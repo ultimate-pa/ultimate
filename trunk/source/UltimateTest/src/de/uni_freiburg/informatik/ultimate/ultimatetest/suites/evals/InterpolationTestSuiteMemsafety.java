@@ -31,7 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompMemsafetyTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderValidMemsafety;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -39,7 +39,7 @@ public class InterpolationTestSuiteMemsafety extends InterpolationTestSuite {
 	
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new SvcompMemsafetyTestResultDecider(ultimateRunDefinition, false);
+		return new SvcompTestResultDeciderValidMemsafety(ultimateRunDefinition, false);
 	}
 	
 	@Override

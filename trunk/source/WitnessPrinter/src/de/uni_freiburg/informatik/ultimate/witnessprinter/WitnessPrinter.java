@@ -36,17 +36,21 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.DataRaceFoundResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LassoShapedNonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
@@ -54,8 +58,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLCorrectnessWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLViolationWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlViolationWitnessGenerator;
 
 /**
  *
@@ -64,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.yaml.YamlCorrectnessWi
  */
 public class WitnessPrinter implements IOutput {
 	private static final String GRAPHML = ".graphml";
-	private static final String YAML = ".yaml";
+	private static final String YAML = ".yml";
 
 	private ILogger mLogger;
 	private IUltimateServiceProvider mServices;
@@ -88,7 +95,8 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		if ("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder".equals(graphType.getCreator())) {
+		if ("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder".equals(graphType.getCreator())
+				|| "de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder".equals(graphType.getCreator())) {
 			mMatchingModel = true;
 		} else {
 			mMatchingModel = false;
@@ -127,7 +135,8 @@ public class WitnessPrinter implements IOutput {
 		final boolean createYaml = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_YAML_WITNESS);
 
 		final List<ResultWitness> witnesses;
-		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)) {
+		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)
+				|| results.stream().anyMatch(a -> a instanceof DataRaceFoundResult<?, ?, ?>)) {
 			mLogger.info("Generating witness for reachability counterexample");
 			witnesses = generateReachabilityCounterexampleWitness(results, createGraphML, createYaml);
 		} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
@@ -154,17 +163,18 @@ public class WitnessPrinter implements IOutput {
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
-		final BacktranslatedCFG<?, IcfgEdge> origCfg =
-				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
-		final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
 		final List<ResultWitness> witnesses = new ArrayList<>();
 		if (createGraphML) {
+			final BacktranslatedCFG<?, IcfgEdge> origCfg =
+					new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
+			final IBacktranslatedCFG<?, ?> translateCFG = backtrans.translateCFG(origCfg);
 			witnesses.add(new ResultWitness(filename, GRAPHML,
-					new CorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString(), result));
+					new GraphMLCorrectnessWitnessGenerator<>(translateCFG, mLogger, mServices).makeGraphMLString(),
+					result));
 		}
 		if (createYaml) {
 			witnesses.add(new ResultWitness(filename, YAML,
-					new YamlCorrectnessWitnessGenerator(translateCFG, mLogger, mServices).makeYamlString(), result));
+					new YamlCorrectnessWitnessGenerator(root, mLogger, mServices).makeYamlString(), result));
 		}
 		return witnesses;
 	}
@@ -173,20 +183,28 @@ public class WitnessPrinter implements IOutput {
 	private List<ResultWitness> generateReachabilityCounterexampleWitness(final List<IResult> results,
 			final boolean createGraphML, final boolean createYaml) {
 		final List<ResultWitness> suppliers = new ArrayList<>();
-		final Collection<CounterExampleResult> cexResults =
-				ResultUtil.filterResults(results, CounterExampleResult.class);
+		final Collection<IResultWithFiniteTrace> cexResults =
+				ResultUtil
+						.filterResults(results,
+								r -> r instanceof CounterExampleResult<?, ?, ?>
+										|| r instanceof DataRaceFoundResult<?, ?, ?>)
+						.stream().map(IResultWithFiniteTrace.class::cast).collect(Collectors.toList());
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
 
-		for (final CounterExampleResult<?, ?, ?> cex : cexResults) {
+		for (final IResultWithFiniteTrace<?, ?> cex : cexResults) {
 			final IProgramExecution<?, ?> backtransPe = backtrans.translateProgramExecution(cex.getProgramExecution());
 			if (createGraphML) {
 				final String witness =
-						new ViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
+						new GraphMLViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeGraphMLString();
 				suppliers.add(new ResultWitness(filename, GRAPHML, witness, cex));
 			}
-			// TODO: Add support for YAML
+			if (createYaml) {
+				final String witness =
+						new YamlViolationWitnessGenerator<>(backtransPe, mLogger, mServices).makeYamlString();
+				suppliers.add(new ResultWitness(filename, YAML, witness, cex));
+			}
 		}
 		return suppliers;
 	}
@@ -212,13 +230,13 @@ public class WitnessPrinter implements IOutput {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TE, T> String getWitness(final IBacktranslationService backtrans,
-			final LassoShapedNonTerminationArgument<?, ?> cex) {
-		final IProgramExecution<TE, T> stem =
-				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getStemExecution());
-		final IProgramExecution<TE, T> loop =
-				(IProgramExecution<TE, T>) backtrans.translateProgramExecution(cex.getLoopExecution());
-		return new ViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
+	private <TE, T, STE extends IElement, ST> String getWitness(final IBacktranslationService backtrans,
+			final LassoShapedNonTerminationArgument<STE, ST> cex) {
+		final Lasso<?> lasso =
+				backtrans.translateLassoProgramExecution(new Lasso<>(cex.getStemExecution(), cex.getLoopExecution()));
+		final var stem = (IProgramExecution<TE, T>) lasso.getStem();
+		final var loop = (IProgramExecution<TE, T>) lasso.getLoop();
+		return new GraphMLViolationWitnessGenerator<>(stem, loop, mLogger, mServices).makeGraphMLString();
 	}
 
 	@Override

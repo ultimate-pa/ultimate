@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -73,7 +76,9 @@ public class StaticObjectsHandler {
 
 	private boolean mIsFrozen;
 	private int mDeclCounter;
-	private final HashRelation<String, Triple<VariableDeclaration, CDeclaration, Integer>> mGlobalVarsForCVars =
+
+	// Relation from pair (cId, scope) to Boogie variable declaration
+	private final HashRelation<Pair<String, IASTNode>, Triple<VariableDeclaration, CDeclaration, Integer>> mGlobalVarsForCVars =
 			new HashRelation<>();
 	private final List<VariableDeclaration> mGlobalVarsWithoutCVar = new ArrayList<>();
 
@@ -121,19 +126,34 @@ public class StaticObjectsHandler {
 		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
 		final CType cType = cDec.getType();
-		if (cType.isIncomplete() && !cDec.getType().getUnderlyingType().isVoidType()) {
+		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
 			if (cType instanceof CStructOrUnion) {
 				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
 			} else if (cType instanceof CEnum) {
 				mIncompleteType2TypeDecl.put(((CEnum) cType).getName(), boogieDec);
+			} else if (cType instanceof CNamed) {
+				// do nothing, this is handled by TypeHandler::redirectNamedType
 			} else {
 				throw new AssertionError("missing support for global incomplete " + cType);
 			}
 		}
 	}
 
-	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec) {
-		mGlobalVarsForCVars.addPair(cDec.getName(), new Triple<>(boogieDec, cDec, mDeclCounter));
+	/**
+	 * Adds a declaration for a global variable.
+	 *
+	 * @param boogieDec
+	 *            the Boogie declaration
+	 * @param cDec
+	 *            the original C declaration
+	 * @param scope
+	 *            the scope: for global C variables, this should be {@code null}. For static C variables (which are
+	 *            mapped to global Boogie variables), this should be the cursor in the symbol table where the variable
+	 *            is stored.
+	 */
+	public void addGlobalVariableDeclaration(final VariableDeclaration boogieDec, final CDeclaration cDec,
+			final IASTNode scope) {
+		mGlobalVarsForCVars.addPair(new Pair<>(cDec.getName(), scope), new Triple<>(boogieDec, cDec, mDeclCounter));
 		mDeclCounter++;
 	}
 
@@ -145,8 +165,9 @@ public class StaticObjectsHandler {
 		// Matthias 20221110: Unfortunately, we cannot require that this object is frozen.
 		// This method is called by the PostProcessor and something modifies this object afterwards.
 		final List<Triple<VariableDeclaration, CDeclaration, Integer>> result = new ArrayList<>();
-		for (final String id : mGlobalVarsForCVars.getDomain()) {
-			final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls = mGlobalVarsForCVars.getImage(id);
+		for (final var idAndScope : mGlobalVarsForCVars.getDomain()) {
+			final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls =
+					mGlobalVarsForCVars.getImage(idAndScope);
 			final Triple<VariableDeclaration, CDeclaration, Integer> varDecl = computeSuitableVarDecl(decls);
 			result.add(varDecl);
 		}
@@ -154,27 +175,26 @@ public class StaticObjectsHandler {
 				.map(trip -> new Pair<>(trip.getFirst(), trip.getSecond())).collect(Collectors.toList());
 	}
 
-	private Triple<VariableDeclaration, CDeclaration, Integer>
+	private static Triple<VariableDeclaration, CDeclaration, Integer>
 			computeSuitableVarDecl(final Set<Triple<VariableDeclaration, CDeclaration, Integer>> decls) {
 		if (decls.size() == 1) {
 			return decls.iterator().next();
-		} else {
-			Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
-			for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
-				if (pair.getSecond().getInitializer() != null) {
-					if (suiteableDecl == null) {
-						suiteableDecl = pair;
-					} else {
-						throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
-					}
+		}
+		Triple<VariableDeclaration, CDeclaration, Integer> suiteableDecl = null;
+		for (final Triple<VariableDeclaration, CDeclaration, Integer> pair : decls) {
+			if (pair.getSecond().getInitializer() != null) {
+				if (suiteableDecl == null) {
+					suiteableDecl = pair;
+				} else {
+					throw new AssertionError("Two decls with initializer " + pair.getSecond().getName());
 				}
 			}
-			if (suiteableDecl == null) {
-				// no declaration has an initializer, pick some
-				suiteableDecl = decls.iterator().next();
-			}
-			return suiteableDecl;
 		}
+		if (suiteableDecl == null) {
+			// no declaration has an initializer, pick some
+			suiteableDecl = decls.iterator().next();
+		}
+		return suiteableDecl;
 	}
 
 	public void addGlobalConstDeclaration(final ConstDeclaration cd, final CDeclaration cDeclaration,

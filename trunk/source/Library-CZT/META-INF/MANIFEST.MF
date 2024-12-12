@@ -2,6 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Library-CZT
 Bundle-SymbolicName: net.sourceforge.czt
+Bundle-Vendor: CZT Team - https://czt.sourceforge.net
 Bundle-Version: 1.5.0
 Bundle-ClassPath: czt_1_5_0_bin.jar
 Export-Package: junit.extensions,
@@ -109,5 +110,5 @@ Export-Package: junit.extensions,
  org.junit.runner.notification,
  org.junit.runners,
  org.junit.runners.model
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: net.sourceforge.czt

@@ -1,0 +1,5 @@
+// #TestSpec: redundant:req1,req2; results:-1
+Input R IS bool
+
+req1: Globally, it is always the case that "!R" holds
+req2: Globally, it is always the case that "!R" holds

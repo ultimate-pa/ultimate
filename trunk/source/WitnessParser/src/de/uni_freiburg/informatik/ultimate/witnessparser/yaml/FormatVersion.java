@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.Objects;
+
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
@@ -34,10 +36,6 @@ public class FormatVersion implements Comparable<FormatVersion> {
 
 	protected final int mMajor;
 	protected final int mMinor;
-
-	public FormatVersion() {
-		this(0, 0);
-	}
 
 	public FormatVersion(final int major, final int minor) {
 		validateVersionNumber(major < 0, "Major number of FormatVersion cannot be negative!");
@@ -50,12 +48,12 @@ public class FormatVersion implements Comparable<FormatVersion> {
 	public static FormatVersion fromString(final String string) {
 		final String[] split = string.split("\\.");
 		if (split.length != 2) {
-			return null;
+			throw new IllegalArgumentException("Invalid format version " + string);
 		}
 		try {
 			return new FormatVersion(Integer.parseInt(split[0]), Integer.parseInt(split[1]));
 		} catch (final NumberFormatException e) {
-			return null;
+			throw new IllegalArgumentException("Invalid format version " + string);
 		}
 	}
 
@@ -74,34 +72,34 @@ public class FormatVersion implements Comparable<FormatVersion> {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-
-		if (obj instanceof FormatVersion) {
-			final FormatVersion other = FormatVersion.class.cast(obj);
-			if (this.compareTo(other) == 0) {
-				return true;
-			}
-		}
-
-		return false;
+	public int hashCode() {
+		return Objects.hash(mMajor, mMinor);
 	}
 
 	@Override
-	public int compareTo(FormatVersion other) {
-		final int compareMajorResult = Integer.compare(this.getMajor(), other.getMajor());
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+		final FormatVersion other = (FormatVersion) obj;
+		return mMajor == other.mMajor && mMinor == other.mMinor;
+	}
+
+	@Override
+	public int compareTo(final FormatVersion other) {
+		final int compareMajorResult = Integer.compare(getMajor(), other.getMajor());
 
 		if (compareMajorResult == 0) {
 			// Major number of both objects are equal
 			// Compare minor numbers and return compare result
-			return Integer.compare(this.getMinor(), other.getMinor());
-		} else {
-			// Major number of both objects are not equal
-			// Return compare result of major numbers
-			return compareMajorResult;
+			return Integer.compare(getMinor(), other.getMinor());
 		}
+		// Major number of both objects are not equal
+		// Return compare result of major numbers
+		return compareMajorResult;
 	}
 
 	@Override

@@ -85,7 +85,7 @@ public interface ILocation extends IAnnotations {
 	 *         elem is null
 	 */
 	static ILocation getAnnotation(final IElement elem) {
-		return ModelUtils.getAnnotation(elem, ILocation.class.getName(), a -> (ILocation) a);
+		return ModelUtils.getAnnotation(elem, ILocation.class);
 	}
 
 }

@@ -1,0 +1,47 @@
+- entry_type: invariant_set
+  metadata:
+    format_version: '2.0'
+    uuid: ab8aa68b-8260-4b03-903e-21f97d2b5d71
+    creation_time: '2024-03-28T12:41:50+01:00'
+    producer:
+      name: Manual
+      version: n/a
+    task:
+      input_files:
+      - loop_as_goto.c
+      input_file_hashes:
+        loop_as_goto.c: UNUSED
+      specification: UNUSED
+      data_model: UNUSED
+      language: C
+  content:
+  - invariant:
+      type: location_invariant
+      location:
+        file_name: loop_as_goto.c
+        file_hash: UNUSED
+        line: 3
+        column: 3
+        function: main
+      format: c_expression
+      value: i == 0
+  - invariant:
+      type: location_invariant
+      location:
+        file_name: loop_as_goto.c
+        file_hash: UNUSED
+        line: 4
+        column: 5
+        function: main
+      format: c_expression
+      value: i <= 5
+  - invariant:
+      type: location_invariant
+      location:
+        file_name: loop_as_goto.c
+        file_hash: UNUSED
+        line: 6
+        column: 7
+        function: main
+      format: c_expression
+      value: i <= 5

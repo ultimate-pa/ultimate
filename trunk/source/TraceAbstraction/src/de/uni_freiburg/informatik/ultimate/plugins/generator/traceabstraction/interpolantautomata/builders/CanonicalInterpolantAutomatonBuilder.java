@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAnalysis<CL>
+public class CanonicalInterpolantAutomatonBuilder<LETTER> extends CoverageAnalysis<Object>
 		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 
 	private final boolean mSelfloopAtInitial = false;
@@ -62,13 +62,12 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 	protected final NestedWord<LETTER> mNestedWord;
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<>();
 
-	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final TracePredicates ipp, final List<CL> programPointSequence,
+	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final TracePredicates ipp,
 			final VpAlphabet<LETTER> alphabet, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final ILogger logger, final IPredicateUnifier predicateUnifier,
-			final NestedWord<LETTER> nestedWord) {
-		super(services, ipp, programPointSequence, logger, predicateUnifier);
-		mNestedWord = nestedWord;
+			final Counterexample<LETTER> counterexample) {
+		super(services, ipp, counterexample.getControlConfigurations(), logger, predicateUnifier);
+		mNestedWord = counterexample.getWord();
 		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, emptyStackFactory);
 	}
 

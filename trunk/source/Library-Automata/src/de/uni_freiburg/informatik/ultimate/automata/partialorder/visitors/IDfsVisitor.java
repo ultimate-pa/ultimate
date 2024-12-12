@@ -100,21 +100,6 @@ public interface IDfsVisitor<L, S> {
 	}
 
 	/**
-	 * Called when a state is "delayed". This is specific to the "delay set" variant of Partial Order Reduction.
-	 *
-	 * @deprecated
-	 *
-	 * @param state
-	 *            state that is delayed
-	 */
-	// TODO (Dominik 2021-01-24) We should try to get rid of this method, as "delaying" states is an
-	// implementation detail of SleepSetDelayReduction that should not be exposed to visitors.
-	@Deprecated(since = "2021-01-24")
-	default void delayState(final S state) {
-		// by default, do nothing here
-	}
-
-	/**
 	 * Used to indicate that the visitor is finished and further traversal of the automaton is not needed.
 	 *
 	 * @return true if the search should be (completely) aborted, false otherwise.

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -129,8 +128,7 @@ public class QvasrsSummarizer {
 				final UnmodifiableTransFormula conjunctionFormula =
 						QvasrUtils.buildFormula(transitionFormula, conjunctionPreTfPost, mScript);
 
-				final Term conjunctionDNF = SmtUtils.toDnf(mServices, mScript, conjunctionFormula.getFormula(),
-						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				final Term conjunctionDNF = SmtUtils.toDnf(mServices, mScript, conjunctionFormula.getFormula());
 				final Set<Term> disjunctsAbtraction = QvasrUtils.splitDisjunction(conjunctionDNF);
 				QvasrAbstraction preTfPostAbstraction = new QvasrAbstraction(identityMatrix, new Qvasr());
 				for (final Term disjunct : disjunctsAbtraction) {

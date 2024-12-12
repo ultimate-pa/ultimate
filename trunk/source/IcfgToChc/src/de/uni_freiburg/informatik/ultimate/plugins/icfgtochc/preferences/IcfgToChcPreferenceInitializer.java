@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences.SpecMode;
@@ -65,29 +66,6 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String DESC_SPEC_MODE = "Describes how the specification for the program is given.";
 	public static final SpecMode DEF_SPEC_MODE = SpecMode.POSTCONDITION;
 
-	// SETTINGS FOR THREAD-MODULAR PROOFS
-	// ------------------------------------------------------------------------
-
-	public static final String LABEL_THREADMODULAR_LEVEL = "Thread-Modular Proof Level";
-	public static final String DESC_THREADMODULAR_LEVEL = "The level at which thread-modular proofs should be computed";
-	public static final int DEF_THREADMODULAR_LEVEL = 2;
-
-	// TODO Currently unused
-	public static final String LABEL_EXPLICIT_LOCATIONS = "Encode control locations explicitly";
-	public static final String DESC_EXPLICIT_LOCATIONS = "Control locations can be encoded symbolically "
-			+ "(as CHC variables), or explicitly (by using different predicate symbols).";
-	public static final boolean DEF_EXPLICIT_LOCATIONS = false;
-
-	public static final String LABEL_LIPTON_REDUCTION = "Apply Lipton reduction";
-	public static final String DESC_LIPTON_REDUCTION = "If enabled, Lipton reduction is applied to simplify thread "
-			+ "templates, before a thread-modular proof is computed.";
-	public static final boolean DEF_LIPTON_REDUCTION = false;
-
-	public static final String LABEL_SKIP_ASSERT_EDGES = "Skip assert edges";
-	private static final String DESC_SKIP_ASSERT_EDGES = "If enabled, we do not directly encode unreachability of "
-			+ "error locations. Instead, the assertion condition is part of the safety clause.";
-	private static final boolean DEF_SKIP_ASSERT_EDGES = true;
-
 	// TODO Introduce PreferenceType.List?
 	public static final String LABEL_PARAMETRIC_TEMPLATES = "Templates for parametric program";
 	private static final String DESC_PARAMETRIC_TEMPLATES = "Comma-separated list of procedures denoting thread "
@@ -100,40 +78,63 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			"Comma-separated list of procedures for which a single thread is running in a parametric program.";
 	private static final String DEF_PARAMETRIC_SINGLE_THREADS = "";
 
+	// SETTINGS FOR THREAD-MODULAR PROOFS
+	// ------------------------------------------------------------------------
+
+	public static final String LABEL_THREADMODULAR_LEVEL = "Thread-Modular Proof Level";
+	private static final String DESC_THREADMODULAR_LEVEL =
+			"The level at which thread-modular proofs should be computed";
+	private static final int DEF_THREADMODULAR_LEVEL = 2;
+
+	public static final String LABEL_SYMMETRY_CLAUSES = "Use symmetry clauses";
+	private static final boolean DEF_SYMMETRY_CLAUSES = false;
+
+	// TODO Currently unused
+	public static final String LABEL_EXPLICIT_LOCATIONS = "Encode control locations explicitly";
+	private static final String DESC_EXPLICIT_LOCATIONS = "Control locations can be encoded symbolically "
+			+ "(as CHC variables), or explicitly (by using different predicate symbols).";
+	private static final boolean DEF_EXPLICIT_LOCATIONS = false;
+
+	public static final String LABEL_LIPTON_REDUCTION = "Apply Lipton reduction";
+	private static final String DESC_LIPTON_REDUCTION = "If enabled, Lipton reduction is applied to simplify thread "
+			+ "templates, before a thread-modular proof is computed.";
+	private static final boolean DEF_LIPTON_REDUCTION = false;
+
+	public static final String LABEL_SKIP_ASSERT_EDGES = "Skip assert edges";
+	private static final String DESC_SKIP_ASSERT_EDGES = "If enabled, we do not directly encode unreachability of "
+			+ "error locations. Instead, the assertion condition is part of the safety clause.";
+	private static final boolean DEF_SKIP_ASSERT_EDGES = true;
+
 	// SETTINGS FOR SLEEP SET REDUCTION
 	// ------------------------------------------------------------------------
 
 	public static final String LABEL_SLEEP_SET_REDUCTION = "Enable sleep set reduction";
-	public static final String DESC_SLEEP_SET_REDUCTION = "If enabled, symbolic sleep set reduction is applied to the "
+	private static final String DESC_SLEEP_SET_REDUCTION = "If enabled, symbolic sleep set reduction is applied to the "
 			+ "program. This allows for more programs to be proven correct.";
-	public static final boolean DEF_SLEEP_SET_REDUCTION = true;
+	private static final boolean DEF_SLEEP_SET_REDUCTION = true;
 
 	public static final String LABEL_BREAK_PREFORDER_SYMMETRY = "Break symmetry of preference order";
-	public static final String DESC_BREAK_PREFORDER_SYMMETRY = "A straightforward encoding forces proofs to consider "
+	private static final String DESC_BREAK_PREFORDER_SYMMETRY = "A straightforward encoding forces proofs to consider "
 			+ "all symmetric preference orders. If we break symmetry, more proofs are accepted.";
-	public static final boolean DEF_BREAK_PREFORDER_SYMMETRY = true;
+	private static final boolean DEF_BREAK_PREFORDER_SYMMETRY = true;
 
 	// TODO Currently unused
 	public static final String LABEL_EXPLICIT_SLEEP = "Encode sleep sets explicitly";
-	public static final String DESC_EXPLICIT_SLEEP = "Sleep sets can be encoded symbolically (as CHC variables), "
+	private static final String DESC_EXPLICIT_SLEEP = "Sleep sets can be encoded symbolically (as CHC variables), "
 			+ "or explicitly (by using different predicate symbols).";
-	public static final boolean DEF_EXPLICIT_SLEEP = false;
+	private static final boolean DEF_EXPLICIT_SLEEP = false;
 
 	public static final String LABEL_PREFERENCE_ORDER = "Preference order used for reduction";
-	public static final PreferenceOrder DEF_PREFERENCE_ORDER = PreferenceOrder.SEQ_COMP;
+	private static final PreferenceOrder DEF_PREFERENCE_ORDER = PreferenceOrder.SEQ_COMP;
 
 	public static final String LABEL_CONDITIONAL_INDEPENDENCE = "Conditional Independence";
-	public static final ConditionalIndependence DEF_CONDITIONAL_INDEPENDENCE = ConditionalIndependence.OFF;
+	private static final IndependenceConditions DEF_CONDITIONAL_INDEPENDENCE = IndependenceConditions.NONE;
 
 	public static final String LABEL_SEMICOMMUTATIVITY = "Use semi-commutativity";
-	public static final boolean DEF_SEMICOMMUTATIVITY = true;
+	private static final boolean DEF_SEMICOMMUTATIVITY = true;
 
 	public enum PreferenceOrder {
 		SEQ_COMP, LOCKSTEP
-	}
-
-	public enum ConditionalIndependence {
-		OFF, PRECOMPUTED_CONDITIONS
 	}
 
 	/**
@@ -153,19 +154,20 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SPEC_MODE, DEF_SPEC_MODE, DESC_SPEC_MODE, PreferenceType.Combo,
 						SpecMode.values()),
+				new UltimatePreferenceItem<>(LABEL_PARAMETRIC_TEMPLATES, DEF_PARAMETRIC_TEMPLATES,
+						DESC_PARAMETRIC_TEMPLATES, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_PARAMETRIC_SINGLE_THREADS, DEF_PARAMETRIC_SINGLE_THREADS,
+						DESC_PARAMETRIC_SINGLE_THREADS, PreferenceType.String),
 				// Settings for thread-modular proofs
 				new UltimatePreferenceItem<>(LABEL_THREADMODULAR_LEVEL, DEF_THREADMODULAR_LEVEL,
 						DESC_THREADMODULAR_LEVEL, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_SYMMETRY_CLAUSES, DEF_SYMMETRY_CLAUSES, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_EXPLICIT_LOCATIONS, DEF_EXPLICIT_LOCATIONS, DESC_EXPLICIT_LOCATIONS,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_LIPTON_REDUCTION, DEF_LIPTON_REDUCTION, DESC_LIPTON_REDUCTION,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SKIP_ASSERT_EDGES, DEF_SKIP_ASSERT_EDGES, DESC_SKIP_ASSERT_EDGES,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_PARAMETRIC_TEMPLATES, DEF_PARAMETRIC_TEMPLATES,
-						DESC_PARAMETRIC_TEMPLATES, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_PARAMETRIC_SINGLE_THREADS, DEF_PARAMETRIC_SINGLE_THREADS,
-						DESC_PARAMETRIC_SINGLE_THREADS, PreferenceType.String),
 				getSleepSetSettings() };
 	}
 
@@ -180,7 +182,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 		container.addItem(new UltimatePreferenceItem<>(LABEL_PREFERENCE_ORDER, DEF_PREFERENCE_ORDER,
 				PreferenceType.Combo, PreferenceOrder.values()));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
-				PreferenceType.Combo, ConditionalIndependence.values()));
+				PreferenceType.Combo, IndependenceConditions.values()));
 		container.addItem(
 				new UltimatePreferenceItem<>(LABEL_SEMICOMMUTATIVITY, DEF_SEMICOMMUTATIVITY, PreferenceType.Boolean));
 		return container;

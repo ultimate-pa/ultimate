@@ -89,49 +89,42 @@ public class PredicateWithConjuncts implements IPredicate {
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
+		if (obj == null || !(obj instanceof PredicateWithConjuncts)) {
 			return false;
 		}
-		if (getClass() == obj.getClass()) {
-			final PredicateWithConjuncts other = (PredicateWithConjuncts) obj;
-			return mSerial == other.mSerial;
+		if (mSerial == ((PredicateWithConjuncts) obj).mSerial) {
+			// Different predicates with the same serial number must not be used within the same context.
+			// Hence we throw an exception if they are compared for equality.
+			// The only case in which PredicateWithConjuncts are considered equal is reference equality (case 1 above).
+			throw new UnsupportedOperationException("different predicates with same serial number");
 		}
 		return false;
 	}
 
 	@Override
 	public Term getFormula() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public String[] getProcedures() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer variables. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramFunction> getFuns() {
-		// TODO compute on-demand (and possibly use partial results when constructed from conjunction)
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer functions. Access conjuncts individually.");
 	}
+
 	@Override
 	public String toString() {
 		return mSerial + "#" + mConjuncts.toString();

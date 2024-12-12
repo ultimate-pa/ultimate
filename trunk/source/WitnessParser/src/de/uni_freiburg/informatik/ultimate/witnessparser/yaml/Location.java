@@ -27,26 +27,22 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlNode;
 
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Location implements IYamlProvider {
+public class Location {
 
 	private final String mFileName;
-	private final String mFileHash;
-	private final int mLine;
-	private final int mColumn;
+	private final Integer mLine;
+	private final Integer mColumn;
 	private final String mFunction;
 
-	public Location(final String fileName, final String fileHash, final int line, final int column,
-			final String function) {
+	public Location(final String fileName, final Integer line, final Integer column, final String function) {
 		mFileName = fileName;
-		mFileHash = fileHash;
 		mLine = line;
 		mColumn = column;
 		mFunction = function;
@@ -56,15 +52,11 @@ public class Location implements IYamlProvider {
 		return mFileName;
 	}
 
-	public String getFileHash() {
-		return mFileHash;
-	}
-
-	public int getLine() {
+	public Integer getLine() {
 		return mLine;
 	}
 
-	public int getColumn() {
+	public Integer getColumn() {
 		return mColumn;
 	}
 
@@ -79,7 +71,7 @@ public class Location implements IYamlProvider {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mColumn, mFileHash, mFileName, mFunction, mLine);
+		return Objects.hash(mColumn, mFileName, mFunction, mLine);
 	}
 
 	@Override
@@ -91,15 +83,20 @@ public class Location implements IYamlProvider {
 			return false;
 		}
 		final Location other = (Location) obj;
-		return mColumn == other.mColumn && Objects.equals(mFileHash, other.mFileHash)
-				&& Objects.equals(mFileName, other.mFileName) && Objects.equals(mFunction, other.mFunction)
-				&& mLine == other.mLine;
+		return Objects.equals(mColumn, other.mColumn) && Objects.equals(mFileName, other.mFileName)
+				&& Objects.equals(mFunction, other.mFunction) && Objects.equals(mLine, other.mLine);
 	}
 
-	@Override
-	public YamlNode toYaml() {
-		return Yaml.createYamlMappingBuilder().add("file_name", mFileName).add("file_hash", mFileHash)
-				.add("line", Integer.toString(mLine)).add("column", Integer.toString(mColumn))
-				.add("function", mFunction).build();
+	public Map<String, Object> toMap() {
+		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		result.put("file_name", mFileName);
+		result.put("line", mLine);
+		if (mColumn != null) {
+			result.put("column", mColumn);
+		}
+		if (mFunction != null) {
+			result.put("function", mFunction);
+		}
+		return result;
 	}
 }

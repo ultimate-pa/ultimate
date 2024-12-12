@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
@@ -255,7 +255,7 @@ public class SvcompSoundnessBugsReach extends AbstractEvalTestSuite {
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new SvcompReachTestResultDecider(ultimateRunDefinition, false);
+		return new SvcompTestResultDeciderUnreachCall(ultimateRunDefinition, false);
 	}
 
 	@Override

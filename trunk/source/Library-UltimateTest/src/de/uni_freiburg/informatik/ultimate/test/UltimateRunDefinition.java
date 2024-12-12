@@ -30,9 +30,12 @@ package de.uni_freiburg.informatik.ultimate.test;
 import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase.AfterTest;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -59,6 +62,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	private final File mSettings;
 	private final File mToolchain;
 	private final long mTimeout;
+	private final NamedServiceCallback mServiceCallback;
 	private final AfterTest mFunAfterTest;
 
 	private String mInputFilenames;
@@ -67,6 +71,11 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	public UltimateRunDefinition(final File input, final File settings, final File toolchain, final long timeout) {
 		this(new File[] { input }, settings, toolchain, timeout);
+	}
+
+	public UltimateRunDefinition(final File input, final File settings, final File toolchain, final long timeout,
+			final NamedServiceCallback serviceCallback) {
+		this(new File[] { input }, settings, toolchain, timeout, serviceCallback, null);
 	}
 
 	public UltimateRunDefinition(final File input, final File settings, final File toolchain, final long timeout,
@@ -80,6 +89,11 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain, final long timeout,
 			final AfterTest funAfterTest) {
+		this(input, settings, toolchain, timeout, null, funAfterTest);
+	}
+
+	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain, final long timeout,
+			final NamedServiceCallback serviceCaĺlback, final AfterTest funAfterTest) {
 		if (input == null || toolchain == null) {
 			throw new IllegalArgumentException("Toolchain and Input may not be null");
 		}
@@ -90,6 +104,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		mSettings = settings;
 		mToolchain = toolchain;
 		mTimeout = timeout;
+		mServiceCallback = serviceCaĺlback;
 		mFunAfterTest = funAfterTest;
 		mStringRepr = generateShortStringRepresentation();
 	}
@@ -108,6 +123,10 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	public long getTimeout() {
 		return mTimeout;
+	}
+
+	public NamedServiceCallback getServiceCallback() {
+		return mServiceCallback;
 	}
 
 	public AfterTest getAfterTestMethod() {
@@ -195,13 +214,20 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	}
 
 	public String generateLongStringRepresentation() {
-		return "Input: " + mInput + ", Settings: " + mSettings + ", Toolchain: " + mToolchain;
+		final String repr = "Input: " + mInput + ", Settings: " + mSettings + ", Toolchain: " + mToolchain;
+		if (mServiceCallback != null && mServiceCallback.hasName()) {
+			return "Callback: " + mServiceCallback.getName() + ", " + repr;
+		}
+		return repr;
 	}
 
 	private String generateShortStringRepresentation() {
 		final StringBuilder sb = new StringBuilder();
 		final File settings = getSettings();
 		final File toolchain = getToolchain();
+		if (mServiceCallback != null && mServiceCallback.hasName()) {
+			sb.append("Callback:").append(mServiceCallback.getName()).append(" ");
+		}
 		sb.append("Input:").append(getInputFileNames());
 		sb.append(" Settings:");
 		if (settings == null) {
@@ -235,6 +261,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		result = prime * result + (mInput == null ? 0 : Arrays.hashCode(mInput));
 		result = prime * result + (mSettings == null ? 0 : mSettings.hashCode());
 		result = prime * result + (mToolchain == null ? 0 : mToolchain.hashCode());
+		result = prime * result + (mServiceCallback == null ? 0 : mServiceCallback.hashCode());
 		return result;
 	}
 
@@ -271,6 +298,9 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		} else if (!mToolchain.equals(other.mToolchain)) {
 			return false;
 		}
+		if (!Objects.equals(mServiceCallback, other.mServiceCallback)) {
+			return false;
+		}
 		return true;
 	}
 
@@ -302,6 +332,48 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 			return -1;
 		} else {
 			return mSettings.compareTo(other.mSettings);
+		}
+	}
+
+	public static class NamedServiceCallback {
+		private final String mName;
+		private final UnaryOperator<IUltimateServiceProvider> mCallback;
+
+		public NamedServiceCallback(final String name, final UnaryOperator<IUltimateServiceProvider> callback) {
+			mName = name;
+			mCallback = Objects.requireNonNull(callback);
+		}
+
+		public boolean hasName() {
+			return mName != null;
+		}
+
+		public String getName() {
+			return mName;
+		}
+
+		public IUltimateServiceProvider processServices(final IUltimateServiceProvider services) {
+			return mCallback.apply(services);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mCallback, mName);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			final NamedServiceCallback other = (NamedServiceCallback) obj;
+			return mCallback == other.mCallback && Objects.equals(mName, other.mName);
 		}
 	}
 }

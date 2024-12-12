@@ -36,8 +36,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -65,7 +65,7 @@ public class SpaceExParser implements ISource {
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
-	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> mBacktranslator;
+	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String, ?> mBacktranslator;
 
 	/**
 	 * Constructor of the SpaceEx Parser plugin.

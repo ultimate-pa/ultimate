@@ -6,4 +6,5 @@ which mathsat
 z3 -version
 cvc4 --version | head -n 3
 mathsat -version
+mvn --version
 echo "All solvers available!"

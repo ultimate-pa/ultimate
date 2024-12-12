@@ -33,13 +33,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.Clausifier;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.EqualityProxy;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.TermCompiler;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ILiteral;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.IProofTracker;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.linar.MutableAffineTerm;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.Polynomial;
 
 /**
  * Helper class for substitution in quantified clauses.
@@ -138,7 +138,7 @@ public class SubstitutionHelper {
 				final ApplicationTerm atomApp = (ApplicationTerm) atomTerm;
 				if (atomApp.getFunction().getName() == "<=") {
 					if (atomApp.getFreeVars().length == 0) {
-						final SMTAffineTerm lhs = new SMTAffineTerm(atomApp.getParameters()[0]);
+						final Polynomial lhs = new Polynomial(atomApp.getParameters()[0]);
 						final MutableAffineTerm msum =
 								mClausifier.createMutableAffinTerm(lhs, mSource);
 						newAtom = mQuantTheory.getLinAr().generateConstraint(msum, false);

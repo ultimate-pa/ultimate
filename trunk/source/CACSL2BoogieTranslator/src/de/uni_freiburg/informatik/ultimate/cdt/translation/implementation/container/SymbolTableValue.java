@@ -227,10 +227,4 @@ public class SymbolTableValue {
 		}
 		return sb.toString();
 	}
-
-	public SymbolTableValue createOnHeap(final String onHeapBoogieName) {
-		final CDeclaration newCDecl = mCDecl.createOnHeap();
-		return new SymbolTableValue(onHeapBoogieName, mBoogieDecl, mAstType, newCDecl, mDeclarationInformation,
-				mDeclarationNode, mIsIntFromPointer, mConstantValue);
-	}
 }

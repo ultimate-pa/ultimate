@@ -72,6 +72,18 @@ public class ArraySortInterpretation implements SortInterpretation {
 		return result;
 	}
 
+	public Term getSelect(final Term storeTerm, final Term selectIndex) {
+		ApplicationTerm arrayTerm = (ApplicationTerm) storeTerm;
+		while (arrayTerm.getFunction().getName() == "store") {
+			if (arrayTerm.getParameters()[1] == selectIndex) {
+				return arrayTerm.getParameters()[2];
+			}
+			arrayTerm = (ApplicationTerm) arrayTerm.getParameters()[0];
+		}
+		assert arrayTerm.getFunction().getName() == SMTLIBConstants.CONST;
+		return arrayTerm.getParameters()[0];
+	}
+
 	public Term normalizeStoreTerm(final Term storeTerm) {
 		final Map<Term, Term> map = new LinkedHashMap<>();
 		ApplicationTerm arrayTerm = (ApplicationTerm) storeTerm;

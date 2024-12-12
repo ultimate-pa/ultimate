@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.chcsolver;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -101,7 +103,7 @@ public class ChcSolverObserver extends BaseObserver {
 		switch (mPrefs.getBackend()) {
 		case ELDARICA:
 			// return new EldaricaChcScript(mServices, annotation.getScript().getScript());
-			return new EldaricaCliChcScript(mServices, annotation.getScript());
+			return new EldaricaCliChcScript(mServices, annotation.getScript(), getHintsFile());
 		case Z3:
 			return createZ3Backend();
 		case TREEAUTOMIZER:
@@ -112,6 +114,20 @@ public class ChcSolverObserver extends BaseObserver {
 		default:
 			throw new UnsupportedOperationException("Unsupported CHC backend: " + mPrefs.getBackend());
 		}
+	}
+
+	private Path getHintsFile() {
+		final var hintsPath = mPrefs.getEldaricaHints();
+		if (hintsPath == null) {
+			return null;
+		}
+		if (!Files.exists(hintsPath)) {
+			mLogger.warn("Specified file with eldarica hints does not exist: %s", hintsPath);
+			mLogger.warn("Starting eldarica without hints...");
+			return null;
+		}
+		mLogger.warn("Passing given hints to eldarica: %s", hintsPath);
+		return hintsPath;
 	}
 
 	private SmtChcScript createZ3Backend() {

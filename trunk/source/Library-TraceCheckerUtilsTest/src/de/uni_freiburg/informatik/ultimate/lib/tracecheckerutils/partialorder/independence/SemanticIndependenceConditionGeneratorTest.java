@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.i
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Set;
 
 import org.junit.After;
 import org.junit.Before;
@@ -52,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -81,7 +79,6 @@ public class SemanticIndependenceConditionGeneratorTest {
 	private ManagedScript mMgdScript;
 	private final DefaultIcfgSymbolTable mSymbolTable = new DefaultIcfgSymbolTable();
 	private BasicPredicateFactory mPredicateFactory;
-	private SemanticIndependenceConditionGenerator mGenerator;
 	private SemanticIndependenceRelation<BasicInternalAction> mIndependence;
 
 	// variables for SimpleSet example
@@ -107,7 +104,6 @@ public class SemanticIndependenceConditionGeneratorTest {
 		setupArrayStack();
 
 		mPredicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
-		mGenerator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript, mPredicateFactory, SYMMETRIC);
 		mIndependence = new SemanticIndependenceRelation<>(mServices, mMgdScript, true, SYMMETRIC);
 	}
 
@@ -168,7 +164,8 @@ public class SemanticIndependenceConditionGeneratorTest {
 		// only guarantees equivalence "with respect to stack semantics", i.e., observational equivalence.
 		// Instead, we find the trivial case of a full 0-capacity stack, which guarantees our notion of commutativity.
 		final Term expected = parseWithVariables("(and (= top (- max 1)) (= max 0))");
-		testArrayStack(pop(s1), push(e1, r1), expected);
+		// NOTE: This only works with strong quantifier elimination.
+		testArrayStack(pop(s1), push(e1, r1), expected, true);
 	}
 
 	@Test
@@ -201,13 +198,25 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	private void testArrayStack(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB,
 			final Term expected) {
-		runTest(tfA, tfB, mArrayStackAxioms, expected);
+		testArrayStack(tfA, tfB, expected, false);
+	}
+
+	private void testArrayStack(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB,
+			final Term expected, final boolean strongQuantElim) {
+		runTest(tfA, tfB, mArrayStackAxioms, expected, strongQuantElim);
 	}
 
 	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term axioms,
 			final Term expected) {
+		runTest(tfA, tfB, axioms, expected, false);
+	}
+
+	private void runTest(final UnmodifiableTransFormula tfA, final UnmodifiableTransFormula tfB, final Term axioms,
+			final Term expected, final boolean needsStrongQuantElim) {
 		final IPredicate axiomPredicate = mPredicateFactory.newPredicate(axioms);
-		final IPredicate actual = mGenerator.generateCondition(axiomPredicate, tfA, tfB);
+		final var generator = new SemanticIndependenceConditionGenerator(mServices, mMgdScript, mPredicateFactory,
+				SYMMETRIC, needsStrongQuantElim);
+		final IPredicate actual = generator.generateCondition(axiomPredicate, tfA, tfB);
 		if (expected == null) {
 			if (actual != null) {
 				assert checkIndependence(axiomPredicate, actual, tfA,
@@ -355,19 +364,19 @@ public class SemanticIndependenceConditionGeneratorTest {
 
 	private UnmodifiableTransFormula constructIte(final Term condition, final UnmodifiableTransFormula thenBranch,
 			final UnmodifiableTransFormula elseBranch) {
-		final UnmodifiableTransFormula takeThen = compose(TransFormulaBuilder.constructTransFormulaFromTerm(condition,
-				(Set) mSymbolTable.getGlobals(), mMgdScript), thenBranch);
+		final UnmodifiableTransFormula takeThen = compose(
+				TransFormulaBuilder.constructTransFormulaFromTerm(condition, mSymbolTable.getGlobals(), mMgdScript),
+				thenBranch);
 		final UnmodifiableTransFormula takeElse =
 				compose(TransFormulaBuilder.constructTransFormulaFromTerm(SmtUtils.not(mScript, condition),
-						(Set) mSymbolTable.getGlobals(), mMgdScript), elseBranch);
-		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, true, takeThen, takeElse);
+						mSymbolTable.getGlobals(), mMgdScript), elseBranch);
+		return TransFormulaUtils.parallelComposition(mLogger, mServices, mMgdScript, null, false, true, takeThen,
+				takeElse);
 	}
 
-	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula a, final UnmodifiableTransFormula b) {
+	private UnmodifiableTransFormula compose(final UnmodifiableTransFormula fst, final UnmodifiableTransFormula snd) {
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, false, false, false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
-				Arrays.asList(a, b));
+				SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(fst, snd));
 	}
 
 	private Term parseWithVariables(final String syntax) {

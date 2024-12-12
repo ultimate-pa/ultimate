@@ -32,7 +32,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompTestResultDeciderUnreachCall;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite {
@@ -62,7 +62,7 @@ public class Svcomp20SleepSetReduction extends AbstractTraceAbstractionTestSuite
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new SvcompReachTestResultDecider(urd, false);
+		return new SvcompTestResultDeciderUnreachCall(urd, false);
 	}
 
 	/**

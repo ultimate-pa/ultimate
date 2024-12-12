@@ -27,15 +27,15 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.Map.Entry;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.preferences.WitnessParserPreferences;
 
 /**
@@ -49,17 +49,18 @@ public abstract class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-	protected final boolean mCheckOnlyLoopInvariants;
+	protected IPreferenceProvider mPrefs;
+	protected final boolean mIgnoreUnmatchedEntries;
 
 	protected IASTTranslationUnit mTranslationUnit;
-	private HashRelation<IASTNode, IExtractedWitnessEntry> mAST2Entries;
+	private IExtractedCorrectnessWitness mResult;
 	protected ExtractionStatistics mStats;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCheckOnlyLoopInvariants = WitnessParserPreferences.getPrefs(service)
-				.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
+		mPrefs = WitnessParserPreferences.getPrefs(service);
+		mIgnoreUnmatchedEntries = mPrefs.getBoolean(WitnessParserPreferences.LABEL_IGNORE_UNMATCHED_WITNESS_ENTRIES);
 		mStats = new ExtractionStatistics();
 	}
 
@@ -71,41 +72,35 @@ public abstract class CorrectnessWitnessExtractor {
 	 * Get the witness entries, i.e. a relation that maps each {@link IASTNode} to the {@link IExtractedWitnessEntry}s
 	 * that match this location.
 	 */
-	public HashRelation<IASTNode, IExtractedWitnessEntry> getWitnessEntries() {
-		if (mAST2Entries == null) {
+	public IExtractedCorrectnessWitness getWitness() {
+		if (mResult == null) {
 			if (!isReady()) {
 				mLogger.warn("Cannot extract witness if there is no witness");
 				return null;
 			}
-			if (mCheckOnlyLoopInvariants) {
-				mLogger.info("Only extracting loop invariants from correctness witness");
-			} else {
-				mLogger.info("Extracting all invariants from correctness witness");
-			}
-			mAST2Entries = computeWitnessEntries();
-			printResults(mAST2Entries);
+			mResult = extractWitness();
+			printWitness();
 		}
-		return mAST2Entries;
+		return mResult;
 	}
 
-	private void printResults(final HashRelation<IASTNode, IExtractedWitnessEntry> result) {
-		if (result.isEmpty()) {
+	private void printWitness() {
+		final List<String> entriesAsString = mResult.printAllEntries();
+		if (entriesAsString.isEmpty()) {
 			mLogger.info("Witness did not contain any usable entries.");
 			return;
 		}
 		mLogger.info("Found the following entries in the witness:");
-		for (final Entry<IASTNode, IExtractedWitnessEntry> entry : result.getSetOfPairs()) {
-			mLogger.info(entry.getValue().toString());
-		}
+		entriesAsString.forEach(mLogger::info);
 	}
 
 	protected abstract boolean isReady();
 
 	/**
-	 * Compute the witness entries, i.e. a relation that maps each {@link IASTNode} to the
-	 * {@link IExtractedWitnessEntry}s that match this location.
+	 * Extract the witness, i.e. return an object that provides {@link IExtractedWitnessEntry}s that match a given
+	 * {@link IASTNode}.
 	 */
-	protected abstract HashRelation<IASTNode, IExtractedWitnessEntry> computeWitnessEntries();
+	protected abstract IExtractedCorrectnessWitness extractWitness();
 
 	public static final class ExtractionStatistics {
 		private int mSuccess;

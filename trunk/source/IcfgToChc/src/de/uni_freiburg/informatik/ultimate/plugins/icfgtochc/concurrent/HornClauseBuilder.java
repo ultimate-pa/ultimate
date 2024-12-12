@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -130,13 +131,12 @@ public class HornClauseBuilder {
 
 		HornClause clause;
 		if (mHeadPredicate == null) {
-			clause = new HornClause(mManagedScript, mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs,
-					mBodyVars);
+			clause = new HornClause(mSymbolTable, constraint, mBodyPreds, substitutedBodyArgs, mBodyVars);
 		} else {
 			final var headArgs =
 					mHeadPredicate.getParameters().stream().map(this::getHeadVar).collect(Collectors.toList());
-			clause = new HornClause(mManagedScript, mSymbolTable, constraint, mHeadPredicate.getPredicate(), headArgs,
-					mBodyPreds, substitutedBodyArgs, mBodyVars);
+			clause = new HornClause(mSymbolTable, constraint, mHeadPredicate.getPredicate(), headArgs, mBodyPreds,
+					substitutedBodyArgs, mBodyVars);
 		}
 		if (mComment != null) {
 			clause.setComment(mComment);
@@ -166,7 +166,7 @@ public class HornClauseBuilder {
 
 	private Term getSubstitutedConstraint() {
 		if (mConstraints.isEmpty()) {
-			return null;
+			return mManagedScript.getScript().term(SMTLIBConstants.TRUE);
 		}
 		return substitute(SmtUtils.and(mManagedScript.getScript(), mConstraints));
 	}

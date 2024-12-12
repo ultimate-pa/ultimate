@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public class RCFGBacktranslator extends
-		DefaultTranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String> {
+		DefaultTranslator<IIcfgTransition<IcfgLocation>, BoogieASTNode, Term, Expression, IcfgLocation, String, ILocation> {
 
 	private final ILogger mLogger;
 	private Term2Expression mTerm2Expression;
@@ -390,8 +390,9 @@ public class RCFGBacktranslator extends
 	}
 
 	private static Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
-		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
-		final Multigraph<String, BoogieASTNode> rtr = new Multigraph<>(inv == null ? null : inv.getInvariant());
+		final WitnessInvariant<?> inv = WitnessInvariant.getAnnotation(old);
+		final Multigraph<String, BoogieASTNode> rtr =
+				new Multigraph<>(inv == null ? null : inv.getInvariant().toString());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}

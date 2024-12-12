@@ -36,7 +36,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import ap.SimpleAPI;
+import ap.api.SimpleAPI;
+import ap.basetypes.Tree;
 import ap.parser.IAtom;
 import ap.parser.IFormula;
 import ap.terfor.preds.Predicate;
@@ -60,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.util.Lazy;
 import lazabs.GlobalParameters;
 import lazabs.horn.bottomup.HornClauses.Clause;
 import lazabs.horn.bottomup.SimpleWrapper;
-import lazabs.prover.Tree;
 import scala.Option;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
@@ -105,7 +105,7 @@ public class EldaricaChcScript implements IChcScript, AutoCloseable {
 		mPrincess = SimpleAPI.apply(SimpleAPI.apply$default$1(), SimpleAPI.apply$default$2(),
 				SimpleAPI.apply$default$3(), SimpleAPI.apply$default$4(), SimpleAPI.apply$default$5(),
 				SimpleAPI.apply$default$6(), SimpleAPI.apply$default$7(), SimpleAPI.apply$default$8(),
-				SimpleAPI.apply$default$9(), SimpleAPI.apply$default$10());
+				SimpleAPI.apply$default$9(), SimpleAPI.apply$default$10(), SimpleAPI.apply$default$11());
 		mDefaultQueryTimeout = defaultQueryTimeout;
 	}
 

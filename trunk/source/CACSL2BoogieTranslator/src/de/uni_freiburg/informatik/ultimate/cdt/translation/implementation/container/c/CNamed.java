@@ -42,20 +42,22 @@ public class CNamed extends CType {
 
 	/**
 	 * The name that is mapped.
+	 *
+	 * This is the unique name used in the translated Boogie code; not the original C name.
 	 */
 	private final String mName;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param decl
-	 *            the declaration to work on.
+	 * @param name
+	 *            the unique name used in the translated Boogie code
 	 * @param mappedType
 	 *            the type this named type is referring to.
 	 */
 	public CNamed(final String name, final CType mappedType) {
 		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false);
+		super(false, false, false, false, false, mappedType.isAtomic());
 		mName = name;
 		mMappedType = mappedType;
 	}
@@ -63,7 +65,7 @@ public class CNamed extends CType {
 	/**
 	 * Getter for the named declaration's name.
 	 *
-	 * @return the named declaration's name.
+	 * @return the named declaration's unique name used in the translated Boogie code.
 	 */
 	public String getName() {
 		return mName;
@@ -97,14 +99,6 @@ public class CNamed extends CType {
 	@Override
 	public String toString() {
 		return getName();
-	}
-
-	@Override
-	public boolean isCompatibleWith(final CType o) {
-		if (o == null) {
-			return false;
-		}
-		return getUnderlyingType().isCompatibleWith(o.getUnderlyingType());
 	}
 
 	@Override

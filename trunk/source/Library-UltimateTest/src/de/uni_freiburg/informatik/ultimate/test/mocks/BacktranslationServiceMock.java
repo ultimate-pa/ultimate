@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.test.mocks;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -44,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 final class BacktranslationServiceMock implements IBacktranslationService {
 
 	@Override
-	public <STE, TTE, SE, TE, SVL, TVL> void addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator) {
+	public <STE, TTE, SE, TE, SVL, TVL, LOC> void
+			addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> translator) {
 		// does nothing
 	}
 
@@ -56,6 +58,18 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	@Override
 	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
 		return "";
+	}
+
+	@Override
+	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return translateExpression(expression, clazz);
+	}
+
+	@Override
+	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return translateExpressionToString(expression, clazz);
 	}
 
 	@Override
@@ -73,14 +87,21 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		return new ProgramExecutionMock<>(null, null);
 	}
-	
+
+	@Override
+	public <STE, SE> Lasso<IProgramExecution<?, ?>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> lasso) {
+		return new IBacktranslationService.Lasso<>(translateProgramExecution(lasso.getStem()),
+				translateProgramExecution(lasso.getLoop()));
+	}
+
 	@Override
 	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		return null;
 	}
 
 	@Override
-	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+	public <SE> String translateProgramStateToString(final ProgramState<SE> programState) {
 		return null;
 	}
 
@@ -90,10 +111,13 @@ final class BacktranslationServiceMock implements IBacktranslationService {
 	}
 
 	@Override
+	public <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final ProcedureContract<SE, ? extends SE> contract, final CTX context, final Class<SE> clazz) {
+		return null;
+	}
+
+	@Override
 	public IBacktranslationService getTranslationServiceCopy() {
 		return this;
 	}
-
-
-
 }

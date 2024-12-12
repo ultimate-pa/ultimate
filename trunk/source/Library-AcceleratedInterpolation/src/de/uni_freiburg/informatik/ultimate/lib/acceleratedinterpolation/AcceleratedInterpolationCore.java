@@ -38,8 +38,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -74,8 +73,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -112,7 +111,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private IPredicate[] mInterpolants;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final IRun<L, IPredicate> mCounterexampleTrace;
+	private final Counterexample<L> mCounterexampleTrace;
 	private final List<L> mCounterexample;
 	private Map<IcfgLocation, Set<List<L>>> mLoops;
 	private final Map<IcfgLocation, Set<List<UnmodifiableTransFormula>>> mLoopsAsTf;
@@ -155,7 +154,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 */
 	public AcceleratedInterpolationCore(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript script, final IPredicateUnifier predicateUnifier, final ITraceCheckPreferences prefs,
-			final IRun<L, IPredicate> counterexample, final IIcfg<?> icfg,
+			final Counterexample<L> counterexample, final IIcfg<?> icfg,
 			final ILoopdetector<IcfgLocation, L> loopdetector,
 			final ILoopPreprocessor<IcfgLocation, L, UnmodifiableTransFormula> loopPreprocessor,
 			final IAccelerator accelerator, final IStrategySupplier<L> strategySupplier) {
@@ -277,16 +276,17 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 		// translate the given trace into a meta trace which makes use of the loop
 		// acceleration.
-		final NestedRun<L, IPredicate> metaTrace = generateMetaTrace();
+		final Counterexample<L> metaCounterexample = generateMetaTrace();
+		final Word<L> metaTrace = metaCounterexample.getWord();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Meta-Trace: ");
-			for (int i = 0; i < metaTrace.getLength() - 1; i++) {
+			for (int i = 0; i < metaTrace.length(); i++) {
 				mLogger.debug(SmtUtils.simplify(mScript, metaTrace.getSymbol(i).getTransformula().getFormula(),
 						mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
 			}
 		}
 
-		final LBool feasResult = runStrategy(metaTrace);
+		final LBool feasResult = runStrategy(metaCounterexample);
 		if (feasResult == LBool.UNSAT) {
 			mInterpolants = mMetaTraceTransformer.getInductiveLoopInterpolants(mInterpolants, mAccelerations, mLoopSize,
 					mMetaTraceApplicationMethod);
@@ -296,7 +296,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 		return feasResult;
 	}
 
-	private LBool runStrategy(final IRun<L, ?> actualTrace) throws AssertionError {
+	private LBool runStrategy(final Counterexample<L> actualTrace) throws AssertionError {
 		final AutomatonFreeRefinementEngine<L> afre = new AutomatonFreeRefinementEngine<>(mServices, mLogger,
 				mStrategySupplier.constructStrategy(actualTrace));
 
@@ -339,13 +339,13 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 	 *
 	 * @return
 	 */
-	private NestedRun<L, IPredicate> generateMetaTrace() {
+	private Counterexample<L> generateMetaTrace() {
 		final List<L> counterExampleNonAccelerated = new ArrayList<>(mCounterexample);
 		final List<UnmodifiableTransFormula> counterExampleAccelerated = new ArrayList<>();
 		final List<L> counterExampleAcceleratedLetter = new ArrayList<>();
-		final ArrayList<IPredicate> traceStates = new ArrayList<>();
-		final ArrayList<IPredicate> acceleratedTraceSchemeStates = new ArrayList<>();
-		traceStates.addAll(mCounterexampleTrace.getStateSequence());
+		final ArrayList<Object> traceStates = new ArrayList<>();
+		final ArrayList<Object> acceleratedTraceSchemeStates = new ArrayList<>();
+		traceStates.addAll(mCounterexampleTrace.getControlConfigurations());
 		for (int i = 0; i < counterExampleNonAccelerated.size(); i++) {
 			final L l = counterExampleNonAccelerated.get(i);
 			counterExampleAccelerated.add(l.getTransformula());
@@ -446,7 +446,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			mCounterexample.forEach(a -> mLogger.debug(a.getTransformula()));
 		}
 
-		return new NestedRun<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
+		return new Counterexample<>(traceSchemeNestedWord, acceleratedTraceSchemeStates);
 	}
 
 	/**
@@ -489,8 +489,7 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 			return;
 		}
 		final UnmodifiableTransFormula nestedAcceleration = TransFormulaUtils.parallelComposition(mLogger, mServices,
-				mScript, null, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false,
-				accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
+				mScript, null, false, false, accelerations.toArray(new UnmodifiableTransFormula[accelerations.size()]));
 		Set<List<L>> nestingLoop;
 		if (mLoops.containsKey(nestingLoophead)) {
 			nestingLoop = mLoops.get(nestingLoophead);
@@ -523,6 +522,6 @@ public class AcceleratedInterpolationCore<L extends IIcfgTransition<?>> {
 
 	@FunctionalInterface
 	public interface IStrategySupplier<L extends IAction> {
-		IRefinementStrategy<L> constructStrategy(final IRun<L, ?> counterexample);
+		IRefinementStrategy<L> constructStrategy(final Counterexample<L> counterexample);
 	}
 }

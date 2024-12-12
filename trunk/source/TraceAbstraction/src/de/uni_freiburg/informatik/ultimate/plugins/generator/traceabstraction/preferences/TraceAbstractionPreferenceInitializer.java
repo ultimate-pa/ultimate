@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.SmtFeatureHeuristicPartitioningType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.ExternalSolver;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.Pa
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.IndependenceType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -192,6 +193,19 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		OFF, FALLBACK, PURE, COARSE
 	}
 
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS = "Commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS =
+			"If set to a value other than NONE, GemCutter will generate conditions"
+					+ " enabling commutativity (independence) of certain statements and try to prove that"
+					+ " these conditions hold at relevant points in the program, to enable more reduction.";
+	private static final IndependenceConditions DEF_COMMUTATIVITY_COND_SYNTHESIS = IndependenceConditions.NONE;
+
+	public static final String LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Refinement strategy for commutativity condition synthesis";
+	private static final String DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY =
+			"Strategy used to check whether (and prove that) a synthesized commutativity condition holds.";
+	private static final RefinementStrategy DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY = RefinementStrategy.SMTINTERPOL;
+
 	// Settings for PetriAutomizer
 	// ========================================================================
 
@@ -255,12 +269,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
 	private static final int DEF_WATCHITERATION = 1_000_000;
 
-	public static final String LABEL_HOARE =
-			"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
-	private static final boolean DEF_HOARE = false;
-
 	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
-	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.All;
+	private static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.None;
+
+	// Dominik (2024-11-18): Introduced this setting to disable contract computation for SV-COMP (where it is currently
+	// not useful) because procedure contract computation has a bug ("ensures" clause uses non-permitted variables).
+	// See https://chat.sopranium.de/swt/pl/im6pymo9zjrn3kkiwzgcrce57o
+	// TODO Find the bug, fix the bug, remove this setting.
+	public static final String LABEL_COMPUTE_PROCEDURE_CONTRACTS = "Compute procedure contracts";
+	private static final String DESC_COMPUTE_PROCEDURE_CONTRACTS =
+			"Controls whether procedure contracts are computed from the Hoare annotation."
+					+ "Contract computation only works if the Hoare annotation for the relevant locations has been computed.";
+	private final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
 
 	// Trace Check Solver
 	// ========================================================================
@@ -374,11 +394,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 					+ "relevance analysis.";
 
 	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
-	private static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-
-	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
-	private static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA2;
 
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
 	private static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
@@ -543,9 +559,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo, Artifact.values()),
 				new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS, PreferenceType.Combo,
 						HoareAnnotationPositions.values()),
+				new UltimatePreferenceItem<>(LABEL_COMPUTE_PROCEDURE_CONTRACTS, DEF_COMPUTE_PROCEDURE_CONTRACTS,
+						DESC_COMPUTE_PROCEDURE_CONTRACTS, true, PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>(LABEL_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
 						DEF_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER, DESC_USE_PREDICATE_TRIE_BASED_PREDICATE_UNIFIER,
@@ -640,8 +657,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE, DEF_SIMPLIFICATION_TECHNIQUE,
 						PreferenceType.Combo, SimplificationTechnique.values()),
-				new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE, DEF_XNF_CONVERSION_TECHNIQUE,
-						PreferenceType.Combo, XnfConversionTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY, DEF_COUNTEREXAMPLE_SEARCH_STRATEGY,
 						PreferenceType.Combo, CounterexampleSearchStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
@@ -725,6 +740,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_SCRIPT_DUMP_PATH, DEF_INDEPENDENCE_SCRIPT_DUMP_PATH,
 						PreferenceType.Directory),
+
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS, DEF_COMMUTATIVITY_COND_SYNTHESIS,
+						DESC_COMMUTATIVITY_COND_SYNTHESIS, PreferenceType.Combo, IndependenceConditions.values()),
+				new UltimatePreferenceItem<>(LABEL_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+						DEF_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY, DESC_COMMUTATIVITY_COND_SYNTHESIS_STRATEGY,
+						PreferenceType.Combo, RefinementStrategy.values()),
 
 				getIndependenceSettings(0),
 
@@ -815,13 +836,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	/**
-	 * Hoare annotation position.
-	 */
-	public enum HoareAnnotationPositions {
-		All, LoopsAndPotentialCycles,
-	}
-
-	/**
 	 * Search strategy for counterexamples in the remainder language of the current abstraction (automaton).
 	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -905,6 +919,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold
 		 */
 		WOLF,
+		/**
+		 * Bitvector strategy that tries SP/WP with CVC4, Z3 and Mathsat with a low interpolant threshold (similar to
+		 * {@link #WOLF}, but in a different order and dependent on floats)
+		 */
+		FOX,
 		/**
 		 * Bitvector strategy similar to {@link #WOLF}, but no {@link AssertCodeBlockOrder} for Mathsat, and
 		 * {@link InterpolationTechnique#FPandBPonlyIfFpWasNotPerfect} for all solvers.

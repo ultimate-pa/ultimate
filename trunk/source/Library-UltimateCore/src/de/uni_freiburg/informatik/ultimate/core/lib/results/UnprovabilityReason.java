@@ -67,7 +67,7 @@ public class UnprovabilityReason {
 	public static <TE extends IElement> List<UnprovabilityReason>
 			getUnprovabilityReasons(final IProgramExecution<TE, ?> pe) {
 		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
-		for (final Entry<String, ILocation> entry : Overapprox.getOverapproximations(pe).entrySet()) {
+		for (final Entry<String, ILocation> entry : Overapprox.getOverapproximations(pe)) {
 			unproabilityReasons
 					.add(new UnprovabilityReason("overapproximation of " + entry.getKey(), entry.getValue()));
 		}

@@ -26,22 +26,33 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import java.util.EnumSet;
+
+import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
 
 /**
  *
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class CACSLBacktranslationValueProvider implements IBacktranslationValueProvider<CACSLLocation, IASTExpression> {
+public class CACSLBacktranslationValueProvider
+		implements IBacktranslationValueProvider<CACSLLocation, BacktranslatedExpression> {
 
 	@Override
 	public int getStartLineNumberFromStep(final CACSLLocation step) {
@@ -54,11 +65,44 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 	}
 
 	@Override
+	public int getLineNumberFromStep(final CACSLLocation step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		if (stepInfo.contains(StepInfo.PROC_CALL) || stepInfo.contains(StepInfo.PROC_RETURN)) {
+			// Use the end location (should be the location of the closing parenthesis)
+			return step.getEndLine();
+		}
+		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
+				&& step instanceof CLocation) {
+			// Use the starting location of the parent (should be the corresponding if/while)
+			return ((CLocation) step).getParent().getStartLine();
+		}
+		return step.getStartLine();
+	}
+
+	@Override
+	public int getColumnNumberFromStep(final CACSLLocation step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		if (stepInfo.contains(StepInfo.PROC_CALL) || stepInfo.contains(StepInfo.PROC_RETURN)) {
+			// Use the end location (should be the location of the closing parenthesis)
+			return step.getEndColumn() - 1;
+		}
+		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
+				&& step instanceof CLocation) {
+			// Use the starting location of the parent (should be the corresponding if/while)
+			return ((CLocation) step).getParent().getStartColumn();
+		}
+		return step.getStartColumn();
+	}
+
+	@Override
+	public String getFunctionFromStep(final CACSLLocation step) {
+		return step.getFunction();
+	}
+
+	@Override
 	public String getStringFromStep(final CACSLLocation step) {
 		if (step instanceof CLocation) {
 			return getStringFromIASTNode(((CLocation) step).getNode());
 		} else if (step instanceof ACSLLocation) {
-			return ((ACSLLocation) step).getNode().toString();
+			return ACSLPrettyPrinter.print(((ACSLLocation) step).getNode());
 		} else {
 			throw new UnsupportedOperationException();
 		}
@@ -70,8 +114,8 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 	}
 
 	@Override
-	public String getStringFromExpression(final IASTExpression expression) {
-		return getStringFromIASTNode(expression);
+	public String getStringFromExpression(final BacktranslatedExpression expression) {
+		return ACSLPrettyPrinter.print(expression.getExpression());
 	}
 
 	private String getStringFromIASTNode(final IASTNode currentStepNode) {
@@ -104,4 +148,20 @@ public class CACSLBacktranslationValueProvider implements IBacktranslationValueP
 		return step.getFileName();
 	}
 
+	@Override
+	public boolean isValidAssumptionLocation(final CACSLLocation traceElement) {
+		if (traceElement instanceof CLocation) {
+			final IASTNode node = ((CLocation) traceElement).getNode();
+			if (node instanceof IASTFunctionCallExpression) {
+				// For now we omit assumptions at function calls, as they might point to the wrong location.
+				return false;
+			}
+			// "assumption: The location has to point to the beginning of a statement or a declaration inside a compound
+			// statement."
+			return node instanceof IASTStatement || node instanceof IASTSimpleDeclaration
+					|| node.getParent() instanceof IASTExpressionStatement
+					|| node.getParent() instanceof IASTIfStatement;
+		}
+		return false;
+	}
 }

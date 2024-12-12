@@ -189,6 +189,7 @@ Keyword = ":" {SMTLetterDigit}+
   ":produce-proofs"      { return symbol(LexerSymbols.CPRODUCEPROOFS, yytext()); }
   ":produce-unsat-cores" { return symbol(LexerSymbols.CPRODUCEUNSATCORES, yytext()); }
   ":random-seed"         { return symbol(LexerSymbols.CRANDOMSEED, yytext()); }
+  ":reproducible-resource-limit"  { return symbol(LexerSymbols.CREPRODUCIBLERESOURCELIMIT, yytext()); }
   ":timeout"             { return symbol(LexerSymbols.CTIMEOUT, yytext()); }
   /* Own keywords */
   ":interpolant-check-mode" { return symbol(LexerSymbols.CINTERPOLANTCHECKMODE, yytext()); }

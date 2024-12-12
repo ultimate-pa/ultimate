@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -69,6 +70,7 @@ public class Executor {
 
 	private BufferedWriter mWriter;
 	private InputStream mStdErr;
+	private InputStream mStdOut;
 
 	private final Script mScript;
 	private final Parser mParser;
@@ -132,7 +134,7 @@ public class Executor {
 		}
 
 		final OutputStream stdin = mProcess.getOutputStream();
-		final InputStream stdout = mProcess.getInputStream();
+		mStdOut = mProcess.getInputStream();
 
 		if (mTimeout > 0) {
 			mProcess.setCountdownToTermination(mTimeout);
@@ -143,7 +145,7 @@ public class Executor {
 		mStdErr = mProcess.getErrorStream();
 
 		final SimpleSymbolFactory symfactory = new SimpleSymbolFactory();
-		mLexer = new Lexer(new InputStreamReader(stdout));
+		mLexer = new Lexer(new InputStreamReader(mStdOut));
 		mLexer.setSymbolFactory(symfactory);
 
 		final OutputStream underlying;
@@ -160,6 +162,14 @@ public class Executor {
 		if (mSetupCommand != null) {
 			input(mSetupCommand);
 			parseSuccess();
+		}
+	}
+
+	public String skipLine() {
+		try {
+			return new BufferedReader(new InputStreamReader(mStdOut)).readLine();
+		} catch (final IOException e) {
+			throw convertIOException(e);
 		}
 	}
 

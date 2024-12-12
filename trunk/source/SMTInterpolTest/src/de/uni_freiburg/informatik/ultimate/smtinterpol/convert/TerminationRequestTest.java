@@ -27,27 +27,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.ReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ResourceLimit;
 
 @RunWith(JUnit4.class)
 public class TerminationRequestTest {
-	public class MyTerminationRequest implements TerminationRequest {
-
-		public int mRequestCtr;
-
-		public MyTerminationRequest(final int deadline) {
-			mRequestCtr = deadline;
-		}
-
-		@Override
-		public boolean isTerminationRequested() {
-			return mRequestCtr-- <= 0;
-		}
-	}
 
 	@Test
 	public void test() {
-		final TerminationRequest cancel = new MyTerminationRequest(0);
+		final ResourceLimit cancel = new ResourceLimit(null);
+		cancel.setResourceLimit(1);
 		final SMTInterpol smtinterpol = new SMTInterpol(cancel);
 		smtinterpol.setOption(":verbosity", 3);
 		smtinterpol.setLogic(Logics.QF_UF);

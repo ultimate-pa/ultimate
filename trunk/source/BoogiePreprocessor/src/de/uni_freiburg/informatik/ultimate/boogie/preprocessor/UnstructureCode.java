@@ -35,11 +35,7 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
@@ -47,19 +43,15 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -226,20 +218,6 @@ public class UnstructureCode extends BaseObserver {
 		}
 	}
 
-	private Expression getLHSExpression(final LeftHandSide lhs) {
-		Expression expr;
-		if (lhs instanceof ArrayLHS) {
-			final ArrayLHS arrlhs = (ArrayLHS) lhs;
-			final Expression array = getLHSExpression(arrlhs.getArray());
-			expr = new ArrayAccessExpression(lhs.getLocation(), lhs.getType(), array, arrlhs.getIndices());
-		} else {
-			final VariableLHS varlhs = (VariableLHS) lhs;
-			expr = new IdentifierExpression(lhs.getLocation(), lhs.getType(), varlhs.getIdentifier(),
-					varlhs.getDeclarationInformation());
-		}
-		return expr;
-	}
-
 	/**
 	 * Converts a single statement to unstructured code. This may produce many new flat statements for example if
 	 * statement is a while-loop.
@@ -369,27 +347,6 @@ public class UnstructureCode extends BaseObserver {
 						true, true);
 			}
 			unstructureBlock(stmt.getElsePart());
-		} else if (origStmt instanceof AssignmentStatement) {
-			final AssignmentStatement assign = (AssignmentStatement) origStmt;
-			final LeftHandSide[] lhs = assign.getLhs();
-			final Expression[] rhs = assign.getRhs();
-			boolean changed = false;
-			for (int i = 0; i < lhs.length; i++) {
-				while (lhs[i] instanceof ArrayLHS) {
-					final LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
-					final Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
-					final Expression arrayExpr = getLHSExpression(array);
-					rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices,
-							rhs[i]);
-					lhs[i] = array;
-					changed = true;
-				}
-			}
-			if (changed) {
-				postCreateStatement(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs), true);
-			} else {
-				mFlatStatements.add(origStmt);
-			}
 		} else {
 			mFlatStatements.add(origStmt);
 		}

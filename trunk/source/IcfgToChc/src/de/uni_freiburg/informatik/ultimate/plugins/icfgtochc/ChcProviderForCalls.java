@@ -200,7 +200,7 @@ public class ChcProviderForCalls implements IChcProvider {
 				throw new UnsupportedOperationException("implement this");
 			}
 
-			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars,
+			final HornClause chc = new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars,
 					Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
 			chc.setComment("Type: (not V) -> procEntry");
 			resultChcs.add(chc);
@@ -245,8 +245,8 @@ public class ChcProviderForCalls implements IChcProvider {
 				throw new UnsupportedOperationException("implement this");
 			}
 
-			final HornClause chc = new HornClause(mMgdScript, mHcSymbolTable, constraint,
-					Collections.singletonList(bodyPred), Collections.singletonList(firstPredArgs), bodyVars);
+			final HornClause chc = new HornClause(mHcSymbolTable, constraint, Collections.singletonList(bodyPred),
+					Collections.singletonList(firstPredArgs), bodyVars);
 
 			chc.setComment("Type: entryProcExit(..., V) /\\ V -> false");
 			resultChcs.add(chc);
@@ -386,6 +386,7 @@ public class ChcProviderForCalls implements IChcProvider {
 						 * pv is local --> if it is assigned by the return, it is new, otherwise we take the one from
 						 * the clause head
 						 */
+						// TODO 2023-11-01 Matthias: Probably have to take `getOutVars().keySet()` instead
 						if (assignmentOfReturn.getAssignedVars().contains(pv)) {
 							firstPredArgs.add(bodyVar.getTermVariable());
 						} else {
@@ -494,8 +495,8 @@ public class ChcProviderForCalls implements IChcProvider {
 
 		/* construct the horn clause and add it to the resulting chc set */
 		final Collection<HornClause> chcs = new ArrayList<>();
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
-				bodyPredToArguments, bodyVars));
+		chcs.add(new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds, bodyPredToArguments,
+				bodyVars));
 		return chcs;
 	}
 
@@ -646,8 +647,8 @@ public class ChcProviderForCalls implements IChcProvider {
 		updateLogicWrtConstraint(constraintFinal);
 
 		final Collection<HornClause> chcs = new ArrayList<>();
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
-				bodyPredToArguments, bodyVars));
+		chcs.add(new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds, bodyPredToArguments,
+				bodyVars));
 
 		return chcs;
 	}
@@ -783,8 +784,8 @@ public class ChcProviderForCalls implements IChcProvider {
 		 */
 		updateLogicWrtConstraint(constraintFinal);
 		final Collection<HornClause> chcs = new ArrayList<>(2);
-		chcs.add(new HornClause(mMgdScript, mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds,
-				bodyPredToArguments, bodyVars));
+		chcs.add(new HornClause(mHcSymbolTable, constraintFinal, headPred, headVars, bodyPreds, bodyPredToArguments,
+				bodyVars));
 		return chcs;
 	}
 

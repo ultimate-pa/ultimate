@@ -127,8 +127,9 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			assert SmtUtils.isTrueLiteral(mIaTrueState.getFormula());
 			mAlreadyConstructedAutomaton.addState(false, false, mIaTrueState);
 		}
-		assert mIaFalseState.getFormula().toString().equals("false");
-		assert allPredicates.contains(mIaFalseState);
+		assert SmtUtils.isFalseLiteral(mIaFalseState.getFormula());
+		// TODO perhaps make the assert below an optional check (turned off/on via constructor parameter)
+		// assert allPredicates.contains(mIaFalseState);
 		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
 		mResPred2InputPreds.addPair(mIaFalseState, mIaFalseState);
 

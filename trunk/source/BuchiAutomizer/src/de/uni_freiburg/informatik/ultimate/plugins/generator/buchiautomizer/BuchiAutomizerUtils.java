@@ -29,22 +29,16 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaBasis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -67,14 +61,8 @@ public final class BuchiAutomizerUtils {
 		return stem.getLength() == 1;
 	}
 
-	public static Set<IcfgLocation> getLocations(final IPredicate pred) {
-		if (pred instanceof ISLPredicate) {
-			return Set.of(((ISLPredicate) pred).getProgramPoint());
-		}
-		if (pred instanceof IMLPredicate) {
-			return Arrays.stream(((IMLPredicate) pred).getProgramPoints()).collect(Collectors.toSet());
-		}
-		throw new UnsupportedOperationException("Unsupported type " + pred.getClass());
+	public static boolean isEmptyStem(final NestedWord<?> stem) {
+		return stem.length() == 0;
 	}
 
 	public static <LETTER> VpAlphabet<LETTER> getVpAlphabet(final IAutomaton<LETTER, ?> automaton) {

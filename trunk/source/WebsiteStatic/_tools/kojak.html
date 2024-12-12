@@ -1,0 +1,92 @@
+---
+# A Human readable name of this tool. Used as Heading in the frontend.
+title: "Kojak"
+
+# A mandatory unique id for the tool.
+tool_id: "kojak"
+
+# Frontend description.
+description: "A software model checker."
+
+# Supported languages to be displayed in the frontend.
+languages: [
+  { "language": "Boogie", "worker": "boogieKojak" },
+  { "language": "C",      "worker": "cKojak" }
+]
+---
+
+<h1>Kojak</h1>
+<p>Ultimate Kojak is a software model checker that is implemented
+	in the Ultimate framework.</p>
+
+<h2>Web interface</h2>
+<p>
+	<span style="font-variant: small-caps">Ultimate</span> Kojak is
+	available via a <a href="{{ 'webinterface/?tool=kojak' | relative_url }}">web interface</a>.
+</p>
+
+
+<h2>Developers</h2>
+<p>
+<ul>
+	<li><a
+		href="https://swt.informatik.uni-freiburg.de/staff/dietsch">Daniel
+			Dietsch</a></li>
+	<li><a href="https://swt.informatik.uni-freiburg.de/staff/ermis">Evren
+		Ermis</a></li>
+
+	<li><a href="https://swt.informatik.uni-freiburg.de/staff/nutz">Alexander
+		Nutz</a></li>
+
+	<li>Mostafa Mahmoud Mohamed</li>
+</ul>
+</p>
+
+<h2>Download</h2>
+<p>
+	We try to provide regular releases for Windows and Linux at <a
+		href="https://github.com/ultimate-pa/ultimate/releases">our
+		GitHub release page</a>.
+</p>
+<p>
+	All archives available here contain commandline versions of <span
+		style="font-variant: small-caps">Ultimate</span> Kojak that
+	participate(d) in the <a href="https://sv-comp.sosy-lab.org">Competition
+		on Software Verification (SV-COMP)</a>. They are build for x86-64 linux
+	and can be run using the provided Python script
+	<code>Ultimate.py</code>
+	as follows.
+</p>
+<p>
+	<!-- 		<code>Ultimate.py [-h] [--version] [--full-output] [--validate]
+		spec {32bit,64bit} {simple,precise} file [file ...]</code> -->
+	<code>Ultimate.py [-h] [--version] [--full-output] spec
+		{32bit,64bit} {simple,precise} file </code>
+	<br />
+</p>
+<p>Mandatory arguments</p>
+<ul>
+	<li><code>spec</code><br /> An property (.prp) file from SVCOMP.</li>
+	<li><code>{32bit,64bit}</code><br /> Choose which architecture
+		(defined as per SV-COMP rules) should be assumed.</li>
+	<li><code>{simple,precise}</code><br /> Ultimate does not use
+		the distinction between simple and precise memory model and always
+		assumes precise. For compatibility reasons, you have to provide
+		either value.</li>
+	<!-- 	<li><code>file</code><br />Either one C file or one C file and
+		one witness as matching .graphml file.</li> -->
+	<li><code>file</code><br />One C file.</li>
+</ul>
+<p>Optional arguments</p>
+<ul>
+	<li><code>-h, --help</code><br /> Show a help message and exit.</li>
+	<li><code>--version</code><br />Print <span
+		style="font-variant: small-caps">Ultimate</span> Kojak's version and
+		exit.</li>
+	<li><code>--full-output</code><br /> Print <span
+		style="font-variant: small-caps">Ultimate</span> Kojak's full output
+		to stderr after verification ends.</li>
+	<!-- <li><code>--validate </code><br />Validate the provided witness</li> -->
+</ul>
+</p>
+

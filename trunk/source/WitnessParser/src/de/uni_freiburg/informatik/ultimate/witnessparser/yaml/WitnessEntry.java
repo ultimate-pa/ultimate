@@ -34,22 +34,16 @@ import java.util.Objects;
  *
  * @author Manuel Bentele
  */
-public abstract class WitnessEntry implements IYamlProvider {
+public abstract class WitnessEntry {
 
 	private final String mName;
-	protected final Metadata mMetadata;
 
-	public WitnessEntry(final String name, final Metadata metadata) {
+	public WitnessEntry(final String name) {
 		mName = Objects.requireNonNull(name);
-		mMetadata = metadata;
 	}
 
 	public String getName() {
 		return mName;
-	}
-
-	public Metadata getMetadata() {
-		return mMetadata;
 	}
 
 	@Override

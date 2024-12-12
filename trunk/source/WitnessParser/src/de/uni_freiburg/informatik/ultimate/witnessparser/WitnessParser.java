@@ -53,7 +53,7 @@ import edu.uci.ics.jung.io.GraphIOException;
  */
 public class WitnessParser implements ISource {
 
-	private static final String[] FILE_TYPES = new String[] { "graphml", "yaml" };
+	private static final String[] FILE_TYPES = new String[] { "graphml", "yaml", "yml" };
 	private IUltimateServiceProvider mServices;
 	private String mFilename;
 	private ModelType.Type mWitnessType;
@@ -113,18 +113,18 @@ public class WitnessParser implements ISource {
 		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
 
-	private IElement parseAST(final File file) {
-		mFilename = file.getAbsolutePath();
-		if (file.getName().endsWith("yaml")) {
-			try {
-				final Witness witness = YamlWitnessParser.parseWitness(file);
-				mWitnessType = witness.isCorrectnessWitness() ? Type.CORRECTNESS_WITNESS : Type.VIOLATION_WITNESS;
-				return witness;
-			} catch (final IOException e) {
-				mWitnessType = Type.OTHER;
-				return null;
-			}
+	private Witness parseYaml(final File file) {
+		try {
+			final Witness witness = YamlWitnessParser.parseWitness(file);
+			mWitnessType = witness.isCorrectnessWitness() ? Type.CORRECTNESS_WITNESS : Type.VIOLATION_WITNESS;
+			return witness;
+		} catch (final IOException e) {
+			mWitnessType = Type.OTHER;
+			return null;
 		}
+	}
+
+	private IElement parseGraphML(final File file) {
 		final WitnessAutomatonConstructor wac = new WitnessAutomatonConstructor(mServices);
 		try {
 			final IElement rtr = wac.constructWitnessAutomaton(file);
@@ -137,6 +137,17 @@ public class WitnessParser implements ISource {
 		}
 		mWitnessType = Type.OTHER;
 		return null;
+	}
+
+	private IElement parseAST(final File file) {
+		mFilename = file.getAbsolutePath();
+		if (file.getName().endsWith("yaml") || file.getName().endsWith("yml")) {
+			return parseYaml(file);
+		}
+		if (file.getName().endsWith("graphml")) {
+			return parseGraphML(file);
+		}
+		throw new AssertionError(String.format("Unable to parse %s as witness.", file.getName()));
 	}
 
 	@Override

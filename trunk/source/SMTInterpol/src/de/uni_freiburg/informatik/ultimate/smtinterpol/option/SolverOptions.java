@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.quant.QuantifierTh
 public class SolverOptions {
 
 	private final LongOption mTimeout;
+	private final LongOption mReproducibleResourceLimit;
 	private final BooleanOption mProduceProofs;
 	private final LongOption mRandomSeed;
 	private final BooleanOption mInterpolantCheckMode;
@@ -53,6 +54,9 @@ public class SolverOptions {
 		mTimeout = new LongOption(0, true, "Soft timeout in milliseconds for "
 				+ "individual check-sat calls.  Values <= 0 deactivate the "
 				+ "timeout.");
+		mReproducibleResourceLimit = new LongOption(0, true, "Deterministic "
+				+ "resource limit for individual check-sat calls. Values <= 0 "
+				+ "deactivate the limit.");
 		mProduceProofs = new BooleanOption(false, false,
 				"Produce proofs for unsatisfiable formulas.");
 		mRandomSeed = new LongOption(Config.RANDOM_SEED,
@@ -84,6 +88,7 @@ public class SolverOptions {
 		// general standard compliant options
 		options.addOption(SMTLIBConstants.VERBOSITY, new VerbosityOption(logger));
 		options.addOption(SMTInterpolConstants.TIMEOUT, mTimeout);
+		options.addOption(SMTLIBConstants.REPRODUCIBLE_RESOURCE_LIMIT, mReproducibleResourceLimit);
 		options.addOption(SMTLIBConstants.RANDOM_SEED, mRandomSeed);
 		options.addOption(SMTLIBConstants.PRODUCE_ASSERTIONS, new BooleanOption(false, false,
 				"Store asserted formulas for later retrieval."));
@@ -145,6 +150,7 @@ public class SolverOptions {
 	@SuppressWarnings("unchecked")
 	SolverOptions(final OptionMap options) {
 		mTimeout = (LongOption) options.getOption(SMTInterpolConstants.TIMEOUT);
+		mReproducibleResourceLimit = (LongOption) options.getOption(SMTLIBConstants.REPRODUCIBLE_RESOURCE_LIMIT);
 		mProduceProofs = (BooleanOption) options.getOption(SMTLIBConstants.PRODUCE_PROOFS);
 		mRandomSeed = (LongOption) options.getOption(SMTLIBConstants.RANDOM_SEED);
 		mInterpolantCheckMode = (BooleanOption) options.getOption(SMTInterpolConstants.INTERPOLANT_CHECK_MODE);
@@ -220,6 +226,10 @@ public class SolverOptions {
 
 	public final long getTimeout() {
 		return mTimeout.getValue();
+	}
+
+	public final long getReproducibleResourceLimit() {
+		return mReproducibleResourceLimit.getValue();
 	}
 
 	public CheckType getSimplifierCheckType() {

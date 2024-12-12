@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.independence;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -48,6 +51,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.PrettyPrint;
 public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collection<S>>
 		implements IIndependenceRelation<C, L> {
 	private final IIndependenceRelation<S, L> mUnderlying;
+	private final Function<List<S>, C> mBuildCollection;
+	private final IConditionMerger<L, S, C> mConditionMerger;
 	private final DisjunctiveStatistics mStatistics;
 
 	/**
@@ -57,8 +62,29 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	 *            The underlying relation which is queried for individual conditions. This relation must be conditional.
 	 */
 	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying) {
+		this(underlying, null, null);
+	}
+
+	/**
+	 * Creates a new instance which also provides a corresponding {@link ISymbolicIndependenceRelation}.
+	 *
+	 * @param underlying
+	 *            The underlying relation which is queried for individual conditions. This relation must be conditional.
+	 * @param buildSingleton
+	 *            A function that builds a singleton collection of type {@code C} from an element of type {@code S}.
+	 *            This is used for the corresponding {@link ISymbolicIndependenceRelation}. If this parameter is
+	 *            {@code null}, no symbolic relation can be created.
+	 * @param conditionContextMerger
+	 *            A function used to merge multiple context conditions before using them to compute an independence
+	 *            condition in the symbolic relation. If this parameter is {@code null}, the symbolic relation is
+	 *            queried for each context condition separately.
+	 */
+	public DisjunctiveConditionalIndependenceRelation(final IIndependenceRelation<S, L> underlying,
+			final Function<List<S>, C> buildCollection, final IConditionMerger<L, S, C> conditionMerger) {
 		assert underlying.isConditional() : "Only makes sense for conditional independence relations";
 		mUnderlying = underlying;
+		mBuildCollection = buildCollection;
+		mConditionMerger = conditionMerger;
 		mStatistics = new DisjunctiveStatistics();
 	}
 
@@ -103,8 +129,66 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 	}
 
 	@Override
+	public ISymbolicIndependenceRelation<L, C> getSymbolicRelation() {
+		if (mBuildCollection == null) {
+			return null;
+		}
+		final var underlying = mUnderlying.getSymbolicRelation();
+		if (underlying == null) {
+			return null;
+		}
+		return new SymbolicDisjunctiveIndependence(underlying);
+	}
+
+	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
+	}
+
+	private class SymbolicDisjunctiveIndependence implements ISymbolicIndependenceRelation<L, C> {
+		private final ISymbolicIndependenceRelation<L, S> mUnderlyingSymbolic;
+
+		public SymbolicDisjunctiveIndependence(final ISymbolicIndependenceRelation<L, S> underlyingSymbolic) {
+			mUnderlyingSymbolic = underlyingSymbolic;
+		}
+
+		@Override
+		public C getCommutativityCondition(final C state, final L a, final L b) {
+			if (state == null || state.isEmpty() || !isConditional()) {
+				return getSingleCommutativityCondition(null, a, b);
+			}
+			if (mConditionMerger != null) {
+				return getSingleCommutativityCondition(mConditionMerger.merge(state, a, b), a, b);
+			}
+
+			final var generatedConditions = new ArrayList<S>();
+			for (final var condition : state) {
+				final S generatedCondition = mUnderlyingSymbolic.getCommutativityCondition(condition, a, b);
+				if (generatedCondition == null) {
+					continue;
+				}
+				generatedConditions.add(generatedCondition);
+			}
+			return mBuildCollection.apply(generatedConditions);
+		}
+
+		private C getSingleCommutativityCondition(final S context, final L a, final L b) {
+			final S generatedCondition = mUnderlyingSymbolic.getCommutativityCondition(context, a, b);
+			if (generatedCondition == null) {
+				return null;
+			}
+			return mBuildCollection.apply(List.of(generatedCondition));
+		}
+
+		@Override
+		public boolean isSymmetric() {
+			return mUnderlyingSymbolic.isSymmetric();
+		}
+
+		@Override
+		public boolean isConditional() {
+			return mUnderlyingSymbolic.isConditional();
+		}
 	}
 
 	private class DisjunctiveStatistics extends IndependenceStatisticsDataProvider {
@@ -122,5 +206,9 @@ public class DisjunctiveConditionalIndependenceRelation<L, S, C extends Collecti
 				mMaxQueriedIndex = index;
 			}
 		}
+	}
+
+	public interface IConditionMerger<L, S, C extends Collection<S>> {
+		S merge(C conditions, L a, L b);
 	}
 }

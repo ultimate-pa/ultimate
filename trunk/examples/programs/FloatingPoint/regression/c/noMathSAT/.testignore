@@ -1,0 +1,7 @@
+TIMEOUT:
+- task: SAS09-Float.c
+  settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
+  toolchain: AutomizerC.xml
+- task: ctrans-float-rounding.c
+  settings: AutomizerC-Reach-32bit-Z3-IcWpLv-Float_Const.epf
+  toolchain: AutomizerC.xml

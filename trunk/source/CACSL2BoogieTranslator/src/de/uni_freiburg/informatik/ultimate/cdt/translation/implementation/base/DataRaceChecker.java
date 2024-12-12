@@ -73,11 +73,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DataRaceAnnotation.Race;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableList;
 
 public final class DataRaceChecker {
@@ -193,8 +193,7 @@ public final class DataRaceChecker {
 
 	private Expression createRaceWrite(final ExpressionResultBuilder erb, final ILocation loc) {
 		final AuxVarInfo tmp = mAuxVarInfoBuilder.constructAuxVarInfo(loc, getBoolASTType(), SFO.AUXVAR.NONDET);
-		erb.addDeclaration(tmp.getVarDec());
-		erb.addAuxVar(tmp);
+		erb.addAuxVarWithDeclaration(tmp);
 
 		final Statement havoc = new HavocStatement(loc, new VariableLHS[] { tmp.getLhs() });
 		erb.addStatement(havoc);
@@ -261,6 +260,10 @@ public final class DataRaceChecker {
 	}
 
 	private static boolean isRaceImpossible(final LRValue lrVal) {
+		if (lrVal.getCType().isAtomic()) {
+			// Atomic types cannot lead to data races
+			return true;
+		}
 		if (lrVal instanceof HeapLValue) {
 			final Expression address = ((HeapLValue) lrVal).getAddress();
 			return address instanceof IdentifierExpression

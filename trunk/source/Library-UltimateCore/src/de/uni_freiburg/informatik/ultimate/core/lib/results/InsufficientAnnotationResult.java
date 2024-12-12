@@ -34,24 +34,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * Result that tells us that an annotation of a program with loop invariants and
- * procedure specifications is not inductive.
- * This result takes two locations and tells us that it is not true that their 
- * annotation is inductive for all loop-free paths between these locations. 
+ * Result that tells us that an annotation of a program with loop invariants and procedure specifications is not
+ * inductive. This result takes two locations and tells us that it is not true that their annotation is inductive for
+ * all loop-free paths between these locations.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <ELEM>
  *            Type of position
- * @param <E>
- *            Type of expression
  */
-public class InsufficientAnnotationResult<ELEM extends IElement, E>
-		extends AbstractResultAtElement<ELEM> {
+public class InsufficientAnnotationResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
 
-	final ILocation mLocationBefore;
-	final ILocation mLocationAfter;
-	final ProgramState<E> mStateBefore;
-	final ProgramState<E> mStateAfter;
+	private final ILocation mLocationBefore;
+	private final ILocation mLocationAfter;
+	private final String mStateBefore;
+	private final String mStateAfter;
 
 	/**
 	 * Constructs a {@link InsufficientAnnotationResult}.
@@ -64,11 +60,13 @@ public class InsufficientAnnotationResult<ELEM extends IElement, E>
 	 *            Which plugin (PluginId) found the error location=
 	 * @param translatorSequence
 	 *            The current backtranslator service (obtained from {@link IUltimateServiceProvider}).
+	 * @param <E>
+	 *            Type of expression
 	 */
-	public InsufficientAnnotationResult(final ELEM positionBefore, final String plugin,
+	public <E> InsufficientAnnotationResult(final ELEM positionBefore, final String plugin,
 			final IBacktranslationService translatorSequence, final ELEM positionAfter,
 			final ProgramState<E> stateBefore, final ProgramState<E> stateAfter) {
-		super(positionBefore, plugin, translatorSequence);
+		super(positionBefore, plugin);
 		mLocationBefore = ILocation.getAnnotation(positionBefore);
 		mLocationAfter = ILocation.getAnnotation(positionAfter);
 		if (mLocationBefore == null) {
@@ -77,8 +75,8 @@ public class InsufficientAnnotationResult<ELEM extends IElement, E>
 		if (mLocationAfter == null) {
 			throw new UnsupportedOperationException("position does not have a location");
 		}
-		mStateBefore = stateBefore;
-		mStateAfter = stateAfter;
+		mStateBefore = translatorSequence.translateProgramStateToString(stateBefore);
+		mStateAfter = translatorSequence.translateProgramStateToString(stateAfter);
 	}
 
 	@Override
@@ -93,10 +91,10 @@ public class InsufficientAnnotationResult<ELEM extends IElement, E>
 		sb.append(getShortDescription());
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Counterexample state before: ");
-		sb.append(mTranslatorSequence.translateProgramStateToString(mStateBefore));
+		sb.append(mStateBefore);
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Counterexample state after: ");
-		sb.append(mTranslatorSequence.translateProgramStateToString(mStateAfter));
+		sb.append(mStateAfter);
 		return sb.toString();
 	}
 

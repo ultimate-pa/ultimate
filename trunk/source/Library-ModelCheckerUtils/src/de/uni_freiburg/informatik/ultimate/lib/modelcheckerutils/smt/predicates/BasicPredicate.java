@@ -41,27 +41,19 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 public class BasicPredicate extends ModernAnnotations implements IPredicate {
 	private static final long serialVersionUID = -2257982001512157622L;
-	protected final String[] mProcedures;
 	protected Term mFormula;
 	protected final Term mClosedFormula;
 	protected final Set<IProgramVar> mVars;
 	protected final Set<IProgramFunction> mFunctions;
 	protected final int mSerialNumber;
 
-	public BasicPredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Set<IProgramFunction> functions, final Term closedFormula) {
+	public BasicPredicate(final int serialNumber, final Term term, final Set<IProgramVar> vars,
+			final Set<IProgramFunction> functions, final Term closedFormula) {
 		mFormula = term;
 		mClosedFormula = closedFormula;
-		mProcedures = procedures;
 		mVars = vars;
 		mFunctions = functions;
 		mSerialNumber = serialNumber;
-	}
-
-	@Override
-	@Visualizable
-	public String[] getProcedures() {
-		return mProcedures;
 	}
 
 	/**
@@ -94,10 +86,6 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		return mSerialNumber + "#" + mFormula.toStringDirect();
 	}
 
-	public boolean isUnknown() {
-		return false;
-	}
-
 	@Override
 	public final int hashCode() {
 		return HashUtils.hashJenkins(31, mSerialNumber);
@@ -114,8 +102,14 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		if (!(obj instanceof BasicPredicate)) {
 			return false;
 		}
-		final BasicPredicate other = (BasicPredicate) obj;
-		return mSerialNumber == other.mSerialNumber;
-	}
 
+		final BasicPredicate other = (BasicPredicate) obj;
+		if (mSerialNumber == other.mSerialNumber) {
+			// Different predicates with the same serial number must not be used within the same context.
+			// Hence we throw an exception if they are compared for equality.
+			// The only case in which two BasicPredicates are considered equal is reference equality (case 1 above).
+			throw new UnsupportedOperationException("different predicates with same serial number");
+		}
+		return false;
+	}
 }

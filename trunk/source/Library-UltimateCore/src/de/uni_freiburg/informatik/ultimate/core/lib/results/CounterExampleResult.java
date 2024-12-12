@@ -60,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
 		implements IResultWithFiniteTrace<TE, E>, IResultWithCheck {
 	private final Check mCheckedSpecification;
-	private String mProgramExecutionAsString;
 	private final List<ILocation> mFailurePath;
 	private final IProgramExecution<TE, E> mProgramExecution;
+	private final String mProgramExecutionAsString;
 
 	/**
 	 * Constructs a {@link CounterExampleResult}.
@@ -78,10 +78,11 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	 */
 	public CounterExampleResult(final ELEM position, final String plugin,
 			final IBacktranslationService translatorSequence, final IProgramExecution<TE, E> pe) {
-		super(position, plugin, translatorSequence);
+		super(position, plugin);
 		mCheckedSpecification = Check.getAnnotation(position);
 		mProgramExecution = pe;
 		mFailurePath = ResultUtil.getLocationSequence(pe);
+		mProgramExecutionAsString = translatorSequence.translateProgramExecution(mProgramExecution).toString();
 	}
 
 	/**
@@ -89,7 +90,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	 * minimizing the memory footprint.
 	 */
 	private CounterExampleResult(final CounterExampleResult<ELEM, TE, E> old) {
-		super(old.getElement(), old.getPlugin(), old.mTranslatorSequence);
+		super(old.getElement(), old.getPlugin());
 		mCheckedSpecification = old.mCheckedSpecification;
 		mProgramExecution = IProgramExecution.emptyExecution(old.mProgramExecution.getExpressionClass(),
 				old.mProgramExecution.getTraceElementClass());
@@ -151,9 +152,6 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 	}
 
 	public String getProgramExecutionAsString() {
-		if (mProgramExecutionAsString == null) {
-			mProgramExecutionAsString = mTranslatorSequence.translateProgramExecution(mProgramExecution).toString();
-		}
 		return mProgramExecutionAsString;
 	}
 

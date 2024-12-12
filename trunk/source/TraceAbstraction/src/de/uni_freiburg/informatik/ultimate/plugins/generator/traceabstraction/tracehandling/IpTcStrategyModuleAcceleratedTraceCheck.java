@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -36,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.acceleratedtracecheck.AcceleratedTraceCheck;
 
 /**
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.ac
 public class IpTcStrategyModuleAcceleratedTraceCheck<L extends IIcfgTransition<?>>
 		extends IpTcStrategyModuleBase<IInterpolatingTraceCheck<L>, L> {
 
-	private final IRun<L, ?> mCounterexample;
+	private final Counterexample<L> mCounterexample;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicateUnifier mPredicateUnifier;
@@ -58,7 +58,7 @@ public class IpTcStrategyModuleAcceleratedTraceCheck<L extends IIcfgTransition<?
 	private final PredicateFactory mPredicateFactory;
 
 	public IpTcStrategyModuleAcceleratedTraceCheck(final IUltimateServiceProvider services, final ILogger logger,
-			final IRun<L, ?> counterexample, final IPredicate precondition, final IPredicate postcondition,
+			final Counterexample<L> counterexample, final IPredicate precondition, final IPredicate postcondition,
 			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<L> prefs,
 			final PredicateFactory predicateFactory) {
 		mServices = services;
@@ -72,11 +72,10 @@ public class IpTcStrategyModuleAcceleratedTraceCheck<L extends IIcfgTransition<?
 		mPredicateFactory = predicateFactory;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
-		return new AcceleratedTraceCheck<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier,
-				(IRun<L, IPredicate>) mCounterexample, mPrecondition, mPostcondition, mPredicateFactory);
+		return new AcceleratedTraceCheck<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier, mCounterexample,
+				mPrecondition, mPostcondition, mPredicateFactory);
 	}
 
 	@Override

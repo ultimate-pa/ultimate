@@ -1,4 +1,3 @@
-(set-info :expect-errors 1)
 (set-option :produce-models true)
 (set-logic AUFNIRA)
 (declare-const v0 Bool)

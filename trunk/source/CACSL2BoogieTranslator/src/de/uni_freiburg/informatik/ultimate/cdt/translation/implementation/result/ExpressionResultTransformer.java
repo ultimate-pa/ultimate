@@ -38,10 +38,11 @@ import java.util.Set;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -72,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -248,7 +250,7 @@ public class ExpressionResultTransformer {
 		}
 		if (lrVal instanceof LocalLValue) {
 			final CType underlyingType = lrVal.getCType().getUnderlyingType();
-			mCHandler.moveArrayAndStructIdsOnHeap(loc, underlyingType, lrVal.getValue(), expr.getAuxVars(), hook);
+			mCHandler.moveArrayAndStructIdsOnHeap(underlyingType, lrVal.getValue(), hook);
 
 			final CType resultType;
 			if (underlyingType instanceof CArray) {
@@ -464,8 +466,7 @@ public class ExpressionResultTransformer {
 		final AuxVarInfo newArrayAuxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, arrayType, SFO.AUXVAR.ARRAYCOPY);
 		final LRValue resultValue = new RValue(newArrayAuxvar.getExp(), arrayType);
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addDeclaration(newArrayAuxvar.getVarDec());
-		builder.addAuxVar(newArrayAuxvar);
+		builder.addAuxVarWithDeclaration(newArrayAuxvar);
 
 		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
 		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
@@ -515,19 +516,7 @@ public class ExpressionResultTransformer {
 	 */
 	private RValue toBoolean(final ILocation loc, final RValue rVal) {
 		assert !rVal.isBoogieBool();
-		final CType underlyingType = CEnum.replaceEnumWithInt(rVal.getCType().getUnderlyingType());
-		final Expression zero = mExprTrans.constructZero(loc, underlyingType);
-
-		final Expression resultEx;
-		if (underlyingType instanceof CPrimitive) {
-			resultEx = mExprTrans.constructBinaryEqualityExpression(loc, IASTBinaryExpression.op_notequals,
-					rVal.getValue(), rVal.getCType(), zero, underlyingType);
-		} else if (underlyingType instanceof CPointer) {
-			resultEx = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
-					zero);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
-		}
+		final Expression resultEx = mExprTrans.toBool(loc, rVal.getValue(), rVal.getCType());
 		return new RValue(resultEx, new CPrimitive(CPrimitives.INT), true);
 	}
 
@@ -547,12 +536,7 @@ public class ExpressionResultTransformer {
 
 	private RValue toInteger(final ILocation loc, final RValue rVal) {
 		assert rVal.isBoogieBool();
-		final Expression one =
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ONE);
-		final Expression zero =
-				mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
-		return new RValue(ExpressionFactory.constructIfThenElseExpression(loc, rVal.getValue(), one, zero),
-				rVal.getCType(), false);
+		return new RValue(mExprTrans.boolToInt(loc, rVal.getValue()), rVal.getCType(), false);
 	}
 
 	/**
@@ -588,11 +572,14 @@ public class ExpressionResultTransformer {
 	 */
 	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final ILocation loc,
 			final CType targetCType, final IASTNode hook) {
+		if (expr.getLrValue() == null) {
+			throw new AssertionError("Missing value " + loc);
+		}
 		if (expr.getLrValue().getCType().getUnderlyingType() instanceof CArray
 				&& (targetCType.getUnderlyingType() instanceof CPointer
 						|| targetCType.getUnderlyingType() instanceof CPrimitive)) {
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
-			final RValue decayed = mCHandler.decayArrayLrValToPointer(loc, expr.getLrValue(), hook);
+			final RValue decayed = mCHandler.decayArrayLrValToPointer(expr.getLrValue(), hook);
 			return erb.setLrValue(decayed).build();
 		}
 		return switchToRValue(expr, loc, hook);
@@ -653,7 +640,7 @@ public class ExpressionResultTransformer {
 		if (result.getLrValue().getCType().getUnderlyingType() instanceof CArray) {
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			resultBuilder.addAllExceptLrValue(result);
-			resultBuilder.setLrValue(mCHandler.decayArrayLrValToPointer(loc, result.getLrValue(), hook));
+			resultBuilder.setLrValue(mCHandler.decayArrayLrValToPointer(result.getLrValue(), hook));
 			return resultBuilder.build();
 		}
 		return result;
@@ -679,8 +666,10 @@ public class ExpressionResultTransformer {
 		final BoogieType oldBoogieType = (BoogieType) expr.getLrValue().getValue().getType();
 		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(targetCType);
 
-		if (TypeHandler.areMatchingTypes(newType, oldType) && oldBoogieType.equals(newBoogieType)) {
+		if (TypeHandler.areMatchingTypes(newType, oldType) && !newType.equals(new CPrimitive(CPrimitives.BOOL))
+				&& oldBoogieType.equals(newBoogieType)) {
 			// types are already identical -- nothing to do
+			// For _Bool we always do the conversion to ensure that the resulting value is 0 or 1
 			return expr;
 		}
 
@@ -1034,10 +1023,113 @@ public class ExpressionResultTransformer {
 		return nullPointerConstant;
 	}
 
+	/**
+	 * Dispatches a pointer and ensures that the result contains either a {@code LocalLValue} or a {@code HeapLValue}.
+	 * If possible (i.e., pointer is of the form {@code &x} where {@code x} is not already on the heap), a
+	 * {@code LocalLValue} is returned as an optimization.
+	 *
+	 * @param main
+	 *            Dispatcher
+	 * @param loc
+	 *            Location
+	 * @param pointer
+	 *            Pointer AST-expression
+	 * @return The dispatched {@code ExpressionResult} with either a {@code LocalLValue} or a {@code HeapLValue}.
+	 */
+	public ExpressionResult dispatchPointerLValue(final IDispatcher main, final ILocation loc, final IASTNode pointer) {
+		if (isAdressofOperator(pointer)) {
+			// If pointer is of the form &x, simply dispatch x an return the result, if it contains a LocalLValue.
+			// To match the type, create a new LocalLValue with a pointer type that points to the type of x.
+			final ExpressionResult subresult =
+					(ExpressionResult) main.dispatch(((IASTUnaryExpression) pointer).getOperand());
+			if (subresult.getLrValue() instanceof LocalLValue) {
+				final LocalLValue addressValue = (LocalLValue) subresult.getLrValue();
+				final LocalLValue resultValue = new LocalLValue(addressValue.getLhs(),
+						new CPointer(subresult.getCType()), addressValue.isBoogieBool(),
+						addressValue.isIntFromPointer(), addressValue.getBitfieldInformation());
+				return new ExpressionResultBuilder(subresult).resetLrValue(resultValue).build();
+			}
+		}
+		// Otherwise simply dispatch the expression, but make sure that the result contains a HeapLValue.
+		final ExpressionResult result = decayArrayToPointer((ExpressionResult) main.dispatch(pointer), loc, pointer);
+		if (result.getLrValue() instanceof HeapLValue) {
+			return result;
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder(result);
+		builder.resetLrValue(LRValueFactory.constructHeapLValue(mTypeHandler, result.getLrValue().getValue(),
+				result.getCType(), null));
+		return builder.build();
+	}
+
+	private static boolean isAdressofOperator(final IASTNode node) {
+		return node instanceof IASTUnaryExpression
+				&& ((IASTUnaryExpression) node).getOperator() == IASTUnaryExpression.op_amper;
+	}
+
+	/**
+	 * Assigns the value of the expression {@code rhs} to the given {@code lhs} of pointer type. If {@code lhs} is a
+	 * {@code LocalLValue}, a simple assignment is performed, otherwise a write in the memory.
+	 *
+	 * @param loc
+	 *            Location
+	 * @param lhs
+	 *            A LRValue of pointer type
+	 * @param rhs
+	 *            The expression to be assigned
+	 * @return The expression result containing the assignment
+	 */
+	public ExpressionResult makePointerAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
+		if (lhs instanceof RValue) {
+			return makePointerAssignment(loc, new HeapLValue(lhs.getValue(), lhs.getCType(), null), rhs);
+		}
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		if (lhs instanceof LocalLValue) {
+			builder.addStatement(
+					StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
+
+		} else if (lhs instanceof HeapLValue) {
+			final CType resultType = ((CPointer) lhs.getCType()).getPointsToType();
+			builder.addStatements(mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, resultType, false));
+		}
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnWrite(builder, loc, lhs);
+		}
+		return builder.build();
+	}
+
+	/**
+	 * Reads the value of the given {@code value} of pointer type. The result is guaranteed to return an aux-var as
+	 * RValue. If {@code value} is a {@code LocalLValue}, the value is simply assigned to a fresh aux-var, otherwise a
+	 * read in the memory is performed (which also assigns the return value to an aux-var).
+	 *
+	 * @param loc
+	 *            Location
+	 * @param value
+	 *            A LRValue of pointer type
+	 * @return The expression result containing the assignment
+	 */
+	public ExpressionResult readPointerValue(final ILocation loc, final LRValue value) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final CType resultType = ((CPointer) value.getCType()).getPointsToType();
+		if (mDataRaceChecker != null) {
+			mDataRaceChecker.checkOnRead(builder, loc, value);
+		}
+		if (value instanceof HeapLValue) {
+			final HeapLValue heapValue = (HeapLValue) value;
+			builder.addAllIncludingLrValue(mMemoryHandler.getReadCall(heapValue.getAddress(), resultType));
+		} else {
+			// Introduce an auxvar for the result for consistency, mMemoryHandler.getReadCall also creates an auxvar
+			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
+			builder.addAuxVarWithDeclaration(auxVar).setLrValue(new RValue(auxVar.getExp(), resultType));
+			builder.addStatement(
+					StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), value.getValue()));
+		}
+		return builder.build();
+	}
+
 	@FunctionalInterface
 	private interface ITransformationFunction {
 		ExpressionResult apply(final ExpressionResultTransformer ert, final ExpressionResult expr,
 				final CType targetCType, final ILocation loc, final IASTNode hook);
 	}
-
 }
