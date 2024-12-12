@@ -33,20 +33,27 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ExplicitSymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -76,16 +83,47 @@ class IndependenceChecker {
 	private final Map<ILocalProgramVar, ILocalProgramVar> mRightSubstitution;
 
 	public IndependenceChecker(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final ISymbolicIndependenceRelation<? super IcfgEdge, IPredicate> independence) {
+			final boolean useSemicommutativity, final IndependenceConditions independenceConditions) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mMgdScript = csToolkit.getManagedScript();
 		mSymbolTable = csToolkit.getSymbolTable();
-		mIndependence = independence;
 		mEdgeFactory = new IcfgEdgeFactory(new SerialProvider());
 
 		final var localVars = collectLocalVariables(csToolkit);
 		mLeftSubstitution = createVariableMapping("~~left~~", localVars);
 		mRightSubstitution = createVariableMapping("~~right~~", localVars);
+
+		mIndependence = createIndependence(services, useSemicommutativity, independenceConditions);
+	}
+
+	private ISymbolicIndependenceRelation<IAction, IPredicate> createIndependence(
+			final IUltimateServiceProvider services, final boolean useSemicommutativity,
+			final IndependenceConditions independenceConditions) {
+		// Create a symbol table with the instantiated local variables and the original global variables.
+		final var instantiatedSymbolTable = new DefaultIcfgSymbolTable();
+		for (final var global : mSymbolTable.getGlobals()) {
+			instantiatedSymbolTable.add(global);
+		}
+		for (final var leftLocal : mLeftSubstitution.values()) {
+			instantiatedSymbolTable.add(leftLocal);
+		}
+		for (final var rightLocal : mRightSubstitution.values()) {
+			instantiatedSymbolTable.add(rightLocal);
+		}
+
+		// Create a predicate factory for the instantiated conditions, using the new symbol table.
+		final var factory = new BasicPredicateFactory(services, mMgdScript, instantiatedSymbolTable);
+
+		final var generator = independenceConditions.requiresConditionGenerator()
+				? new SemanticIndependenceConditionGenerator(services, mMgdScript, factory, !useSemicommutativity)
+				: null;
+		final var independence = new SemanticIndependenceRelation<>(services, mMgdScript, false, !useSemicommutativity,
+				independenceConditions, factory, generator);
+
+		if (independenceConditions == IndependenceConditions.NONE) {
+			return new ExplicitSymbolicIndependenceRelation<>(independence, factory.and(), factory.or());
+		}
+		return independence.getSymbolicRelation();
 	}
 
 	public Term getIndependenceCondition(final Function<IHcReplacementVar, TermVariable> getTermVariable,
@@ -204,8 +242,8 @@ class IndependenceChecker {
 		return mEdgeFactory.createInternalTransition(edge.getSource(), edge.getTarget(), null, copyTf);
 	}
 
-	private Term deinstantiate(final Function<IHcReplacementVar, TermVariable> getTermVariable, final ThreadInstance thread1,
-			final ThreadInstance thread2, final Term term) {
+	private Term deinstantiate(final Function<IHcReplacementVar, TermVariable> getTermVariable,
+			final ThreadInstance thread1, final ThreadInstance thread2, final Term term) {
 		final var backSubstitution = new HashMap<TermVariable, Term>();
 		addBackSubstitutionMappings(getTermVariable, mLeftSubstitution, backSubstitution, thread1);
 		addBackSubstitutionMappings(getTermVariable, mRightSubstitution, backSubstitution, thread2);

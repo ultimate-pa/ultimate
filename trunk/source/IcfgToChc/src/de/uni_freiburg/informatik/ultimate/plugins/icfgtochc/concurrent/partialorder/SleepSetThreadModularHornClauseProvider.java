@@ -35,14 +35,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
@@ -65,10 +62,11 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 
 	public SleepSetThreadModularHornClauseProvider(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final IIcfg<IcfgLocation> icfg, final HcSymbolTable symbolTable,
-			final ISymbolicIndependenceRelation<? super IIcfgTransition<?>, IPredicate> independence,
 			final IThreadModularPreferenceOrder preferenceOrder, final IcfgToChcPreferences prefs) {
 		super(services, mgdScript, icfg, symbolTable, prefs);
-		mIndependenceChecker = new IndependenceChecker(services, icfg.getCfgSmtToolkit(), independence);
+
+		mIndependenceChecker = new IndependenceChecker(services, icfg.getCfgSmtToolkit(), prefs.useSemicommutativity(),
+				prefs.conditionalIndependence());
 		mThreadLocations = icfg.getProgramPoints().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
 				e -> e.getValue().values().stream().filter(this::isRelevantLocation).collect(Collectors.toList())));
 
