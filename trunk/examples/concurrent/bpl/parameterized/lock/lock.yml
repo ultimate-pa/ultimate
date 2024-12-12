@@ -18,5 +18,4 @@ options:
 
     # Settings for reduction
     Preference order used for reduction: SEQ_COMP
-    Conditional Independence: "PRECOMPUTED_CONDITIONS"
 

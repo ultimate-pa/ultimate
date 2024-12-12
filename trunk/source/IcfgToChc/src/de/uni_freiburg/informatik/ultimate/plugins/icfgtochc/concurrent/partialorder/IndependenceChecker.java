@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -41,9 +42,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HcGlobalVar;
@@ -63,7 +66,7 @@ class IndependenceChecker {
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final ISymbolicIndependenceRelation<? super IcfgEdge> mIndependence;
+	private final ISymbolicIndependenceRelation<? super IcfgEdge, IPredicate> mIndependence;
 	private final IcfgEdgeFactory mEdgeFactory;
 
 	private final Map<Pair<IcfgEdge, IcfgEdge>, Term> mCache = new HashMap<>();
@@ -72,7 +75,7 @@ class IndependenceChecker {
 	private final Map<ILocalProgramVar, ILocalProgramVar> mRightSubstitution;
 
 	public IndependenceChecker(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final ISymbolicIndependenceRelation<? super IcfgEdge> independence) {
+			final ISymbolicIndependenceRelation<? super IcfgEdge, IPredicate> independence) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mMgdScript = csToolkit.getManagedScript();
 		mSymbolTable = csToolkit.getSymbolTable();
@@ -176,7 +179,14 @@ class IndependenceChecker {
 		// compute the independence condition
 		final var inst1 = instantiate(action1, mLeftSubstitution);
 		final var inst2 = instantiate(action2, mRightSubstitution);
-		final var condition = mIndependence.getIndependenceCondition(inst1, inst2);
+		final var rawCondition = mIndependence.getCommutativityCondition(null, inst1, inst2);
+		final Term condition;
+		if (rawCondition == null) {
+			condition = mMgdScript.getScript().term(SMTLIBConstants.FALSE);
+		} else {
+			condition = rawCondition.getFormula();
+		}
+
 		mLogger.info(
 				"instantiated independence condition for '" + action1 + "' and '" + action2 + "' is: " + condition);
 

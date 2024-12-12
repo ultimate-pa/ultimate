@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ExplicitSymbolicIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -47,17 +49,16 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IcfgLiptonReducer;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadModularHornClauseProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ApproximateLockstepPreferenceOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ConditionSynthesizingIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ExplicitSymbolicIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.IThreadModularPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SequentialCompositionPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.partialorder.SleepSetThreadModularHornClauseProvider;
@@ -161,21 +162,18 @@ public class IcfgToChcObserver extends BaseObserver {
 		return new ChcProviderForCalls(mgdScript, hcSymbolTable).getHornClauses(icfg);
 	}
 
-	private ISymbolicIndependenceRelation<IAction> getIndependence(final IIcfg<?> icfg, final ManagedScript mgdScript) {
+	private ISymbolicIndependenceRelation<IAction, IPredicate> getIndependence(final IIcfg<?> icfg,
+			final ManagedScript mgdScript) {
 		final boolean symmetric = !mPrefs.useSemicommutativity();
-		final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, symmetric);
+		final var factory = new BasicPredicateFactory(mServices, mgdScript, icfg.getCfgSmtToolkit().getSymbolTable());
+		final var generator = new SemanticIndependenceConditionGenerator(mServices, mgdScript, factory, symmetric);
+		final var independence = new SemanticIndependenceRelation<>(mServices, mgdScript, false, symmetric,
+				mPrefs.conditionalIndependence(), factory, generator);
 
-		switch (mPrefs.conditionalIndependence()) {
-		case OFF:
-			return new ExplicitSymbolicIndependenceRelation<>(independence, mgdScript.getScript());
-		case PRECOMPUTED_CONDITIONS:
-			final var factory =
-					new BasicPredicateFactory(mServices, mgdScript, icfg.getCfgSmtToolkit().getSymbolTable());
-			final var generator = new SemanticIndependenceConditionGenerator(mServices, mgdScript, factory, symmetric);
-			return new ConditionSynthesizingIndependenceRelation<>(independence, generator, mgdScript.getScript());
+		if (mPrefs.conditionalIndependence() == IndependenceConditions.NONE) {
+			return new ExplicitSymbolicIndependenceRelation<>(independence, factory.and(), factory.or());
 		}
-
-		throw new AssertionError("Unknown conditional independence setting: " + mPrefs.conditionalIndependence());
+		return independence.getSymbolicRelation();
 	}
 
 	private IThreadModularPreferenceOrder getPreferenceOrder(final Script script, final IIcfg<?> icfg) {

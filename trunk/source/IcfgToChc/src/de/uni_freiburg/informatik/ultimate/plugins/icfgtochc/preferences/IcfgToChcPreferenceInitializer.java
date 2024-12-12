@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferences.SpecMode;
@@ -127,17 +128,13 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 	private static final PreferenceOrder DEF_PREFERENCE_ORDER = PreferenceOrder.SEQ_COMP;
 
 	public static final String LABEL_CONDITIONAL_INDEPENDENCE = "Conditional Independence";
-	private static final ConditionalIndependence DEF_CONDITIONAL_INDEPENDENCE = ConditionalIndependence.OFF;
+	private static final IndependenceConditions DEF_CONDITIONAL_INDEPENDENCE = IndependenceConditions.NONE;
 
 	public static final String LABEL_SEMICOMMUTATIVITY = "Use semi-commutativity";
 	private static final boolean DEF_SEMICOMMUTATIVITY = true;
 
 	public enum PreferenceOrder {
 		SEQ_COMP, LOCKSTEP
-	}
-
-	public enum ConditionalIndependence {
-		OFF, PRECOMPUTED_CONDITIONS
 	}
 
 	/**
@@ -185,7 +182,7 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 		container.addItem(new UltimatePreferenceItem<>(LABEL_PREFERENCE_ORDER, DEF_PREFERENCE_ORDER,
 				PreferenceType.Combo, PreferenceOrder.values()));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_CONDITIONAL_INDEPENDENCE, DEF_CONDITIONAL_INDEPENDENCE,
-				PreferenceType.Combo, ConditionalIndependence.values()));
+				PreferenceType.Combo, IndependenceConditions.values()));
 		container.addItem(
 				new UltimatePreferenceItem<>(LABEL_SEMICOMMUTATIVITY, DEF_SEMICOMMUTATIVITY, PreferenceType.Boolean));
 		return container;

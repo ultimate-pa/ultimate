@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.SemanticIndependenceRelation.IndependenceConditions;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ConcurrencyMode;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer.ConditionalIndependence;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.preferences.IcfgToChcPreferenceInitializer.PreferenceOrder;
 
 public class IcfgToChcPreferences {
@@ -96,9 +96,9 @@ public class IcfgToChcPreferences {
 		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_PREFERENCE_ORDER, PreferenceOrder.class);
 	}
 
-	public ConditionalIndependence conditionalIndependence() {
+	public IndependenceConditions conditionalIndependence() {
 		return mPrefs.getEnum(IcfgToChcPreferenceInitializer.LABEL_CONDITIONAL_INDEPENDENCE,
-				ConditionalIndependence.class);
+				IndependenceConditions.class);
 	}
 
 	public boolean useSemicommutativity() {

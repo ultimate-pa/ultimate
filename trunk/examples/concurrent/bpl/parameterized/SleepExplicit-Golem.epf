@@ -6,7 +6,7 @@
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Concurrency\ mode=PARAMETRIC
 # Settings for sleep sets
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Preference\ order\ used\ for\ reduction=SEQ_COMP
-/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Conditional\ Independence=PRECOMPUTED_CONDITIONS
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Conditional\ Independence=SUFFICIENT
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Break\ symmetry\ of\ preference\ order=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtochc/Enable\ sleep\ set\ reduction=true
 # Other settings

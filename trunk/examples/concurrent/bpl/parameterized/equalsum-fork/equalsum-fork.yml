@@ -19,5 +19,5 @@ options:
 
     # Settings for reduction
     Preference order used for reduction: LOCKSTEP
-    Conditional Independence: "OFF"
+    Conditional Independence: "NONE"
 

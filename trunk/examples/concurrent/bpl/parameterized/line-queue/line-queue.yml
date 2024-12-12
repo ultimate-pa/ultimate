@@ -19,6 +19,5 @@ options:
 
     # Settings for reduction
     Preference order used for reduction: LOCKSTEP
-    Conditional Independence: "PRECOMPUTED_CONDITIONS"
     Use semi-commutativity: true
 
