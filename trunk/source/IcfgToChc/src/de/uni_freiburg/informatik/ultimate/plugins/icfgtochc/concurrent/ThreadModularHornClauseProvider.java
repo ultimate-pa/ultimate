@@ -811,20 +811,24 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 			substitution.put(inVar, clause.getBodyVar(rv).getTerm());
 		}
 
+		// We rely on the internal normal form, namely that all assigned variables have outvars and are handled below.
+		assert TransFormulaUtils.hasInternalNormalForm(tf) : "Transition formula is not in internal normal form";
+
 		final TermVariable outVar = tf.getOutVars().get(pv);
 		final var dummyOutVars = new HashMap<IHcReplacementVar, HcBodyVar>();
 		if (outVar != null && !Objects.equals(inVar, outVar)) {
 			final var headPred = clause.getHeadPredicate();
 			if (headPred != null && headPred.hasParameter(rv)) {
 				substitution.put(outVar, clause.getHeadVar(rv).getTerm());
+
+				// If we get here, pv must be an assigned variable of the transition formula.
+				// Hence the variable used to represent rv in the clause body and head must differ.
+				assert tf.getAssignedVars().contains(pv) : "invars / outvars / assigned vars inconsistent";
+				clause.differentBodyHeadVar(rv);
 			} else {
 				final var bodyVar = dummyOutVars.computeIfAbsent(rv, x -> clause.getFreshBodyVar(x, x.getSort()));
 				substitution.put(outVar, bodyVar.getTerm());
 			}
-		}
-
-		if (tf.getAssignedVars().contains(pv)) {
-			clause.differentBodyHeadVar(rv);
 		}
 	}
 
