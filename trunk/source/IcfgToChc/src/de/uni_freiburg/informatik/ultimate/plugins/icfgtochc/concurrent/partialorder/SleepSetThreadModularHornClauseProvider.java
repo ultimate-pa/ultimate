@@ -329,8 +329,8 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 				continue;
 			}
 
-			final var conjunct =
-					mIndependenceChecker.getIndependenceCondition(clause, activeThread, activeEdge, otherThread, edge);
+			final var conjunct = mIndependenceChecker.getIndependenceCondition(
+					v -> clause.getBodyVar(v).getTermVariable(), activeThread, activeEdge, otherThread, edge);
 			if (SmtUtils.isFalseLiteral(conjunct)) {
 				// escape early if one outgoing edge does not commute under any circumstances
 				return mScript.term(SMTLIBConstants.FALSE);

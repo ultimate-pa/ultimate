@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HcGlobalVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HcLocalVar;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.HornClauseBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IHcReplacementVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadInstance;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -87,8 +88,9 @@ class IndependenceChecker {
 		mRightSubstitution = createVariableMapping("~~right~~", localVars);
 	}
 
-	public Term getIndependenceCondition(final HornClauseBuilder clause, final ThreadInstance thread1,
-			final IcfgEdge action1, final ThreadInstance thread2, final IcfgEdge action2) {
+	public Term getIndependenceCondition(final Function<IHcReplacementVar, TermVariable> getTermVariable,
+			final ThreadInstance thread1, final IcfgEdge action1, final ThreadInstance thread2,
+			final IcfgEdge action2) {
 		// Hardcoded conditions for line-queue example
 		// TODO remove after evaluation
 		Term hardcoded = null;
@@ -153,13 +155,13 @@ class IndependenceChecker {
 		if (hardcoded != null) {
 			mLogger.warn(
 					"Hardcoded independence condition for '" + action1 + "' and '" + action2 + "' is: " + hardcoded);
-			return deinstantiate(clause, thread1, thread2, hardcoded);
+			return deinstantiate(getTermVariable, thread1, thread2, hardcoded);
 		}
 
 		// first check the cache
 		final var cached = mCache.get(new Pair<>(action1, action2));
 		if (cached != null) {
-			return deinstantiate(clause, thread1, thread2, cached);
+			return deinstantiate(getTermVariable, thread1, thread2, cached);
 		}
 
 		// for symmetric relations, check the cache for the symmetric case as well
@@ -167,12 +169,12 @@ class IndependenceChecker {
 			final var symCached = mCache.get(new Pair<>(action2, action1));
 			if (symCached != null) {
 				// This needs a different deinstantiation than the cases above and below.
-				return deinstantiate(clause, thread2, thread1, symCached);
+				return deinstantiate(getTermVariable, thread2, thread1, symCached);
 			}
 		}
 
 		final var instantiated = getInstantiatedIndependenceCondition(action1, action2);
-		return deinstantiate(clause, thread1, thread2, instantiated);
+		return deinstantiate(getTermVariable, thread1, thread2, instantiated);
 	}
 
 	private Term getInstantiatedIndependenceCondition(final IcfgEdge action1, final IcfgEdge action2) {
@@ -202,29 +204,27 @@ class IndependenceChecker {
 		return mEdgeFactory.createInternalTransition(edge.getSource(), edge.getTarget(), null, copyTf);
 	}
 
-	private Term deinstantiate(final HornClauseBuilder clause, final ThreadInstance thread1,
+	private Term deinstantiate(final Function<IHcReplacementVar, TermVariable> getTermVariable, final ThreadInstance thread1,
 			final ThreadInstance thread2, final Term term) {
 		final var backSubstitution = new HashMap<TermVariable, Term>();
-		addBackSubstitutionMappings(clause, mLeftSubstitution, backSubstitution, thread1);
-		addBackSubstitutionMappings(clause, mRightSubstitution, backSubstitution, thread2);
+		addBackSubstitutionMappings(getTermVariable, mLeftSubstitution, backSubstitution, thread1);
+		addBackSubstitutionMappings(getTermVariable, mRightSubstitution, backSubstitution, thread2);
 
 		for (final var global : mSymbolTable.getGlobals()) {
 			final var hcVar = new HcGlobalVar(global);
-			final var bodyVar = clause.getBodyVar(hcVar);
-			backSubstitution.put(global.getTermVariable(), bodyVar.getTermVariable());
+			backSubstitution.put(global.getTermVariable(), getTermVariable.apply(hcVar));
 		}
 
 		return Substitution.apply(mMgdScript, backSubstitution, term);
 	}
 
-	private void addBackSubstitutionMappings(final HornClauseBuilder clause,
+	private void addBackSubstitutionMappings(final Function<IHcReplacementVar, TermVariable> getTermVariable,
 			final Map<ILocalProgramVar, ILocalProgramVar> substitution, final Map<TermVariable, Term> backSubstitution,
 			final ThreadInstance thread) {
 		for (final var local : mSymbolTable.getLocals(thread.getTemplateName())) {
 			final var hcVar = new HcLocalVar(local, thread);
-			final var bodyVar = clause.getBodyVar(hcVar);
 			final var instVar = substitution.get(local);
-			backSubstitution.put(instVar.getTermVariable(), bodyVar.getTermVariable());
+			backSubstitution.put(instVar.getTermVariable(), getTermVariable.apply(hcVar));
 		}
 	}
 
