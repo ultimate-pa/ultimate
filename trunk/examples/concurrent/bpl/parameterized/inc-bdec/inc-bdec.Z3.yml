@@ -1,6 +1,6 @@
 format_version: '2.0'
 
-input_files: 'lock.bpl'
+input_files: 'inc-bdec.bpl'
 
 properties:
   - property_file: ../../../svcomp/properties/unreach-call.prp
@@ -11,11 +11,15 @@ options:
   de.uni_freiburg.informatik.ultimate.plugins.icfgtochc:
     # Settings for the program
     Assume program has a precondition: true
-    Specification mode: ASSERT_VIOLATIONS
+    Specification mode: POSTCONDITION
 
     # Thread modularity level
-    Thread-Modular Proof Level: 1
+    Thread-Modular Proof Level: 2
 
     # Settings for reduction
     Preference order used for reduction: SEQ_COMP
+
+  # Fix the best solver for this benchmark
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: Z3
 

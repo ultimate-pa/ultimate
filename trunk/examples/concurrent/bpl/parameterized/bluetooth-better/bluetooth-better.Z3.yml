@@ -1,6 +1,6 @@
 format_version: '2.0'
 
-input_files: 'notify-listeners.bpl'
+input_files: 'bluetooth-better.bpl'
 
 properties:
   - property_file: ../../../svcomp/properties/unreach-call.prp
@@ -10,14 +10,16 @@ options:
   language: Boogie
   de.uni_freiburg.informatik.ultimate.plugins.icfgtochc:
     # Settings for the program
-    Assume program has a precondition: false
+    Assume program has a precondition: true
     Specification mode: ASSERT_VIOLATIONS
-    Single-instance threads: notifier
+    Single-instance threads: server
 
     # Thread modularity level
-    Thread-Modular Proof Level: 1
+    Thread-Modular Proof Level: 2
 
     # Settings for reduction
-    Preference order used for reduction: LOCKSTEP
-    Use semi-commutativity: true
+    Preference order used for reduction: SEQ_COMP
+
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: Z3
 

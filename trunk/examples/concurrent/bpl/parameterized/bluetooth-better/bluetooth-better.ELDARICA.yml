@@ -1,6 +1,6 @@
 format_version: '2.0'
 
-input_files: 'inc-dec-eq0-locked-assert.bpl'
+input_files: 'bluetooth-better.bpl'
 
 properties:
   - property_file: ../../../svcomp/properties/unreach-call.prp
@@ -12,11 +12,14 @@ options:
     # Settings for the program
     Assume program has a precondition: true
     Specification mode: ASSERT_VIOLATIONS
+    Single-instance threads: server
 
     # Thread modularity level
     Thread-Modular Proof Level: 2
 
     # Settings for reduction
     Preference order used for reduction: SEQ_COMP
-    Conditional Independence: "NONE"
+
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: ELDARICA
 

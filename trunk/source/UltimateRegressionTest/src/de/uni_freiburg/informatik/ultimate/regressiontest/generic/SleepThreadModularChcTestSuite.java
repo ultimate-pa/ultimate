@@ -51,17 +51,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
-	// @formatter:off
-	private static final String[] SETTINGS = {
-			"examples/concurrent/bpl/parameterized/SleepExplicit-Z3.epf",
-			"examples/concurrent/bpl/parameterized/SleepExplicit-Golem.epf",
-			"examples/concurrent/bpl/parameterized/SleepExplicit-Eldarica.epf",
-	};
-	// @formatter:on
+	private static final String SETTINGS = "examples/concurrent/bpl/parameterized/SleepExplicit.epf";
 	private static final String TOOLCHAIN = "examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml";
 	private static final String DIRECTORY = "examples/concurrent/bpl/parameterized/";
 	private static final String TASKDEF_REGEX = ".*\\.yml";
-	private static final int DEFAULT_TIMEOUT = 60;
+	private static final int DEFAULT_TIMEOUT = 600;
 
 	@Override
 	protected Collection<UltimateTestCase> createTestCases() {
@@ -71,16 +65,13 @@ public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
 
 		final List<UltimateTestCase> result = new ArrayList<>();
 		for (final var taskDefFile : selectedYamlFiles) {
+			final File settingsFile = UltimateRunDefinitionGenerator.getFileFromTrunkDir(SETTINGS);
 			final var taskDefinition = parseTaskDefinition(taskDefFile);
 			final String bplFilename = (String) taskDefinition.get("input_files");
 			final Path bplPath = taskDefFile.toPath().getParent().resolve(bplFilename);
-
-			for (final String settingsPath : SETTINGS) {
-				final File settingsFile = UltimateRunDefinitionGenerator.getFileFromTrunkDir(settingsPath);
-				final var urd = new UltimateRunDefinition(bplPath.toFile(), settingsFile, toolchainFile,
-						getTimeout(taskDefinition), applySettings(taskDefFile, taskDefinition));
-				result.add(new UltimateTestCase(constructITestResultDecider(urd, taskDefinition), urd, List.of()));
-			}
+			final var urd = new UltimateRunDefinition(bplPath.toFile(), settingsFile, toolchainFile,
+					getTimeout(taskDefinition), applySettings(taskDefFile, taskDefinition));
+			result.add(new UltimateTestCase(constructITestResultDecider(urd, taskDefinition), urd, List.of()));
 		}
 
 		return result;

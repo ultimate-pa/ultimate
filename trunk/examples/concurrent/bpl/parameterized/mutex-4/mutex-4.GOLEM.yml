@@ -1,6 +1,6 @@
 format_version: '2.0'
 
-input_files: 'ticket.bpl'
+input_files: 'mutex-4.bpl'
 
 properties:
   - property_file: ../../../svcomp/properties/unreach-call.prp
@@ -19,4 +19,9 @@ options:
     # Settings for reduction
     Preference order used for reduction: SEQ_COMP
     Conditional Independence: "NONE"
+
+  # Fix the best solver for this benchmark
+  de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
+    CHC solver backend: GOLEM
+    Timeout: 5000 # ms
 
