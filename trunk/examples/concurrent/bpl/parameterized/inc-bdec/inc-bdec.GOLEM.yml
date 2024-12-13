@@ -22,4 +22,5 @@ options:
   # Fix the best solver for this benchmark
   de.uni_freiburg.informatik.ultimate.plugins.chcsolver:
     CHC solver backend: GOLEM
+    Timeout: 90000 #ms
 
