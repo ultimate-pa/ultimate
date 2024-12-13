@@ -79,7 +79,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	ExecutorService mExec;
 	List<Future<WorkerThreadResult<L, A>>> mWorkerFutures;
 
-	int mThreadLimit = 1; // Runtime.avalablecores or so
+	int mThreadLimit; // Runtime.avalablecores or so
 	CompletionService<WorkerThreadResult<L, A>> mECS;
 	private final IIcfg<?> mRootNode;
 
@@ -126,7 +126,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mWorkerFutures = new ArrayList<Future<WorkerThreadResult<L, A>>>();
 		mRootNode = rootNode;
 		mECS = new ExecutorCompletionService<>(mExec);
-
+		mThreadLimit = mPref.getThreadLimit();
+		if (mThreadLimit == 0) {
+			mThreadLimit = Runtime.getRuntime().availableProcessors();
+		}
 	}
 
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,

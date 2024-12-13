@@ -97,6 +97,8 @@ public final class TAPreferences {
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
 
+	private final int mThreadLimit;
+
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
 	}
@@ -201,6 +203,8 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
 				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
+
+		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
 	}
 
 	/**
@@ -559,5 +563,9 @@ public final class TAPreferences {
 
 	public TestGenerationMode getTestGeneration() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_TEST_GEN_MODE, TestGenerationMode.class);
+	}
+
+	public int getThreadLimit() {
+		return mThreadLimit;
 	}
 }

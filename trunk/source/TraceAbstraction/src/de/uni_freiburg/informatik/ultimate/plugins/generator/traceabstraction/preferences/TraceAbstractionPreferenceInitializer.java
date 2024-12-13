@@ -501,6 +501,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_TEST_GEN_MODE = "Test Generation Mode";
 	private static final String DESC_TEST_GEN_MODE =
 			"None deactivates Test Generation, Standart standart Test Generation for Model Checkers, Search-MultiGoal uses the A* to find Multi Goal test cases and ignores ifeasible traces during the search, Naive-MultiGoal starts the CEGAR with the last added Test Goal and adds a new Test Goal every iteration";
+	// Thread Limit
+	// ========================================================================
+	public static final String LABEL_THREADLIMIT = "Amount of thread used for parallel CEGAR";
+	public static final Integer DEF_THREADLIMIT = 1;
 
 	/**
 	 * Constructor.
@@ -716,8 +720,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 
 	public UltimatePreferenceItemContainer getTestGenerationSettings() {
-		return new UltimatePreferenceItemContainer("Test Generation", new UltimatePreferenceItem<>(LABEL_TEST_GEN_MODE,
-				DEF_TEST_GEN_MODE, DESC_TEST_GEN_MODE, PreferenceType.Combo, TestGenerationMode.values())
+		return new UltimatePreferenceItemContainer("Test Generation",
+				new UltimatePreferenceItem<>(LABEL_TEST_GEN_MODE, DEF_TEST_GEN_MODE, DESC_TEST_GEN_MODE,
+						PreferenceType.Combo, TestGenerationMode.values()),
+				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000))
 
 		);
 	}
