@@ -529,7 +529,7 @@ def create_cli_settings(prop, validate_witness, witness_type, architecture, inpu
         # - enforce if statements for conditional expressions
         if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
             ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
-            ret.append("NEVER")
+            ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
             ret.append("--cacsl2boogietranslator.always.translate.conditional.expressions.to.if-statements")
             re.append("true")
     elif not validate_witness:

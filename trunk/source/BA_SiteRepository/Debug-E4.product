@@ -22,7 +22,7 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4M
+      <vmArgs>-Xmx4g -Xms4M -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 
