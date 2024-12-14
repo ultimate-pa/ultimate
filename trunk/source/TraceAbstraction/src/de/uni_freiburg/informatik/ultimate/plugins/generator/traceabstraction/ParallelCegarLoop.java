@@ -121,7 +121,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO Auto-generated constructor stub
 
 		// Start thread pool, TODO either fixed or not. try different sizes too
-		mExec = Executors.newFixedThreadPool(mThreadLimit);
+
 		// Holds the Future of each thread
 		mWorkerFutures = new ArrayList<Future<WorkerThreadResult<L, A>>>();
 		mRootNode = rootNode;
@@ -130,6 +130,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		if (mThreadLimit == 0) {
 			mThreadLimit = Runtime.getRuntime().availableProcessors();
 		}
+		mExec = Executors.newFixedThreadPool(mThreadLimit);
 	}
 
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
