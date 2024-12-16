@@ -788,8 +788,9 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final LoopInvariant node) {
-		final ExpressionResult res = (ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook());
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final ExpressionResult res = mExprResultTransformer.transformSwitchRexIntToBool(
+				(ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook()), loc, main.getAcslHook());
 		if (!res.getAuxVars().isEmpty()) {
 			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
 		}
