@@ -371,9 +371,6 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 						.getAnnotations().get(TestGoalAnnotation.class.getName());
 				System.out.println(pLocAnnoTG.mId);
 				if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
-					System.out.println("HIER HALLO: " + pLocAnnoTG.mId);
-					System.out.println(mTestGoalWorkingSet.contains(pLocAnnoTG.mId));
-					System.out.println("HIER HALasLO: " + mTestGoalWorkingSet);
 					mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
 							mAbstraction.internalPredecessors(testGoal));
 				}

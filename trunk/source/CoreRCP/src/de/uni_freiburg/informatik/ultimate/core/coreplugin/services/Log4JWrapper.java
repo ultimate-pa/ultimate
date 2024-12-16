@@ -68,7 +68,7 @@ public final class Log4JWrapper implements ILogger {
 
 	@Override
 	public void log(final LogLevel level, final String msg) {
-		mLogger.log(FQCN, translateLevel(level), msg, null);
+		mLogger.log(FQCN, translateLevel(level), "ThId " + Thread.currentThread().getId() + ": " + msg, null);
 	}
 
 	@Override

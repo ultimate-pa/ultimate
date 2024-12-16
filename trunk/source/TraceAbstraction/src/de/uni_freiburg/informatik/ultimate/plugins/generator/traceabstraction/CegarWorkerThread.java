@@ -4,12 +4,18 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -39,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopResultBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.AutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -95,6 +102,10 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 
+	// Globals for Difference (Interpolant Automaton Enhancement)
+	protected HoareAnnotationFragments<L> mHaf;
+	protected static final boolean REMOVE_DEAD_ENDS = true;
+
 	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
 			final int iteration, final CegarLoopResultBuilder resultBuilder,
 			final CegarLoopStatisticsGenerator statistcs, final IUltimateServiceProvider services,
@@ -128,25 +139,6 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mIcfg = rootNode;
 
 	}
-
-	// public void setUpTaCheckAndRefinementPreferences(final SimplificationTechnique mSimplificationTechnique,
-	// final XnfConversionTechnique mXnfConversionTechnique, final InterpolationTechnique mInterpolationTechnique,
-	// final IIcfg<? extends IcfgLocation> mIcfg) {
-	// final TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs =
-	// new TaCheckAndRefinementPreferences<L>(getServices(), mPref, mInterpolationTechnique,
-	// mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfg);
-	// }
-	//
-	// public void setUpStrategy(final IIcfg<? extends IcfgLocation> mIcfg, final Class<L> mTransitionClazz,
-	// final TaskIdentifier mTaskIdentifier, final RefinementStrategy strategyType) {
-	// final StrategyFactory<L> strategyFactory = new StrategyFactory<L>(mLogger, mPref, mTaCheckAndRefinementPrefs,
-	// mIcfg, mPredicateFactory, mPredicateFactoryInterpolantAutomata, mTransitionClazz);
-	//
-	// final ITARefinementStrategy<L> mStrategy = strategyFactory.constructStrategy(getServices(), mCounterexample,
-	// mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, mIteration),
-	// mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-	// strategyType);
-	// }
 
 	@Override
 	public WorkerThreadResult<L, A> call() {
@@ -374,6 +366,12 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 		}
 
+		// TODO: HTC and predicateunifier statistics are saved in the following
+		// method, but it seems better to save them
+		// at the end of the htc lifecycle instead of there
+		computeAutomataDifference(mAbstraction, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
+				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
+
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<L, A>(subtrahend,
 				subtrahendBeforeEnhancement, predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode,
 				useErrorAutomaton, automatonType, mCsToolkit.getManagedScript(), mCounterexample);
@@ -381,6 +379,97 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO missing a lot of stuff from NwaCegarLoop
 
 		return workerResult;
+	}
+
+	/*
+	 * WARNING
+	 * The real difference has to be computed in the Main Thrad / CEGAR loop
+	 * This is only used to enhance the interpolant automaton
+	 */
+	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
+			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
+			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
+			final boolean useErrorAutomaton, final AutomatonType automatonType)
+			throws AutomataLibraryException, AssertionError {
+		if (automatonType.equals(AutomatonType.ERROR) || enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+			return;
+		}
+		try {
+			mLogger.debug("WORKER: Start constructing difference for enhancing interpolant automaton in worker");
+			final PowersetDeterminizer<L, IPredicate> psd =
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
+			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
+			try {
+				if (mPref.differenceSenwa()) {
+					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+							minuend, subtrahend, psd, false);
+				} else {
+					diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+							minuend, subtrahend, psd, explointSigmaStarConcatOfIA);
+				}
+				mCegarLoopBenchmark.reportInterpolantAutomatonStates(subtrahend.size());
+			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
+				final RunningTaskInfo runningTaskInfo = executeDifferenceTimeoutActions(minuend, subtrahend,
+						subtrahendBeforeEnhancement, automatonType);
+				tce.addRunningTaskInfo(runningTaskInfo);
+				throw tce;
+			} finally {
+
+				assert subtrahend instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
+				((AbstractInterpolantAutomaton<L>) subtrahend).switchToReadonlyMode();
+
+			}
+
+			if (!useErrorAutomaton) {
+				// TODO alot of sanity checks dont think its required
+				// checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
+			}
+
+			if (REMOVE_DEAD_ENDS) {
+				if (mComputeHoareAnnotation) {
+					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
+					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+				}
+				diff.removeDeadEnds();
+				if (mComputeHoareAnnotation) {
+					mHaf.addDeadEndDoubleDeckers(diff);
+				}
+			}
+
+		} finally {
+			mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
+			mLogger.info(htc.getStatistics());
+			mLogger.info(htc);
+			mLogger.debug("WORKER: Finished constructing difference");
+			// mCegarLoopBenchmark.addEdgeCheckerData(htc.getStatistics());
+			// mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
+			// mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		}
+	}
+
+	private RunningTaskInfo executeDifferenceTimeoutActions(final INestedWordAutomaton<L, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
+			final AutomatonType automatonType) throws AutomataLibraryException {
+		final RunningTaskInfo runningTaskInfo =
+				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
+		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
+			// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+			// mPredicateFactoryResultChecking, mCounterexample, true);
+		}
+		return runningTaskInfo;
+	}
+
+	private RunningTaskInfo getDifferenceTimeoutRunningTaskInfo(final INestedWordAutomaton<L, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
+			final AutomatonType automatonType) {
+		final String taskDescription = "WORKER: constructing difference of abstraction (" + minuend.size()
+				+ "states) and " + automatonType + " automaton (currently " + subtrahend.size() + " states, "
+				+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
+		return new RunningTaskInfo(getClass(), taskDescription);
 	}
 
 	protected final IHoareTripleChecker getHoareTripleChecker() {

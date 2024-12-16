@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
@@ -374,7 +375,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				// need a new counterexample every iteration
 				if (runningThreads < mThreadLimit) {
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
-					System.gc();
+					// System.gc(); //Reduces memory significantly, but memory is not our issue atm
 					if (isAbstractionCorrect) {
 						if (runningThreads == 0) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
@@ -509,7 +510,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
 				throw tce;
 			} finally {
-				if (workerResult.getEnhanceMode() != InterpolantAutomatonEnhancement.NONE) {
+				final boolean notEnahncedInWorker = false; // TODO
+				if (workerResult.getEnhanceMode() != InterpolantAutomatonEnhancement.NONE && notEnahncedInWorker) {
 					assert workerResult
 							.getSubtrahend() instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton<L>) workerResult.getSubtrahend()).switchToReadonlyMode();
@@ -520,6 +522,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				// TODO needs to get the worker counterexample
 				// checkEnhancement(workerResult.getSubtrahendBeforeEnhancement(), workerResult.getSubtrahend());
 			}
+			// Future work:
+			assert !mPref.dumpOnlyReuseAutomata();
+			assert mFaultLocalizationMode == RelevanceAnalysisMode.NONE;
 
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
