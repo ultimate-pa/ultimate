@@ -24,6 +24,7 @@
 
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +45,6 @@ public class AssertOrderInsideLoopFirst1<L extends IAction> implements IAssertOr
 		final Map<Integer, Set<Integer>> depth2Statements =
 				AssertOrderUtils.partitionStatementsAccordingDepth(counterexample);
 		// Sort the statements by their depth in descending order (i.e., the most nested statements first).
-		return depth2Statements.keySet().stream().sorted((i1, i2) -> i2.compareTo(i1)).map(depth2Statements::get)
-				.toList();
+		return depth2Statements.keySet().stream().sorted(Comparator.reverseOrder()).map(depth2Statements::get).toList();
 	}
 }
