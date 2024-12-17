@@ -28,15 +28,18 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.AnnotateAndAsserter;
 
 /**
  * This interface is used as an abstraction for assert orders. An assert order is a partitioning of the counterexample.
+ * The actual assertion of the partitions is done in {@link AnnotateAndAsserter}.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface IAssertOrder<L extends IAction> {
 	/**
-	 * Partitions counterexample
+	 * Partitions the trace of the counterexample. As a trace might contain statements multiple times, the indices of
+	 * the statements in the trace are contained in the result, rather the the statements itself.
 	 *
 	 * @param counterexample
 	 *            the current counterexample
