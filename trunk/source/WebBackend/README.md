@@ -8,7 +8,9 @@ Go to `trunk/source/BA_MavenParentUltimate` run `mvn clean install -P materializ
 After a successful build, the artifacts to run and configure the application can be found in `trunk/source/BA_SiteRepository/target/products/WebBackend`.
 
 There are two main artifacts. The `WebBackend` (described by this README) and the front-end (in the folder `WebsiteStatic`).
-* **WebsiteStatic** is a standalone frontend supposed to be served by a web server (e.g. Apache or Nginx). It is plain copy of the `trunk/source/WebsiteStatic` folder. See [trunk/source/WebsiteStatic/README.md](../WebsiteStatic/README.md) for its documentation.
+* **WebsiteStatic** is a standalone frontend supposed to be served by a web server (e.g. Apache or Nginx).
+  See [trunk/source/WebsiteStatic/README.md](../WebsiteStatic/README.md) for its documentation, including build instructions.
+  Once built, the contents of `trunk/source/WebsiteStatic/_site` can be served as static HTML and JS by the web server.
 * **WebBackend** contains the backend (this project). It runs the Ultimate framework and listens to incoming API calls from the frontend.
 
 ## Configuration
@@ -56,7 +58,7 @@ SETTINGS_WHITELIST=C:\\path\\to\\settings_whitelist.json
 # FRONTEND_ROUTE (string) . : The URL prefix, the FRONTEND will be served at
 # E.g. /website results in <http://localhost:PORT/website>
 SERVE_WEBSITE=True
-FRONTEND_PATH=C:\\path\\to\\WebsiteStatic
+FRONTEND_PATH=C:\\path\\to\\WebsiteStatic\\_site
 FRONTEND_ROUTE=/website
 
 # LOG_FILE_PATH (string) .. : Absolute (or relative from java.class.path) path to the log file (/dev/stdout and the like is also ok)
@@ -94,17 +96,17 @@ Example:
 ```
 
 ### Serving the front-end (aka `WebsiteStatic`)
-After a build, a cleaned, ready to be served Version of the `WebsiteStatic` project can be found in `trunk/source/BA_WebBackend/target/products/WebsiteStatic`.
+After a build, a ready to be served version of the `WebsiteStatic` project can be found in `trunk/source/WebsiteStatic/_site`.
 
 #### Bundled with the backend
 * Set the config-parameter `SERVE_WEBSITE` to `True`.
-* Set the config-parameter `FRONTEND_PATH` to the absolute path of the `WebsiteStatic` folder.
-* Configure the Website. See `trunk/source/WebsiteStatic/README.md` for details.
+* Configure and build the website frontend. See `trunk/source/WebsiteStatic/README.md` for details.
+* Set the config-parameter `FRONTEND_PATH` to the absolute path of the `WebsiteStatic/_site` folder.
 
 #### Stand alone
 * Set the config-parameter `SERVE_WEBSITE` to `False`.
-* Serve the content of `WebsiteStatic` as a static HTML site from a web server of your choice.
-* Configure the Website. See `trunk/source/WebsiteStatic/README.md` for details.
+* Configure and build the website frontend. See `trunk/source/WebsiteStatic/README.md` for details.
+* Serve the content of `WebsiteStatic/_site` as a static HTML site from a web server of your choice.
 
 ## Start
 After configuring, just run `./WebBackend`.
