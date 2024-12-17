@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -1291,11 +1290,10 @@ public final class TransFormulaUtils {
 		return sb.toString();
 	}
 
-	private static Set<TermVariable> transferSet(final TermTransferrer termTF, final Set<TermVariable> inputSet) {
+	private static Set<TermVariable> transferSet(final Script script, final Set<TermVariable> inputSet) {
 		final Set<TermVariable> outSet = new HashSet<>();
 		for (final TermVariable var : inputSet) {
-			// maybe we could use the TV mapping from historyrecordingscript
-			outSet.add((TermVariable) termTF.transform(var));
+			outSet.add((TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(var));
 		}
 		return outSet;
 	}
@@ -1314,18 +1312,33 @@ public final class TransFormulaUtils {
 		Term formula = tf.getFormula();
 
 		if (((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null) {
-
-			final TermTransferrer termTF =
-					new TermTransferrer(((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript(),
-							(mgdScript.getScript()));
-
-			formula = termTF.transform(tf.getFormula());
-
-			auxVars = transferSet(termTF, auxVars);
+			formula = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(tf.getFormula());
+			auxVars = transferSet(mgdScript.getScript(), auxVars);
 		}
 
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), false,
-				tf.getNonTheoryConsts(), false, tf.getBranchEncoders(), false);
+		// Transfer tf.getInVars(), tf.getOutVars() and tf.getBranchEncoders()
+
+		final HashMap<IProgramVar, TermVariable> tfInVars = new HashMap<>();
+		final HashMap<IProgramVar, TermVariable> tfOutVars = new HashMap<>();
+		final HashSet<TermVariable> tfBranchEncoder = new HashSet<>();
+
+		for (final Entry<IProgramVar, TermVariable> invar : tf.getInVars().entrySet()) {
+			tfInVars.put(invar.getKey(), (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+					.transferTermToWorker(invar.getValue()));
+		}
+
+		for (final Entry<IProgramVar, TermVariable> outvar : tf.getOutVars().entrySet()) {
+			tfOutVars.put(outvar.getKey(), (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+					.transferTermToWorker(outvar.getValue()));
+		}
+
+		for (final TermVariable bec : tf.getBranchEncoders()) {
+			tfBranchEncoder
+					.add((TermVariable) ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(bec));
+		}
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tfInVars, tfOutVars, false, tf.getNonTheoryConsts(),
+				false, tfBranchEncoder, false);
 
 		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(auxVars);
 		final Term renamed = Substitution.apply(mgdScript, oldAuxVar2newAuxVar, formula);
@@ -1338,9 +1351,11 @@ public final class TransFormulaUtils {
 
 		tfb.setFormula(resultTerm);
 		for (final TermVariable auxVar : oldAuxVar2newAuxVar.values()) {
+			assert resultTerm.getTheory().equals(auxVar.getTheory());
 			tfb.addAuxVar(auxVar);
 		}
 		for (final TermVariable auxVar : decoupled.getSecond()) {
+			assert resultTerm.getTheory().equals(auxVar.getTheory());
 			tfb.addAuxVar(auxVar);
 		}
 		tfb.setInfeasibility(tf.isInfeasible());

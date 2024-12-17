@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -311,34 +312,32 @@ public class TransFormulaBuilder {
 
 	private void transferEverythingToWorker(final ManagedScript script) {
 		if (((HistoryRecordingScript) script.getScript()).getMainScript() != null) {
-
-			final TermTransferrer termTF = new TermTransferrer(
-					((HistoryRecordingScript) script.getScript()).getMainScript().getScript(), (script.getScript()));
-
-			mFormula = termTF.transform(mFormula);
-			mInVars = transferMap(termTF, mInVars);
-			mOutVars = transferMap(termTF, mOutVars);
-			mAuxVars = transferSet(termTF, mAuxVars);
-			mBranchEncoders = transferSet(termTF, mBranchEncoders);
+			mFormula = ((HistoryRecordingScript) script.getScript()).transferTermToWorker(mFormula);
+			mInVars = transferMap(script.getScript(), mInVars);
+			mOutVars = transferMap(script.getScript(), mOutVars);
+			mAuxVars = transferSet(script.getScript(), mAuxVars);
+			mBranchEncoders = transferSet(script.getScript(), mBranchEncoders);
 
 		} else {
 			return;
 		}
 	}
 
-	private Map<IProgramVar, TermVariable> transferMap(final TermTransferrer termTF,
+	private Map<IProgramVar, TermVariable> transferMap(final Script script,
 			final Map<IProgramVar, TermVariable> inputMap) {
 		final HashMap<IProgramVar, TermVariable> outMap = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : inputMap.entrySet()) {
-			outMap.put(entry.getKey(), (TermVariable) termTF.transform(entry.getValue()));
+
+			outMap.put(entry.getKey(),
+					(TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(entry.getValue()));
 		}
 		return outMap;
 	}
 
-	private Set<TermVariable> transferSet(final TermTransferrer termTF, final Set<TermVariable> inputSet) {
+	private Set<TermVariable> transferSet(final Script script, final Set<TermVariable> inputSet) {
 		final Set<TermVariable> outSet = new HashSet<>();
 		for (final TermVariable var : inputSet) {
-			outSet.add((TermVariable) termTF.transform(var));
+			outSet.add((TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(var));
 		}
 		return outSet;
 	}

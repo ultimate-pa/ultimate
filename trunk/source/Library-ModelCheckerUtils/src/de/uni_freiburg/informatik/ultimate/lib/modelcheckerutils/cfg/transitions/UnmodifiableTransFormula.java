@@ -63,6 +63,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	private final Set<TermVariable> mBranchEncoders;
 	private final Infeasibility mInfeasibility;
 	private final Term mClosedFormula;
+	private final ManagedScript mMgdScript;
 
 	/**
 	 * Was the solver able to prove infeasiblity of a TransFormula. UNPROVEABLE means that TransFormula could be
@@ -91,6 +92,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		mClosedFormula =
 				computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
 		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
+		mMgdScript = script;
 
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
@@ -268,8 +270,11 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		for (final IProgramConst programConsts : getNonTheoryConsts()) {
 			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
 			assert consistent : "is theory symbol";
-			nonTheoryConstantTerms.add(programConsts.getDefaultConstant());
-			consistent &= constantsInFormula.contains(programConsts.getDefaultConstant());
+			nonTheoryConstantTerms.add((ApplicationTerm) ((HistoryRecordingScript) mMgdScript.getScript())
+					.transferTermToWorker(programConsts.getDefaultConstant()));
+			// assert mFormula.getTheory().equals(programConsts.getDefaultConstant().getTheory());
+			consistent &= constantsInFormula.contains(((HistoryRecordingScript) mMgdScript.getScript())
+					.transferTermToWorker(programConsts.getDefaultConstant()));
 			assert consistent : "not in formula";
 		}
 		for (final ApplicationTerm constInFomula : constantsInFormula) {

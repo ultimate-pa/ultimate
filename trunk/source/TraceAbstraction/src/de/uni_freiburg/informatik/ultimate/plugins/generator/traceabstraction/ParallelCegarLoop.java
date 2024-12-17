@@ -130,6 +130,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mThreadLimit = mPref.getThreadLimit();
 		if (mThreadLimit == 0) {
 			mThreadLimit = Runtime.getRuntime().availableProcessors();
+			mThreadLimit -= 1; // one for main thread
 		}
 		mExec = Executors.newFixedThreadPool(mThreadLimit);
 		mECS = new ExecutorCompletionService<>(mExec);
