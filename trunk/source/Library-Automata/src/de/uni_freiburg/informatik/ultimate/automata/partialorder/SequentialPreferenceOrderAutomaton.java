@@ -54,16 +54,18 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 	private final INwaOutgoingLetterAndTransitionProvider<L, S1> mLeftAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mRightAutomaton;
 	private final ImmutableSet<L> mTransitionLetters;
-
 	private final ISequentialStateFactory<S1, S2, S> mStateFactory;
+	private final boolean mApplyFunctionAfterTransition;
 
 	public SequentialPreferenceOrderAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S1> leftAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<L, S2> rightAutomaton,
-			final ImmutableSet<L> transitionLetters, final ISequentialStateFactory<S1, S2, S> stateFactory) {
+			final ImmutableSet<L> transitionLetters, final ISequentialStateFactory<S1, S2, S> stateFactory,
+			final boolean applyFunctionAfterTransition) {
 		mLeftAutomaton = leftAutomaton;
 		mRightAutomaton = rightAutomaton;
 		mTransitionLetters = transitionLetters;
 		mStateFactory = stateFactory;
+		mApplyFunctionAfterTransition = applyFunctionAfterTransition;
 
 		assert NestedWordAutomataUtils.isFiniteAutomaton(leftAutomaton) : "calls and returns are not supported";
 		assert NestedWordAutomataUtils.isFiniteAutomaton(rightAutomaton) : "calls and returns are not supported";
@@ -132,7 +134,17 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 		case Either.Left(final S1 original):
 			if (mLeftAutomaton.isFinal(original) && mTransitionLetters.contains(letter)) {
 				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
-				// TODO implement the second variant of the definition here
+				if (mApplyFunctionAfterTransition) {
+					// It is assumed here that if mRightAutomaton has multiple initial states,
+					// then it doesnt matter which one we transition to.
+					// If needed this could probably be fixed by applying TransformIterator twice?
+					return () -> new TransformIterator<>(
+							mRightAutomaton
+									.internalSuccessors(mRightAutomaton.getInitialStates().iterator().next(), letter)
+									.iterator(),
+							transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+									mStateFactory.createNewStateRight(transition.getSucc())));
+				}
 				return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
 						successor -> new OutgoingInternalTransition<>(letter,
 								mStateFactory.createNewStateRight(successor)));

@@ -50,20 +50,24 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 	private final IPreferenceOrder<L, S0, S2> mSecondOrder;
 	private final ImmutableSet<L> mTransitionLetters;
 	private final ISequentialStateFactory<S1, S2, S> mStateFactory;
+	private final boolean mApplyFunctionAfterTransition;
 	private SequentialPreferenceOrderAutomaton<L, S1, S2, S> mAutomaton;
 
 	public SequentialPreferenceOrder(final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
-			final ImmutableSet<L> transitionLetters, final ISequentialStateFactory<S1, S2, S> stateFactory) {
+			final ImmutableSet<L> transitionLetters, final ISequentialStateFactory<S1, S2, S> stateFactory,
+			final boolean applyFunctionAfterTransition) {
 		mFirstOrder = fst;
 		mSecondOrder = snd;
 		mTransitionLetters = transitionLetters;
 		mStateFactory = stateFactory;
+		mApplyFunctionAfterTransition = applyFunctionAfterTransition;
 	}
 
 	public static <L, S0, S1, S2> SequentialPreferenceOrder<L, S0, S1, S2, Either<S1, S2>> create(
 			final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
 			final ImmutableSet<L> transitionLetters) {
-		return new SequentialPreferenceOrder<>(fst, snd, transitionLetters, new ISequentialStateFactory.Default<>());
+		return new SequentialPreferenceOrder<>(fst, snd, transitionLetters, new ISequentialStateFactory.Default<>(),
+				true);
 	}
 
 	@Override
@@ -75,7 +79,7 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 	public INwaOutgoingLetterAndTransitionProvider<L, S> getMonitor() {
 		if (mAutomaton == null) {
 			mAutomaton = new SequentialPreferenceOrderAutomaton<>(mFirstOrder.getMonitor(), mSecondOrder.getMonitor(),
-					mTransitionLetters, mStateFactory);
+					mTransitionLetters, mStateFactory, mApplyFunctionAfterTransition);
 		}
 		return mAutomaton;
 	}
