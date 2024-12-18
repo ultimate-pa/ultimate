@@ -22,18 +22,18 @@ options:
       left:
         builtin: loop_lockstep
         iterations:
-          - [thread1Thread1of1ForFork1, 1]
-          - [thread2Thread1of1ForFork0, 1]
+          - [thread1Thread1of1ForFork0, 1]
+          - [thread2Thread1of1ForFork1, 1]
       # The second preference order (used later)
       right:
         builtin: loop_lockstep
         iterations:
-          - [thread1Thread1of1ForFork1, 1]
-          - [thread2Thread1of1ForFork0, 2]
+          - [thread1Thread1of1ForFork0, 1]
+          - [thread2Thread1of1ForFork1, 2]
       # The letters at which we switch from one order to the other.
       # To find out the names, set a breakpoint and run Ultimate in debug mode.
       switch_on:
-        - "[70] L41-1-->L43:"
+        - "[68] L39-1-->L41:"
 
     # Additional options.
     # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.

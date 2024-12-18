@@ -33,7 +33,8 @@ options:
       # The letters at which we switch from one order to the other.
       # To find out the names, set a breakpoint and run Ultimate in debug mode.
       switch_on:
-        - "[63] L33-1-->L39:"
+        # We switch when we enter the second loop.
+        - "[68] L39-1-->L41:"
 
     # Additional options.
     # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
