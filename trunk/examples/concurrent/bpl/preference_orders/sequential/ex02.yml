@@ -39,3 +39,7 @@ options:
     # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
     Limit iterations: 10
 
+    # Interpolation struggles to find the invariants though they are simple.
+    # Hence, we provide (most of) them explicity (in ex02.bpl.proof.smt2).
+    Read initial proof assertions from file if available: true
+
