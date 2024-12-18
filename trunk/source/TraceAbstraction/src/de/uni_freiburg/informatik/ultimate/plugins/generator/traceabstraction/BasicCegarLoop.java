@@ -672,9 +672,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				automaton, true).getResult();
 	}
 
-	public IPreconditionProvider getPreconditionProvider() {
-		return IPreconditionProvider.constructDefaultPreconditionProvider();
-	}
+	public abstract IPreconditionProvider getPreconditionProvider();
 
 	public IPostconditionProvider getPostconditionProvider() {
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
