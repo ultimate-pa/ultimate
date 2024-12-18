@@ -126,6 +126,7 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 
 				final String nextThread = letter.getPrecedingProcedure();
 				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.getIndex());
+				assert nextIndex != -1 : "Unknown thread " + nextThread + " not in " + mThreads;
 
 				if (mMaxSteps.get(nextIndex) == 1) {
 					nextIndex = (nextIndex + 1) % mThreads.size();
