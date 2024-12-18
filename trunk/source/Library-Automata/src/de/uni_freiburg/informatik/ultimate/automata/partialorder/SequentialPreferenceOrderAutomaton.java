@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Either;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
@@ -135,13 +136,9 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 			if (mLeftAutomaton.isFinal(original) && mTransitionLetters.contains(letter)) {
 				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
 				if (mApplyFunctionAfterTransition) {
-					// It is assumed here that if mRightAutomaton has multiple initial states,
-					// then it doesnt matter which one we transition to.
-					// If needed this could probably be fixed by applying TransformIterator twice?
 					return () -> new TransformIterator<>(
-							mRightAutomaton
-									.internalSuccessors(mRightAutomaton.getInitialStates().iterator().next(), letter)
-									.iterator(),
+							new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
+									q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
 							transition -> new OutgoingInternalTransition<>(transition.getLetter(),
 									mStateFactory.createNewStateRight(transition.getSucc())));
 				}
