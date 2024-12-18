@@ -10,25 +10,24 @@
  *
  */
 var n, x, c: int;
+var i, j : int;
 
 procedure ULTIMATE.start()
-modifies x;
+modifies x, i, j;
 {
   assume x == 0;
 
   fork 1 thread1();
-  fork 2 thread2();
+  fork 2,2 thread2();
   join 1;
-  join 2;
+  join 2,2;
 
   assert x == 0;
 }
 
 procedure thread1()
-modifies x;
+modifies x, i;
 {
-  var i : int;
-
   i := 0;
   while (i < n)
   {
@@ -45,9 +44,8 @@ modifies x;
 }
 
 procedure thread2()
-modifies x;
+modifies x, j;
 {
-  var j : int;
   j := 0;
 
   while (j < 3 * n)
