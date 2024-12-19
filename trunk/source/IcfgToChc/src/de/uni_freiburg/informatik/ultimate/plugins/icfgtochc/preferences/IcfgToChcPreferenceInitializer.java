@@ -118,6 +118,14 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 			+ "all symmetric preference orders. If we break symmetry, more proofs are accepted.";
 	private static final boolean DEF_BREAK_PREFORDER_SYMMETRY = true;
 
+	public static final String LABEL_NONDET_SLEEP_UPDATES = "Use nondeterministic sleep update encoding";
+	private static final String DESC_NONDET_SLEEP_UPDATES = """
+			If enabled, sleep set updates are encoded such that non-deterministically, \
+			non-commuting edges may or may not be added to the sleep set. \
+			This does not affect CHC satisfiability but may sometimes be simpler for the CHC solver. \
+			It is particularly recommended in connection with necessary-and-complete conditional independence.""";
+	private static final boolean DEF_NONDET_SLEEP_UPDATES = false;
+
 	// TODO Currently unused
 	public static final String LABEL_EXPLICIT_SLEEP = "Encode sleep sets explicitly";
 	private static final String DESC_EXPLICIT_SLEEP = "Sleep sets can be encoded symbolically (as CHC variables), "
@@ -177,6 +185,8 @@ public class IcfgToChcPreferenceInitializer extends UltimatePreferenceInitialize
 				DESC_SLEEP_SET_REDUCTION, PreferenceType.Boolean));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_BREAK_PREFORDER_SYMMETRY, DEF_BREAK_PREFORDER_SYMMETRY,
 				DESC_BREAK_PREFORDER_SYMMETRY, PreferenceType.Boolean));
+		container.addItem(new UltimatePreferenceItem<>(LABEL_NONDET_SLEEP_UPDATES, DEF_NONDET_SLEEP_UPDATES,
+				DESC_NONDET_SLEEP_UPDATES, PreferenceType.Boolean));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_EXPLICIT_SLEEP, DEF_EXPLICIT_SLEEP, DESC_EXPLICIT_SLEEP,
 				PreferenceType.Boolean));
 		container.addItem(new UltimatePreferenceItem<>(LABEL_PREFERENCE_ORDER, DEF_PREFERENCE_ORDER,

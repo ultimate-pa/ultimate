@@ -282,10 +282,27 @@ public class SleepSetThreadModularHornClauseProvider extends ThreadModularHornCl
 		final Term commConstr =
 				getCommutativityConstraint(clause, activeThread, activeEdge, updatedThread, currentLoc.getTerm());
 
+		// Combine the conjuncts to determine whether the thread can be added to the sleep set.
+		// ((updatedThread < activeThread) \/ sleep) /\ commConstr
+		final Term sleepConstr = SmtUtils.and(mScript, canBePutToSleep, commConstr);
+
 		// Update the sleep variable of updatedThread, according to the sleep set rule.
-		// sleep' = ((updatedThread < activeThread) \/ sleep) /\ commConstr
-		clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(),
-				SmtUtils.and(mScript, canBePutToSleep, commConstr)));
+		if (mPrefs.useNondetSleepUpdates()) {
+			// This encoding allows to nondeterministically add the thread to the sleep set or not, if the required
+			// conditions are not satisfied. As we always prove the program correct for all resolutions of such
+			// nondeterminism, we also cover the case that the thread is not added. Hence, this mode is still sound.
+			// Overall, the satisfiability of the CHC system should not be affected.
+			//
+			// However, we generate a slightly simpler constraint which might be easier to solve. In particular, if the
+			// commutativity constraint contains universally quantified variables, this form allows to lift these
+			// quantified variables to the clause level.
+			//
+			// ((updatedThread < activeThread) \/ sleep) /\ commConstr -> sleep'
+			clause.addConstraint(SmtUtils.implies(mScript, sleepConstr, newSleep.getTerm()));
+		} else {
+			// sleep' = ((updatedThread < activeThread) \/ sleep) /\ commConstr
+			clause.addConstraint(SmtUtils.binaryBooleanEquality(mScript, newSleep.getTerm(), sleepConstr));
+		}
 	}
 
 	protected Term getCommutativityConstraint(final HornClauseBuilder clause, final ThreadInstance activeThread,

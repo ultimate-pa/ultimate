@@ -87,6 +87,10 @@ public class IcfgToChcPreferences {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_BREAK_PREFORDER_SYMMETRY);
 	}
 
+	public boolean useNondetSleepUpdates() {
+		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_NONDET_SLEEP_UPDATES);
+	}
+
 	// TODO Currently unused
 	public boolean explicitSleep() {
 		return mPrefs.getBoolean(IcfgToChcPreferenceInitializer.LABEL_EXPLICIT_SLEEP);
