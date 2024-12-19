@@ -3,30 +3,94 @@
   <resultfiles>${taskdef_path}/CHC_*.smt2</resultfiles>
 
   <option name="&#45;-force-no-wrapper" />
-  <option name="-s">${taskdef_path}/ThreadModularVerifier.Settings.epf</option>
+  <option name="-s">${taskdef_path}/../ThreadModularVerifier.Settings.epf</option>
 
   <rundefinition name="SleepExplicit.Eldarica">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
   </rundefinition>
 
   <rundefinition name="SleepExplicit.Z3">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <rundefinition name="SleepExplicit.Golem">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.Eldarica">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.Z3">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
+    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.Golem">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
+    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Eldarica">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NecSufComm.Eldarica">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
+    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NecSufComm.Z3">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
+    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
+  </rundefinition>
+
+  <rundefinition name="SleepExplicit.NecSufComm.Golem">
+    <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
+    <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
+    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <!--rundefinition name="SleepExplicit.TreeAutomizer">
@@ -42,27 +106,27 @@
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-icfgtochc.break.symmetry.of.preference.order">false</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
   </rundefinition>
 
   <rundefinition name="SleepSymbolic.Z3">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-icfgtochc.break.symmetry.of.preference.order">false</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <rundefinition name="SleepSymbolic.Golem">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-icfgtochc.break.symmetry.of.preference.order">false</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <!--rundefinition name="SleepSymbolic.TreeAutomizer">
@@ -80,9 +144,9 @@
     <option name="&#45;-icfgtochc.break.symmetry.of.preference.order">false</option>
     <option name="&#45;-icfgtochc.use.symmetry.clauses">true</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
   </rundefinition>
 
   <rundefinition name="SleepSymbolic-Symmetry.Z3">
@@ -90,9 +154,9 @@
     <option name="&#45;-icfgtochc.break.symmetry.of.preference.order">false</option>
     <option name="&#45;-icfgtochc.use.symmetry.clauses">true</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <rundefinition name="SleepSymbolic-Symmetry.Golem">
@@ -100,9 +164,9 @@
     <option name="&#45;-icfgtochc.break.symmetry.of.preference.order">false</option>
     <option name="&#45;-icfgtochc.use.symmetry.clauses">true</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <!--rundefinition name="SleepSymbolic-Symmetry.TreeAutomizer">
@@ -120,27 +184,27 @@
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-icfgtochc.enable.sleep.set.reduction">false</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
   </rundefinition>
 
   <rundefinition name="NoSleep.Z3">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-icfgtochc.enable.sleep.set.reduction">false</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <rundefinition name="NoSleep.Golem">
     <option name="-tc">../../../trunk/examples/threadmodular/regression/ThreadModularVerifier.xml</option>
     <option name="&#45;-icfgtochc.enable.sleep.set.reduction">false</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <!--rundefinition name="NoSleep.TreeAutomizer">
@@ -158,9 +222,9 @@
     <option name="&#45;-icfgtochc.enable.sleep.set.reduction">false</option>
     <option name="&#45;-icfgtochc.use.symmetry.clauses">true</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
   </rundefinition>
 
   <rundefinition name="NoSleep-Symmetry.Z3">
@@ -168,9 +232,9 @@
     <option name="&#45;-icfgtochc.enable.sleep.set.reduction">false</option>
     <option name="&#45;-icfgtochc.use.symmetry.clauses">true</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <rundefinition name="NoSleep-Symmetry.Golem">
@@ -178,9 +242,9 @@
     <option name="&#45;-icfgtochc.enable.sleep.set.reduction">false</option>
     <option name="&#45;-icfgtochc.use.symmetry.clauses">true</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
+    <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
-    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option>
+    <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
   </rundefinition>
 
   <!--rundefinition name="UniHorn">

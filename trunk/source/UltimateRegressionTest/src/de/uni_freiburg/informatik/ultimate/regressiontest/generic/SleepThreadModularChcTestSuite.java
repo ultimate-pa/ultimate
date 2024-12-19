@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 public class SleepThreadModularChcTestSuite extends UltimateTestSuite {
-	private static final String SETTINGS = "examples/concurrent/bpl/parameterized/SleepExplicit.epf";
+	private static final String SETTINGS = "examples/concurrent/bpl/parameterized/ThreadModularVerifier.Settings.epf";
 	private static final String TOOLCHAIN = "examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml";
 	private static final String DIRECTORY = "examples/concurrent/bpl/parameterized/";
 	private static final String TASKDEF_REGEX = ".*\\.yml";

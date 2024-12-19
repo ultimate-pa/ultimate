@@ -19,7 +19,7 @@ file_export_version=3.0
 
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/CHC\ solver\ backend=Z3
-/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ CHC\ model\ if\ query\ is\ SAT=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ CHC\ model\ if\ query\ is\ SAT=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ UNSAT\ core\ if\ query\ is\ UNSAT=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.chcsolver/Produce\ derivation\ if\ query\ is\ UNSAT=false
 @de.uni_freiburg.informatik.ultimate.plugins.chcsolver=0.2.3
