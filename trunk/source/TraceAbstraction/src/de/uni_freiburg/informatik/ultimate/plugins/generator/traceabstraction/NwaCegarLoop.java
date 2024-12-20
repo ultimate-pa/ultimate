@@ -445,10 +445,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		if (mProofUpdater != null && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique);
-			assert NwaFloydHoareValidityCheck
-					.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-							new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction, true)
-					.getResult() : "Not inductive";
+			assert NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+					new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction,
+					getPreconditionProvider().constructPrecondition(unifier), true).getResult() : "Not inductive";
 		}
 	}
 
