@@ -591,5 +591,4 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		return run.getStateSequence().stream().map(p -> ((ISLPredicate) p).getProgramPoint())
 				.collect(Collectors.toList());
 	}
-
 }

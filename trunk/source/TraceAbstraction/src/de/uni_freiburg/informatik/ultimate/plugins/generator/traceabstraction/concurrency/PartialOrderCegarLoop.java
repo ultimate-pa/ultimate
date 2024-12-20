@@ -581,7 +581,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return result;
 	}
 
-
 	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
 		protected MLPredicateWithInterpolants(final IMLPredicate underlying, final IPredicate annotation) {
 			super(underlying, annotation);
