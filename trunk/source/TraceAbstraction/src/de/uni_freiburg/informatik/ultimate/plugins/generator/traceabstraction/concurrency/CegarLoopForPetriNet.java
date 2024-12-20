@@ -598,16 +598,6 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 				.collect(Collectors.toList());
 	}
 
-	@Override
-	public IPreconditionProvider getPreconditionProvider() {
-		final Marking<IPredicate> initialMarking = (Marking<IPredicate>) mCounterexample.getStateSequence().get(0);
-		final var initialLocations = initialMarking.stream().filter(ISLPredicate.class::isInstance)
-				.map(ISLPredicate.class::cast).map(ISLPredicate::getProgramPoint).collect(Collectors.toList());
-		final IcfgLocation initialLoc = DataStructureUtils.getOneAndOnly(initialLocations, "initial location");
-		return unifier -> unifier.getOrConstructPredicate(
-				PredicateUtils.computeInitialPredicateForProcedure(mCsToolkit.getModifiableGlobalsTable(),
-						mCsToolkit.getManagedScript().getScript(), initialLoc.getProcedure(), mPredicateFactory));
-	}
 
 	private static final class CounterexampleCache<L extends IIcfgTransition<?>> {
 		private PetriNetRun<L, IPredicate> mCounterexample;

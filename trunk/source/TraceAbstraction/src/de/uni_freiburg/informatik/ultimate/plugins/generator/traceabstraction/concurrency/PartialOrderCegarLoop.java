@@ -104,7 +104,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPreconditionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -582,14 +581,6 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		return result;
 	}
 
-	@Override
-	public IPreconditionProvider getPreconditionProvider() {
-		final IPredicate initialState = (IPredicate) mCounterexample.getStateSequence().get(0);
-		final IcfgLocation initialLoc = PredicateUtils.getSingleLocation(initialState);
-		return unifier -> unifier.getOrConstructPredicate(
-				PredicateUtils.computeInitialPredicateForProcedure(mCsToolkit.getModifiableGlobalsTable(),
-						mCsToolkit.getManagedScript().getScript(), initialLoc.getProcedure(), mPredicateFactory));
-	}
 
 	private static final class MLPredicateWithInterpolants extends AnnotatedMLPredicate<IPredicate> {
 		protected MLPredicateWithInterpolants(final IMLPredicate underlying, final IPredicate annotation) {

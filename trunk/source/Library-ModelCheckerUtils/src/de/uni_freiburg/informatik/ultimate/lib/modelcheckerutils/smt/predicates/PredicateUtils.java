@@ -478,4 +478,12 @@ public class PredicateUtils {
 				.collect(Collectors.toList());
 		return factory.andT(equalities);
 	}
+
+	public static IPredicate computeInitialPredicate(final CfgSmtToolkit csToolkit, final IPredicateUnifier unifier) {
+		final var script = csToolkit.getManagedScript().getScript();
+		final var equalities = csToolkit.getSymbolTable().getGlobals().stream().map(
+				global -> SmtUtils.equality(script, global.getTermVariable(), global.getOldVar().getTermVariable()))
+				.collect(Collectors.toList());
+		return unifier.getOrConstructPredicate(SmtUtils.and(script, equalities));
+	}
 }

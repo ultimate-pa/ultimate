@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult.BasicRefinementEngineResult;
@@ -211,7 +212,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				}
 			}
 		}
-
 	}
 
 	@Override
@@ -667,14 +667,17 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	protected boolean checkInterpolantAutomatonInductivity(final INestedWordAutomaton<L, IPredicate> automaton) {
+		final var unifier = mRefinementResult.getPredicateUnifier();
 		return NwaFloydHoareValidityCheck.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-				new IncrementalHoareTripleChecker(mCsToolkit, false), mRefinementResult.getPredicateUnifier(),
-				automaton, true).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, automaton,
+				getPreconditionProvider().constructPrecondition(unifier), true).getResult();
 	}
 
-	public abstract IPreconditionProvider getPreconditionProvider();
+	protected IPreconditionProvider getPreconditionProvider() {
+		return unifier -> PredicateUtils.computeInitialPredicate(mCsToolkit, unifier);
+	}
 
-	public IPostconditionProvider getPostconditionProvider() {
+	protected IPostconditionProvider getPostconditionProvider() {
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
 	}
 
@@ -685,6 +688,5 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				final Lazy<IPredicateUnifier> predicateUnifier) {
 			super(LBool.UNKNOWN, null, null, false, Collections.emptyList(), htc, predicateUnifier);
 		}
-
 	}
 }

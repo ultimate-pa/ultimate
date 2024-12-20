@@ -592,12 +592,4 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				.collect(Collectors.toList());
 	}
 
-	@Override
-	public IPreconditionProvider getPreconditionProvider() {
-		final IPredicate initialState = (IPredicate) mCounterexample.getStateSequence().get(0);
-		final IcfgLocation initialLoc = PredicateUtils.getSingleLocation(initialState);
-		return unifier -> unifier.getOrConstructPredicate(
-				PredicateUtils.computeInitialPredicateForProcedure(mCsToolkit.getModifiableGlobalsTable(),
-						mCsToolkit.getManagedScript().getScript(), initialLoc.getProcedure(), mPredicateFactory));
-	}
 }

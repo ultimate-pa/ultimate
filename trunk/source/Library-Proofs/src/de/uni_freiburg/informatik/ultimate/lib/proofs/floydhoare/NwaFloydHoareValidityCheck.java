@@ -73,9 +73,22 @@ public class NwaFloydHoareValidityCheck<L extends IAction, S> extends FloydHoare
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IHoareTripleChecker hoareTripleChecker, final IPredicateUnifier unifier,
 			final INestedWordAutomaton<L, IPredicate> automaton, final boolean assertValidity) {
+		return forInterpolantAutomaton(services, mgdScript, hoareTripleChecker, unifier, automaton,
+				unifier.getTruePredicate(), assertValidity);
+	}
+
+	/**
+	 * Creates a validity check for an interpolant automaton, i.e., an automaton where the states of the automaton are
+	 * themselves the predicates forming a Floyd/Hoare automaton.
+	 */
+	public static <L extends IAction> NwaFloydHoareValidityCheck<L, IPredicate> forInterpolantAutomaton(
+			final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IHoareTripleChecker hoareTripleChecker, final IPredicateUnifier unifier,
+			final INestedWordAutomaton<L, IPredicate> automaton, final IPredicate precondition,
+			final boolean assertValidity) {
 		return new NwaFloydHoareValidityCheck<>(services, mgdScript, hoareTripleChecker, automaton,
-				new FloydHoareForInterpolantAutomaton(unifier, automaton), assertValidity,
-				MissingAnnotationBehaviour.THROW, false);
+				new FloydHoareForInterpolantAutomaton(precondition, unifier.getFalsePredicate(), automaton),
+				assertValidity, MissingAnnotationBehaviour.THROW, false);
 	}
 
 	/**
