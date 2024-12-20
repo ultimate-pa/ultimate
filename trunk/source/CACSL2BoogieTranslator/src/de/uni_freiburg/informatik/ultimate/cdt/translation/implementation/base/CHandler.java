@@ -266,7 +266,7 @@ public class CHandler {
 	 * This is required for soundness because we omit the initialization of large string literals. A setting determine
 	 * the size from which a string is "large".
 	 */
-	private static final boolean OVERAPPROX_FLAG_LARGE_STRING_LITERAL = false;
+	private static final boolean OVERAPPROX_FLAG_LARGE_STRING_LITERAL = true;
 
 	private final MemoryHandler mMemoryHandler;
 

@@ -71,7 +71,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private AberranceInformation[] mTraceAberrantList;
+	private AberranceInformation[] mTraceAberranceList;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
 	private final ErrorLocalizationStatisticsGenerator mErrorLocalizationStatisticsGenerator;
@@ -94,9 +94,9 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		mSimplificationTechnique = simplificationTechnique;
 		mSymbolTable = symbolTable;
 		mPredicateFactory = predicateFactory;
-		mTraceAberrantList = new AberranceInformation[counterexample.getWord().length()];
-		for (int i = 0; i < mTraceAberrantList.length; i++) {
-			mTraceAberrantList[i] = new AberranceInformation(TraceAberrance.MAYBE);
+		mTraceAberranceList = new AberranceInformation[counterexample.getWord().length()];
+		for (int i = 0; i < mTraceAberranceList.length; i++) {
+			mTraceAberranceList[i] = new AberranceInformation(TraceAberrance.MAYBE);
 		}
 		doTraceAberrantAnalysis(counterexample.getWord(), predicateUnifier.getTruePredicate(),
 				predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit, predicateUnifier);
@@ -109,7 +109,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 	}
 
 	public List<IRelevanceInformation> getAberranceInformation() {
-		return Arrays.asList(mTraceAberrantList);
+		return Arrays.asList(mTraceAberranceList);
 	}
 
 	private void doTraceAberrantAnalysis(final NestedWord<L> counterexampleWord, final IPredicate truePredicate,
@@ -133,9 +133,6 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				abort = false;
 				if (mFirstOverapproxVariable == -1) {
 					mFirstOverapproxVariable = i;
-				} else {
-					mLogger.info("aborting trace aberrance, multiple OverapproxVariable");
-					return;
 				}
 				if (i > mLastOverapproxVariable) {
 					mLastOverapproxVariable = i;
@@ -274,8 +271,8 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				if (t == LBool.SAT) {
 					mLogger.info("Success checkSatTerm");
 					// TODO only overapprox
-					for (int i = 0; i < mTraceAberrantList.length; i++) {
-						mTraceAberrantList[i] = new AberranceInformation(TraceAberrance.NO);
+					for (int i = 0; i < mTraceAberranceList.length; i++) {
+						mTraceAberranceList[i] = new AberranceInformation(TraceAberrance.NO);
 					}
 					return;
 				}
@@ -291,7 +288,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 			toCheck.add(overapprox instanceof OverapproxVariable);
 			// toCheck.add(overapprox != null);
 		}
-		mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
+		mTraceAberranceList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		if (prefs.getBoolean(
@@ -330,8 +327,8 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					otherPath.add(((IcfgEdge) edge).getTarget());
 					otherPathEdges.add((IcfgEdge) edge);
 					final IcfgLocation currentNode = ((IcfgEdge) edge).getTarget();
-					final int currentPathEnd = findOtherPathEnd(currentPath, otherPath, otherPathEdges, otherPaths,
-							otherPathsEdges, maxPaths, maxPathLength);
+					final int currentPathEnd = findOtherPathEndAndOtherPaths(currentPath, otherPath, otherPathEdges,
+							otherPaths, otherPathsEdges, maxPaths, maxPathLength);
 					if (currentPathEnd == 0) {
 						break;
 					}
@@ -436,7 +433,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					mPredicateSkipList.add(counterexampleWord.getSymbol(i));
 					mPrePostSequences = calculatePrePost(csToolkit, falsePredicate, truePredicate, counterexampleWord,
 							mFirstOverapproxVariable, mLastOverapproxVariable);
-					mTraceAberrantList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
+					mTraceAberranceList = checkHoareTriples(csToolkit, counterexampleWord, mPrePostSequences, toCheck);
 					if (noOverapproxVariableTraceAberrant(counterexampleWord)) {
 						break;
 					}
@@ -452,7 +449,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		for (int i = 0; i < counterexampleWord.length(); i++) {
 			final Overapprox overapprox = Overapprox.getAnnotation(counterexampleWord.getSymbol(i));
 			if (overapprox instanceof OverapproxVariable
-					&& mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
+					&& mTraceAberranceList[i].GetTraceAberrance() != TraceAberrance.NO) {
 				// if (mTraceAberrantList[i].GetTraceAberrance() != TraceAberrance.NO) {
 				return false;
 			}
@@ -522,7 +519,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				continue;
 			}
 			final IPredicate pre = prePostPredicates[0].getPredicate(i + 1);
-			final IPredicate sp = prePostPredicates[1].getPredicate(i);
+			final IPredicate sp = prePostPredicates[1].getPredicate(i - 1);
 			IInternalAction internal;
 			try {
 				internal = faultLocalizationRelevanceChecker.constructHavocedInternalAction(mServices,
@@ -533,7 +530,6 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				traceAberranceList.add(new AberranceInformation(TraceAberrance.MAYBE));
 				continue;
 			}
-			// TODO check if internal possible
 			Validity res = null;
 			try {
 				res = hc.checkInternal(sp, internal, pre);
@@ -554,14 +550,12 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		return traceAberranceList.toArray(new AberranceInformation[traceAberranceList.size()]);
 	}
 
-	private static int findOtherPathEnd(final List<IcfgLocation> currentPath, final List<IcfgLocation> otherPath,
-			final List<IcfgEdge> otherPathEdges, final List<List<IcfgLocation>> otherPaths,
-			final List<List<IcfgEdge>> otherPathsEdges, final int maxPaths, final int maxPathLength) {
+	private static int findOtherPathEndAndOtherPaths(final List<IcfgLocation> currentPath,
+			final List<IcfgLocation> otherPath, final List<IcfgEdge> otherPathEdges,
+			final List<List<IcfgLocation>> otherPaths, final List<List<IcfgEdge>> otherPathsEdges, final int maxPaths,
+			final int maxPathLength) {
 		assert otherPath.size() > 0 && currentPath.size() > 0;
 		IcfgLocation currentNode = otherPath.get(otherPath.size() - 1);
-		if (Overapprox.getAnnotation(currentNode) instanceof OverapproxVariable) {
-			return 0;
-		}
 		if (currentPath.contains(currentNode)) {
 			return 1;
 		}
@@ -574,7 +568,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 			}
 			if (currentNode.getOutgoingEdges().size() > 1) {
 				for (int i = 1; i < currentNode.getOutgoingEdges().size(); i++) {
-					if (otherPaths.size() >= maxPaths) {
+					if (otherPaths.size() >= maxPaths && maxPaths != 0) {
 						return 0;
 					}
 					final IcfgEdge newEdge = currentNode.getOutgoingEdges().get(i);
@@ -587,19 +581,16 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 					newEdges.add(newEdge);
 					otherPaths.add(newPath);
 					otherPathsEdges.add(newEdges);
-					if (findOtherPathEnd(currentPath, newPath, newEdges, otherPaths, otherPathsEdges, maxPaths,
-							maxPathLength) == 0) {
+					if (findOtherPathEndAndOtherPaths(currentPath, newPath, newEdges, otherPaths, otherPathsEdges,
+							maxPaths, maxPathLength) == 0) {
 						return 0;
 					}
 				}
 			}
-			if (otherPath.size() > maxPathLength) {
+			if (otherPath.size() > maxPathLength && maxPathLength != 0) {
 				return 0;
 			}
 			final IcfgEdge newEdge = currentNode.getOutgoingEdges().get(0);
-			if (Overapprox.getAnnotation(newEdge) instanceof OverapproxVariable) {
-				return 0;
-			}
 			if (!(newEdge instanceof CodeBlock) || !((CodeBlock) newEdge instanceof StatementSequence)) {
 				if (newEdge instanceof SequentialComposition) {
 					for (final var st : ((SequentialComposition) newEdge).getCodeBlocks()) {
