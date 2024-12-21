@@ -98,12 +98,12 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 		for (int i = 0; i < mTraceAberranceList.length; i++) {
 			mTraceAberranceList[i] = new AberranceInformation(TraceAberrance.MAYBE);
 		}
+		mFirstOverapproxVariable = -1;
+		mLastOverapproxVariable = Integer.MAX_VALUE - 1;
 		doTraceAberrantAnalysis(counterexample.getWord(), predicateUnifier.getTruePredicate(),
 				predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit, predicateUnifier);
 
 		mErrorLocalizationStatisticsGenerator = new ErrorLocalizationStatisticsGenerator();
-		mFirstOverapproxVariable = -1;
-		mLastOverapproxVariable = Integer.MAX_VALUE;
 		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
 
 	}
@@ -519,7 +519,7 @@ public class TraceAberrantChecker<L extends IIcfgTransition<?>> {
 				continue;
 			}
 			final IPredicate pre = prePostPredicates[0].getPredicate(i + 1);
-			final IPredicate sp = prePostPredicates[1].getPredicate(i - 1);
+			final IPredicate sp = prePostPredicates[1].getPredicate(i);
 			IInternalAction internal;
 			try {
 				internal = faultLocalizationRelevanceChecker.constructHavocedInternalAction(mServices,
