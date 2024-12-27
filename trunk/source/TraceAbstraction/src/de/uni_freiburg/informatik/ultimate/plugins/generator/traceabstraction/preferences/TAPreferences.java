@@ -98,6 +98,8 @@ public final class TAPreferences {
 	private final IndependenceSettings mLbeIndependenceSettings;
 
 	private final int mThreadLimit;
+	public boolean useGoalSetForIsEmpty;
+	public boolean parallelSearchSrategy;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -205,6 +207,8 @@ public final class TAPreferences {
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
+		useGoalSetForIsEmpty = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_GOALSET);
+		parallelSearchSrategy = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH);
 	}
 
 	/**

@@ -377,6 +377,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		} else {
 			throw new AssertionError("unknown action");
 		}
+
+		cbFormula = ((HistoryRecordingScript) mManagedScript.getScript()).transferTermToWorker(cbFormula);
+
+		assert cbFormula.getTheory().equals(mManagedScript.getScript().getTheory());
 		if (mUseNamedTerms) {
 			final Annotation annot = new Annotation(ANNOT_NAMED, ID_TRANSITION_FORMULA);
 			cbFormula = mManagedScript.annotate(this, cbFormula, annot);

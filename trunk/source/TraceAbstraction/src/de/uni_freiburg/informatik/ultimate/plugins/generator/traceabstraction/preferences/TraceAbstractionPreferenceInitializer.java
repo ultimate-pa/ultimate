@@ -503,8 +503,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 			"None deactivates Test Generation, Standart standart Test Generation for Model Checkers, Search-MultiGoal uses the A* to find Multi Goal test cases and ignores ifeasible traces during the search, Naive-MultiGoal starts the CEGAR with the last added Test Goal and adds a new Test Goal every iteration";
 	// Thread Limit
 	// ========================================================================
-	public static final String LABEL_THREADLIMIT = "Amount of thread used for parallel CEGAR";
+	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
 	public static final Integer DEF_THREADLIMIT = 1;
+	// Parallel CEGAR counterexample search stragies
+	// ========================================================================
+	public static final String LABEL_GOALSET = "IsEmpty with Goal Set ";
+	public static final boolean DEF_GOALSET = false;
+	public static final String LABEL_PARALLELSEARCH = "Parallel Search Strategy";
+	public static final boolean DEF_PARALLELSEARCH = false;
 
 	/**
 	 * Constructor.
@@ -724,7 +730,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_TEST_GEN_MODE, DEF_TEST_GEN_MODE, DESC_TEST_GEN_MODE,
 						PreferenceType.Combo, TestGenerationMode.values()),
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000))
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_GOALSET, DEF_GOALSET, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH, DEF_PARALLELSEARCH, PreferenceType.Boolean)
 
 		);
 	}
