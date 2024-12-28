@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.As
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderNotIncrementally;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderShuffledSingletons;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
@@ -132,6 +133,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 			return new AssertOrderSmtFeatureHeuristic<>(order.getSmtFeatureHeuristicScoringMethod(),
 					order.getSmtFeatureHeuristicNumPartitions(), order.getSmtFeatureHeuristicThreshold(),
 					order.getSmtFeatureHeuristicPartitioningType(), mLogger);
+		case SHUFFLED_SINGLETONS:
+			return new AssertOrderShuffledSingletons<>();
 		default:
 			throw new AssertionError("unknown heuristic " + order);
 		}
