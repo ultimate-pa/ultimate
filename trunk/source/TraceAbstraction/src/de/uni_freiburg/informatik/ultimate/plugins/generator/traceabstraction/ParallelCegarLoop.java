@@ -224,13 +224,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		int runningThreads = 0;
 		mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+		mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
-			if (mAllCounterexamples.contains(mCounterexample) && mCounterexample != null
-					&& runningThreads < mThreadLimit) {
-				assert false;
-			}
-			mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+
 			try {
 				mCegarLoopBenchmark.announceNextIteration();
 				try {
@@ -259,6 +256,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							mLogger.info("Waking up, a worker is done.");
 						} catch (final InterruptedException e) {
 							e.printStackTrace();
+							mExec.shutdownNow();
 							// TODO throw exception
 						}
 
@@ -290,6 +288,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						} catch (final ExecutionException | InterruptedException e) {
 							// TODO better handling of exceptions in worker thread
 							e.printStackTrace();
+							mExec.shutdownNow();
 							throw new AutomataLibraryException(null, e.getMessage());
 						}
 					}
@@ -314,7 +313,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								return;
 							}
 							mAbstraction = diff.getResult();
-							mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
+							// mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
 							// Kill the worker script
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
@@ -324,6 +323,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							assert !abstraction.equals(mAbstraction);
 						} catch (final AssertionError ae) {
 							// TODO it might happen that mCounterexample is no longer accepted
+							mExec.shutdownNow();
 							throw ae;
 						}
 
@@ -342,22 +342,26 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				}
 				// need a new counterexample every iteration
 				if (runningThreads < mThreadLimit) {
-					assert mActiveCounterexamples.size() == runningThreads;
+					// assert mActiveCounterexamples.size() == runningThreads;
+					final IRun<L, ?> oldCounterexample = mCounterexample;
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
+					if (oldCounterexample == mCounterexample) {
+						mCounterexample = null;
+					}
 					if (mCounterexample != null) {
 						resetThreadLimit();
+						if (mAllCounterexamples.contains(mCounterexample) && mCounterexample != null
+								&& runningThreads < mThreadLimit) {
+							assert false;
+						}
+						mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 					} else {
-						mThreadLimit = 1;
-					}
-				}
-
-				if (runningThreads == 0) {
-					final boolean isAbstractionCorrect = isAbstractionEmpty();
-					if (isAbstractionCorrect) {
-						mResultBuilder.addResultForAllRemaining(Result.SAFE);
-						mExec.shutdown();
-						return;
+						if (isAbstractionCorrect && runningThreads == 0) {
+							mResultBuilder.addResultForAllRemaining(Result.SAFE);
+							mExec.shutdownNow();
+							return;
+						}
 					}
 				}
 
@@ -367,7 +371,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 
 		}
-		mExec.shutdown();
+		mExec.shutdownNow();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 	}
 
@@ -435,17 +439,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
 
 			} // WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
-			else {
-				/*
-				 * Naive approach, we simply set mThreadLimit = 1 and continue with the default isEmpty
-				 */
-				System.out.println("isEmpty()!");
-				mThreadLimit = 1;
 
-				mCounterexample =
-						new IsEmpty<>(new AutomataLibraryServices(getServices()), mAbstraction, mSearchStrategy)
-								.getNestedRun();
-			}
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
