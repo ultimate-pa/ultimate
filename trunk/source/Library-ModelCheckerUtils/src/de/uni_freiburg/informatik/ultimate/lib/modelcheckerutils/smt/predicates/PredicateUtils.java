@@ -292,11 +292,10 @@ public class PredicateUtils {
 			TermVariable tv = termVar;
 			Term cIndex;
 			tv = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(tv);
-			if (tf.getAuxVars().contains(tv)) {
+			if (tf.getAuxVars().contains(termVar)) { // contains needs termvar not transfered tv
 				// replace auxvar by corresponding constant
 				cIndex = script.term(ProgramVarUtils.generateConstantIdentifierForAuxVar(tv));
 			} else {
-
 				cIndex = reverseMapping.get(tv).getDefaultConstant();
 				cIndex = ((HistoryRecordingScript) script).transferTermToWorker(cIndex);
 			}

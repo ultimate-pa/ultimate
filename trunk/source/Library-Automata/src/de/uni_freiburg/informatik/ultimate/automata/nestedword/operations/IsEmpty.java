@@ -556,6 +556,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	private DoubleDecker<STATE> constructRunFromStateToNextBranch(final int position,
 			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) throws AutomataOperationCanceledException {
 		int positionOfThisSubSearch = position;
+		if (!counterexamples.isEmpty()) {
+			mVisitedPairs.clear();
+		}
 		while (!isQueueEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";

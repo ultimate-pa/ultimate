@@ -259,6 +259,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							mLogger.info("Waking up, a worker is done.");
 						} catch (final InterruptedException e) {
 							e.printStackTrace();
+							// TODO throw exception
 						}
 
 					}
@@ -286,8 +287,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								mInActiveErrorLocs.remove(traceHash);
 								doneThreads.add(mWorkerFutures.get(i));
 							}
-						} catch (InterruptedException | ExecutionException e) {
+						} catch (final ExecutionException | InterruptedException e) {
 							// TODO better handling of exceptions in worker thread
+							e.printStackTrace();
 							throw new AutomataLibraryException(null, e.getMessage());
 						}
 					}
@@ -340,21 +342,25 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				}
 				// need a new counterexample every iteration
 				if (runningThreads < mThreadLimit) {
+					assert mActiveCounterexamples.size() == runningThreads;
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
 					if (mCounterexample != null) {
+						resetThreadLimit();
 						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
-					} else if (mThreadLimit > 1) {
-						mThreadLimit -= 1;
-					}
-					// System.gc(); //Reduces memory significantly, but memory is not our issue atm
-					if (isAbstractionCorrect) {
-						if (runningThreads == 0) { // maybe just kill all running threads
-							mResultBuilder.addResultForAllRemaining(Result.SAFE);
-							mExec.shutdown();
-							return;
-						}
+					} else {
+						mThreadLimit = 1;
 					}
 				}
+
+				if (runningThreads == 0) {
+					final boolean isAbstractionCorrect = isAbstractionEmpty();
+					if (isAbstractionCorrect) {
+						mResultBuilder.addResultForAllRemaining(Result.SAFE);
+						mExec.shutdown();
+						return;
+					}
+				}
+
 			} finally {
 				// TODO if (updateBudget) {
 				// TODO final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
@@ -363,6 +369,14 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		mExec.shutdown();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
+	}
+
+	private void resetThreadLimit() {
+		mThreadLimit = mPref.getThreadLimit();
+		if (mThreadLimit == 0) { // maximum of available cores
+			mThreadLimit = Runtime.getRuntime().availableProcessors();
+			mThreadLimit -= 1; // one for main thread
+		}
 	}
 
 	@Override
@@ -380,15 +394,20 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			 * Since mActiveErrorLocs must be subsetEq to getFinalStates()
 			 * and getFinalStates() can change
 			 */
-			if (mTestGeneration.equals(TestGenerationMode.None) || !useGoalSetForIsEmpty) {
-				mActiveErrorLocs.clear();
-			}
+
+			mActiveErrorLocs.clear();
+
 			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
 				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
 						.get(TestGoalAnnotation.class.getName());
 				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-					continue;
+					if (mTestGeneration.equals(TestGenerationMode.None) || !useGoalSetForIsEmpty) {
+						mActiveErrorLocs.add(testGoal);
+					} else {
+						continue;
+					}
+
 				} else {
 					if (pLocAnno instanceof TestGoalAnnotation) {
 						mActiveErrorLocs.add(testGoal);
