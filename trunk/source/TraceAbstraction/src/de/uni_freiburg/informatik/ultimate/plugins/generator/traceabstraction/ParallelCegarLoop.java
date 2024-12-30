@@ -91,7 +91,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	final ArrayList<NestedRun<L, IPredicate>> mActiveCounterexamples = new ArrayList<>();
 
 	// for debugging only, ensures our search does not find the same counterexampl twice
-	private final HashSet<NestedRun<L, IPredicate>> mAllCounterexamples = new HashSet<>();
+	// private final HashSet<NestedRun<L, IPredicate>> mAllCounterexamples = new HashSet<>();
 
 	private final boolean useGoalSetForIsEmpty;
 	private final boolean mParallelSearchSrategy;
@@ -224,7 +224,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		int runningThreads = 0;
 		mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
-		mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+		// mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
 
@@ -313,7 +313,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								return;
 							}
 							mAbstraction = diff.getResult();
-							// mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
+							mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
 							// Kill the worker script
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
@@ -350,11 +350,11 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					}
 					if (mCounterexample != null) {
 						resetThreadLimit();
-						if (mAllCounterexamples.contains(mCounterexample) && mCounterexample != null
+						if (mActiveCounterexamples.contains(mCounterexample) && mCounterexample != null
 								&& runningThreads < mThreadLimit) {
 							assert false;
 						}
-						mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+						// mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 					} else {
 						if (isAbstractionCorrect && runningThreads == 0) {
