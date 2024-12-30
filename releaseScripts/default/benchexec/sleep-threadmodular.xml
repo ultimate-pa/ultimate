@@ -32,7 +32,7 @@
   <rundefinition name="SleepExplicit.NondetSleep.Eldarica">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="&#45;-icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
@@ -41,7 +41,7 @@
   <rundefinition name="SleepExplicit.NondetSleep.Z3">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="&#45;-icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
@@ -50,7 +50,7 @@
   <rundefinition name="SleepExplicit.NondetSleep.Golem">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="&#45;-icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
@@ -59,8 +59,8 @@
   <rundefinition name="SleepExplicit.NondetSleep.NecSufComm.Eldarica">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-use.nondeterministic.sleep.update.encoding">true</option>
-    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="&#45;-icfgtochc.use.nondeterministic.sleep.update.encoding">true</option>
+    <option name="&#45;-icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
@@ -69,7 +69,7 @@
   <rundefinition name="SleepExplicit.NecSufComm.Eldarica">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">ELDARICA</option>
-    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="&#45;-icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">true</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">true</option-->
@@ -78,7 +78,7 @@
   <rundefinition name="SleepExplicit.NecSufComm.Z3">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">Z3</option>
-    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="&#45;-icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
@@ -87,7 +87,7 @@
   <rundefinition name="SleepExplicit.NecSufComm.Golem">
     <option name="-tc">../../../trunk/examples/concurrent/bpl/parameterized/ThreadModularVerifier.xml</option>
     <option name="&#45;-chcsolver.chc.solver.backend">GOLEM</option>
-    <option name="&#45;-conditional.independence">NECESSARY_AND_SUFFICIENT</option>
+    <option name="&#45;-icfgtochc.conditional.independence">NECESSARY_AND_SUFFICIENT</option>
     <!--option name="&#45;-chcsolver.produce.chc.model.if.query.is.sat">true</option>
     <option name="&#45;-chcsolver.produce.derivation.if.query.is.unsat">false</option>
     <option name="&#45;-chcsolver.produce.unsat.core.if.query.is.unsat">false</option-->
