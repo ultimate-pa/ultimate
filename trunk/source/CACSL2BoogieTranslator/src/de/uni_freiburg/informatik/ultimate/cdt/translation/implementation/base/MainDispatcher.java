@@ -535,7 +535,7 @@ public class MainDispatcher implements IDispatcher {
 				return mAcslHandler.visit(this, (IfThenElseExpression) n);
 			}
 			if (n instanceof QuantifierExpression) {
-				return mAcslHandler.visit(this, n);
+				return mAcslHandler.visit(this, (QuantifierExpression) n);
 			}
 			if (n instanceof WildcardExpression) {
 				return mAcslHandler.visit(this, n);

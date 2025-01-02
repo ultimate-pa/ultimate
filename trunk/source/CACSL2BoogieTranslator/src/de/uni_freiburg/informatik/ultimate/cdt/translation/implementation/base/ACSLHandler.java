@@ -121,9 +121,11 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
  * @author Markus Lindenmann
@@ -173,6 +175,8 @@ public class ACSLHandler implements IACSLHandler {
 	private final LocationFactory mLocationFactory;
 	private final CHandler mCHandler;
 	private final CExpressionTranslator mCExpressionTranslator;
+
+	private final ScopedHashMap<String, LRValue> mBoundVariables = new ScopedHashMap<>();
 
 	public ACSLHandler(final boolean witnessInvariantMode, final FlatSymbolTable symboltable,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
@@ -650,6 +654,10 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression node) {
+		final var boundVar = mBoundVariables.get(node.getIdentifier());
+		if (boundVar != null) {
+			return new ExpressionResult(boundVar);
+		}
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final String id = lookupId(main, node, loc);
 
@@ -707,6 +715,47 @@ public class ACSLHandler implements IACSLHandler {
 		default:
 			throw new IncorrectSyntaxException(loc, "The type of specType should be in some type!");
 		}
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final QuantifierExpression node) {
+		mBoundVariables.beginScope();
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final List<VarList> quantifiedVars = new ArrayList<>();
+		final List<Expression> typeConstraints = new ArrayList<>();
+		for (final var decl : node.getVariables()) {
+			// For each quantified variable in the ACSL expression, create a corresponding Boogie variable and store it
+			// in the mBoundVariables to be used when handling IdentifierExpressions.
+			final String name = decl.getName();
+			final CType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+			if (!(cType instanceof CPrimitive)) {
+				throw new UnsupportedSyntaxException(loc, "Only quantified variables of primitive type are supported.");
+			}
+			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
+			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cType);
+			mBoundVariables.put(name, new LocalLValue(new VariableLHS(loc, boogieType, name, declInfo), cType, false));
+			quantifiedVars.add(new VarList(loc, new String[] { name }, mTypeHandler.cType2AstType(loc, cType)));
+			// Collect the type constraints for the given CType (if any)
+			final var id = ExpressionFactory.constructIdentifierExpression(loc, boogieType, name, declInfo);
+			final var constraint = mExpressionTranslation.getTypeConstraint(loc, id, cType);
+			if (constraint.isPresent()) {
+				typeConstraints.add(constraint.get());
+			}
+		}
+		final ExpressionResult subResult =
+				mExprResultTransformer.rexIntToBool(dispatchSwitch(main, node.getSubformula(), loc), loc);
+		if (!subResult.hasNoSideEffects()) {
+			throw new UnsupportedSyntaxException(loc, "Unable to handle quantified expressions with side-effects.");
+		}
+		// Create a quantifier expression in Boogie
+		// As Boogie uses mathematical integers, we add type constraints inside the quantifier, i.e., we produce
+		// (exists ... typeConstraints && subResult) and (forall ... typeConstraints ==> subResult)
+		final Expression inner = ExpressionFactory.newBinaryExpression(loc,
+				node.isUniversal() ? Operator.LOGICIMPLIES : Operator.LOGICAND,
+				ExpressionFactory.and(loc, typeConstraints), subResult.getLrValue().getValue());
+		final Expression result = ExpressionFactory.quantifier(loc, node.isUniversal(), quantifiedVars, inner);
+		mBoundVariables.endScope();
+		return new ExpressionResult(new RValue(result, new CPrimitive(CPrimitives.BOOL), true));
 	}
 
 	@Override
