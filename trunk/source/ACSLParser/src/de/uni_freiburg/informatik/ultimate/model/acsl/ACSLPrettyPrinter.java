@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
@@ -125,6 +126,11 @@ public class ACSLPrettyPrinter {
 			return "\\result";
 		case final AtLabelExpression at:
 			return String.format("\\at(%s, %s)", printExpression(at.getExpression()), at.getLabel());
+		case final QuantifierExpression quantifier:
+			final String quantor = quantifier.isUniversal() ? "\\forall" : "\\exists";
+			final String vars = Arrays.stream(quantifier.getVariables())
+					.map(x -> x.getType().getTypeName() + " " + x.getName()).collect(Collectors.joining(", "));
+			return String.format("%s %s; %s", quantor, vars, printExpression(quantifier.getSubformula()));
 		default:
 			// TODO: Add more cases
 			return expression.toString();
