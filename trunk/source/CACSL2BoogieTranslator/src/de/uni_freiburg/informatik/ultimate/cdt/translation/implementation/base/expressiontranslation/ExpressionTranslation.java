@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -353,8 +354,21 @@ public abstract class ExpressionTranslation {
 		return new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rValue).build();
 	}
 
-	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
-			ExpressionResultBuilder expressionResultBuilder);
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
+			final ExpressionResultBuilder expressionResultBuilder) {
+		final var constraint = getTypeConstraint(loc, expr, ctype);
+		if (constraint.isPresent()) {
+			expressionResultBuilder.addStatement(new AssumeStatement(loc, constraint.get()));
+		}
+	}
+
+	/**
+	 * Returns a constraint for the given {@code cType} that is required for the model of the translated expression
+	 * {@code expr}. If the modelling does not require such a type constraint, the function can return
+	 * {@code Optional.empty()}.
+	 */
+	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
+			final CType cType);
 
 	public Expression constructNullPointer(final ILocation loc) {
 		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
