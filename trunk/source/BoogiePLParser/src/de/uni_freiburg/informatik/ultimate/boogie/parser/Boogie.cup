@@ -701,8 +701,8 @@ stmtList ::=
     //| stmtList:l error {: RESULT = l; :}
 	;
 stmt ::=
-	  ID:i COLON
-	  {: RESULT = new Label(getLocation(i$,i$), i); :}
+	  ID:i attributes:attr COLON
+	  {: RESULT = new Label(getLocation(i$,i$), i, attr); :}
 	| ASSERT:x attributes:attr expr:e SEMI
 	  {: RESULT = new AssertStatement(getLocation(x$,e$), attr, e); Check check = createCheck(RESULT); check.annotate(RESULT); :}
 	| ASSUME:x attributes:attr expr:e SEMI
