@@ -39,9 +39,13 @@ public class BtorExpression {
 		stateName = "";
 	}
 
-	public BtorExpression(final BtorSort sort, final String name) {
+	public BtorExpression(final BtorSort sort, final String name, final boolean input) {
 		this.sort = sort;
-		type = BtorExpressionType.STATE;
+		if (input) {
+			type = BtorExpressionType.INPUT;
+		} else {
+			type = BtorExpressionType.STATE;
+		}
 		children = new ArrayList<>();
 		constant = 0;
 		stateName = name;
@@ -91,8 +95,8 @@ public class BtorExpression {
 		return false;
 	}
 
-	public static boolean addExpression(final BtorSort sort, final String name) {
-		final BtorExpression newExpression = new BtorExpression(sort, name);
+	public static boolean addExpression(final BtorSort sort, final String name, final boolean input) {
+		final BtorExpression newExpression = new BtorExpression(sort, name, input);
 		if (allExpressions.containsKey(newExpression)) {
 			return true;
 		}
@@ -117,9 +121,12 @@ public class BtorExpression {
 			if (type == BtorExpressionType.CONSTD) {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(sortMap.get(sort)) + " " + String.valueOf(constant) + "\n");
-			} else if (type == BtorExpressionType.STATE) {
+			} else if (type == BtorExpressionType.STATE || type == BtorExpressionType.INPUT) {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(sortMap.get(sort)) + " " + stateName + "\n");
+			} else if (type == BtorExpressionType.SEXT) {
+				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
+						+ String.valueOf(sortMap.get(sort)) + " " + String.valueOf(constant) + "\n");
 			} else {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(sortMap.get(sort)) + "\n");
@@ -132,7 +139,7 @@ public class BtorExpression {
 				return currentLine;
 			}
 			// handling for error locations
-			if (type == BtorExpressionType.BAD) {
+			if (type == BtorExpressionType.BAD || type == BtorExpressionType.CONSTRAINT) {
 				writer.write(String.valueOf(nid) + " " + type.name().toLowerCase() + " "
 						+ String.valueOf(children.get(0).nid));
 			} else {

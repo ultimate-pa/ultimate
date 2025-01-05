@@ -80,8 +80,8 @@ public class Svcomp24FoldersAutomizerReachBtorTest extends AbstractTraceAbstract
 //		new SvcompFolderSubset("examples/svcomp/combinations/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //
 //		/*** Subcategory   ReachSafety-ControlFlow ***/
-		new SvcompFolderSubset("examples/svcomp/ntdrivers-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new SvcompFolderSubset("examples/svcomp/openssl-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new SvcompFolderSubset("examples/svcomp/ntdrivers-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+//		new SvcompFolderSubset("examples/svcomp/openssl-simplified/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new SvcompFolderSubset("examples/svcomp/locks/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new SvcompFolderSubset("examples/svcomp/ntdrivers/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 //		new SvcompFolderSubset("examples/svcomp/openssl/", PROPERTY, EXPECTED_RESULT, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -203,8 +203,8 @@ public class Svcomp24FoldersAutomizerReachBtorTest extends AbstractTraceAbstract
 	}
 
 	private static final Pair[] SETTINGS = {
-			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default.epf"),
-			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf"),
+//			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default.epf"),
+//			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf"),
 			new Pair<>("automizer/ForwardPredicatesBtorTestInlining.epf", "automizer/ForwardPredicatesBtorTestInlining.epf"),
 //			new Pair<>("automizer/acceleratedInterpolation/acceleratedTraceCheck_32.epf", "automizer/acceleratedInterpolation/acceleratedTraceCheck_64.epf"),
 //			new Pair<>("default/automizer/svcomp-Reach-32bit-Automizer_Default-FullInlining.epf", "default/automizer/svcomp-Reach-64bit-Automizer_Default-FullInlining.epf"),

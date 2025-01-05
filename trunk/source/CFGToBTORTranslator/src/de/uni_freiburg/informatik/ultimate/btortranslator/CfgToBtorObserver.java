@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.btorutils.BtorScript;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -91,7 +91,7 @@ public class CfgToBtorObserver extends BaseObserver {
 		return true;
 	}
 
-	private void processIcfg(final IIcfg<BoogieIcfgLocation> icfg) {
+	private void processIcfg(final IIcfg<BoogieIcfgLocation> icfg) throws Exception {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 		Boogie2SMT boogie2SMT = null;
 		if (icfg instanceof BoogieIcfgContainer) {
@@ -120,7 +120,7 @@ public class CfgToBtorObserver extends BaseObserver {
 			final Process process = processBuilder.start();
 			final StringBuilder btormcOutput = new StringBuilder();
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			final boolean timeout = process.waitFor(20, TimeUnit.SECONDS);
+			final boolean timeout = process.waitFor(30, TimeUnit.SECONDS);
 			String line;
 			while (timeout && (line = reader.readLine()) != null) {
 				btormcOutput.append(line + "\n");
@@ -137,12 +137,17 @@ public class CfgToBtorObserver extends BaseObserver {
 
 			if (!icfg.getProcedureErrorNodes().values().isEmpty()) {
 				final Set<BoogieIcfgLocation> errorLocations = icfg.getProcedureErrorNodes().values().iterator().next();
-				if (!timeout || process.exitValue() != 0) {
-					for (final BoogieIcfgLocation errorLocation : errorLocations) {
-						final NoResult<IIcfgElement> unkResult = new NoResult<IIcfgElement>(errorLocation,
-								Activator.PLUGIN_ID, mServices.getBacktranslationService());
-						mServices.getResultService().reportResult(Activator.PLUGIN_ID, unkResult);
-					}
+				if (!timeout) {
+					// for (final BoogieIcfgLocation errorLocation : errorLocations) {
+					// final NoResult<IIcfgElement> unkResult = new NoResult<IIcfgElement>(errorLocation,
+					// Activator.PLUGIN_ID, mServices.getBacktranslationService());
+					// mServices.getResultService().reportResult(Activator.PLUGIN_ID, unkResult);
+					// }
+					final TimeoutResult timeoutResult =
+							new TimeoutResult(Activator.PLUGIN_ID, "btormc timeout reached");
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID, timeoutResult);
+				} else if (process.exitValue() != 0) {
+					throw new Exception("btormc returned nonzero exit value");
 				} else if (btormcWitness.startsWith("sat")) {
 					final ArrayList<Long> pcList = new ArrayList<>();
 					final Map<Long, Map<String, Long>> programStateSequence = new HashMap<>();
@@ -170,7 +175,6 @@ public class CfgToBtorObserver extends BaseObserver {
 							mServices.getBacktranslationService(), pe);
 					mServices.getResultService().reportResult(Activator.PLUGIN_ID, nResult);
 				} else {
-
 					mServices.getResultService().reportResult(Activator.PLUGIN_ID, AllSpecificationsHoldResult
 							.createAllSpecificationsHoldResult(Activator.PLUGIN_ID, errorLocations.size()));
 					for (final IcfgLocation errorLocation : errorLocations) {

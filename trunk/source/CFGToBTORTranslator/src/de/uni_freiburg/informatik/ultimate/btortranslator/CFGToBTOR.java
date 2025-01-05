@@ -48,6 +48,7 @@ public class CFGToBTOR {
 	private final Set<DebugIdentifier> errorLocations;
 	private final Map<SuffixedDebugIdentifier, BtorExpression> pcMap;
 	private final BtorExpression pcExpression;
+	private final List<BtorExpression> constraintExpressions;
 	// private final Boogie2SmtSymbolTable B2STable;
 	ManagedScript mScript;
 	IUltimateServiceProvider mService;/////
@@ -61,7 +62,8 @@ public class CFGToBTOR {
 		errorLocations = new HashSet<>();
 		variableAssignmentMap = new HashMap<>();
 		pcMap = new HashMap<>();
-		pcExpression = new BtorExpression(new BtorSort(64), "pc");
+		pcExpression = new BtorExpression(new BtorSort(64), "pc", false);
+		constraintExpressions = new ArrayList<>();
 		this.boogie2SMT = boogie2SMT;
 	}
 
@@ -69,7 +71,7 @@ public class CFGToBTOR {
 		final Set<IProgramVar> allVariables = IcfgUtils.collectAllProgramVars(icfg.getCfgSmtToolkit());
 		for (final IProgramVar var : allVariables) {
 			final BtorSort sort = new BtorSort(var.getSort());
-			final BtorExpression newState = new BtorExpression(sort, var.getGloballyUniqueId());
+			final BtorExpression newState = new BtorExpression(sort, var.getGloballyUniqueId(), false);
 			variableMap.put(var.getGloballyUniqueId(), newState);
 		}
 	}
@@ -221,11 +223,14 @@ public class CFGToBTOR {
 					}
 					swapIndex--;
 				}
-
+				final ArrayList<BtorExpression> nonDetGuards = new ArrayList<>();
+				int updateIndex = 0;
 				for (final UpdateRule update : updates) {
 					if (SmtUtils.isTrueLiteral(update.getCondition())) {
-						final BtorExpression nondeterministicGuard =
-								new BtorExpression(new BtorSort(1), BtorExpressionType.INPUT, new ArrayList<>());
+						final BtorExpression nondeterministicGuard = new BtorExpression(new BtorSort(1),
+								locID + "_" + update.getTargetIdentifier().toString() + "_" + updateIndex, true);
+						updateIndex++;
+						nonDetGuards.add(nondeterministicGuard);
 						latestUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE, Arrays
 								.asList(nondeterministicGuard, pcMap.get(update.getTargetIdentifier()), latestUpdate));
 						generateAssignments(locID, update.getTransFormula(), update.getIcfgEdge(),
@@ -235,6 +240,18 @@ public class CFGToBTOR {
 						latestUpdate = new BtorExpression(new BtorSort(64), BtorExpressionType.ITE,
 								Arrays.asList(guard, pcMap.get(update.getTargetIdentifier()), latestUpdate));
 						generateAssignments(locID, update.getTransFormula(), update.getIcfgEdge(), guard);
+					}
+				}
+				assert (nonDetGuards.size() != 1);
+				if (!nonDetGuards.isEmpty()) {
+					for (int j = 0; j < nonDetGuards.size(); j++) {
+						for (int k = j + 1; k < nonDetGuards.size(); k++) {
+							final BtorExpression xor = new BtorExpression(new BtorSort(1), BtorExpressionType.XOR,
+									Arrays.asList(nonDetGuards.get(j), nonDetGuards.get(k)));
+							final BtorExpression constraint = new BtorExpression(new BtorSort(1),
+									BtorExpressionType.CONSTRAINT, Arrays.asList(xor));
+							constraintExpressions.add(constraint);
+						}
 					}
 				}
 			}
@@ -393,9 +410,15 @@ public class CFGToBTOR {
 				new ArrayList<>(Arrays.asList(initial_pc, pc_initialization, pcUpdate));
 		final List<BtorExpression> badExpressions = generateBadExpressions();
 		allTopLevelExpressions.addAll(variableUpdateExpressions);
+		allTopLevelExpressions.addAll(constraintExpressions);
 		allTopLevelExpressions.addAll(badExpressions);
 		final Set<BtorSort> sorts = new HashSet<>();
 		for (final BtorExpression var : variableMap.values()) {
+			if (var.getSort().isArray()) {
+				sorts.add(var.getSort().keySort);
+				sorts.add(var.getSort().valueSort);
+			}
+
 			sorts.add(var.getSort());
 
 		}

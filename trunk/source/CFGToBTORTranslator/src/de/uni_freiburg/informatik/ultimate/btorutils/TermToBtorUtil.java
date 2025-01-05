@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SMT;
@@ -70,18 +71,24 @@ public class TermToBtorUtil {
 			final TransFormula tf, final Map<String, BtorExpression> variableMap, final Boogie2SMT boogie2SMT) {
 		BtorExpression lhs;
 		BtorExpression rhs;
+		BtorExpression array;
 		BtorExpression index;
+		BtorExpression arrayValue;
 		final BtorSort sort;
 		final String appName = appTerm.getFunction().getName();
+		Term[] params;
+		Term idx;
+		List<Term> idxs;
+		int i;
 		switch (appName) {
 
 		// case sign_extend:
 		// case zero_extend:
-		// case "sign_extend":
-		// lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap);
-		// // rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap);
-		// sort = lhs.getSort();
-		// return new BtorExpression(sort, BtorExpressionType.SEXT, Arrays.asList(lhs));
+		case "sign_extend":
+			final BtorExpression ext =
+					convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
+			sort = ext.getSort();
+			return new BtorExpression(sort, BtorExpressionType.SEXT, Arrays.asList(ext));
 
 		// case extract: (slice)
 		case "bvnot":
@@ -152,7 +159,7 @@ public class TermToBtorUtil {
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
 			BtorExpression latestAnd = new BtorExpression(sort, BtorExpressionType.AND, Arrays.asList(lhs, rhs));
-			for (int i = 2; i < andParams.length; i++) {
+			for (i = 2; i < andParams.length; i++) {
 				rhs = convertConditionalToBtorExpression(andParams[i], tf, variableMap, boogie2SMT);
 				latestAnd = new BtorExpression(sort, BtorExpressionType.AND, Arrays.asList(latestAnd, rhs));
 			}
@@ -166,7 +173,7 @@ public class TermToBtorUtil {
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
 			BtorExpression latestOr = new BtorExpression(sort, BtorExpressionType.OR, Arrays.asList(lhs, rhs));
-			for (int i = 2; i < orParams.length; i++) {
+			for (i = 2; i < orParams.length; i++) {
 				rhs = convertConditionalToBtorExpression(orParams[i], tf, variableMap, boogie2SMT);
 				assert (lhs.getSort().equals(rhs.getSort()));
 				latestOr = new BtorExpression(sort, BtorExpressionType.OR, Arrays.asList(latestOr, rhs));
@@ -180,7 +187,7 @@ public class TermToBtorUtil {
 			assert (lhs.getSort().equals(rhs.getSort()));
 			sort = lhs.getSort();
 			final BtorExpression latestXor = new BtorExpression(sort, BtorExpressionType.XOR, Arrays.asList(lhs, rhs));
-			for (int i = 2; i < xorParams.length; i++) {
+			for (i = 2; i < xorParams.length; i++) {
 				rhs = convertConditionalToBtorExpression(xorParams[i], tf, variableMap, boogie2SMT);
 				assert (lhs.getSort().equals(rhs.getSort()));
 				latestOr = new BtorExpression(sort, BtorExpressionType.XOR, Arrays.asList(latestXor, rhs));
@@ -219,6 +226,7 @@ public class TermToBtorUtil {
 			return new BtorExpression(sort, BtorExpressionType.MUL, Arrays.asList(lhs, rhs));
 
 		case "bvsdiv":
+		case "div":
 		case "/":
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
@@ -256,30 +264,91 @@ public class TermToBtorUtil {
 
 		case "bvsub":
 		case "-":
-			if (appTerm.getParameters().length > 1) {
-				lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
-				rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
-				assert (lhs.getSort().equals(rhs.getSort()));
-				sort = lhs.getSort();
-				return new BtorExpression(sort, BtorExpressionType.SUB, Arrays.asList(lhs, rhs));
-			}
-
-			// case concat:
-		case "select":
+			// if (appTerm.getParameters().length > 1) {
+			// lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
+			// rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
+			// assert (lhs.getSort().equals(rhs.getSort()));
+			// sort = lhs.getSort();
+			// return new BtorExpression(sort, BtorExpressionType.SUB, Arrays.asList(lhs, rhs));
+			// }
 			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
 			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
-			assert (lhs.getSort().keySort != null);
-			assert (lhs.getSort().keySort.equals(rhs.getSort()));
-			return new BtorExpression(lhs.getSort().valueSort, BtorExpressionType.READ, Arrays.asList(lhs, rhs));
+			assert (lhs.getSort().equals(rhs.getSort()));
+			sort = lhs.getSort();
+			return new BtorExpression(sort, BtorExpressionType.SUB, Arrays.asList(lhs, rhs));
+
+		case "concat":
+			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
+			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
+			return new BtorExpression(new BtorSort(lhs.getSort().size + rhs.getSort().size), BtorExpressionType.CONCAT,
+					Arrays.asList(lhs, rhs));
+
+		case "select":
+			params = appTerm.getParameters();
+			idx = params[1];
+			idxs = new ArrayList<>();
+			idxs.add(idx);
+			while (params[0] instanceof ApplicationTerm
+					&& ((ApplicationTerm) params[0]).getFunction().getName().equals("select")) {
+				params = ((ApplicationTerm) params[0]).getParameters();
+				idx = params[1];
+				idxs.add(idx);
+			}
+			i = 1;
+			index = convertConditionalToBtorExpression(idxs.get(0), tf, variableMap, boogie2SMT);
+			while (i < idxs.size()) {
+				final BtorExpression nextIndex =
+						convertConditionalToBtorExpression(idxs.get(i), tf, variableMap, boogie2SMT);
+				index = new BtorExpression(new BtorSort(index.getSort().size + nextIndex.getSort().size),
+						BtorExpressionType.CONCAT, Arrays.asList(index, nextIndex));
+				i++;
+			}
+
+			array = convertConditionalToBtorExpression(params[0], tf, variableMap, boogie2SMT);
+			assert (array.getSort().keySort != null);
+			assert (array.getSort().keySort.equals(index.getSort()));
+			return new BtorExpression(array.getSort().valueSort, BtorExpressionType.READ, Arrays.asList(array, index));
+
+		case "ite":
+			final BtorExpression iteIf =
+					convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
+			final BtorExpression iteThen =
+					convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
+			final BtorExpression iteElse =
+					convertConditionalToBtorExpression(appTerm.getParameters()[2], tf, variableMap, boogie2SMT);
+			assert (iteThen.getSort().equals(iteElse.getSort()));
+			return new BtorExpression(iteThen.getSort(), BtorExpressionType.ITE,
+					Arrays.asList(iteIf, iteThen, iteElse));
 
 		case "store":
-			lhs = convertConditionalToBtorExpression(appTerm.getParameters()[0], tf, variableMap, boogie2SMT);
-			index = convertConditionalToBtorExpression(appTerm.getParameters()[1], tf, variableMap, boogie2SMT);
-			rhs = convertConditionalToBtorExpression(appTerm.getParameters()[2], tf, variableMap, boogie2SMT);
-			assert (lhs.getSort().keySort != null);
-			assert (lhs.getSort().keySort.equals(index.getSort()));
-			assert (lhs.getSort().valueSort.equals(rhs.getSort()));
-			return new BtorExpression(lhs.getSort(), BtorExpressionType.WRITE, Arrays.asList(lhs, index, rhs));
+			params = appTerm.getParameters();
+			idx = params[1];
+			idxs = new ArrayList<>();
+			idxs.add(idx);
+			array = convertConditionalToBtorExpression(params[0], tf, variableMap, boogie2SMT);
+			while (params[2] instanceof ApplicationTerm
+					&& ((ApplicationTerm) params[2]).getFunction().getName().equals("store")) {
+				params = ((ApplicationTerm) params[2]).getParameters();
+				idx = params[1];
+				idxs.add(0, idx);
+			}
+			final Term val = params[2];
+			arrayValue = convertConditionalToBtorExpression(val, tf, variableMap, boogie2SMT);
+			i = 1;
+			index = convertConditionalToBtorExpression(idxs.get(0), tf, variableMap, boogie2SMT);
+			while (i < idxs.size()) {
+				final BtorExpression nextindex =
+						convertConditionalToBtorExpression(idxs.get(i), tf, variableMap, boogie2SMT);
+				index = new BtorExpression(new BtorSort(index.getSort().size + nextindex.getSort().size),
+						BtorExpressionType.CONCAT, Arrays.asList(index, nextindex));
+				i++;
+			}
+			// arrayValue = convertConditionalToBtorExpression(appTerm.getParameters()[2], tf, variableMap, boogie2SMT);
+			assert (array.getSort().keySort != null);
+			assert (array.getSort().keySort.equals(index.getSort()));
+			assert (array.getSort().valueSort.equals(arrayValue.getSort()));
+			return new BtorExpression(array.getSort(), BtorExpressionType.WRITE,
+					Arrays.asList(array, index, arrayValue));
 
 		case "true":
 			return new BtorExpression(new BtorSort(1), BtorExpressionType.ONE);
@@ -292,7 +361,10 @@ public class TermToBtorUtil {
 				final long value = Long.parseLong(appName.substring(2));
 				return new BtorExpression(new BtorSort(Integer.parseInt(appTerm.getSort().getIndices()[0])), value);
 			}
-			throw new UnsupportedOperationException("Converting currently unsupported btor2 expression");
+			throw new UnsupportedOperationException(
+					"Converting currently unsupported btor2 expression" + appTerm.getFunction().getName());
+		// as const
+		// myFunc
 		// return null;
 		}
 	}

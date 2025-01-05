@@ -4,8 +4,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 public class BtorSort {
 	int size;
-	BtorSort keySort;
-	BtorSort valueSort;
+	public BtorSort keySort;
+	public BtorSort valueSort;
 
 	public BtorSort(final int size) {
 		this.size = size;
@@ -27,8 +27,15 @@ public class BtorSort {
 		} else if (sort.getName() == "BitVec") {
 			size = Integer.parseInt(sort.getIndices()[0]);
 		} else if (sort.getName() == "Array") {
-			keySort = new BtorSort(sort.getArguments()[0]);
-			valueSort = new BtorSort(sort.getArguments()[1]);
+
+			Sort[] vargs = sort.getArguments();
+			int i = new BtorSort(vargs[0]).size;
+			while (vargs[1].getName() == "Array") {
+				i += new BtorSort(vargs[0]).size;
+				vargs = vargs[1].getArguments();
+			}
+			keySort = new BtorSort(i);
+			valueSort = new BtorSort(vargs[1]);
 			size = 0;
 		} else if (sort.getName() == "Real") {
 			throw new UnsupportedOperationException("Reals are not supported by BTOR2 Translation");
@@ -39,7 +46,8 @@ public class BtorSort {
 		} else if (sort.getName() == "myType") {
 			throw new UnsupportedOperationException("myTypes are not supported by BTOR2 Translation");
 		} else {
-			throw new UnsupportedOperationException("Unrecognized sort, supported sorts: int, bool, bitvec, and array");
+			throw new UnsupportedOperationException(
+					"Unrecognized sort:" + sort.getName() + ", supported sorts: int, bool, bitvec, and array");
 		}
 
 	}
