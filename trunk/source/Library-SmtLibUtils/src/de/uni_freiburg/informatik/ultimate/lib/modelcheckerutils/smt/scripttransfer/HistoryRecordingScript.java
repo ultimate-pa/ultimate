@@ -461,15 +461,6 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public Term term(final String funcname, final Term... params) throws SMTLIBException {
-		if (!mScript.equals(mCurrentlyUsedScript.mScript)) {
-			final TermTransferrer tf = new TermTransferrer(this, mCurrentlyUsedScript);
-			final Term[] transferredParams = new Term[params.length];
-			for (int i = 0; i < params.length; i++) {
-				transferredParams[i] = tf.transform(params[i]);
-			}
-			return mCurrentlyUsedScript.mScript.term(funcname, transferredParams);
-		}
-
 		return mCurrentlyUsedScript.mScript.term(funcname, params);
 
 	}

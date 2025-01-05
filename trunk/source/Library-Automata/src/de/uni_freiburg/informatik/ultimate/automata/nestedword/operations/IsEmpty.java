@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -203,10 +205,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	private STATE mReconstructionPredK;
 
 	/**
-	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
-	 * currently checked by a thread
+	 * States are scored by their (parallel strategy) score
 	 */
-	private final HashMap<Integer, NestedRun<LETTER, STATE>> mActiveCounterexamples = null;
+	private final PriorityQueue<PQState> mScoredQueue = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
 
 	/**
 	 * Constructor for parallel search strategy. Gets as additional argument the list of all counterexamples currently
@@ -415,6 +416,20 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	}
 
 	/**
+	 * Dequeue from priority queue first then first (second param) and finally third param
+	 */
+	private PQState dequeuePriorityQueues(final PriorityQueue<IsEmpty<LETTER, STATE>.PQState> priorityQueue,
+			final Deque<DoubleDecker<STATE>> firstQueue, final Deque<DoubleDecker<STATE>> secondQueue) {
+		if (!priorityQueue.isEmpty()) {
+			final PQState lowestscoreState = priorityQueue.poll();
+
+			return lowestscoreState;
+		} else {
+			return null;
+		}
+	}
+
+	/**
 	 * Dequeue a state pair.
 	 */
 	private DoubleDecker<STATE> dequeueGivenQueues(final Deque<DoubleDecker<STATE>> firstQueue,
@@ -430,6 +445,13 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	private boolean isQueueEmpty() {
 		return mQueue.isEmpty() && mQueueCall.isEmpty();
+	}
+
+	/**
+	 * @return true iff the priority queue (is internally represented by two queues) is empty.
+	 */
+	private boolean isPiorityQueueEmpty() {
+		return mScoredQueue.isEmpty() && mQueue.isEmpty() && mQueueCall.isEmpty();
 	}
 
 	/**
@@ -509,10 +531,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * Auch für start
 	 *
 	 */
-	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
+	private void pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
-		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
-		final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
@@ -520,25 +540,35 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 				int currentScore = 0;
 				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
 					if (counterexample.getLength() > position + 1) {
-						if (counterexample.getStateAtPosition(position + 1).equals(transition.getSucc())) {
+
+						IcfgLocation programPoint = null;
+						final STATE stateInCEx = counterexample.getStateAtPosition(position + 1);
+						if (stateInCEx instanceof ISLPredicate) {
+							programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
+							// } else if (stateInCEx instanceof SPredicate) {
+							// programPoint = ((SPredicate) stateInCEx).getProgramPoint();
+						} else {
+							assert false;
+						}
+
+						if (programPoint.equals(((ISLPredicate) transition.getSucc()).getProgramPoint())) {
 							currentScore += 1;
-							activeCounterexamples.add(counterexample);
 						}
 					}
 				}
-
-				pq.add(new PQState(currentScore, transition.getSucc(), activeCounterexamples, symbol));
+				addRunInformationInternal(succ, stateK, symbol, state, stateK);
+				markVisited(succ, stateK);
+				mScoredQueue.add(new PQState(currentScore, transition.getSucc(), position + 1, symbol, stateK));
 			}
 		}
-		return pq;
+
 	}
 
-	private PriorityQueue<PQState> pickStartToExplore(final Collection<STATE> states,
+	private void pickStartToExplore(final Collection<STATE> states,
 			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
-		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
+
 		final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
 		for (final STATE state : states) {
-
 			int currentScore = 0;
 			for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
 				if (counterexample.getStateAtPosition(0).equals(state)) {
@@ -546,78 +576,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 					activeCounterexamples.add(counterexample);
 				}
 			}
-
-			pq.add(new PQState(currentScore, state, activeCounterexamples, null));
-
+			mScoredQueue.add(new PQState(currentScore, state, 0, null, mDummyEmptyStackState));
 		}
-		return pq;
-	}
-
-	private DoubleDecker<STATE> constructRunFromStateToNextBranch(final int position,
-			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) throws AutomataOperationCanceledException {
-		int positionOfThisSubSearch = position;
-		if (!counterexamples.isEmpty()) {
-			mVisitedPairs.clear();
-		}
-		while (!isQueueEmpty()) {
-			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
-				throw new AutomataOperationCanceledException(rti);
-			}
-			final DoubleDecker<STATE> pair = dequeue();
-			positionOfThisSubSearch += 1;
-			final STATE state = pair.getUp();
-			final STATE stateK = pair.getDown();
-
-			if (isGoalState(state) && counterexamples.isEmpty()) {
-				return pair;
-			} else if (isGoalState(state)) {
-				/*
-				 * continue search here or backtrack?
-				 */
-				return null;
-			}
-
-			processSummaries(state, stateK);
-
-			// enqueues successors
-			// TODO optimization if there is only one succ
-			if (!counterexamples.isEmpty()) {
-				final PriorityQueue<PQState> pqStart =
-						pickSuccToExplore(positionOfThisSubSearch, state, stateK, counterexamples); // statek is not
-				// equired in method
-				while (!pqStart.isEmpty()) {
-					final PQState startpq = pqStart.poll();
-					assert (startpq != null);
-					final STATE succ = startpq.getState();
-					final LETTER symbol = startpq.getLetter();
-					addRunInformationInternal(succ, stateK, symbol, state, stateK);
-					enqueueAndMarkVisited(succ, mDummyEmptyStackState);
-
-					final DoubleDecker<STATE> goal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
-							startpq.getCounterexamplesUnderConsideration());
-					if (goal != null) {
-						return goal;
-					}
-
-				}
-			} else {
-				getAcceptingRunHelperInternal(state, stateK);
-			}
-			// TODO do we need sth here? warning, does bfs
-			getAcceptingRunHelperCall(state, stateK);
-
-			// equality intended here
-			if (stateK == mOperand.getEmptyStackState()) {
-				// there is no return transition
-				continue;
-			}
-
-			getAcceptingRunHelperReturn(state, stateK);
-		}
-		return null;
-
 	}
 
 	/**
@@ -632,24 +592,57 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 
 		}
 
-		final PriorityQueue<PQState> pqStart = pickStartToExplore(mStartStates, counterexamples);
-
-		while (!pqStart.isEmpty()) {
-			final PQState startpq = pqStart.poll();
-			final STATE start = startpq.getState();
-			enqueueAndMarkVisited(start, mDummyEmptyStackState);
-			final DoubleDecker<STATE> goal =
-					constructRunFromStateToNextBranch(0, startpq.getCounterexamplesUnderConsideration());
-			if (goal != null) {
-				assert isGoalState(goal.getUp());
-				final NestedRun<LETTER, STATE> result = constructRun(goal.getUp(), goal.getDown());
-				assert !counterexamples.contains(result);
-				return result;
+		pickStartToExplore(mStartStates, counterexamples);
+		int position = 0;
+		while (!isPiorityQueueEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+				throw new AutomataOperationCanceledException(rti);
 			}
 
-		}
+			final PQState lowestScoreState = dequeuePriorityQueues(mScoredQueue, mQueue, mQueueCall);
+			final DoubleDecker<STATE> pair;
+			int score = 0;
+			if (lowestScoreState != null) {
+				pair = new DoubleDecker<>(lowestScoreState.getStatek(), lowestScoreState.getState());
+				score = lowestScoreState.getScore();
+				position = lowestScoreState.getPositionOfState();
+			} else {
+				pair = dequeue();
+			}
 
+			final STATE state = pair.getUp();
+			final STATE stateK = pair.getDown();
+
+			if (isGoalState(state) && score == 0) { // && counterexamples.isEmpty()
+				final NestedRun<LETTER, STATE> run = constructRun(state, stateK);
+				assert !counterexamples.contains(run);
+
+				return run; // TODO hack we use goal set but we want sth better
+				// } else if (isGoalState(state)) {
+				/*
+				 * continue search here or backtrack?
+				 */
+
+				// return null;
+			}
+
+			processSummaries(state, stateK);
+
+			pickSuccToExplore(position, state, stateK, counterexamples);
+			position += 1;
+			getAcceptingRunHelperCall(state, stateK);
+			// equality intended here
+			if (stateK == mOperand.getEmptyStackState()) {
+				// there is no return transition
+				continue;
+			}
+
+			getAcceptingRunHelperReturn(state, stateK);
+		}
 		return null;
+
 	}
 
 	private void getAcceptingRunHelperInternal(final STATE state, final STATE stateK) {
@@ -997,16 +990,15 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	private class PQState {
 		Integer mScore;
 		STATE mState;
-		// STATE mStateK;
-		ArrayList<NestedRun<LETTER, STATE>> mCounterexamples = new ArrayList<>();
+		STATE mStateK;
+		Integer mPosition;
 		LETTER mSymbol;
 
-		public PQState(final int score, final STATE state, final ArrayList<NestedRun<LETTER, STATE>> counterexamples,
-				final LETTER symbol) {
+		public PQState(final int score, final STATE state, final int i, final LETTER symbol, final STATE statek) {
 			mScore = score;
 			mState = state;
-			// mStateK = statek;
-			mCounterexamples = counterexamples;
+			mStateK = statek;
+			mPosition = i;
 			mSymbol = symbol;
 		}
 
@@ -1018,16 +1010,16 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			return mState;
 		}
 
-		// public STATE getStatek() {
-		// return mStateK;
-		// }
+		public STATE getStatek() {
+			return mStateK;
+		}
 
 		public LETTER getLetter() {
 			return mSymbol;
 		}
 
-		public ArrayList<NestedRun<LETTER, STATE>> getCounterexamplesUnderConsideration() {
-			return mCounterexamples;
+		public int getPositionOfState() {
+			return mPosition;
 		}
 	}
 }

@@ -310,5 +310,6 @@ Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/petr
 Import-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt,
+ de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.automata

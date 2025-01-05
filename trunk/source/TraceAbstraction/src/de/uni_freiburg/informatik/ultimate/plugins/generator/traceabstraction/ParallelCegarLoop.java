@@ -91,7 +91,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	final ArrayList<NestedRun<L, IPredicate>> mActiveCounterexamples = new ArrayList<>();
 
 	// for debugging only, ensures our search does not find the same counterexampl twice
-	// private final HashSet<NestedRun<L, IPredicate>> mAllCounterexamples = new HashSet<>();
+	private final HashMap<Integer, NestedRun<L, IPredicate>> mAllCounterexamples = new HashMap<>();
 
 	private final boolean useGoalSetForIsEmpty;
 	private final boolean mParallelSearchSrategy;
@@ -224,7 +224,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		int runningThreads = 0;
 		mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
-		// mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
 
@@ -252,7 +251,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						// No busy waiting
 						try {
 							mLogger.info("All threads busy, going to sleep.");
-							mECS.take();
+							mECS.take(); // take doesnt remove the future
 							mLogger.info("Waking up, a worker is done.");
 						} catch (final InterruptedException e) {
 							e.printStackTrace();
@@ -270,20 +269,26 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						final Future<WorkerThreadResult<L, A>> futureResult = mWorkerFutures.get(i);
 						try {
 							if (futureResult.isDone()) {
-								mLogger.info("Thread Done: " + i);
+								mLogger.info("Thread Done: " + Thread.currentThread().getId());
 								runningThreads -= 1;
-								automataWaitingList.add(futureResult.get());
-								final List<L> trace = futureResult.get().getCounterexample().getWord().asList();
+								final WorkerThreadResult<L, A> doneFuture = futureResult.get();
+								doneFuture.getAutomatonType();
+								final List<L> trace = doneFuture.getCounterexample().getWord().asList();
 								final int traceHash = trace.hashCode();
 
 								final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
 
 								mLogger.info("Done TestGoal: " + testGoalId);
-								mLogger.info("Done Type: " + futureResult.get().getAutomatonType());
+								mLogger.info("Done Type: " + doneFuture.getAutomatonType());
 
-								// Free up the testgoal for counterexample search
-								mInActiveErrorLocs.remove(traceHash);
 								doneThreads.add(mWorkerFutures.get(i));
+								if (doneFuture.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
+										|| !useGoalSetForIsEmpty) {
+									automataWaitingList.add(doneFuture);
+									// Free up the testgoal for counterexample search
+									mInActiveErrorLocs.remove(traceHash);
+								}
+
 							}
 						} catch (final ExecutionException | InterruptedException e) {
 							// TODO better handling of exceptions in worker thread
@@ -313,7 +318,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								return;
 							}
 							mAbstraction = diff.getResult();
-							mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
+							// mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
 							// Kill the worker script
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
@@ -346,15 +351,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					final IRun<L, ?> oldCounterexample = mCounterexample;
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
 					if (oldCounterexample == mCounterexample) {
+						System.out.println("Didnt Find a Counterexample!!! " + Thread.activeCount());
+
 						mCounterexample = null;
 					}
 					if (mCounterexample != null) {
 						resetThreadLimit();
-						if (mActiveCounterexamples.contains(mCounterexample) && mCounterexample != null
-								&& runningThreads < mThreadLimit) {
-							assert false;
-						}
-						// mAllCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+
 						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 					} else {
 						if (isAbstractionCorrect && runningThreads == 0) {
@@ -398,47 +401,56 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			 * Since mActiveErrorLocs must be subsetEq to getFinalStates()
 			 * and getFinalStates() can change
 			 */
+			if (useGoalSetForIsEmpty) {
+				mActiveErrorLocs.clear();
 
-			mActiveErrorLocs.clear();
-
-			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
-				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.get(TestGoalAnnotation.class.getName());
-				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-					if (mTestGeneration.equals(TestGenerationMode.None) || !useGoalSetForIsEmpty) {
-						mActiveErrorLocs.add(testGoal);
-					} else {
+				for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+					final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+							.get(TestGoalAnnotation.class.getName());
+					if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
 						continue;
-					}
-
-				} else {
-					if (pLocAnno instanceof TestGoalAnnotation) {
-						mActiveErrorLocs.add(testGoal);
+					} else {
+						if (pLocAnno instanceof TestGoalAnnotation) {
+							mActiveErrorLocs.add(testGoal);
+						}
 					}
 				}
 			}
-
-			if (!mActiveErrorLocs.isEmpty()) {
-				mCounterexample = runWithModifiedGoalSet(mAbstraction, mActiveErrorLocs);
+			if (!mActiveErrorLocs.isEmpty() || !useGoalSetForIsEmpty
+					|| mTestGeneration.equals(TestGenerationMode.None)) {
+				if (!useGoalSetForIsEmpty || mTestGeneration.equals(TestGenerationMode.None)) {
+					mCounterexample =
+							runWithModifiedGoalSet(mAbstraction, (Set<IPredicate>) mAbstraction.getFinalStates());
+				} else {
+					mCounterexample = runWithModifiedGoalSet(mAbstraction, mActiveErrorLocs);
+					if (mCounterexample == null) {
+						return true;
+					}
+					final List<?> sequence = mCounterexample.getStateSequence();
+					final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
+					assert mActiveErrorLocs.contains(currentGoal);
+					// mark test goal as busy/occupied
+					final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
+					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+							.get(TestGoalAnnotation.class.getName());
+					final List<L> trace = mCounterexample.getWord().asList();
+					final int traceHash = trace.hashCode();
+					// use traceHash as identifier so we can calculate the identifier later
+					mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
+					// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
+				}
 				if (mCounterexample == null) {
 					return true;
+				} else {
+					final List<L> trace = mCounterexample.getWord().asList();
+					final int traceHash = trace.hashCode();
+					if (mAllCounterexamples.containsKey(traceHash)) {
+						assert false;
+					}
+					mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
 				}
-				final List<?> sequence = mCounterexample.getStateSequence();
-				final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
-				assert mActiveErrorLocs.contains(currentGoal);
-
-				// mark test goal as busy/occupied
-				final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
-				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.get(TestGoalAnnotation.class.getName());
-
-				final List<L> trace = mCounterexample.getWord().asList();
-				final int traceHash = trace.hashCode();
-				// use traceHash as identifier so we can calculate the identifier later
-				mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
-
-			} // WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
+			}
 
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
@@ -499,7 +511,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(workerResult.getSubtrahend(),
 					true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
-
+			// TODO mStateFactoryForRefinement muss fresh vom worker script kommen
 			try {
 				if (mPref.differenceSenwa()) {
 					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
