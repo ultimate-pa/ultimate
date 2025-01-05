@@ -448,7 +448,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					if (mAllCounterexamples.containsKey(traceHash)) {
 						assert false;
 					}
-					mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
+					// mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
 				}
 			}
 
