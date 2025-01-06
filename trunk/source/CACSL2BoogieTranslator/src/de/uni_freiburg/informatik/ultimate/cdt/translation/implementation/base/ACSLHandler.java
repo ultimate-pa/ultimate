@@ -407,7 +407,10 @@ public class ACSLHandler implements IACSLHandler {
 	private ExpressionResult dispatchSwitch(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression node, final ILocation loc) {
 		final ExpressionResult expr = (ExpressionResult) main.dispatch(node, main.getAcslHook());
-		return mExprResultTransformer.switchToRValue(expr, loc, main.getAcslHook());
+		// Perform an unchecked switch to RValue (i.e., without checking for memsafety).
+		// This also ensures that there are no read-calls for dereferences and thus allows us to use also dereferences
+		// inside ACSL expressions that have to be side-effect-free (e.g., loop invariant or contracts)
+		return mExprResultTransformer.switchToRValueUnchecked(expr, loc, main.getAcslHook());
 	}
 
 	@Override

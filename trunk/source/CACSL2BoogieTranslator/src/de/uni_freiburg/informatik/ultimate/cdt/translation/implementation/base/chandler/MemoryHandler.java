@@ -114,7 +114,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -748,6 +747,18 @@ public class MemoryHandler {
 		return new Pair<>(addressRValue, ultimateAllocCall);
 	}
 
+	private HeapDataArray determineMemoryArrayForType(final ICType type) {
+		if (type instanceof CPointer) {
+			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+			return mMemoryModel.getPointerHeapArray();
+		}
+		if (type instanceof final CPrimitive primitive) {
+			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive.getType());
+			return mMemoryModel.getDataHeapArray(primitive.getType());
+		}
+		throw new AssertionError("There is no memory array for the type " + type);
+	}
+
 	/**
 	 * Generates a call of the read procedure and writes the returned value to a temp variable, returned in the
 	 * expression of the returned ResultExpression. Note that we only read simple types from the heap -- when reading
@@ -768,13 +779,26 @@ public class MemoryHandler {
 
 	public ExpressionResult getReadCall(final Expression address, final ICType resultType, final boolean unchecked) {
 		final ILocation loc = address.getLocation();
+		if (unchecked) {
+			final int byteSize;
+			if (resultType instanceof CPointer) {
+				byteSize = mTypeSizes.getSizeOfPointer();
+			} else if (resultType instanceof final CPrimitive prim) {
+				byteSize = mTypeSizes.getSize(prim.getType());
+			} else {
+				throw new AssertionError("We only support reading primitive or pointer types");
+			}
+			return new ExpressionResult(new RValue(
+					readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize),
+					resultType));
+		}
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MEMREAD);
 		resultBuilder.addAuxVarWithDeclaration(auxvar);
 		final VariableLHS[] lhss = { auxvar.getLhs() };
-		final CallStatement call = StatementFactory.constructCallStatement(loc, false, lhss,
-				determineReadProcedure(resultType, unchecked, loc),
-				new Expression[] { address, calculateSizeOf(loc, resultType) });
+		final CallStatement call =
+				StatementFactory.constructCallStatement(loc, false, lhss, determineReadProcedure(resultType, loc),
+						new Expression[] { address, calculateSizeOf(loc, resultType) });
 		if (resultType.isAtomic()) {
 			resultBuilder.addStatement(new AtomicStatement(loc, new Statement[] { call }));
 		} else {
@@ -788,18 +812,17 @@ public class MemoryHandler {
 		return resultBuilder.build();
 	}
 
-	private String determineReadProcedure(final ICType resultType, final boolean unchecked, final ILocation loc)
-			throws AssertionError {
+	private String determineReadProcedure(final ICType resultType, final ILocation loc) throws AssertionError {
 		final ICType ut = resultType.getUnderlyingType();
 		if (ut instanceof CPrimitive) {
 			final CPrimitive cp = (CPrimitive) ut;
 			checkFloatOnHeapSupport(loc, cp);
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
-			return determineReadProcedureForPrimitive(cp.getType(), unchecked);
+			return determineReadProcedureForPrimitive(cp.getType());
 		}
 		if (ut instanceof CPointer) {
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			return determineReadProcedureForPointer(unchecked);
+			return determineReadProcedureForPointer();
 		}
 		if (ut instanceof CArray) {
 			// we assume it is an Array on Heap
@@ -807,30 +830,22 @@ public class MemoryHandler {
 			// but it may not only be on heap, because it is addressoffed, but also because it is inside
 			// a struct that is addressoffed..
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			return determineReadProcedureForPointer(unchecked);
+			return determineReadProcedureForPointer();
 		}
 		if (ut instanceof CEnum) {
 			// enum is treated like an int
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
-			return determineReadProcedureForPrimitive(CPrimitives.INT, unchecked);
+			return determineReadProcedureForPrimitive(CPrimitives.INT);
 		}
 		throw new UnsupportedOperationException("unsupported type " + ut);
 	}
 
-	private String determineReadProcedureForPointer(final boolean unchecked) {
-		if (unchecked) {
-			mRequiredMemoryModelFeatures.reportPointerUncheckedReadRequired();
-			return mMemoryModel.getUncheckedReadPointerProcedureName();
-		}
+	private String determineReadProcedureForPointer() {
 		mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 		return mMemoryModel.getReadPointerProcedureName();
 	}
 
-	private String determineReadProcedureForPrimitive(final CPrimitives prim, final boolean unchecked) {
-		if (unchecked) {
-			mRequiredMemoryModelFeatures.reportUncheckedReadRequired(prim);
-			return mMemoryModel.getUncheckedReadProcedureName(prim);
-		}
+	private String determineReadProcedureForPrimitive(final CPrimitives prim) {
 		return mMemoryModel.getReadProcedureName(prim);
 	}
 
@@ -998,9 +1013,9 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Like {@link #doPointerArithmetic(int, ILocation, Expression, RValue, ICType)} but additionally the integer operand
-	 * is converted to the same type that we use to represent pointer components. As a consequence we have to return an
-	 * ExpressionResult.
+	 * Like {@link #doPointerArithmetic(int, ILocation, Expression, RValue, ICType)} but additionally the integer
+	 * operand is converted to the same type that we use to represent pointer components. As a consequence we have to
+	 * return an ExpressionResult.
 	 */
 	public ExpressionResult doPointerArithmeticWithConversion(final int operator, final ILocation loc,
 			final Expression ptrAddress, final RValue integer, final ICType valueType) {
@@ -1715,10 +1730,7 @@ public class MemoryHandler {
 		final List<Declaration> result = new ArrayList<>();
 		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
 				mRequiredMemoryModelFeatures)) {
-			if (rda.alsoUncheckedRead()) {
-				result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, true));
-			}
-			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda, false));
+			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda));
 		}
 		return result;
 	}
@@ -1806,8 +1818,8 @@ public class MemoryHandler {
 			swrite.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeWrite, inPtr, procName));
 		}
 
-		final boolean floating2bitvectorTransformationNeeded = mMemoryModel instanceof MemoryModel_SingleBitprecise
-				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE);
+		final boolean floating2bitvectorTransformationNeeded =
+				mMemoryModel instanceof MemoryModel_SingleBitprecise && rda.getRepresentativeType().isFloatingType();
 
 		final Expression nonFPBVReturnValue = ExpressionFactory.constructIdentifierExpression(loc,
 				mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#value",
@@ -1815,7 +1827,7 @@ public class MemoryHandler {
 		final CPrimitives cprimitive;
 		final Expression returnValue;
 		if (floating2bitvectorTransformationNeeded) {
-			cprimitive = rda.getPrimitives().iterator().next();
+			cprimitive = ((CPrimitive) rda.getRepresentativeType()).getType();
 			if (mSettings.useFpToIeeeBvExtension()) {
 				returnValue = mExpressionTranslation.transformFloatToBitvector(loc, nonFPBVReturnValue, cprimitive);
 			} else {
@@ -1927,14 +1939,14 @@ public class MemoryHandler {
 	 * @return
 	 */
 	private List<Procedure> constructSingleReadProcedure(final CHandler main, final ILocation loc,
-			final HeapDataArray hda, final ReadWriteDefinition rda, final boolean unchecked) {
+			final HeapDataArray hda, final ReadWriteDefinition rda) {
 		// specification for memory reads
 		final String returnValue = "#value";
 		final ASTType valueAstType = rda.getASTType();
 		final String ptrId = "#ptr";
 		final String readTypeSize = "#sizeOfReadType";
 
-		final String readProcedureName = unchecked ? rda.getUncheckedReadProcedureName() : rda.getReadProcedureName();
+		final String readProcedureName = rda.getReadProcedureName();
 
 		// create procedure signature
 		{
@@ -1949,49 +1961,20 @@ public class MemoryHandler {
 		}
 
 		// create procedure specifications
-		final ArrayList<Specification> sread = new ArrayList<>();
+		final ArrayList<Specification> sread =
+				new ArrayList<>(constructPointerBaseValidityCheck(loc, ptrId, readProcedureName));
 
-		if (!unchecked) {
-			sread.addAll(constructPointerBaseValidityCheck(loc, ptrId, readProcedureName));
+		final Expression sizeRead =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogieTypeForPointerComponents(),
+						readTypeSize, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
 
-			final Expression sizeRead = ExpressionFactory.constructIdentifierExpression(loc,
-					mTypeHandler.getBoogieTypeForPointerComponents(), readTypeSize,
-					new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
+		sread.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeRead, ptrId, readProcedureName));
 
-			sread.addAll(constructPointerTargetFullyAllocatedCheck(loc, sizeRead, ptrId, readProcedureName));
-		}
-
-		final Expression arr = hda.getIdentifierExpression();
 		final Expression ptrExpr =
 				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrId,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, readProcedureName));
 
-		Expression dataFromHeap;
-		if (rda.getBytesize() == hda.getSize()) {
-			dataFromHeap = constructOneDimensionalArrayAccess(loc, arr, ptrExpr);
-		} else if (rda.getBytesize() < hda.getSize()) {
-			dataFromHeap = mExpressionTranslation.extractBits(loc,
-					constructOneDimensionalArrayAccess(loc, arr, ptrExpr), rda.getBytesize() * 8, 0);
-		} else {
-			assert rda.getBytesize() % hda.getSize() == 0 : "incompatible sizes";
-			final Expression[] dataChunks = new Expression[rda.getBytesize() / hda.getSize()];
-			for (int i = 0; i < dataChunks.length; i++) {
-				if (i == 0) {
-					dataChunks[dataChunks.length - 1 - 0] = constructOneDimensionalArrayAccess(loc, arr, ptrExpr);
-				} else {
-					final Expression index =
-							addIntegerConstantToPointer(loc, ptrExpr, BigInteger.valueOf(i * hda.getSize()));
-					dataChunks[dataChunks.length - 1 - i] = constructOneDimensionalArrayAccess(loc, arr, index);
-				}
-			}
-			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
-		}
-
-		if (mMemoryModel instanceof MemoryModel_SingleBitprecise
-				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE)) {
-			final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
-			dataFromHeap = mExpressionTranslation.transformBitvectorToFloat(loc, dataFromHeap, cprimitive);
-		}
+		final Expression dataFromHeap = readFromHeap(loc, hda, ptrExpr, rda.getRepresentativeType(), rda.getBytesize());
 
 		final Expression valueExpr = ExpressionFactory.constructIdentifierExpression(loc,
 				mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), returnValue,
@@ -2004,6 +1987,39 @@ public class MemoryHandler {
 		mProcedureManager.endCustomProcedure(main, readProcedureName);
 
 		return Collections.emptyList();
+	}
+
+	private Expression readFromHeap(final ILocation loc, final HeapDataArray hda, final Expression address,
+			final ICType resultType, final int bytesize) {
+		final Expression result;
+		final Expression memoryArray = hda.getIdentifierExpression();
+		if (bytesize == hda.getSize() || hda.getSize() == 0) {
+			// If the size of the heap array matches the desired bytesize, or if we are using integer translation (where
+			// the size of the heap array is zero), then construct a simple access in the memory array.
+			result = constructOneDimensionalArrayAccess(loc, memoryArray, address);
+		} else if (bytesize < hda.getSize()) {
+			result = mExpressionTranslation.extractBits(loc,
+					constructOneDimensionalArrayAccess(loc, memoryArray, address), bytesize * 8, 0);
+		} else {
+			assert bytesize % hda.getSize() == 0 : "incompatible sizes";
+			final Expression[] dataChunks = new Expression[bytesize / hda.getSize()];
+			for (int i = 0; i < dataChunks.length; i++) {
+				if (i == 0) {
+					dataChunks[dataChunks.length - 1 - 0] =
+							constructOneDimensionalArrayAccess(loc, memoryArray, address);
+				} else {
+					final Expression index =
+							addIntegerConstantToPointer(loc, address, BigInteger.valueOf(i * hda.getSize()));
+					dataChunks[dataChunks.length - 1 - i] = constructOneDimensionalArrayAccess(loc, memoryArray, index);
+				}
+			}
+			result = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
+		}
+
+		if (mMemoryModel instanceof MemoryModel_SingleBitprecise && resultType.isFloatingType()) {
+			return mExpressionTranslation.transformBitvectorToFloat(loc, result, ((CPrimitive) resultType).getType());
+		}
+		return result;
 	}
 
 	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,

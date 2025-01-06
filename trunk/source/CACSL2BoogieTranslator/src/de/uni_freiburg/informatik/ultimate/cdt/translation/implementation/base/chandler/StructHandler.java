@@ -229,11 +229,11 @@ public class StructHandler {
 	}
 
 	public Result readFieldInTheStructAtAddress(final ILocation loc, final int fieldIndex,
-			final Expression structAddress, final CStructOrUnion structType) {
+			final Expression structAddress, final CStructOrUnion structType, final boolean unchecked) {
 		final Expression newPointer = computeStructFieldAddress(loc, fieldIndex, structAddress, structType);
 		final ICType resultType = structType.getFieldTypes()[fieldIndex];
 
-		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType);
+		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType, unchecked);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(call);
 		resultBuilder.setLrValue(new RValue(call.getLrValue().getValue(), resultType));

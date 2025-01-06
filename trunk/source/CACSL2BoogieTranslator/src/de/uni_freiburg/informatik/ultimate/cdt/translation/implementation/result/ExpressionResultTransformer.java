@@ -225,7 +225,8 @@ public class ExpressionResultTransformer {
 		return transform(expr, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_INT_TO_BOOL);
 	}
 
-	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
+	private ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook,
+			final boolean unchecked) {
 		final LRValue lrVal = expr.getLrValue();
 
 		if (lrVal == null) {
@@ -264,12 +265,8 @@ public class ExpressionResultTransformer {
 
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
-			if (underlyingType instanceof CPrimitive) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
-				newValue = (RValue) rex.getLrValue();
-				erb.addAllExceptLrValue(rex);
-			} else if (underlyingType instanceof CPointer) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
+			if (underlyingType instanceof CPrimitive || underlyingType instanceof CPointer) {
+				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, unchecked);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CArray) {
@@ -278,8 +275,8 @@ public class ExpressionResultTransformer {
 			} else if (underlyingType instanceof CEnum) {
 				throw new AssertionError("handled above");
 			} else if (underlyingType instanceof CStructOrUnion) {
-				final ExpressionResult rex =
-						readStructFromHeap(expr, loc, hlv.getAddress(), (CStructOrUnion) underlyingType, hook);
+				final ExpressionResult rex = readStructFromHeap(expr, loc, hlv.getAddress(),
+						(CStructOrUnion) underlyingType, hook, unchecked);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CNamed) {
@@ -298,6 +295,15 @@ public class ExpressionResultTransformer {
 		throw new AssertionError("an LRValue that is not null, and no LocalLValue, RValue or HeapLValue???");
 	}
 
+	public ExpressionResult switchToRValue(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
+		return switchToRValue(expr, loc, hook, false);
+	}
+
+	public ExpressionResult switchToRValueUnchecked(final ExpressionResult expr, final ILocation loc,
+			final IASTNode hook) {
+		return switchToRValue(expr, loc, hook, true);
+	}
+
 	/**
 	 * Read the contents of a struct (given as a pointer) from the heap recursively (for nested structs) returning a
 	 * StructConstructor.
@@ -307,6 +313,7 @@ public class ExpressionResultTransformer {
 	 * @param loc
 	 * @param structOnHeapAddress
 	 * @param structType
+	 * @param unchecked
 	 * @param mExprTrans
 	 * @param mTypeSizes
 	 * @param mAuxVarInfoBuilder
@@ -316,7 +323,8 @@ public class ExpressionResultTransformer {
 	 *         items inside the StructConstructor correctly
 	 */
 	private ExpressionResult readStructFromHeap(final ExpressionResult old, final ILocation loc,
-			final Expression structOnHeapAddress, final CStructOrUnion structType, final IASTNode hook) {
+			final Expression structOnHeapAddress, final CStructOrUnion structType, final IASTNode hook,
+			final boolean unchecked) {
 
 		final Expression startAddress = structOnHeapAddress;
 		final Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
@@ -348,14 +356,14 @@ public class ExpressionResultTransformer {
 			final LRValue fieldLRVal;
 			if (underlyingType instanceof CPrimitive) {
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType);
+						i, structOnHeapAddress, structType, unchecked);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
 				newAuxVars.addAll(fieldRead.getAuxVars());
 			} else if (underlyingType instanceof CPointer) {
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType);
+						i, structOnHeapAddress, structType, unchecked);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
@@ -363,7 +371,8 @@ public class ExpressionResultTransformer {
 			} else if (underlyingType instanceof CArray) {
 				final Expression arrayPointer =
 						mStructHandler.computeStructFieldAddress(loc, i, structOnHeapAddress, structType);
-				final ExpressionResult xres1 = readArrayFromHeap(old, loc, arrayPointer, (CArray) underlyingType, hook);
+				final ExpressionResult xres1 =
+						readArrayFromHeap(old, loc, arrayPointer, (CArray) underlyingType, hook, unchecked);
 				final ExpressionResult xres = xres1;
 
 				fieldLRVal = xres.getLrValue();
@@ -374,7 +383,7 @@ public class ExpressionResultTransformer {
 			} else if (underlyingType instanceof CEnum) {
 				// like CPrimitive..
 				final ExpressionResult fieldRead = (ExpressionResult) mStructHandler.readFieldInTheStructAtAddress(loc,
-						i, structOnHeapAddress, structType);
+						i, structOnHeapAddress, structType, unchecked);
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
 				newDecl.addAll(fieldRead.getDeclarations());
@@ -392,8 +401,8 @@ public class ExpressionResultTransformer {
 				final Expression innerStructAddress =
 						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
 
-				final ExpressionResult fieldRead =
-						readStructFromHeap(old, loc, innerStructAddress, (CStructOrUnion) underlyingType, hook);
+				final ExpressionResult fieldRead = readStructFromHeap(old, loc, innerStructAddress,
+						(CStructOrUnion) underlyingType, hook, unchecked);
 
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
@@ -437,7 +446,7 @@ public class ExpressionResultTransformer {
 	 * @return
 	 */
 	private ExpressionResult readArrayFromHeap(final ExpressionResult old, final ILocation loc,
-			final Expression address, final CArray arrayType, final IASTNode hook) {
+			final Expression address, final CArray arrayType, final IASTNode hook, final boolean unchecked) {
 		final ICType arrayValueType = arrayType.getValueType().getUnderlyingType();
 		if (arrayValueType instanceof CArray) {
 			throw new UnsupportedSyntaxException(loc,
@@ -466,9 +475,9 @@ public class ExpressionResultTransformer {
 					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
 			final ExpressionResult readRex;
 			if (arrayValueType instanceof CStructOrUnion) {
-				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook);
+				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook, unchecked);
 			} else {
-				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType());
+				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType(), unchecked);
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());
