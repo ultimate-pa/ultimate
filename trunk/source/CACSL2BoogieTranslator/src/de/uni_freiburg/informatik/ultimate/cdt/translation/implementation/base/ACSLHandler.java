@@ -240,8 +240,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	private Result handleOldExpression(final ILocation loc, final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression inner) {
-		final ExpressionResult result = mExprResultTransformer
-				.switchToRValue((ExpressionResult) main.dispatch(inner, main.getAcslHook()), loc, main.getAcslHook());
+		final ExpressionResult result = dispatchSwitch(main, inner, loc);
 		if (!result.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "old can only be used for expressions without side-effects.");
 		}
@@ -270,9 +269,9 @@ public class ACSLHandler implements IACSLHandler {
 
 	private Result handleAssert(final IDispatcher main, final ILocation loc, final Assertion assertion) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		ExpressionResult formula = (ExpressionResult) main.dispatch(assertion.getFormula(), main.getAcslHook());
+		ExpressionResult formula = dispatchSwitch(main, assertion.getFormula(), loc);
 
-		formula = mExprResultTransformer.transformSwitchRexIntToBool(formula, loc, main.getAcslHook());
+		formula = mExprResultTransformer.rexIntToBool(formula, loc);
 
 		resultBuilder.addAllExceptLrValue(formula);
 
@@ -482,46 +481,40 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		final ExpressionResult left = dispatchSwitch(main, node.getLeft(), loc);
+		final ExpressionResult right = dispatchSwitch(main, node.getRight(), loc);
 
 		switch (node.getOperator()) {
 		case ARITHDIV:
 		case ARITHMOD:
 		case ARITHMUL: {
-			final ExpressionResult left =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getLeft());
-			final ExpressionResult right =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
+			final ExpressionResult leftInt = mExprResultTransformer.rexBoolToInt(left, loc);
+			final ExpressionResult rightInt = mExprResultTransformer.rexBoolToInt(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, left, right);
+			return mCExpressionTranslator.handleMultiplicativeOperation(loc, op, leftInt, rightInt);
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
-			final ExpressionResult left =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getLeft());
-			final ExpressionResult right =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
+			final ExpressionResult leftInt = mExprResultTransformer.rexBoolToInt(left, loc);
+			final ExpressionResult rightInt = mExprResultTransformer.rexBoolToInt(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleAdditiveOperation(loc, op, left, right);
+			return mCExpressionTranslator.handleAdditiveOperation(loc, op, leftInt, rightInt);
 		}
 		case COMPEQ:
 		case COMPNEQ: {
-			final ExpressionResult left =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getLeft());
-			final ExpressionResult right =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
+			final ExpressionResult leftInt = mExprResultTransformer.rexBoolToInt(left, loc);
+			final ExpressionResult rightInt = mExprResultTransformer.rexBoolToInt(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleEqualityOperators(loc, op, left, right);
+			return mCExpressionTranslator.handleEqualityOperators(loc, op, leftInt, rightInt);
 		}
 		case COMPGEQ:
 		case COMPGT:
 		case COMPLEQ:
 		case COMPLT: {
-			final ExpressionResult left =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getLeft());
-			final ExpressionResult right =
-					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getRight());
+			final ExpressionResult leftInt = mExprResultTransformer.rexBoolToInt(left, loc);
+			final ExpressionResult rightInt = mExprResultTransformer.rexBoolToInt(right, loc);
 			final int op = getCASTBinaryExprOperator(node.getOperator());
-			return mCExpressionTranslator.handleRelationalOperators(loc, op, left, right);
+			return mCExpressionTranslator.handleRelationalOperators(loc, op, leftInt, rightInt);
 		}
 		case LOGICAND:
 		case LOGICIFF:
@@ -529,15 +522,13 @@ public class ACSLHandler implements IACSLHandler {
 		case LOGICOR: {
 			final Operator op = getBoogieBinaryExprOperator(node.getOperator());
 			if (op != null) {
-				ExpressionResult left = dispatchSwitch(main, node.getLeft(), loc);
-				ExpressionResult right = dispatchSwitch(main, node.getRight(), loc);
 				final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 				resultBuilder.addAllExceptLrValue(left);
 				resultBuilder.addAllExceptLrValue(right);
-				left = mExprResultTransformer.rexIntToBool(left, loc);
-				right = mExprResultTransformer.rexIntToBool(right, loc);
-				final Expression be = ExpressionFactory.newBinaryExpression(loc, op, left.getLrValue().getValue(),
-						right.getLrValue().getValue());
+				final ExpressionResult leftBool = mExprResultTransformer.rexIntToBool(left, loc);
+				final ExpressionResult rightBool = mExprResultTransformer.rexIntToBool(right, loc);
+				final Expression be = ExpressionFactory.newBinaryExpression(loc, op, leftBool.getLrValue().getValue(),
+						rightBool.getLrValue().getValue());
 				// TODO: Handle Ctype
 				final RValue rval = new RValue(be, new CPrimitive(CPrimitives.INT), true);
 				resultBuilder.setLrValue(rval);
@@ -548,8 +539,6 @@ public class ACSLHandler implements IACSLHandler {
 		case LOGICXOR: {
 			// translate into (l | r)
 			// where l = left & !right
-			final ExpressionResult left = dispatchSwitch(main, node.getLeft(), loc);
-			final ExpressionResult right = dispatchSwitch(main, node.getRight(), loc);
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 			resultBuilder.addAllExceptLrValue(right);
 			final Expression notRight = ExpressionFactory.constructUnaryExpression(loc,
@@ -570,12 +559,11 @@ public class ACSLHandler implements IACSLHandler {
 		case BITOR:
 		case BITXOR:
 			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc,
-					getCASTBinaryExprOperator(node.getOperator()), dispatchSwitch(main, node.getLeft(), loc),
-					dispatchSwitch(main, node.getRight(), loc));
+					getCASTBinaryExprOperator(node.getOperator()), left, right);
 		case BITSHIFTLEFT:
 		case BITSHIFTRIGHT:
 			return mCExpressionTranslator.handleBitshiftOperation(loc, getCASTBinaryExprOperator(node.getOperator()),
-					dispatchSwitch(main, node.getLeft(), loc), dispatchSwitch(main, node.getRight(), loc));
+					left, right);
 
 		case BITIFF:
 		case BITIMPLIES:
@@ -596,24 +584,25 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main,
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook());
-
-		final ExpressionResult resRValue = mExprResultTransformer.switchToRValue(res, loc, main.getAcslHook());
 
 		switch (node.getOperator()) {
 		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not, resRValue);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not,
+					dispatchSwitch(main, node.getExpr(), loc));
 		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus, resRValue);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus,
+					dispatchSwitch(main, node.getExpr(), loc));
 		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus, resRValue);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus,
+					dispatchSwitch(main, node.getExpr(), loc));
 		case LOGICCOMPLEMENT:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde, resRValue);
+			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde,
+					dispatchSwitch(main, node.getExpr(), loc));
 		case POINTER:
 			// TODO: We don't have the hook available here, does null always work here?
-			return mCHandler.handleIndirectionOperator(resRValue, loc, null);
+			return mCHandler.handleIndirectionOperator(dispatchSwitch(main, node.getExpr(), loc), loc, null);
 		case ADDROF:
-			return handleAddressof(loc, res);
+			return handleAddressof(loc, (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook()));
 		default:
 			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -785,11 +774,12 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final Requires node) {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
-				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
+		final ExpressionResult exprResult =
+				mExprResultTransformer.rexIntToBool(dispatchSwitch(main, node.getFormula(), loc), loc);
 		if (!exprResult.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "Requires must be translatable by a single expression");
 		}
+
 		final Expression formula = exprResult.getLrValue().getValue();
 		final Check check = new Check(Spec.PRE_CONDITION);
 		final ILocation reqLoc = mLocationFactory.createACSLLocation(node);
@@ -801,12 +791,13 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final Ensures node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
-				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
+		final ExpressionResult exprResult =
+				mExprResultTransformer.rexIntToBool(dispatchSwitch(main, node.getFormula(), loc), loc);
 		if (!exprResult.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "Ensures must be translatable by a single expression");
 		}
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
+
 		final Expression formula = exprResult.getLrValue().getValue();
 		final Check check = new Check(Spec.POST_CONDITION);
 		final ILocation ensLoc = mLocationFactory.createACSLLocation(node);
@@ -871,13 +862,14 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final LoopInvariant node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ExpressionResult res = mExprResultTransformer.transformSwitchRexIntToBool(
-				(ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook()), loc, main.getAcslHook());
+		final ExpressionResult res =
+				mExprResultTransformer.rexIntToBool(dispatchSwitch(main, node.getFormula(), loc), loc);
 		if (!res.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
 		}
 
 		assert res != null && res.getLrValue().getValue() != null;
+
 		final Check check = new Check(Spec.INVARIANT);
 		final ILocation invLoc = mLocationFactory.createACSLLocation(node);
 		final LoopInvariantSpecification lis =
@@ -906,8 +898,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArray(), main.getAcslHook());
 		// TODO: Why does the ACSL-access have a list of indices, but we only dispatch the first one?
-		final ExpressionResult index = mExprResultTransformer.switchToRValue(
-				(ExpressionResult) main.dispatch(node.getIndices()[0], main.getAcslHook()), loc, main.getAcslHook());
+		final ExpressionResult index = dispatchSwitch(main, node.getIndices()[0], loc);
 		return mCHandler.handleArraySubscriptExpression(array, index, main.getAcslHook());
 	}
 
@@ -915,9 +906,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final FieldAccessExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
-		final Result old = main.dispatch(node.getStruct());
-		final ExpressionResult r =
-				mExprResultTransformer.switchToRValue((ExpressionResult) old, loc, main.getAcslHook());
+		final ExpressionResult r = dispatchSwitch(main, node.getStruct(), loc);
 		assert r.getClass() == ExpressionResult.class;
 		final String field = node.getField();
 
@@ -1020,12 +1009,9 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		assert node.getOutgoingNodes().size() == 4;
 
-		ExpressionResult opCondition = (ExpressionResult) main.dispatch(node.getCondition());
-		opCondition = mExprResultTransformer.switchToRValue(opCondition, loc, main.getAcslHook());
-		ExpressionResult opPositive = (ExpressionResult) main.dispatch(node.getThenPart());
-		opPositive = mExprResultTransformer.switchToRValue(opPositive, loc, main.getAcslHook());
-		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getElsePart());
-		opNegative = mExprResultTransformer.switchToRValue(opNegative, loc, main.getAcslHook());
+		final ExpressionResult opCondition = dispatchSwitch(main, node.getCondition(), loc);
+		final ExpressionResult opPositive = dispatchSwitch(main, node.getThenPart(), loc);
+		final ExpressionResult opNegative = dispatchSwitch(main, node.getElsePart(), loc);
 		return mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative,
 				main.getAcslHook());
 	}
