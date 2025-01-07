@@ -7,11 +7,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
+ * Models the program counter of a program. I.e., this variable is used to store an integer encoding the current control
+ * location of a sequential program resp. the current control location of a thread in a concurrent program.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- *
  */
-public class HcLocationVar implements IHcThreadSpecificVar {
+public final class HcLocationVar implements IHcThreadSpecificVar {
+	// Hash codes are multiplied by this number to reduce likelihood of collisions with other IHcReplacementVar
+	// implementations. Each implementation uses a different value.
+	private static final int HASH_PRIME = 79;
+
 	private final ThreadInstance mInstance;
 	private final Sort mSort;
 
@@ -20,7 +25,7 @@ public class HcLocationVar implements IHcThreadSpecificVar {
 	}
 
 	private HcLocationVar(final ThreadInstance instance, final Sort sort) {
-		mInstance = instance;
+		mInstance = Objects.requireNonNull(instance);
 		mSort = sort;
 	}
 
@@ -46,22 +51,11 @@ public class HcLocationVar implements IHcThreadSpecificVar {
 
 	@Override
 	public int hashCode() {
-		final int prime = 79;
-		return prime * Objects.hash(mInstance);
+		return HASH_PRIME * Objects.hash(mInstance);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcLocationVar other = (HcLocationVar) obj;
-		return Objects.equals(mInstance, other.mInstance);
+		return this == obj || obj instanceof final HcLocationVar other && mInstance.equals(other.mInstance);
 	}
 }

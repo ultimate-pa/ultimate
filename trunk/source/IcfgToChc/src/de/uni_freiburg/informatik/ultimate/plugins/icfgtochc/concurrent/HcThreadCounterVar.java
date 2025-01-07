@@ -45,7 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
-public class HcThreadCounterVar implements IHcReplacementVar {
+public final class HcThreadCounterVar implements IHcReplacementVar {
+	// Hash codes are multiplied by this number to reduce likelihood of collisions with other IHcReplacementVar
+	// implementations. Each implementation uses a different value.
+	private static final int HASH_PRIME = 61;
 
 	private final Sort mSort;
 
@@ -65,17 +68,11 @@ public class HcThreadCounterVar implements IHcReplacementVar {
 
 	@Override
 	public int hashCode() {
-		return 79;
+		return HASH_PRIME;
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		return getClass() == obj.getClass();
+		return this == obj || obj instanceof HcThreadCounterVar;
 	}
 }

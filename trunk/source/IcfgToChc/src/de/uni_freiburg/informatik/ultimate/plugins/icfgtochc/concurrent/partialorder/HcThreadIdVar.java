@@ -34,7 +34,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IHcThreadSpecificVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadInstance;
 
-public class HcThreadIdVar implements IHcThreadSpecificVar {
+/**
+ * Thread-specific variable that represents a unique ID of each thread in a concurrent program.
+ */
+public final class HcThreadIdVar implements IHcThreadSpecificVar {
+	// Hash codes are multiplied by this number to reduce likelihood of collisions with other IHcReplacementVar
+	// implementations. Each implementation uses a different value.
+	private static final int HASH_PRIME = 43;
+
 	private final Sort mSort;
 	private final ThreadInstance mInstance;
 
@@ -43,7 +50,7 @@ public class HcThreadIdVar implements IHcThreadSpecificVar {
 	}
 
 	private HcThreadIdVar(final ThreadInstance instance, final Sort sort) {
-		mInstance = instance;
+		mInstance = Objects.requireNonNull(instance);
 		mSort = sort;
 	}
 
@@ -69,22 +76,11 @@ public class HcThreadIdVar implements IHcThreadSpecificVar {
 
 	@Override
 	public int hashCode() {
-		final int prime = 59;
-		return prime * Objects.hash(mInstance);
+		return HASH_PRIME * Objects.hash(mInstance);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcThreadIdVar other = (HcThreadIdVar) obj;
-		return Objects.equals(mInstance, other.mInstance);
+		return this == obj || obj instanceof final HcThreadIdVar other && mInstance.equals(other.mInstance);
 	}
 }

@@ -38,7 +38,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IHcFinit
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.IHcThreadSpecificVar;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent.ThreadInstance;
 
-public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar {
+/**
+ * Thread-specific boolean variable used in the sleep set-reduced encoding of concurrent programs.
+ *
+ * If this variable is {@code true}, then the actions of its thread are currently in the sleep set, and therefore the
+ * thread is not allowed to perform a step. To achieve this, all transitions of the thread have a guard requiring that
+ * this variable is {@code false}.
+ *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ *
+ * @see SleepSetThreadModularHornClauseProvider
+ */
+public final class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar {
+	// Hash codes are multiplied by this number to reduce likelihood of collisions with other IHcReplacementVar
+	// implementations. Each implementation uses a different value.
+	private static final int HASH_PRIME = 83;
+
 	private final Sort mSort;
 	private final ThreadInstance mInstance;
 	private final Set<Term> mValues;
@@ -49,8 +64,8 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 	}
 
 	private HcSleepVar(final ThreadInstance instance, final Sort sort, final Set<Term> values) {
-		mInstance = instance;
-		mSort = sort;
+		mInstance = Objects.requireNonNull(instance);
+		mSort = Objects.requireNonNull(sort);
 		mValues = values;
 	}
 
@@ -81,22 +96,11 @@ public class HcSleepVar implements IHcThreadSpecificVar, IHcFiniteReplacementVar
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		return prime * Objects.hash(mInstance);
+		return HASH_PRIME * mInstance.hashCode();
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcSleepVar other = (HcSleepVar) obj;
-		return Objects.equals(mInstance, other.mInstance);
+		return this == obj || obj instanceof final HcSleepVar other && mInstance.equals(other.mInstance);
 	}
 }

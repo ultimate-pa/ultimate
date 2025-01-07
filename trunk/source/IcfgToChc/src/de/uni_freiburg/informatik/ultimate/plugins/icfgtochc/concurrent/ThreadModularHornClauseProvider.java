@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -264,9 +265,9 @@ public class ThreadModularHornClauseProvider extends ExtensibleHornClauseProvide
 		mLocationVars.put(instance, location);
 		result.add(location);
 
-		final List<IProgramVar> localVars = mCfgSymbolTable.getLocals(instance.getTemplateName()).stream()
+		final List<ILocalProgramVar> localVars = mCfgSymbolTable.getLocals(instance.getTemplateName()).stream()
 				.filter(mVariableFilter).collect(Collectors.toList());
-		for (final IProgramVar pv : localVars) {
+		for (final ILocalProgramVar pv : localVars) {
 			final var local = new HcLocalVar(pv, instance);
 			mLocalVars.put(instance, pv, local);
 			result.add(local);

@@ -2,22 +2,30 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
+ * Represents a (procedure-)local variable of a program.
+ *
+ * As we model thread templates of concurrent programs as procedures, this class also implements
+ * {@link IHcThreadSpecificVar}.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- *
  */
-public class HcLocalVar implements IHcThreadSpecificVar {
-	private final IProgramVar mVariable;
+public final class HcLocalVar implements IHcThreadSpecificVar {
+	// Hash codes are multiplied by this number to reduce likelihood of collisions with other IHcReplacementVar
+	// implementations. Each implementation uses a different value.
+	private static final int HASH_PRIME = 97;
+
+	private final ILocalProgramVar mVariable;
 	private final ThreadInstance mInstance;
 
-	public HcLocalVar(final IProgramVar variable, final ThreadInstance instance) {
+	public HcLocalVar(final ILocalProgramVar variable, final ThreadInstance instance) {
 		assert variable.getProcedure().equals(instance.getTemplateName());
-		mVariable = variable;
-		mInstance = instance;
+		mVariable = Objects.requireNonNull(variable);
+		mInstance = Objects.requireNonNull(instance);
 	}
 
 	public IProgramVar getVariable() {
@@ -46,8 +54,7 @@ public class HcLocalVar implements IHcThreadSpecificVar {
 
 	@Override
 	public int hashCode() {
-		final int prime = 97;
-		return prime * Objects.hash(mInstance, mVariable);
+		return HASH_PRIME * Objects.hash(mInstance, mVariable);
 	}
 
 	@Override
@@ -55,13 +62,7 @@ public class HcLocalVar implements IHcThreadSpecificVar {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final HcLocalVar other = (HcLocalVar) obj;
-		return Objects.equals(mInstance, other.mInstance) && Objects.equals(mVariable, other.mVariable);
+		return obj instanceof final HcLocalVar other && mInstance.equals(other.mInstance)
+				&& mVariable.equals(other.mVariable);
 	}
 }

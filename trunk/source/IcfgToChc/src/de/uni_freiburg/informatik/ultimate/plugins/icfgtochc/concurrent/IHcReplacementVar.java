@@ -28,6 +28,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.icfgtochc.concurrent;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
+/**
+ * A variable that is useful to model a program in CHC clauses. It might directly correspond to a program variable (like
+ * {@link HcGlobalVar} and {@code HcLocalVar}), or it might be introduced specifically for the CHC model (like
+ * {@link HcLocationVar}).
+ *
+ * These variables are a useful intermediate construct for the translation. In the final CHC clauses, they are always
+ * replaced by some term variable (or term).
+ */
 public interface IHcReplacementVar {
 	Sort getSort();
 }
