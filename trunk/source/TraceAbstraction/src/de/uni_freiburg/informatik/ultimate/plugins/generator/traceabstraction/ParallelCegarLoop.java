@@ -79,7 +79,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	boolean mComputeHoareAnnotation;
 
 	ExecutorService mExec;
-	List<Future<WorkerThreadResult<L, A>>> mWorkerFutures;
 
 	int mThreadLimit; // Runtime.avalablecores or so
 	CompletionService<WorkerThreadResult<L, A>> mECS;
@@ -128,8 +127,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		super(name, initialAbstraction, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, hoareAnnotationLocs, services, transitionClazz, stateFactoryForRefinement);
 
-		// Holds the Future of each thread
-		mWorkerFutures = new ArrayList<Future<WorkerThreadResult<L, A>>>();
 		mRootNode = rootNode;
 
 		// Start thread pool
@@ -226,7 +223,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
-
 			try {
 				mCegarLoopBenchmark.announceNextIteration();
 				try {
@@ -235,75 +231,69 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 						final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 						mServices = iterationServices;
-						RefinementStrategy strategyType;
-
-						// strategyType = RefinementStrategy.WOLF;
-						// strategyType = RefinementStrategy.CAMEL;
-						strategyType = mPref.getRefinementStrategy();
+						final RefinementStrategy strategyType = mPref.getRefinementStrategy(); // TODO parallel
+																								// strategies
 						final CegarWorkerThread<L, A> worker =
 								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
-						// worker is Callable and is called here
-						final Future<WorkerThreadResult<L, A>> future = mECS.submit(worker);
-						mWorkerFutures.add(future);
-
+						// worker is a Callable and is called here
+						mECS.submit(worker);
 						runningThreads += 1;
 					} else {
-						// No busy waiting
+
 						try {
 							mLogger.info("All threads busy, going to sleep.");
-							mECS.take(); // take doesnt remove the future
+							// No busy waiting via Completeable
+							Future<WorkerThreadResult<L, A>> doneFuture = mECS.take(); // take doesnt remove the future
 							mLogger.info("Waking up, a worker is done.");
+							while (doneFuture != null) {
+								try {
+									final WorkerThreadResult<L, A> workerResult = doneFuture.get();
+									mLogger.info("Main: A Thread is Done");
+									runningThreads -= 1;
+									workerResult.getAutomatonType();
+									final List<L> trace = workerResult.getCounterexample().getWord().asList();
+									final int traceHash = trace.hashCode();
+									// TODO should be enough to save testgoal id right?
+									final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
+
+									mLogger.info("Done TestGoal: " + testGoalId);
+									mLogger.info("Done Type: " + workerResult.getAutomatonType());
+
+									if (workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
+											|| !useGoalSetForIsEmpty) {
+										automataWaitingList.add(workerResult);
+										// Free up the testgoal for counterexample search
+										mInActiveErrorLocs.remove(traceHash);
+									}
+
+								} catch (final ExecutionException | InterruptedException e) {
+									// TODO better handling of exceptions in worker thread
+									e.printStackTrace();
+									mExec.shutdownNow();
+									throw new AutomataLibraryException(null, e.getMessage());
+								}
+								doneFuture = mECS.poll();
+							}
 						} catch (final InterruptedException e) {
 							e.printStackTrace();
 							mExec.shutdownNow();
 							// TODO throw exception
 						}
-
 					}
 
 					/*
 					 * Check which worker is done and add the resulting automaton to automataWaitingList
+					 *					 *
 					 */
-					final List<Future<WorkerThreadResult<L, A>>> doneThreads = new ArrayList<>();
-					for (int i = 0; i < mWorkerFutures.size(); i++) {
-						final Future<WorkerThreadResult<L, A>> futureResult = mWorkerFutures.get(i);
-						try {
-							if (futureResult.isDone()) {
-								mLogger.info("Thread Done: " + Thread.currentThread().getId());
-								runningThreads -= 1;
-								final WorkerThreadResult<L, A> doneFuture = futureResult.get();
-								doneFuture.getAutomatonType();
-								final List<L> trace = doneFuture.getCounterexample().getWord().asList();
-								final int traceHash = trace.hashCode();
-
-								final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
-
-								mLogger.info("Done TestGoal: " + testGoalId);
-								mLogger.info("Done Type: " + doneFuture.getAutomatonType());
-
-								doneThreads.add(mWorkerFutures.get(i));
-								if (doneFuture.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
-										|| !useGoalSetForIsEmpty) {
-									automataWaitingList.add(doneFuture);
-									// Free up the testgoal for counterexample search
-									mInActiveErrorLocs.remove(traceHash);
-								}
-
-							}
-						} catch (final ExecutionException | InterruptedException e) {
-							// TODO better handling of exceptions in worker thread
-							e.printStackTrace();
-							mExec.shutdownNow();
-							throw new AutomataLibraryException(null, e.getMessage());
-						}
-					}
-					mWorkerFutures.removeAll(doneThreads);
 
 					// Refine abstraction as long as there are automata in automataWaitingList
 					while (!automataWaitingList.isEmpty()) {
 						mLogger.info("Refining Abstraction: " + automataWaitingList.size());
 						assert !automataWaitingList.isEmpty();
 						final WorkerThreadResult<L, A> firstAutomatonInWaitingList = automataWaitingList.pop();
+						if (useGoalSetForIsEmpty) {
+							assert firstAutomatonInWaitingList.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
+						}
 						try {
 							final INestedWordAutomaton<L, IPredicate> abstraction = mAbstraction;
 
@@ -318,7 +308,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								return;
 							}
 							mAbstraction = diff.getResult();
-							// mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
+							mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
 							// Kill the worker script
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
@@ -341,7 +331,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 				// Check if empty only if abstraction changed or we have a thread available
 				if (abstractionWasRefined) {
-					minimizeAbstractionIfEnabled();
+					minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
 				} else {
 					mIteration -= 1;
 				}
@@ -443,12 +433,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				if (mCounterexample == null) {
 					return true;
 				} else {
+					// For debugging only, can be used to test if the search returns redundant counterexamples
 					final List<L> trace = mCounterexample.getWord().asList();
 					final int traceHash = trace.hashCode();
 					if (mAllCounterexamples.containsKey(traceHash)) {
 						assert false;
 					}
-					// mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
+					mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
 				}
 			}
 
@@ -502,6 +493,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	 * Difference is calculated twice first in worker and then in master.
 	 * We need the worker CFG script here
 	 */
+	@SuppressWarnings("unchecked")
 	private IOpWithDelayedDeadEndRemoval<L, IPredicate> computeAutomataDifference(
 			final INestedWordAutomaton<L, IPredicate> minuend, final WorkerThreadResult<L, A> workerResult)
 			throws AutomataLibraryException, AssertionError {
@@ -512,12 +504,24 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			// TODO mStateFactoryForRefinement muss fresh vom worker script kommen
+
+			final Set<IcfgLocation> hoareAnnotationLocs;
+			if (mComputeHoareAnnotation) {
+				hoareAnnotationLocs = (Set<IcfgLocation>) TraceAbstractionUtils
+						.getLocationsForWhichHoareAnnotationIsComputed(mRootNode, mPref.getHoareAnnotationPositions());
+			} else {
+				hoareAnnotationLocs = Collections.emptySet();
+			}
+
+			final PredicateFactoryRefinement stateFactoryForRefinement =
+					new PredicateFactoryRefinement(getServices(), workerResult.getWorkerMgdScript(),
+							workerResult.getPredicateFactory(), mComputeHoareAnnotation, hoareAnnotationLocs);
 			try {
 				if (mPref.differenceSenwa()) {
-					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
 							minuend, workerResult.getSubtrahend(), psd, false);
 				} else {
-					diff = new Difference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+					diff = new Difference<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
 							minuend, workerResult.getSubtrahend(), psd, workerResult.exploitSigmaStarConcatOfIa());
 				}
 				mCegarLoopBenchmark.reportInterpolantAutomatonStates(workerResult.getSubtrahend().size());
@@ -609,9 +613,11 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 	private final boolean mExploitSigmaStarConcatOfIa;
 	private ManagedScript mMgdScript;
 	private IRun<L, ?> mCounterexample;
+	PredicateFactory mPredicateFactory;
 
 	/**
 	 * @param automatonType
+	 * @param predicateFactory
 	 *
 	 *
 	 */
@@ -619,7 +625,8 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final InterpolantAutomatonEnhancement enhanceMode, final boolean useErrorAutomaton,
-			final AutomatonType automatonType, final ManagedScript mgdScript, final IRun<L, ?> counterexample) {
+			final AutomatonType automatonType, final ManagedScript mgdScript, final IRun<L, ?> counterexample,
+			final PredicateFactory predicateFactory) {
 		mSubtrahend = subtrahend;
 		mAutomatonType = automatonType;
 		mUseErrorAutomaton = useErrorAutomaton;
@@ -628,6 +635,11 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 		mExploitSigmaStarConcatOfIa = explointSigmaStarConcatOfIA;
 		mMgdScript = mgdScript;
 		mCounterexample = counterexample;
+		mPredicateFactory = predicateFactory;
+	}
+
+	public PredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
 	}
 
 	public InterpolantAutomatonEnhancement getEnhanceMode() {

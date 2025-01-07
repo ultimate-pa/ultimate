@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUti
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -207,17 +206,13 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 			return mDontCareTerm;
 		}
 		if (((HistoryRecordingScript) mScript).getMainScript() != null) {
-			final TermTransferrer tf =
-					new TermTransferrer(((HistoryRecordingScript) mScript).getMainScript().getScript(), mScript);
-
 			if (terms.isEmpty()) {
-				return tf.transform(funGetNeutralElement.get());
+				return ((HistoryRecordingScript) mScript).transferTermToWorker(funGetNeutralElement.get());
 			}
 
 			final List<Term> newTerms = new ArrayList<>();
-
 			for (final Term t : terms) {
-				newTerms.add(tf.transform(t));
+				newTerms.add(((HistoryRecordingScript) mScript).transferTermToWorker(t));
 			}
 			final Term xJunct = funCreateXJunct.apply(mScript, newTerms);
 			if (st != SimplificationTechnique.NONE) {

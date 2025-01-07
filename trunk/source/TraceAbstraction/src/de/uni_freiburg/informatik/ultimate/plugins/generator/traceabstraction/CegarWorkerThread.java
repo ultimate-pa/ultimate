@@ -79,7 +79,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	// each worker needs one of their own:
 	private final int mIteration;
 	private final IRun<L, ?> mCounterexample;
-	private final INestedWordAutomaton<L, IPredicate> mAbstraction; // abstraction at the point the worker was spawned
+	private INestedWordAutomaton<L, IPredicate> mAbstraction; // abstraction at the point the worker was spawned
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	// each worker needs one of their own, but creates it themself:
@@ -98,6 +98,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	private final IcfgLocation mCurrentErrorLoc;
 
 	// for error automata
+	private final boolean mUseGoalSetForIsEmpty;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
@@ -137,6 +138,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mSimplificationTechnique = pref.getSimplificationTechnique();
 		mXnfConversionTechnique = pref.getXnfConversionTechnique();
 		mIcfg = rootNode;
+		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
 
 	}
 
@@ -148,13 +150,21 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 		try {
 			final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(mStrategy);
+			if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
+				// in this setting we dont use error automata
+				mAbstraction = null;
 
+				mThreadResult = new WorkerThreadResult<L, A>(null, null, null, false, null, false, AutomatonType.ERROR,
+						mCsToolkit.getManagedScript(), mCounterexample, null);
+				return mThreadResult;
+			}
 			final AbstractCegarLoop.AutomatonType automatonType =
 					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 
 			constructRefinementAutomaton(automatonType);
 
 			mThreadResult = refineAbstractionInternally();
+			mAbstraction = null;
 		} catch (AutomataLibraryException | ToolchainCanceledException e) {
 			// TODO deal with failure
 		}
@@ -374,7 +384,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<L, A>(subtrahend,
 				subtrahendBeforeEnhancement, predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode,
-				useErrorAutomaton, automatonType, mCsToolkit.getManagedScript(), mCounterexample);
+				useErrorAutomaton, automatonType, mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory);
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 

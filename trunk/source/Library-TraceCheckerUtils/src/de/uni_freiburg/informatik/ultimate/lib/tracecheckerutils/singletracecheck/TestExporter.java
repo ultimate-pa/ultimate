@@ -180,9 +180,7 @@ class TestVector {
 
 	// TODO singed bit not considered in value bounds!!!
 	private void addToLinkedList64Bit(final Integer index, final Term valueTerm, final String type) {
-		if (valueTerm != null) {
-			System.out.println("Value: " + valueTerm.toStringDirect());
-		}
+
 		need64Bit = false;
 		if (values64Bit.size() <= index) {
 			for (int i = values64Bit.size(); i <= index; i = i + 1) {
@@ -313,10 +311,6 @@ class TestVector {
 	}
 
 	private void addToLinkedList(final Integer index, final Term valueTerm, final String type) {
-		if (valueTerm != null) {
-			System.out.println("Value: " + valueTerm.toStringDirect());
-		}
-
 		if (values.size() <= index) {
 			for (int i = values.size(); i <= index; i = i + 1) {
 				values.add(null);
