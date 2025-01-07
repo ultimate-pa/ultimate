@@ -239,7 +239,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						mECS.submit(worker);
 						runningThreads += 1;
 					} else {
-
 						try {
 							mLogger.info("All threads busy, going to sleep.");
 							// No busy waiting via Completeable
@@ -280,11 +279,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							// TODO throw exception
 						}
 					}
-
-					/*
-					 * Check which worker is done and add the resulting automaton to automataWaitingList
-					 *					 *
-					 */
 
 					// Refine abstraction as long as there are automata in automataWaitingList
 					while (!automataWaitingList.isEmpty()) {
@@ -342,12 +336,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
 					if (oldCounterexample == mCounterexample) {
 						System.out.println("Didnt Find a Counterexample!!! " + Thread.activeCount());
-
 						mCounterexample = null;
 					}
 					if (mCounterexample != null) {
 						resetThreadLimit();
-
 						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 					} else {
 						if (isAbstractionCorrect && runningThreads == 0) {
@@ -437,9 +429,15 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					final List<L> trace = mCounterexample.getWord().asList();
 					final int traceHash = trace.hashCode();
 					if (mAllCounterexamples.containsKey(traceHash)) {
-						assert false;
+						if (useGoalSetForIsEmpty) {
+							assert false;
+						}
+						mCounterexample = null; // no assert false; because a thread can finish after difference before
+												// isEmpty
+					} else {
+						mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
 					}
-					mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
+
 				}
 			}
 
