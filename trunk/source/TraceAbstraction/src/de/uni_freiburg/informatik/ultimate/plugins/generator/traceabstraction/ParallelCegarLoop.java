@@ -95,6 +95,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private final boolean useGoalSetForIsEmpty;
 	private final boolean mParallelSearchSrategy;
 
+	// shared read only inital abstraction for automata generalization in threads
+	private final INestedWordAutomaton<L, IPredicate> mInitialAbstraction;
+
 	/**
 	 *
 	 * Compute Initial Abstraction, can be reused
@@ -140,6 +143,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
 		mParallelSearchSrategy = mPref.parallelSearchSrategy;
+		mInitialAbstraction = initialAbstraction;
 	}
 
 	/*
@@ -192,15 +196,15 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz);
 
 		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(getServices(), mCounterexample,
-				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, mIteration),
+				mInitialAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, mIteration),
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				strategyType);
 
 		// start worker
 		return new CegarWorkerThread<L, A>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
-				mCegarLoopBenchmark, iterationServices, freshToolKit, mStrategyFactory, mAbstraction, predicateFactory,
-				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
-				currentErrorLoc, mRootNode);
+				mCegarLoopBenchmark, iterationServices, freshToolKit, mStrategyFactory, mInitialAbstraction,
+				predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
+				mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode);
 	}
 
 	/*
