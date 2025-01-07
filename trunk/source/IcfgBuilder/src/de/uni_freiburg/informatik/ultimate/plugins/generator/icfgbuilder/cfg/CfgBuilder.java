@@ -1021,16 +1021,34 @@ public class CfgBuilder {
 
 		private BoogieIcfgLocation buildLabel(final IIcfgElement currentElement, final Label st) {
 			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
-			// TODO Matthias 2024-09-23: This is one of several auxiliary statements that we
-			// add while constructing an ICFG. If we want to support the next step operator
-			// of LTL we have to define the semantics of a step in Boogie. For this we have
-			// to find out what auxiliry statements we add.
-			final AssumeStatement assume = new AssumeStatement(st.getLocation(),
-					ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
-			mIcfgBacktranslator.putAux(assume, new BoogieASTNode[] { st });
-			final StatementSequence stseq = prependStatement(assume, currentElement);
-			endStatementSequence(stseq, newLocation);
+			if (currentElement instanceof BoogieIcfgLocation) {
+				// TODO: Implement this case after we have labels in the CFG
+				final boolean isLabel = false;
+				if (isLabel) {
+					// TODO Matthias 2024-09-23: This is one of several auxiliary statements that we
+					// add while constructing an ICFG. If we want to support the next step operator
+					// of LTL we have to define the semantics of a step in Boogie. For this we have
+					// to find out what auxiliry statements we add.
+					final AssumeStatement assume = new AssumeStatement(st.getLocation(),
+							ExpressionFactory.createBooleanLiteral(st.getLocation(), true));
+					mIcfgBacktranslator.putAux(assume, new BoogieASTNode[] { st });
+					final StatementSequence stseq = prependStatement(assume, currentElement);
+					endStatementSequence(stseq, newLocation);
+				} else {
+					mergeLocNodes((BoogieIcfgLocation) currentElement, newLocation, true);
+				}
+			} else {
+				endStatementSequence((StatementSequence) currentElement, newLocation);
+				if (!isAuxiliaryLabel(st)) {
+					// TODO: add to labels of CFG after we have labels in the CFG
+				}
+			}
 			return newLocation;
+		}
+
+		// TODO Implement support for the attribute
+		private boolean isAuxiliaryLabel(final Label st) {
+			return true;
 		}
 
 		private BoogieIcfgLocation buildGoto(final BoogieIcfgLocation currentLocation, final GotoStatement st) {
