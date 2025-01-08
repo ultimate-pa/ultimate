@@ -124,7 +124,7 @@ public class ACSLPrettyPrinter {
 		case final ACSLResultExpression res:
 			return "\\result";
 		case final AtLabelExpression at:
-			return "\\at(" + printExpression(at.getFormula()) + ", " + at.getLabel() + ")";
+			return String.format("\\at(%s, %s)", printExpression(at.getFormula()), at.getLabel());
 		default:
 			// TODO: Add more cases
 			return expression.toString();
