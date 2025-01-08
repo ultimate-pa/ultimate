@@ -253,6 +253,7 @@ public final class Boogie2ACSL {
 
 			// In all other contexts, in particular for invariants inside a function body, we use \old() to indicate
 			// that we are referring to the original value of the parameter in C (because params can be re-assigned).
+			// TODO: Only translate to \old for contracts and to \at(x, Pre) for invariants
 			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())),
 					pair.getSecond(), range);
 		}
@@ -747,6 +748,7 @@ public final class Boogie2ACSL {
 				return null;
 			}
 			range = innerTrans.getRange();
+			// TODO: Only translate to \old for contracts and to \at(x, Pre) for invariants
 			resultExpr = new OldValueExpression(innerTrans.getExpression());
 			cType = innerTrans.getCType();
 			break;
