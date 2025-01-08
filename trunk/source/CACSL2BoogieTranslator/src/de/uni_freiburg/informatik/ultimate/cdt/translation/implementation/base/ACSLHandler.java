@@ -704,7 +704,7 @@ public class ACSLHandler implements IACSLHandler {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
-				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
 		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
 			throw new UnsupportedSyntaxException(loc, "Requires must be translatable by a single expression");
 		}
@@ -720,7 +720,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final Ensures node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
-				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
 		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
 			throw new UnsupportedSyntaxException(loc, "Ensures must be translatable by a single expression");
 		}
@@ -870,12 +870,11 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(rIdc);
 
 		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
-		final Expression[] idc = new Expression[] { idx };
+		final Expression[] idc = { idx };
 
-		final Expression arr = // new IdentifierExpression(loc, SFO.VALID);
-				ExpressionFactory.constructIdentifierExpression(loc,
-						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
-						SFO.VALID, new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
+				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		// TODO: CType/range type of valid array -- depends on a preference???
@@ -895,7 +894,7 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(rIdc);
 
 		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
-		final Expression[] idc = new Expression[] { idx };
+		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -921,7 +920,7 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(rIdc);
 
 		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
-		final Expression[] idc = new Expression[] { idx };
+		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
