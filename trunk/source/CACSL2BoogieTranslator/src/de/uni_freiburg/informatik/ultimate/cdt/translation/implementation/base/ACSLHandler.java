@@ -99,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
@@ -206,6 +207,22 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final OldValueExpression node) {
 		return handleOldExpression(mLocationFactory.createACSLLocation(node), main, node.getFormula());
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final AtLabelExpression node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		switch (node.getLabel()) {
+		case "Old":
+			// TODO: Check that the context is a contract
+			return handleOldExpression(loc, main, node.getFormula());
+		case "Pre":
+			// TODO: Check that the context is a statement annotation
+			return handleOldExpression(loc, main, node.getFormula());
+		default:
+			throw new UnsupportedSyntaxException(loc,
+					node.getLabel() + " is currently not supported as a label in \\at.");
+		}
 	}
 
 	private Result handleOldExpression(final ILocation loc, final IDispatcher main,

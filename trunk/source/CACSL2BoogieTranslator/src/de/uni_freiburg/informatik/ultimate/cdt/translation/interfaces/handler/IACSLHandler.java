@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
@@ -307,6 +308,17 @@ public interface IACSLHandler extends IHandler {
 	 * @return a result object
 	 */
 	Result visit(IDispatcher main, OldValueExpression node);
+
+	/**
+	 * Translates an AtLabelExpression.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, AtLabelExpression node);
 
 	Result visit(IDispatcher main, CastExpression node);
 
