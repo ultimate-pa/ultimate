@@ -199,18 +199,25 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final ACSLNode node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		if (node instanceof OldValueExpression) {
-			final OldValueExpression ove = (OldValueExpression) node;
-			final ExpressionResult inner = (ExpressionResult) main.dispatch(ove.getFormula(), main.getAcslHook());
-			final ExpressionResult innerSwitched =
-					mExprResultTransformer.switchToRValue(inner, loc, main.getAcslHook());
-			final RValue newRValue =
-					new RValue(ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD,
-							innerSwitched.getLrValue().getValue()), innerSwitched.getLrValue().getCType());
-			return new ExpressionResultBuilder().addAllExceptLrValue(innerSwitched).setLrValue(newRValue).build();
-		}
 		final String msg = "ACSLHandler: Not yet implemented: " + node.toString();
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final OldValueExpression node) {
+		return handleOldExpression(mLocationFactory.createACSLLocation(node), main, node.getFormula());
+	}
+
+	private Result handleOldExpression(final ILocation loc, final IDispatcher main,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression inner) {
+		final ExpressionResult result = mExprResultTransformer
+				.switchToRValue((ExpressionResult) main.dispatch(inner, main.getAcslHook()), loc, main.getAcslHook());
+		if (!result.hasNoSideEffects()) {
+			throw new UnsupportedSyntaxException(loc, "old can only be used for expressions without side-effects.");
+		}
+		final RValue newRValue = new RValue(ExpressionFactory.constructUnaryExpression(loc,
+				UnaryExpression.Operator.OLD, result.getLrValue().getValue()), result.getLrValue().getCType());
+		return new ExpressionResultBuilder().addAllExceptLrValue(result).setLrValue(newRValue).build();
 	}
 
 	@Override
