@@ -219,9 +219,17 @@ public class ACSLHandler implements IACSLHandler {
 		case "Pre":
 			// TODO: Check that the context is a statement annotation
 			return handleOldExpression(loc, main, node.getFormula());
-		default:
+		case "Here":
+		case "Post":
+		case "LoopEntry":
+		case "LoopCurrent":
+		case "Init":
+			// TODO: Support other built-in labels
 			throw new UnsupportedSyntaxException(loc,
 					node.getLabel() + " is currently not supported as a label in \\at.");
+		default:
+			throw new UnsupportedSyntaxException(loc,
+					"Only built-in labels are currently supported as a in \\at (found ." + node.getLabel() + ").");
 		}
 	}
 
