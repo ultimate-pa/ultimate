@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
@@ -245,20 +246,24 @@ public final class Boogie2ACSL {
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			final var range = getRangeForCType(pair.getSecond());
 
-			if (context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition) {
+			if (isFunctionDefinition(context)) {
 				// In the context of a function definition, i.e., when backtranslating a contract, we can backtranslate
 				// invars directly.
 				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);
 			}
 
-			// In all other contexts, in particular for invariants inside a function body, we use \old() to indicate
-			// that we are referring to the original value of the parameter in C (because params can be re-assigned).
-			// TODO: Only translate to \old for contracts and to \at(x, Pre) for invariants
-			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())),
+			// In all other contexts, in particular for invariants inside a function body, we use \at(_, Pre) (as \old
+			// is only allowed for function contracts in ACSL) to indicate that we are referring to the original value
+			// of the parameter in C (because params can be re-assigned).
+			return new BacktranslatedExpression(new AtLabelExpression(new IdentifierExpression(pair.getFirst()), "Pre"),
 					pair.getSecond(), range);
 		}
 		mReporter.accept("Unknown variable: " + expr.getIdentifier());
 		return null;
+	}
+
+	private static boolean isFunctionDefinition(final ILocation context) {
+		return context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition;
 	}
 
 	private BacktranslatedExpression constructFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
@@ -748,8 +753,14 @@ public final class Boogie2ACSL {
 				return null;
 			}
 			range = innerTrans.getRange();
-			// TODO: Only translate to \old for contracts and to \at(x, Pre) for invariants
-			resultExpr = new OldValueExpression(innerTrans.getExpression());
+			// In ACSL \old is only allowed in function contracts.
+			// Therefore we translate an old-expression old(x) in Boogie to either \old(x), if the context is a function
+			// (which means that the expression is present in a contract), or \at(x, Pre) otherwise.
+			if (isFunctionDefinition(context)) {
+				resultExpr = new OldValueExpression(innerTrans.getExpression());
+			} else {
+				resultExpr = new AtLabelExpression(innerTrans.getExpression(), "Pre");
+			}
 			cType = innerTrans.getCType();
 			break;
 		}
