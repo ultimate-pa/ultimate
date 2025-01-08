@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
@@ -122,6 +123,8 @@ public class ACSLPrettyPrinter {
 			return String.format("(%s) %s", cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
 		case final ACSLResultExpression res:
 			return "\\result";
+		case final AtLabelExpression at:
+			return "\\at(" + printExpression(at.getFormula()) + ", " + at.getLabel() + ")";
 		default:
 			// TODO: Add more cases
 			return expression.toString();
