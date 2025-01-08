@@ -78,7 +78,7 @@ public class ACSLPrettyPrinter {
 		case final Requires req:
 			return "//@ requires " + printExpression(req.getFormula()) + ";";
 		case final Ensures ens:
-			return "//@ requires " + printExpression(ens.getFormula()) + ";";
+			return "//@ ensures " + printExpression(ens.getFormula()) + ";";
 		default:
 			// TODO: Add more cases
 			return node.toString();
