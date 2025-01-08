@@ -32,23 +32,23 @@ file_export_version=3.0
 /instance/JungVisualization/shapeForNodePreference=RoundRectangle
 @JungVisualization=0.0.1
 #Tue Nov 05 17:28:03 CET 2013
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolants=ForwardPredicates
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/BlockSize=single program statement
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/What\ is\ a\ letter\ in\ the\ trace\ abstraction\ alpabet=STATEMENT
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Solver=Z3
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:8096 -smt2 -in
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Interpolants=ForwardPredicates
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/BlockSize=single program statement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/What\ is\ a\ letter\ in\ the\ trace\ abstraction\ alpabet=STATEMENT
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/To\ the\ following\ directory=
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Solver=Z3
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:8096 -smt2 -in
 file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/PreserveGotoEdges=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/AllErrorsAtOnce=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolating\ solver=Z3
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Preserve\ Goto-Edges\ in\ RCFG=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/PreserveGotoEdges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/AllErrorsAtOnce=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Interpolating\ solver=Z3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Preserve\ Goto-Edges\ in\ RCFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SingleStatement
 #Tue Nov 05 17:28:03 CET 2013
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.core=
