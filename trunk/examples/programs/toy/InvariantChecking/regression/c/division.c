@@ -1,4 +1,4 @@
-// #Safe
+//#ValidAnnotation
 /*
  * Date: 2025-01-08
  * Author: schuessf@informatik.uni-freiburg.de
