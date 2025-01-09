@@ -357,6 +357,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
 
+	public static final String LABEL_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL = "Assert witness elements hierarchical";
+	public static final boolean DEF_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL = false;
+	public static final String DESC_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL =
+			"Assert elemtents from witness first and use underlying CodeBlock assert order for all other CodeBlocks.";
+
 	public static final String LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY = "Assert CodeBlocks";
 
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
@@ -607,6 +612,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_LIVE_VARIABLES, Boolean.TRUE, PreferenceType.Boolean),
 
 				new UltimatePreferenceItemGroup("Assert Order",
+						new UltimatePreferenceItem<>(LABEL_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL,
+								DEF_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL, DESC_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL,
+								PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 								AssertCodeBlockOrderType.NOT_INCREMENTALLY, PreferenceType.Combo,
 								AssertCodeBlockOrderType.values()),

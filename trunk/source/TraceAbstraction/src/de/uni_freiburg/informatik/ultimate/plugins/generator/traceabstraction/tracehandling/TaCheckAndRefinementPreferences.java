@@ -334,17 +334,19 @@ public class TaCheckAndRefinementPreferences<LETTER extends IIcfgTransition<?>> 
 
 	public static class TaAssertCodeBlockOrder extends AssertCodeBlockOrder {
 
-		public TaAssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType,
+		public TaAssertCodeBlockOrder(final boolean assertWitnessElementsHierarchical,
+				final AssertCodeBlockOrderType assertCodeBlockOrderType,
 				final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,
 				final ScoringMethod smtFeatureHeuristicScoringMethod, final int smtFeatureHeuristicNumPartitions,
 				final double smtFeatureHeuristicThreshold) {
-			super(assertCodeBlockOrderType, smtFeatureHeuristicPartitioningType, smtFeatureHeuristicScoringMethod,
-					smtFeatureHeuristicNumPartitions, smtFeatureHeuristicThreshold);
+			super(assertWitnessElementsHierarchical, assertCodeBlockOrderType, smtFeatureHeuristicPartitioningType,
+					smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions, smtFeatureHeuristicThreshold);
 		}
 
 		public TaAssertCodeBlockOrder(final IPreferenceProvider ups) {
-			super(ups.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
-					AssertCodeBlockOrderType.class),
+			super(ups.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL),
+					ups.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
+							AssertCodeBlockOrderType.class),
 					ups.getEnum(
 							TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_HEURISTIC_PARTITIONING_STRATEGY,
 							SmtFeatureHeuristicPartitioningType.class),
