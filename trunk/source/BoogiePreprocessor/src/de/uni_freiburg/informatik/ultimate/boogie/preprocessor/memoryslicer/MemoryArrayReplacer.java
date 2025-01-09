@@ -239,6 +239,15 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 		return super.processStatement(statement);
 	}
 
+	@Override
+	protected Expression processExpression(final Expression expr) {
+		if (expr instanceof final IdentifierExpression id && id.getIdentifier().startsWith("#memory")) {
+			throw new MemorySliceException(
+					"Found direct access to memory array (without a read-call), which is not supported yet.");
+		}
+		return super.processExpression(expr);
+	}
+
 	private AssignmentStatement handleArrayWrite(final AssignmentStatement as) {
 		if (as.getLhs().length != 1) {
 			return null;
