@@ -1,7 +1,7 @@
 format_version: '2.0'
 
 # The file containing the program to verify.
-input_files: 'ex02.bpl'
+input_files: 'ex02-simple.bpl'
 
 properties:
   # The property that should be satisfied (unreach-call is a stand-in for "no asserts violated")
@@ -35,7 +35,10 @@ options:
       switch_on:
         - "[68] L39-1-->L41:"
 
-    # Additional options.
-    # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
-    Limit iterations: 10
+    # Interpolation struggles to find the invariants though they are simple.
+    # Hence, we provide (most of) them explicity (in ex02.bpl.proof.smt2).
+    Read initial proof assertions from file if available: true
+
+    # As we specify the entire proof (see setting above), a single iteration should suffice.
+    Limit iterations: 1
 
