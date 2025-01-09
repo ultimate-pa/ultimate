@@ -102,20 +102,18 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 
 	@Override
 	public boolean isInitial(final S state) {
-		final var original = mStateFactory.getOriginalState(state);
-		if (original instanceof final Either.Left<S1, S2> originalS1) {
-			return mLeftAutomaton.isInitial(originalS1.value());
-		}
-		return false;
+		return switch (mStateFactory.getOriginalState(state)) {
+		case Either.Left(final S1 original) -> mLeftAutomaton.isInitial(original);
+		case Either.Right(final S2 original) -> false;
+		};
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
-		final var original = mStateFactory.getOriginalState(state);
-		if (original instanceof final Either.Right<S1, S2> originalS2) {
-			return mRightAutomaton.isFinal(originalS2.value());
-		}
-		return false;
+		return switch (mStateFactory.getOriginalState(state)) {
+		case Either.Left(final S1 original) -> false;
+		case Either.Right(final S2 original) -> mRightAutomaton.isFinal(original);
+		};
 	}
 
 	@Override
