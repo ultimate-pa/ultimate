@@ -112,11 +112,11 @@ public class ACSLPrettyPrinter {
 			return String.format("(%s ? %s : %s)", printExpression(ite.getCondition()),
 					printExpression(ite.getThenPart()), printExpression(ite.getElsePart()));
 		case final ValidExpression valid:
-			return String.format("\\valid(%s)", printExpression(valid.getFormula()));
+			return String.format("\\valid(%s)", printExpression(valid.getExpression()));
 		case final FieldAccessExpression f:
 			return String.format("(%s).%s", printExpression(f.getStruct()), f.getField());
 		case final OldValueExpression old:
-			return String.format("\\old(%s)", printExpression(old.getFormula()));
+			return String.format("\\old(%s)", printExpression(old.getExpression()));
 		case final ArrayAccessExpression arrayAccess:
 			return printArrayAccessExpression(arrayAccess);
 		case final CastExpression cast:
@@ -124,7 +124,7 @@ public class ACSLPrettyPrinter {
 		case final ACSLResultExpression res:
 			return "\\result";
 		case final AtLabelExpression at:
-			return String.format("\\at(%s, %s)", printExpression(at.getFormula()), at.getLabel());
+			return String.format("\\at(%s, %s)", printExpression(at.getExpression()), at.getLabel());
 		default:
 			// TODO: Add more cases
 			return expression.toString();

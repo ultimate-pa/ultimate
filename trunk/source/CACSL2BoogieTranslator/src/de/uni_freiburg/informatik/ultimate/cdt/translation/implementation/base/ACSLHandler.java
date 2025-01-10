@@ -206,7 +206,7 @@ public class ACSLHandler implements IACSLHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final OldValueExpression node) {
-		return handleOldExpression(mLocationFactory.createACSLLocation(node), main, node.getFormula());
+		return handleOldExpression(mLocationFactory.createACSLLocation(node), main, node.getExpression());
 	}
 
 	@Override
@@ -215,10 +215,10 @@ public class ACSLHandler implements IACSLHandler {
 		switch (node.getLabel()) {
 		case "Old":
 			// TODO: Check that the context is a contract
-			return handleOldExpression(loc, main, node.getFormula());
+			return handleOldExpression(loc, main, node.getExpression());
 		case "Pre":
 			// TODO: Check that the context is a statement annotation
-			return handleOldExpression(loc, main, node.getFormula());
+			return handleOldExpression(loc, main, node.getExpression());
 		case "Here":
 		case "Post":
 		case "LoopEntry":
@@ -895,7 +895,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final FreeableExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 
-		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook());
+		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getExpression(), main.getAcslHook());
 		Expression idx = (Expression) rIdc.getNode();
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -919,7 +919,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final MallocableExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 
-		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook());
+		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getExpression(), main.getAcslHook());
 		Expression idx = rIdc.getLrValue().getValue();
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -944,7 +944,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final ValidExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 
-		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook());
+		final ExpressionResult rIdc = (ExpressionResult) main.dispatch(node.getExpression(), main.getAcslHook());
 		Expression idx = rIdc.getLrValue().getValue();
 
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();

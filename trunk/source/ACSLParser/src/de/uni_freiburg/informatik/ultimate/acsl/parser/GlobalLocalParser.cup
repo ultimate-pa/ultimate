@@ -514,7 +514,7 @@ lexpr_inner::=
 | AMP:op   lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.ADDROF, e), op$, e$);  :} %prec prec_unary_op 
 | SIZEOF:l LPAR lexpr:expr RPAR:r 
  {: SizeOfExpression sexpr = setNodeLocationFromSymbols(new SizeOfExpression(), l$, r$); 
- 	sexpr.setFormula(expr);
+ 	sexpr.setExpression(expr);
  	RESULT = sexpr; :}
 | SIZEOF:l LPAR logic_type:lt RPAR:r 
  {: SizeOfExpression sexpr = setNodeLocationFromSymbols(new SizeOfExpression(), l$, r$);
