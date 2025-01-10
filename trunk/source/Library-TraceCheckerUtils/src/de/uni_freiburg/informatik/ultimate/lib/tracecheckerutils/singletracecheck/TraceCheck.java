@@ -252,6 +252,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					}
 				} else {
 					providesIcfgProgramExecution = false;
+					// TODO back to default
 					// icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
 					// if (icfgProgramExecution != null) {
 					// providesIcfgProgramExecution = true;

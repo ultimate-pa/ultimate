@@ -533,33 +533,51 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 */
 	private void pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
+		final int newPosition = position + 1;
+
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ)) && (!wasVisited(succ, stateK))) {
+
+			/*
+			 * This is some weird code to detect if we have a function call
+			 * In this case, statek comes before state comes before succ in the counterexample
+			 * thus the position has to be increased by two
+			 */
+			if (stateK != mOperand.getEmptyStackState() && !((ISLPredicate) stateK).getProgramPoint().getProcedure()
+					.equals(((ISLPredicate) succ).getProgramPoint().getProcedure())) {
+				if (((ISLPredicate) state).getProgramPoint().getIncomingEdges().size() > 1) {
+
+					// newPosition = newPosition + 1;
+				}
+			}
+			if ((!mForbiddenStates.contains(succ))) {// && (!wasVisited(succ, stateK))) {
 				int currentScore = 0;
 				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
-					if (counterexample.getLength() > position + 1) {
-
+					if (counterexample.getLength() > newPosition) {
 						IcfgLocation programPoint = null;
-						final STATE stateInCEx = counterexample.getStateAtPosition(position + 1);
+						final STATE stateInCEx = counterexample.getStateAtPosition(newPosition);
 						if (stateInCEx instanceof ISLPredicate) {
 							programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-							// } else if (stateInCEx instanceof SPredicate) {
-							// programPoint = ((SPredicate) stateInCEx).getProgramPoint();
 						} else {
 							assert false;
 						}
 
-						if (programPoint.equals(((ISLPredicate) transition.getSucc()).getProgramPoint())) {
+						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 							currentScore += 1;
 						}
+
 					}
 				}
+
+				if (currentScore == 0) {
+					// markVisited(succ, stateK);
+
+				}
 				addRunInformationInternal(succ, stateK, symbol, state, stateK);
-				markVisited(succ, stateK);
-				mScoredQueue.add(new PQState(currentScore, transition.getSucc(), position + 1, symbol, stateK));
+				mScoredQueue.add(new PQState(currentScore, transition.getSucc(), newPosition, symbol, stateK));
 			}
+
 		}
 
 	}
@@ -589,11 +607,13 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 
 		if (counterexamples.isEmpty()) {
 			return getAcceptingRun(); // TODO not clear if thats what we want
-
 		}
-
 		pickStartToExplore(mStartStates, counterexamples);
+
 		int position = 0;
+		STATE oldStateK = null;
+		int stateKChanged = 0;
+
 		while (!isPiorityQueueEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -614,24 +634,34 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 
 			final STATE state = pair.getUp();
 			final STATE stateK = pair.getDown();
+			if (score == 0 && lowestScoreState != null) {
+				assert mQueue.isEmpty();
+				enqueueAndMarkVisited(state, stateK);
+				final NestedRun<LETTER, STATE> runBFS = getAcceptingRun();
+				// what if we dont find any here
+				if (runBFS != null) {
+					return runBFS;
+				}
+			}
+			if (stateK != oldStateK && oldStateK != null) {
+				stateKChanged += 1;
+				position += 1;
+			}
+			oldStateK = pair.getDown();
 
 			if (isGoalState(state) && score == 0) { // && counterexamples.isEmpty()
 				final NestedRun<LETTER, STATE> run = constructRun(state, stateK);
-				assert !counterexamples.contains(run);
 
-				return run; // TODO hack we use goal set but we want sth better
-				// } else if (isGoalState(state)) {
-				/*
-				 * continue search here or backtrack?
-				 */
-
-				// return null;
+				for (final NestedRun<LETTER, STATE> cex : counterexamples) {
+					assert cex.getWord().asList().hashCode() != run.getWord().asList().hashCode();
+				}
+				return run;
 			}
 
 			processSummaries(state, stateK);
 
 			pickSuccToExplore(position, state, stateK, counterexamples);
-			position += 1;
+
 			getAcceptingRunHelperCall(state, stateK);
 			// equality intended here
 			if (stateK == mOperand.getEmptyStackState()) {
@@ -726,9 +756,11 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			succK2run = new HashMap<>();
 			mInternalSubRun.put(succ, succK2run);
 		}
-		assert succK2run.get(succK) == null;
+		// if (succK2run.get(succK) != null) {
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.INTERNAL_POSITION, succ);
+		// assert succK2run.get(succK) == run;
 		succK2run.put(succK, run);
+		// }
 	}
 
 	/**
