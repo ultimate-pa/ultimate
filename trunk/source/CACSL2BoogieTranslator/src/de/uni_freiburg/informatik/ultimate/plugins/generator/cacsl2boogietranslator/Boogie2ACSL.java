@@ -527,7 +527,7 @@ public final class Boogie2ACSL {
 		final BigInterval rightRange = rhs.getRange();
 		final BigInterval resultRange = leftRange.euclideanDivide(rightRange);
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression());
-		if (leftRange.isStrictlyNonNegative()) {
+		if (leftRange.isNonNegative()) {
 			if (resultRange.isSingleton()) {
 				return translateIntegerLiteral(resultRange.getMinValue());
 			}
@@ -542,16 +542,16 @@ public final class Boogie2ACSL {
 				new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression()),
 				new IntegerLiteral("1"));
 		final Expression expr;
-		if (rightRange.isStrictlyNonNegative()) {
+		if (rightRange.isNonNegative()) {
 			expr = posExpr;
-		} else if (rightRange.isStrictlyNonPositive()) {
+		} else if (rightRange.isNonPositive()) {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
-		if (leftRange.isStrictlyNonPositive()) {
+		if (leftRange.isNonPositive()) {
 			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
@@ -575,7 +575,7 @@ public final class Boogie2ACSL {
 		}
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression());
 		final BigInterval resultRange = leftRange.euclideanModulo(rightRange);
-		if (leftRange.isStrictlyNonNegative()) {
+		if (leftRange.isNonNegative()) {
 			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
@@ -585,16 +585,16 @@ public final class Boogie2ACSL {
 		final Expression negExpr = new BinaryExpression(Operator.ARITHMINUS,
 				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
 		final Expression expr;
-		if (rightRange.isStrictlyNonNegative()) {
+		if (rightRange.isNonNegative()) {
 			expr = posExpr;
-		} else if (rightRange.isStrictlyNonPositive()) {
+		} else if (rightRange.isNonPositive()) {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
-		if (leftRange.isStrictlyNonPositive()) {
+		if (leftRange.isNonPositive()) {
 			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
