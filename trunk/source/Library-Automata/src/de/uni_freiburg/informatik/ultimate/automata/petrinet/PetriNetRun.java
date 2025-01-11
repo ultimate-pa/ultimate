@@ -67,8 +67,8 @@ public class PetriNetRun<LETTER, PLACE> implements IRun<LETTER, Marking<PLACE>> 
 	 *
 	 * @param m0
 	 *            initial marking
-	 * @param symbol
-	 *            first symbol
+	 * @param transition
+	 *            first transition
 	 * @param m1
 	 *            next marking
 	 */
