@@ -589,4 +589,7 @@
 /instance/org.eclipse.ui.ide/WORKSPACE_NAME=Ultimate Program Analysis Framework
 /instance/org.eclipse.ui.ide/tipsAndTricks=false
 
+/instance/org.eclipse.ui.editors/printMargin=true
+/instance/org.eclipse.ui.editors/printMarginColumn=120
+
 file_export_version=3.0
