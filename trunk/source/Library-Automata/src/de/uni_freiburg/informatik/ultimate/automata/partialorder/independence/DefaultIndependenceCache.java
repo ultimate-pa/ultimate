@@ -47,8 +47,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of letters
  */
 public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> {
-
-	private final CacheStatistics mStatistics = new CacheStatistics();
 	private final Map<S, HashRelation<L, L>> mIndependentCache = new HashMap<>();
 	private final Map<S, HashRelation<L, L>> mDependentCache = new HashMap<>();
 	private final Map<S, HashRelation<L, L>> mUnknownCache = new HashMap<>();
@@ -157,7 +155,7 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		return mStatistics;
+		return new CacheStatistics();
 	}
 
 	private final class CacheStatistics extends AbstractStatisticsDataProvider {
