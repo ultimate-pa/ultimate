@@ -71,8 +71,53 @@
 			**/src/de/uni_freiburg/informatik/ultimate/ultimatetest/**,
 		</sonar.coverage.exclusions>
 
+		<sonar.tests>
+			../AbstractInterpretationV2Test,
+			../BoogiePreprocessorTest,
+			../CoreRCPTest,
+			../Library-AutomataTest,
+			../Library-IcfgTransformerTest,
+			../Library-ModelCheckerUtilsTest,
+			../Library-TraceCheckerUtilsTest,
+			../Library-MSODTest,
+			../Library-SMTLIBTest,
+			../Library-srParseTest,
+			../Library-UltimateTestTest,
+			../Library-UltimateUtilTest,
+			../Library-PathExpressionsTest,
+			../Library-SifaTest,
+			../SMTInterpolTest,
+			../SMTSolverBridgeTest,
+			../SpaceExParserTest,
+			../PEAtoBoogieTest,
+			../UltimateRegressionTest,
+			../UltimateTest,
+		</sonar.tests>
+
 		<!-- Exclude completely from any Sonar analysis (including coverage) -->
 		<sonar.exclusions>
+			<!-- test code is listed separately under sonar.tests above -->
+			../AbstractInterpretationV2Test/**,
+			../BoogiePreprocessorTest/**,
+			../CoreRCPTest/**,
+			../Library-AutomataTest/**,
+			../Library-IcfgTransformerTest/**,
+			../Library-ModelCheckerUtilsTest/**,
+			../Library-TraceCheckerUtilsTest/**,
+			../Library-MSODTest/**,
+			../Library-SMTLIBTest/**,
+			../Library-srParseTest/**,
+			../Library-UltimateTestTest/**,
+			../Library-UltimateUtilTest/**,
+			../Library-PathExpressionsTest/**,
+			../Library-SifaTest/**,
+			../SMTInterpolTest/**,
+			../SMTSolverBridgeTest/**,
+			../SpaceExParserTest/**,
+			../PEAtoBoogieTest/**,
+			../UltimateRegressionTest/**,
+			../UltimateTest/**,
+
 			**/src/smtcomp/**,
 			**/src/jdd/**,
 			**/src/com/github/jhoenicke/javacup/**,
