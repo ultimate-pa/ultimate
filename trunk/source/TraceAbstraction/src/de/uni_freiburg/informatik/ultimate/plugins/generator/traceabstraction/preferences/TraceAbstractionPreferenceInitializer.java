@@ -513,6 +513,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_PARALLELSEARCH = false;
 	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
 	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
+	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
+			"Minimize Abstraction every time a worker is done";
+	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = false;
 
 	/**
 	 * Constructor.
@@ -736,7 +739,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_GOALSET, DEF_GOALSET, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH, DEF_PARALLELSEARCH, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
 						PreferenceType.Boolean));
+
 	}
 
 	public UltimatePreferenceItemContainer getPORSettings() {

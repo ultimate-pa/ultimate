@@ -101,6 +101,7 @@ public final class TAPreferences {
 	public boolean useGoalSetForIsEmpty;
 	public boolean parallelSearchSrategy;
 	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel;
+	public boolean minimizeAbstractionPerWorker;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -212,6 +213,8 @@ public final class TAPreferences {
 		parallelSearchSrategy = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH);
 		considerOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
+		minimizeAbstractionPerWorker =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
 	}
 
 	/**
@@ -575,4 +578,5 @@ public final class TAPreferences {
 	public int getThreadLimit() {
 		return mThreadLimit;
 	}
+
 }
