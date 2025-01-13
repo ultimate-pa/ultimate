@@ -33,8 +33,8 @@ import java.util.Objects;
  * type {@code Y}. If one type is a subtype of the other (or they are the same type), the values meant to have type
  * {@code X} can still be distinguished from the values that are meant to have type {@code Y}.
  */
-public sealed interface Either<X, Y> permits Either.Left, Either.Right {
-	public static final record Left<X, Y>(X value) implements Either<X, Y> {
+public sealed interface Either<X, Y> {
+	record Left<X, Y>(X value) implements Either<X, Y> {
 		@Override
 		public int hashCode() {
 			// Override hashCode() such that Left(x) and Right(x) hash differently.
@@ -42,7 +42,7 @@ public sealed interface Either<X, Y> permits Either.Left, Either.Right {
 		}
 	}
 
-	public static final record Right<X, Y>(Y value) implements Either<X, Y> {
+	record Right<X, Y>(Y value) implements Either<X, Y> {
 		@Override
 		public int hashCode() {
 			// Override hashCode() such that Left(x) and Right(x) hash differently.
