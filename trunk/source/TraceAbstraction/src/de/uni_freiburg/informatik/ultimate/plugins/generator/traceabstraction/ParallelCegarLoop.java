@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyParallel;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
@@ -97,6 +98,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	final ArrayList<NestedRun<L, IPredicate>> mActiveCounterexamples = new ArrayList<>();
 
 	// for debugging only, ensures our search does not find the same counterexampl twice
+	// TODO later we canmerge mActiveCounterexamples and mAllCounterexamples and use the setting for conditional remove
 	private final HashMap<Integer, NestedRun<L, IPredicate>> mAllCounterexamples = new HashMap<>();
 
 	private final boolean useGoalSetForIsEmpty;
@@ -231,7 +233,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO manage time and timeout
 
 		int runningThreads = 0;
-		mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+			mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
+		}
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
 			final boolean minimizePerWorker = true;
@@ -334,7 +338,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 										new PredicateFactoryResultChecking(mPredicateFactory));
 
 							}
-							mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
+							if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+								mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
+							}
 							// Kill the worker script
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
@@ -347,7 +353,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							mExec.shutdownNow();
 							throw ae;
 						}
-
+						mLogger.info("Refinement done.");
 					}
 
 				} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
@@ -365,11 +371,17 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				if (runningThreads < mThreadLimit) {
 					// assert mActiveCounterexamples.size() == runningThreads;
 					final IRun<L, ?> oldCounterexample = mCounterexample;
+					mLogger.info("Search for Counterexample");
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
 
 					if (oldCounterexample == mCounterexample) {
-						System.out.println("Didnt Find a Counterexample!!! " + Thread.activeCount());
+						mLogger.info("Didnt Find a Counterexample!!! " + Thread.activeCount());
 						mCounterexample = null;
+						if (super.isAbstractionEmpty()) {
+							mResultBuilder.addResultForAllRemaining(Result.SAFE);
+							mExec.shutdownNow();
+							return;
+						}
 					}
 					if (mCounterexample != null) {
 						resetThreadLimit();
@@ -464,15 +476,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				// For debugging only, can be used to test if the search returns redundant counterexamples
 				final List<L> trace = mCounterexample.getWord().asList();
 				final int traceHash = trace.hashCode();
-				if (mAllCounterexamples.containsKey(traceHash)) {
-					// if (useGoalSetForIsEmpty) {
-					assert false;
-					// }
-					mCounterexample = null; // no assert false; because a thread can finish after difference before
-											// isEmpty
-
-				} else {
-					mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
+				if (!mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel || true) { // TODO remove true, just for
+																							// debugging
+					if (mAllCounterexamples.containsKey(traceHash)) {
+						throw new AssertionError("IsEmpty(Parallel) Found the same counterexample twice!");
+					} else {
+						mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
+					}
 				}
 
 			}
@@ -512,18 +522,16 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	protected NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 
-		final boolean considerOnlyActive = false;
-		if (mParallelSearchSrategy && considerOnlyActive) {
-			return new IsEmpty<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
+		if (mParallelSearchSrategy && mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+			return new IsEmptyParallel<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, false,
-					IsEmpty.SearchStrategy.BFS, mActiveCounterexamples).getNestedRun();
-		} else if (mParallelSearchSrategy && !considerOnlyActive) {
+					IsEmptyParallel.SearchStrategy.BFS, mActiveCounterexamples).getNestedRun();
+		} else if (mParallelSearchSrategy && !mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
 			final ArrayList<NestedRun<L, IPredicate>> allCounterexamples =
 					new ArrayList<>(mAllCounterexamples.values());
-			return new IsEmpty<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
+			return new IsEmptyParallel<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, false,
-					IsEmpty.SearchStrategy.BFS, allCounterexamples).getNestedRun();
-
+					IsEmptyParallel.SearchStrategy.BFS, allCounterexamples).getNestedRun();
 		} else {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
 					Collections.emptySet(), possibleEndPoints).getNestedRun();

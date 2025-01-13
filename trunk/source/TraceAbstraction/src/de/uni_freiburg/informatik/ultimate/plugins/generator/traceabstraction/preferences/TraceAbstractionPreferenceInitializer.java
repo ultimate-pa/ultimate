@@ -511,6 +511,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_GOALSET = false;
 	public static final String LABEL_PARALLELSEARCH = "Parallel Search Strategy";
 	public static final boolean DEF_PARALLELSEARCH = false;
+	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
+	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
 
 	/**
 	 * Constructor.
@@ -732,9 +734,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_GOALSET, DEF_GOALSET, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH, DEF_PARALLELSEARCH, PreferenceType.Boolean)
-
-		);
+				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH, DEF_PARALLELSEARCH, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
+						PreferenceType.Boolean));
 	}
 
 	public UltimatePreferenceItemContainer getPORSettings() {
