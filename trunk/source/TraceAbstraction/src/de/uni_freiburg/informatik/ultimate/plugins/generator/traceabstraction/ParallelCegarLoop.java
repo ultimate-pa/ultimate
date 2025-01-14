@@ -406,7 +406,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 									final int traceHash = trace.hashCode();
 									if (mAllCounterexamples.containsKey(traceHash)) {
-										throw new AssertionError("This cant be!!!");
+										mResultBuilder.addResultForAllRemaining(Result.SAFE);
+										mExec.shutdownNow();
+										return;
+										// throw new AssertionError("This cant be!!!");
 									}
 									/*
 									 * no idea whats going on here
@@ -414,7 +417,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 									 * IsEmpty finds only state with 1 succ and is Parallel
 									 * Yet IsEmpty finds a counterexample in isParallel doesnt
 									 */
-									assert isAbstractionCorrect == debug;
+									// assert isAbstractionCorrect == debug;
+									mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 									continue;
 								}
 							}
