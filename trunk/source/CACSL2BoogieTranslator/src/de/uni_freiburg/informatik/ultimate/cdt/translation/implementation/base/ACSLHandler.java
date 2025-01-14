@@ -188,7 +188,8 @@ public class ACSLHandler implements IACSLHandler {
 		mProcedureManager = procedureManager;
 		mExprResultTransformer = chandler.getExpressionResultTransformer();
 		mLocationFactory = locationFactory;
-		mCExpressionTranslator = chandler.getCExpressionTranslator();
+		// Use a copy of CExpressionTranslator, where all checks for UB are disabled.
+		mCExpressionTranslator = chandler.getCExpressionTranslator().disableChecksForUndefinedBehavior();
 		mCHandler = chandler;
 	}
 
