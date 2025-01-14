@@ -511,10 +511,10 @@ public class MainDispatcher implements IDispatcher {
 				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof OldValueExpression) {
-				return mAcslHandler.visit(this, n);
+				return mAcslHandler.visit(this, (OldValueExpression) n);
 			}
 			if (n instanceof AtLabelExpression) {
-				return mAcslHandler.visit(this, n);
+				return mAcslHandler.visit(this, (AtLabelExpression) n);
 			}
 			if (n instanceof BaseAddrExpression) {
 				return mAcslHandler.visit(this, n);

@@ -99,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
@@ -199,18 +200,49 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final ACSLNode node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		if (node instanceof OldValueExpression) {
-			final OldValueExpression ove = (OldValueExpression) node;
-			final ExpressionResult inner = (ExpressionResult) main.dispatch(ove.getFormula(), main.getAcslHook());
-			final ExpressionResult innerSwitched =
-					mExprResultTransformer.switchToRValue(inner, loc, main.getAcslHook());
-			final RValue newRValue =
-					new RValue(ExpressionFactory.constructUnaryExpression(loc, UnaryExpression.Operator.OLD,
-							innerSwitched.getLrValue().getValue()), innerSwitched.getLrValue().getCType());
-			return new ExpressionResultBuilder().addAllExceptLrValue(innerSwitched).setLrValue(newRValue).build();
-		}
 		final String msg = "ACSLHandler: Not yet implemented: " + node.toString();
 		throw new UnsupportedSyntaxException(loc, msg);
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final OldValueExpression node) {
+		return handleOldExpression(mLocationFactory.createACSLLocation(node), main, node.getFormula());
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final AtLabelExpression node) {
+		final ILocation loc = mLocationFactory.createACSLLocation(node);
+		switch (node.getLabel()) {
+		case "Old":
+			// TODO: Check that the context is a contract
+			return handleOldExpression(loc, main, node.getFormula());
+		case "Pre":
+			// TODO: Check that the context is a statement annotation
+			return handleOldExpression(loc, main, node.getFormula());
+		case "Here":
+		case "Post":
+		case "LoopEntry":
+		case "LoopCurrent":
+		case "Init":
+			// TODO: Support other built-in labels
+			throw new UnsupportedSyntaxException(loc,
+					node.getLabel() + " is currently not supported as a label in \\at.");
+		default:
+			throw new UnsupportedSyntaxException(loc,
+					"Only built-in labels are currently supported as a in \\at (found ." + node.getLabel() + ").");
+		}
+	}
+
+	private Result handleOldExpression(final ILocation loc, final IDispatcher main,
+			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression inner) {
+		final ExpressionResult result = mExprResultTransformer
+				.switchToRValue((ExpressionResult) main.dispatch(inner, main.getAcslHook()), loc, main.getAcslHook());
+		if (!result.hasNoSideEffects()) {
+			throw new UnsupportedSyntaxException(loc, "old can only be used for expressions without side-effects.");
+		}
+		final RValue newRValue = new RValue(ExpressionFactory.constructUnaryExpression(loc,
+				UnaryExpression.Operator.OLD, result.getLrValue().getValue()), result.getLrValue().getCType());
+		return new ExpressionResultBuilder().addAllExceptLrValue(result).setLrValue(newRValue).build();
 	}
 
 	@Override
@@ -704,7 +736,7 @@ public class ACSLHandler implements IACSLHandler {
 		mSpecType = ACSLHandler.SPEC_TYPE.REQUIRES;
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
-				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
 		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
 			throw new UnsupportedSyntaxException(loc, "Requires must be translatable by a single expression");
 		}
@@ -720,7 +752,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final Ensures node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
-				((ExpressionResult) main.dispatch(node.getFormula())), loc, main.getAcslHook());
+				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
 		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
 			throw new UnsupportedSyntaxException(loc, "Ensures must be translatable by a single expression");
 		}
@@ -870,12 +902,11 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(rIdc);
 
 		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
-		final Expression[] idc = new Expression[] { idx };
+		final Expression[] idc = { idx };
 
-		final Expression arr = // new IdentifierExpression(loc, SFO.VALID);
-				ExpressionFactory.constructIdentifierExpression(loc,
-						BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT),
-						SFO.VALID, new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
+				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
+				new DeclarationInformation(StorageClass.GLOBAL, null));
 
 		final Expression e = ExpressionFactory.constructNestedArrayAccessExpression(loc, arr, idc);
 		// TODO: CType/range type of valid array -- depends on a preference???
@@ -895,7 +926,7 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(rIdc);
 
 		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
-		final Expression[] idc = new Expression[] { idx };
+		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
 				new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -921,7 +952,7 @@ public class ACSLHandler implements IACSLHandler {
 		resultBuilder.addAllExceptLrValue(rIdc);
 
 		idx = ExpressionFactory.constructStructAccessExpression(loc, idx, SFO.POINTER_BASE);
-		final Expression[] idc = new Expression[] { idx };
+		final Expression[] idc = { idx };
 		final Expression arr = ExpressionFactory.constructIdentifierExpression(loc,
 				BoogieType.createArrayType(0, new BoogieType[] { BoogieType.TYPE_INT }, BoogieType.TYPE_INT), SFO.VALID,
 				new DeclarationInformation(StorageClass.GLOBAL, null));

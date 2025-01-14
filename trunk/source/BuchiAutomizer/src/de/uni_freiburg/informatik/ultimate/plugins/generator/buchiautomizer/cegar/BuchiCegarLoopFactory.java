@@ -62,9 +62,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Rank
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer.AutomatonTypeConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessAutomatonAbstractionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
@@ -112,8 +112,9 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				.getEnum(BuchiAutomizerPreferenceInitializer.LABEL_AUTOMATON_TYPE, AutomatonTypeConcurrent.class);
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
-			final var automatonProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices,
-					petriNetProvider, stateFactoryForRefinement);
+		case PARTIAL_ORDER_BA:
+			final var automatonProvider =
+					createAutomatonProvider(petriNetProvider, automatonTypeConcurrent, stateFactoryForRefinement);
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
 					stateFactoryForRefinement, automatonProvider);
 		case BUCHI_PETRI_NET:
@@ -127,6 +128,20 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException(
 					"The type " + automatonTypeConcurrent + " is currently not supported.");
 		}
+	}
+
+	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
+			createAutomatonProvider(final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> petriProvider,
+					final AutomatonTypeConcurrent automatonType,
+					final PredicateFactoryRefinement stateFactoryForRefinement) {
+		final var lazyProductProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices, petriProvider,
+				stateFactoryForRefinement);
+		return switch (automatonType) {
+		case BUCHI_AUTOMATON -> lazyProductProvider;
+		case PARTIAL_ORDER_BA -> throw new UnsupportedOperationException("TODO: add support for POR here");
+		case BUCHI_PETRI_NET, RABIN_PETRI_NET ->
+				throw new AssertionError("Petri nets should be handled elsewhere: " + automatonType);
+		};
 	}
 
 	@SuppressWarnings("unchecked")

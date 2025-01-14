@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.As
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderNotIncrementally;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderShuffledSingletons;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
@@ -75,6 +76,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
+	private int mAssertedStatements;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
@@ -87,6 +89,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mTcbg = tcbg;
 		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
 		mCheckSat = 0;
+		mAssertedStatements = 0;
 		buildAnnotatedSsaAndAssertTerms();
 	}
 
@@ -99,10 +102,15 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
 
-		final List<Set<Integer>> partitions =
-				getAssertOrder(mAssertCodeBlocksOrder).partition(mSSA.getCounterexample());
+		final List<Set<Integer>> partitions = getAssertOrder(mAssertCodeBlocksOrder)
+				.partition(mSSA.getCounterexample());
 
+		mLogger.info(String.format("Assert order %s partitioned %s statements into %s equivalence classes.",
+				mAssertCodeBlocksOrder, mSSA.getCounterexample().length(), partitions.size()));
 		mSatisfiable = annotateAndAssert(mSSA.getTrace(), partitions);
+		mLogger.info(String.format("Assert order %s issued %s check-sat command(s) and asserted %s of %s statements.",
+				mAssertCodeBlocksOrder, mCheckSat, mAssertedStatements, mSSA.getCounterexample().length()));
+
 		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
@@ -125,6 +133,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 			return new AssertOrderSmtFeatureHeuristic<>(order.getSmtFeatureHeuristicScoringMethod(),
 					order.getSmtFeatureHeuristicNumPartitions(), order.getSmtFeatureHeuristicThreshold(),
 					order.getSmtFeatureHeuristicPartitioningType(), mLogger);
+		case SHUFFLED_SINGLETONS:
+			return new AssertOrderShuffledSingletons<>();
 		default:
 			throw new AssertionError("unknown heuristic " + order);
 		}
@@ -135,6 +145,7 @@ public class AnnotateAndAsserter<L extends IAction> {
 		boolean isFirstIteration = true;
 		for (final Set<Integer> partition : partitions) {
 			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, partition, isFirstIteration);
+			mAssertedStatements += partition.size();
 			mCheckSat++;
 			sat = mMgdScriptTc.getScript().checkSat();
 			// Report benchmarks
