@@ -31,47 +31,47 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.Comparator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.SequentialPreferenceOrderAutomaton.ISequentialStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Either;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IfElsePreferenceOrderAutomaton.IIfElseStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.OptionalEither;
 
 /**
- * Order representing the sequentialization of two given orders mFirstOrder and mSecondOrder.
+ * Order representing a combination of two given orders mFirstOrder and mSecondOrder that chooses which of the two
+ * monitors to use based on which branch of an if-statement the program enters.
  *
  * @param <L>
- *            letter type
+ *            The type of the transition letters.
  * @param <S0>
- *            program state type
+ *            The state type of the program.
  * @param <S1>
- *            monitor state type of mFirstOrder
+ *            The state type of mLeftAutomaton.
  * @param <S2>
- *            monitor state type of mSecondOrder
+ *            The state type of mRightAutomaton.
  * @param <S>
- *            monitor state type of the sequentialization
+ *            The state type of the combination. If mAutomaton is using the default state factory, this will be
+ *            {@code OptionalEither<S1,S2>}.
  */
-public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder<L, S0, S> {
+
+public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder<L, S0, S> {
+
 	private final IPreferenceOrder<L, S0, S1> mFirstOrder;
 	private final IPreferenceOrder<L, S0, S2> mSecondOrder;
-	private final ImmutableSet<L> mTransitionLetters;
-	private final ISequentialStateFactory<S1, S2, S> mStateFactory;
-	private final boolean mApplyFunctionAfterTransition;
-	private SequentialPreferenceOrderAutomaton<L, S1, S2, S> mAutomaton;
+	private final ImmutableSet<L> mIfBranchLetters;
+	private final IIfElseStateFactory<S1, S2, S> mStateFactory;
+	private IfElsePreferenceOrderAutomaton<L, S1, S2, S> mAutomaton;
 
-	public SequentialPreferenceOrder(final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
-			final ImmutableSet<L> transitionLetters, final ISequentialStateFactory<S1, S2, S> stateFactory,
-			final boolean applyFunctionAfterTransition) {
+	public IfElsePreferenceOrder(final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
+			final ImmutableSet<L> ifBranchLetters, final IIfElseStateFactory<S1, S2, S> stateFactory) {
 		mFirstOrder = fst;
 		mSecondOrder = snd;
-		mTransitionLetters = transitionLetters;
+		mIfBranchLetters = ifBranchLetters;
 		mStateFactory = stateFactory;
-		mApplyFunctionAfterTransition = applyFunctionAfterTransition;
 	}
 
-	public static <L, S0, S1, S2> SequentialPreferenceOrder<L, S0, S1, S2, Either<S1, S2>> create(
+	public static <L, S0, S1, S2> IfElsePreferenceOrder<L, S0, S1, S2, OptionalEither<S1, S2>> create(
 			final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
-			final ImmutableSet<L> transitionLetters) {
-		return new SequentialPreferenceOrder<>(fst, snd, transitionLetters, new ISequentialStateFactory.Default<>(),
-				true);
+			final ImmutableSet<L> ifBranchLetters) {
+		return new IfElsePreferenceOrder<>(fst, snd, ifBranchLetters, new IIfElseStateFactory.Default<>());
 	}
 
 	@Override
@@ -82,8 +82,8 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, S> getMonitor() {
 		if (mAutomaton == null) {
-			mAutomaton = new SequentialPreferenceOrderAutomaton<>(mFirstOrder.getMonitor(), mSecondOrder.getMonitor(),
-					mTransitionLetters, mStateFactory, mApplyFunctionAfterTransition);
+			mAutomaton = new IfElsePreferenceOrderAutomaton<>(mFirstOrder.getMonitor(), mSecondOrder.getMonitor(),
+					mIfBranchLetters, mStateFactory);
 		}
 		return mAutomaton;
 	}
@@ -91,10 +91,14 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 	@Override
 	public Comparator<L> getOrder(final S0 programState, final S monitorState) {
 		switch (mStateFactory.getOriginalState(monitorState)) {
-		case Either.Left(final S1 original):
+		case OptionalEither.Neither():
+			// Lambda Expression representing the empty order
+			return (a, b) -> 0;
+		case OptionalEither.Left(final S1 original):
 			return mFirstOrder.getOrder(programState, original);
-		case Either.Right(final S2 original):
+		case OptionalEither.Right(final S2 original):
 			return mSecondOrder.getOrder(programState, original);
 		}
 	}
+
 }

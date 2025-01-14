@@ -4,26 +4,26 @@
  * Copyright (C) 2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2024 University of Freiburg
  *
- * This file is part of the ULTIMATE Automata Library.
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
- * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
  *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE Automata Library grant you additional permission
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
@@ -37,40 +37,41 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.Either;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.OptionalEither;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
- * Automaton representing the monitor of the sequentialization of two given monitors mLeftAutomaton and mRightAutomaton.
+ * Automaton representing a combination of two given monitors mFirstAutomaton and mSecondAutomaton that chooses which of
+ * the two monitors to use based on which branch of an if-statement the program enters.
  *
  * @param <L>
- *            letter type
+ *            The type of the transition letters.
  * @param <S1>
- *            state type of mLeftAutomaton
+ *            The state type of mLeftAutomaton.
  * @param <S2>
- *            state type of mRightAutomaton
+ *            The state type of mRightAutomaton.
  * @param <S>
- *            state type of monitor of the sequentialization
+ *            The state type of the combination. Using the default state factory, this will be
+ *            {@code OptionalEither<S1,S2>}.
+ *
+ *
  */
-public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
+
+public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
 	private final INwaOutgoingLetterAndTransitionProvider<L, S1> mLeftAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mRightAutomaton;
-	private final ImmutableSet<L> mTransitionLetters;
-	private final ISequentialStateFactory<S1, S2, S> mStateFactory;
-	private final boolean mApplyFunctionAfterTransition;
+	private final ImmutableSet<L> mIfBranchLetters;
+	private final IIfElseStateFactory<S1, S2, S> mStateFactory;
 
-	public SequentialPreferenceOrderAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S1> leftAutomaton,
-			final INwaOutgoingLetterAndTransitionProvider<L, S2> rightAutomaton,
-			final ImmutableSet<L> transitionLetters, final ISequentialStateFactory<S1, S2, S> stateFactory,
-			final boolean applyFunctionAfterTransition) {
+	public IfElsePreferenceOrderAutomaton(final INwaOutgoingLetterAndTransitionProvider<L, S1> leftAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<L, S2> rightAutomaton, final ImmutableSet<L> ifBranchLetters,
+			final IIfElseStateFactory<S1, S2, S> stateFactory) {
 		mLeftAutomaton = leftAutomaton;
 		mRightAutomaton = rightAutomaton;
-		mTransitionLetters = transitionLetters;
+		mIfBranchLetters = ifBranchLetters;
 		mStateFactory = stateFactory;
-		mApplyFunctionAfterTransition = applyFunctionAfterTransition;
 
 		assert NestedWordAutomataUtils.isFiniteAutomaton(leftAutomaton) : "calls and returns are not supported";
 		assert NestedWordAutomataUtils.isFiniteAutomaton(rightAutomaton) : "calls and returns are not supported";
@@ -92,65 +93,70 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 
 	@Override
 	public S getEmptyStackState() {
-		throw new UnsupportedOperationException("sequential preference order automata do not have stacks");
+		throw new UnsupportedOperationException("preference order automata do not have stacks");
 	}
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		final var initials = new ArrayList<S>();
-		for (final var s : mLeftAutomaton.getInitialStates()) {
-			initials.add(mStateFactory.createNewStateLeft(s));
-		}
-		return initials;
+		final var stateList = new ArrayList<S>();
+		stateList.add(mStateFactory.createNewBeginningState());
+		return stateList;
 	}
 
 	@Override
 	public boolean isInitial(final S state) {
 		return switch (mStateFactory.getOriginalState(state)) {
-		case Either.Left(final S1 original) -> mLeftAutomaton.isInitial(original);
-		case Either.Right(final S2 original) -> false;
+		case OptionalEither.Right(final S2 original) -> false;
+		case OptionalEither.Left(final S1 original) -> false;
+		case OptionalEither.Neither() -> true;
 		};
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
 		return switch (mStateFactory.getOriginalState(state)) {
-		case Either.Left(final S1 original) -> false;
-		case Either.Right(final S2 original) -> mRightAutomaton.isFinal(original);
+		case OptionalEither.Left(final S1 original) -> mLeftAutomaton.isFinal(original);
+		case OptionalEither.Right(final S2 original) -> mRightAutomaton.isFinal(original);
+		case OptionalEither.Neither() -> false;
 		};
 	}
 
 	@Override
 	public int size() {
-		return mLeftAutomaton.size() + mRightAutomaton.size();
+		return mLeftAutomaton.size() + mRightAutomaton.size() + 1;
 	}
 
 	@Override
 	public String sizeInformation() {
-		return "The sequentialized automaton has " + size() + " states.";
+		return "The combined if/else-automaton has " + size() + " states.";
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		switch (mStateFactory.getOriginalState(state)) {
-		case Either.Left(final S1 original):
-			if (mLeftAutomaton.isFinal(original) && mTransitionLetters.contains(letter)) {
-				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
-				if (mApplyFunctionAfterTransition) {
-					return () -> new TransformIterator<>(
-							new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
-									q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
-							transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-									mStateFactory.createNewStateRight(transition.getSucc())));
-				}
-				return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
+
+		// Automaton is currently in the initial State
+		case OptionalEither.Neither():
+			// letter represents transition into if branch -> transition into left automaton
+			if (mIfBranchLetters.contains(letter)) {
+				return () -> new TransformIterator<>(mLeftAutomaton.getInitialStates().iterator(),
 						successor -> new OutgoingInternalTransition<>(letter,
-								mStateFactory.createNewStateRight(successor)));
+								mStateFactory.createNewStateLeft(successor)));
 			}
+			// letter doesn't represent transition into if branch
+			// -> letter leads into else branch -> transition into right automaton
+			return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
+					successor -> new OutgoingInternalTransition<>(letter,
+							mStateFactory.createNewStateRight(successor)));
+
+		// Automaton is already in if branch
+		case OptionalEither.Left(final S1 original):
 			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
 							mStateFactory.createNewStateLeft(transition.getSucc())));
-		case Either.Right(final S2 original):
+
+		// Automaton is already in else branch
+		case OptionalEither.Right(final S2 original):
 			return () -> new TransformIterator<>(mRightAutomaton.internalSuccessors(original, letter).iterator(),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
 							mStateFactory.createNewStateRight(transition.getSucc())));
@@ -167,26 +173,34 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 		throw new UnsupportedOperationException("returns are not supported");
 	}
 
-	public interface ISequentialStateFactory<S1, S2, S> extends IStateFactory<S> {
+	public interface IIfElseStateFactory<S1, S2, S> extends IStateFactory<S> {
 		S createNewStateLeft(S1 state);
 
 		S createNewStateRight(S2 state);
 
-		Either<S1, S2> getOriginalState(S state);
+		S createNewBeginningState();
 
-		public class Default<S1, S2> implements ISequentialStateFactory<S1, S2, Either<S1, S2>> {
+		OptionalEither<S1, S2> getOriginalState(S state);
+
+		public class Default<S1, S2> implements IIfElseStateFactory<S1, S2, OptionalEither<S1, S2>> {
+
 			@Override
-			public Either<S1, S2> createNewStateLeft(final S1 state) {
-				return new Either.Left<>(state);
+			public OptionalEither<S1, S2> createNewStateLeft(final S1 state) {
+				return new OptionalEither.Left<>(state);
 			}
 
 			@Override
-			public Either<S1, S2> createNewStateRight(final S2 state) {
-				return new Either.Right<>(state);
+			public OptionalEither<S1, S2> createNewStateRight(final S2 state) {
+				return new OptionalEither.Right<>(state);
 			}
 
 			@Override
-			public Either<S1, S2> getOriginalState(final Either<S1, S2> state) {
+			public OptionalEither<S1, S2> createNewBeginningState() {
+				return new OptionalEither.Neither<>();
+			}
+
+			@Override
+			public OptionalEither<S1, S2> getOriginalState(final OptionalEither<S1, S2> state) {
 				return state;
 			}
 		}
