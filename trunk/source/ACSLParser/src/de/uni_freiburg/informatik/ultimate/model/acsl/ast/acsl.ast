@@ -177,7 +177,7 @@ Expression ::=
 		expr     : Expression
 	| { ArrayAccessExpression }
 		array   : Expression
-		indices : Expression[]
+		index : Expression
 	| { ArrayStoreExpression }
 		array   : Expression 
 		indices : Expression[]

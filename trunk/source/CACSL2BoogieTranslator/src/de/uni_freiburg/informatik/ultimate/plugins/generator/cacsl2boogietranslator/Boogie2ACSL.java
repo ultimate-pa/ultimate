@@ -809,7 +809,7 @@ public final class Boogie2ACSL {
 			if (translatedIndex == null) {
 				return null;
 			}
-			result = new ArrayAccessExpression(result, new Expression[] { translatedIndex.getExpression() });
+			result = new ArrayAccessExpression(result, translatedIndex.getExpression());
 			resultType = ((CArray) resultType).getValueType();
 		}
 		final var range = getRangeForCType(resultType);

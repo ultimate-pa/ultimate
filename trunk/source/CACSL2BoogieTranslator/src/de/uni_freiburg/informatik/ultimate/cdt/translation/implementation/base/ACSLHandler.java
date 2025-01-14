@@ -897,8 +897,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final ArrayAccessExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArray(), main.getAcslHook());
-		// TODO: Why does the ACSL-access have a list of indices, but we only dispatch the first one?
-		final ExpressionResult index = dispatchSwitch(main, node.getIndices()[0], loc);
+		final ExpressionResult index = dispatchSwitch(main, node.getIndex(), loc);
 		return mCHandler.handleArraySubscriptExpression(array, index, main.getAcslHook());
 	}
 

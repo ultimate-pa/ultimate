@@ -119,7 +119,8 @@ public class ACSLPrettyPrinter {
 		case final OldValueExpression old:
 			return String.format("\\old(%s)", printExpression(old.getExpression()));
 		case final ArrayAccessExpression arrayAccess:
-			return printArrayAccessExpression(arrayAccess);
+			return String.format("%s[%s]", printExpression(arrayAccess.getArray()),
+					printExpression(arrayAccess.getIndex()));
 		case final CastExpression cast:
 			return String.format("(%s) %s", cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
 		case final ACSLResultExpression res:
@@ -135,12 +136,6 @@ public class ACSLPrettyPrinter {
 			// TODO: Add more cases
 			return expression.toString();
 		}
-	}
-
-	private static String printArrayAccessExpression(final ArrayAccessExpression expression) {
-		return printExpression(expression.getArray()) + "["
-				+ Arrays.stream(expression.getIndices()).map(x -> printExpression(x)).collect(Collectors.joining(", "))
-				+ "]";
 	}
 
 	private static String printUnaryExpression(final UnaryExpression expression) {
