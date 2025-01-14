@@ -827,8 +827,6 @@ public class TypeChecker extends BaseObserver {
 			for (int i = 0; i < join.getLhs().length; i++) {
 				typecheckLeftHandSide(join.getLhs()[i]);
 			}
-		} else if (statement instanceof AtomicStatement) {
-			// Nothing to check (yet).
 		} else {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}
