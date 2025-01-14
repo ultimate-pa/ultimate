@@ -48,9 +48,6 @@ public sealed interface OptionalEither<X, Y> {
 	}
 
 	record Neither<X, Y>() implements OptionalEither<X, Y> {
-		@Override
-		public int hashCode() {
-			return Objects.hash(29, value);
-		}
+		// We no longer have a value, so the class needs to be entirely empty.
 	}
 }
