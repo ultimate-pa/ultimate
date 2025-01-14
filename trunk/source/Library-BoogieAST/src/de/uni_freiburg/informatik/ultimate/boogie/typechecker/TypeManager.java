@@ -28,9 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.boogie.typechecker;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Stack;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -39,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -226,4 +231,39 @@ public class TypeManager {
 		}
 	}
 
+	public static boolean isEquivalent(final ASTType first, final ASTType second) {
+		return switch (first) {
+		case final PrimitiveType ptFirst ->
+				second instanceof final PrimitiveType ptSecond && Objects.equals(ptFirst.getName(), ptSecond.getName());
+		case final NamedType ntFirst ->
+				second instanceof final NamedType ntSecond && Objects.equals(ntFirst.getName(), ntSecond.getName())
+						&& areEquivalent(ntFirst.getTypeArgs(), ntSecond.getTypeArgs());
+		case final ArrayType atFirst -> second instanceof final ArrayType atSecond
+				&& isEquivalent(atFirst.getValueType(), atSecond.getValueType())
+				&& Arrays.equals(atFirst.getTypeParams(), atSecond.getTypeParams())
+				&& areEquivalent(atFirst.getIndexTypes(), atSecond.getIndexTypes());
+		case final StructType stFirst ->
+				second instanceof final StructType stSecond && areEquivalent(stFirst.getFields(), stSecond.getFields());
+		};
+	}
+
+	public static boolean areEquivalent(final ASTType[] first, final ASTType[] second) {
+		return areEquivalent(Arrays.asList(first), Arrays.asList(second));
+	}
+
+	public static boolean areEquivalent(final List<? extends ASTType> first, final List<? extends ASTType> second) {
+		return first.size() == second.size()
+				&& IntStream.range(0, first.size()).allMatch(i -> isEquivalent(first.get(i), second.get(i)));
+	}
+
+	private static boolean areEquivalent(final VarList[] first, final VarList[] second) {
+		return first.length == second.length && IntStream.range(0, first.length).allMatch(i -> {
+			final var vlFirst = first[i];
+			final var vlSecond = second[i];
+			assert vlFirst.getWhereClause() == null && vlSecond.getWhereClause() == null
+					: "'where' not supported in struct type declarations";
+			return isEquivalent(vlFirst.getType(), vlSecond.getType())
+					&& Arrays.equals(vlFirst.getIdentifiers(), vlSecond.getIdentifiers());
+		});
+	}
 }
