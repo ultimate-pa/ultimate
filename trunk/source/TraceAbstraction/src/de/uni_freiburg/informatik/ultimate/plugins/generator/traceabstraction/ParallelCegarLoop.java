@@ -403,12 +403,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								final boolean debug = super.isAbstractionEmpty();
 								if (mCounterexample != null) {
 									final List<L> trace = mCounterexample.getWord().asList();
+
 									final int traceHash = trace.hashCode();
 									if (mAllCounterexamples.containsKey(traceHash)) {
 										throw new AssertionError("This cant be!!!");
 									}
-
+									/*
+									 * no idea whats going on here
+									 * Might be a problem with inlining, or sth
+									 * IsEmpty finds only state with 1 succ and is Parallel
+									 * Yet IsEmpty finds a counterexample in isParallel doesnt
+									 */
 									assert isAbstractionCorrect == debug;
+									continue;
 								}
 							}
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
