@@ -252,7 +252,15 @@ public class StandardFunctionHandler {
 						transformedName, node.getFileLocation()));
 			}
 			final ILocation loc = mLocationFactory.createCLocation(node);
-			return functionModel.handleFunction(main, node, loc, name);
+			// TODO: There is a sequence point after the evaluations of the function designator and the actual arguments
+			// but before the actual call. (C11 6.5.2.2.10)
+			// TO achieve this, we probably need an auxiliary function to dispatch the arguments (and possibly some
+			// exceptions, e.g. for string literals)
+			final ExpressionResultBuilder builder =
+					new ExpressionResultBuilder((ExpressionResult) functionModel.handleFunction(main, node, loc, name));
+			// There is a sequence point immediately before a library function returns. (C11 7.1.4.3)
+			CTranslationUtil.addSequencePoint(loc, builder);
+			return builder.build();
 		}
 		return null;
 	}

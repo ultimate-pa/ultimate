@@ -979,6 +979,7 @@ public class CHandler {
 		if (rr.getStatements().isEmpty()) {
 			// no statements in right operands, hence no side effects in operand
 			// we can directly combine operands with LOGICAND/OR
+			// TODO: There should be still a sequence point here!
 			final RValue newRVal =
 					new RValue(ExpressionFactory.newBinaryExpression(loc, boogieOp, rl.getLrValue().getValue(),
 							rr.getLrValue().getValue()), new CPrimitive(CPrimitive.CPrimitives.INT), true);
@@ -999,6 +1000,10 @@ public class CHandler {
 		final AssignmentStatement assignStmt = StatementFactory.constructAssignmentStatement(loc,
 				new LeftHandSide[] { auxvarInfo.getLhs() }, new Expression[] { rl.getLrValue().getValue() });
 		builder.addStatementAndAnnotateOverapprox(assignStmt);
+
+		// [...] there is a sequence point between the evaluations of the first and second operands.
+		// (C11 6.5.13.4 / 6.5.14.4)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		final Statement[] thenPart;
 		final Statement[] elsePart;
@@ -1266,6 +1271,8 @@ public class CHandler {
 	}
 
 	public Result visit(final IDispatcher main, final IASTDeclarator node) {
+		// TODO: A full declarator is a declarator that is not part of another declarator. The end of a full declarator
+		// is a sequence point. (C11 6.7.6.3)
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final TypesResult pendingResType = mCurrentDeclaredTypes.peek();
 
@@ -1539,6 +1546,8 @@ public class CHandler {
 		final List<ExpressionResult> results = new ArrayList<>();
 		for (final IASTExpression expr : node.getExpressions()) {
 			results.add((ExpressionResult) main.dispatch(expr));
+			// [...] there is a sequence point between its evaluation and that of the right operand. (C11 6.5.17.2)
+			results.add(CTranslationUtil.getSequencePointResult(mLocationFactory.createCLocation(expr)));
 		}
 		return new ExpressionListResult(results);
 	}

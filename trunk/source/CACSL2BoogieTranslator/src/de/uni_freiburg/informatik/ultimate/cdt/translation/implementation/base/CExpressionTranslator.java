@@ -836,6 +836,7 @@ public class CExpressionTranslator {
 			if (resultCType.isVoidType()) {
 				// result type is void the value is not assigned
 			} else {
+				// TODO: There should be still a sequence point here!
 				final Expression ite =
 						ExpressionFactory.constructIfThenElseExpression(loc, opCondition.getLrValue().getValue(),
 								opPositive.getLrValue().getValue(), opNegative.getLrValue().getValue());
@@ -847,6 +848,10 @@ public class CExpressionTranslator {
 			// respective branch is taken.
 
 			resultBuilder.addAllExceptLrValue(opCondition);
+
+			// [...] here is a sequence point between its evaluation and the evaluation of the second or third operand
+			// (whichever is evaluated) (C11 6.5.15.4)
+			CTranslationUtil.addSequencePoint(loc, resultBuilder);
 
 			// auxvar that will hold the result of the ite expression
 			final AuxVarInfo auxvar;

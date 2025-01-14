@@ -772,6 +772,9 @@ public class FunctionHandler {
 					calleeProcDecl.getOutParams(), calleeProcDecl.getSpecification(), calleeProcDecl.getBody());
 			calleeProcInfo.resetDeclaration(newProc);
 		}
+		// There is a sequence point after the evaluations of the function designator and the actual arguments but
+		// before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, functionCallExpressionResultBuilder);
 
 		return createFunctionCall(loc, calleeName, functionCallExpressionResultBuilder, translatedParams);
 	}

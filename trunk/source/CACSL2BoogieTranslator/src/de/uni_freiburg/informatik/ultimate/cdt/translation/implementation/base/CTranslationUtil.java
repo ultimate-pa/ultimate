@@ -43,14 +43,18 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTCompoundStatementExpressio
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -540,5 +544,19 @@ public class CTranslationUtil {
 	public static boolean hasAttribute(final IASTDeclSpecifier declSpec, final String attributeName) {
 		return Arrays.stream(declSpec.getAttributes()).map(x -> String.valueOf(x.getName()))
 				.anyMatch(attributeName::equals);
+	}
+
+	private static Statement getSequencePointMarker(final ILocation loc) {
+		return new AssumeStatement(loc,
+				new NamedAttribute[] { new NamedAttribute(loc, "sequence_point", new Expression[0]) },
+				new BooleanLiteral(loc, true));
+	}
+
+	public static void addSequencePoint(final ILocation loc, final ExpressionResultBuilder builder) {
+		builder.addStatement(getSequencePointMarker(loc));
+	}
+
+	public static ExpressionResult getSequencePointResult(final ILocation loc) {
+		return new ExpressionResult(List.of(getSequencePointMarker(loc)), null, List.of(), Set.of());
 	}
 }
