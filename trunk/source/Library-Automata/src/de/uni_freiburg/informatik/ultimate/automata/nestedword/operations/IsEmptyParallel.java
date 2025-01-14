@@ -120,6 +120,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 */
 	private final Map<STATE, Set<STATE>> mVisitedPairs = new HashMap<>();
 
+	private final Map<STATE, Set<STATE>> mVisitedCallPairs = new HashMap<>();
+
 	/**
 	 * Queue of states that have to be processed and have been visited while processing a internal transition, a return
 	 * transition or a computed summary.
@@ -333,12 +335,27 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	}
 
 	/**
+	 * Mark a state pair a visited.
+	 */
+	private void markCallVisited(final STATE state, final STATE stateK) {
+		Set<STATE> callPreds = mVisitedCallPairs.get(state);
+		if (callPreds == null) {
+			callPreds = new HashSet<>();
+			mVisitedCallPairs.put(state, callPreds);
+		}
+		callPreds.add(stateK);
+	}
+
+	/**
 	 * @return true iff the state pair (state,stateK) was already visited.
 	 */
 	private boolean wasVisited(final STATE state, final STATE stateK) {
-		final Set<STATE> callPreds = mVisitedPairs.get(state);
+		Set<STATE> callPreds = mVisitedPairs.get(state);
 		if (callPreds == null) {
-			return false;
+			callPreds = mVisitedCallPairs.get(state);
+			if (callPreds == null) {
+				return false;
+			}
 		}
 		return callPreds.contains(stateK);
 	}
@@ -354,10 +371,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		mCallSubRun.clear();
 		mReturnPredStateK.clear();
 		mSummaryReturnPred.clear();
+		mSummaryReturnSymbol.clear();
 		mReconstructionStack.clear();
+		mReturnSubRun.clear();
 		assert isQueueEmpty();
 		// is it a call or a internal predi?
-		enqueueAndMarkVisited(startpair.getUp(), startpair.getUp());
+		enqueueAndMarkVisited(startpair.getUp(), startpair.getDown());
 		// enqueueAndMarkVisitedCall(succ, state);
 		while (!isQueueEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -400,7 +419,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private NestedRun<LETTER, STATE> getAcceptingRun(final Collection<STATE> states)
 			throws AutomataOperationCanceledException {
 
-		assert isQueueEmpty();
 		for (final STATE state : states) {
 			enqueueAndMarkVisited(state, mDummyEmptyStackState);
 		}
@@ -451,11 +469,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
-		final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
+		System.out.println("----------------------------------------- ");
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
+			System.out.println("INternal: " + transition);
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-
+			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
 				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
@@ -485,9 +504,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
+			System.out.println("ca: " + transition);
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-
+			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
 				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
@@ -518,9 +538,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand.returnSuccessorsGivenHier(state,
 				stateK)) {
+			System.out.println("re: " + transition);
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-
+			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
 				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
@@ -602,9 +623,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		final STATE state = pair.getUp();
 		final STATE stateK = pair.getDown();
 		if (!counterexamples.isEmpty()) {
-			mVisitedPairs.clear();
+			// mVisitedPairs.clear();
 			if (isGoalState(state)) {
-				return null;
+				// i think this is ok in most cases since goal is dead end? but then to be save we can go to the end of
+				// this method
+				// return null;
 			}
 		} else {
 			mVisitedPairs.clear();
@@ -626,10 +649,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		if (!counterexamples.isEmpty()) {
 			final PriorityQueue<PQState> pqStart =
 					pickSuccToExplore(positionOfThisSubSearch, state, stateK, counterexamples); // statek is not
-			// equired in method
-			if (stateK != oldStateK && oldStateK != null) {
-				// positionOfThisSubSearch += 1;
-			}
+
 			if (pqStart.isEmpty()) {
 				return null;
 			}
@@ -639,11 +659,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				assert (startpq != null);
 				final STATE succ = startpq.getState();
 				final LETTER symbol = startpq.getLetter();
-				// addRunInformationInternal(succ, stateK, symbol, state, stateK);
-				// enqueueAndMarkVisited(succ, mDummyEmptyStackState);
 				final NestedRun<LETTER, STATE> runToGoal;
 				if (startpq.isCall()) {
-					// addRunInformationCall(succ, state, symbol, state, stateK);
+					markCallVisited(state, succ);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(state, succ), stateK, startpq.getCounterexamplesUnderConsideration());
 
@@ -777,6 +795,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			if (mForbiddenStates.contains(succ)) {
 				continue;
 			}
+			if (getCallStatesOfCallState(stateK).isEmpty()) {
+				assert false;
+			}
 			for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
 				addSummary(stateK, succ, state, symbol);
 				if (!wasVisited(succ, stateKk)) {
@@ -893,9 +914,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * the first component is callState.
 	 */
 	private Set<STATE> getCallStatesOfCallState(final STATE callState) {
-		final Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
+		Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
 		if (callStatesOfCallStates == null) {
-			return Collections.emptySet();
+			callStatesOfCallStates = mVisitedCallPairs.get(callState);
+			if (callStatesOfCallStates == null) {
+				return Collections.emptySet();
+			}
 		}
 		return callStatesOfCallStates;
 	}
@@ -950,7 +974,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					mLogger.warn("No Run ending in pair " + state + "  " + stateK + " with reconstructionStack"
 							+ mReconstructionStack);
 				}
-				throw new AssertionError();
+				if (startStates.contains(run.getStateAtPosition(0))) {
+					return run;
+				}
+				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
+						+ " run is " + run.getStateSequence());
 			}
 			run = mReconstructionOneStepRun.concatenate(run);
 			state = run.getStateAtPosition(0);

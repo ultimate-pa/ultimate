@@ -253,8 +253,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
 						// worker is a Callable and is called here
 						mECS.submit(worker);
+						// TODO reset mCounterexample = null here. needs a small rework furhter down
 						runningThreads += 1;
-					} else {
+					} else if (runningThreads > 0) {
 						try {
 							mLogger.info("All threads busy, going to sleep.");
 							// No busy waiting via Completeable
@@ -376,19 +377,40 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 					if (oldCounterexample == mCounterexample) {
 						mLogger.info("Didnt Find a Counterexample!!! " + Thread.activeCount());
-						mCounterexample = null;
+						// TODO, we can get rid of all this here, if isEMptyParalle can be trusted
+						// we can terminate the serarch if counterexamle is null
+
 						if (super.isAbstractionEmpty()) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
 							mExec.shutdownNow();
 							return;
 						}
+						final List<L> trace = mCounterexample.getWord().asList();
+						final int traceHash = trace.hashCode();
+						if (mAllCounterexamples.containsKey(traceHash)) {
+							mLogger.info("But there is still some actively analyzed: " + runningThreads);
+							mCounterexample = null;
+						} else {
+							throw new AssertionError("Bug in IsParallel !!");
+						}
+
 					}
 					if (mCounterexample != null) {
-						resetThreadLimit();
 						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 					} else {
 						if (isAbstractionCorrect && runningThreads == 0) {
-							assert isAbstractionCorrect == super.isAbstractionEmpty();
+							if (!useGoalSetForIsEmpty) {
+								final boolean debug = super.isAbstractionEmpty();
+								if (mCounterexample != null) {
+									final List<L> trace = mCounterexample.getWord().asList();
+									final int traceHash = trace.hashCode();
+									if (mAllCounterexamples.containsKey(traceHash)) {
+										throw new AssertionError("This cant be!!!");
+									}
+
+									assert isAbstractionCorrect == debug;
+								}
+							}
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
 							mExec.shutdownNow();
 							return;
@@ -404,14 +426,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		mExec.shutdownNow();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
-	}
-
-	private void resetThreadLimit() {
-		mThreadLimit = mPref.getThreadLimit();
-		if (mThreadLimit == 0) { // maximum of available cores
-			mThreadLimit = Runtime.getRuntime().availableProcessors();
-			mThreadLimit -= 1; // one for main thread
-		}
 	}
 
 	@Override
