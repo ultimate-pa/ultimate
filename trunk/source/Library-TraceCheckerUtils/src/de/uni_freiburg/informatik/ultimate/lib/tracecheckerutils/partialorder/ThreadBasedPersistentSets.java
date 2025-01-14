@@ -77,8 +77,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  * 2) Compatibility conflicts: Optional. Needed to ensure the choice of persistent sets is compatible with the IDfsOrder
  * used by sleep-set reduction.
  *
- * 3) Error conflicts: Needed to ensure the computed set is a membrane (no error can be reached without executing some
- * action in the set).
+ *
+ * 3) Error conflicts: Optional. Needed to ensure the computed set is a membrane (no error can be reached without
+ * executing some action in the set).
  *
  * 4) Join conflicts: Needed if joins cannot be resolved uniquely (there are multiple *JoinThreadOther transitions for a
  * single *JoinThreadCurrent). The possibly joined threads have to be included in the persistent set if the future
@@ -100,6 +101,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	private final IIndependenceRelation<?, IcfgEdge> mIndependence;
 	private final IDfsOrder<IcfgEdge, IPredicate> mOrder;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
+	boolean mErrorConflictsDisabled; // Added to disable error conflicts for ample set reduction. False by default
 
 	private final ThreadBasedPersistentSetStatistics mStatistics;
 
@@ -122,7 +124,13 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence) {
-		this(services, icfg, independence, null, null);
+		this(services, icfg, independence, null, null, false);
+	}
+
+	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
+			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order,
+			final Collection<? extends IcfgLocation> errorLocs) {
+		this(services, icfg, independence, order, errorLocs, false);
 	}
 
 	/**
@@ -142,7 +150,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 	 */
 	public ThreadBasedPersistentSets(final IUltimateServiceProvider services, final IIcfg<LOC> icfg,
 			final IIndependenceRelation<?, IcfgEdge> independence, final IDfsOrder<IcfgEdge, IPredicate> order,
-			final Collection<? extends IcfgLocation> errorLocs) {
+			final Collection<? extends IcfgLocation> errorLocs, final boolean disableErrorConflicts) {
 		assert !independence.isConditional() : "Conditional independence currently not supported";
 
 		mLogger = services.getLoggingService().getLogger(ThreadBasedPersistentSets.class);
@@ -152,6 +160,7 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 		mOrder = order;
 		mErrorLocs = errorLocs == null ? IcfgUtils.getErrorLocations(icfg) : errorLocs;
 		mStatistics = new ThreadBasedPersistentSetStatistics(independence);
+		mErrorConflictsDisabled = disableErrorConflicts;
 	}
 
 	@Override
@@ -297,7 +306,8 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 		for (final IcfgLocation persistentLoc : locations) {
 			for (final IcfgLocation otherLoc : locations) {
-				if (hasCommutativityConflict(persistentLoc, otherLoc) || hasErrorConflict(persistentLoc, otherLoc)
+				if (hasCommutativityConflict(persistentLoc, otherLoc)
+						|| hasErrorConflict(persistentLoc, otherLoc, mErrorConflictsDisabled)
 						|| hasJoinConflict(persistentLoc, otherLoc)) {
 					result.addPair(persistentLoc, otherLoc);
 				}
@@ -407,9 +417,11 @@ public class ThreadBasedPersistentSets<LOC extends IcfgLocation> implements IPer
 
 	}
 
-	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc) {
+	private boolean hasErrorConflict(final IcfgLocation persistentLoc, final IcfgLocation sourceLoc,
+			final boolean disabled) {
 		final String persistentThread = persistentLoc.getProcedure();
-		if (persistentThread.equals(sourceLoc.getProcedure())) {
+		// TODO: check for a more elegant way to optionalize error conflicts
+		if (disabled || persistentThread.equals(sourceLoc.getProcedure())) {
 			return false;
 		}
 		return canReachConflict(persistentThread, sourceLoc, e -> mErrorLocs.contains(e.getTarget()),

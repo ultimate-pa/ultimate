@@ -1,0 +1,240 @@
+/*
+ *
+ */
+package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.StreamSupport;
+
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AmpleReductionConstructingVisitor;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
+/**
+ * DFS with ample sets. A copy of DepthFirstTraversal with minimal changes to accommodate the ample sets
+ *
+ * @param <L>
+ *            The type of letters in the traversed automaton
+ * @param <S>
+ *            The type of states in the traversed automaton
+ */
+public class AmpleReduction<L, S> {
+	private static final String ABORT_MSG = "visitor aborted traversal";
+
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger;
+	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
+	private final S mStartState;
+	private final IDfsOrder<L, S> mOrder;
+	private final AmpleReductionConstructingVisitor<L, S> mVisitor; // visitor computes ample sets and prunes
+	private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
+	private final DfsBookkeeping<S> mDfs = new DfsBookkeeping<>();
+
+	private int mIndentLevel = -1;
+
+	/**
+	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
+	 *
+	 * @param services
+	 *            automata services used for logging and timeout management
+	 * @param operand
+	 *            The automaton to be traversed
+	 * @param order
+	 *            The order in which transitions for each state should be explored
+	 * @param visitor
+	 *            A visitor to traverse the automaton
+	 * @param startingState
+	 *            A state from which the traversal starts.
+	 * @throws AutomataOperationCanceledException
+	 *             in case of timeout or cancellation
+	 */
+	public AmpleReduction(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final AmpleReductionConstructingVisitor<L, S> visitor, final S startingState)
+			throws AutomataOperationCanceledException {
+		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
+
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(AmpleReduction.class);
+		mOperand = operand;
+		mStartState = startingState;
+		mOrder = order;
+		mVisitor = visitor;
+
+		traverse();
+	}
+
+	/**
+	 * Performs a depth-first traversal starting from the operand's initial state. This method is called purely for its
+	 * side-effects.
+	 *
+	 * @param services
+	 *            automata services used for logging and timeout management
+	 * @param operand
+	 *            The automaton to be traversed
+	 * @param order
+	 *            The order in which transitions for each state should be explored
+	 * @param visitor
+	 *            A visitor to traverse the automaton
+	 * @throws AutomataOperationCanceledException
+	 *             in case of timeout or cancellation
+	 */
+	public static <L, S> void traverse(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
+			final AmpleReductionConstructingVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+		final var initial =
+				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
+		if (initial.isPresent()) {
+			new AmpleReduction<>(services, operand, order, visitor, initial.get());
+		} else {
+			final var logger = services.getLoggingService().getLogger(AmpleReduction.class);
+			logger.warn("Depth first traversal did not find any initial state. Returning directly.");
+		}
+	}
+
+	private void traverse() throws AutomataOperationCanceledException {
+		final boolean abortImmediately = visitState(mStartState);
+		if (abortImmediately) {
+			mLogger.debug(ABORT_MSG);
+			return;
+		}
+
+		while (!mWorklist.isEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
+
+			final var current = mWorklist.pop();
+			final S currentState = current.getFirst();
+
+			// Backtrack states still on the stack whose exploration has finished.
+			final boolean abort = backtrackUntil(currentState);
+			if (abort) {
+				mLogger.debug(ABORT_MSG);
+				return;
+			}
+
+			final OutgoingInternalTransition<L, S> currentTransition = current.getSecond();
+			final S nextState = currentTransition.getSucc();
+			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
+					currentTransition.getLetter());
+
+			// ------------------------------------------start changes-------------------------------------------------
+			// TODO: Find a more sane way to do this
+
+			// check for all outgoing transitions of next state if they'd close a cycle : mDfs.isVisited() and
+			// mDfs.stackIndexOf() != -1
+			boolean loop = false;
+			final Set<L> ampling = new HashSet<>();
+
+			for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
+				if (!loop && mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
+					loop = true;
+				}
+				ampling.add(currentTS.getLetter());
+			}
+
+			final boolean prune =
+					mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState, loop, ampling);
+			// -------------------------------------------- end of changes -------------------------------------------
+
+			if (mVisitor.isFinished()) {
+				mLogger.debug(ABORT_MSG);
+				return;
+			}
+
+			final int stackIndex;
+			if (prune) {
+				debugIndent("-> visitor pruned transition");
+			} else if (!mDfs.isVisited(nextState)) {
+				final boolean abortNow = visitState(nextState);
+				if (abortNow) {
+					mLogger.debug(ABORT_MSG);
+					return;
+				}
+			} else if ((stackIndex = mDfs.stackIndexOf(nextState)) != -1) {
+				debugIndent("-> state is on stack -- do not unroll loop");
+				mDfs.updateLoopHead(currentState, new Pair<>(stackIndex, nextState));
+			} else {
+				debugIndent("-> state was visited before -- no re-exploration");
+				mDfs.backPropagateLoopHead(currentState, nextState);
+			}
+		}
+
+		final boolean abort = backtrackUntil(mStartState);
+		if (abort) {
+			mLogger.debug(ABORT_MSG);
+			return;
+		}
+
+		backtrack();
+		mLogger.debug("traversal completed");
+	}
+
+	private boolean backtrackUntil(final S state) {
+		while (!mDfs.peek().equals(state)) {
+			final boolean abort = backtrack();
+			if (abort) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean backtrack() {
+		final S oldState = mDfs.peek();
+		final boolean isComplete = mDfs.backtrack();
+
+		debugIndent("backtracking state %s (complete: %s)", oldState, isComplete);
+		mIndentLevel--;
+
+		mVisitor.backtrackState(oldState, isComplete);
+		return mVisitor.isFinished();
+	}
+
+	private boolean visitState(final S state) {
+		assert !mDfs.isVisited(state) : "must never re-visit state";
+		mIndentLevel++;
+		debugIndent("visiting state %s", state);
+
+		final boolean pruneSuccessors;
+		if (mStartState.equals(state)) {
+			debugIndent("-> state is start state");
+			assert !mDfs.hasStarted() : "start state should be first visited state";
+			pruneSuccessors = mVisitor.addStartState(state);
+		} else {
+			assert mDfs.hasStarted() : "first visited state should be start state";
+			pruneSuccessors = mVisitor.discoverState(state);
+		}
+		if (mVisitor.isFinished()) {
+			return true;
+		}
+		mDfs.push(state);
+
+		if (pruneSuccessors) {
+			debugIndent("-> visitor pruned all outgoing edges");
+		} else {
+			final Comparator<OutgoingInternalTransition<L, S>> comp =
+					Comparator.<OutgoingInternalTransition<L, S>, L> comparing(OutgoingInternalTransition::getLetter,
+							mOrder.getOrder(state)).reversed();
+			StreamSupport.stream(mOperand.internalSuccessors(state).spliterator(), false).sorted(comp)
+					.forEachOrdered(out -> mWorklist.push(new Pair<>(state, out)));
+		}
+		return false;
+	}
+
+	private void debugIndent(final String msg, final Object... params) {
+		mLogger.debug("  ".repeat(mIndentLevel) + msg, params);
+	}
+}
