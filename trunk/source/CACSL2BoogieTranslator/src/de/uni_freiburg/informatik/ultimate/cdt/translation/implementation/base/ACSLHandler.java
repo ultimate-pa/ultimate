@@ -787,7 +787,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
 				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
-		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
+		if (!exprResult.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "Requires must be translatable by a single expression");
 		}
 		final Expression formula = exprResult.getLrValue().getValue();
@@ -803,7 +803,7 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult exprResult = mExprResultTransformer.transformSwitchRexIntToBool(
 				(ExpressionResult) main.dispatch(node.getFormula()), loc, main.getAcslHook());
-		if (!exprResult.getStatements().isEmpty() || !exprResult.getOverapprs().isEmpty()) {
+		if (!exprResult.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "Ensures must be translatable by a single expression");
 		}
 		mSpecType = ACSLHandler.SPEC_TYPE.ENSURES;
@@ -873,18 +873,8 @@ public class ACSLHandler implements IACSLHandler {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 		final ExpressionResult res = mExprResultTransformer.transformSwitchRexIntToBool(
 				(ExpressionResult) main.dispatch(node.getFormula(), main.getAcslHook()), loc, main.getAcslHook());
-		if (!res.getAuxVars().isEmpty()) {
+		if (!res.hasNoSideEffects()) {
 			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
-		}
-		if (!res.getDeclarations().isEmpty()) {
-			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
-		}
-		if (!res.getNeighbourUnionFields().isEmpty()) {
-			throw new UnsupportedSyntaxException(loc, "We support only side-effect free specifications.");
-		}
-		if (!res.getOverapprs().isEmpty()) {
-			throw new UnsupportedSyntaxException(loc,
-					"We support only contracts that we can translate without overapproximation.");
 		}
 
 		assert res != null && res.getLrValue().getValue() != null;
