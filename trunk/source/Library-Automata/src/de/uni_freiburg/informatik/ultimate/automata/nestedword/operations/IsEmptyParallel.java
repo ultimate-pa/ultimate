@@ -258,7 +258,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		if (mGoalStateIsAcceptingState) {
 			return mOperand.isFinal(state);
 		}
-		return mGoalStates.contains(state) || mOperand.isFinal(state);
+		return mGoalStates.contains(state);
 	}
 
 	/**
