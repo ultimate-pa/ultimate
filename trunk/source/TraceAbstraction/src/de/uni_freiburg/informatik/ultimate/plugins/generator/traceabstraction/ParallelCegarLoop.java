@@ -93,12 +93,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private final IIcfg<?> mRootNode;
 
 	private final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
-	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>(); // maps counterexample hash to test
-																					// goal id
-	final ArrayList<NestedRun<L, IPredicate>> mActiveCounterexamples = new ArrayList<>();
-
-	// for debugging only, ensures our search does not find the same counterexampl twice
-	// TODO later we canmerge mActiveCounterexamples and mAllCounterexamples and use the setting for conditional remove
+	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>();
 	private final HashMap<Integer, NestedRun<L, IPredicate>> mAllCounterexamples = new HashMap<>();
 
 	private final boolean useGoalSetForIsEmpty;
@@ -231,11 +226,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	@Override
 	protected void iterate() throws AutomataLibraryException {
 		// TODO manage time and timeout
-
 		int runningThreads = 0;
-		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
-			mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
-		}
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
 			final boolean minimizePerWorker = mPref.minimizeAbstractionPerWorker;
@@ -253,8 +244,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
 						// worker is a Callable and is called here
 						mECS.submit(worker);
-						// TODO reset mCounterexample = null here. needs a small rework furhter down
 						runningThreads += 1;
+						// mCounterexample is being checked, make sure next thread gets a new one
+						mCounterexample = null;
+
 					} else if (runningThreads > 0) {
 						try {
 							mLogger.info("All threads busy, going to sleep.");
@@ -266,22 +259,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 									final WorkerThreadResult<L, A> workerResult = doneFuture.get();
 									mLogger.info("Main: A Thread is Done");
 									runningThreads -= 1;
-									workerResult.getAutomatonType();
-									final List<L> trace = workerResult.getCounterexample().getWord().asList();
-									final int traceHash = trace.hashCode();
-									// TODO should be enough to save testgoal id right?
-									final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
-
-									mLogger.info("Done TestGoal: " + testGoalId);
-									mLogger.info("Done Type: " + workerResult.getAutomatonType());
-
-									if (workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)
-											|| !useGoalSetForIsEmpty) {
+									if (useGoalSetForIsEmpty) {
+										final List<L> trace = workerResult.getCounterexample().getWord().asList();
+										final int traceHash = trace.hashCode();
+										final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
+										mLogger.info("Done TestGoal: " + testGoalId);
+										if (workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)) {
+											automataWaitingList.add(workerResult);
+											mInActiveErrorLocs.remove(traceHash);
+										}
+									} else {
 										automataWaitingList.add(workerResult);
-										// Free up the testgoal for counterexample search
-										mInActiveErrorLocs.remove(traceHash);
 									}
-
+									mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
 								} catch (final ExecutionException | InterruptedException e) {
 									// TODO better handling of exceptions in worker thread
 									e.printStackTrace();
@@ -302,15 +292,16 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						mLogger.info("Refining Abstraction: " + automataWaitingList.size());
 						assert !automataWaitingList.isEmpty();
 						final WorkerThreadResult<L, A> firstAutomatonInWaitingList = automataWaitingList.pop();
-						if (useGoalSetForIsEmpty) {
-							assert firstAutomatonInWaitingList.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
-						}
+						assert !useGoalSetForIsEmpty
+								|| firstAutomatonInWaitingList.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
 						try {
-							final INestedWordAutomaton<L, IPredicate> abstraction = mAbstraction;
-
 							final List<L> trace = firstAutomatonInWaitingList.getCounterexample().getWord().asList();
 							final int traceHash = trace.hashCode();
 							mLogger.info("Subtrahend traceHash: " + traceHash);
+
+							if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+								mAllCounterexamples.remove(traceHash);
+							}
 
 							final Set<IcfgLocation> hoareAnnotationLocs;
 							if (mComputeHoareAnnotation) {
@@ -327,7 +318,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 									hoareAnnotationLocs);
 
 							final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(
-									abstraction, firstAutomatonInWaitingList, stateFactoryForRefinement);
+									mAbstraction, firstAutomatonInWaitingList, stateFactoryForRefinement);
 
 							if (mPref.stopAfterFirstViolation()
 									&& firstAutomatonInWaitingList.getAutomatonType() == AutomatonType.ERROR) {
@@ -339,16 +330,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 										new PredicateFactoryResultChecking(mPredicateFactory));
 
 							}
-							if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
-								mActiveCounterexamples.remove(firstAutomatonInWaitingList.getCounterexample());
-							}
+
 							// Kill the worker script
 							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
 									.exitWorkerOnly();
 							abstractionWasRefined = true;
 							// Not sure if necessary
 							firstAutomatonInWaitingList.garbageCollect();
-							assert !abstraction.equals(mAbstraction);
 						} catch (final AssertionError ae) {
 							// TODO it might happen that mCounterexample is no longer accepted
 							mExec.shutdownNow();
@@ -370,61 +358,20 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				}
 				// need a new counterexample every iteration
 				if (runningThreads < mThreadLimit) {
-					// assert mActiveCounterexamples.size() == runningThreads;
-					final IRun<L, ?> oldCounterexample = mCounterexample;
-					mLogger.info("Search for Counterexample");
+					mLogger.info("Searching for Counterexample");
 					final boolean isAbstractionCorrect = isAbstractionEmpty();
-
-					if (oldCounterexample == mCounterexample) {
-						mLogger.info("Didnt Find a Counterexample!!! " + Thread.activeCount());
-						// TODO, we can get rid of all this here, if isEMptyParalle can be trusted
-						// we can terminate the serarch if counterexamle is null
-
-						if (super.isAbstractionEmpty()) {
-							mResultBuilder.addResultForAllRemaining(Result.SAFE);
-							mExec.shutdownNow();
-							return;
-						}
-						final List<L> trace = mCounterexample.getWord().asList();
-						final int traceHash = trace.hashCode();
-						if (mAllCounterexamples.containsKey(traceHash)) {
-							mLogger.info("But there is still some actively analyzed: " + runningThreads);
-							mCounterexample = null;
-						} else {
-							throw new AssertionError("Bug in IsParallel !!");
-						}
-
-					}
 					if (mCounterexample != null) {
-						mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
-					} else {
-						if (isAbstractionCorrect && runningThreads == 0) {
-							if (!useGoalSetForIsEmpty) {
-								final boolean debug = super.isAbstractionEmpty();
-								if (mCounterexample != null) {
-									final List<L> trace = mCounterexample.getWord().asList();
+						mLogger.info("Found new Counterexample!");
+					}
+					if (mCounterexample == null) {
+						mLogger.info("Did not Find a Counterexample!");
 
-									final int traceHash = trace.hashCode();
-									if (mAllCounterexamples.containsKey(traceHash)) {
-										mResultBuilder.addResultForAllRemaining(Result.SAFE);
-										mExec.shutdownNow();
-										return;
-										// throw new AssertionError("This cant be!!!");
-									}
-									/*
-									 * no idea whats going on here
-									 * Might be a problem with inlining, or sth
-									 * IsEmpty finds only state with 1 succ and is Parallel
-									 * Yet IsEmpty finds a counterexample in isParallel doesnt
-									 */
-									assert isAbstractionCorrect == debug;
-									mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
-									continue;
-								}
-							}
+						if ((isAbstractionCorrect && runningThreads == 0) || mAbstraction.size() == 0) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
 							mExec.shutdownNow();
 							return;
+						} else {
+							mLogger.info("But we are still checking some: " + runningThreads);
 						}
 					}
 				}
@@ -437,6 +384,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		mExec.shutdownNow();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
+
 	}
 
 	@Override
@@ -456,7 +404,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			 */
 			if (useGoalSetForIsEmpty) {
 				mActiveErrorLocs.clear();
-
 				for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 					final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
 					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
@@ -501,15 +448,11 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				// For debugging only, can be used to test if the search returns redundant counterexamples
 				final List<L> trace = mCounterexample.getWord().asList();
 				final int traceHash = trace.hashCode();
-				if (!mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel || true) { // TODO remove true, just for
-																							// debugging
-					if (mAllCounterexamples.containsKey(traceHash)) {
-						throw new AssertionError("IsEmpty(Parallel) Found the same counterexample twice!");
-					} else {
-						mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
-					}
+				if (mAllCounterexamples.containsKey(traceHash)) {
+					throw new AssertionError("IsEmpty(Parallel) Found the same counterexample twice!");
+				} else {
+					mAllCounterexamples.put(traceHash, (NestedRun<L, IPredicate>) mCounterexample);
 				}
-
 			}
 
 		} finally {
@@ -546,12 +489,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	@Override
 	protected NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
-
-		if (mParallelSearchSrategy && mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
-			return new IsEmptyParallel<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
-					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-					IsEmptyParallel.SearchStrategy.BFS, mActiveCounterexamples).getNestedRun();
-		} else if (mParallelSearchSrategy && !mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+		assert useGoalSetForIsEmpty || possibleEndPoints == null;
+		if (mParallelSearchSrategy) {
 			final ArrayList<NestedRun<L, IPredicate>> allCounterexamples =
 					new ArrayList<>(mAllCounterexamples.values());
 			return new IsEmptyParallel<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
