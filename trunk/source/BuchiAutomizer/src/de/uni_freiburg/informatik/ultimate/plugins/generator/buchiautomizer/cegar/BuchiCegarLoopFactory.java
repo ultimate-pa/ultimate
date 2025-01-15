@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.AmpleRedAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
@@ -136,9 +137,12 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 					final PredicateFactoryRefinement stateFactoryForRefinement) {
 		final var lazyProductProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices, petriProvider,
 				stateFactoryForRefinement);
+		// TODO: add abstraction provider for ample red here
+		final var ampleProvider = new AmpleRedAbstractionProvider<>(lazyProductProvider, mServices,
+				stateFactoryForRefinement, mPrefs.getDfsOrderSeed());
 		return switch (automatonType) {
 		case BUCHI_AUTOMATON -> lazyProductProvider;
-		case PARTIAL_ORDER_BA -> throw new UnsupportedOperationException("TODO: add support for POR here");
+		case PARTIAL_ORDER_BA -> ampleProvider;
 		case BUCHI_PETRI_NET, RABIN_PETRI_NET ->
 				throw new AssertionError("Petri nets should be handled elsewhere: " + automatonType);
 		};

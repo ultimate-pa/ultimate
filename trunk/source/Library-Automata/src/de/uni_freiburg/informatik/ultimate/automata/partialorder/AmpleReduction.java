@@ -75,6 +75,7 @@ public class AmpleReduction<L, S> {
 		traverse();
 	}
 
+	// TODO: Find out if this is actually needed
 	/**
 	 * Performs a depth-first traversal starting from the operand's initial state. This method is called purely for its
 	 * side-effects.
