@@ -258,7 +258,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		if (mGoalStateIsAcceptingState) {
 			return mOperand.isFinal(state);
 		}
-		return mGoalStates.contains(state);
+		return mGoalStates.contains(state) || mOperand.isFinal(state);
 	}
 
 	/**
@@ -469,9 +469,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
-		System.out.println("----------------------------------------- ");
+
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
-			System.out.println("INternal: " + transition);
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
 			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
@@ -489,9 +488,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						}
 
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-
-							currentScore += 1;
-							activeCounterexamples.add(counterexample);
+							if (symbol == counterexample.getSymbol(position - 1)) {
+								currentScore += 1;
+								activeCounterexamples.add(counterexample);
+							}
 						} else {
 							assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
 						}
@@ -504,7 +504,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
-			System.out.println("ca: " + transition);
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
 			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
@@ -522,9 +521,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						}
 
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-
-							currentScore += 1;
-							activeCounterexamples.add(counterexample);
+							if (symbol == counterexample.getSymbol(position - 1)) {
+								currentScore += 1;
+								activeCounterexamples.add(counterexample);
+							}
 						} else {
 							assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
 						}
@@ -535,10 +535,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				pq.add(new PQState(currentScore, transition.getSucc(), activeCounterexamples, symbol, true, false));
 			}
 		}
-
+		if (stateK == mOperand.getEmptyStackState()) {
+			// there is no return transition
+			return pq;
+		}
 		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand.returnSuccessorsGivenHier(state,
 				stateK)) {
-			System.out.println("re: " + transition);
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
 			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
@@ -556,9 +558,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						}
 
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-
-							currentScore += 1;
-							activeCounterexamples.add(counterexample);
+							if (symbol == counterexample.getSymbol(position - 1)) {
+								currentScore += 1;
+								activeCounterexamples.add(counterexample);
+							}
 						} else {
 							assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
 						}
@@ -651,6 +654,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					pickSuccToExplore(positionOfThisSubSearch, state, stateK, counterexamples); // statek is not
 
 			if (pqStart.isEmpty()) {
+				// assert isGoalState(state);
 				return null;
 			}
 

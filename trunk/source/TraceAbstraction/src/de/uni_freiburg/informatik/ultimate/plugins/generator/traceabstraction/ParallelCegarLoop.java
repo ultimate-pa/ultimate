@@ -238,7 +238,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			boolean abstractionWasRefined = false;
-			final boolean minimizePerWorker = true;
+			final boolean minimizePerWorker = mPref.minimizeAbstractionPerWorker;
 			try {
 				mCegarLoopBenchmark.announceNextIteration();
 				try {
@@ -417,7 +417,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 									 * IsEmpty finds only state with 1 succ and is Parallel
 									 * Yet IsEmpty finds a counterexample in isParallel doesnt
 									 */
-									// assert isAbstractionCorrect == debug;
+									assert isAbstractionCorrect == debug;
 									mActiveCounterexamples.add((NestedRun<L, IPredicate>) mCounterexample);
 									continue;
 								}
@@ -472,7 +472,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 
 			if (!useGoalSetForIsEmpty || mTestGeneration.equals(TestGenerationMode.None)) {
-				mCounterexample = runWithModifiedGoalSet(mAbstraction, (Set<IPredicate>) mAbstraction.getFinalStates());
+				mCounterexample = runWithModifiedGoalSet(mAbstraction, null);
 			} else {
 				if (mActiveErrorLocs.isEmpty()) {
 					mCounterexample = null;
@@ -549,13 +549,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		if (mParallelSearchSrategy && mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
 			return new IsEmptyParallel<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
-					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, false,
+					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmptyParallel.SearchStrategy.BFS, mActiveCounterexamples).getNestedRun();
 		} else if (mParallelSearchSrategy && !mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
 			final ArrayList<NestedRun<L, IPredicate>> allCounterexamples =
 					new ArrayList<>(mAllCounterexamples.values());
 			return new IsEmptyParallel<L, IPredicate>(new AutomataLibraryServices(mServices), abstraction,
-					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, false,
+					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmptyParallel.SearchStrategy.BFS, allCounterexamples).getNestedRun();
 		} else {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
