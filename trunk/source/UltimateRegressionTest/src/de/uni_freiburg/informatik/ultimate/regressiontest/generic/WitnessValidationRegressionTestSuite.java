@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2024-2025 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Copyright (C) 2025 University of Freiburg
  *
  * This file is part of the ULTIMATE Regression Test Library.
@@ -41,22 +41,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 /**
  *
- * This test suite automatically generates test cases from the example folder. First the verification and the generation
- * of witnesses is tested, afterwards the validation of the previously generated witnesses.
+ * This test suite automatically generates test cases to validate crafted witnesses.
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
-	// Be careful: These fields have to match the settings for WitnessPrinter
-	private static final String WITNESS_SUFFIX = "-witness";
-	private static final List<String> WITNESS_EXTENSIONS = List.of(".graphml", ".yml");
-
+public class WitnessValidationRegressionTestSuite extends AbstractRegressionTestSuite {
+	private static final List<String> WITNESS_EXTENSIONS = List.of(".graphml", ".yaml", ".yml");
 	private static final long DEFAULT_TIMEOUT = 25 * 1000L;
 
-	public WitnessRegressionTestSuite() {
+	public WitnessValidationRegressionTestSuite() {
 		mTimeout = DEFAULT_TIMEOUT;
-		mRootFolder = TestUtil.getPathFromTrunk("examples/witness-generation-validation");
+		mRootFolder = TestUtil.getPathFromTrunk("examples/witness-checking");
 	}
 
 	@Override
@@ -65,34 +61,21 @@ public class WitnessRegressionTestSuite extends AbstractRegressionTestSuite {
 	}
 
 	@Override
-	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition runDefinition,
-			final String overridenExpectedVerdict) {
-		return new SafetyCheckTestResultDecider(runDefinition, false, overridenExpectedVerdict);
-	}
-
-	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		final List<UltimateTestCase> generation = new ArrayList<>();
-		final List<UltimateTestCase> validation = new ArrayList<>();
+		final List<UltimateTestCase> result = new ArrayList<>();
 		for (final UltimateTestCase t : super.createTestCases()) {
 			final UltimateRunDefinition def = t.getUltimateRunDefinition();
-			final String toolchainName = def.getToolchain().getName().toLowerCase();
-			if (toolchainName.contains("generation")) {
-				generation.add(t);
-			} else if (toolchainName.contains("validation")) {
-				for (final File f : def.getInput()) {
-					for (final String ending : WITNESS_EXTENSIONS) {
-						final File witness = new File(f.getAbsolutePath() + WITNESS_SUFFIX + ending);
-						final File[] newFiles = DataStructureUtils.concat(def.getInput(), new File[] { witness });
-						final UltimateRunDefinition newDef = new UltimateRunDefinition(newFiles, def.getSettings(),
-								def.getToolchain(), def.getTimeout());
-						validation.add(new UltimateTestCase(getTestResultDecider(def), newDef, List.of()));
-					}
+			for (final File f : def.getInput()) {
+				final File[] witnesses = f.getParentFile().listFiles(
+						(d, n) -> WITNESS_EXTENSIONS.stream().anyMatch(n::endsWith) && n.startsWith(f.getName()));
+				for (final File witness : witnesses) {
+					final File[] newFiles = DataStructureUtils.concat(def.getInput(), new File[] { witness });
+					final UltimateRunDefinition newDef = new UltimateRunDefinition(newFiles, def.getSettings(),
+							def.getToolchain(), def.getTimeout());
+					result.add(new UltimateTestCase(getTestResultDecider(newDef), newDef, List.of()));
 				}
-			} else {
-				throw new AssertionError("Not supported yet.");
 			}
 		}
-		return DataStructureUtils.concat(generation, validation);
+		return result;
 	}
 }
