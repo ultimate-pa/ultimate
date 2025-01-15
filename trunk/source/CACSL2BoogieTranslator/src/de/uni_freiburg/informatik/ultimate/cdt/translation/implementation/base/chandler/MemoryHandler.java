@@ -2602,11 +2602,17 @@ public class MemoryHandler {
 	private List<Statement> getWriteCallStruct(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final CStructOrUnion valueType, final HeapWriteMode writeMode) {
 		final List<Statement> stmt = new ArrayList<>();
+		final boolean checkForFloats = CStructOrUnion.isUnion(valueType)
+				&& mSettings.getMemoryModelPreference() == MemoryModel.HoenickeLindenmann_Original;
 		for (final String fieldId : valueType.getFieldIds()) {
 			final Expression startAddress = hlv.getAddress();
 			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			final CType fieldType = valueType.getFieldType(fieldId);
+			if (checkForFloats && fieldType.getUnderlyingType().isFloatingType()) {
+				stmt.add(ExpressionTranslation.modelUnsupportedFeature(loc,
+						"write for union with floats in the HoenickeLindenmann_Original memory model"));
+			}
 			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);
 			if (fieldOffset.isBitfieldOffset()) {
