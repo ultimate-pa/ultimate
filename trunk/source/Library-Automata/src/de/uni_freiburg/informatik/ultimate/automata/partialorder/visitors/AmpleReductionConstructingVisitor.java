@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
 
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -79,25 +80,33 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		mPersistent = persistent;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, alphabet, stateFactory);
 		mAmpleSets = new HashMap<>(); // store the ample sets of reduction states
+		// TODO: Check if automaton satisfies requirements? Where?
+		// Get ample set of initial state. There should only be one initial state
+		final S init = mOriginalAutomaton.getInitialStates().iterator().next();
+		// persistent set is null for the trivial persistent set (which is the set of all outgoing edges?)
+		final Set<L> initAmple = mPersistent.persistentSet(init);
+
+		mAmpleSets.put(init, initAmple);
 	}
 
 	// Discover transitions (whose letters) are part of the ample set of the source state. Return 'false' to discover a
 	// transition
-	public boolean discoverTransition(final S source, final L letter, final S target, final boolean targetIsLoopNode,
-			final Set<L> enabledTarget) {
+	public boolean discoverTransition(final S source, final L letter, final S target, final boolean targetIsLoopNode) {
 		// Cycle checking is outsourced to DepthFirstTraversal
 		final Set<L> persistent = mAmpleSets.get(source);
 		// Prune outgoing edges not in the state's ample set
-		if (!persistent.contains(letter)) {
+		if (!Objects.isNull(persistent) && !persistent.contains(letter)) {
 			return true;
 		}
+		// TODO: Nonemptiness check?
 		// Get the ample set of the new successor state
 		Set<L> ample;
 		if (targetIsLoopNode) {
 			// Ample Set = Set of all outgoing edges in case of loop closure
-			ample = enabledTarget;
+			ample = null;
 		} else {
 			ample = mPersistent.persistentSet(target);
+
 		}
 		mAmpleSets.put(target, ample);
 

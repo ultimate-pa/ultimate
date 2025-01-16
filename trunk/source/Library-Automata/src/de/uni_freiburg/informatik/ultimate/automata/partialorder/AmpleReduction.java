@@ -6,8 +6,6 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -132,22 +130,19 @@ public class AmpleReduction<L, S> {
 					currentTransition.getLetter());
 
 			// ------------------------------------------start changes-------------------------------------------------
-			// TODO: Find a more sane way to do this
-
 			// check for all outgoing transitions of next state if they'd close a cycle : mDfs.isVisited() and
 			// mDfs.stackIndexOf() != -1
+			// TODO: Think about what should be done by the visitor and what in the reduction
 			boolean loop = false;
-			final Set<L> ampling = new HashSet<>();
-
 			for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
 				if (!loop && mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
 					loop = true;
+					break;
 				}
-				ampling.add(currentTS.getLetter());
 			}
 
 			final boolean prune =
-					mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState, loop, ampling);
+					mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState, loop);
 			// -------------------------------------------- end of changes -------------------------------------------
 
 			if (mVisitor.isFinished()) {
