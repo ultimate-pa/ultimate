@@ -1,5 +1,28 @@
 /*
+ * Copyright (C) 2025 Veronika Klasen
+ * Copyright (C) 2025 University of Freiburg
  *
+ * This file is part of the ULTIMATE Automata Library.
+ *
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
+ * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
@@ -20,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * DFS with ample sets. A copy of DepthFirstTraversal with minimal changes to accommodate the ample sets
+ * DFS with ample sets. A copy of DepthFirstTraversal with minimal changes to accommodate the ample sets. Only intended
+ * for deterministic automata with every state being accepting.
  *
  * @param <L>
  *            The type of letters in the traversed automaton
@@ -42,7 +66,8 @@ public class AmpleReduction<L, S> {
 	private int mIndentLevel = -1;
 
 	/**
-	 * Performs a depth-first traversal. This constructor is called purely for its side-effects.
+	 * Performs a depth-first traversal compatible with an AmpleReductionConstructingVisitor. This constructor is called
+	 * purely for its side-effects.
 	 *
 	 * @param services
 	 *            automata services used for logging and timeout management
@@ -57,12 +82,12 @@ public class AmpleReduction<L, S> {
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
+	// TODO: Add a check if input automaton meets requirements? Add statistics.
 	public AmpleReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final AmpleReductionConstructingVisitor<L, S> visitor, final S startingState)
 			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
-
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(AmpleReduction.class);
 		mOperand = operand;
@@ -70,10 +95,14 @@ public class AmpleReduction<L, S> {
 		mOrder = order;
 		mVisitor = visitor;
 
+		mLogger.info("Starting ample reduction");
 		traverse();
+		mLogger.info("Finished ample reduction");
+		mLogger.info("Number of pruned transitions: %s, Number of non-trivial ample sets: %s ",
+				mVisitor.mPruningCounter, mVisitor.mNonTrivialCounter);
 	}
 
-	// TODO: Find out if this is actually needed
+	// TODO: Find out if this is needed for ample reductions
 	/**
 	 * Performs a depth-first traversal starting from the operand's initial state. This method is called purely for its
 	 * side-effects.

@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  * @param <S>
  *            The type of automaton states
  */
+
+//TODO: think about what statistics to collect
 public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S> {
 	INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final Predicate<S> mIsInitial;
@@ -53,6 +55,10 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 	private final NestedWordAutomaton<L, S> mReductionAutomaton;
 	private final IPersistentSetChoice<L, S> mPersistent;
 	private final HashMap<S, Set<L>> mAmpleSets;
+
+	// TODO: remove once we've proper statistics
+	public int mPruningCounter; // count the number of pruned ts
+	public int mNonTrivialCounter; // count the number of non-trivial ample sets
 
 	/**
 	 * Create a new visitor instance.
@@ -69,6 +75,8 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 	 *            Services used in the constructed automaton
 	 * @param stateFactory
 	 *            State factory used by the constructed automaton
+	 * @param persistent
+	 *            Used to compute the ample sets of states.
 	 */
 	public AmpleReductionConstructingVisitor(final INwaOutgoingLetterAndTransitionProvider<L, S> operand,
 			final Predicate<S> isInitial, final Predicate<S> isFinal, final VpAlphabet<L> alphabet,
@@ -79,13 +87,16 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		mIsFinal = isFinal;
 		mPersistent = persistent;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, alphabet, stateFactory);
-		mAmpleSets = new HashMap<>(); // store the ample sets of reduction states
+		// !Trivial ample sets (ample set = set of all outgoing edges) are represented by null!
+		mAmpleSets = new HashMap<>(); // store the ample sets of reduction states.
 		// TODO: Check if automaton satisfies requirements? Where?
 		// Get ample set of initial state. There should only be one initial state
 		final S init = mOriginalAutomaton.getInitialStates().iterator().next();
 		// persistent set is null for the trivial persistent set (which is the set of all outgoing edges?)
 		final Set<L> initAmple = mPersistent.persistentSet(init);
-
+		if (!Objects.isNull(initAmple)) {
+			mNonTrivialCounter++;
+		}
 		mAmpleSets.put(init, initAmple);
 	}
 
@@ -96,6 +107,7 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		final Set<L> persistent = mAmpleSets.get(source);
 		// Prune outgoing edges not in the state's ample set
 		if (!Objects.isNull(persistent) && !persistent.contains(letter)) {
+			mPruningCounter++;
 			return true;
 		}
 		// TODO: Nonemptiness check?
@@ -107,6 +119,9 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		} else {
 			ample = mPersistent.persistentSet(target);
 
+		}
+		if (!Objects.isNull(ample)) {
+			mNonTrivialCounter++;
 		}
 		mAmpleSets.put(target, ample);
 
