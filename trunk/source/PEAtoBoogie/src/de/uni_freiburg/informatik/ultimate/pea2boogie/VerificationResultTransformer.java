@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -93,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRedundancyResult;
@@ -118,12 +120,14 @@ public class VerificationResultTransformer {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IReqSymbolTable mReqSymbolTable;
+	private final IPreferenceProvider mPrefs;
 
 	public VerificationResultTransformer(final ILogger logger, final IUltimateServiceProvider services,
 			final IReqSymbolTable reqSymbolTable) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
+		mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
@@ -184,9 +188,13 @@ public class VerificationResultTransformer {
 		}
 
 		if (spec == Spec.RTINCONSISTENT) {
+			if (!mPrefs.getBoolean(Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH)) {
+				return new ReqCheckRtInconsistentResult<>(element, plugin);
+			}
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution<? extends IAction> oldPe = (IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
-					.getProgramExecution();
+			final IcfgProgramExecution<? extends IAction> oldPe =
+					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
+							.getProgramExecution();
 			final IProgramExecution<IAction, Term> newPe = reduceRtInconsistencyProgramExecution(oldPe, reqCheck);
 			if (newPe == null) {
 				return new ReqCheckRtInconsistentResult<>(element, plugin);
