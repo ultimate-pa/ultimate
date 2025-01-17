@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.RandomDfsOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ThreadBasedPersistentSets;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /*
  * Analogon to PartialOrderAbstractionProvider
@@ -104,4 +106,14 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		return visitor.getReductionAutomaton();
 	}
 
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		class AmpleRedStatistics extends AbstractStatisticsDataProvider {
+			public AmpleRedStatistics() {
+				declareCounter("TEST", () -> 42);
+				forward("Underlying", mUnderlying::getStatistics);
+			}
+		}
+		return new AmpleRedStatistics();
+	}
 }
