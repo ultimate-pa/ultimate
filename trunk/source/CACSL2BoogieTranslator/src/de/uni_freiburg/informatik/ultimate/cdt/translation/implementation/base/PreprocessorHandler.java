@@ -46,7 +46,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorPragmaStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorUndefStatement;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.PreprocessorErrorException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
@@ -92,9 +92,9 @@ public class PreprocessorHandler implements IPreprocessorHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final IASTPreprocessorErrorStatement node) {
-		final String msg = "PreprocessorHandler: There was an error while parsing the preprocessor statements!";
+		final String msg = "PreprocessorHandler: " + node.toString();
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		throw new IncorrectSyntaxException(loc, msg);
+		throw new PreprocessorErrorException(loc, msg);
 	}
 
 	@Override
