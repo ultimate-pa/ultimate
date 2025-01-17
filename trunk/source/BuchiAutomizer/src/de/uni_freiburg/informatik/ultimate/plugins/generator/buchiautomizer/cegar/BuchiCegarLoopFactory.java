@@ -188,7 +188,9 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
 		try {
-			return provider.getInitialAbstraction(icfg, getAcceptingStates(icfg));
+			final var abstraction = provider.getInitialAbstraction(icfg, getAcceptingStates(icfg));
+			mCegarLoopBenchmark.addInitialAbstractionStatistics(provider.getStatistics());
+			return abstraction;
 		} catch (final AutomataOperationCanceledException ex) {
 			final RunningTaskInfo runningTaskInfo =
 					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");

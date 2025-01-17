@@ -69,6 +69,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 	public static final String LASSO_NONTERMINATION_ANALYSIS_TIME = "LassoNonterminationAnalysisTime";
 	public static final String MINIMIZATION_OF_DETERMINISTIC_AUTOMATA = "MinimizationsOfDetermnisticAutomata";
 	public static final String MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA = "MinimizationsOfNondetermnisticAutomata";
+	public static final String INITIAL_ABSTRACTION_STATISTICS = "InitialAbstraction";
 
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -94,6 +95,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		keyList.add(LASSO_NONTERMINATION_ANALYSIS_TIME);
 		keyList.add(MINIMIZATION_OF_DETERMINISTIC_AUTOMATA);
 		keyList.add(MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA);
+		keyList.add(INITIAL_ABSTRACTION_STATISTICS);
 		return keyList;
 	}
 
@@ -141,6 +143,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		case LASSO_NONTERMINATION_ANALYSIS_UNSAT:
 		case LASSO_NONTERMINATION_ANALYSIS_UNKNOWN:
 		case LASSO_NONTERMINATION_ANALYSIS_TIME:
+		case INITIAL_ABSTRACTION_STATISTICS:
 			throw new AssertionError("not yet implemented");
 		default:
 			return super.aggregate(key, value1, value2);
@@ -294,6 +297,11 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 		sb.append(initTime);
 		sb.append(": ");
 		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(initTime)));
+		sb.append("\t");
+
+		sb.append(INITIAL_ABSTRACTION_STATISTICS);
+		sb.append(": ");
+		sb.append(benchmarkData.getValue(INITIAL_ABSTRACTION_STATISTICS));
 
 		return sb.toString();
 	}

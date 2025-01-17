@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
@@ -39,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.SynthesisResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoCheck.TraceCheckResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerator {
@@ -59,6 +61,7 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 	private long mLassoNonterminationAnalysisTime;
 	private int mMinimizationOfDetAutom;
 	private int mMinimizationOfNondetAutom;
+	private IStatisticsDataProvider mInitialAbstractionStatistics;
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
@@ -127,6 +130,8 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 			return mMinimizationOfDetAutom;
 		case BuchiCegarLoopBenchmark.MINIMIZATION_OF_NONDETERMINISTIC_AUTOMATA:
 			return mMinimizationOfNondetAutom;
+		case BuchiCegarLoopBenchmark.INITIAL_ABSTRACTION_STATISTICS:
+			return mInitialAbstractionStatistics;
 		default:
 			return super.getValue(key);
 		}
@@ -227,5 +232,13 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopStatisticsGenerat
 
 	public void reportMinimizationOfNondetAutom() {
 		mMinimizationOfNondetAutom++;
+	}
+
+	public void addInitialAbstractionStatistics(final IStatisticsDataProvider statistics) {
+		Objects.requireNonNull(statistics);
+		if (mInitialAbstractionStatistics != null) {
+			throw new UnsupportedOperationException("initial abstraction statistics have already been initialized");
+		}
+		mInitialAbstractionStatistics = statistics;
 	}
 }
