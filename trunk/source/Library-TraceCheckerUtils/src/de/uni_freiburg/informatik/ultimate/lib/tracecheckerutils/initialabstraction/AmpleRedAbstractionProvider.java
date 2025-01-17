@@ -46,6 +46,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.RandomDfsOrder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ThreadBasedPersistentSets;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /*
  * Analogon to PartialOrderAbstractionProvider
@@ -65,6 +68,7 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
 	private final long mDfsOrderSeed;
 	private final AutomataLibraryServices mAutomataServices;
+	private final Statistics mStatistics = new Statistics();
 
 	// TODO: Do a check whether the input automaton is deterministic?
 	public AmpleRedAbstractionProvider(
@@ -82,6 +86,7 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	public NestedWordAutomaton<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 
+		mStatistics.startTimer();
 		final IIndependenceRelation<IPredicate, L> indep =
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
@@ -100,8 +105,43 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		// TODO: Do something about the order (order shouldnt matter) // state here
 		final AmpleReduction<L, IPredicate> ampleRed = new AmpleReduction<>(mAutomataServices, originalAutomaton,
 				new RandomDfsOrder<>(mDfsOrderSeed, false), visitor, initState);
+		final NestedWordAutomaton<L, IPredicate> redAutomaton = visitor.getReductionAutomaton();
+		mStatistics.stopTimer();
+		mStatistics.mLoopCausedTrivial = visitor.mLoopCausedTrivial;
+		mStatistics.mReductionStates = redAutomaton.getStates().size();
+		mStatistics.mReductionTS = redAutomaton.computeNumberOfInternalTransitions();
+		return redAutomaton;
+	}
 
-		return visitor.getReductionAutomaton();
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	// TODO: figure out if AbstractStatisticsDataProvider makes sense as superclass
+	private class Statistics extends AbstractStatisticsDataProvider {
+		// private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
+		int mLoopCausedTrivial = 0;
+		int mReductionTS = 0;
+		int mReductionStates = 0;
+		TimeTracker mReductionTime = new TimeTracker();
+
+		public Statistics() {
+			// forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
+			declareTimeTracker("Time to compute Ample Reduction", mReductionTime);
+			declareCounter("Trivial Ample Sets caused by loops", () -> mLoopCausedTrivial);
+			declareCounter("Number of transitions in reduction automaton", () -> mReductionTS);
+			declareCounter("Number of states in reduction automaton", () -> mReductionStates);
+
+		}
+
+		public void startTimer() {
+			mReductionTime.start();
+		}
+
+		public void stopTimer() {
+			mReductionTime.stop();
+		}
 	}
 
 }

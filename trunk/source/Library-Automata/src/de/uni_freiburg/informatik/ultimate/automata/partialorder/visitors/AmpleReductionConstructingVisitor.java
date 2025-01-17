@@ -59,6 +59,7 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 	// TODO: remove once we've proper statistics
 	public int mPruningCounter; // count the number of pruned ts
 	public int mNonTrivialCounter; // count the number of non-trivial ample sets
+	public int mLoopCausedTrivial; // Originally non-trivial ample sets that became trivial bc of (A4: Cycle condition)
 
 	/**
 	 * Create a new visitor instance.
@@ -89,7 +90,6 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		mReductionAutomaton = new NestedWordAutomaton<>(services, alphabet, stateFactory);
 		// !Trivial ample sets (ample set = set of all outgoing edges) are represented by null!
 		mAmpleSets = new HashMap<>(); // store the ample sets of reduction states.
-		// TODO: Check if automaton satisfies requirements? Where?
 		// Get ample set of initial state. There should only be one initial state
 		final S init = mOriginalAutomaton.getInitialStates().iterator().next();
 		// persistent set is null for the trivial persistent set (which is the set of all outgoing edges?)
@@ -115,6 +115,10 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		Set<L> ample;
 		if (targetIsLoopNode) {
 			// Ample Set = Set of all outgoing edges in case of loop closure
+			// Only added for curiosity/statistics.
+			if (!Objects.isNull(mPersistent.persistentSet(target))) {
+				mLoopCausedTrivial++;
+			}
 			ample = null;
 		} else {
 			ample = mPersistent.persistentSet(target);

@@ -94,12 +94,13 @@ public class AmpleReduction<L, S> {
 		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
-
-		mLogger.info("Starting ample reduction");
+		// TODO: Remove logger output once the statistics work
+		mLogger.warn("Starting ample reduction"); // yellow so I can find it in console output
 		traverse();
 		mLogger.info("Finished ample reduction");
 		mLogger.info("Number of pruned transitions: %s, Number of non-trivial ample sets: %s ",
 				mVisitor.mPruningCounter, mVisitor.mNonTrivialCounter);
+		mLogger.info("Number of trivial ample sets caused by loops: %s", mVisitor.mLoopCausedTrivial);
 	}
 
 	// TODO: Find out if this is needed for ample reductions

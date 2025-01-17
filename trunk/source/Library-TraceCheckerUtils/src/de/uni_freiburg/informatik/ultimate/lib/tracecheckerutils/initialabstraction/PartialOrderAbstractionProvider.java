@@ -66,7 +66,6 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 	private final PartialOrderMode mPartialOrderMode;
 	private final OrderType mOrderType;
 	private final long mDfsOrderSeed;
-
 	private final Statistics mStatistics = new Statistics();
 
 	/**

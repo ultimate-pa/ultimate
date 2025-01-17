@@ -137,7 +137,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 					final PredicateFactoryRefinement stateFactoryForRefinement) {
 		final var lazyProductProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices, petriProvider,
 				stateFactoryForRefinement);
-		// TODO: Statistics, Check?
+		// TODO: Statistics, Check if input automaton meets requirements?
 		final var ampleProvider = new AmpleRedAbstractionProvider<>(lazyProductProvider, mServices,
 				stateFactoryForRefinement, mPrefs.getDfsOrderSeed());
 		return switch (automatonType) {
