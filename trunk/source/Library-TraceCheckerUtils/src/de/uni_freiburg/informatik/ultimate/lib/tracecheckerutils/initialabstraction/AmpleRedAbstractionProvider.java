@@ -68,7 +68,7 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
 	private final long mDfsOrderSeed;
 	private final AutomataLibraryServices mAutomataServices;
-	private final Statistics mStatistics = new Statistics();
+	private final AmpleRedStatistics mStatistics;
 
 	// TODO: Do a check whether the input automaton is deterministic?
 	public AmpleRedAbstractionProvider(
@@ -80,6 +80,7 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		mAutomataServices = new AutomataLibraryServices(services);
 		mStateFactory = stateFactory;
 		mDfsOrderSeed = seed;
+		mStatistics = new AmpleRedStatistics();
 	}
 
 	@Override
@@ -115,23 +116,27 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
+		/*
+		 * class AmpleRedStatistics extends AbstractStatisticsDataProvider { public AmpleRedStatistics() {
+		 * declareCounter("TEST", () -> 42); forward("Underlying", mUnderlying::getStatistics); } }
+		 */
 		return mStatistics;
 	}
 
-	// TODO: figure out if AbstractStatisticsDataProvider makes sense as superclass
-	private class Statistics extends AbstractStatisticsDataProvider {
+	private class AmpleRedStatistics extends AbstractStatisticsDataProvider {
 		// private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
 		int mLoopCausedTrivial = 0;
 		int mReductionTS = 0;
 		int mReductionStates = 0;
 		TimeTracker mReductionTime = new TimeTracker();
 
-		public Statistics() {
+		public AmpleRedStatistics() {
 			// forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 			declareTimeTracker("Time to compute Ample Reduction", mReductionTime);
 			declareCounter("Trivial Ample Sets caused by loops", () -> mLoopCausedTrivial);
 			declareCounter("Number of transitions in reduction automaton", () -> mReductionTS);
 			declareCounter("Number of states in reduction automaton", () -> mReductionStates);
+			forward("Underlying", mUnderlying::getStatistics);
 
 		}
 
@@ -143,5 +148,4 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 			mReductionTime.stop();
 		}
 	}
-
 }
