@@ -914,7 +914,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final IStatisticsDataProvider cegarLoopBenchmarkGenerator = getCegarLoopBenchmark();
 
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata;
-			if (mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+			if (mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
+					&& mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL) {
 				floydHoareAutomata = new ArrayList<>(getFloydHoareAutomata());
 			} else {
 				floydHoareAutomata = null;

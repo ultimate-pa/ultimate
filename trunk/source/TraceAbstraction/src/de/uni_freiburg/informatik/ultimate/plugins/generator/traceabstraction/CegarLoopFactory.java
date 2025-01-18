@@ -192,7 +192,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private void requireNoReuse(final String analysis) {
-		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
+				&& mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL) {
 			throw new UnsupportedOperationException("Floyd/Hoare automaton reuse not supported for " + analysis);
 		}
 	}

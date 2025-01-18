@@ -2408,7 +2408,7 @@ public class StandardFunctionHandler {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		final boolean testCaseGeneration = true;
+		final boolean testCaseGeneration = mSettings.isCoverBranches() || mSettings.isCoverError();
 		final Statement st;
 		if (!testCaseGeneration) {
 			st = createReachabilityAssert(loc, name, mSettings.checkErrorFunction(), Spec.ERROR_FUNCTION, falseLiteral);

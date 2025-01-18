@@ -180,8 +180,9 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 
 		mLogger.info("Computing trace abstraction results");
 		// Report results that were buffered because they may be overridden or amended.
-
-		// reportLocationResults();
+		if (mTestGeneration.equals(TestGenerationMode.None)) {
+			reportLocationResults();
+		}
 		reportBenchmarkResults();
 
 		logNumberOfWitnessInvariants(errNodesOfAllProc);
@@ -316,7 +317,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				break;
 			}
 
-			if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
+			if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
+					&& mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL) {
 				mFloydHoareAutomataFromErrorLocations.addAll(clres.getFloydHoareAutomata());
 			}
 			mResultReporter.reportCegarLoopResult(clres);

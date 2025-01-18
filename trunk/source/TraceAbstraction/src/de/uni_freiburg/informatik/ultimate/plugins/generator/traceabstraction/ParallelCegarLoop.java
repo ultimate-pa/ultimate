@@ -185,8 +185,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
 		if (mComputeHoareAnnotation) {
-			assert false; // TODO needs different hoareAnnotationLocs
-
+			// TODO need different hoareAnnotationLocs
+			throw new AssertionError("Hoare Annotations not yet supported in Parallel cegar loop");
 		}
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
@@ -365,7 +365,17 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					}
 					if (mCounterexample == null) {
 						mLogger.info("Did not Find a Counterexample!");
-
+						super.isAbstractionEmpty();
+						if (mCounterexample != null) {
+							final List<L> trace = mCounterexample.getWord().asList();
+							final int traceHash = trace.hashCode();
+							if (mAllCounterexamples.containsKey(traceHash)) {
+								mLogger.info("But there is still some actively analyzed: " + runningThreads);
+								mCounterexample = null;
+							} else {
+								throw new AssertionError("Bug in IsParallel !!");
+							}
+						}
 						if ((isAbstractionCorrect && runningThreads == 0) || mAbstraction.size() == 0) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
 							mExec.shutdownNow();
@@ -389,10 +399,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-
-		if (mTestGeneration.equals(TestGenerationMode.None)) {
-			// return super.isAbstractionEmpty();
-		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		try {
 			/*

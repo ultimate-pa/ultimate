@@ -200,7 +200,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
 		mInterpolationTechnique = interpolation;
-		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
+		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
+				&& taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL;
 		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationLocs, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 

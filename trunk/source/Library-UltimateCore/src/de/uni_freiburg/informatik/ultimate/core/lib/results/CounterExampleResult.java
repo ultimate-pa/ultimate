@@ -131,7 +131,8 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 			sb.append(" The dash (-) means that the statement's code block is irrelevant.)");
 			sb.append(CoreUtil.getPlatformLineSeparator());
 		}
-		sb.append(getProgramExecutionAsString());
+		// TODO probably need to map back from worker to main here, future work!
+		// sb.append(getProgramExecutionAsString());
 		return sb.toString();
 	}
 

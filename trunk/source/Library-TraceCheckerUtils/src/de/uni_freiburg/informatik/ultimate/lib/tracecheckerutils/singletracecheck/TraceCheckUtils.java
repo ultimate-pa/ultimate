@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -351,8 +352,12 @@ public final class TraceCheckUtils {
 			vars.add(bv);
 			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
-			final TermVariable tv = bv.getTermVariable();
-			final TermVariable tvOld = bvOld.getTermVariable();
+
+			final TermVariable tv = (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+					.transferTermToWorker(bv.getTermVariable());
+			final TermVariable tvOld = (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+					.transferTermToWorker(bvOld.getTermVariable());
+
 			final Term equality = SmtUtils.binaryEquality(mgdScript.getScript(), tv, tvOld);
 			term = SmtUtils.and(mgdScript.getScript(), term, equality);
 		}
@@ -367,15 +372,15 @@ public final class TraceCheckUtils {
 	 */
 	public static <L extends IAction> NestedFormulas<L, UnmodifiableTransFormula, IPredicate> decoupleArrayValues(
 			final ManagedScript mgdScript, final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nf) {
-		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result = new ModifiableNestedFormulas<>(
-				nf.getTrace(), new TreeMap<>());
+		final ModifiableNestedFormulas<L, UnmodifiableTransFormula, IPredicate> result =
+				new ModifiableNestedFormulas<>(nf.getTrace(), new TreeMap<>());
 		result.setPrecondition(nf.getPrecondition());
 		result.setPostcondition(nf.getPostcondition());
 		for (int i = 0; i < nf.getTrace().length(); i++) {
 			if (nf.getTrace().isCallPosition(i)) {
 				{
-					final UnmodifiableTransFormula decoupledLocalVarAssignment = TransFormulaUtils
-							.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
+					final UnmodifiableTransFormula decoupledLocalVarAssignment =
+							TransFormulaUtils.decoupleArrayValues(nf.getLocalVarAssignment(i), mgdScript);
 					result.setLocalVarAssignmentAtPos(i, decoupledLocalVarAssignment);
 				}
 				// globalVarAssignment and oldVarAssignment are equalities an cannot be affected
@@ -383,8 +388,8 @@ public final class TraceCheckUtils {
 				result.setGlobalVarAssignmentAtPos(i, nf.getGlobalVarAssignment(i));
 				result.setOldVarAssignmentAtPos(i, nf.getOldVarAssignment(i));
 			} else {
-				final UnmodifiableTransFormula decoupled = TransFormulaUtils
-						.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
+				final UnmodifiableTransFormula decoupled =
+						TransFormulaUtils.decoupleArrayValues(nf.getFormulaFromNonCallPos(i), mgdScript);
 				result.setFormulaAtNonCallPos(i, decoupled);
 				if (nf.getTrace().isPendingReturn(i)) {
 					result.setPendingContext(i, nf.getPendingContext(i));
