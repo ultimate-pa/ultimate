@@ -71,32 +71,8 @@
 			**/src/de/uni_freiburg/informatik/ultimate/ultimatetest/**,
 		</sonar.coverage.exclusions>
 
-		<sonar.tests>${workspaceDir}/AbstractInterpretationV2Test/src,${workspaceDir}/BoogiePreprocessorTest/src,${workspaceDir}/CoreRCPTest/src,${workspaceDir}/Library-AutomataTest/src,${workspaceDir}/Library-IcfgTransformerTest/src,${workspaceDir}/Library-ModelCheckerUtilsTest/src,${workspaceDir}/Library-TraceCheckerUtilsTest/src,${workspaceDir}/Library-MSODTest/src,${workspaceDir}/Library-SMTLIBTest/src,${workspaceDir}/Library-srParseTest/src,${workspaceDir}/Library-UltimateTestTest/src,${workspaceDir}/Library-UltimateUtilTest/src,${workspaceDir}/Library-PathExpressionsTest/src,${workspaceDir}/Library-SifaTest/src,${workspaceDir}/SMTInterpolTest/src,${workspaceDir}/SMTSolverBridgeTest/src,${workspaceDir}/SpaceExParserTest/src,${workspaceDir}/PEAtoBoogieTest/src,${workspaceDir}/UltimateRegressionTest/src,${workspaceDir}/UltimateTest/src</sonar.tests>
-
 		<!-- Exclude completely from any Sonar analysis (including coverage) -->
 		<sonar.exclusions>
-			<!-- test code is listed separately under sonar.tests above -->
-			${workspaceDir}/AbstractInterpretationV2Test,
-			${workspaceDir}/BoogiePreprocessorTest,
-			${workspaceDir}/CoreRCPTest,
-			${workspaceDir}/Library-AutomataTest,
-			${workspaceDir}/Library-IcfgTransformerTest,
-			${workspaceDir}/Library-ModelCheckerUtilsTest,
-			${workspaceDir}/Library-TraceCheckerUtilsTest,
-			${workspaceDir}/Library-MSODTest,
-			${workspaceDir}/Library-SMTLIBTest,
-			${workspaceDir}/Library-srParseTest,
-			${workspaceDir}/Library-UltimateTestTest,
-			${workspaceDir}/Library-UltimateUtilTest,
-			${workspaceDir}/Library-PathExpressionsTest,
-			${workspaceDir}/Library-SifaTest,
-			${workspaceDir}/SMTInterpolTest,
-			${workspaceDir}/SMTSolverBridgeTest,
-			${workspaceDir}/SpaceExParserTest,
-			${workspaceDir}/PEAtoBoogieTest,
-			${workspaceDir}/UltimateRegressionTest,
-			${workspaceDir}/UltimateTest,
-
 			**/src/smtcomp/**,
 			**/src/jdd/**,
 			**/src/com/github/jhoenicke/javacup/**,
