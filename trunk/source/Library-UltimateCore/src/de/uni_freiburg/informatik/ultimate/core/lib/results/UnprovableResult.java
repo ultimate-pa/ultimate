@@ -122,7 +122,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append("Possible FailurePath: ");
 			sb.append(CoreUtil.getPlatformLineSeparator());
-			sb.append(getProgramExecutionAsString());
+			// sb.append(getProgramExecutionAsString()); // TODO sort can come from wrong script
 		}
 		return sb.toString();
 	}
