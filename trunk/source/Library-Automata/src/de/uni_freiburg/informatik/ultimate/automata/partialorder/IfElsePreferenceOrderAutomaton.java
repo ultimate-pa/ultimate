@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.OptionalEither;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
@@ -139,15 +140,19 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 		case OptionalEither.Neither():
 			// letter represents transition into if branch -> transition into left automaton
 			if (mIfBranchLetters.contains(letter)) {
-				return () -> new TransformIterator<>(mLeftAutomaton.getInitialStates().iterator(),
-						successor -> new OutgoingInternalTransition<>(letter,
-								mStateFactory.createNewStateLeft(successor)));
+				return () -> new TransformIterator<>(
+						new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
+								q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
+						transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+								mStateFactory.createNewStateLeft(transition.getSucc())));
 			}
 			// letter doesn't represent transition into if branch
 			// -> letter leads into else branch -> transition into right automaton
-			return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
-					successor -> new OutgoingInternalTransition<>(letter,
-							mStateFactory.createNewStateRight(successor)));
+			return () -> new TransformIterator<>(
+					new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
+							q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
+					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+							mStateFactory.createNewStateLeft(transition.getSucc())));
 
 		// Automaton is already in if branch
 		case OptionalEither.Left(final S1 original):

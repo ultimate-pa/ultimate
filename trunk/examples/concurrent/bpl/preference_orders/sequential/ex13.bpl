@@ -1,4 +1,4 @@
-//#Safe
+///#Safe
 /*
  * Author: Marcel Ebbinghaus, Emma Bach
  *
@@ -10,9 +10,10 @@
  *
  */
 var n, x, c: int;
+var i, j : int;
 
 procedure ULTIMATE.start()
-modifies x;
+modifies x, i, j;
 {
   assume x == 0;
 
@@ -25,10 +26,8 @@ modifies x;
 }
 
 procedure thread1()
-modifies x;
+modifies x, i;
 {
-  var i : int;
-
   i := 0;
   while (i < n)
   {
@@ -52,9 +51,8 @@ modifies x;
 }
 
 procedure thread2()
-modifies x;
+modifies x, j;
 {
-  var j : int;
   j := 0;
 
   while (j < 6 * n)
