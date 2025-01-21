@@ -192,9 +192,8 @@ public class VerificationResultTransformer {
 				return new ReqCheckRtInconsistentResult<>(element, plugin);
 			}
 			@SuppressWarnings("unchecked")
-			final IcfgProgramExecution<? extends IAction> oldPe =
-					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
-							.getProgramExecution();
+			final IcfgProgramExecution<? extends IAction> oldPe = (IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
+					.getProgramExecution();
 			final IProgramExecution<IAction, Term> newPe = reduceRtInconsistencyProgramExecution(oldPe, reqCheck);
 			if (newPe == null) {
 				return new ReqCheckRtInconsistentResult<>(element, plugin);
@@ -208,8 +207,8 @@ public class VerificationResultTransformer {
 				mLogger.debug("PE after Pea2Boogie result transformation");
 				mLogger.debug(newPe);
 			}
-			final List<Entry<Rational, Map<Term, Term>>> delta2var2value =
-					generateTimeSequenceMap(newPe.getProgramStates());
+			final List<Entry<Rational, Map<Term, Term>>> delta2var2value = generateTimeSequenceMap(
+					newPe.getProgramStates());
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
@@ -241,8 +240,8 @@ public class VerificationResultTransformer {
 
 	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {
 
-		final int deltaMaxLength =
-				delta2var2value.stream().map(a -> a.getKey().toString().length()).max(Integer::compare).get();
+		final int deltaMaxLength = delta2var2value.stream().map(a -> a.getKey().toString().length())
+				.max(Integer::compare).get();
 		// there might be two numbers of maxlength, we have 3 additional chars "(;]", we
 		// want 2 spaces
 		// if maxLength is smaller than INITIAL (7) + 5 , use 12 instead
@@ -253,8 +252,8 @@ public class VerificationResultTransformer {
 		Rational current = Rational.ZERO;
 		String lastValues = "";
 		for (final Entry<Rational, Map<Term, Term>> entry : delta2var2value) {
-			final String values =
-					entry.getValue().entrySet().stream().map(this::formatVarValue).collect(Collectors.joining(" "));
+			final String values = entry.getValue().entrySet().stream().map(this::formatVarValue)
+					.collect(Collectors.joining(" "));
 			if (lastValues.equals(values)) {
 				// subsume these values in the current step
 				continue;
@@ -287,10 +286,10 @@ public class VerificationResultTransformer {
 	/**
 	 * @return A map from delta value to variable values that are interesting at this point of time
 	 */
-	private List<Entry<Rational, Map<Term, Term>>>
-			generateTimeSequenceMap(final List<ProgramState<Term>> programStates) {
-		final List<ProgramState<Term>> stateSequence =
-				programStates.stream().filter(Objects::nonNull).collect(Collectors.toList());
+	private List<Entry<Rational, Map<Term, Term>>> generateTimeSequenceMap(
+			final List<ProgramState<Term>> programStates) {
+		final List<ProgramState<Term>> stateSequence = programStates.stream().filter(Objects::nonNull)
+				.collect(Collectors.toList());
 
 		final Map<String, Term> vars = new LinkedHashMap<>(stateSequence.stream()
 				.flatMap(a -> a.getVariables().stream()).distinct().collect(Collectors.toMap(Term::toString, a -> a)));
@@ -395,8 +394,8 @@ public class VerificationResultTransformer {
 			final IcfgProgramExecution<IAction> peWithBE;
 			if (hasInvalidBranchEncoders(pe)) {
 				mLogger.info("Computing branch encoders");
-				final TraceCheck<IAction> tcl =
-						TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
+				final TraceCheck<IAction> tcl = TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred,
+						falsePred, trace);
 				if (!tcl.providesRcfgProgramExecution()) {
 					mLogger.warn("Could not extract reduced program execution from trace: TraceCheck reported "
 							+ tcl.isCorrect());
@@ -412,21 +411,21 @@ public class VerificationResultTransformer {
 			final List<IAction> cleanedTrace = removeUnrelatedVariables(sequentialTrace, reqCheck, mgdScriptTc);
 
 			mLogger.info("Computing reduced program execution");
-			final TraceCheck<IAction> tc =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, cleanedTrace);
+			final TraceCheck<IAction> tc = TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred,
+					falsePred, cleanedTrace);
 			if (tc.isCorrect() == LBool.SAT) {
 				return tc.getRcfgProgramExecution();
 			}
 
 			// should be unreachable
 			mLogger.fatal("Reduced program execution is not 'sat'");
-			final TraceCheck<IAction> tcOrig =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, trace);
-			final TraceCheck<IAction> tcSeq =
-					TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred, falsePred, sequentialTrace);
-			final String msg =
-					String.format("Cleaned trace is not '%s', but '%s', sequentialized is '%s', original is '%s'.",
-							LBool.SAT, tc.isCorrect(), tcSeq.isCorrect(), tcOrig.isCorrect());
+			final TraceCheck<IAction> tcOrig = TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred,
+					falsePred, trace);
+			final TraceCheck<IAction> tcSeq = TraceCheck.createTraceCheck(mServices, toolkit, mgdScriptTc, truePred,
+					falsePred, sequentialTrace);
+			final String msg = String.format(
+					"Cleaned trace is not '%s', but '%s', sequentialized is '%s', original is '%s'.", LBool.SAT,
+					tc.isCorrect(), tcSeq.isCorrect(), tcOrig.isCorrect());
 			mLogger.fatal(msg);
 			throw new AssertionError(msg);
 		} catch (final ToolchainCanceledException e) {
@@ -454,8 +453,8 @@ public class VerificationResultTransformer {
 	private List<IAction> removeUnrelatedVariables(final List<IAction> sequentialTrace, final ReqCheck reqCheck,
 			final ManagedScript mgdScript) {
 		final String firstPeaName = ReqSymboltableBuilder.getPcName(reqCheck.getPeaNames().iterator().next());
-		final Set<String> equivClass =
-				new HashSet<>(mReqSymbolTable.getVariableEquivalenceClasses().getContainingSet(firstPeaName));
+		final Set<String> equivClass = new HashSet<>(
+				mReqSymbolTable.getVariableEquivalenceClasses().getContainingSet(firstPeaName));
 		equivClass.add(mReqSymbolTable.getDeltaVarName());
 
 		assert equivClass.containsAll(
@@ -491,8 +490,8 @@ public class VerificationResultTransformer {
 				nonTheoryConsts = oldTf.getNonTheoryConsts();
 			} else {
 				mLogger.info("Removing %s variables", toRemove.size());
-				final Term quantifiedFormula =
-						SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, toRemove, oldFormula);
+				final Term quantifiedFormula = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS,
+						toRemove, oldFormula);
 				newFormula = tryToEliminate(mgdScript, quantifiedFormula);
 				final Set<ApplicationTerm> constantsInFormula = SmtUtils.extractConstants(newFormula, false);
 				nonTheoryConsts = oldTf.getNonTheoryConsts().stream()
@@ -547,8 +546,8 @@ public class VerificationResultTransformer {
 			}
 
 			// IActions of the old script
-			final List<IAction> sequentialActions =
-					extractSequential(Collections.singletonList((CodeBlock) ate.getTraceElement()), branchEncoder);
+			final List<IAction> sequentialActions = extractSequential(
+					Collections.singletonList((CodeBlock) ate.getTraceElement()), branchEncoder);
 
 			// Transfer transformulas to new script
 			final List<UnmodifiableTransFormula> transFormulas = sequentialActions.stream()
@@ -601,14 +600,14 @@ public class VerificationResultTransformer {
 
 	private static void dieIfUnsupported(final Spec spec) {
 		switch (spec) {
-			case CONSISTENCY:
-			case VACUOUS:
-			case RTINCONSISTENT:
-			case COMPLEMENT:
-			case REDUNDANCY:
-				return;
-			default:
-				throw new UnsupportedOperationException("Unknown spec type " + spec);
+		case CONSISTENCY:
+		case VACUOUS:
+		case RTINCONSISTENT:
+		case COMPLEMENT:
+		case REDUNDANCY:
+			return;
+		default:
+			throw new UnsupportedOperationException("Unknown spec type " + spec);
 		}
 	}
 }
