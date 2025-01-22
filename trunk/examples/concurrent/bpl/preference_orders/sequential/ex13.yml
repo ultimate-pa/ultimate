@@ -40,12 +40,12 @@ options:
             - [thread2Thread1of1ForFork1, 3]
         # Switch to third automaton when entering the third loop
         switch_on:
-        - "[82] L39-1-->L41:"
+        - "[87] L46-1-->L48:"
           
 
       # Switch to second automaton when entering the second loop
       switch_on:
-        - "[78] L32-1-->L34:"
+        - "[82] L39-1-->L41:"
 
     # Interpolation struggles to find the invariants though they are simple.
     # Hence, we provide (most of) them explicity (in ex13.bpl.proof.smt2).
