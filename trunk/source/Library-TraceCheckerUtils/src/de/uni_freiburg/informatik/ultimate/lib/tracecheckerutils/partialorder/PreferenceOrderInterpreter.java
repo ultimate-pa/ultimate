@@ -40,6 +40,7 @@ import org.yaml.snakeyaml.Yaml;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.IfElsePreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.SequentialPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -89,6 +90,10 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 			return buildSequentialComposition(spec, left, right);
 		}
 
+		else if ("ifelse".equals(spec.get("operator"))) {
+			return buildIfElseComposition(spec, left, right);
+		}
+
 		// TODO add support for other combination operators here
 
 		throw new UnsupportedOperationException("Unknown type of preference order: " + spec);
@@ -124,6 +129,14 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 				((List<String>) spec.get("switch_on")).stream().map(this::findLetter).collect(Collectors.toSet());
 
 		return SequentialPreferenceOrder.create(left, right, ImmutableSet.of(letters));
+	}
+
+	private <S1, S2> IPreferenceOrder<L, IPredicate, ?> buildIfElseComposition(final Map<String, Object> spec,
+			final IPreferenceOrder<L, IPredicate, S1> left, final IPreferenceOrder<L, IPredicate, S2> right) {
+		final Set<L> letters =
+				((List<String>) spec.get("switch_on")).stream().map(this::findLetter).collect(Collectors.toSet());
+
+		return IfElsePreferenceOrder.create(left, right, ImmutableSet.of(letters));
 	}
 
 	private L findLetter(final String description) {

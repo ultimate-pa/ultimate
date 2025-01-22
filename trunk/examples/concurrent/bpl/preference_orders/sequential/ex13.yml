@@ -38,13 +38,18 @@ options:
           iterations:
             - [thread1Thread1of1ForFork0, 1]
             - [thread2Thread1of1ForFork1, 3]
-        # Switch to sencond automaton when entering the second loop
+        # Switch to third automaton when entering the third loop
         switch_on:
-          - "[64] L32-1-->L34:"
+        - "[82] L39-1-->L41:"
+          
 
-      # Switch to third automaton when entering the third loop
+      # Switch to second automaton when entering the second loop
       switch_on:
-        - "[68] L39-1-->L41:"
+        - "[78] L32-1-->L34:"
+
+    # Interpolation struggles to find the invariants though they are simple.
+    # Hence, we provide (most of) them explicity (in ex13.bpl.proof.smt2).
+    Read initial proof assertions from file if available: true
 
     # Additional options.
     # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
