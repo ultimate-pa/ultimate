@@ -132,6 +132,8 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  */
 public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		extends BasicCegarLoop<L, INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> {
+	private final static boolean LOG_CTEX_RUN = true;
+
 	private final PartialOrderMode mPartialOrderMode;
 	private final InformationStorageFactory mFactory = new InformationStorageFactory();
 
@@ -293,7 +295,23 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 			assert mCounterexample == null || accepts(getServices(), mAbstraction, mCounterexample.getWord(), false)
 					: "Counterexample is not accepted by abstraction";
+
+			// TODO Temporary code for ease of debugging. Should be removed before merge.
+			if (mCounterexample != null && LOG_CTEX_RUN) {
+				mLogger.warn("Found counterexample run:");
+				for (int i = 0; i < mCounterexample.getLength(); ++i) {
+					final var state = (IPredicate) mCounterexample.getStateSequence().get(i);
+					final List<IPredicate> conjuncts = getConjuncts(state);
+					mLogger.warn(conjuncts);
+					if (i < mCounterexample.getWord().length()) {
+						final var statement = mCounterexample.getSymbol(i);
+						mLogger.warn("\t" + statement);
+					}
+				}
+			}
+
 			return mCounterexample == null;
+
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
 		}
