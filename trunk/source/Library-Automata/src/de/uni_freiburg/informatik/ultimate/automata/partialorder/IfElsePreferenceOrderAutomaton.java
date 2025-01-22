@@ -135,19 +135,19 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		switch (mStateFactory.getOriginalState(state)) {
+		// Automaton is currently in the initial State
+		// letter represents transition into if branch -> transition into left automaton
+		case OptionalEither.Neither() when mIfBranchLetters.contains(letter):
+			return () -> new TransformIterator<>(
+					new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
+							q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
+					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+							mStateFactory.createNewStateLeft(transition.getSucc())));
 
 		// Automaton is currently in the initial State
+		// but letter doesn't represent transition into if branch
+		// -> letter leads into else branch -> transition into right automaton
 		case OptionalEither.Neither():
-			// letter represents transition into if branch -> transition into left automaton
-			if (mIfBranchLetters.contains(letter)) {
-				return () -> new TransformIterator<>(
-						new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
-								q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
-						transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-								mStateFactory.createNewStateLeft(transition.getSucc())));
-			}
-			// letter doesn't represent transition into if branch
-			// -> letter leads into else branch -> transition into right automaton
 			return () -> new TransformIterator<>(
 					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
 							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
