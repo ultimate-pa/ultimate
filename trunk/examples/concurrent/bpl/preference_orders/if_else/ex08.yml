@@ -33,8 +33,7 @@ options:
       # The letters at which we switch to the if branch
       # To find out the names, set a breakpoint and run Ultimate in debug mode.
       switch_on:
-        # We switch when we enter the second loop.
-        - "[68] L39-1-->L41:"
+        - "[75] L32-->L34:"
 
     # Additional options.
     # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
