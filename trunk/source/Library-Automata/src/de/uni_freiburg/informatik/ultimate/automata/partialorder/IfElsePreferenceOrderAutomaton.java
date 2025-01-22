@@ -149,10 +149,10 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 			// letter doesn't represent transition into if branch
 			// -> letter leads into else branch -> transition into right automaton
 			return () -> new TransformIterator<>(
-					new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
-							q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
+					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
+							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateLeft(transition.getSucc())));
+							mStateFactory.createNewStateRight(transition.getSucc())));
 
 		// Automaton is already in if branch
 		case OptionalEither.Left(final S1 original):
