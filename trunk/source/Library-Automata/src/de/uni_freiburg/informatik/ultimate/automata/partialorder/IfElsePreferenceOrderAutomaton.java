@@ -28,7 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Transfor
 
 public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 
+	private final S mInitialState;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S1> mLeftAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mRightAutomaton;
 	private final ImmutableSet<L> mIfBranchLetters;
@@ -73,6 +74,7 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 		mRightAutomaton = rightAutomaton;
 		mIfBranchLetters = ifBranchLetters;
 		mStateFactory = stateFactory;
+		mInitialState = stateFactory.createNewBeginningState();
 
 		assert NestedWordAutomataUtils.isFiniteAutomaton(leftAutomaton) : "calls and returns are not supported";
 		assert NestedWordAutomataUtils.isFiniteAutomaton(rightAutomaton) : "calls and returns are not supported";
@@ -99,9 +101,7 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 
 	@Override
 	public Iterable<S> getInitialStates() {
-		final var stateList = new ArrayList<S>();
-		stateList.add(mStateFactory.createNewBeginningState());
-		return stateList;
+		return List.of(mInitialState);
 	}
 
 	@Override
