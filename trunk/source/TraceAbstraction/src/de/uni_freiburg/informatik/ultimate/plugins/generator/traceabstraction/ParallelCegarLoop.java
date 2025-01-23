@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -26,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyParallel;
@@ -96,11 +99,18 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>();
 	private final HashMap<Integer, NestedRun<L, IPredicate>> mAllCounterexamples = new HashMap<>();
 
+	private final HashMap<Integer, Future<WorkerThreadResult<L, A>>> mTraceHashToThread = new HashMap<>();
+
 	private final boolean useGoalSetForIsEmpty;
 	private final boolean mParallelSearchSrategy;
 
 	// shared read only inital abstraction for automata generalization in threads
+
 	private final INestedWordAutomaton<L, IPredicate> mInitialAbstraction;
+
+	// Addtional Statistiks for Evaluation
+	private Integer mCountRedundantCex = 0;
+	private Integer mCountCancelledWorkerThatWereAlreadyDone = 0;
 
 	/**
 	 *
@@ -162,6 +172,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// Set the Main Script
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 				.setMainScript(mCsToolkit.getManagedScript());
+
+		// ensure no variable name collisions
+		freshToolKit.getManagedScript().setVariableManager(mCsToolkit.getManagedScript().getVariableManager());
 
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
 		final Map<TermVariable, IProgramVar> varMap =
@@ -258,12 +271,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						final CegarWorkerThread<L, A> worker =
 								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
 						// worker is a Callable and is called here
-						mECS.submit(worker);
+						final Future<WorkerThreadResult<L, A>> future = mECS.submit(worker);
 						runningThreads += 1;
 						// mInterations equals the amount of counterexamples checked
 						mCegarLoopBenchmark.announceNextIteration();
 						// add mCounterexample to list such that we dont get it twice in our search
-						addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample);
+						addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample, future);
 						// mCounterexample is being checked, make sure next thread gets a new one
 						mCounterexample = null;
 
@@ -285,10 +298,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 									automataWaitingList.add(workerResult);
 									mInActiveErrorLocs.remove(traceHash);
 								}
+								// TODO garbage collect!!!
 							} else {
 								automataWaitingList.add(workerResult);
 							}
 							mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
+						} catch (final CancellationException e) {
+							mLogger.info("Worker was cancelled");
 						} catch (final ExecutionException | InterruptedException e) {
 							// TODO better handling of exceptions in worker thread
 							e.printStackTrace();
@@ -351,6 +367,35 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							abstractionWasRefined = true;
 							// Not sure if necessary
 							firstAutomatonInWaitingList.garbageCollect();
+
+							// TODO iterate over active counterexamples, check if included else kill worker
+							final HashSet<Integer> rejectedWordHashes = new HashSet<Integer>();
+							for (final Entry<Integer, NestedRun<L, IPredicate>> entry : mAllCounterexamples
+									.entrySet()) {
+								assert mTraceHashToThread.containsKey(entry.getKey());
+								if (!new Accepts<L, IPredicate>(new AutomataLibraryServices(getServices()),
+										mAbstraction, entry.getValue().getWord(), false, false).getResult()) {
+									mCountRedundantCex += 1;
+									mLogger.info("Newest Abstraction rejects word with trace " + entry.getKey()
+											+ " Worker cancelled. Cancelled so far: " + mCountRedundantCex);
+									if ((mTraceHashToThread.get(entry.getKey())).isDone()) {
+										mCountCancelledWorkerThatWereAlreadyDone += 1;
+									}
+									mLogger.info(
+											"Cancelled when already done: " + mCountCancelledWorkerThatWereAlreadyDone);
+									(mTraceHashToThread.get(entry.getKey())).cancel(true);
+									rejectedWordHashes.add(entry.getKey());
+
+								}
+
+							}
+							// TODO I see no downside in doing this always
+							if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+								for (final Integer rejecetedWord : rejectedWordHashes) {
+									mAllCounterexamples.remove(rejecetedWord);
+								}
+							}
+
 						} catch (final AssertionError ae) {
 							// TODO it might happen that mCounterexample is no longer accepted
 							mExec.shutdownNow();
@@ -398,7 +443,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							}
 							mCounterexample = null;
 						}
-						if ((isAbstractionCorrect && runningThreads == 0) || mAbstraction.size() == 0) {
+						// If IsEmpty sais its empty, then we can terminate even if threads are still running
+						if (isAbstractionCorrect || mAbstraction.size() == 0) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
 							mExec.shutdownNow();
 							return;
@@ -502,7 +548,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	/*
 	 * Only add a counterexample if it is being checked by a thread otherwise we are unsound
 	 */
-	private void addCounterexampleToSet(final NestedRun<L, IPredicate> counterexample) {
+	private void addCounterexampleToSet(final NestedRun<L, IPredicate> counterexample,
+			final Future<WorkerThreadResult<L, A>> future) {
 		final List<L> trace = counterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		if (mAllCounterexamples.containsKey(traceHash)) {
@@ -510,6 +557,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		} else {
 			mAllCounterexamples.put(traceHash, counterexample);
 		}
+
+		mTraceHashToThread.put(traceHash, future);
 	}
 
 	@Override

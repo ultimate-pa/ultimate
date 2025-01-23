@@ -150,6 +150,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 		try {
 			final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(mStrategy);
+			if (Thread.currentThread().isInterrupted()) {
+				throw new RuntimeException("Worker Interrupted");
+			}
 			if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
 				// in this setting we dont use error automata
 				mAbstraction = null;
@@ -160,9 +163,16 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 			final AbstractCegarLoop.AutomatonType automatonType =
 					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
-
+			if (Thread.currentThread().isInterrupted()) {
+				throw new RuntimeException("Worker Interrupted");
+			}
+			if (Thread.currentThread().isInterrupted()) {
+				throw new RuntimeException("Worker Interrupted");
+			}
 			constructRefinementAutomaton(automatonType);
-
+			if (Thread.currentThread().isInterrupted()) {
+				throw new RuntimeException("Worker Interrupted");
+			}
 			mThreadResult = refineAbstractionInternally();
 			mAbstraction = null;
 		} catch (AutomataLibraryException | ToolchainCanceledException e) {
@@ -192,8 +202,13 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		}
-
+		if (Thread.currentThread().isInterrupted()) {
+			throw new RuntimeException("Worker Interrupted");
+		}
 		final LBool feasibility = mRefinementResult.getCounterexampleFeasibility();
+		if (Thread.currentThread().isInterrupted()) {
+			throw new RuntimeException("Worker Interrupted");
+		}
 		IProgramExecution<L, Term> rcfgProgramExecution = null;
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample %s feasible", feasibility == LBool.SAT ? "is" : "might be");
@@ -205,7 +220,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 
 		}
-		// mTcSmtManager.getScript().exit();
+		if (Thread.currentThread().isInterrupted()) {
+			throw new RuntimeException("Worker Interrupted");
+		}
 
 		if (refinementEngineStats != null && false) { // leads to concurrency problems
 			mCegarLoopBenchmark.addRefinementEngineStatistics(refinementEngineStats);

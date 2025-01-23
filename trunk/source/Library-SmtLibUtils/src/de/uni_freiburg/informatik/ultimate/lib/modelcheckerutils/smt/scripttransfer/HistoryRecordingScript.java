@@ -90,6 +90,7 @@ public class HistoryRecordingScript extends WrapperScript {
 	}
 
 	public Term transferTermToWorker(final Term mainTerm) {
+
 		if (mTf == null) {
 			return mainTerm;
 		}
@@ -365,16 +366,25 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
+		if (Thread.currentThread().isInterrupted()) {
+			throw new RuntimeException("Worker Interrupted");
+		}
 		return mCurrentlyUsedScript.mScript.assertTerm(term);
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
+		if (Thread.currentThread().isInterrupted()) {
+			throw new RuntimeException("Worker Interrupted");
+		}
 		return mCurrentlyUsedScript.mScript.checkSat();
 	}
 
 	@Override
 	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
+		if (Thread.currentThread().isInterrupted()) {
+			throw new RuntimeException("Worker Interrupted");
+		}
 		return mCurrentlyUsedScript.mScript.checkSatAssuming(assumptions);
 	}
 
