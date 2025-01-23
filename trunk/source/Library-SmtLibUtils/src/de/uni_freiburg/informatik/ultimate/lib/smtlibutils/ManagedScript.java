@@ -55,7 +55,7 @@ public class ManagedScript {
 	protected final IUltimateServiceProvider mServices;
 	protected final Script mScript;
 	protected final ILogger mLogger;
-	protected final VariableManager mVariableManager;
+	protected VariableManager mVariableManager;
 	private final SkolemFunctionManager mSkolemFunctionManager;
 
 	private Object mLockOwner;
@@ -67,6 +67,15 @@ public class ManagedScript {
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		mVariableManager = new VariableManager();
 		mSkolemFunctionManager = new SkolemFunctionManager();
+	}
+
+	public VariableManager getVariableManager() {
+		return mVariableManager;
+	}
+
+	public void setVariableManager(final VariableManager variablemanager) {
+		assert mVariableManager.mTv2Basename.isEmpty();
+		mVariableManager = variablemanager;
 	}
 
 	public void lock(final Object lockOwner) {
@@ -331,6 +340,7 @@ public class ManagedScript {
 				mLogger.warn("TermVariable " + tv
 						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
+				mTv2Basename.put(tv, basename);
 			}
 			final TermVariable result = constructFreshTermVariable(basename, tv.getSort());
 			return result;
