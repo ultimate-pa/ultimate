@@ -173,9 +173,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 				.setMainScript(mCsToolkit.getManagedScript());
 
-		// ensure no variable name collisions
-		freshToolKit.getManagedScript().setVariableManager(mCsToolkit.getManagedScript().getVariableManager());
-
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
 		final Map<TermVariable, IProgramVar> varMap =
 				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
@@ -316,13 +313,20 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 					assert doneFuture == null;
 
+					// quick check for error automata, no need to spend time refining if we have one
+					for (final WorkerThreadResult<L, A> autoamta : automataWaitingList) {
+						if (mPref.stopAfterFirstViolation()
+								&& autoamta.getAutomatonType().equals(AutomatonType.ERROR)) {
+							mExec.shutdownNow();
+							return;
+						}
+					}
 					// Refine abstraction as long as there are automata in automataWaitingList
 					while (!automataWaitingList.isEmpty()) {
 						mLogger.info("Refining Abstraction: " + automataWaitingList.size());
 						assert !automataWaitingList.isEmpty();
 						final WorkerThreadResult<L, A> firstAutomatonInWaitingList = automataWaitingList.pop();
-						assert !useGoalSetForIsEmpty
-								|| firstAutomatonInWaitingList.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
+						assert firstAutomatonInWaitingList.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
 						try {
 							final List<L> trace = firstAutomatonInWaitingList.getCounterexample().getWord().asList();
 							final int traceHash = trace.hashCode();
@@ -350,15 +354,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(
 									mAbstraction, firstAutomatonInWaitingList, stateFactoryForRefinement);
 
-							if (mPref.stopAfterFirstViolation()
-									&& firstAutomatonInWaitingList.getAutomatonType() == AutomatonType.ERROR) {
-								return;
-							}
 							mAbstraction = diff.getResult();
 							if (minimizePerWorker) {
 								minimizeAbstractionIfEnabled(stateFactoryForRefinement,
 										new PredicateFactoryResultChecking(mPredicateFactory));
-
 							}
 
 							// Kill the worker script
@@ -368,7 +367,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							// Not sure if necessary
 							firstAutomatonInWaitingList.garbageCollect();
 
-							// TODO iterate over active counterexamples, check if included else kill worker
+							// iterate over active counterexamples, check if included else kill worker
 							final HashSet<Integer> rejectedWordHashes = new HashSet<Integer>();
 							for (final Entry<Integer, NestedRun<L, IPredicate>> entry : mAllCounterexamples
 									.entrySet()) {
@@ -401,6 +400,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							mExec.shutdownNow();
 							throw ae;
 						}
+						mLogger.info("Cancelled so far: " + mCountRedundantCex);
+						mLogger.info("Cancelled when already done: " + mCountCancelledWorkerThatWereAlreadyDone);
+						mLogger.info("Overalliterations: " + mIteration);
 						mLogger.info("Refinement done.");
 					}
 
@@ -431,7 +433,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					if (mCounterexample == null) {
 						mLogger.info("Did not Find a Counterexample!");
 						didntFindCexLastIteration = true;
-						// double check if abstraction is really empty, not need if our approach is complete
+						// double check if abstraction is really empty, terminate if it is
 						isAbstractionCorrect = super.isAbstractionEmpty();
 						if (mCounterexample != null) {
 							final List<L> trace = mCounterexample.getWord().asList();

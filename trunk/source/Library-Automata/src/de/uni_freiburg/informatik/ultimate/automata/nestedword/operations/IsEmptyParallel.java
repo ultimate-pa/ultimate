@@ -725,6 +725,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
 					}
 				} else if (startpq.isReturn()) {
+					markCallVisited(stateK, state);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(stateK, succ), startpq.getCounterexamplesUnderConsideration());
 					addSummary(stateK, succ, state, symbol);

@@ -68,7 +68,6 @@ public class HistoryRecordingScript extends WrapperScript {
 	public final Deque<ISmtDeclarable> mHistory;
 	private final Map<String, ISmtDeclarable> mSymbolTable;
 	private int mCurrentStackLevel;
-	public HistoryRecordingScript mCurrentlyUsedScript = this;
 	private ManagedScript mMainScript = null;
 	public boolean mAfterSynchronisation = false;
 
@@ -132,29 +131,23 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	}
 
-	public void synchronizeWorkerAndMain() {
-		mAfterSynchronisation = true;
-		transferHistoryFromRecord(mMainScript.getScript());
-		mCurrentlyUsedScript = (HistoryRecordingScript) mMainScript.getScript();
-	}
-
 	@Override
 	public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
 			throws SMTLIBException {
-		mCurrentlyUsedScript.mScript.defineFun(fun, params, resultSort, definition);
+		mScript.defineFun(fun, params, resultSort, definition);
 		insert(DeclarableFunctionSymbol.createFromScriptDefineFun(fun, params, resultSort, definition));
 	}
 
 	@Override
 	public void resetAssertions() {
-		mCurrentlyUsedScript.mScript.resetAssertions();
+		mScript.resetAssertions();
 
 		removeStackLevelsFromHistory(mCurrentStackLevel);
 	}
 
 	@Override
 	public void reset() {
-		mCurrentlyUsedScript.mScript.reset();
+		mScript.reset();
 
 		mHistory.clear();
 		mSymbolTable.clear();
@@ -162,7 +155,7 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public void defineSort(final String sort, final Sort[] sortParams, final Sort definition) {
-		mCurrentlyUsedScript.mScript.defineSort(sort, sortParams, definition);
+		mScript.defineSort(sort, sortParams, definition);
 
 		insert(DeclarableSortSymbol.createFromScriptDefineSort(sort, sortParams, definition));
 	}
@@ -170,20 +163,20 @@ public class HistoryRecordingScript extends WrapperScript {
 	@Override
 	public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) {
 
-		mCurrentlyUsedScript.mScript.declareFun(fun, paramSorts, resultSort);
+		mScript.declareFun(fun, paramSorts, resultSort);
 
 		insert(DeclarableFunctionSymbol.createFromScriptDeclareFun(fun, paramSorts, resultSort));
 	}
 
 	@Override
 	public void declareSort(final String sort, final int arity) {
-		mCurrentlyUsedScript.mScript.declareSort(sort, arity);
+		mScript.declareSort(sort, arity);
 		insert(DeclarableSortSymbol.createFromScriptDeclareSort(sort, arity));
 	}
 
 	@Override
 	public void push(final int levels) {
-		mCurrentlyUsedScript.mScript.push(levels);
+		mScript.push(levels);
 
 		assert levels > 0;
 		for (int i = 0; i < levels; ++i) {
@@ -194,7 +187,7 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public void pop(final int levels) {
-		mCurrentlyUsedScript.mScript.pop(levels);
+		mScript.pop(levels);
 
 		removeStackLevelsFromHistory(levels);
 	}
@@ -335,33 +328,33 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public void setLogic(final String logic) throws UnsupportedOperationException, SMTLIBException {
-		mCurrentlyUsedScript.mScript.setLogic(logic);
+		mScript.setLogic(logic);
 	}
 
 	@Override
 	public void setLogic(final Logics logic) throws UnsupportedOperationException, SMTLIBException {
-		mCurrentlyUsedScript.mScript.setLogic(logic);
+		mScript.setLogic(logic);
 	}
 
 	@Override
 	public void setOption(final String opt, final Object value) throws UnsupportedOperationException, SMTLIBException {
-		mCurrentlyUsedScript.mScript.setOption(opt, value);
+		mScript.setOption(opt, value);
 	}
 
 	@Override
 	public void setInfo(final String info, final Object value) {
-		mCurrentlyUsedScript.mScript.setInfo(info, value);
+		mScript.setInfo(info, value);
 	}
 
 	@Override
 	public void declareDatatype(final DataType datatype, final DataType.Constructor[] constrs) throws SMTLIBException {
-		mCurrentlyUsedScript.mScript.declareDatatype(datatype, constrs);
+		mScript.declareDatatype(datatype, constrs);
 	}
 
 	@Override
 	public void declareDatatypes(final DataType[] datatypes, final DataType.Constructor[][] constrs,
 			final Sort[][] sortParams) throws SMTLIBException {
-		mCurrentlyUsedScript.mScript.declareDatatypes(datatypes, constrs, sortParams);
+		mScript.declareDatatypes(datatypes, constrs, sortParams);
 	}
 
 	@Override
@@ -369,7 +362,7 @@ public class HistoryRecordingScript extends WrapperScript {
 		if (Thread.currentThread().isInterrupted()) {
 			throw new RuntimeException("Worker Interrupted");
 		}
-		return mCurrentlyUsedScript.mScript.assertTerm(term);
+		return mScript.assertTerm(term);
 	}
 
 	@Override
@@ -377,7 +370,7 @@ public class HistoryRecordingScript extends WrapperScript {
 		if (Thread.currentThread().isInterrupted()) {
 			throw new RuntimeException("Worker Interrupted");
 		}
-		return mCurrentlyUsedScript.mScript.checkSat();
+		return mScript.checkSat();
 	}
 
 	@Override
@@ -385,53 +378,53 @@ public class HistoryRecordingScript extends WrapperScript {
 		if (Thread.currentThread().isInterrupted()) {
 			throw new RuntimeException("Worker Interrupted");
 		}
-		return mCurrentlyUsedScript.mScript.checkSatAssuming(assumptions);
+		return mScript.checkSatAssuming(assumptions);
 	}
 
 	@Override
 	public Term[] getAssertions() throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.getAssertions();
+		return mScript.getAssertions();
 	}
 
 	@Override
 	public Term getProof() throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getProof();
+		return mScript.getProof();
 	}
 
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getUnsatCore();
+		return mScript.getUnsatCore();
 	}
 
 	@Override
 	public Term[] getUnsatAssumptions() throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getUnsatAssumptions();
+		return mScript.getUnsatAssumptions();
 	}
 
 	@Override
 	public Map<Term, Term> getValue(final Term[] terms) throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getValue(terms);
+		return mScript.getValue(terms);
 	}
 
 	@Override
 	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
 
-		return mCurrentlyUsedScript.mScript.getAssignment();
+		return mScript.getAssignment();
 	}
 
 	@Override
 	public Object getOption(final String opt) throws UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getOption(opt);
+		return mScript.getOption(opt);
 	}
 
 	@Override
 	public Object getInfo(final String info) throws UnsupportedOperationException, SMTLIBException {
-		return mCurrentlyUsedScript.mScript.getInfo(info);
+		return mScript.getInfo(info);
 	}
 
 	@Override
 	public void exit() {
-		mCurrentlyUsedScript.mScript.exit();
+		mScript.exit();
 	}
 
 	public void exitWorkerOnly() {
@@ -440,154 +433,154 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public Theory getTheory() {
-		return mCurrentlyUsedScript.mScript.getTheory();
+		return mScript.getTheory();
 	}
 
 	@Override
 	public Sort sort(final String sortname, final Sort... params) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.sort(sortname, params);
+		return mScript.sort(sortname, params);
 	}
 
 	@Override
 	public Sort sort(final String sortname, final String[] indices, final Sort... params) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.sort(sortname, indices, params);
+		return mScript.sort(sortname, indices, params);
 	}
 
 	@Override
 	public Sort[] sortVariables(final String... names) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.sortVariables(names);
+		return mScript.sortVariables(names);
 	}
 
 	@Override
 	public DataType.Constructor constructor(final String name, final String[] selectors, final Sort[] argumentSorts)
 			throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.constructor(name, selectors, argumentSorts);
+		return mScript.constructor(name, selectors, argumentSorts);
 	}
 
 	@Override
 	public DataType datatype(final String typename, final int numParams) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.datatype(typename, numParams);
+		return mScript.datatype(typename, numParams);
 	}
 
 	@Override
 	public Term term(final String funcname, final Term... params) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.term(funcname, params);
+		return mScript.term(funcname, params);
 
 	}
 
 	@Override
 	public Term term(final String funcname, final String[] indices, final Sort returnSort, final Term... params)
 			throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.term(funcname, indices, returnSort, params);
+		return mScript.term(funcname, indices, returnSort, params);
 	}
 
 	@Override
 	public TermVariable variable(final String varname, final Sort sort) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.variable(varname, sort);
+		return mScript.variable(varname, sort);
 	}
 
 	@Override
 	public Term quantifier(final int quantor, final TermVariable[] vars, final Term body, final Term[]... patterns)
 			throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.quantifier(quantor, vars, body, patterns);
+		return mScript.quantifier(quantor, vars, body, patterns);
 	}
 
 	@Override
 	public Term let(final TermVariable[] vars, final Term[] values, final Term body) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.let(vars, values, body);
+		return mScript.let(vars, values, body);
 	}
 
 	@Override
 	public Term match(final Term dataArg, final TermVariable[][] vars, final Term[] cases,
 			final DataType.Constructor[] constructors) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.match(dataArg, vars, cases, constructors);
+		return mScript.match(dataArg, vars, cases, constructors);
 	}
 
 	@Override
 	public Term annotate(final Term t, final Annotation... annotations) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.annotate(t, annotations);
+		return mScript.annotate(t, annotations);
 	}
 
 	@Override
 	public Term numeral(final String num) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.numeral(num);
+		return mScript.numeral(num);
 	}
 
 	@Override
 	public Term numeral(final BigInteger num) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.numeral(num);
+		return mScript.numeral(num);
 	}
 
 	@Override
 	public Term decimal(final String decimal) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.decimal(decimal);
+		return mScript.decimal(decimal);
 	}
 
 	@Override
 	public Term decimal(final BigDecimal decimal) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.decimal(decimal);
+		return mScript.decimal(decimal);
 	}
 
 	@Override
 	public Term hexadecimal(final String hex) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.hexadecimal(hex);
+		return mScript.hexadecimal(hex);
 	}
 
 	@Override
 	public Term binary(final String bin) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.binary(bin);
+		return mScript.binary(bin);
 	}
 
 	@Override
 	public Term string(final QuotedObject str) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.string(str);
+		return mScript.string(str);
 	}
 
 	@Override
 	public Term simplify(final Term term) throws SMTLIBException {
-		return mCurrentlyUsedScript.mScript.simplify(term);
+		return mScript.simplify(term);
 	}
 
 	@Override
 	public Term[] getInterpolants(final Term[] partition) throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getInterpolants(partition);
+		return mScript.getInterpolants(partition);
 	}
 
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree)
 			throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getInterpolants(partition, startOfSubtree);
+		return mScript.getInterpolants(partition, startOfSubtree);
 	}
 
 	@Override
 	public Model getModel() throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getModel();
+		return mScript.getModel();
 	}
 
 	@Override
 	public Iterable<Term[]> checkAllsat(final Term[] predicates) throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.checkAllsat(predicates);
+		return mScript.checkAllsat(predicates);
 	}
 
 	@Override
 	public Term[] findImpliedEquality(final Term[] x, final Term[] y) {
-		return mCurrentlyUsedScript.mScript.findImpliedEquality(x, y);
+		return mScript.findImpliedEquality(x, y);
 	}
 
 	@Override
 	public QuotedObject echo(final QuotedObject msg) {
-		return mCurrentlyUsedScript.mScript.echo(msg);
+		return mScript.echo(msg);
 	}
 
 	@Override
 	public FunctionSymbol getFunctionSymbol(final String constructor) {
-		return mCurrentlyUsedScript.mScript.getFunctionSymbol(constructor);
+		return mScript.getFunctionSymbol(constructor);
 	}
 
 	@Override
 	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
 			throws SMTLIBException, UnsupportedOperationException {
-		return mCurrentlyUsedScript.mScript.getInterpolants(partition, startOfSubtree, proofTree);
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
 
 	}
 
