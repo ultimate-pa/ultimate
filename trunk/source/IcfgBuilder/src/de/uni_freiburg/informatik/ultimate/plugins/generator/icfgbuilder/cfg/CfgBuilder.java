@@ -1022,9 +1022,14 @@ public class CfgBuilder {
 		private BoogieIcfgLocation buildLabel(final IIcfgElement currentElement, final Label st) {
 			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
 			if (currentElement instanceof BoogieIcfgLocation) {
-				// TODO: Implement this case after we have labels in the CFG
+				// TODO: Implement this case after we have label nodes in the CFG
 				final boolean isLabel = false;
-				if (isLabel) {
+				// If the currentElement is a label node we have a situation were we had two
+				// labels in a row and we want to keep the label node. <br />
+				// If the currentElement is a loop node, we have a situation were the label
+				// is the last element in a loop body. Here we do not want to merge the node
+				// for the label with the loop node.
+				if (isLabel || mIcfg.getLoopLocations().contains(currentElement)) {
 					// TODO Matthias 2024-09-23: This is one of several auxiliary statements that we
 					// add while constructing an ICFG. If we want to support the next step operator
 					// of LTL we have to define the semantics of a step in Boogie. For this we have
