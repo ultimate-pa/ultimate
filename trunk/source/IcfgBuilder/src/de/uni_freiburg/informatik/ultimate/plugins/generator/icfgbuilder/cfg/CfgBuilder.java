@@ -48,6 +48,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -194,7 +195,6 @@ public class CfgBuilder {
 
 	private final CodeBlockFactory mCbf;
 
-	private Stack<BoogieIcfgLocation> mWhileExits;
 	private Stack<BoogieIcfgLocation> mConditionalStarts;
 	private int mRemovedAssumeTrueStatements = 0;
 
@@ -623,6 +623,14 @@ public class CfgBuilder {
 		Map<Integer, Integer> mNameCache;
 
 		/**
+		 * We maintain a stack. Whose topmost element is the node after the current
+		 * while loop. This node will be the target of break statement inside the loop.
+		 * For loops without a break statement we may omit to put something on the
+		 * stack.
+		 */
+		private Stack<BoogieIcfgLocation> mWhileExits;
+
+		/**
 		 * Builds the control flow graph of a single procedure according to a given
 		 * implementation.
 		 *
@@ -743,11 +751,11 @@ public class CfgBuilder {
 					continue;
 				}
 				if (currentLocation instanceof StatementSequence && !(st instanceof CallStatement || isAssuAssiHavoc(st)
-						|| st instanceof Label || st instanceof AssertStatement)) {
+						|| st instanceof Label || st instanceof AssertStatement || st instanceof WhileStatement)) {
 					currentLocation = endStatementSequence((StatementSequence) currentLocation);
 				}
 				if (st instanceof WhileStatement) {
-					currentLocation = buildWhile((BoogieIcfgLocation) currentLocation, (WhileStatement) st);
+					currentLocation = buildWhile(currentLocation, (WhileStatement) st);
 				} else if (st instanceof IfStatement) {
 					currentLocation = buildIf((BoogieIcfgLocation) currentLocation, (IfStatement) st);
 				} else if (st instanceof AssertStatement) {
@@ -847,7 +855,17 @@ public class CfgBuilder {
 			return false;
 		}
 
-		private BoogieIcfgLocation buildWhile(final BoogieIcfgLocation targetLoc, final WhileStatement st) {
+		private BoogieIcfgLocation buildWhile(final IIcfgElement inputElement, final WhileStatement st) {
+			final boolean containOuterBreak = BoogieUtils.containsOuterBreak(st.getBody());
+			final IIcfgElement elementAfterLoop;
+			if (containOuterBreak && inputElement instanceof StatementSequence) {
+				// If the loop contains a break that can end this loop, we need a node directly
+				// after the loop to which the break can jump. If we currently have a
+				// StatementSequence, we have to end this StatementSequence
+				elementAfterLoop = endStatementSequence((StatementSequence) inputElement);
+			} else {
+				elementAfterLoop = inputElement;
+			}
 			final BoogieIcfgLocation loopEntryLoc = new BoogieIcfgLocation(constructLocDebugIdentifier(st),
 					mCurrentProcedureName, false, st);
 			final BoogieIcfgLocation afterInvariants;
@@ -883,7 +901,12 @@ public class CfgBuilder {
 
 			mProcLocNodes.put(loopEntryLoc.getDebugIdentifier(), loopEntryLoc);
 			mIcfg.getLoopLocations().add(loopEntryLoc);
-			mWhileExits.add(targetLoc);
+
+			if (containOuterBreak) {
+				// If the loop contains a break that can leave this loop we have to put the node
+				// after the loop on the stack.
+				mWhileExits.add((BoogieIcfgLocation) elementAfterLoop);
+			}
 			mConditionalStarts.add(afterInvariants);
 			final AssumeStatement condTrue;
 			final AssumeStatement condFalse;
@@ -901,10 +924,13 @@ public class CfgBuilder {
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
 			ModelUtils.copyAnnotations(st, condTrue);
 			ModelUtils.copyAnnotations(st, condFalse);
-			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, targetLoc,
+			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, elementAfterLoop,
 					afterInvariants);
-			final BoogieIcfgLocation exit = mWhileExits.pop();
-			assert exit == targetLoc;
+			if (containOuterBreak) {
+				// We pushed to the stack, we have to pop from the stack.
+				final BoogieIcfgLocation exit = mWhileExits.pop();
+				assert exit == elementAfterLoop;
+			}
 			mConditionalStarts.pop();
 			return loopEntryLoc;
 		}
@@ -1652,4 +1678,5 @@ public class CfgBuilder {
 			}
 		}
 	}
+
 }
