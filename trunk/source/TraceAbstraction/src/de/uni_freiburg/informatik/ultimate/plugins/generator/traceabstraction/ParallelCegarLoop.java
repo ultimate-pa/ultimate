@@ -291,6 +291,11 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 								final int traceHash = trace.hashCode();
 								final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
 								mLogger.info("Done TestGoal: " + testGoalId);
+								if (mPref.stopAfterFirstViolation()
+										&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
+									mExec.shutdownNow();
+									return;
+								}
 								if (workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)) {
 									automataWaitingList.add(workerResult);
 									mInActiveErrorLocs.remove(traceHash);
@@ -313,14 +318,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 					assert doneFuture == null;
 
-					// quick check for error automata, no need to spend time refining if we have one
-					for (final WorkerThreadResult<L, A> autoamta : automataWaitingList) {
-						if (mPref.stopAfterFirstViolation()
-								&& autoamta.getAutomatonType().equals(AutomatonType.ERROR)) {
-							mExec.shutdownNow();
-							return;
-						}
-					}
 					// Refine abstraction as long as there are automata in automataWaitingList
 					while (!automataWaitingList.isEmpty()) {
 						mLogger.info("Refining Abstraction: " + automataWaitingList.size());
