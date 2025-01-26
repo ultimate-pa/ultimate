@@ -359,25 +359,16 @@ public class HistoryRecordingScript extends WrapperScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		if (Thread.currentThread().isInterrupted()) {
-			throw new RuntimeException("Worker Interrupted");
-		}
 		return mScript.assertTerm(term);
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		if (Thread.currentThread().isInterrupted()) {
-			throw new RuntimeException("Worker Interrupted");
-		}
 		return mScript.checkSat();
 	}
 
 	@Override
 	public LBool checkSatAssuming(final Term... assumptions) throws SMTLIBException {
-		if (Thread.currentThread().isInterrupted()) {
-			throw new RuntimeException("Worker Interrupted");
-		}
 		return mScript.checkSatAssuming(assumptions);
 	}
 
