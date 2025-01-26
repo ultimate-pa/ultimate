@@ -257,28 +257,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						doneFuture = mECS.poll();
 					}
 
-					// Needs to come before search because of initial counterexample
-					// can be null if no counterexample was found, but threads are still running
-					if (runningThreads < mThreadLimit && mCounterexample != null) {
-						final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
-						final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
-						mServices = iterationServices;
-						final RefinementStrategy strategyType = mPref.getRefinementStrategy(); // TODO parallel
-																								// strategies
-						final CegarWorkerThread<L, A> worker =
-								setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
-						// worker is a Callable and is called here
-						final Future<WorkerThreadResult<L, A>> future = mECS.submit(worker);
-						runningThreads += 1;
-						// mInterations equals the amount of counterexamples checked
-						mCegarLoopBenchmark.announceNextIteration();
-						// add mCounterexample to list such that we dont get it twice in our search
-						addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample, future);
-						// mCounterexample is being checked, make sure next thread gets a new one
-						mCounterexample = null;
-
-					}
-
 					// collect all done futures, add automata to waiting list
 					while (doneFuture != null) {
 						try {
@@ -379,7 +357,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 									}
 									mLogger.info(
 											"Cancelled when already done: " + mCountCancelledWorkerThatWereAlreadyDone);
-									(mTraceHashToThread.get(entry.getKey())).cancel(true);
+									// (mTraceHashToThread.get(entry.getKey())).cancel(true);
 									rejectedWordHashes.add(entry.getKey());
 
 								}
@@ -442,13 +420,34 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							}
 							mCounterexample = null;
 						}
-						// If IsEmpty sais its empty, then we can terminate even if threads are still running
+						// If IsEmpty says its empty, then we can terminate even if threads are still running
 						if (isAbstractionCorrect || mAbstraction.size() == 0) {
 							mResultBuilder.addResultForAllRemaining(Result.SAFE);
 							mExec.shutdownNow();
 							return;
 						}
 					}
+				}
+				// Doesnt Need to come before search because of initial counterexample, we skip search
+				// mCounterexample can be null if no counterexample was found, but threads are still running
+				if (runningThreads < mThreadLimit && mCounterexample != null) {
+					final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
+					final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
+					mServices = iterationServices;
+					final RefinementStrategy strategyType = mPref.getRefinementStrategy(); // TODO parallel
+																							// strategies
+					final CegarWorkerThread<L, A> worker =
+							setUpWorker(iterationServices, runningThreads, currentErrorLoc, strategyType);
+					// worker is a Callable and is called here
+					final Future<WorkerThreadResult<L, A>> future = mECS.submit(worker);
+					runningThreads += 1;
+					// mInterations equals the amount of counterexamples checked
+					mCegarLoopBenchmark.announceNextIteration();
+					// add mCounterexample to list such that we dont get it twice in our search
+					addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample, future);
+					// mCounterexample is being checked, make sure next thread gets a new one
+					mCounterexample = null;
+
 				}
 			} finally {
 				// TODO if (updateBudget) {
