@@ -460,8 +460,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		final boolean mTestGeneration = true;
-		if (mTestGeneration && !mAAA.mSucessfulReuse) { // TODO check for bugs
+		if (!mTestGenReuseMode.equals(TestGenReuseMode.None) && !mAAA.mSucessfulReuse) { // TODO check for bugs
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb, vaOrder);
 			final boolean mExportTests = true;
 			if (mExportTests) {

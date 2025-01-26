@@ -264,16 +264,16 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							mLogger.info("Main: A Thread is Done");
 							runningThreads -= 1;
 							// In useGoalSetForIsEmpty mode we omit error automata
+							if (mPref.stopAfterFirstViolation()
+									&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
+								mExec.shutdownNow();
+								return;
+							}
 							if (useGoalSetForIsEmpty) {
 								final List<L> trace = workerResult.getCounterexample().getWord().asList();
 								final int traceHash = trace.hashCode();
 								final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
 								mLogger.info("Done TestGoal: " + testGoalId);
-								if (mPref.stopAfterFirstViolation()
-										&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
-									mExec.shutdownNow();
-									return;
-								}
 								if (workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)) {
 									automataWaitingList.add(workerResult);
 									mInActiveErrorLocs.remove(traceHash);
@@ -354,10 +354,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 											+ " Worker cancelled. Cancelled so far: " + mCountRedundantCex);
 									if ((mTraceHashToThread.get(entry.getKey())).isDone()) {
 										mCountCancelledWorkerThatWereAlreadyDone += 1;
+									} else {
+										(mTraceHashToThread.get(entry.getKey())).cancel(true);
 									}
 									mLogger.info(
 											"Cancelled when already done: " + mCountCancelledWorkerThatWereAlreadyDone);
-									// (mTraceHashToThread.get(entry.getKey())).cancel(true);
+
 									rejectedWordHashes.add(entry.getKey());
 
 								}
@@ -430,7 +432,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				}
 				// Doesnt Need to come before search because of initial counterexample, we skip search
 				// mCounterexample can be null if no counterexample was found, but threads are still running
-				if (runningThreads < mThreadLimit && mCounterexample != null) {
+				while (runningThreads < mThreadLimit && mCounterexample != null) {
 					final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 					final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 					mServices = iterationServices;
@@ -447,8 +449,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample, future);
 					// mCounterexample is being checked, make sure next thread gets a new one
 					mCounterexample = null;
-
+					isAbstractionEmpty();
 				}
+				mCounterexample = null;
 			} finally {
 				// TODO if (updateBudget) {
 				// final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
