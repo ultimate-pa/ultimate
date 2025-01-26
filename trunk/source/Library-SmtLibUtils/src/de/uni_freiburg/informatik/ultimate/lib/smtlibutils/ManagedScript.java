@@ -69,15 +69,6 @@ public class ManagedScript {
 		mSkolemFunctionManager = new SkolemFunctionManager();
 	}
 
-	public VariableManager getVariableManager() {
-		return mVariableManager;
-	}
-
-	public void setVariableManager(final VariableManager variablemanager) {
-		assert mVariableManager.mTv2Basename.isEmpty();
-		mVariableManager = variablemanager;
-	}
-
 	public void lock(final Object lockOwner) {
 		if (lockOwner == null) {
 			throw new IllegalArgumentException("cannot be locked by null");
