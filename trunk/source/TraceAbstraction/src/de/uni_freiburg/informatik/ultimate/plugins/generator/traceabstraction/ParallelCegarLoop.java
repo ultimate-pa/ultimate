@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -82,8 +81,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
 
-	private final ArrayDeque<WorkerThreadResult<L, A>> automataWaitingList = new ArrayDeque<WorkerThreadResult<L, A>>();
-
 	boolean mNoThreadFree;
 	boolean mComputeHoareAnnotation;
 
@@ -101,7 +98,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private final boolean mParallelSearchSrategy;
 
 	// shared read only inital abstraction for automata generalization in threads
-
 	private final INestedWordAutomaton<L, IPredicate> mInitialAbstraction;
 
 	// Addtional Statistiks for Evaluation
@@ -154,6 +150,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
 		mParallelSearchSrategy = mPref.parallelSearchSrategy;
 		mInitialAbstraction = initialAbstraction;
+
+		Thread.currentThread().setName("Main Cegar Thread");
 	}
 
 	/*
@@ -238,12 +236,11 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();
 			boolean abstractionWasRefined = false;
-			final boolean minimizePerWorker = mPref.minimizeAbstractionPerWorker;
 			try {
 				try {
 					// we sleep if not: thread or counterexample is available
 					Future<WorkerThreadResult<L, A>> doneFuture;
-					if (runningThreads == mThreadLimit || mCounterexample == null) {
+					if (runningThreads == mThreadLimit || didntFindCexLastIteration) {
 						assert runningThreads > 0;
 						mLogger.info("All threads busy, going to sleep.");
 						// No busy waiting via Completeable
@@ -253,103 +250,67 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						doneFuture = mECS.poll();
 					}
 
-					// collect all done futures, add automata to waiting list
+					// go through all done Futures
 					while (doneFuture != null) {
 						try {
 							final WorkerThreadResult<L, A> workerResult = doneFuture.get();
 							mLogger.info("Main: A Thread is Done");
 							runningThreads -= 1;
-							// In useGoalSetForIsEmpty mode we omit error automata
+
+							final List<L> trace = workerResult.getCounterexample().getWord().asList();
+							final int traceHash = trace.hashCode();
+							// mTraceHashToThread.remove(traceHash);
+
+							// mInterations equals the amount of refinements
+							mCegarLoopBenchmark.announceNextIteration();
+
+							// If Error automaton terminate immediately
 							if (mPref.stopAfterFirstViolation()
 									&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
 								mExec.shutdownNow();
 								return;
 							}
+							// In useGoalSetForIsEmpty mode we omit error automata
 							if (useGoalSetForIsEmpty) {
-								final List<L> trace = workerResult.getCounterexample().getWord().asList();
-								final int traceHash = trace.hashCode();
 								final Integer testGoalId = mInActiveErrorLocs.get(traceHash);
 								mLogger.info("Done TestGoal: " + testGoalId);
 								if (workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE)) {
-									automataWaitingList.add(workerResult);
 									mInActiveErrorLocs.remove(traceHash);
+								} else {
+									continue;
 								}
-								// TODO garbage collect!!!
-							} else {
-								automataWaitingList.add(workerResult);
 							}
 							mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
-						} catch (final CancellationException e) {
-							mLogger.info("Worker was cancelled");
+
+							// Refine abstraction, if abstraction is empty terminate immediately
+							mLogger.info("Refining Abstraction");
+							mRefinementsDone += 1;
+							refinement(workerResult);
+							abstractionWasRefined = true;
+
+							// After refinement check if empty
+							final boolean isAbstractionEmpty = super.isAbstractionEmpty();
+							// If IsEmpty says its empty, then we can terminate even if threads are still running
+							if (isAbstractionEmpty || mAbstraction.size() == 0) {
+								mResultBuilder.addResultForAllRemaining(Result.SAFE);
+								mExec.shutdownNow();
+								return;
+							}
+
+							// set cex to null to be certain we don check counterexamples from the old abstraction
+							mCounterexample = null;
 						} catch (final ExecutionException | InterruptedException e) {
 							// TODO better handling of exceptions in worker thread
 							e.printStackTrace();
 							mExec.shutdownNow();
 							throw new AutomataLibraryException(null, e.getMessage());
+						} catch (final CancellationException e) {
+							mLogger.info("Worker was cancelled!");
 						}
 						doneFuture = mECS.poll();
 					}
 
 					assert doneFuture == null;
-
-					// Refine abstraction as long as there are automata in automataWaitingList
-					while (!automataWaitingList.isEmpty()) {
-						mLogger.info("Refining Abstraction: " + automataWaitingList.size());
-						mRefinementsDone += 1;
-						assert !automataWaitingList.isEmpty();
-						final WorkerThreadResult<L, A> firstAutomatonInWaitingList = automataWaitingList.pop();
-						assert firstAutomatonInWaitingList.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
-						try {
-							final List<L> trace = firstAutomatonInWaitingList.getCounterexample().getWord().asList();
-							final int traceHash = trace.hashCode();
-							mLogger.info("Subtrahend traceHash: " + traceHash);
-
-							// Only remove after the counterexample is no longer in the abstraction
-							if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
-								mAllCounterexamples.remove(traceHash);
-							}
-
-							final Set<IcfgLocation> hoareAnnotationLocs;
-							if (mComputeHoareAnnotation) {
-								hoareAnnotationLocs = (Set<IcfgLocation>) TraceAbstractionUtils
-										.getLocationsForWhichHoareAnnotationIsComputed(mRootNode,
-												mPref.getHoareAnnotationPositions());
-							} else {
-								hoareAnnotationLocs = Collections.emptySet();
-							}
-
-							final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(
-									getServices(), firstAutomatonInWaitingList.getWorkerMgdScript(),
-									firstAutomatonInWaitingList.getPredicateFactory(), mComputeHoareAnnotation,
-									hoareAnnotationLocs);
-
-							final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(
-									mAbstraction, firstAutomatonInWaitingList, stateFactoryForRefinement);
-
-							mAbstraction = diff.getResult();
-							if (minimizePerWorker) {
-								minimizeAbstractionIfEnabled(stateFactoryForRefinement,
-										new PredicateFactoryResultChecking(mPredicateFactory));
-							}
-
-							// Kill the worker script
-							((HistoryRecordingScript) firstAutomatonInWaitingList.getWorkerMgdScript().getScript())
-									.exitWorkerOnly();
-							abstractionWasRefined = true;
-							// Not sure if necessary
-							firstAutomatonInWaitingList.garbageCollect();
-
-							// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
-
-						} catch (final AssertionError ae) {
-							// TODO it might happen that mCounterexample is no longer accepted
-							mExec.shutdownNow();
-							throw ae;
-						}
-						mLogger.info("Refinements: " + mRefinementsDone);
-						mLogger.info("Overalliterations: " + mIteration);
-						mLogger.info("Refinement done.");
-					}
 
 				} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
 					// TODO deal with UNKNOWN
@@ -360,8 +321,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					throw new ToolchainCanceledException(this.getClass());
 				}
 
-				// Check if empty only if abstraction changed or we have a thread available
-				if (abstractionWasRefined && !minimizePerWorker) {
+				if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker) {
 					minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
 				}
 
@@ -370,7 +330,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				// dont search for counterexamples unnecessarily BUSY WAITING!
 				if ((mCounterexample == null && !didntFindCexLastIteration) || abstractionWasRefined) {
 					mLogger.info("Searching for Counterexample");
-					boolean isAbstractionCorrect = isAbstractionEmpty();
+					isAbstractionEmpty(); // isEmptyParallel
 					if (mCounterexample != null) {
 						mLogger.info("Found new Counterexample!");
 						didntFindCexLastIteration = false;
@@ -378,29 +338,13 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					if (mCounterexample == null) {
 						mLogger.info("Did not Find a Counterexample!");
 						didntFindCexLastIteration = true;
-						// double check if abstraction is really empty, terminate if it is
-						isAbstractionCorrect = super.isAbstractionEmpty();
-						if (mCounterexample != null) {
-							final List<L> trace = mCounterexample.getWord().asList();
-							final int traceHash = trace.hashCode();
-							if (mAllCounterexamples.containsKey(traceHash)) {
-								mLogger.info("But there is still some actively analyzed: " + runningThreads);
-							} else {
-								throw new AssertionError("Bug in IsParallel !!");
-							}
-							mCounterexample = null;
-						}
-						// If IsEmpty says its empty, then we can terminate even if threads are still running
-						if (isAbstractionCorrect || mAbstraction.size() == 0) {
-							mResultBuilder.addResultForAllRemaining(Result.SAFE);
-							mExec.shutdownNow();
-							return;
-						}
+						assert runningThreads > 0;
+						// there are probably still threads running
 					}
 				}
 				// Doesnt Need to come before search because of initial counterexample, we skip search
 				// mCounterexample can be null if no counterexample was found, but threads are still running
-				while (runningThreads < mThreadLimit && mCounterexample != null) {
+				if (runningThreads < mThreadLimit && mCounterexample != null) {
 					final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 					final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 					mServices = iterationServices;
@@ -411,8 +355,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					// worker is a Callable and is called here
 					mECS.submit(worker);
 					runningThreads += 1;
-					// mInterations equals the amount of counterexamples checked
-					mCegarLoopBenchmark.announceNextIteration();
+
 					mCounterexamplesChecked += 1;
 					mLogger.info("Counterexamples: " + mCounterexamplesChecked);
 					// add mCounterexample to list such that we dont get it twice in our search
@@ -421,7 +364,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					mCounterexample = null;
 					isAbstractionEmpty();
 				}
-				mCounterexample = null;
 			} finally {
 				// TODO if (updateBudget) {
 				// final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
@@ -431,6 +373,54 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mExec.shutdownNow();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 
+	}
+
+	private void refinement(final WorkerThreadResult<L, A> threadResult)
+			throws AutomataOperationCanceledException, AutomataLibraryException {
+		assert threadResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
+
+		final List<L> trace = threadResult.getCounterexample().getWord().asList();
+		final int traceHash = trace.hashCode();
+		mLogger.info("Subtrahend traceHash: " + traceHash);
+
+		// Only remove after the counterexample is no longer in the abstraction
+		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+			mAllCounterexamples.remove(traceHash);
+		}
+
+		final Set<IcfgLocation> hoareAnnotationLocs;
+		if (mComputeHoareAnnotation) {
+			hoareAnnotationLocs = (Set<IcfgLocation>) TraceAbstractionUtils
+					.getLocationsForWhichHoareAnnotationIsComputed(mRootNode, mPref.getHoareAnnotationPositions());
+		} else {
+			hoareAnnotationLocs = Collections.emptySet();
+		}
+
+		final PredicateFactoryRefinement stateFactoryForRefinement =
+				new PredicateFactoryRefinement(getServices(), threadResult.getWorkerMgdScript(),
+						threadResult.getPredicateFactory(), mComputeHoareAnnotation, hoareAnnotationLocs);
+		mLogger.info("Difference in Main");
+		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
+				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
+
+		mAbstraction = diff.getResult();
+
+		if (mPref.minimizeAbstractionPerWorker) {
+			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
+					new PredicateFactoryResultChecking(mPredicateFactory));
+		}
+
+		// Kill the worker script
+		((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exitWorkerOnly();
+
+		// Not sure if necessary
+		threadResult.garbageCollect();
+
+		// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
+
+		mLogger.info("Refinements: " + mRefinementsDone);
+		mLogger.info("Overalliterations: " + mIteration);
+		mLogger.info("Refinement done.");
 	}
 
 	@Override
