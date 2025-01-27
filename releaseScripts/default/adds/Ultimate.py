@@ -598,7 +598,7 @@ def check_witness_type(witness, type):
         valid = check_witness_type_graphml(witness, type)
     else:
         print(f'Unexpected witness file ending .{witness.rpartition(".")[2]}. '
-              'The witness has to end with .yml, .yaml, or .graphml.)
+              'The witness has to end with .yml, .yaml, or .graphml.')
     if not valid:
         sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
 
