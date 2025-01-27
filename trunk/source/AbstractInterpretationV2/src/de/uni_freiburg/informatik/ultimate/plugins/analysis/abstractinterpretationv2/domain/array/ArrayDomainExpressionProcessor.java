@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -89,8 +88,7 @@ public class ArrayDomainExpressionProcessor<STATE extends IAbstractState<STATE>>
 			return state.updateState(mToolkit.handleAssumptionBySubdomain(state.getSubState(), term));
 		}
 		ArrayDomainState<STATE> returnState = state;
-		final Term cnf = SmtUtils.toCnf(mToolkit.getServices(), mToolkit.getManagedScript(), term,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final Term cnf = SmtUtils.toCnf(mToolkit.getServices(), mToolkit.getManagedScript(), term);
 		for (final Term t : SmtUtils.getConjuncts(cnf)) {
 			if (returnState.isBottom()) {
 				break;

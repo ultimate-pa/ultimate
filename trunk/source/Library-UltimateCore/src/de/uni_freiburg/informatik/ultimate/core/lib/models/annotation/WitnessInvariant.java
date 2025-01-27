@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -27,28 +27,30 @@
 
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class WitnessInvariant extends ModernAnnotations {
+public class WitnessInvariant<E> extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
 	private static final String KEY = WitnessInvariant.class.getName();
 
 	@Visualizable
-	private final String mInvariant;
+	private final E mInvariant;
 
-	public WitnessInvariant(final String invariant) {
-		mInvariant = invariant;
+	public WitnessInvariant(final E invariant) {
+		mInvariant = Objects.requireNonNull(invariant);
 	}
 
-	public String getInvariant() {
+	public E getInvariant() {
 		return mInvariant;
 	}
 
@@ -56,7 +58,7 @@ public class WitnessInvariant extends ModernAnnotations {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static WitnessInvariant getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessInvariant) a);
+	public static WitnessInvariant<?> getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (WitnessInvariant<?>) a);
 	}
 }

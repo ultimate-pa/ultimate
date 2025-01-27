@@ -1197,6 +1197,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (!filename.endsWith(".class")) {
 			return false;
 		}
+		if (filename.contains("$")) {
+			// Do not check nested classes
+			return false;
+		}
 		final Class<?> clazz = getClassFromFile(packageName, file);
 		if (clazz == null) {
 			return false;
@@ -1226,7 +1230,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			clazz = Class.forName(qualifiedName);
 		} catch (final ClassNotFoundException e) {
 			mLogger.error("Couldn't load/find class " + qualifiedName);
-			throw new RuntimeException(e);
+			// TODO: In the web interface classes that do not exist anymore are found.
+			// As a workaround we do not crash here, but just return null and continue.
+			return null;
 		}
 		return clazz;
 	}

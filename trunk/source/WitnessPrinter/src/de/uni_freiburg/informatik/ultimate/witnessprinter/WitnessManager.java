@@ -35,7 +35,9 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -49,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.WitnessPrinter.ResultWitness;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -71,33 +73,41 @@ public class WitnessManager {
 	}
 
 	/**
-	 * @param witnessTriples
+	 * @param witnesses
 	 *            A collection of triples (IResult, filename, string that represents a valid SVCOMP witness).
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void run(final Collection<Triple<IResult, String, String>> witnessTriples)
-			throws IOException, InterruptedException {
+	public void run(final Collection<ResultWitness> witnesses) throws IOException, InterruptedException {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		int cexNo = 0;
-		String suffix = null;
-		for (final Triple<IResult, String, String> witnessTriple : witnessTriples) {
-			final IResult cex = witnessTriple.getFirst();
-			final String originalFile = witnessTriple.getSecond();
-			final String svcompWitness = witnessTriple.getThird();
+		final Map<String, Integer> cexCounts = new HashMap<>();
+		for (final ResultWitness witness : witnesses) {
+			final IResult cex = witness.getResult();
+			final String originalFile = witness.getSourceFile();
+			final String svcompWitness = witness.getWitnessString();
+			final String witnessEnding = witness.getWitnessEnding();
 
 			final String witnessDir = ups.getString(PreferenceInitializer.LABEL_WITNESS_DIRECTORY);
-			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME);
+			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME) + witnessEnding;
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_BESIDE_FILE);
+			final Integer count = cexCounts.get(witnessFilename);
+			String prefix;
+			if (count == null) {
+				prefix = null;
+				cexCounts.put(witnessFilename, 1);
+			} else {
+				prefix = count.toString();
+				cexCounts.put(witnessFilename, count + 1);
+			}
 			final List<String> filenamesToDelete = new ArrayList<>();
 
 			String filename = null;
 			if (svcompWitness != null) {
 				if (writeBesideInputFile) {
-					filename = createWitnessFilenameWriteBeside(originalFile, suffix);
+					filename = createWitnessFilenameWriteBeside(originalFile, prefix, witnessEnding);
 				} else {
-					filename = createWitnessFilename(witnessDir, witnessFilename, suffix);
+					filename = createWitnessFilename(witnessDir, witnessFilename, prefix);
 				}
 				writeWitness(svcompWitness, filename);
 				filenamesToDelete.add(filename);
@@ -120,8 +130,6 @@ public class WitnessManager {
 					deleteFile(fi);
 				}
 			}
-			cexNo++;
-			suffix = String.valueOf(cexNo);
 		}
 	}
 
@@ -144,9 +152,9 @@ public class WitnessManager {
 		}
 	}
 
-	private String createWitnessFilenameWriteBeside(final String origInputFile, final String additionalPrefix) {
+	private String createWitnessFilenameWriteBeside(final String origInputFile, final String additionalPrefix,
+			final String fileending) {
 		final String suffix = "witness";
-		final String fileending = ".graphml";
 		final String separator = "-";
 		final StringBuilder filename = new StringBuilder();
 		final File f = new File(origInputFile);

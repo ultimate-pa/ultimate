@@ -86,7 +86,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) expr;
 			if (unexp.getOperator() == Operator.OLD) {
-				newExpr = unexp.getExpr();
+				newExpr = processExpression(unexp.getExpr());
 			} else {
 				final Expression subexpr = processExpression(unexp.getExpr());
 				if (subexpr != unexp.getExpr()) {
@@ -102,12 +102,6 @@ public class WeakestPrecondition extends BoogieTransformer {
 			final Expression right = processExpression(binexp.getRight());
 			if (left != binexp.getLeft() || right != binexp.getRight()) {
 				newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(), binexp.getOperator(), left, right);
-			}
-		} else if (expr instanceof UnaryExpression) {
-			final UnaryExpression unexp = (UnaryExpression) expr;
-			final Expression subexpr = processExpression(unexp.getExpr());
-			if (subexpr != unexp.getExpr()) {
-				newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
 			}
 		} else if (expr instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;

@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.advisors;
 
+import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.ICoolBarManager;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -126,9 +127,6 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		final MenuManager fileMenu = new MenuManager("&File", "file");
 
 		fileMenu.add(mLoadSourceFiles);
-		// fileMenu.add(openDottyGraphFromFile);
-
-		// fileMenu.add(preferenceAction);
 		fileMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 		fileMenu.add(new Separator());
 		fileMenu.add(mExitAction);
@@ -139,6 +137,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		settingsMenu.add(mLoadSettings);
 		settingsMenu.add(mSaveSettings);
 		settingsMenu.add(mResetSettings);
+		settingsMenu.add(new Separator());
 		settingsMenu.add(mCancelToolchain);
 
 		final MenuManager helpMenu = new MenuManager("&Help", "help");
@@ -146,7 +145,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 		menuBar.add(fileMenu);
 		menuBar.add(settingsMenu);
-		menuBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+		menuBar.add(new GroupMarker(IWorkbenchActionConstants.MB_ADDITIONS));
 		menuBar.add(helpMenu);
 
 	}
@@ -165,6 +164,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		toolBar.add(mLoadSettings);
 		toolBar.add(mSaveSettings);
 		toolBar.add(mResetSettings);
+		toolBar.add(new Separator());
 		toolBar.add(mCancelToolchain);
 	}
 }

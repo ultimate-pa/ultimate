@@ -90,6 +90,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	ReuseStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
 
+	ConComCheckerStatistics(StatisticsType.STATISTICS_DATA_AGGREGATION, StatisticsType.KEY_BEFORE_DATA),
+
 	ErrorAutomatonCreated(StatisticsType.INTEGER_ADDITION, StatisticsType.KEY_BEFORE_DATA);
 
 	private final Function<Object, Function<Object, Object>> mAggr;

@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -86,6 +87,9 @@ public class RValue extends LRValue {
 
 	private static boolean areBoogieAndCTypeCompatible(final CType cType, final IBoogieType bType) {
 		if (cType instanceof CPointer) {
+			if (bType instanceof BoogieArrayType) {
+				return true;
+			}
 			if (!(bType instanceof BoogieStructType)) {
 				return false;
 			}

@@ -1,0 +1,12 @@
+CONST MAX_TIME_1 IS 5
+CONST MAX_TIME_2 IS 10
+CONST error_state_1 IS 1
+CONST error_state_2 IS 2
+
+Input A IS bool
+Input C IS bool
+Input B IS bool
+Input error_state IS int
+
+ID000: Globally, it is always the case that if "A" holds, then "error_state == error_state_1" holds after at most "MAX_TIME_1" time units
+ID001: Globally, it is always the case that if "B" holds, then "error_state == error_state_2 " holds after at most "MAX_TIME_2 " time units

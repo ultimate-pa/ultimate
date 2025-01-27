@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -68,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Source Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the source
  *            program model.
  * @param <TTE>
- *            Target Trace Elment. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
+ *            Target Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
  *            program model.
  * @param <SE>
  *            Source Expression. Type of expression in the source program model.
@@ -79,7 +81,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <TVL>
  *            Target vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the target program model.
  */
-public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
+public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
+		implements ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	private final Class<? extends STE> mSourceTraceElementType;
 	private final Class<? extends TTE> mTargetTraceElementType;
@@ -160,9 +163,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	@Override
+	public TE translateExpressionWithContext(final SE expression, final CTX context) {
+		return translateExpression(expression);
+	}
+
+	@Override
 	public String targetExpressionToString(final TE expression) {
 		if (expression == null) {
-			return "NULL";
+			return null;
 		}
 		return expression.toString();
 	}
@@ -235,16 +243,17 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	 *            </ul>
 	 */
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE, SVL, TVL> TE translateExpressionIteratively(final SE expr,
-			final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL, CTX> TE translateExpressionIteratively(final SE expr,
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>... iTranslators) {
 		TE result;
 
 		if (iTranslators.length == 0) {
 			result = (TE) expr;
 		} else {
-			final ITranslator<STE, ?, SE, ?, SVL, ?> last =
-					(ITranslator<STE, ?, SE, ?, SVL, ?>) iTranslators[iTranslators.length - 1];
-			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<STE, ?, SE, ?, SVL, ?, CTX> last =
+					(ITranslator<STE, ?, SE, ?, SVL, ?, CTX>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>[] allButLast =
+					Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			final Object expressionOfIntermediateType = last.translateExpression(expr);
 			result = (TE) translateExpressionIteratively(expressionOfIntermediateType, allButLast);
 		}
@@ -252,28 +261,31 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE, SVL, TVL> List<TTE> translateTraceIteratively(final List<STE> trace,
-			final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL, CTX> List<TTE> translateTraceIteratively(final List<STE> trace,
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>... iTranslators) {
 		List<TTE> result;
 		if (iTranslators.length == 0) {
 			result = (List<TTE>) trace;
 		} else {
-			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>[] allButLast =
+					Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			result = (List<TTE>) translateTraceIteratively(trace, allButLast);
 		}
 		return result;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE, SVL, TVL> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
-			final IProgramExecution<STE, SE> programExecution, final ITranslator<?, ?, ?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE, SVL, TVL, CTX> IProgramExecution<TTE, TE> translateProgramExecutionIteratively(
+			final IProgramExecution<STE, SE> programExecution,
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>... iTranslators) {
 		final IProgramExecution<TTE, TE> result;
 		if (iTranslators.length == 0) {
 			result = (IProgramExecution<TTE, TE>) programExecution;
 		} else {
-			final ITranslator<STE, ?, SE, ?, SVL, ?> last =
-					(ITranslator<STE, ?, SE, ?, SVL, ?>) iTranslators[iTranslators.length - 1];
-			final ITranslator<?, ?, ?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
+			final ITranslator<STE, ?, SE, ?, SVL, ?, CTX> last =
+					(ITranslator<STE, ?, SE, ?, SVL, ?, CTX>) iTranslators[iTranslators.length - 1];
+			final ITranslator<?, ?, ?, ?, ?, ?, CTX>[] allButLast =
+					Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			final IProgramExecution<?, ?> peOfIntermediateType = last.translateProgramExecution(programExecution);
 			result = (IProgramExecution<TTE, TE>) translateProgramExecutionIteratively(peOfIntermediateType,
 					allButLast);
@@ -359,6 +371,21 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 		return rtr;
 	}
 
+	@Override
+	public ProcedureContract<TE, ? extends TE>
+			translateProcedureContract(final ProcedureContract<SE, ? extends SE> oldContract, final CTX context) {
+		final var newRequires = oldContract.getRequires() == null ? null
+				: translateExpressionWithContext(oldContract.getRequires(), context);
+		final var newEnsures = oldContract.getEnsures() == null ? null
+				: translateExpressionWithContext(oldContract.getEnsures(), context);
+		final var newModifies =
+				oldContract.hasModifies()
+						? oldContract.getModifies().stream().map(mv -> translateExpressionWithContext(mv, context))
+								.collect(Collectors.toSet())
+						: null;
+		return new ProcedureContract<>(oldContract.getProcedure(), newRequires, newEnsures, newModifies);
+	}
+
 	protected <VL> Multigraph<VL, TTE> createUnlabeledWitnessNode(final IElement old) {
 		final Multigraph<VL, TTE> rtr = new Multigraph<>(null);
 		ModelUtils.copyAnnotations(old, rtr);
@@ -435,6 +462,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 		return checkCallStackSource(logger, rtr);
 	}
 
+	protected boolean checkCallStackSourceLassoProgramExecution(final ILogger logger,
+			final Lasso<IProgramExecution<STE, SE>> sourceProgramExecution) {
+		final List<AtomicTraceElement<STE>> rtr = new ArrayList<>();
+		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
+		return checkCallStackSource(logger, rtr);
+	}
+
 	/**
 	 * Check if the call stack of the source program execution is correct (according to procedure labels and step
 	 * infos).
@@ -443,6 +478,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslato
 			final IProgramExecution<TTE, TE> sourceProgramExecution) {
 		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
 		sourceProgramExecution.iterator().forEachRemaining(rtr::add);
+		return checkCallStackTarget(logger, rtr);
+	}
+
+	protected boolean checkCallStackTargetLassoProgramExecution(final ILogger logger,
+			final Lasso<IProgramExecution<TTE, TE>> sourceProgramExecution) {
+		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
+		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
 		return checkCallStackTarget(logger, rtr);
 	}
 

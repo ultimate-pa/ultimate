@@ -109,4 +109,9 @@ public class DefaultLocation extends ModernAnnotations implements ILocation {
 		sb.append("]");
 		return sb.toString();
 	}
+
+	@Override
+	public String getFunction() {
+		return null;
+	}
 }

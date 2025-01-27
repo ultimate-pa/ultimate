@@ -1100,6 +1100,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	/**
+	 * Represents a cost function for edges, together with a heuristic that enables the A* algorithm to find a
+	 * least-cost path.
+	 *
+	 * In order to guarantee that A* indeed finds a least-cost path, the heuristic must be "admissible", see
+	 * <https://en.wikipedia.org/wiki/Admissible_heuristic>.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
@@ -1109,9 +1114,27 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 *            Type of transitions
 	 */
 	public interface IHeuristic<STATE, LETTER> {
-
+		/**
+		 * Estimates the cost of a path to an accepting configuration.
+		 *
+		 * @param state
+		 *            The next NWA state, reached by the transition {@code trans}
+		 * @param stateK
+		 *            The hierarchical predecessor NWA state
+		 * @param trans
+		 *            The first transition on the path whose cost shall be estimated the
+		 * @return a non-negative number representing an estimate of the cost (an under-approximation, for an admissible
+		 *         heuristic)
+		 */
 		double getHeuristicValue(STATE state, STATE stateK, LETTER trans);
 
+		/**
+		 * Determines the cost of a transition with the given letter.
+		 *
+		 * @param trans
+		 *            the letter labeling the transition
+		 * @return a non-negative number indicating the cost
+		 */
 		double getConcreteCost(LETTER trans);
 
 		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,

@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -102,21 +102,18 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final boolean mCollectInterpolantStatistics;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<LETTER, IPredicate> abstraction,
-			final NestedRun<LETTER, IPredicate> nestedRun, final CfgSmtToolkit csToolkit,
+			final List<IPredicate> stateSequence, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactory, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final boolean collectInterpolantStatistics,
-			final IPredicateUnifier predicateUnifier, final TracePredicates ipp)
-			throws AutomataOperationCanceledException {
+			final boolean collectInterpolantStatistics, final IPredicateUnifier predicateUnifier,
+			final TracePredicates ipp) throws AutomataOperationCanceledException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mCollectInterpolantStatistics = collectInterpolantStatistics;
-		mStateSequence = nestedRun.getStateSequence();
+		mStateSequence = stateSequence;
 		mCsToolkit = csToolkit;
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
@@ -143,7 +140,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		}
 		mHtc = HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(services,
 				HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
-		for (final IPredicate state : nestedRun.getStateSequence()) {
+		for (final IPredicate state : stateSequence) {
 			mWorklist.add(state);
 			mAnnotated.add(state);
 		}
@@ -302,24 +299,23 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		final SortedMap<Integer, IPredicate> pendingContexts = computePendingContexts(run);
 		// SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 
+		final var ctex = new Counterexample<>(run.getWord(), run.getStateSequence());
 		InterpolatingTraceCheck<LETTER> tc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			tc = new InterpolatingTraceCheckCraig<>(precondition, postcondition, pendingContexts, run.getWord(),
-					run.getStateSequence(), mServices, mCsToolkit, mPredicateFactory, mPredicateUnifier,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, mCollectInterpolantStatistics, mInterpolation, true,
-					mXnfConversionTechnique, mSimplificationTechnique);
+			tc = new InterpolatingTraceCheckCraig<>(precondition, postcondition, pendingContexts, ctex, mServices,
+					mCsToolkit, mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false,
+					mCollectInterpolantStatistics, mInterpolation, true, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
+			tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts, ctex, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
-					mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence(),
-					mCollectInterpolantStatistics);
+					mSimplificationTechnique, mCollectInterpolantStatistics);
 			break;
 		case PathInvariants:
 		default:

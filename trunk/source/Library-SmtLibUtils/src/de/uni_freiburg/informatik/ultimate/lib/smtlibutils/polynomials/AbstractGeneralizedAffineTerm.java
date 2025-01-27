@@ -39,6 +39,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.Junction;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -762,7 +763,7 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 	public enum ComparisonResult {
 		INCONSISTENT, IMPLIES, EXPLIES, EQUIVALENT;
 
-		public ComparisonResult switchDiection() {
+		public ComparisonResult switchDirection() {
 			final ComparisonResult result;
 			switch (this) {
 			case EQUIVALENT:
@@ -784,20 +785,35 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		}
 	}
 
-
 	public static ComparisonResult compareRepresentation(final PolynomialRelation lhs, final PolynomialRelation rhs) {
+		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
+			throw new AssertionError("Cannot compare polynomials of different sorts");
+		}
 		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
 		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
 		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
 			throw new AssertionError("incomparable");
 		}
-		final RelationSymbol lhsRelationSymbol = lhs.getRelationSymbol();
-		final RelationSymbol rhsRelationSymbol = rhs.getRelationSymbol();
-		final Rational lhsConstant = lhs.getPolynomialTerm().getConstant();
-		final Rational rhsConstant = rhs.getPolynomialTerm().getConstant();
+		final RelationSymbol lhsRelationSymbol;
+		final RelationSymbol rhsRelationSymbol;
+		final Rational lhsConstant;
+		final Rational rhsConstant;
+		if (SmtSortUtils.isIntSort(lhs.getPolynomialTerm().getSort())) {
+			lhsRelationSymbol = lhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant()
+					.add(lhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+			rhsConstant = rhs.getPolynomialTerm().getConstant()
+					.add(rhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+		} else {
+			lhsRelationSymbol = lhs.getRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant();
+			rhsConstant = rhs.getPolynomialTerm().getConstant();
+		}
 		final ComparisonResult result = compare(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant);
-		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant,
-				result) : "double check failed";
+		assert doubleCheck(lhsRelationSymbol, rhsRelationSymbol, lhsConstant, rhsConstant, result)
+				: "double check failed";
 		return result;
 	}
 
@@ -807,12 +823,15 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 		if (result == null) {
 			return (otherDirection == null);
 		} else {
-			return result.switchDiection().equals(otherDirection);
+			return result.switchDirection().equals(otherDirection);
 		}
 	}
 
 	/**
-	 * Compare the relations lc lrel 0 and rc rrel 0
+	 * Compare the relations lc lrel 0 and rc rrel 0.
+	 *
+	 * Consider lc and rc as rationals, so that e.g., c > 0 and c >=1 are not
+	 * considered equivalent.
 	 */
 	private static ComparisonResult compare(final RelationSymbol lhsRelationSymbol,
 			final RelationSymbol rhsRelationSymbol, final Rational lhsConstant, final Rational rhsConstant)
@@ -1238,6 +1257,73 @@ public abstract class AbstractGeneralizedAffineTerm<AVAR> extends Term implement
 			throw new AssertionError("unknown value: " + rRel);
 		}
 		return result;
+	}
+
+
+	public static boolean areRepresentationsFusible(final Junction junction, final PolynomialRelation lhs,
+			final PolynomialRelation rhs) {
+		if (!lhs.getPolynomialTerm().getSort().equals(rhs.getPolynomialTerm().getSort())) {
+			throw new AssertionError("Cannot compare polynomials of different sorts");
+		}
+		final AbstractGeneralizedAffineTerm<?> lhsTerm = lhs.getPolynomialTerm();
+		final AbstractGeneralizedAffineTerm<?> rhsTerm = rhs.getPolynomialTerm();
+		if (!lhsTerm.getAbstractVariable2Coefficient().equals(rhsTerm.getAbstractVariable2Coefficient())) {
+			throw new AssertionError("incomparable");
+		}
+		if (!lhs.getRelationSymbol().isConvexInequality() && !rhs.getRelationSymbol().isConvexInequality()) {
+			return false;
+		}
+		final RelationSymbol lhsRelationSymbol;
+		final RelationSymbol rhsRelationSymbol;
+		final Rational lhsConstant;
+		final Rational rhsConstant;
+		if (SmtSortUtils.isIntSort(lhs.getPolynomialTerm().getSort())) {
+			lhsRelationSymbol = lhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol().getCorrespondingNonStrictRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant()
+					.add(lhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+			rhsConstant = rhs.getPolynomialTerm().getConstant()
+					.add(rhs.getRelationSymbol().getOffsetForStrictToNonstrictTransformation());
+		} else {
+			lhsRelationSymbol = lhs.getRelationSymbol();
+			rhsRelationSymbol = rhs.getRelationSymbol();
+			lhsConstant = lhs.getPolynomialTerm().getConstant();
+			rhsConstant = rhs.getPolynomialTerm().getConstant();
+		}
+		return areRepresentationsFusibleHelper(junction, lhsRelationSymbol, rhsRelationSymbol, lhsConstant,
+				rhsConstant);
+	}
+
+	/**
+	 */
+	private static boolean areRepresentationsFusibleHelper(final Junction junction,
+			final RelationSymbol lhsRelationSymbol, final RelationSymbol rhsRelationSymbol, final Rational lhsConstant,
+			final Rational rhsConstant) {
+		if (!lhsRelationSymbol.isConvexInequality() || !rhsRelationSymbol.isConvexInequality()) {
+			return false;
+		}
+		switch (junction) {
+		case AND:
+			if (lhsRelationSymbol.equals(RelationSymbol.LEQ) && rhsRelationSymbol.equals(RelationSymbol.GEQ)
+					|| lhsRelationSymbol.equals(RelationSymbol.GEQ) && rhsRelationSymbol.equals(RelationSymbol.LEQ)) {
+				if (rhsConstant.equals(lhsConstant)) {
+					return true;
+				}
+			}
+			return false;
+		case OR:
+			if (lhsRelationSymbol.equals(RelationSymbol.LESS) && rhsRelationSymbol.equals(RelationSymbol.GREATER)
+					|| lhsRelationSymbol.equals(RelationSymbol.GREATER)
+							&& rhsRelationSymbol.equals(RelationSymbol.LESS)) {
+				if (rhsConstant.equals(lhsConstant)) {
+					return true;
+				}
+			}
+			return false;
+		default:
+			throw new AssertionError();
+
+		}
 	}
 
 	/**

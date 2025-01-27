@@ -27,8 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
  * Auxiliary file that contains information about float operations of env.h and math.h support in ultimate.
@@ -41,7 +45,6 @@ public class FloatSupportInUltimate {
 
 	private final static String[] SUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
 			"sqrt",
-			"signbit",
 			"__isinf",
 			"__finite",
 			"isinf",
@@ -50,7 +53,6 @@ public class FloatSupportInUltimate {
 			"__isnan",
 			"isnan",
 			"__fpclassify",
-			"__signbit",
 			"sqrtf",
 			"__isinff",
 			"isinff",
@@ -60,7 +62,6 @@ public class FloatSupportInUltimate {
 			"__isnanf",
 			"isnanf",
 			"__fpclassifyf",
-			"__signbitf",
 			"sqrtl",
 			"__isinfl",
 			"__finitel",
@@ -70,7 +71,6 @@ public class FloatSupportInUltimate {
 			"__isnanl",
 			"isnanl",
 			"__fpclassifyl",
-			"__signbitl",
 			"fabs",
 			"fabsf",
 			"fabsl",
@@ -98,9 +98,6 @@ public class FloatSupportInUltimate {
 			"ceil",
 			"ceilf",
 			"ceill",
-			"sin",
-			"sinf",
-			"sinl",
 			"remainder",
 			"remainderf",
 			"remainderl",
@@ -124,29 +121,8 @@ public class FloatSupportInUltimate {
 
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
 			// from math.h
-			"acos",
-			"asin",
-			"atan",
-			"atan2",
-			"cos",
-			"tan",
-			"cosh",
-			"sinh",
-			"tanh",
-			"acosh",
-			"asinh",
-			"atanh",
-			"exp",
 			"frexp",
 			"ldexp",
-			"log",
-			"log10",
-			"modf",
-			"expm1",
-			"log1p",
-			"logb",
-			"exp2",
-			"log2",
 			"pow",
 			"hypot",
 			"cbrt",
@@ -158,47 +134,23 @@ public class FloatSupportInUltimate {
 			"y0",
 			"y1",
 			"yn",
-			"erf",
 			"erfc",
 			"lgamma",
 			"tgamma",
 			"gamma",
 			"lgamma_r",
-			"rint",
 			"nextafter",
 			"nexttoward",
 			"scalbn",
 			"ilogb",
 			"scalbln",
-			"nearbyint",
 			"remquo",
 			"lrint",
 			"llrint",
 			"fma",
 			"scalb",
-			"acosf",
-			"asinf",
-			"atanf",
-			"atan2f",
-			"cosf",
-			"tanf",
-			"coshf",
-			"sinhf",
-			"tanhf",
-			"acoshf",
-			"asinhf",
-			"atanhf",
-			"expf",
 			"frexpf",
 			"ldexpf",
-			"logf",
-			"log10f",
-			"modff",
-			"expm1f",
-			"log1pf",
-			"logbf",
-			"exp2f",
-			"log2f",
 			"powf",
 			"hypotf",
 			"cbrtf",
@@ -210,47 +162,23 @@ public class FloatSupportInUltimate {
 			"y0f",
 			"y1f",
 			"ynf",
-			"erff",
 			"erfcf",
 			"lgammaf",
 			"tgammaf",
 			"gammaf",
 			"lgammaf_r",
-			"rintf",
 			"nextafterf",
 			"nexttowardf",
 			"scalbnf",
 			"ilogbf",
 			"scalblnf",
-			"nearbyintf",
 			"remquof",
 			"lrintf",
 			"llrintf",
 			"fmaf",
 			"scalbf",
-			"acosl",
-			"asinl",
-			"atanl",
-			"atan2l",
-			"cosl",
-			"tanl",
-			"coshl",
-			"sinhl",
-			"tanhl",
-			"acoshl",
-			"asinhl",
-			"atanhl",
-			"expl",
 			"frexpl",
 			"ldexpl",
-			"logl",
-			"log10l",
-			"modfl",
-			"expm1l",
-			"log1pl",
-			"logbl",
-			"exp2l",
-			"log2l",
 			"powl",
 			"hypotl",
 			"cbrtl",
@@ -262,25 +190,25 @@ public class FloatSupportInUltimate {
 			"y0l",
 			"y1l",
 			"ynl",
-			"erfl",
 			"erfcl",
 			"lgammal",
 			"tgammal",
 			"gammal",
 			"lgammal_r",
-			"rintl",
 			"nextafterl",
 			"nexttowardl",
 			"scalbnl",
 			"ilogbl",
 			"scalblnl",
-			"nearbyintl",
 			"remquol",
 			"lrintl",
 			"llrintl",
 			"fmal",
 			"scalbl",
 			"signgam;",
+			"modf",
+			"modff",
+			"modfl",
 
 			// from fenv.h
 			"feclearexcept",
@@ -294,6 +222,135 @@ public class FloatSupportInUltimate {
 			"feupdateenv",
 	};
 	//@formatter:on
+
+	private final static Map<String, CPrimitives> OVERAPPROXIMATED_UNARY_FUNCTIONS = new HashMap<>();
+	static {
+		// https://en.cppreference.com/w/c/numeric/math/sin
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sin", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/exp
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/expm1
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expm1", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expm1f", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expm1l", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/tanh
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanh", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanhf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanhl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/erf
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("erf", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("erff", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("erfl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/log
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/cos
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cos", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cosf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cosl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/log1p
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log1p", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log1pf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log1pl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/rint
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("rint", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("rintf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("rintl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/atanh
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanh", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanhf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanhl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/asin
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asin", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/acos
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acos", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acosf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acosl", CPrimitives.LONGDOUBLE);
+
+		// https://en.cppreference.com/w/c/numeric/math/nearbyint
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyint", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyintf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyintl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/signbit
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("signbit", CPrimitives.INT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("__signbit", CPrimitives.INT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("__signbitl", CPrimitives.INT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("__signbitf", CPrimitives.INT);
+
+		// http://en.cppreference.com/w/c/numeric/math/atan
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/atan2
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan2", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan2f", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan2l", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/tan
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tan", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/cosh
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cosh", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("coshf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("coshl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/sinh
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinh", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinhf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinhl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/acosh
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acosh", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acoshf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acoshl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/asinh
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinh", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinhf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinhl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/log10
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10f", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10l", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/logb
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logb", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logbf", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logbl", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/exp2
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp2", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp2f", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp2l", CPrimitives.LONGDOUBLE);
+
+		// http://en.cppreference.com/w/c/numeric/math/log2
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2", CPrimitives.DOUBLE);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2f", CPrimitives.FLOAT);
+		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2l", CPrimitives.LONGDOUBLE);
+	}
 
 	private final static Set<String> SUPPORTED_FLOAT_OPERATIONS =
 			new HashSet<>(Arrays.asList(SUPPORTED_FLOAT_OPERATIONS_ARRAY));
@@ -309,4 +366,7 @@ public class FloatSupportInUltimate {
 		return SUPPORTED_FLOAT_OPERATIONS;
 	}
 
+	public static Map<String, CPrimitives> getOverapproximatedUnaryFunctions() {
+		return OVERAPPROXIMATED_UNARY_FUNCTIONS;
+	}
 }

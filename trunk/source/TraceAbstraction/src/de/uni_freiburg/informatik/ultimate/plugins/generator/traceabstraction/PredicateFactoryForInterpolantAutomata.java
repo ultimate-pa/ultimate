@@ -58,14 +58,22 @@ public class PredicateFactoryForInterpolantAutomata
 		IConcurrentProductStateFactory<IPredicate>, IPetriNet2FiniteAutomatonStateFactory<IPredicate>,
 		IMinimizationStateFactory<IPredicate>, IDeterminizeStateFactory<IPredicate> {
 
-	protected final boolean mComputeHoareAnnotation;
+	protected final boolean mPreserveTerms;
 	private final IPredicate mEmtpyStack;
 	protected final ManagedScript mMgdScript;
 	protected final PredicateFactory mPredicateFactory;
 
+	/**
+	 *
+	 * @param mgdScript
+	 * @param predicateFactory
+	 * @param preserveTerms
+	 *            Whether the factory should preserve the terms for computed predicates. If this is {@code false}, the
+	 *            factory may replace some terms by "don't care".
+	 */
 	public PredicateFactoryForInterpolantAutomata(final ManagedScript mgdScript,
-			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
-		mComputeHoareAnnotation = computeHoareAnnotation;
+			final PredicateFactory predicateFactory, final boolean preserveTerms) {
+		mPreserveTerms = preserveTerms;
 		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mEmtpyStack = mPredicateFactory.newEmptyStackPredicate();
@@ -73,7 +81,7 @@ public class PredicateFactoryForInterpolantAutomata
 
 	@Override
 	public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
-		if (mComputeHoareAnnotation) {
+		if (mPreserveTerms) {
 			final List<IPredicate> upPredicates = new ArrayList<>();
 			for (final IPredicate caller : down2up.keySet()) {
 				for (final IPredicate current : down2up.get(caller)) {

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -339,11 +340,131 @@ public enum RelationSymbol {
 		case BVSLT:
 		case BVSGT:
 			return true;
-
 		default:
 			throw new AssertionError("unknown RelationSymbol " + this);
 		}
 	}
+
+	/**
+	 * If this is a non-strict inequality then return the corresponding strict inequality symbol.
+	 * Otherwise, return this.
+	 */
+	public RelationSymbol getCorrespondingStrictRelationSymbol() {
+		switch (this) {
+		case LEQ:
+			return LESS;
+		case GEQ:
+			return GREATER;
+		case BVULE:
+			return BVULT;
+		case BVUGE:
+			return BVUGT;
+		case BVSGE:
+			return BVSGT;
+		case BVSLE:
+			return BVSLT;
+		case EQ:
+		case DISTINCT:
+		case LESS:
+		case GREATER:
+		case BVULT:
+		case BVUGT:
+		case BVSLT:
+		case BVSGT:
+			return this;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
+	/**
+	 * Let `ψ ▷ 0` be a polynomial relation whose sort is `Int`. Which offset δ do
+	 * we have to add such that the relation `ψ + δ ▶ 0` in which ▶is the strict
+	 * version of ▷(if available) is equivalent to the original relation.
+	 */
+	public Rational getOffsetForNonstrictToStrictTransformation() {
+		switch (this) {
+		case LEQ:
+			return Rational.MONE;
+		case GEQ:
+			return Rational.ONE;
+		case EQ:
+		case DISTINCT:
+		case LESS:
+		case GREATER:
+			return Rational.ZERO;
+		case BVULE:
+		case BVUGE:
+		case BVSGE:
+		case BVSLE:
+		case BVULT:
+		case BVUGT:
+		case BVSLT:
+		case BVSGT:
+			throw new AssertionError("Non-strict to strict transformation not available for bitvectors");
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
+	public RelationSymbol getCorrespondingNonStrictRelationSymbol() {
+		switch (this) {
+		case LESS:
+			return LEQ;
+		case GREATER:
+			return GEQ;
+		case BVULT:
+			return BVULE;
+		case BVUGT:
+			return BVUGE;
+		case BVSLT:
+			return BVSLE;
+		case BVSGT:
+			return BVSGE;
+		case LEQ:
+		case GEQ:
+		case BVULE:
+		case BVUGE:
+		case BVSGE:
+		case BVSLE:
+		case EQ:
+		case DISTINCT:
+			return this;
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
+	/**
+	 * Let `ψ ▷ 0` be a polynomial relation whose sort is `Int`. Which offset δ do
+	 * we have to add such that the relation `ψ + δ ▶ 0` in which ▶is the non-strict
+	 * version of ▷(if available) is equivalent to the original relation.
+	 */
+	public Rational getOffsetForStrictToNonstrictTransformation() {
+		switch (this) {
+		case LESS:
+			return Rational.ONE;
+		case GREATER:
+			return Rational.MONE;
+		case EQ:
+		case DISTINCT:
+		case LEQ:
+		case GEQ:
+			return Rational.ZERO;
+		case BVULE:
+		case BVUGE:
+		case BVSGE:
+		case BVSLE:
+		case BVULT:
+		case BVUGT:
+		case BVSLT:
+		case BVSGT:
+			throw new AssertionError("Strict to non-strict transformation not available for bitvectors");
+		default:
+			throw new AssertionError("unknown RelationSymbol " + this);
+		}
+	}
+
 
 	public static RelationSymbol getLessRelationSymbol(final boolean strict, final Sort sort,
 			final BvSignedness sigedness) {

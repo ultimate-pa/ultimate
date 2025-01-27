@@ -28,12 +28,14 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTCompoundStatementExpression;
@@ -61,9 +63,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
@@ -534,32 +533,12 @@ public class CTranslationUtil {
 		return hook;
 	}
 
-	public static long countNumberOfPrimitiveElementInType(final CType cTypeRaw, final TypeSizes typeSizes,
-			final IASTNode hook) {
-		final CType cType = cTypeRaw.getUnderlyingType();
-		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
-			return 1;
-		} else if (cType instanceof CFunction) {
-			assert false : "this is unexpected, a CFunction that is not wrapped inside a CPointer";
-			return 1;
-		} else if (cType instanceof CStructOrUnion && CStructOrUnion.isUnion(cType)) {
-			return 1;
-		} else if (cType instanceof CStructOrUnion && !CStructOrUnion.isUnion(cType)) {
-			final CStructOrUnion cStruct = (CStructOrUnion) cType;
-			long sum = 0;
-			for (final CType fieldType : cStruct.getFieldTypes()) {
-				sum += countNumberOfPrimitiveElementInType(fieldType, typeSizes, hook);
-			}
-			return sum;
-		} else if (cType instanceof CArray) {
-			final CArray cArray = (CArray) cType;
-			final long innerCount = countNumberOfPrimitiveElementInType(cArray.getValueType(), typeSizes, hook);
-			final BigInteger boundBig = typeSizes.extractIntegerValue(cArray.getBound());
-			final long bound = boundBig.longValueExact();
-			return innerCount * bound;
-		} else {
-			assert false : "missed cType case?";
-			return 1;
-		}
+	/**
+	 * Returns true iff the given {@code declSpec} has an attribute with the given {@code name}, i.e., is preceded by
+	 * {@code __attribute__((name))}.
+	 */
+	public static boolean hasAttribute(final IASTDeclSpecifier declSpec, final String attributeName) {
+		return Arrays.stream(declSpec.getAttributes()).map(x -> String.valueOf(x.getName()))
+				.anyMatch(attributeName::equals);
 	}
 }

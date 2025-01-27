@@ -1,0 +1,25 @@
+---
+# A Human readable name of this tool. Used as Heading in the frontend.
+title: "Referee"
+
+# A mandatory unique id for the tool.
+tool_id: "referee"
+
+# Frontend description.
+description: "Checking validity of given invariants."
+
+# Supported languages to be displayed in the frontend.
+languages: [
+  { "language": "Boogie", "worker": "boogieReferee" },
+  { "language": "C",      "worker": "cReferee" }
+]
+---
+
+<h1>Referee</h1>
+
+<p>Referee is a deductive verifier.This means that we check for a program annotated with invariants, if the invariants are sufficient for an inductive proof. For example, for a loop invariant we check if it holds at the beginning of the loop, if it is preserved by the loop body and if it is strong enough the prove the remaining program after the loop correct.
+These annotated invariants can be extracted from correctness witnesses, therefore Referee can be used as a validator for these.</p>
+
+<h2>Web Interface</h2>
+<p><span style="font-variant:small-caps">Referee</span> is available via a <a href="{{ 'webinterface/?tool=referee' | relative_url }}">web interface</a>.</p>
+

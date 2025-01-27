@@ -66,12 +66,14 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 
 	private final ModelEvaluator mEval;
 
+	private int mModelValueCounter;
+
 	public Model(final Clausifier clausifier, final Theory theory) {
 		mTheory = theory;
 		mSorts.put(theory.getBooleanSort(), new BoolSortInterpretation());
-		if (theory.getLogic().hasIntegers() || theory.getLogic().hasReals()) {
+		if (theory.getLogic().hasIntegers() || theory.getLogic().hasReals() || theory.getLogic().isBitVector()) {
 			final SortInterpretation numericInterpretation = new NumericSortInterpretation();
-			if (theory.getLogic().hasIntegers()) {
+			if (theory.getLogic().hasIntegers() || theory.getLogic().isBitVector()) {
 				mSorts.put(theory.getNumericSort(), numericInterpretation);
 			}
 			if (theory.getLogic().hasReals()) {
@@ -130,6 +132,7 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			}
 		}
 		mEval = new ModelEvaluator(this);
+		mModelValueCounter = 0;
 	}
 
 	public boolean checkTypeValues(final LogProxy logger) {
@@ -156,6 +159,16 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 			}
 		}
 		return correct;
+	}
+
+	/**
+	 * Get a fresh value. This returns an index that was not yet used for creating a
+	 * model value.
+	 *
+	 * @return the fresh value.
+	 */
+	public int getFreshModelValue() {
+		return mModelValueCounter++;
 	}
 
 	public Term getModelValue(final int index, final Sort sort) {
@@ -313,8 +326,10 @@ public class Model implements de.uni_freiburg.informatik.ultimate.logic.Model {
 						provideSortInterpretation(sort.getArguments()[1]));
 			} else if (sort.getSortSymbol().isDatatype()) {
 				interpretation = new DataTypeInterpretation(this, sort);
+			} else if (sort.isBitVecSort()) {
+				interpretation = new BitVectorInterpretation();
 			} else {
-				interpretation = new FiniteSortInterpretation();
+				interpretation = new FiniteSortInterpretation(this);
 			}
 			mSorts.put(sort, interpretation);
 		}

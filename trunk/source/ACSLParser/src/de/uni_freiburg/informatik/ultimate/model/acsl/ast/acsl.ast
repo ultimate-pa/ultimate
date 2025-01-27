@@ -21,13 +21,22 @@ CodeForBehavior ::=
 	codeStmt : CodeStatement;
 
 CodeStatement ::=
-	formula : Expression
-	( { Assertion } 
-	| { CodeInvariant } 
-	);
-
-	
-
+ 	{ Assertion }
+		formula : Expression
+ 	| { CodeInvariant }
+		formula : Expression
+ 	| { GhostDeclaration }
+		type : ACSLType
+		identifier : String
+		expr : Expression
+	| { GlobalGhostDeclaration }
+		type : ACSLType
+		identifier : String
+		expr : Expression
+	| { GhostUpdate }
+		identifier : String
+		expr : Expression
+ 	;
 
 /**
  * LoopAnnotation
@@ -158,7 +167,8 @@ Expression ::=
 		operator : Operator { LOGICIFF, LOGICIMPLIES, LOGICAND, LOGICOR, LOGICXOR,
 						   COMPLT, COMPGT, COMPLEQ, COMPGEQ, COMPEQ, COMPNEQ, COMPPO,
 						   BITVECCONCAT, ARITHPLUS, ARITHMINUS, ARITHMUL, ARITHDIV, ARITHMOD,
-						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR, LTLUNTIL, LTLRELEASE, LTLWEAKUNTIL }
+						   BITAND, BITOR, BITIMPLIES, BITIFF, BITXOR, BITSHIFTLEFT, BITSHIFTRIGHT,
+						   LTLUNTIL, LTLRELEASE, LTLWEAKUNTIL }
 		left  : Expression
 		right : Expression
 	| { NotDefinedExpression }
@@ -167,7 +177,7 @@ Expression ::=
 		expr     : Expression
 	| { ArrayAccessExpression }
 		array   : Expression
-		indices : Expression[]
+		index : Expression
 	| { ArrayStoreExpression }
 		array   : Expression 
 		indices : Expression[]
@@ -210,15 +220,15 @@ Expression ::=
 	| { ValidExpression }
 		/** is used to check if a pointer location is safe, so the formula should be a
 			Pointer (UnaryExpression with star) or this makes no sense */
-		formula : Expression
+		expression : Expression
     | { FreeableExpression }
         /** is used to check if a pointer location is safe, so the formula should be a
             Pointer (UnaryExpression with star) or this makes no sense */
-        formula : Expression
+        expression : Expression
     | { MallocableExpression }
         /** is used to check if a pointer location is safe, so the formula should be a
             Pointer (UnaryExpression with star) or this makes no sense */
-        formula : Expression
+        expression : Expression
 	| { /** represents the result value, which is used in contracts */ 
 		ACSLResultExpression }
 	| { FieldAccessExpression }
@@ -227,22 +237,22 @@ Expression ::=
 		field : String
 	| { SizeOfExpression }
 		/** checks the size of differnent things, like in C */
-		formula : ?&Expression
+		expression : ?&Expression
 		logicType : ?&ACSLType
 	| { OldValueExpression }
 		/** refers to the old value of a certain expression */
-		formula : Expression
+		expression : Expression
 	| { AtLabelExpression }
 		/** refers to the value at a certain position, determined
 			by the given label */
-		formula : Expression
+		expression : Expression
 		label : String
 	| { BaseAddrExpression }
 		/** gets the base addr of a certain pointer */
-		formula : Expression
+		expression : Expression
 	| { BlockLengthExpression }
 		/** gets the memory block length of a certain pointer */
-		formula : Expression
+		expression : Expression
 	| { SyntacticNamingExpression }
 		/** special contruct is used in assumes clauses */
 		identifier : String
@@ -259,10 +269,8 @@ Expression ::=
 	| { QuantifierExpression }
 		/** This is true for universal and false for existential quantifier */
 		isUniversal : boolean
-		typeParams  : String[]
+		variables : Declaration[]
 		subformula  : Expression
-		parameters  : String[] 
-		attributes  : String[]
 	| { /** This can be used as call forall parameter, or as if or 
 	     * while condition.  In all other places it is forbidden. */ 
 		WildcardExpression }
@@ -271,3 +279,7 @@ Expression ::=
 ACSLType ::= 
 	typeName : String;
 
+
+Declaration ::=
+	type : ACSLType
+	name : String;

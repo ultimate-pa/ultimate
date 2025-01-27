@@ -1,0 +1,7 @@
+// #TestSpec: redundant:req2; results:-1
+Input x IS int
+Input y IS bool
+
+
+req1: Globally, it is always the case that if "y" holds, then "x>=5" holds after at most "3" time units
+req2: Globally, it is always the case that if "y" holds, then "x>=5" holds after at most "5" time units

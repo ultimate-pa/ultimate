@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 
 /**
@@ -66,8 +65,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 public class StringLiteralResult extends ExpressionResult {
 
 	private final CStringLiteral mStringLiteral;
-	private final boolean mOverapproximatesLongStringLiteral;
-	private final AuxVarInfo mAuxVarName;
 
 	/**
 	 * Note that a StringLiteralResults need no fields for declarations and statements because the literals have static
@@ -76,16 +73,12 @@ public class StringLiteralResult extends ExpressionResult {
 	 *
 	 * @param lrVal
 	 * @param overapproxList
-	 * @param auxVarName
 	 * @param stringLiteral
-	 * @param overAppLongLiteral
 	 */
-	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList, final AuxVarInfo auxVarName,
-			final CStringLiteral stringLiteral, final boolean overAppLongLiteral) {
+	public StringLiteralResult(final LRValue lrVal, final List<Overapprox> overapproxList,
+			final CStringLiteral stringLiteral) {
 		super(Collections.emptyList(), lrVal, Collections.emptyList(), Collections.emptySet(), overapproxList);
-		mAuxVarName = auxVarName;
 		mStringLiteral = stringLiteral;
-		mOverapproximatesLongStringLiteral = overAppLongLiteral;
 	}
 
 	public CStringLiteral getLiteralString() {
@@ -95,21 +88,5 @@ public class StringLiteralResult extends ExpressionResult {
 	@Override
 	public String toString() {
 		return "StringLiteralResult: " + mStringLiteral;
-	}
-
-	/**
-	 * We overapproximate string literals that are longer than a certain threshold by a nondeterministic value.
-	 *
-	 * @return true iff the string literal that this StringLiteralResult represents is being overapproximated
-	 */
-	public boolean overApproximatesLongStringLiteral() {
-		return mOverapproximatesLongStringLiteral;
-	}
-
-	/**
-	 * Returns the name of the auxiliary variable that marks the memory location of the string in our Boogie heap array.
-	 */
-	public AuxVarInfo getAuxVar() {
-		return mAuxVarName;
 	}
 }

@@ -6,7 +6,9 @@
 **/.recommenders/*
 **/.gitignore
 **/.idea/*
+**/__pycache__/
 hs_err_pid*
+*.md.backup
 
 /releaseScripts/default/DeltaDebugger-linux/*
 /releaseScripts/default/DeltaDebugger-win32/*
@@ -16,6 +18,8 @@ hs_err_pid*
 /releaseScripts/default/UGemCutter-win32/*
 /releaseScripts/default/UKojak-linux/*
 /releaseScripts/default/UKojak-win32/*
+/releaseScripts/default/UReferee-linux/*
+/releaseScripts/default/UReferee-win32/*
 /releaseScripts/default/UTaipan-linux/*
 /releaseScripts/default/UTaipan-win32/*
 /releaseScripts/default/UTaipan-win32/
@@ -88,12 +92,16 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Completeness.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Contract.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/ContractStatement.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Declaration.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Decreases.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Ensures.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Expression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/FieldAccessExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/FreeableExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/FunctionApplication.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GhostUpdate.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GhostDeclaration.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GlobalGhostDeclaration.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GlobalInvariant.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/GlobalLTLInvariant.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/IdentifierExpression.java
@@ -306,5 +314,19 @@ trunk/examples/concurrent/bpl/weaver-benchmarks/weaver
 /trunk/runtime-Debug-E4.product
 /trunk/runtime-WebBackend.product
 
+# Local copies of these files for custom configuration, not checked in.
+# Corresponding checked-in files have '.dist' suffix.
+/trunk/source/WebBackend/web.config.properties
+/trunk/source/WebBackend/settings_whitelist.json
+/trunk/source/WebsiteStatic/js/webinterface/config.js
+
+trunk/source/WebsiteStatic/_site
+trunk/source/WebsiteStatic/.jekyll-cache
 trunk/source/WebsiteStatic/bootstrap_dev/node_modules/
-trunk/source/WebsiteStatic/config/config.js
+trunk/source/WebsiteStatic/bootstrap_dev/*.css
+trunk/source/WebsiteStatic/bootstrap_dev/*.css.map
+trunk/source/WebsiteStatic/webinterface/code_examples/
+trunk/source/WebsiteStatic/webinterface/workers/*.json
+!trunk/source/WebsiteStatic/webinterface/workers/*.override.json
+
+releaseScripts/default/sv-benchmarks

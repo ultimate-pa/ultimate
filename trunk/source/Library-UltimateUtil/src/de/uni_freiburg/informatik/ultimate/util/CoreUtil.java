@@ -271,9 +271,6 @@ public class CoreUtil {
 
 	private static File writeFile(final String filename, final String content, final boolean append)
 			throws IOException {
-		if (content == null || content.isEmpty()) {
-			return null;
-		}
 		final File file = createFile(filename);
 		writeFile(fw -> fw.append(content), append, file);
 		return file;

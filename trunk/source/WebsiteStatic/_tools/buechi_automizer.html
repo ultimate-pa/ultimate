@@ -1,0 +1,35 @@
+---
+# A Human readable name of this tool. Used as Heading in the frontend.
+title: "Büchi Automizer"
+
+# A mandatory unique id for the tool.
+tool_id: "buechi_automizer"
+
+# Frontend description.
+description: "Termination analysis based on Büchi automata."
+
+# Supported languages to be displayed in the frontend.
+languages: [
+  { "language": "Boogie", "worker": "boogieBuchiAutomizer" },
+  { "language": "C",      "worker": "cBuchiAutomizer" }
+]
+---
+
+<h1>Büchi Automizer</h1>
+<p>
+Ultimate Büchi Automizer implements a novel approach to termination analysis in which a program is decomposed into modules.
+Each module represents a set of traces that share a common termination argument.
+The decomposition is constructed on demand by &ldquo;learning&rdquo;  terminating modules from a termination analysis of lasso-shaped sample traces.
+For this termination analysis of lasso-shaped traces the built-in tool <a href="{{ 'lasso_ranker/' | relative_url }}">LassoRanker</a> is used.
+<!-- Ultimate Büchi Automizer is one toolchain of the <a href="http://ultimate.informatik.uni-freiburg.de"><span style="font-variant:small-caps">Ultimate</span> software analysis framework</a> -->
+</p>
+
+<h2>Web Interface</h2>
+<p> <span style="font-variant:small-caps">Ultimate</span> Automizer is available via a <a href="{{ 'webinterface/?tool=buechi_automizer' | relative_url }}">web interface</a> in which you can analyse termination of C programs. This version has some limitations. We use a theorem prover that does not support non-linear arithmetic and therefore the built-in tool <a href="{{ 'lasso_ranker/' | relative_url }}">LassoRanker</a> can only provide linear ranking functions.</p>
+
+<h2>Developers</h2>
+<p>Ultimate Buchi Automizer is maintained by <a href="http://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias Heizmann</a>. The built-in tool <a href="{{ 'lasso_ranker/' | relative_url }}">LassoRanker</a> is maintained by <a href="http://swt.informatik.uni-freiburg.de/staff/leike">Jan Leike</a> and <a href="http://swt.informatik.uni-freiburg.de/staff/heizmann">Matthias Heizmann</a>.
+Since <span style="font-variant:small-caps">Ultimate</span> Büchi Automizer is a toolchain of the <a href="http://ultimate.informatik.uni-freiburg.de"><span style="font-variant:small-caps">Ultimate</span> software analysis framework</a>, <a href="http://ultimate.informatik.uni-freiburg.de#developers">many people</a> contributed code and ideas. We want to mention especially, Jürgen Christ, Daniel Dietsch, Jochen Hoenicke,
+Markus Lindenmann, Betim Musa, Alexander Nutz, Christian Schilling, Stefan Wissert,
+and Andreas Podelski.</p>
+

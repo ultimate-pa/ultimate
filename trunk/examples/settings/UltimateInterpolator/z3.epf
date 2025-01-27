@@ -1,0 +1,18 @@
+#Sat May 18 19:41:01 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.source.smtparser=
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SmtParser\ Mode=UltimateInterpolator
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:15000
+/instance/de.uni_freiburg.informatik.ultimate.source.smtparser/SMT\ solver=External_DefaultMode
+@de.uni_freiburg.informatik.ultimate.source.smtparser=0.1.24
+file_export_version=3.0
+
+
+#Sat Jun 01 23:45:41 CEST 2019
+\!/instance/de.uni_freiburg.informatik.ultimate.core=
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ controller\ plugin=ERROR
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ core\ plugin=ERROR
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ external\ tools=ERROR
+/instance/de.uni_freiburg.informatik.ultimate.core/Log\ level\ for\ plugins=ERROR
+/instance/de.uni_freiburg.informatik.ultimate.core/Root\ log\ level=ERROR
+@de.uni_freiburg.informatik.ultimate.core=0.1.24
+file_export_version=3.0

@@ -32,9 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.util.Map;
-
-import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
@@ -45,10 +43,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.GraphMLCorrectnessWitnessExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.YamlCorrectnessWitnessExtractor;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 /**
  * @author Markus Lindenmann
@@ -60,19 +60,21 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final ACSLObjectContainerObserver mAdditionalAnnotationObserver;
-	private final CorrectnessWitnessExtractor mWitnessExtractor;
+	private final GraphMLCorrectnessWitnessExtractor mGraphMLWitnessExtractor;
+	private final YamlCorrectnessWitnessExtractor mYamlWitnessExtractor;
 
 	private WrapperNode mRootNode;
 	private ASTDecorator mInputDecorator;
 	private boolean mLastModel;
-	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
+	private IExtractedCorrectnessWitness mWitness;
 
 	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services,
 			final ACSLObjectContainerObserver additionalAnnotationObserver) {
 		assert services != null;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mWitnessExtractor = new CorrectnessWitnessExtractor(mServices);
+		mGraphMLWitnessExtractor = new GraphMLCorrectnessWitnessExtractor(mServices);
+		mYamlWitnessExtractor = new YamlCorrectnessWitnessExtractor(mServices);
 		mAdditionalAnnotationObserver = additionalAnnotationObserver;
 	}
 
@@ -82,13 +84,19 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			extractWitnessInformation((WitnessNode) root);
 			return false;
 		}
+		if (root instanceof Witness) {
+			extractWitnessInformation((Witness) root);
+			return false;
+		}
 
 		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof ASTDecorator)) {
 			mInputDecorator = (ASTDecorator) ((WrapperNode) root).getBacking();
 			if (mInputDecorator.countUnits() == 1) {
-				mWitnessExtractor.setAST(mInputDecorator.getUnit(0).getSourceTranslationUnit());
+				final IASTTranslationUnit translationUnit = mInputDecorator.getUnit(0).getSourceTranslationUnit();
+				mGraphMLWitnessExtractor.setAST(translationUnit);
+				mYamlWitnessExtractor.setAST(translationUnit);
 			} else {
-				mLogger.info("Witness extractor is disabled for multiple files");
+				mLogger.info("Witness extractor is disabled for %d files", mInputDecorator.countUnits());
 			}
 			return false;
 		}
@@ -100,6 +108,12 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		return false;
 	}
 
+	private void extractWitnessInformation(final Witness witness) {
+		if (witness.isCorrectnessWitness()) {
+			mYamlWitnessExtractor.setWitness(witness);
+		}
+	}
+
 	private void extractWitnessInformation(final WitnessNode wnode) {
 		final WitnessGraphAnnotation graphAnnot = WitnessGraphAnnotation.getAnnotation(wnode);
 
@@ -108,7 +122,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			// is currently not handled here. May happen in the future if we want to handle assume
 			break;
 		case CORRECTNESS_WITNESS:
-			mWitnessExtractor.setWitness(wnode);
+			mGraphMLWitnessExtractor.setWitness(wnode);
 			break;
 		default:
 			throw new UnsupportedOperationException("Unknown witness type " + graphAnnot.getWitnessType());
@@ -117,14 +131,17 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() {
-		if (mWitnessExtractor.isReady()) {
-			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
+		if (mGraphMLWitnessExtractor.isReady()) {
+			mWitness = mGraphMLWitnessExtractor.getWitness();
+		}
+		if (mYamlWitnessExtractor.isReady()) {
+			mWitness = mYamlWitnessExtractor.getWitness();
 		}
 		if (mLastModel) {
 			if (mInputDecorator == null) {
 				throw new IllegalArgumentException("There is no C AST present. Did you parse a C file?");
 			}
-			mRootNode = new MainTranslator(mServices, mLogger, mWitnessInvariants, mInputDecorator.getUnits(),
+			mRootNode = new MainTranslator(mServices, mLogger, mWitness, mInputDecorator.getUnits(),
 					mInputDecorator.getSymbolTable(), mAdditionalAnnotationObserver.getAnnotation()).getResult();
 		}
 	}

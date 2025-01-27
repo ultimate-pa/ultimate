@@ -6,6 +6,9 @@
 
 // The write is atomic, the read is not.
 
+extern void __VERIFIER_atomic_begin();
+extern void __VERIFIER_atomic_end();
+
 typedef unsigned long pthread_t;
 
 unsigned int x;

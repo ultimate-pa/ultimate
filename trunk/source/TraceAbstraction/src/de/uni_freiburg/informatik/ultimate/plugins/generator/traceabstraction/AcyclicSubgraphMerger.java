@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
@@ -75,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class AcyclicSubgraphMerger {
 
+	public static final String SUBGRAPH_HAS_A_CYCLE = "Subgraph has a cycle";
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
@@ -98,7 +98,7 @@ public class AcyclicSubgraphMerger {
 				final BlockEncodingBacktranslator backtranslator =
 						new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 				final BasicIcfg<IcfgLocation> newCfg = new IcfgDuplicator(mLogger, mServices,
-						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg, false);
+						icfg.getCfgSmtToolkit().getManagedScript(), backtranslator).copy(icfg, "_ASGM", false);
 				final Map<IcfgLocation, IcfgLocation> newLoc2oldLoc = backtranslator.getLocationMapping();
 				initialCopyWithOldStartLoc = new Subgraph(initialSubgraph, newCfg, newLoc2oldLoc);
 				final Map<IcfgEdge, IcfgEdge> newEdge2oldEdge = (Map) backtranslator.getEdgeMapping();
@@ -141,8 +141,8 @@ public class AcyclicSubgraphMerger {
 		final Subgraph projection;
 		{
 			final String identifier = "InductivityChecksStartingFrom_" + initialCopy.getSubgraphStartLocation();
-			final PathProgramConstructionResult pc =
-					PathProgram.constructPathProgram(identifier, initialCopy.getIcfg(), subgraphEdgesInCopy);
+			final PathProgramConstructionResult pc = PathProgram.constructPathProgram(identifier, initialCopy.getIcfg(),
+					subgraphEdgesInCopy, Collections.singleton(initialCopy.getSubgraphStartLocation()), x -> false);
 			final Map<IcfgLocation, IcfgLocation> copy2projection = pc.getLocationMapping();
 			final Map<IcfgLocation, IcfgLocation> projection2copy =
 					DataStructureUtils.constructReverseMapping(copy2projection);
@@ -157,8 +157,9 @@ public class AcyclicSubgraphMerger {
 			final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES, false);
 			ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
-			final BlockEncoder be = new BlockEncoder(mLogger, beServices, projection.getIcfg(),
-					SimplificationTechnique.NONE, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES_IGNORE_BLOWUP, true);
+			final BlockEncoder be =
+					new BlockEncoder(mLogger, beServices, projection.getIcfg(), SimplificationTechnique.NONE);
 			blockEncoded = new Subgraph(projection, be.getResult(), be.getBacktranslator().getLocationMapping());
 		}
 
@@ -170,7 +171,7 @@ public class AcyclicSubgraphMerger {
 		mEndloc2TransFormula = new HashMap<>();
 		for (final IcfgEdge startSucc : blockEncoded.getSubgraphStartLocation().getOutgoingEdges()) {
 			if (!blockEncoded.getSubgraphEndLocations().contains(startSucc.getTarget())) {
-				throw new AssertionError();
+				throw new IllegalArgumentException(SUBGRAPH_HAS_A_CYCLE);
 			}
 			final IcfgLocation endLoc = startSucc.getTarget();
 			final IcfgLocation endInProjection = blockEncoded.getBacktranslation().get(endLoc);

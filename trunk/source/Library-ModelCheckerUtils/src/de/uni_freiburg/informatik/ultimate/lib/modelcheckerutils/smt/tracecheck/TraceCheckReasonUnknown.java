@@ -90,6 +90,21 @@ public class TraceCheckReasonUnknown {
 		 * only take 2 parameters.
 		 */
 		ULTIMATE_VIOLATES_SMT_LIB_STANDARD_AND_SOLVER_COMPLAINS,
+
+		/**
+		 * SMTInterpol does not support RoundingMode.
+		 */
+		UNSUPPORTED_ROUNDINGMODE,
+
+		/**
+		 * SMTInterpol does not support const arrays of finite types.
+		 */
+		UNSUPPORTED_FINITE_CONST_ARRAYS,
+
+		/**
+		 * MathSAT does not support roundNearestTiesToAway as rounding mode.
+		 */
+		MATHSAT_ROUNDINGMODE,
 	}
 
 	/**
@@ -162,6 +177,8 @@ public class TraceCheckReasonUnknown {
 	}
 
 	private static final String SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
+	private static final String SMTINTERPOL_ROUNDINGMODE_MESSAGE = "Unsupported internal sort: RoundingMode";
+	private static final String SMTINTERPOL_CONST_FINITE_MESSAGE = "Const is only supported for infinite index sort";
 	private static final String CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX = "A non-linear fact";
 	private static final String CVC4_CONST_ARRAY_WRITE_CHAIN_CONNECTION_MESSAGE =
 			"Array theory solver does not yet support write-chains connecting two different constant arrays";
@@ -246,6 +263,18 @@ public class TraceCheckReasonUnknown {
 		} else if (message.startsWith("ERROR: bvadd takes exactly 2 arguments")) {
 			// we use bvadd with larger number of params, e.g., MatSAT complains
 			reason = Reason.ULTIMATE_VIOLATES_SMT_LIB_STANDARD_AND_SOLVER_COMPLAINS;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.equals(SMTINTERPOL_ROUNDINGMODE_MESSAGE)) {
+			// SMTInterpol does not support RoundingMode
+			reason = Reason.UNSUPPORTED_ROUNDINGMODE;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.equals(SMTINTERPOL_CONST_FINITE_MESSAGE)) {
+			// SMTInterpol does not support const arrays for finite types
+			reason = Reason.UNSUPPORTED_FINITE_CONST_ARRAYS;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.contains("unknown symbol: roundNearestTiesToAway")) {
+			// MathSAT does not support roundNearestTiesToAway as rounding mode
+			reason = Reason.MATHSAT_ROUNDINGMODE;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else {
 			reason = Reason.SOLVER_CRASH_OTHER;

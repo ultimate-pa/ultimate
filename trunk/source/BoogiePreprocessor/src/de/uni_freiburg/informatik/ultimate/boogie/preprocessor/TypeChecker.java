@@ -724,7 +724,10 @@ public class TypeChecker extends BaseObserver {
 			}
 			for (final Specification inv : whilestmt.getInvariants()) {
 				if (inv instanceof LoopInvariantSpecification) {
-					typecheckExpression(((LoopInvariantSpecification) inv).getFormula());
+					final BoogieType t2 = typecheckExpression(((LoopInvariantSpecification) inv).getFormula());
+					if (!t2.equals(BoogieType.TYPE_BOOL) && !t2.equals(BoogieType.TYPE_ERROR)) {
+						typeError(statement, "Loop invariant is not boolean: " + statement);
+					}
 				} else {
 					TypeCheckHelper.internalError("Unknown while specification: " + inv);
 				}
@@ -824,8 +827,6 @@ public class TypeChecker extends BaseObserver {
 			for (int i = 0; i < join.getLhs().length; i++) {
 				typecheckLeftHandSide(join.getLhs()[i]);
 			}
-		} else if (statement instanceof AtomicStatement) {
-			// Nothing to check (yet).
 		} else {
 			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
 		}

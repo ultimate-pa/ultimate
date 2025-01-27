@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
+import java.util.regex.Pattern;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.expectedresult.IExpectedResultFinder;
@@ -49,7 +51,21 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	/**
 	 *
 	 * @param ultimateRunDefinition
+	 * @param unknownIsJUnitSuccess
+	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
+	 *            for JUnit.
 	 *
+	 * @param overridenExpectedVerdict
+	 *            The expected verdict overridden in a separate file, null if not present.
+	 */
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition,
+			final boolean unknownIsJUnitSuccess, final String overridenExpectedVerdict) {
+		super(ultimateRunDefinition, unknownIsJUnitSuccess, overridenExpectedVerdict);
+	}
+
+	/**
+	 *
+	 * @param ultimateRunDefinition
 	 * @param unknownIsJUnitSuccess
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if false, the TestResult UNKNOWN is a failure
 	 *            for JUnit.
@@ -83,6 +99,19 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		@Override
 		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
 				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			if (mOverridenExpectedVerdict != null) {
+				final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
+				final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+				final Pattern pattern = Pattern.compile(mOverridenExpectedVerdict, Pattern.CASE_INSENSITIVE);
+				if (pattern.matcher(overallResult.toString()) != null || pattern.matcher(overallResultMsg) != null) {
+					mTestResult = TestResult.IGNORE;
+				} else {
+					mTestResult = TestResult.FAIL;
+				}
+				mCategory = overallResult + " (Expected to match :" + mOverridenExpectedVerdict + ")";
+				mMessage = " UltimateResult: " + overallResultMsg;
+				return;
+			}
 			evaluateExpectedResult(expectedResultFinder);
 			final boolean testGeneration = true;
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
@@ -210,6 +239,14 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 					mTestResult = TestResult.SUCCESS;
 				} else {
 					mTestResult = TestResult.UNKNOWN;
+				}
+				break;
+			case INVALID_ANNOTATION:
+			case VALID_ANNOTATION:
+				if (expectedResult == overallResult) {
+					mTestResult = TestResult.SUCCESS;
+				} else {
+					mTestResult = TestResult.FAIL;
 				}
 				break;
 			case UNKNOWN:

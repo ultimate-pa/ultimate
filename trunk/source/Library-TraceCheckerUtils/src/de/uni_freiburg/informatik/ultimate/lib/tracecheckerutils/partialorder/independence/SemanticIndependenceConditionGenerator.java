@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.abduction.Abducer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
@@ -59,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 public class SemanticIndependenceConditionGenerator {
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 
 	private final ManagedScript mMgdScript;
@@ -68,6 +65,7 @@ public class SemanticIndependenceConditionGenerator {
 	private final ILogger mLogger;
 	private final BasicPredicateFactory mFactory;
 	private final boolean mSymmetric;
+	private final boolean mStrongQuantifierElimination;
 
 	/**
 	 * Create a new instance.
@@ -84,11 +82,35 @@ public class SemanticIndependenceConditionGenerator {
 	 */
 	public SemanticIndependenceConditionGenerator(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final BasicPredicateFactory factory, final boolean symmetric) {
+		this(services, mgdScript, factory, symmetric, false);
+	}
+
+	/**
+	 * Create a new instance.
+	 *
+	 * @param services
+	 *            Ultimate services instance
+	 * @param mgdScript
+	 *            A script that is used for name management, satisfiability checking and quantifier elimination.
+	 * @param factory
+	 *            A factory that is used to create {@link IPredicate} instances representing the conditions
+	 * @param symmetric
+	 *            Whether to generate conditions that are strong enough for symmetric independence (otherwise conditions
+	 *            might only be strong enough for non-symmetric independence).
+	 * @param strongQuantifierElimination
+	 *            If set to true, a more expensive and more powerful quantifier elimination algorithm is used. This
+	 *            helps in cases where otherwise no independence condition can be found, because solvers return UNKNOWN
+	 *            for complex quantified formulae.
+	 */
+	public SemanticIndependenceConditionGenerator(final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final BasicPredicateFactory factory, final boolean symmetric,
+			final boolean strongQuantifierElimination) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(SemanticIndependenceConditionGenerator.class);
 		mMgdScript = mgdScript;
 		mFactory = factory;
 		mSymmetric = symmetric;
+		mStrongQuantifierElimination = strongQuantifierElimination;
 	}
 
 	/**
@@ -133,9 +155,11 @@ public class SemanticIndependenceConditionGenerator {
 		forbidden.removeAll(unification.getInVars().values());
 		final Term condition;
 		if (mSymmetric) {
-			condition = new Abducer(mServices, mMgdScript, forbidden).abduceEquivalence(lhsFormula, rhsFormula);
+			condition = new Abducer(mServices, mMgdScript, forbidden, mStrongQuantifierElimination)
+					.abduceEquivalence(lhsFormula, rhsFormula);
 		} else {
-			condition = new Abducer(mServices, mMgdScript, forbidden).abduce(lhsFormula, rhsFormula);
+			condition = new Abducer(mServices, mMgdScript, forbidden, mStrongQuantifierElimination).abduce(lhsFormula,
+					rhsFormula);
 		}
 		if (condition == null) {
 			return null;
@@ -162,7 +186,7 @@ public class SemanticIndependenceConditionGenerator {
 		final boolean tryAuxVarElimination = true;
 
 		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mMgdScript, simplify, tryAuxVarElimination,
-				false, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, Arrays.asList(first, second));
+				false, SIMPLIFICATION_TECHNIQUE, Arrays.asList(first, second));
 	}
 
 	private final UnmodifiableTransFormula withGuard(final IPredicate guard, final UnmodifiableTransFormula tf) {
@@ -173,13 +197,14 @@ public class SemanticIndependenceConditionGenerator {
 	}
 
 	private final Term quantify(final Set<TermVariable> vars, final Term formula) {
-		Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS, vars, formula);
-		final boolean eliminateLight = true;
-		if (eliminateLight) {
-			return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
-		} else {
-			return PartialQuantifierElimination.eliminate(mServices, mMgdScript, quantified,
-					SIMPLIFICATION_TECHNIQUE);
+		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS, vars, formula);
+		if (mStrongQuantifierElimination) {
+			return PartialQuantifierElimination.eliminate(mServices, mMgdScript, quantified, SIMPLIFICATION_TECHNIQUE);
 		}
+		return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
+	}
+
+	public boolean isSymmetric() {
+		return mSymmetric;
 	}
 }

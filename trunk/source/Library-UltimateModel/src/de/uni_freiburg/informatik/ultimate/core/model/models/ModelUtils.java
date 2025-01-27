@@ -187,6 +187,20 @@ public final class ModelUtils {
 	}
 
 	/**
+	 * Get some {@link IAnnotations} implementer from an {@link IElement} if present. The key is assumed to be the name
+	 * of the annotation class.
+	 *
+	 * @param node
+	 *            The {@link IElement} instance which has the annotation
+	 * @param clazz
+	 *            The annotation class
+	 * @return An instance of a type implementing {@link IAnnotations} and annotated to <code>node</code>
+	 */
+	public static <T extends IAnnotations> T getAnnotation(final IElement node, final Class<T> clazz) {
+		return getAnnotation(node, clazz.getName(), clazz::cast);
+	}
+
+	/**
 	 * Get some {@link IAnnotations} implementer from an {@link IElement} with the matching key if present.
 	 *
 	 * @param node

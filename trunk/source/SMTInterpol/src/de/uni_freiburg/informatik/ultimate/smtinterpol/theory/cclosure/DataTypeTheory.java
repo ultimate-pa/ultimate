@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.ITheory;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dpll.Literal;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.proof.SourceAnnotation;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.theory.cclosure.CCAnnotation.RuleKind;
-import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ArrayQueue;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.ScopedArrayList;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
 /**
@@ -86,11 +86,7 @@ public class DataTypeTheory implements ITheory {
 	/**
 	 * Collect all created terms to check after a backtrack if their equalities are still valid.
 	 */
-	private ArrayQueue<CCAppTerm> mRecheckOnBacktrack = new ArrayQueue<>();
-	/**
-	 * This a cache for {@link #isInfinite(Sort, LinkedHashSet)}
-	 */
-	private final LinkedHashMap<Sort, Boolean> mInfinityMap = new LinkedHashMap<>();
+	private final ScopedArrayList<CCAppTerm> mRecheckOnBacktrack = new ScopedArrayList<>();
 	/**
 	 * This maps from a pair of equal terms to a list of pairs of equal terms.
 	 * The equalities of the term pairs in the list are the reason for the equality of the key pair
@@ -711,15 +707,12 @@ public class DataTypeTheory implements ITheory {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override
-	public Clause backtrackComplete() {
-		// if we constructed new terms, their equalities have been removed in the backtracking process,
-		// so we need to check if they are still valid.
-		final ArrayQueue<CCAppTerm> newRecheckOnBacktrack = new ArrayQueue<>();
-		while (!mRecheckOnBacktrack.isEmpty()) {
+	public void recheckTrigger() {
+		final Iterator<CCAppTerm> iter = mRecheckOnBacktrack.iterator();
+		while (iter.hasNext()) {
 			CCTerm constructorCCTerm = null;
 			ApplicationTerm constructor = null;
-			final CCAppTerm checkTerm = mRecheckOnBacktrack.poll();
+			final CCAppTerm checkTerm = iter.next();
 			final ApplicationTerm selectOrIsTerm = (ApplicationTerm) checkTerm.mFlatTerm;
 			final FunctionSymbol selectorOrTester = selectOrIsTerm.getFunction();
 			final CCTerm selectOrIsArg = checkTerm.getArg();
@@ -732,6 +725,7 @@ public class DataTypeTheory implements ITheory {
 				}
 			}
 			if (constructor == null) {
+				iter.remove();
 				continue;
 			}
 			SymmetricPair<CCTerm>[] reason;
@@ -743,35 +737,43 @@ public class DataTypeTheory implements ITheory {
 			if (selectorOrTester.isSelector()) {
 				final String selName = selectorOrTester.getName();
 				final Constructor c = getConstructor(selectorOrTester);
-				if (c.getName().equals(constructor.getFunction().getName())) {
-					for (int i = 0; i < c.getSelectors().length; i++) {
-						if (selName.equals(c.getSelectors()[i])) {
-							final CCTerm arg = mClausifier.getCCTerm(constructor.getParameters()[i]);
-							if (arg.mRepStar != checkTerm.mRepStar) {
-								final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm, arg);
-								final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, provedEq, reason,
-										constructorCCTerm);
-								addPendingLemma(lemma);
-							}
-							newRecheckOnBacktrack.add(checkTerm);
+				assert c.getName().equals(constructor.getFunction().getName());
+				for (int i = 0; i < c.getSelectors().length; i++) {
+					if (selName.equals(c.getSelectors()[i])) {
+						final CCTerm arg = mClausifier.getCCTerm(constructor.getParameters()[i]);
+						if (arg.mRepStar != checkTerm.mRepStar) {
+							final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm, arg);
+							final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_PROJECT, provedEq, reason,
+									constructorCCTerm);
+							addPendingLemma(lemma);
 						}
 					}
 				}
 			} else {
-				if (constructor.getFunction().getName().equals(selectorOrTester.getIndices()[0])) {
-					final CCTerm ccTrue = mClausifier.getCCTerm(mTheory.mTrue);
-					if (ccTrue.mRepStar != checkTerm.mRepStar) {
-						final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm,
-								mClausifier.getCCTerm(mTheory.mTrue));
-						final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, provedEq, reason,
-								constructorCCTerm);
-						addPendingLemma(lemma);
-					}
-					newRecheckOnBacktrack.add(checkTerm);
+				// If appTerm is a "is" function, check if it tests for the constructor of mArg.
+				// If so set the function equal to true else to false.
+				final Term truthValue;
+				if (selectorOrTester.getIndices()[0].equals(constructor.getFunction().getName())) {
+					truthValue = mClausifier.getTheory().mTrue;
+				} else {
+					truthValue = mClausifier.getTheory().mFalse;
+				}
+				final CCTerm ccTruthValue = mClausifier.getCCTerm(truthValue);
+				if (ccTruthValue.mRepStar != checkTerm.mRepStar) {
+					final SymmetricPair<CCTerm> provedEq = new SymmetricPair<>(checkTerm, ccTruthValue);
+					final DataTypeLemma lemma = new DataTypeLemma(RuleKind.DT_TESTER, provedEq, reason,
+							constructorCCTerm);
+					addPendingLemma(lemma);
 				}
 			}
 		}
-		mRecheckOnBacktrack = newRecheckOnBacktrack;
+	}
+
+	@Override
+	public Clause backtrackComplete() {
+		// if we constructed new terms, their equalities have been removed in the backtracking process,
+		// so we need to check if they are still valid.
+		recheckTrigger();
 		return processPendingLemmas();
 	}
 
@@ -789,11 +791,15 @@ public class DataTypeTheory implements ITheory {
 
 	@Override
 	public void push() {
+		mRecheckOnBacktrack.beginScope();
 	}
 
 	@Override
 	public void pop() {
-		mInfinityMap.clear();
+		mPendingLemmas.clear();
+		mPendingEqualities.clear();
+		mRecheckOnBacktrack.endScope();
+		recheckTrigger();
 	}
 
 	@Override
@@ -851,7 +857,7 @@ public class DataTypeTheory implements ITheory {
 		// check if only selectors with finite return sort are missing and build them
 		final Sort dataTypeSort = ccterm.mFlatTerm.getSort();
 		for (int i = 0; i < constr.getArgumentSorts().length; i++) {
-			if (isInfinite(constr.getArgumentSorts()[i])) {
+			if (mClausifier.isStablyInfinite(constr.getArgumentSorts()[i].mapSort(dataTypeSort.getArguments()))) {
 				final FunctionSymbol selector = mTheory.getFunction(constr.getSelectors()[i], dataTypeSort);
 				if (mCClosure.getAllFuncAppsForArg(selector, ccterm, 0).isEmpty()) {
 					return true;
@@ -887,67 +893,6 @@ public class DataTypeTheory implements ITheory {
 		}
 	}
 
-	/**
-	 * This function determines if a given sort is infinite or not.
-	 *
-	 * @param sort the sort in question.
-	 * @return True if sort is infinite else False
-	 */
-	private boolean isInfinite(final Sort sort) {
-		final Boolean cacheVal = mInfinityMap.get(sort);
-		if (cacheVal != null) {
-			return cacheVal;
-		}
-		final ArrayDeque<Sort> todo = new ArrayDeque<>();
-		final Set<Sort> dependent = new LinkedHashSet<>();
-		todo.push(sort);
-		todo_loop: while (!todo.isEmpty()) {
-			final Sort currSort = todo.pop();
-			if (currSort.getSortSymbol().isDatatype() || currSort.isArraySort()) {
-				final Set<Sort> subSorts = new LinkedHashSet<>();
-				if (currSort.getSortSymbol().isDatatype()) {
-					for (final Constructor c : ((DataType) currSort.getSortSymbol()).getConstructors()) {
-						subSorts.addAll(Arrays.asList(c.getArgumentSorts()));
-					}
-				} else {
-					subSorts.addAll(Arrays.asList(currSort.getArguments()));
-				}
-				final Iterator<Sort> iterator = subSorts.iterator();
-				while (iterator.hasNext()) {
-					final Sort argSort = iterator.next();
-					final Boolean cv = mInfinityMap.get(argSort);
-					if (cv != null) {
-						iterator.remove();
-						if (cv == true) {
-							mInfinityMap.put(currSort, true);
-							dependent.remove(currSort);
-							continue todo_loop;
-						}
-					} else if (dependent.contains(argSort)) {
-						mInfinityMap.put(currSort, true);
-						dependent.remove(currSort);
-						continue todo_loop;
-					}
-				}
-				if (!subSorts.isEmpty()) {
-					todo.push(currSort);
-					dependent.add(currSort);
-					for (final Sort s : subSorts) {
-						todo.push(s);
-					}
-				} else {
-					mInfinityMap.put(currSort, false);
-					dependent.remove(currSort);
-				}
-			} else if (currSort.isNumericSort()) {
-				mInfinityMap.put(currSort, true);
-			} else {
-				mInfinityMap.put(currSort, false);
-			}
-		}
-
-		return mInfinityMap.get(sort);
-	}
 
 	/**
 	 * Find the corresponding constructor to the given selector function.
@@ -993,7 +938,7 @@ public class DataTypeTheory implements ITheory {
 		for (int i = 0; i < args.length; i++) {
 			if (args[i] == null) {
 				final Sort sort = constr.getParameterSorts()[i];
-				if (isInfinite(sort) && !foundInfinite) {
+				if (mClausifier.isStablyInfinite(sort) && !foundInfinite) {
 					args[i] = modelBuilder.getModel().extendFresh(sort);
 					foundInfinite = true;
 				} else {

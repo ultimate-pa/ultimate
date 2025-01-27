@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.UnaryOperator;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -41,13 +42,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequence;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.InvariantBasedSimplification;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.BvToIntTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.HeapSepIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.CopyingTransformulaTransformer;
@@ -70,6 +72,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ConjunctiveAbstractInterpretationUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ConjunctiveAbstractInterpretationUtils.Widening;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
@@ -77,8 +81,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.DefaultEqualityAnalysisProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntToBvBackTranslation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -96,19 +100,16 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IcfgTransformationBacktranslator mBacktranslator;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private IIcfg<?> mResult;
 
 	public IcfgTransformationObserver(final ILogger logger, final IUltimateServiceProvider services,
-			final IcfgTransformationBacktranslator backtranslator, final SimplificationTechnique simplTech,
-			final XnfConversionTechnique xnfConvTech) {
+			final IcfgTransformationBacktranslator backtranslator, final SimplificationTechnique simplTech) {
 		mLogger = logger;
 		mServices = services;
 		mBacktranslator = backtranslator;
 		mSimplificationTechnique = simplTech;
-		mXnfConversionTechnique = xnfConvTech;
 		mResult = null;
 	}
 
@@ -212,6 +213,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 					ConstraintsForBitwiseOperations.NONE);
 		case MAP_ELIMINATION_MONNIAUX:
 			return (IIcfg<OUTLOC>) applyMapEliminationMonniaux((IIcfg<IcfgLocation>) icfg, backtranslationTracker);
+		case ABSTRACT_INTERPRETATION_BASED_SIMPLIFICATION:
+			return applyAbstractInterpretationBasedSimplification(mLogger, icfg, locFac, outlocClass,
+					backtranslationTracker, fac, mServices);
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
@@ -351,12 +355,31 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		transitionPreprocessors.add(new RewriteIte());
 		transitionPreprocessors.add(new SimplifyPreprocessor(services, SimplificationTechnique.SIMPLIFY_QUICK));
 		transitionPreprocessors.add(new ModuloNeighborTransformation(services, true));
-		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+		transitionPreprocessors.add(new DNF(services));
 
 		final ITransformulaTransformer transformer =
 				new LocalTransformer(transitionPreprocessors, icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
+		return icfgTransformer.getResult();
+	}
+
+
+	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyAbstractInterpretationBasedSimplification(
+			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
+			final Class<OUTLOC> outlocClass, final IcfgTransformationBacktranslator backtranslationTracker,
+			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
+
+		final Map<IcfgLocation, IPredicate> invariants = ConjunctiveAbstractInterpretationUtils.computeInvariants(services,
+				icfg, Widening.INTERSECTION);
+		final InvariantBasedSimplification transformer = new InvariantBasedSimplification(services, logger,
+				icfg.getCfgSmtToolkit(), invariants);
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
+				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
+		logger.info(String.format(
+				"Processed %s edges. Simplified %s edges. %s edges simplified from non-false term to false. Overall treesize reduction %s.",
+				transformer.getEdges(), transformer.getSimplifiedEdges(), transformer.getSimplifiedToFalse(),
+				transformer.getOverallTreesizeReduction()));
 		return icfgTransformer.getResult();
 	}
 
@@ -387,7 +410,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
-		transformers.add(new LocalTransformer(new DNF(mServices, mXnfConversionTechnique),
+		transformers.add(new LocalTransformer(new DNF(mServices),
 				icfg.getCfgSmtToolkit().getManagedScript(), fac));
 		final MapEliminationSettings settings = getMapElimSettings();
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
@@ -414,8 +437,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final boolean onlyArgumentsInFormula =
 				ups.getBoolean(IcfgTransformationPreferences.LABEL_MAPELIM_ONLY_ARGUMENTS_IN_FORMULA);
 		return new MapEliminationSettings(addInequalities, onlyTrivialImplicationsForModifiedArguments,
-				onlyTrivialImplicationsArrayWrite, onlyArgumentsInFormula, mSimplificationTechnique,
-				mXnfConversionTechnique);
+				onlyTrivialImplicationsArrayWrite, onlyArgumentsInFormula, mSimplificationTechnique);
 	}
 
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {

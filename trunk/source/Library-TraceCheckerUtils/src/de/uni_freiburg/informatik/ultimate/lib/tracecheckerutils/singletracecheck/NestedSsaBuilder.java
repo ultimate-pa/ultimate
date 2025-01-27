@@ -36,7 +36,6 @@ import java.util.Stack;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -147,16 +146,16 @@ public class NestedSsaBuilder<L extends IAction> {
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
-	public NestedSsaBuilder(final NestedWord<L> trace, final ManagedScript managedTcScript,
-			final CfgSmtToolkit cfgSmtToolkit,
+	public NestedSsaBuilder(final ManagedScript managedTcScript, final CfgSmtToolkit cfgSmtToolkit,
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
 		mLogger = logger;
 		mTcScript = managedTcScript.getScript();
 		mCfgWorkerScript = cfgSmtToolkit.getManagedScript().getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = cfgSmtToolkit.getModifiableGlobalsTable();
-		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>());
-		mVariable2Constant = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Map<Term, Term>>());
+		mSsa = new ModifiableNestedFormulas<>(nestedTransFormulas.getCounterexample(), new TreeMap<Integer, Term>());
+		mVariable2Constant = new ModifiableNestedFormulas<>(nestedTransFormulas.getCounterexample(),
+				new TreeMap<Integer, Map<Term, Term>>());
 		mTransferToScriptNeeded = managedTcScript != cfgSmtToolkit.getManagedScript();
 		if (mTransferToScriptNeeded) {
 			mTermTransferrer = new TermTransferrer(cfgSmtToolkit.getManagedScript().getScript(), mTcScript);
@@ -574,6 +573,9 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public void versionAssignedVars(final int currentPos) {
+			// TODO Matthias 2023-11-01. If this is a call/return of a recursive procedure
+			// we may give too many variables a new version, since getAssignedVars() returns
+			// also the variables of the old scope.
 			for (final IProgramVar bv : mTF.getAssignedVars()) {
 				final Term versioneered = setCurrentVarVersion(bv, currentPos);
 				mConstants2BoogieVar.put(versioneered, bv);

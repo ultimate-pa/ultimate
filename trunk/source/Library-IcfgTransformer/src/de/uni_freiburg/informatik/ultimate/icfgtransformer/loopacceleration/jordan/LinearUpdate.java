@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.jordan;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.AffineTerm;
@@ -46,9 +48,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.Polynomia
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
 
 /**
  *
@@ -85,28 +87,112 @@ public class LinearUpdate {
 		}
 		final Set<Term> readonlyVariables = new HashSet<>();
 		final Map<TermVariable, AffineTerm> updateMap = new HashMap<>();
-
-		final List<MultiDimensionalSelect> arrayReadsWithFixedIndex = new ArrayList<>();
+		final List<MultiDimensionalSelect> arrayReads = new ArrayList<>();
 		for (final Entry<IProgramVar, Term> update : su.getDeterministicAssignment().entrySet()) {
-			final Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> quad = extractLinearUpdate(
+			final UpdateExpression ue = extractLinearUpdate(
 					mgdScript, termVariablesOfModified, update.getValue());
-			if (quad.getFirst() == null) {
-				assert quad.getSecond() == null;
-				assert quad.getThird() == null;
-				assert quad.getFourth() != null;
-				return new Pair<>(null, quad.getFourth());
+			if (ue.getmErrorMessage() != null) {
+				return new Pair<>(null, ue.getmErrorMessage());
 			} else {
-				assert quad.getSecond() != null;
-				assert quad.getThird() != null;
-				assert quad.getFourth() == null;
-				updateMap.put(update.getKey().getTermVariable(), quad.getFirst());
-				readonlyVariables.addAll(quad.getSecond());
-				arrayReadsWithFixedIndex.addAll(quad.getThird());
+				final List<String> problems = new ArrayList<>();
+				for (final MultiDimensionalSelect ar : ue.getmArrayReads()) {
+					if (isMoving(ar.getIndex(), termVariablesOfModified)) {
+						final String errorMessage;
+						if (termVariablesOfModified.contains(ar.getArray())) {
+							errorMessage = String.format("Array read from modified array %s at modified index %s.",
+									ar.getArray(), ar.getIndex());
+						} else {
+							errorMessage = String.format("Array read from non-modified array %s at modified index %s.",
+									ar.getArray(), ar.getIndex());
+						}
+						problems.add(errorMessage);
+					}
+				}
+				if (!problems.isEmpty()) {
+					final StringBuilder sb = new StringBuilder();
+					if (Arrays.asList(update.getValue().getFreeVars()).contains(update.getKey().getTermVariable())) {
+						sb.append("Forever unsupported. ");
+						sb.append(String.format(
+								"Update of scalar variable %s contains this variable and %s array reads whose index is modified. ",
+								update.getKey(), problems.size()));
+					} else {
+						sb.append(String.format(
+								"Update of scalar variable %s contains %s array reads whose index is modified. ",
+								update.getKey(), problems.size()));
+					}
+					sb.append(problems);
+					sb.append(" Modified variables: ");
+					sb.append(termVariablesOfModified);
+					final String errorMessage = sb.toString();
+					throw new AssertionError(errorMessage);
+				}
+
+				updateMap.put(update.getKey().getTermVariable(), ue.getmAffineTerm());
+				readonlyVariables.addAll(ue.getmReadonlyVariables());
+				arrayReads.addAll(ue.getmArrayReads());
 			}
 		}
+//		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
+//				.entrySet()) {
+//			final MultiDimensionalNestedStore mdns = entry.getValue();
+//			for (int i = 0; i < mdns.getIndices().size(); i++) {
+//				final boolean indexIsMoving = isMoving(mdns.getIndices().get(i), termVariablesOfModified);
+//				if (!indexIsMoving) {
+//					throw new AssertionError(
+//							String.format("Array update at fixed index %s with value %s. We have %s updates in total.",
+//									mdns.getIndices().get(i), mdns.getValues().get(i), mdns.getIndices().size()));
+//				}
+//			}
+//		}
+		boolean someFixedIndex = false;
+		final List<String> problems = new ArrayList<>();
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 				.entrySet()) {
-			for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex) {
+			final MultiDimensionalNestedStore mdns = entry.getValue();
+			for (int i = 0; i < mdns.getIndices().size(); i++) {
+				final boolean indexIsMoving = isMoving(mdns.getIndices().get(i), termVariablesOfModified);
+				someFixedIndex |= !indexIsMoving;
+				if (isNondeterministicUpdate(i, mdns, entry.getKey().getTermVariable())) {
+					if (indexIsMoving) {
+						problems.add(String.format("Nondeterministic update of %s at moving index %s", mdns.getArray(), mdns.getIndices().get(i)));
+					} else {
+						problems.add(String.format("Nondeterministic update of %s at fixed index %s", mdns.getArray(), mdns.getIndices().get(i)));
+					}
+				} else {
+					//deterministic update
+					final UpdateExpression ue = extractLinearUpdate(mgdScript, termVariablesOfModified,
+							mdns.getValues().get(i));
+					if (ue.getmErrorMessage() != null) {
+						throw new AssertionError(ue.getmErrorMessage());
+					}
+					final StringBuilder sb = new StringBuilder();
+					sb.append("Deterministic update of ");
+					sb.append(mdns.getArray());
+					sb.append(" at ");
+					sb.append(indexIsMoving ? "moving" : "fixed");
+					sb.append(" index ");
+					sb.append(mdns.getIndices().get(i));
+					sb.append(" with");
+					if (ue.getmAffineTerm().getVariable2Coefficient().isEmpty()) {
+						sb.append(" constant value ");
+					} else {
+						sb.append(" value ");
+					}
+					sb.append(ue.getmAffineTerm());
+					sb.append(". ");
+					for (final MultiDimensionalSelect ar : ue.getmArrayReads()) {
+						sb.append(" Update contains array read at ");
+						final boolean readIndexIsMoving = isMoving(ar.getIndex(), termVariablesOfModified);
+						sb.append(readIndexIsMoving ? "moving" : "fixed");
+						sb.append(" index ");
+						sb.append(ar.getIndex());
+						sb.append(". ");
+					}
+					problems.add(sb.toString());
+				}
+			}
+
+			for (final MultiDimensionalSelect mds : arrayReads) {
 				if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 					final String errorMessage = String.format(
 							"Acceleration would only be sound under the assumption that index %s is different each index in %s",
@@ -115,54 +201,66 @@ public class LinearUpdate {
 				}
 			}
 		}
+		if (someFixedIndex) {
+			throw new AssertionError(problems);
+		}
+//		if (!problems.isEmpty()) {
+//			throw new AssertionError(problems);
+//		}
 		for (final Entry<IProgramVar, MultiDimensionalNestedStore> update : su.getDeterministicArrayWrites()
 				.entrySet()) {
-			if (update.getValue().getIndices().size() != 1) {
-				throw new UnsupportedOperationException(String.format("Nested stores! Array: %s Indices: %s Values: %s",
-						update.getKey(), update.getValue().getIndices(), update.getValue().getValues()));
-			}
+//			if (update.getValue().getIndices().size() != 1) {
+//				throw new UnsupportedOperationException(String.format("Nested stores! Array: %s Indices: %s Values: %s",
+//						update.getKey(), update.getValue().getIndices(), update.getValue().getValues()));
+//			}
 			final Set<TermVariable> freeVarsOfIndex = update.getValue().getIndices().get(0).getFreeVars();
 			freeVarsOfIndex.retainAll(termVariablesOfModified);
 			if (!freeVarsOfIndex.isEmpty()) {
 				// index is moving
 				continue;
 			}
-			final Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> quad = extractLinearUpdate(
+			final UpdateExpression quad = extractLinearUpdate(
 					mgdScript, termVariablesOfModified, update.getValue().getValues().get(0));
-			if (quad.getFirst() == null) {
-				assert quad.getSecond() == null;
-				assert quad.getThird() == null;
-				assert quad.getFourth() != null;
-				return new Pair<>(null, quad.getFourth());
+			if (quad.getmErrorMessage() == null) {
+				return new Pair<>(null, quad.getmErrorMessage());
 			} else {
-				assert quad.getSecond() != null;
-				assert quad.getThird() != null;
-				assert quad.getFourth() == null;
-				final List<MultiDimensionalSelect> arrayReadsWithFixedIndex1 = quad.getThird();
+				final List<MultiDimensionalSelect> arrayReadsWithFixedIndex1 = quad.getmArrayReads();
 				for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
 						.entrySet()) {
 					for (final MultiDimensionalSelect mds : arrayReadsWithFixedIndex1) {
 						if (mds.getArray().equals(entry.getKey().getTermVariable())) {
 							final String errorMessage = String.format(
 									"Fixed index update would only be sound under the assumption that index %s and index %s are different. We have %s reads in this update and %s writes in the loop.",
-									entry.getValue().getIndices(), mds.getIndex(), arrayReadsWithFixedIndex.size(),
+									entry.getValue().getIndices(), mds.getIndex(), arrayReads.size(),
 									su.getDeterministicArrayWrites().size());
 							return new Pair<>(null, errorMessage);
 						}
 					}
 				}
 			}
+			final String errorMessage = String.format("Fixed index update on array %s at index %s with value %s.",
+					update.getValue().getArray(), update.getValue().getIndices().get(0),
+					update.getValue().getValues().get(0));
+			return new Pair<>(null, errorMessage);
+
 		}
 		return new Pair<>(new LinearUpdate(updateMap, readonlyVariables), null);
 	}
 
-	private static Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String> extractLinearUpdate(
+	private static boolean isNondeterministicUpdate(final int i, final MultiDimensionalNestedStore mdns, final TermVariable array) {
+		final ArrayIndex index = mdns.getIndices().get(i);
+		final Term value = mdns.getValues().get(i);
+		final MultiDimensionalSelect mds = MultiDimensionalSelect.of(value);
+		return mds != null && mds.getArray() == array && mds.getIndex().equals(index);
+	}
+
+	private static UpdateExpression extractLinearUpdate(
 			final ManagedScript mgdScript, final Set<TermVariable> termVariablesOfModified, final Term term) {
 		final IPolynomialTerm polyRhs = (IPolynomialTerm) new PolynomialTermTransformer(mgdScript.getScript())
 				.transform(term);
 		final Map<Term, Rational> variables2coeffcient = new HashMap<>();
 		final Set<Term> readonlyVariables = new HashSet<>();
-		final List<MultiDimensionalSelect> arrayReadsWithFixedIndex = new ArrayList<>();
+		final List<MultiDimensionalSelect> arrayReads = new ArrayList<>();
 		for (final Entry<Monomial, Rational> entry : polyRhs.getMonomial2Coefficient().entrySet()) {
 			final Term monomialAsTerm = entry.getKey().toTerm(mgdScript.getScript());
 			if (termVariablesOfModified.contains(monomialAsTerm)) {
@@ -173,62 +271,56 @@ public class LinearUpdate {
 				variables2coeffcient.put(monomialAsTerm, entry.getValue());
 				continue;
 			}
+
 			final TermVariable someOccuringModifiedTermVariable = containsTermVariableOfModified(
 					termVariablesOfModified, monomialAsTerm);
+			final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
+			if (mds != null) {
+				// we have to report this array read because we might need the assumption that
+				// its index is different from indices that to which we write
+				arrayReads.add(mds);
+				variables2coeffcient.put(monomialAsTerm, entry.getValue());
+				if (someOccuringModifiedTermVariable == null) {
+					readonlyVariables.add(monomialAsTerm);
+				}
+				continue;
+				// TODO 2023-10-29 Apply recursively to index entries to check whether they are
+				// linear.
+			}
 			if (someOccuringModifiedTermVariable == null) {
 				// Case where monomial is some term that does not contain a modified variable,
 				// we will consider this term as a readonly variable
-				final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
-				if (mds.getIndex().size() > 0) {
-					// we have to report this array read because we might need the assumption that
-					// its index is different from indices that to which we write
-					arrayReadsWithFixedIndex.add(mds);
-				} else {
-					// If the term is not a select term, are there select terms inside?
-					// This occurs hopefully very seldomly and we have to analyze how we are going
-					// to handle this case
-					final List<MultiDimensionalSelect> innerArrayWrites = MultiDimensionalSelect.extractSelectDeep(term);
-					if (!innerArrayWrites.isEmpty()) {
-						final String errorMessage = String.format("Yet unsupported inner array read. Monomial %s",
-								monomialAsTerm);
-						return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-								errorMessage);
-					}
-				}
 				readonlyVariables.add(monomialAsTerm);
 				variables2coeffcient.put(monomialAsTerm, entry.getValue());
+				// If the term is not a select term (handled above), are there select terms
+				// inside? This occurs hopefully very seldomly and we have to analyze how we are
+				// going to handle this case
+				final List<MultiDimensionalSelect> innerArrayWrites = MultiDimensionalSelect.extractSelectDeep(term);
+				if (!innerArrayWrites.isEmpty()) {
+					final String errorMessage = String
+							.format("Yet unsupported: Array read inside variable. Monomial %s", monomialAsTerm);
+					return new UpdateExpression(null, null, null, errorMessage);
+				}
 			} else {
 				// Case where monomial is not an updated variable but contains an updated
 				// variable. We cannot handle this case, but we want to distinguish several
 				// cases in order to return an improved error message.
+				final String errorMessage;
 				if (!entry.getKey().isLinear()) {
 					// monomial is nontrivial (i.e., some multiplication of non-literals)
 					// nonlinear update that our loop acceleration cannot handle
-					final String errorMessage = String.format("Nonlinear update. Monomial %s, Updated variable %s",
+					 errorMessage = String.format("Nonlinear update. Monomial %s, Updated variable %s",
 							monomialAsTerm, someOccuringModifiedTermVariable);
-					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-							errorMessage);
-				}
-				final MultiDimensionalSelect mds = MultiDimensionalSelect.of(monomialAsTerm);
-				if (mds != null) {
-					final Set<TermVariable> freeVarsOfIndex = mds.getIndex().getFreeVars();
-					freeVarsOfIndex.retainAll(termVariablesOfModified);
-					final String errorMessage = String.format(
-							"Non-array update contains array read whose index is moving. Array read %s, modified variable %s",
-							mds, freeVarsOfIndex);
-					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-							errorMessage);
 				} else {
-					final String errorMessage = String.format(
-							"Monomial contains modified variable. Monomial %s, Variable %s", monomialAsTerm,
-							someOccuringModifiedTermVariable);
-					return new Quad<AffineTerm, Set<Term>, List<MultiDimensionalSelect>, String>(null, null, null,
-							errorMessage);
+					errorMessage = String.format(
+						"Linear monomial contains modified variable. Monomial %s, Updated variable %s", monomialAsTerm,
+						someOccuringModifiedTermVariable);
 				}
+				return new UpdateExpression(null, null, null, errorMessage);
 			}
 		}
 		final AffineTerm affineTerm = new AffineTerm(polyRhs.getSort(), polyRhs.getConstant(), variables2coeffcient);
-		return new Quad<>(affineTerm, readonlyVariables, arrayReadsWithFixedIndex, null);
+		return new UpdateExpression(affineTerm, readonlyVariables, arrayReads, null);
 	}
 
 	private static TermVariable containsTermVariableOfModified(final Set<TermVariable> termVariablesOfModified,
@@ -239,6 +331,10 @@ public class LinearUpdate {
 			}
 		}
 		return null;
+	}
+
+	private static boolean isMoving(final ArrayIndex ai, final Set<TermVariable> termVariablesOfModified) {
+		return DataStructureUtils.haveNonEmptyIntersection(ai.getFreeVars(), termVariablesOfModified);
 	}
 
 	public List<LinearUpdate> partition() {
@@ -269,4 +365,32 @@ public class LinearUpdate {
 		}
 		return result;
 	}
+
+	private static class UpdateExpression {
+		private final AffineTerm mAffineTerm;
+		private final Set<Term> mReadonlyVariables;
+		private final List<MultiDimensionalSelect> mArrayReads;
+		private final String mErrorMessage;
+		public UpdateExpression(final AffineTerm mAffineTerm, final Set<Term> mReadonlyVariables,
+				final List<MultiDimensionalSelect> mArrayReads, final String mErrorMessage) {
+			super();
+			this.mAffineTerm = mAffineTerm;
+			this.mReadonlyVariables = mReadonlyVariables;
+			this.mArrayReads = mArrayReads;
+			this.mErrorMessage = mErrorMessage;
+		}
+		public AffineTerm getmAffineTerm() {
+			return mAffineTerm;
+		}
+		public Set<Term> getmReadonlyVariables() {
+			return mReadonlyVariables;
+		}
+		public List<MultiDimensionalSelect> getmArrayReads() {
+			return mArrayReads;
+		}
+		public String getmErrorMessage() {
+			return mErrorMessage;
+		}
+	}
+
 }

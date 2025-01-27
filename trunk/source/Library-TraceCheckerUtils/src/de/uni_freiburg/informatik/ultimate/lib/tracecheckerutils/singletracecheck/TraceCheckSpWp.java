@@ -59,10 +59,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer.TraceInterpolationException;
@@ -117,18 +116,17 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	private boolean mAlternatingQuantifierBailout;
 
 	public TraceCheckSpWp(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlockOrder, final UnsatCores unsatCores,
 			final boolean useLiveVariables, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
-			final ManagedScript mgdScriptTc, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique, final List<? extends Object> controlLocationSequence,
+			final ManagedScript mgdScriptTc, final SimplificationTechnique simplificationTechnique,
 			final boolean collectInterpolatSequenceStatistics) {
 		// superclass does feasibility check
-		super(precondition, postcondition, pendingContexts, trace, controlLocationSequence, services, csToolkit,
-				mgdScriptTc, predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
-				collectInterpolatSequenceStatistics, simplificationTechnique, xnfConversionTechnique);
+		super(precondition, postcondition, pendingContexts, counterexample, services, csToolkit, mgdScriptTc,
+				predicateFactory, predicateUnifier, assertCodeBlockOrder, computeRcfgProgramExecution,
+				collectInterpolatSequenceStatistics, simplificationTechnique);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
@@ -159,7 +157,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		if (result == LBool.UNSAT) {
 			InterpolantComputationStatus actualInterpolationComputationStatus = null;
 			try {
-				computeInterpolants(new AllIntegers(), interpolation);
+				computeInterpolants(interpolation);
 				actualInterpolationComputationStatus = new InterpolantComputationStatus();
 			} catch (final ToolchainCanceledException ex) {
 				throw ex;
@@ -177,11 +175,10 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	}
 
 	@Override
-	public void computeInterpolants(final Set<Integer> interpolatedPositions,
-			final InterpolationTechnique interpolation) {
+	public void computeInterpolants(final InterpolationTechnique interpolation) {
 		mTraceCheckBenchmarkGenerator.start(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		try {
-			computeInterpolantsUsingUnsatCore(interpolatedPositions);
+			computeInterpolantsUsingUnsatCore();
 		} finally {
 			mTraceCheckBenchmarkGenerator.stop(TraceCheckStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
@@ -235,10 +232,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 * @see LiveVariables
 	 * @see PredicateTransformer
 	 */
-	private void computeInterpolantsUsingUnsatCore(final Set<Integer> interpolatedPositions) {
-		if (!(interpolatedPositions instanceof AllIntegers)) {
-			throw new UnsupportedOperationException();
-		}
+	private void computeInterpolantsUsingUnsatCore() {
 		final Set<Term> unsatCore = new HashSet<>(Arrays.asList(mTcSmtManager.getScript().getUnsatCore()));
 		// unsat core obtained. We now pop assertion stack of solver. This
 		// allows us to use solver e.g. for simplifications
@@ -254,7 +248,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			}
 			if (mLogger.isInfoEnabled()) {
 				final String logMessage = "Trace formula consists of " + numberOfConjunctsInTrace + " conjuncts, "
-						+ unsatCore.size() + " conjunts are in the unsatisfiable core";
+						+ unsatCore.size() + " conjuncts are in the unsatisfiable core";
 				// if 50% or more of all conjucts are in the unsat core we output a warning
 				if (unsatCore.size() * 2 >= numberOfConjunctsInTrace) {
 					mLogger.warn(logMessage);
@@ -293,8 +287,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
-						mBoogie2SmtSymbolTable);
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getPredicates();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing forward predicates";
@@ -307,15 +300,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp, InterpolantType.Forward);
 			mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
-			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
-						getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				mPerfectForwardSequence = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-				if (mPerfectForwardSequence) {
-					mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
-				}
-				mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
-			}
+			mPerfectForwardSequence = checkPerfectSequence(getForwardIpp());
 		}
 
 		if (mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT
@@ -335,8 +320,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
-						mBoogie2SmtSymbolTable);
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsBp =
 						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
 								.getPredicates();
@@ -349,16 +333,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
 						InterpolantType.Backward);
 				mTraceCheckBenchmarkGenerator.reportInterpolantComputation();
-				if (mControlLocationSequence != null) {
-					final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices,
-							getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-					mPerfectBackwardSequence =
-							bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-					if (mPerfectBackwardSequence) {
-						mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
-					}
-					mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
-				}
+				mPerfectBackwardSequence = checkPerfectSequence(getBackwardIpp());
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing backward predicates";
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
@@ -408,23 +383,21 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			constructRelevantTransFormulas(final Set<Term> unsatCore) {
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
-			rtf = new DefaultTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					mCsToolkit.getOldVarsAssignmentCache(), false);
+			rtf = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
+					mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
 		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
 			final Set<L> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
-			rtf = new RelevantTransFormulas<>(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
+			rtf = new RelevantTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
+					mPendingContexts, codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(),
+					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-
 			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts,
 					unsatCore, mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA,
 					mAnnotateAndAsserterConjuncts);
-
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
 		}
@@ -478,9 +451,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 * @return true iff result of infeasiblity check is unsat or unknown
 	 */
 	private boolean stillInfeasible(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv) {
-
-		final TraceCheck<L> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<>(),
-				rv.getTrace(), rv, mServices, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
+		final TraceCheck<L> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<>(), rv,
+				mServices, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
 		final boolean result = tc.isCorrect() != LBool.SAT;
 		return result;
 	}

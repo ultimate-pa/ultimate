@@ -59,7 +59,7 @@ public class CamelRefinementStrategy<L extends IIcfgTransition<?>> extends Basic
 			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation));
+		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}

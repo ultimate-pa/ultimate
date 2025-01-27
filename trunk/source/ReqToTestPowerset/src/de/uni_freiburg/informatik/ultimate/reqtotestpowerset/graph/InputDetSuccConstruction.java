@@ -12,7 +12,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -276,8 +275,7 @@ public class InputDetSuccConstruction {
 	// or a conjunction of conjunctions...
 	private Term remakeTerm(Term termToRemake, Term oVar) {
 		Term result = mTrue;
-		Term dnf = SmtUtils.toDnf(mServices, mManagedScript, termToRemake,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		Term dnf = SmtUtils.toDnf(mServices, mManagedScript, termToRemake);
 		for (Term disjTerm : SmtUtils.getDisjuncts(dnf)) {
 			for (Term element : SmtUtils.getConjuncts(disjTerm)) {
 				if (!element.equals(oVar)) {
@@ -338,8 +336,7 @@ public class InputDetSuccConstruction {
 			for ( GuardGraph succ : node.getOutgoingNodes() ) {
 				Term[] disjs = SmtUtils.getDisjuncts(
 						SmtUtils.toDnf(
-								mServices, mManagedScript, node.getOutgoingEdgeLabel(succ),
-								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+								mServices, mManagedScript, node.getOutgoingEdgeLabel(succ)));
 				
 				localFlag = localFlag || testTermsContainOVar(Arrays.asList(disjs), oVar);
 			}

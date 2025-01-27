@@ -125,7 +125,8 @@ public class LineCoverageCalculator<LETTER extends IIcfgTransition<?>> {
 				continue;
 			}
 			if (!(edge instanceof CodeBlock)) {
-				throw new UnsupportedOperationException("Cannot work with edges that do not provide Boogie code");
+				// throw new UnsupportedOperationException("Cannot work with edges that do not provide Boogie code");
+				continue;
 			}
 			rtr.addAll(calculateLineNumbers((CodeBlock) edge));
 		}

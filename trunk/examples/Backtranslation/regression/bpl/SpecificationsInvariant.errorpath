@@ -35,4 +35,4 @@
 [L13]               y := y - 1;
          VAL        [res=*, x=1, y=0]
 [L10]               invariant y > 0;
-         VAL        [res=*, x=1, y=0]
+         VAL        [res=*, x=1]

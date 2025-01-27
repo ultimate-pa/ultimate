@@ -11,7 +11,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -102,7 +102,11 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		while (counterexample != null) {
 			mLogger.info("---- MCR iteration " + iteration + " ----");
 			iteration++;
-			result = mResultProvider.getResult(counterexample);
+
+			// As "counterexample" is not a run of the program (but the MHB automaton), we do not have program control
+			// locations for it. So we pass only the word to the trace check wrapped in mResultProvider.
+			result = mResultProvider.getResult(counterexample.getWord());
+
 			final List<L> trace = counterexample.getWord().asList();
 			if (result.isCorrect() != LBool.UNSAT) {
 				// We found a feasible error trace
@@ -234,6 +238,6 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 	}
 
 	public interface IMcrResultProvider<LETTER extends IIcfgTransition<?>> {
-		McrTraceCheckResult<LETTER> getResult(IRun<LETTER, ?> counterexample);
+		McrTraceCheckResult<LETTER> getResult(Word<LETTER> counterexample);
 	}
 }

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,17 +56,32 @@ public class TermContextTransformationEngine<C> {
 	 */
 	private static final boolean SMART_REPETITIONS = true;
 
+	/**
+	 * Order in which we iterate over parameters of {@link ApplicationTerm}s.
+	 */
+	private final Comparator<Term> mSiblingOrder;
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
 
-	private TermContextTransformationEngine(final TermWalker<C> termWalker) {
+
+	/**
+	 * @param siblingOrder Order in which we iterate over parameters of
+	 *                     {@link ApplicationTerm}s.
+	 */
+	private TermContextTransformationEngine(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder) {
 		super();
+		mSiblingOrder = siblingOrder;
 		mTermWalker = termWalker;
 		mStack = new ArrayDeque<>();
 	}
 
-	public static <C> Term transform(final TermWalker<C> termWalker, final C initialContext, final Term term) {
-		return new TermContextTransformationEngine<>(termWalker).transform(initialContext, term);
+	/**
+	 * @param siblingOrder Order in which we iterate over parameters of
+	 *                     {@link ApplicationTerm}s.
+	 */
+	public static <C> Term transform(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder,
+			final C initialContext, final Term term) {
+		return new TermContextTransformationEngine<>(termWalker, siblingOrder).transform(initialContext, term);
 	}
 
 	private Term transform(final C context, final Term term) {
@@ -147,6 +163,9 @@ public class TermContextTransformationEngine<C> {
 			mNext = 0;
 			mOriginal = original;
 			mResult = Arrays.copyOf(original.getParameters(), original.getParameters().length);
+			if (mSiblingOrder != null) {
+				Arrays.sort(mResult, mSiblingOrder);
+			}
 			mRepetitions = 0;
 		}
 
@@ -155,7 +174,6 @@ public class TermContextTransformationEngine<C> {
 			if (mNext == mOriginal.getParameters().length && mPositionOfLastChange != -1
 					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
 				mNext = 0;
-//				mPositionOfLastChange = false;
 				mRepetitions++;
 			} else {
 				if (DEBUG_NONTERMINATION && mRepetitions > 0) {
@@ -169,8 +187,8 @@ public class TermContextTransformationEngine<C> {
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
-			} else if (mNext != 0
-					&& SmtUtils.isAbsorbingElement(mOriginal.getFunction().getName(), mResult[mNext - 1])) {
+			} else if (isAbsorbingElementConDis(mOriginal.getFunction(),
+					mResult[Math.floorMod(mNext - 1, mResult.length)])) {
 				// If the result of the last iteration was the absorbing
 				// element, we can already construct the result which
 				// will be the absorbing element as result for this node.
@@ -179,6 +197,10 @@ public class TermContextTransformationEngine<C> {
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
+			} else if (isNeutralElementConDis(mOriginal.getFunction(), mResult[mNext])) {
+				// If the current param is the neutral element we will omit this param.
+				// Rationale: if we compose the result it will not have an effect anyway.
+				result = constructTaskForDescendResult(super.mContext, new FinalResultForAscend(mResult[mNext]));
 			} else {
 				final ArrayList<Term> otherParams = new ArrayList<>(Arrays.asList(mResult));
 				otherParams.remove(mNext);
@@ -197,7 +219,7 @@ public class TermContextTransformationEngine<C> {
 		void integrateResult(final Term result) {
 			assert (mNext < mOriginal.getParameters().length);
 			if (!mResult[mNext].equals(result)
-					&& (!SMART_REPETITIONS || !SmtUtils.isNeutralElement(mOriginal.getFunction().getName(), result))) {
+					&& (!SMART_REPETITIONS || !isNeutralElementConDis(mOriginal.getFunction(), result))) {
 				mPositionOfLastChange = mNext;
 			}
 			mResult[mNext] = result;
@@ -284,6 +306,26 @@ public class TermContextTransformationEngine<C> {
 		}
 		return result;
 	}
+
+	/**
+	 * Returns true iff fun is conjunction or disjunction and term is the absorbing
+	 * element of this operation.
+	 */
+	private static boolean isAbsorbingElementConDis(final FunctionSymbol fun, final Term term) {
+		return (fun.getName().equals("and") || fun.getName().equals("or"))
+				&& SmtUtils.isAbsorbingElement(fun.getName(), term);
+	}
+
+	/**
+	 * Returns true iff fun is conjunction or disjunction and term is the neutral
+	 * element of this operation.
+	 */
+	private static boolean isNeutralElementConDis(final FunctionSymbol fun, final Term term) {
+		return (fun.getName().equals("and") || fun.getName().equals("or"))
+				&& SmtUtils.isNeutralElement(fun.getName(), term);
+	}
+
+
 
 	public abstract static class TermWalker<C> {
 

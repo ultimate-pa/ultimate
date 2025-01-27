@@ -53,7 +53,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String MAINPROC_DEFAULT = "main";
 	public static final String LABEL_CHECK_ASSERTIONS = "Check assertions from assert.h";
 	private static final String DESC_CHECK_ASSERTIONS =
-			"Check if the assertions from assert.h (currently supported: assert, __assert_fail, __assert_func) never fail.";
+			"Check if the assertions from assert.h (currently supported: assert, static_assert, _Static_assert, "
+					+ "__assert_fail, __assert_func) never fail.";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
 	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
@@ -135,6 +136,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "bytes or more are overapproximated, i.e., Ultimate assumes that the string can contain arbitrary bytes.";
 	private static final int DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD = 9;
 
+
 	// Test Generation =========================================================
 	public static final String LABEL_BRANCH_COVERAGE = "Branch Coverage Property";
 	private static final boolean DEF_BRANCH_COVERAGE = false;
@@ -143,7 +145,17 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final boolean DEF_ERROR_COVERAGE = false;
 	private static final String DESC_ERROR_COVERAGE = "TODO";
 
-	public enum PointerCheckMode {
+	public static final String LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS = "Behaviour of calls to undefined functions";
+	private static final String DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS =
+			"Specify how the calls to undefined functions should be modeled (crash, overapproximate, non-deterministic return value).";
+
+	public static final String LABEL_ENFORCE_IF_FOR_CONDITIONAL =
+			"Always translate conditional expressions to if-statements";
+	private static final String DESC_ENFORCE_IF_FOR_CONDITIONAL =
+			"If this setting is enabled, we try to translate conditional expressions to if-statements in Boogie. "
+					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
+
+	public enum CheckMode {
 		IGNORE, ASSUME, ASSERTandASSUME
 	}
 
@@ -199,7 +211,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			}
 			if (byteSize >= 4) {
 				return HoenickeLindenmann_4ByteResolution;
-			} else if (byteSize >= 2) {
+			}
+			if (byteSize >= 2) {
 				return HoenickeLindenmann_2ByteResolution;
 			} else if (byteSize >= 1) {
 				return HoenickeLindenmann_1ByteResolution;
@@ -235,7 +248,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 		private final SmtRoundingMode mSmtRoundingMode;
 
-		private FloatingPointRoundingMode(final SmtRoundingMode smtRoundingMode) {
+		FloatingPointRoundingMode(final SmtRoundingMode smtRoundingMode) {
 			mSmtRoundingMode = smtRoundingMode;
 		}
 
@@ -243,6 +256,24 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			return mSmtRoundingMode;
 		}
 
+	}
+
+	public enum UndefinedFunctionBehaviour {
+		/**
+		 * Model using the return values non-deterministically
+		 */
+		NON_DETERMINISTIC_RETURN,
+
+		/**
+		 * Crash if undefined functions are called (might be unreachable)
+		 */
+		CRASH,
+
+		/**
+		 * Overapproximate the behaviour. We model this using {@code while (true) assert false;}, as arbitrary global
+		 * variables might be modified. This means, we report unknown if the call is reachable.
+		 */
+		OVERAPPROXIMATE_BEHAVIOUR
 	}
 
 	public CACSLPreferenceInitializer() {
@@ -255,14 +286,14 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, true, DESC_CHECK_ASSERTIONS,
+				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.ASSERTandASSUME, PreferenceType.Combo,
+						CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
@@ -276,12 +307,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
-						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,
-						PreferenceType.Combo, PointerCheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
+						CheckMode.ASSERTandASSUME, PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
+						PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE, PreferenceType.Combo,
+						CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
@@ -325,6 +357,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
 						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
 						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+						UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+						PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
+				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
+						PreferenceType.Boolean),
 				// Test Generation
 				new UltimatePreferenceItem<>(LABEL_BRANCH_COVERAGE, DEF_BRANCH_COVERAGE, DESC_BRANCH_COVERAGE,
 						PreferenceType.Boolean),

@@ -17,6 +17,7 @@ modifies a, i, x;
 	while (i < N) {
 		havoc x;
 		a[i] := x;
+		havoc x;
 		i := i + 1;
 	}
 	assert(a[123456] == 42);

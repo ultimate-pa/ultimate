@@ -104,13 +104,19 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 *            The {@link IIcfg} from which the path program should be constructed.
 	 * @param allowedTransitions
 	 *            The set of transitions that should be retained.
+	 * @param additionalInitialLocations
+	 *            Locations which are also considered initial in the resulting CFG.
+	 * @param loopLocationFilter
+	 * 		      {@link Predicate} that decides which loop locations of the original
+	 *            program should also be loop locations of the path program
 	 * @return A {@link PathProgramConstructionResult} that contains the {@link PathProgram} and an explicit mapping
 	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
-			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions) {
-		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, Collections.emptySet())
-				.getResult();
+			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions,
+			final Set<IcfgLocation> additionalInitialLocations, final Predicate<IcfgLocation> loopLocationFilter) {
+		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier, additionalInitialLocations,
+				loopLocationFilter).getResult();
 	}
 
 	@Override
@@ -197,6 +203,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	private static final class PathProgramConstructor {
 
 		private final IIcfg<?> mOriginalIcfg;
+		private final Set<IcfgLocation> mAdditionalInitialNodes;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
 		private final Map<IIcfgTransition<?>, IIcfgTransition<?>> mOldTransition2NewTransition;
 		private final Map<IIcfgTransition<?>, PathProgramCallAction<?>> mOldCall2NewCall;
@@ -209,14 +216,23 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final Map<String, Set<IcfgLocation>> mProcError;
 		private final Set<IcfgLocation> mInitialNodes;
 		private final Set<IcfgLocation> mLoopLocations;
+		private final Predicate<IcfgLocation> mLoopLocationFilter;
 		private final PathProgramConstructionResult mResult;
 
 		private PathProgramConstructor(final IIcfg<?> originalIcfg,
 				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier,
-				final Set<IcfgLocation> additionalInitialLocations) {
+				final Set<IcfgLocation> additionalInitialLocations, final Predicate<IcfgLocation> loopLocationFilter) {
 			final String nonNullIdentifier = Objects.requireNonNull(newIdentifier);
 			final Set<? extends IIcfgTransition<?>> nonNullTransitions = Objects.requireNonNull(allowedTransitions);
 			mOriginalIcfg = Objects.requireNonNull(originalIcfg);
+			for (final IcfgLocation loc : additionalInitialLocations) {
+				if (!mOriginalIcfg.getProgramPoints().get(loc.getProcedure()).get(loc.getDebugIdentifier())
+						.equals(loc)) {
+					throw new AssertionError("Additional initial location not in original CFG: " + loc);
+				}
+			}
+			mAdditionalInitialNodes = new LinkedHashSet<>(additionalInitialLocations);
+			mLoopLocationFilter = loopLocationFilter;
 
 			mOldLoc2NewLoc = new LinkedHashMap<>();
 			mOldTransition2NewTransition = new LinkedHashMap<>();
@@ -228,7 +244,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			mProcEntries = new LinkedHashMap<>();
 			mProcExits = new LinkedHashMap<>();
 			mProcError = new LinkedHashMap<>();
-			mInitialNodes = new LinkedHashSet<>(additionalInitialLocations);
+			mInitialNodes = new LinkedHashSet<>();
 			mLoopLocations = new LinkedHashSet<>();
 
 			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
@@ -356,11 +372,11 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			}
 			newProcProgramPoints.put(ppLoc.getDebugIdentifier(), ppLoc);
 
-			if (mOriginalIcfg.getInitialNodes().contains(loc)) {
+			if (mOriginalIcfg.getInitialNodes().contains(loc) || mAdditionalInitialNodes.contains(loc)) {
 				mInitialNodes.add(ppLoc);
 			}
 
-			if (mOriginalIcfg.getLoopLocations().contains(loc)) {
+			if (mOriginalIcfg.getLoopLocations().contains(loc) && mLoopLocationFilter.test(loc)) {
 				mLoopLocations.add(ppLoc);
 			}
 

@@ -30,9 +30,8 @@ import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 
 import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;
@@ -74,14 +73,10 @@ public class UltimateStarter implements IController<RunDefinition> {
 
 	private ICore<RunDefinition> mCurrentCore;
 
-	private final Function<IUltimateServiceProvider, IUltimateServiceProvider> mServicesCallback;
-
-	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition,
-			final Function<IUltimateServiceProvider, IUltimateServiceProvider> servicesCallback) {
+	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition) {
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mExternalUltimateCore = new ExternalUltimateCore(this);
 		mDeadline = ultimateRunDefinition.getTimeout();
-		mServicesCallback = servicesCallback;
 	}
 
 	public IStatus runUltimate() throws Throwable {
@@ -171,8 +166,9 @@ public class UltimateStarter implements IController<RunDefinition> {
 	@Override
 	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
 		final IToolchainData<RunDefinition> tcData = toolchain.getCurrentToolchainData();
-		if (mServicesCallback != null) {
-			final IUltimateServiceProvider newServices = mServicesCallback.apply(tcData.getServices());
+		final var callback = mUltimateRunDefinition.getServiceCallback();
+		if (callback != null) {
+			final IUltimateServiceProvider newServices = callback.processServices(tcData.getServices());
 			return tcData.replaceServices(newServices);
 		}
 		return tcData;

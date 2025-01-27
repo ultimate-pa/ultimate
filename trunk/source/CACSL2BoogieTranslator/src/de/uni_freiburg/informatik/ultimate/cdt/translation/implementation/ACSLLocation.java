@@ -100,7 +100,7 @@ public class ACSLLocation extends CACSLLocation {
 
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
-		if (other == null) {
+		if (other == null || this == other) {
 			return this;
 		}
 		if (!(other instanceof ILocation)) {
@@ -109,4 +109,8 @@ public class ACSLLocation extends CACSLLocation {
 		return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 	}
 
+	@Override
+	public String getFunction() {
+		return null;
+	}
 }

@@ -163,7 +163,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 				withoutDer = withoutDer.multiply(input.getWithoutDerCases());
 				withoutVar = withoutVar.multiply(input.getWithoutVarCases());
 			} else {
-				throw new AssertionError("expected conjuntion-disjunction alternation");
+				throw new AssertionError("expected conjunction-disjunction alternation");
 			}
 		}
 		return new DerApplicability(ownConnective, cases, withoutDer, withoutVar);
@@ -179,7 +179,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 				withoutDer = withoutDer.add(input.getWithoutDerCases());
 				withoutVar = withoutVar.add(input.getWithoutVarCases());
 			} else {
-				throw new AssertionError("expected conjuntion-disjunction alternation");
+				throw new AssertionError("expected conjunction-disjunction alternation");
 			}
 		}
 		return new DerApplicability(ownConnective, cases, withoutDer, withoutVar);

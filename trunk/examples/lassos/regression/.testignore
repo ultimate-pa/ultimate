@@ -1,0 +1,5 @@
+# The program contains non-linear-arithmetic, so we don't succeed with the linear setting
+Unable to decide termination:
+- task: ConvincingNondeterminism01.bpl
+  settings: BuchiAutomizerBpl-linear.epf
+  toolchain: BuchiAutomizerBpl.xml

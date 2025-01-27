@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateInterpolator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.IntBlastingWrapper.IntBlastingMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.bvinttranslation.TranslationConstrainer.ConstraintsForBitwiseOperations;
@@ -251,8 +252,33 @@ public class SmtParser implements ISource {
 
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
 			script = new UltimateEliminator(mServices, mLogger, backEnd);
-		}
 			break;
+		}
+
+		case UltimateInterpolator: {
+			mLogger.info("Running UltimateInterpolator on input file");
+			final String command = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(SmtParserPreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND);
+
+			SolverSettings solverSettings = SolverBuilder.constructSolverSettings();
+			if (command.isEmpty()) {
+				solverSettings = solverSettings.setSolverMode(SolverMode.Internal_SMTInterpol);
+			} else {
+				solverSettings = solverSettings.setSolverMode(SolverMode.External_DefaultMode)
+						.setUseExternalSolver(true, command, null);
+			}
+
+			final String folderOfDumpedFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getString(SmtParserPreferenceInitializer.LABEL_SMT_DUMP_PATH);
+			if (!folderOfDumpedFile.isEmpty()) {
+				solverSettings = solverSettings.setDumpSmtScriptToFile(true, folderOfDumpedFile,
+						"UltimateInterpolatorBackEndSolverInput.smt2", false);
+			}
+
+			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
+			script = new UltimateInterpolator(mServices, mLogger, backEnd);
+			break;
+		}
 
 		case IntBlastingWrapper: {
 			mLogger.info("Expecting script with bitvectors, will translate to integers");
@@ -310,7 +336,7 @@ public class SmtParser implements ISource {
 		final ParseEnvironment parseEnv = new ExceptionThrowingParseEnvironment(script, optionMap);
 		try {
 			parseEnv.parseScript(file.getAbsolutePath());
-			mLogger.info("Succesfully executed SMT file " + file.getAbsolutePath());
+			mLogger.info("Successfully executed SMT file " + file.getAbsolutePath());
 			if (smtParserMode == SmtParserMode.UltimateTreeAutomizer) {
 				mOutput = ((HornClauseParserScript) script).getHornClauses();
 			}
@@ -332,7 +358,7 @@ public class SmtParser implements ISource {
 		final ParseEnvironment parseEnv1 = new ParseEnvironment(cns, optionMap);
 		try {
 			parseEnv1.parseScript(file.getAbsolutePath());
-			mLogger.info("Succesfully read SMT file " + file.getAbsolutePath());
+			mLogger.info("Successfully read SMT file " + file.getAbsolutePath());
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while reading SMT file " + file.getAbsolutePath());
 			mLogger.info("SMTLIBException " + exc.getMessage());
@@ -349,7 +375,7 @@ public class SmtParser implements ISource {
 				new ParseEnvironment(new FilteredLoggingScript(outputFilename, true, cns.getNames()), optionMap);
 		try {
 			parseEnv2.parseScript(file.getAbsolutePath());
-			mLogger.info("Succesfully wrote SMT file " + outputFilename);
+			mLogger.info("Successfully wrote SMT file " + outputFilename);
 		} catch (final SMTLIBException exc) {
 			mLogger.fatal("Failed while writing SMT file " + outputFilename, exc);
 		}

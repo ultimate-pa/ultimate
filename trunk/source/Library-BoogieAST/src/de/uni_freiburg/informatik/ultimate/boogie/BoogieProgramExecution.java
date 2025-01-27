@@ -104,7 +104,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		return pef.formatProgramExecution(this);
 	}
 
-	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
+	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?, ?>> translatorSequence) {
 		return new BoogieValuation(translatorSequence);
 	}
 
@@ -129,9 +129,9 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	}
 
 	private final class BoogieValuation implements IValuation {
-		private final List<ITranslator<?, ?, ?, ?, ?, ?>> mTranslatorSequence;
+		private final List<ITranslator<?, ?, ?, ?, ?, ?, ?>> mTranslatorSequence;
 
-		private BoogieValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
+		private BoogieValuation(final List<ITranslator<?, ?, ?, ?, ?, ?, ?>> translatorSequence) {
 			mTranslatorSequence = translatorSequence;
 		}
 
@@ -173,7 +173,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 		 *            the resulting expression
 		 * @return a string corresponding to the backtranslated expression
 		 */
-		private <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence,
+		private <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?, ?>> translatorSequence,
 				final SE expr) {
 			final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
 					translatorSequence.toArray(new ITranslator[translatorSequence.size()]));

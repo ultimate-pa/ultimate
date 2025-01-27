@@ -1,7 +1,7 @@
 //#Safe
 /*
  * Luxembourg-WithArrays transformed to integer program.
- * The loop invariant (x > y && 1000-a_y<=a_x) allows us to prove correctness.
+ * The loop invariant (x > y && 1000-a_y>=a_x) allows us to prove correctness.
  * 
  * Date: 2016-04-15
  * Author: heizmann@informatik.uni-freiburg.de

@@ -47,9 +47,8 @@ public class ReqTestResultUtil {
 	public IResult convertTraceAbstractionResult(final IResult result) {
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			return getTestSteps((CounterExampleResult<?, ?, ?>) result);
-		} else if (result instanceof TimeoutResultAtElement<?>) {
-			// TODO
-		} else if (result instanceof PositiveResult<?>) {
+		}
+		if (result instanceof TimeoutResultAtElement<?> || result instanceof PositiveResult<?>) {
 			// TODO
 		}
 		return result;
@@ -76,8 +75,6 @@ public class ReqTestResultUtil {
 									+ ate.getStep().toString());
 					continue;
 				}
-
-				// testSteps.add(getTestStep(recentProgramState));
 				states.add(recentProgramState);
 				recentProgramState = null;
 			}
@@ -100,7 +97,7 @@ public class ReqTestResultUtil {
 		return new ReqTestResultTest(testSteps, getTestAssertionName(finalElement.getStep()));
 	}
 
-	public class TestRelationNode {
+	public static class TestRelationNode {
 
 		private final PhaseEventAutomata mReq;
 		private final Set<PhaseEventAutomata> mDetermined;
@@ -180,12 +177,12 @@ public class ReqTestResultUtil {
 			// get current location index of the pea
 			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
 			final int pc = Integer.parseInt(((IntegerLiteral) pca[0]).getValue()); // TODO: validation
-			if (pc < pea.getPhases().length / 2) {
+			if (pc < pea.getPhases().size() / 2) {
 				// automaton is in its upper half, so it does not set anything
 				continue;
 			}
 			// get phase invariant and all variables therein
-			final CDD invar = pea.getPhases()[pc].getStateInvariant();
+			final CDD invar = pea.getPhases().get(pc).getStateInvariant();
 			final Set<String> vars = Req2CauseTrackingCDD.getCddVariables(invar);
 			Set<String> effectVars = Collections.emptySet();
 			Set<String> determinedOutputs = Collections.emptySet();
@@ -217,12 +214,12 @@ public class ReqTestResultUtil {
 			// get current location index of the pea
 			final Expression[] pca = pcs.toArray(new Expression[pcs.size()]);
 			final int pc = Integer.parseInt(((IntegerLiteral) pca[0]).getValue()); // TODO: validation
-			if (pc < pea.getPhases().length / 2) {
+			if (pc < pea.getPhases().size() / 2) {
 				// automaton is in its upper half, so it does not use anything
 				continue;
 			}
 			// get phase invariant and all variables therein
-			final CDD invar = pea.getPhases()[pc].getStateInvariant();
+			final CDD invar = pea.getPhases().get(pc).getStateInvariant();
 			final Set<String> vars = Req2CauseTrackingCDD.getCddVariables(invar);
 			if (isInEffectPhase(pea, programState)) {
 				// remove effects if pea is in effect phase
@@ -246,7 +243,7 @@ public class ReqTestResultUtil {
 	 */
 	private Set<PhaseEventAutomata> calculateDeterminingReqs(final String varName,
 			final ProgramState<Expression> programState) {
-		// todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
+		// TODO return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
 		final Set<PhaseEventAutomata> determiners = new HashSet<>();
 		for (final Entry<PhaseEventAutomata, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
 			final ReqEffectStore reqEffectStore = entry.getValue();
@@ -287,7 +284,7 @@ public class ReqTestResultUtil {
 	 */
 	private Set<PhaseEventAutomata> calculateEntryEffects(final String varName,
 			final ProgramState<Expression> programState) {
-		// todo return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
+		// TODO return accodring node of graph here (req1, v, req2) read "req1 enables req2 by setting v"
 		final Set<PhaseEventAutomata> determiners = new HashSet<>();
 		for (final Entry<PhaseEventAutomata, ReqEffectStore> entry : mReqEffectStore.entrySet()) {
 			final ReqEffectStore reqEffectStore = entry.getValue();

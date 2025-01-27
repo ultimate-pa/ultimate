@@ -27,19 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Wrapper for an equality of the form a1=a2, where a1 and a2 are TermVariables.
- * In the future we may extend in a way that a1 and a2 can be constants (i.e.
- * 0-ary function symbols).
+ * Wrapper for an equality of the form a1=a2, where a1 and a2 are TermVariables. In the future we may extend in a way
+ * that a1 and a2 can be constants (i.e. 0-ary function symbols).
+ *
  * @author Matthias Heizmann
  */
 public class ArrayEquality {
@@ -56,7 +56,7 @@ public class ArrayEquality {
 	}
 
 	public ArrayEquality(final Term term, final boolean allowDisequalities, final boolean allowConstants)
-					throws ArrayEqualityException {
+			throws ArrayEqualityException {
 
 		if (!(term instanceof ApplicationTerm)) {
 			throw new ArrayEqualityException("no ApplicationTerm");
@@ -64,26 +64,22 @@ public class ArrayEquality {
 
 		final ApplicationTerm appTerm = (ApplicationTerm) term;
 
-
-		final boolean isNotEqualsAppTerm = (appTerm.getFunction().getName().equals("not")
-				&& appTerm.getParameters()[0] instanceof ApplicationTerm
-				&& ((ApplicationTerm) appTerm.getParameters()[0]).getFunction().getName().equals("="));
-		final boolean isDisEquality = appTerm.getFunction().getName().equals("distinct")
-				|| isNotEqualsAppTerm;
+		final boolean isNotEqualsAppTerm =
+				(appTerm.getFunction().getName().equals("not") && appTerm.getParameters()[0] instanceof ApplicationTerm
+						&& ((ApplicationTerm) appTerm.getParameters()[0]).getFunction().getName().equals("="));
+		final boolean isDisEquality = appTerm.getFunction().getName().equals("distinct") || isNotEqualsAppTerm;
 
 		mIsNegated = isDisEquality;
 
 		if (!appTerm.getFunction().getName().equals("=")) {
 			if (!allowDisequalities) {
 				throw new ArrayEqualityException("no equality");
-			} else if(!isDisEquality) {
+			} else if (!isDisEquality) {
 				throw new ArrayEqualityException("no (dis)equality");
 			}
 		}
 
-		final ApplicationTerm eqAppTerm = isNotEqualsAppTerm ?
-				(ApplicationTerm) appTerm.getParameters()[0] :
-					appTerm;
+		final ApplicationTerm eqAppTerm = isNotEqualsAppTerm ? (ApplicationTerm) appTerm.getParameters()[0] : appTerm;
 
 		if (eqAppTerm.getParameters().length != 2) {
 			throw new ArrayEqualityException("no binary equality");
@@ -137,15 +133,11 @@ public class ArrayEquality {
 	}
 
 	public static List<ArrayEquality> extractArrayEqualities(final Term term) {
-		final HashSet<String> functionSymbolNames = new HashSet<>(3);
-		functionSymbolNames.add("=");
-		functionSymbolNames.add("distinct");
-		functionSymbolNames.add("not");
+		final Set<String> functionSymbolNames = Set.of("=", "distinct", "not");
 
 		final List<ArrayEquality> result = new ArrayList<>();
 
-		final ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
-		for (final ApplicationTerm subterm : atf.findMatchingSubterms(term)) {
+		for (final ApplicationTerm subterm : SmtUtils.extractApplicationTerms(functionSymbolNames, term, false)) {
 			ArrayEquality arrayEquality = null;
 			try {
 				arrayEquality = new ArrayEquality(subterm, true, true);
@@ -162,8 +154,7 @@ public class ArrayEquality {
 			return true;
 		} else if (t instanceof ConstantTerm) {
 			return true;
-		} else if (t instanceof ApplicationTerm
-				&& ((ApplicationTerm) t).getParameters().length == 0) {
+		} else if (t instanceof ApplicationTerm && ((ApplicationTerm) t).getParameters().length == 0) {
 			return true;
 		}
 		return false;
@@ -184,12 +175,12 @@ public class ArrayEquality {
 	}
 
 	/**
-	 * Given an array of terms, partition them into terms that are array
-	 * equalities and terms that are not array equalities.
+	 * Given an array of terms, partition them into terms that are array equalities and terms that are not array
+	 * equalities.
 	 */
 	public static class ArrayEqualityExtractor {
-		private final List<ArrayEquality> mArrayEqualities = new ArrayList<ArrayEquality>();
-		private final List<Term> remainingTerms = new ArrayList<Term>();
+		private final List<ArrayEquality> mArrayEqualities = new ArrayList<>();
+		private final List<Term> remainingTerms = new ArrayList<>();
 
 		public ArrayEqualityExtractor(final Term[] terms) {
 			for (final Term term : terms) {

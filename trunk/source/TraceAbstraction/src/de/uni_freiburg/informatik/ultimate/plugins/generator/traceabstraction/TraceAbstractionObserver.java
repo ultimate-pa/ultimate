@@ -45,12 +45,15 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.pe
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils.Property;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.EpsilonNestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.NestedwordAutomatonAST;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -62,7 +65,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	private final List<IIcfg<?>> mIcfgs;
 	private IElement mRootOfNewModel;
-	private WitnessNode mWitnessNode;
+	private IWitnessTransformer<IcfgEdge> mTransformer;
 	private final List<AutomataTestFileAST> mAutomataTestFileAsts;
 	private boolean mLastModel;
 	private ModelType mCurrentGraphType;
@@ -80,11 +83,24 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		if (root instanceof IIcfg<?>) {
 			mIcfgs.add((IIcfg<?>) root);
 		}
-		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
-			if (mWitnessNode == null) {
-				mWitnessNode = (WitnessNode) root;
-			} else {
-				throw new UnsupportedOperationException("two witness models");
+		if (mCurrentGraphType.getType() == Type.VIOLATION_WITNESS
+				&& (root instanceof WitnessNode || root instanceof Witness)) {
+			if (mTransformer != null) {
+				throw new UnsupportedOperationException("Found multiple violation witnesses");
+			}
+			if (root instanceof WitnessNode) {
+				mLogger.warn(
+						"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
+				final INestedWordAutomaton<WitnessEdge, WitnessNode> graphMLwitnessAutomaton =
+						new WitnessModelToAutomatonTransformer((WitnessNode) root, mServices).getResult();
+				mTransformer = (automaton, predicateFactory) -> WitnessUtils.constructGraphMLWitnessProduct(mServices,
+						automaton, graphMLwitnessAutomaton, predicateFactory, mLogger, Property.NON_REACHABILITY);
+			}
+			if (root instanceof Witness) {
+				mLogger.warn(
+						"Found a witness in the YAML format. I will only consider traces that are accepted by the witness");
+				mTransformer = (automaton, predicateFactory) -> WitnessUtils.constructYamlWitnessProduct(mServices,
+						automaton, (Witness) root, predicateFactory, mLogger, Property.NON_REACHABILITY);
 			}
 		}
 		if (root instanceof AutomataTestFileAST) {
@@ -110,18 +126,10 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 			throw new UnsupportedOperationException("TraceAbstraction needs an RCFG");
 		}
 		mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-		INestedWordAutomaton<WitnessEdge, WitnessNode> witnessAutomaton;
-		if (mWitnessNode == null) {
-			witnessAutomaton = null;
-		} else {
-			mLogger.warn(
-					"Found a witness automaton. I will only consider traces that are accepted by the witness automaton");
-			witnessAutomaton = new WitnessModelToAutomatonTransformer(mWitnessNode, mServices).getResult();
-		}
 		final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile =
 				constructRawNestedWordAutomata(mAutomataTestFileAsts);
 		final TraceAbstractionStarter<IcfgEdge> tas =
-				new TraceAbstractionStarter<>(mServices, rcfgRootNode, witnessAutomaton, rawFloydHoareAutomataFromFile,
+				new TraceAbstractionStarter<>(mServices, rcfgRootNode, mTransformer, rawFloydHoareAutomataFromFile,
 						() -> new IcfgCompositionFactory(mServices, rcfgRootNode.getCfgSmtToolkit()),
 						new IcfgCopyFactory(mServices, rcfgRootNode.getCfgSmtToolkit()), IcfgEdge.class);
 		mRootOfNewModel = tas.getRootOfNewModel();

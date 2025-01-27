@@ -64,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -116,7 +115,7 @@ public abstract class AbstractHoareTripleCheckerTest {
 		z = constructVar("z", SmtSortUtils.getIntSort(mScript));
 		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mMgdScript, mSymbolTable);
 		mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mMgdScript, predicateFactory, mSymbolTable,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				SimplificationTechnique.SIMPLIFY_DDA);
 
 		final var modifiable = new HashRelation<String, IProgramNonOldVar>();
 		modifiable.addPair(PROCEDURE, x);

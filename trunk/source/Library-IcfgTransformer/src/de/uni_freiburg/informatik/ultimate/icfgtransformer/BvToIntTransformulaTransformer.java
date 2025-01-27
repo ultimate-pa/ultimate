@@ -201,8 +201,8 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 		// Quantify auxiliary variables
 		final Term withoutAuxVars = SmtUtils.quantifier(mMgdScript.getScript(), QuantifiedFormula.EXISTS,
 				result.getSecond(), result.getFirst());
-		final IPredicate transformedAxiom = new BasicPredicate(0, new String[0], withoutAuxVars, Collections.emptySet(),
-				oldAxioms.getFuns(), withoutAuxVars);
+		final IPredicate transformedAxiom =
+				new BasicPredicate(0, withoutAuxVars, Collections.emptySet(), oldAxioms.getFuns(), withoutAuxVars);
 		final boolean isOverappoximation = result.getThird();
 		return new AxiomTransformationResult(transformedAxiom, isOverappoximation);
 	}

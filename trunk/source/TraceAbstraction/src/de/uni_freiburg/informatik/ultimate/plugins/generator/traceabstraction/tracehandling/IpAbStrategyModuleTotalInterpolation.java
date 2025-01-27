@@ -31,9 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -42,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.TotalInterpolationAutomatonBuilder;
@@ -56,7 +53,7 @@ public class IpAbStrategyModuleTotalInterpolation<LETTER extends IIcfgTransition
 		implements IIpAbStrategyModule<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final IRun<LETTER, ?> mCounterexample;
+	private final List<?> mCounterexampleRun;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
@@ -66,12 +63,12 @@ public class IpAbStrategyModuleTotalInterpolation<LETTER extends IIcfgTransition
 	private IpAbStrategyModuleResult<LETTER> mResult;
 
 	public IpAbStrategyModuleTotalInterpolation(final IUltimateServiceProvider services,
-			final IAutomaton<LETTER, IPredicate> abstraction, final IRun<LETTER, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final List<?> counterexampleRun,
 			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predFac) {
 		mServices = services;
 		mAbstraction = abstraction;
-		mCounterexample = counterexample;
+		mCounterexampleRun = counterexampleRun;
 		mPredicateUnifier = predicateUnifier;
 		mInterpolationTechnique = prefs.getInterpolationTechnique();
 		mCsToolkit = csToolkit;
@@ -95,12 +92,11 @@ public class IpAbStrategyModuleTotalInterpolation<LETTER extends IIcfgTransition
 			final INestedWordAutomaton<LETTER, IPredicate> castedAbstraction =
 					(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 			@SuppressWarnings("unchecked")
-			final NestedRun<LETTER, IPredicate> castedCex = (NestedRun<LETTER, IPredicate>) mCounterexample;
+			final List<IPredicate> castedCex = (List<IPredicate>) mCounterexampleRun;
 			final NestedWordAutomaton<LETTER, IPredicate> automaton =
 					new TotalInterpolationAutomatonBuilder<>(castedAbstraction, castedCex, mCsToolkit,
 							mPredicateFactory, mInterpolationTechnique, mServices, SimplificationTechnique.SIMPLIFY_DDA,
-							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, false, mPredicateUnifier,
-							ipp.getTracePredicates()).getResult();
+							false, mPredicateUnifier, ipp.getTracePredicates()).getResult();
 			mResult = new IpAbStrategyModuleResult<>(automaton, Collections.singletonList(ipp));
 		}
 		return mResult;

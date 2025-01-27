@@ -1,0 +1,8 @@
+Ultimate TreeAutomizer analyzes satisfiability of sets of constrained Horn clauses.
+
+Ultimate TreeAutomizer is maintained by
+Matthias Heizmann [University of Freiburg, Germany]
+
+Ultimate TreeAutomizer is part of Ultimate
+http://ultimate.informatik.uniMINUSfreiburg.de/
+to which many people contributed.

@@ -37,9 +37,9 @@ public class BuchiPredicate extends BasicPredicate {
 	private static final long serialVersionUID = 8005823999426746457L;
 	private final Set<IPredicate> mConjuncts;
 
-	public BuchiPredicate(final int serialNumber, final String[] procedures, final Term term,
-			final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final Term closedFormula, final Set<IPredicate> conjuncts) {
-		super(serialNumber, procedures, term, vars, funs, closedFormula);
+	public BuchiPredicate(final int serialNumber, final Term term, final Set<IProgramVar> vars,
+			final Set<IProgramFunction> funs, final Term closedFormula, final Set<IPredicate> conjuncts) {
+		super(serialNumber, term, vars, funs, closedFormula);
 		mConjuncts = conjuncts;
 
 	}
@@ -47,7 +47,5 @@ public class BuchiPredicate extends BasicPredicate {
 	public Set<IPredicate> getConjuncts() {
 		return mConjuncts;
 	}
-
-
 
 }

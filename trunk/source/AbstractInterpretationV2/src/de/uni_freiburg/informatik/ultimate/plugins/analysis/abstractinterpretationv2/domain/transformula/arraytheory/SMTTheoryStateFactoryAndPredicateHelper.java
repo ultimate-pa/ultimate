@@ -42,11 +42,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermVarsFuns;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -69,7 +68,6 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 	private final SMTTheoryState mBottomState;
 
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_QUICK;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final SMTTheoryOperationProvider mArrayTheoryOperationProvider;
 	private final IUltimateServiceProvider mServices;
@@ -123,7 +121,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 					.collect(Collectors.toSet());
 			mMgdScript.lock(this);
 			mMgdScript.push(this, 1);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(resTerm, mMgdScript, mCsToolkit.getSymbolTable());
+			final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(resTerm, mMgdScript, mCsToolkit.getSymbolTable());
 			mMgdScript.assertTerm(this, tvp.getClosedFormula());
 //					PredicateUtils.computeClosedFormula(resTerm, vars, mMgdScript.getScript()));
 			final LBool checkSatResult = mMgdScript.checkSat(this);
@@ -241,7 +239,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mMgdScript.assertTerm(this, arrayTheoryState.getPredicate().getClosedFormula());
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(literalTerm, mMgdScript, mCsToolkit.getSymbolTable());
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(literalTerm, mMgdScript, mCsToolkit.getSymbolTable());
 		mMgdScript.assertTerm(this, SmtUtils.not(mMgdScript.getScript(), tvp.getClosedFormula()));
 		final LBool checkSatResult = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);

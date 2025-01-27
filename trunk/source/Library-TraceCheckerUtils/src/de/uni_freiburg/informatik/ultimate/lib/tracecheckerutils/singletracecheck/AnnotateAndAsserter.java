@@ -1,6 +1,8 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2014-2015 Betim Musa (musab@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2024 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
@@ -27,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
 import java.math.BigInteger;
+import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,11 +45,21 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignm
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderInsideLoopFirst1;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderMixInsideOutside;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderNotIncrementally;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderShuffledSingletons;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -59,14 +73,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * TODO: use quick check
+ * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
+ * trace in order to get better interpolants.
  *
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de), Max Barth (Max.Barth@lmu.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Betimt Musa (musab@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Max Barth (Max.Barth@lmu.de)
  */
-public class AnnotateAndAsserter<L extends IAction> {
 
-	protected final IUltimateServiceProvider mServices;
-	protected final ILogger mLogger;
+public class AnnotateAndAsserter<L extends IAction> {
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+
+	private final ManagedScript mMgdScriptTc;
 
 	protected final ManagedScript mMgdScriptTc;
 	protected final NestedWord<L> mTrace;
@@ -74,9 +94,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 	protected final NestedFormulas<L, Term, Term> mSSA;
 	protected ModifiableNestedFormulas<L, Term, Term> mAnnotSSA;
 
-	protected final AnnotateAndAssertCodeBlocks<L> mAnnotateAndAssertCodeBlocks;
+	private final TraceCheckStatisticsGenerator mTcbg;
 
-	protected final TraceCheckStatisticsGenerator mTcbg;
+	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
+	private int mCheckSat;
+	private int mAssertedStatements;
 
 	public boolean mSucessfulReuse = false;
 	private VarAssignmentReuseAnnotation mVAforReuse = null;
@@ -95,34 +117,16 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
-			final IUltimateServiceProvider services) {
+			final AssertCodeBlockOrder assertCodeBlocksOrder, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;
-		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
-		mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
-				.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
-
-		reuseUnsatpossible = mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)
-				|| mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc);
 	}
 
 	public void buildAnnotatedSsaAndAssertTerms() {
-		mTcbg.reportTraceChecks();
-		boolean reuse = false;
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-			reuse = true;
-		}
-
-		if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix)) {
-			getReuseCandidate();
-			if (mVAforReuse == null) {
-				reuse = true;
-			}
-		}
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
@@ -135,7 +139,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 		final Collection<Integer> callPositions = new ArrayList<>();
 		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
-		int branchCount = 0;
 		for (int i = 0; i < mTrace.length(); i++) {
 			if (mTrace.isCallPosition(i)) {
 				callPositions.add(i);
@@ -147,9 +150,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 						mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
 
 			} else {
-				if (mTrace.isReturnPosition(i) && mTrace.isPendingReturn(i)) {
-					pendingReturnPositions.add(i);
-				}
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
 
@@ -222,7 +222,6 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
-
 		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
 			assert mTrace.isPendingReturn(positionOfPendingReturn);
 			{
@@ -242,228 +241,13 @@ public class AnnotateAndAsserter<L extends IAction> {
 			}
 			pendingContextCode++;
 		}
-
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-			getCurrentVA();
-
-			if (mCurrentVA != null && mVAforReuse == null && reuseUnsatpossible && branchCount == 0) {
-				mDefaultVA = mCurrentVA.setDefaultVa(mDefaultVA);
-				mDefaultVA = mCurrentVA.mVAofOppositeBranch.setDefaultVa(mDefaultVA);
-				mVAforReuse = mDefaultVA;
-				reuse = true;
-			}
-			if (nondetsInTrace.isEmpty() || mCurrentVA == null || mVAforReuse == null) {
-				reuse = false;
-			} else if (mVAforReuse.mNegatedVA) {
-				reuse = false;
-			} else if (mCurrentVA.mUnsatWithVAs.contains(mVAforReuse) && mVAforReuse.mNegatedVA == false) {
-				reuse = false; // Wie kann das überhaupt sein?
-				// System.out.println("NO REUSE since UNSAT With");
-			} else if (mVAforReuse.mVarAssignmentPair.isEmpty() && !mVAforReuse.equals(mDefaultVA)) {
-				reuse = false;
-			}
-			if (reuse) {
-				ArrayList<Term> vaPairsAsTerms;
-				if (mTestGenReuseMode.equals(TestGenReuseMode.Reuse) || !reuseUnsatpossible) {
-					vaPairsAsTerms = getNonDetsAsTermsReuse();
-				} else if (reuseUnsatpossible) {
-					vaPairsAsTerms = getNonDetsAsTermsReuseUNSAT();
-				} else {
-					throw new AssertionError("unexpected Reuse Mode");
-				}
-
-				if (!vaPairsAsTerms.isEmpty()) {
-					final Term varAssignmentConjunction = SmtUtils.and(mMgdScriptTc.getScript(), vaPairsAsTerms);
-					mMgdScriptTc.getScript().push(1);
-					mAnnotateAndAssertCodeBlocks.annotateAndAssertTerm(varAssignmentConjunction, "Int");
-					System.out.println("REUSE: " + varAssignmentConjunction);
-				} else {
-					reuse = false; // Can be empty if previous test goal is "behind" the current. (loops)
-					// In this case previous test goal has not been checked yet.
-				}
-			} else {
-				// System.out.println("no reuse because prefix doesnt match");
-			}
-		}
-		if (reuse) {
-			System.out.println("REUSE CFG Script CHecksat");
-			mTcbg.reportReuseTried();
-			reuseCheckSAT();
-
-		} else {
-			System.out.println("NO REUSE TC Script CHecksat");
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-		}
-
-		if (mSatisfiable == LBool.UNKNOWN) {
-			// System.out.println("UNKNOWN");
-		}
+		mSatisfiable = mMgdScriptTc.getScript().checkSat();
 
 		// Report benchmarks
 		mTcbg.reportNewCheckSat();
 		mTcbg.reportNewCodeBlocks(mTrace.length());
 		mTcbg.reportNewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
-
-	}
-
-	private void reuseCheckSAT() {
-		System.out.println("trying to reuse");
-
-		mSatisfiable = mMgdScriptTc.getScript().checkSat();
-		System.out.println("REUSE Result: " + mSatisfiable);
-
-		if (mSatisfiable == LBool.SAT) {
-			// register "other branch" as not reachable with this VA. Add negated VA to other branch test goal
-			System.out.println("REUSE SUCCESSFULL");
-			mTcbg.reportSuccessfullReuse();
-			// We check the same branch twice, for branch encoder
-			if (mCurrentVA.secondCheck == true) {
-				mVAforReuse.mNegatedVA = !mVAforReuse.mNegatedVA;
-			}
-			if (mCurrentVA != null) {
-				mCurrentVA.mCoveredTestGoal = true;
-				// concreteExecution();
-			}
-			mSucessfulReuse = true;
-			// Since we do not create a counterexample after successfull reuse, we have to annotate here.
-			mCurrentVA.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
-
-		} else {
-			mMgdScriptTc.getScript().pop(1);
-			if (reuseUnsatpossible) {
-				removeCheckIfCovered();
-			}
-			if (mCurrentVA.secondCheck == true) { // can this even be the case?
-				mVAforReuse.mNegatedVA = false;
-			} else {
-				mVAforReuse.mNegatedVA = true;
-			}
-
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-		}
-
-		mCurrentVA.secondCheck = true;
-	}
-
-	private Term createTermFromVA(final String variableAsString, final Term value) {
-		FunctionSymbol varInCurrentScript =
-				mMgdScriptTc.getScript().getTheory().getDeclaredFunctions().get(variableAsString);
-		if (varInCurrentScript == null) {
-			varInCurrentScript = mMgdScriptTc.getScript().getTheory()
-					.getFunction(variableAsString.substring(1, variableAsString.length() - 1));
-		}
-
-		if (varInCurrentScript == null) {
-			throw new AssertionError("unknown var " + variableAsString);
-		}
-
-		final Term nondetVar = SmtUtils.unfTerm(mMgdScriptTc.getScript(), varInCurrentScript);
-
-		final Term nondetValue;
-
-		switch (nondetVar.getSort().getName()) {
-		case SmtSortUtils.FLOATINGPOINT_SORT: {
-
-			if (nondetVar.getSort().getIndices()[1].equals("24")) {
-				if (value != null) {
-					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
-					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
-							valueAsAppterm.getSort().getIndices(), null, valueAsAppterm.getParameters());
-				} else {
-					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
-					// (_ +zero 2 4)
-
-					final String[] indices = new String[2];
-					indices[0] = "0";
-					indices[1] = "0";
-
-					final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
-					final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 8));
-					final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 23));
-					nondetValue =
-							SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
-
-					// nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), "_ FloatingPoint 0 0", indices,
-					// SmtSortUtils
-					// .getFloatSort(mMgdScriptTc.getScript(), BigInteger.valueOf(8), BigInteger.valueOf(23)));
-
-				}
-			} else if (nondetVar.getSort().getIndices()[1].equals("53")) {
-
-				if (value != null) {
-					final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
-					nondetValue = SmtUtils.unfTerm(mMgdScriptTc.getScript(), valueAsAppterm.getFunction().getName(),
-							null, null, valueAsAppterm.getParameters());
-				} else {
-					// (fp (_ BitVec 1) (_ BitVec eb) (_ BitVec i) (_ FloatingPoint eb sb))
-					// (_ +zero 2 4)
-
-					final String[] indices = new String[2];
-					indices[0] = "0";
-					indices[1] = "0";
-
-					final Term bvConst0 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 1));
-					final Term bvConst1 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 11));
-					final Term bvConst2 = SmtUtils.rational2Term(mMgdScriptTc.getScript(), Rational.ZERO,
-							SmtSortUtils.getBitvectorSort(mMgdScriptTc.getScript(), 52));
-					nondetValue =
-							SmtUtils.unfTerm(mMgdScriptTc.getScript(), "fp", null, null, bvConst0, bvConst1, bvConst2);
-
-				}
-
-			} else {
-				throw new AssertionError("Unexpected Float Sort Size");
-			}
-
-			break;
-		}
-		case SmtSortUtils.BITVECTOR_SORT: {
-			if (value != null) {
-				final ApplicationTerm valueAsAppterm = (ApplicationTerm) value;
-				final BigInteger constValue = new BigInteger(valueAsAppterm.getFunction().getName().substring(2));
-				nondetValue = BitvectorUtils.constructTerm(mMgdScriptTc.getScript(),
-						BitvectorUtils.constructBitvectorConstant(constValue, nondetVar.getSort()));
-			} else {
-				final BigInteger constValue = BigInteger.ZERO;
-				nondetValue = BitvectorUtils.constructTerm(mMgdScriptTc.getScript(),
-						BitvectorUtils.constructBitvectorConstant(constValue, nondetVar.getSort()));
-			}
-			break;
-		}
-		case SmtSortUtils.INT_SORT: {
-
-			if (value != null) {
-				nondetValue = SmtUtils.rational2Term(mMgdScriptTc.getScript(),
-						SmtUtils.toRational(((ConstantTerm) value)), SmtSortUtils.getIntSort(mMgdScriptTc));
-			} else {
-				nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
-						SmtSortUtils.getIntSort(mMgdScriptTc), BigInteger.ZERO);
-			}
-			break;
-		}
-		case SmtSortUtils.REAL_SORT: {
-
-			if (value != null) {
-				nondetValue = SmtUtils.rational2Term(mMgdScriptTc.getScript(),
-						SmtUtils.toRational(((ConstantTerm) value)), SmtSortUtils.getRealSort(mMgdScriptTc));
-			} else {
-				nondetValue = SmtUtils.constructIntegerValue(mMgdScriptTc.getScript(),
-						SmtSortUtils.getRealSort(mMgdScriptTc), BigInteger.ZERO);
-			}
-			break;
-		}
-		default: {
-			throw new AssertionError("Unexpected Value Sort");
-		}
-		}
-		mValueAssignmentUsedForReuse.add(new Pair<>(nondetVar, nondetValue));
-		return SmtUtils.binaryEquality(mMgdScriptTc.getScript(), nondetVar, nondetValue);
 	}
 
 	public LBool isInputSatisfiable() {

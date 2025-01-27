@@ -44,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.mso.MSODSolver.MSODLogic;
 public class SmtParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum SmtParserMode {
-		GenericSmtSolver, MSODSolver, UltimateEliminator, UltimateTreeAutomizer, IntBlastingWrapper,
+		GenericSmtSolver, MSODSolver, UltimateEliminator, UltimateInterpolator, UltimateTreeAutomizer,
+		IntBlastingWrapper,
 	}
 
 	public static final String LABEL_SMT_PARSER_MODE = "SmtParser Mode";

@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<!DOCTYPE table PUBLIC "+//IDN sosy-lab.org//DTD BenchExec table 1.10//EN" "https://www.sosy-lab.org/benchexec/table-1.10.dtd">
+<table>
+  <!-- default columns -->
+  <column title="status"/>
+  <column title="cputime" displayTitle="CPU Time"/>
+  <column title="memory"  displayTitle="Memory" sourceUnit="B" displayUnit="MB"/>
+
+  <!-- Trace Abstraction-specific columns -->
+  <column title="iterations" displayTitle="TAR Iterations">OverallIterations:\s*(\d+),</column>
+  <column title="proofSize"  displayTitle="# Interpolant States">InterpolantAutomatonStates: (\d+)[^\d]</column>
+
+  <union>
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.After.*.xml" />
+  </union>
+
+  <union>
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Before.*.xml" />
+  </union>
+
+  <union>
+    <result filename="concurrency-insufficient-separately.*.Automizer-PN.Together.*.xml" />
+  </union>
+</table>

@@ -26,13 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
-import java.math.BigDecimal;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.ProgramStatePrinter;
 
 /**
  *
@@ -110,20 +110,8 @@ public class GeneratedWitnessEdge<TE, E> {
 	}
 
 	public String getAssumption() {
-		if (!hasAssumption()) {
-			return null;
-		}
-
-		final StringBuilder sb = new StringBuilder();
-		for (final E var : mState.getVariables()) {
-			for (final E val : mState.getValues(var)) {
-				appendValidExpression(var, val, sb);
-			}
-		}
-		if (sb.length() > 0) {
-			return sb.toString();
-		}
-		return null;
+		return new ProgramStatePrinter<>(mStringProvider).stateAsExpression(mState,
+				ProgramStatePrinter::isValidCVariable);
 	}
 
 	public String getEnterFunction() {
@@ -174,31 +162,6 @@ public class GeneratedWitnessEdge<TE, E> {
 		return sb.toString();
 	}
 
-	private void appendValidExpression(final E var, final E val, final StringBuilder sb) {
-		final String varStr = mStringProvider.getStringFromExpression(var);
-
-		if (varStr.contains("\\") || varStr.contains("&")) {
-			// is something like read, old, etc.
-			return;
-		}
-
-		final String valStr = mStringProvider.getStringFromExpression(val);
-		try {
-			new BigDecimal(valStr);
-		} catch (final Exception ex) {
-			// this is no valid number literal, maybe its true or false?
-			if (!"true".equalsIgnoreCase(valStr) && !"false".equalsIgnoreCase(valStr)) {
-				// nope, give up
-				return;
-			}
-		}
-
-		sb.append(varStr);
-		sb.append("==");
-		sb.append(valStr);
-		sb.append(";");
-	}
-
 	public String getOriginFileName() {
 		return mStringProvider.getFileNameFromStep(mATE.getStep());
 	}
@@ -224,5 +187,4 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 		return null;
 	}
-
 }

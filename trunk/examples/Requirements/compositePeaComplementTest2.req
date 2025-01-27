@@ -1,0 +1,8 @@
+Input P is bool
+Input R is bool
+Input S is bool
+Input T is bool
+Input U is bool
+
+ID000: Before "P", it is always the case that if "R" holds, then "S" eventually holds and is succeeded by "T" where "U" does not hold between "S" and "T"
+

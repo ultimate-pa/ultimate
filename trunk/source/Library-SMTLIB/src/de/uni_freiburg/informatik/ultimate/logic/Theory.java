@@ -106,10 +106,6 @@ public class Theory {
 	 * Factory for to_real wrapper function symbol, if IRA logic is used.
 	 */
 	private IRAWrapperFactory mIRAWrappers;
-	/**
-	 * Cache for bitvector constant function symbols (_ bv123 456).
-	 */
-	private UnifyHash<FunctionSymbol> mBitVecConstCache;
 
 	public final ApplicationTerm mTrue, mFalse;
 	public final FunctionSymbol mAnd, mOr, mNot, mImplies, mXor;
@@ -122,7 +118,7 @@ public class Theory {
 	 * Pattern for model value variables '{@literal @}digits'.
 	 */
 	private final static String MODEL_VALUE_PATTERN = "@\\d+";
-	private final static String BITVEC_CONST_PATTERN = "bv\\d+";
+	public final static String BITVEC_CONST_PATTERN = "bv\\d+";
 
 	private int mTvarCtr = 0;
 
@@ -469,6 +465,14 @@ public class Theory {
 			}
 			if (sort.getName().equals("Int") && !v.isIntegral()) {
 				throw new SMTLIBException("Non-integral value with integer sort");
+			}
+		}
+		if (sort.isBitVecSort()) {
+			if (value instanceof BigInteger) {
+				final BigInteger intValue = (BigInteger) value;
+				if (intValue.signum() < 0 || intValue.bitLength() > Integer.valueOf(sort.getIndices()[0])) {
+					throw new SMTLIBException("Bitvector constant out of range");
+				}
 			}
 		}
 		final int hash = ConstantTerm.hashConstant(value, sort);
@@ -856,6 +860,36 @@ public class Theory {
 				return paramSorts[0];
 			}
 		}
+		class Bv2NatFunction extends FunctionSymbolFactory {
+			public Bv2NatFunction(final String name) {
+				super(name);
+				assert name.equals("bv2nat") : "Wrong name: " + name;
+			}
+
+			@Override
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				if (indices != null || paramSorts.length != 1 || paramSorts[0].getName() != "BitVec"
+						|| resultSort != null) {
+					return null;
+				}
+				return mNumericSort;
+			}
+		}
+		class Nat2BvFunction extends FunctionSymbolFactory {
+			public Nat2BvFunction(final String name) {
+				super(name);
+				assert name.equals("nat2bv") : "Wrong name: " + name;
+			}
+
+			@Override
+			public Sort getResultSort(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
+				if (indices == null || indices.length != 1 || paramSorts.length != 1
+						|| !paramSorts[0].getName().equals("Int") || resultSort != null) {
+					return null;
+				}
+				return mBitVecSort.getSort(indices);
+			}
+		}
 		declareInternalFunctionFactory(new FunctionSymbolFactory("concat") {
 			@Override
 			public int getFlags(final String[] indices, final Sort[] paramSorts, final Sort resultSort) {
@@ -951,6 +985,12 @@ public class Theory {
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 		declareInternalFunctionFactory(new RegularBitVecFunction("bvsge", 2, mBooleanSort,
 				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+
+		declareInternalFunctionFactory(new Bv2NatFunction("bv2nat"));
+		declareInternalFunctionFactory(new Nat2BvFunction("nat2bv"));
+
+
+
 	}
 
 	private void createFloatingPointOperators() {
@@ -1297,15 +1337,15 @@ public class Theory {
 			mRealSort = declareInternalSort("Real", 0, SortSymbol.NUMERIC).getSort(null, new Sort[0]);
 		}
 
-		if (logic.isArithmetic()) {
+		if (logic.isArithmetic() || logic.isBitVector()) {
 
-			if (logic.hasIntegers()) {
+			if (logic.hasIntegers() || logic.isBitVector()) {
 				mNumericSort = declareInternalSort("Int", 0, SortSymbol.NUMERIC).getSort(null, new Sort[0]);
 			} else {
 				mNumericSort = mRealSort;
 			}
 
-			if (logic.isIRA()) {
+			if (logic.isIRA() || (logic.isBitVector() && logic.hasReals())) {
 				createIRAOperators();
 			} else {
 				createNumericOperators(mNumericSort, logic.hasReals());
@@ -1547,50 +1587,58 @@ public class Theory {
 
 	public FunctionSymbol getFunctionWithResult(final String name, final String[] indices, final Sort resultType,
 			final Sort... paramTypes) {
+		final FunctionSymbolFactory factory = mFunFactory.get(name);
+		if (factory != null) {
+			FunctionSymbol fsym = factory.getFunctionWithResult(this, indices, paramTypes, resultType);
+			if (fsym == null && mIRAWrappers != null) {
+				fsym = mIRAWrappers.createWrapper(this, name, indices, paramTypes, resultType);
+			}
+			if (fsym == null) {
+				final StringBuilder sb = new StringBuilder();
+				final PrintTerm pt = new PrintTerm();
+				sb.append("Builtin function ");
+				if (indices != null) {
+					sb.append("(_ ").append(name);
+					for (final String i : indices) {
+						sb.append(" ").append(i);
+					}
+					sb.append(") does not support indices or argument sorts (");
+				} else {
+					sb.append(name);
+					sb.append(" does not support argument sorts (");
+				}
+				String sep = "";
+				for (final Sort s : paramTypes) {
+					sb.append(sep);
+					pt.append(sb, s);
+					sep = " ";
+				}
+				sb.append(")");
+				throw new SMTLIBException(sb.toString());
+			}
+			return fsym;
+		}
+		FunctionSymbol fsym = mDeclaredFuns.get(name);
+		if (fsym != null) {
+			if (indices != null) {
+				throw new SMTLIBException("Function " + name + " take no index.");
+			}
+			if (resultType != null || !fsym.typecheck(paramTypes)) {
+				if (mIRAWrappers != null) {
+					fsym = mIRAWrappers.createWrapper(this, name, indices, paramTypes, resultType);
+					if (fsym != null) {
+						return fsym;
+					}
+				}
+				throw new SMTLIBException(
+						"Application of function " + fsym + " does not type check.");
+			}
+			return fsym;
+		}
 		if (resultType != null && indices == null && paramTypes.length == 0 && name.matches(MODEL_VALUE_PATTERN)) {
 			return getModelValueSymbol(name, resultType);
 		}
-		final FunctionSymbolFactory factory = mFunFactory.get(name);
-		if (factory != null) {
-			final FunctionSymbol fsym = factory.getFunctionWithResult(this, indices, paramTypes, resultType);
-			if (fsym != null) {
-				return fsym;
-			}
-		} else {
-			final FunctionSymbol fsym = mDeclaredFuns.get(name);
-			if (fsym != null && indices == null && resultType == null && fsym.typecheck(paramTypes)) {
-				return fsym;
-			}
-		}
-		if (mIRAWrappers != null) {
-			final FunctionSymbol fsym = mIRAWrappers.createWrapper(this, name, indices, paramTypes, resultType);
-			if (fsym != null) {
-				return fsym;
-			}
-		}
-		if (mBitVecSort != null && name.matches(BITVEC_CONST_PATTERN) && indices != null && indices.length == 1
-				&& resultType == null) {
-			/* Create bitvector constants */
-			return getBitVecConstant(name, indices);
-		}
-		return null;
-	}
-
-	private FunctionSymbol getBitVecConstant(final String name, final String[] indices) {
-		if (mBitVecConstCache == null) {
-			mBitVecConstCache = new UnifyHash<>();
-		}
-		final int hash = HashUtils.hashJenkins(name.hashCode(), (Object[]) indices);
-		for (final FunctionSymbol symb : mBitVecConstCache.iterateHashCode(hash)) {
-			if (symb.getName().equals(name) && symb.getIndices()[0].equals(indices[0])) {
-				return symb;
-			}
-		}
-		final Sort sort = mBitVecSort.getSort(indices);
-		final FunctionSymbol symb =
-				new FunctionSymbol(name, indices, EMPTY_SORT_ARRAY, sort, null, null, FunctionSymbol.INTERNAL);
-		mBitVecConstCache.put(hash, symb);
-		return symb;
+		throw new SMTLIBException("Unknown function symbol " + name + ".");
 	}
 
 	public Term term(final FunctionSymbolFactory factory, final Term... parameters) {
@@ -1607,22 +1655,20 @@ public class Theory {
 
 	public Term term(final String funcname, final String[] indices,
 			final Sort returnSort, final Term... params) throws SMTLIBException {
+		if (mBitVecSort != null && indices != null && indices.length == 1 && returnSort == null && params.length == 0
+				&& funcname.matches(BITVEC_CONST_PATTERN) && indices[0].matches("\\d+")) {
+			final BigInteger value = new BigInteger(funcname.substring(2));
+			if (value.bitLength() > Integer.parseInt(indices[0])) {
+				throw new SMTLIBException("Constant out of range: (_ " + funcname + " " + indices[0] + ")");
+			}
+			return constant(value, mBitVecSort.getSort(indices));
+		}
+
 		final Sort[] sorts = params.length == 0 ? Script.EMPTY_SORT_ARRAY : new Sort[params.length];
 		for (int i = 0; i < sorts.length; i++) {
 			sorts[i] = params[i].getSort();
 		}
 		final FunctionSymbol fsym = getFunctionWithResult(funcname, indices, returnSort, sorts);
-		if (fsym == null) {
-			final StringBuilder sb = new StringBuilder();
-			final PrintTerm pt = new PrintTerm();
-			sb.append("Undeclared function symbol (").append(funcname);
-			for (final Sort s : sorts) {
-				sb.append(' ');
-				pt.append(sb, s);
-			}
-			sb.append(')');
-			throw new SMTLIBException(sb.toString());
-		}
 		return term(fsym, params);
 	}
 
@@ -1748,7 +1794,7 @@ public class Theory {
 	 */
 	public DataType createDatatypes(final String name, final int numParams) {
 		if (mDeclaredSorts.containsKey(name)) {
-			throw new IllegalArgumentException("Datatype " + name + " already exists.");
+			throw new SMTLIBException("Datatype " + name + " already exists.");
 		}
 		final DataType datatype = new DataType(this, name, numParams);
 		mDeclaredSorts.put(name, datatype);
@@ -1819,6 +1865,9 @@ public class Theory {
 			if (!next.getValue().isIntern()) {
 				it.remove();
 			}
+		}
+		while (mFunFactory.getActiveScopeNum() > 1) {
+			mFunFactory.endScope();
 		}
 		while (mDeclaredSorts.getActiveScopeNum() > 1) {
 			mDeclaredSorts.endScope();

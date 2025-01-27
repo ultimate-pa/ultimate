@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -53,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IPostconditionProvider;
@@ -75,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelSmtAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.DachshundRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FixedRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FoxRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LazyTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.LizardRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
@@ -130,9 +130,20 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 *
+	 * @param counterexample
+	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
+	 *            will be constructed.
+	 *
+	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
+	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
+	 *            assert order modulation.
+	 * @param abstraction
+	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
+	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
-			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider) {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
@@ -144,9 +155,20 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 *
+	 * @param counterexample
+	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
+	 *            will be constructed.
+	 *
+	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
+	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
+	 *            assert order modulation.
+	 * @param abstraction
+	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
+	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
-			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
 			final RefinementStrategy strategyType) {
@@ -166,7 +188,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			final IPredicateUnifier predicateUnifier, final IPredicate precondition, final IPredicate postcondition,
 			final RefinementStrategy strategyType) {
 
-		mPathProgramCache.addRun(counterexample);
+		mPathProgramCache.addRun(counterexample.getWord());
 
 		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
 				counterexample, precondition, postcondition, predicateUnifier, abstraction, emptyStackFactory);
@@ -193,6 +215,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new WalrusRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WOLF:
 			return new WolfRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case FOX:
+			return new FoxRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case BEAR:
 			return new BearRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case WARTHOG_NO_AM:
@@ -239,7 +263,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		}
 
 		return new PredicateUnifier(mLogger, services, managedScript, mPredicateFactory, symbolTable,
-				mTaPrefs.getSimplificationTechnique(), mTaPrefs.getXnfConversionTechnique());
+				mTaPrefs.getSimplificationTechnique());
 	}
 
 	/**
@@ -252,19 +276,31 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 		private final TaskIdentifier mTaskIdentifier;
 		private final IUltimateServiceProvider mServices;
-		private final IRun<L, ?> mCounterexample;
+		private final Counterexample<L> mCounterexample;
 		private final IPredicateUnifier mPredicateUnifier;
 		private final IPredicate mPrecondition;
 		private final IPredicate mPostcondition;
 		private final IAutomaton<L, IPredicate> mAbstraction;
 		private final IEmptyStackStateFactory<IPredicate> mEmptyStackFactory;
 
+		/**
+		 * @param counterexample
+		 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement
+		 *            result will be constructed.
+		 *
+		 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the
+		 *            program that is being verified. This sequence is used to judge the quality of proofs ("perfect")
+		 *            and for assert order modulation.
+		 * @param abstraction
+		 *            The initial abstraction representing the program. Various strategies require the initial
+		 *            abstraction, e.g., to extract the complete alphabet, or to perform more complex generalizations.
+		 */
 		public StrategyModuleFactory(final TaskIdentifier taskIdentifier, final IUltimateServiceProvider services,
-				final IRun<L, ?> counterExample, final IPredicate precondition, final IPredicate postcondition,
+				final Counterexample<L> counterexample, final IPredicate precondition, final IPredicate postcondition,
 				final IPredicateUnifier predicateUnifier, final IAutomaton<L, IPredicate> abstraction,
 				final IEmptyStackStateFactory<IPredicate> emptyStackFactory) {
 			mServices = services;
-			mCounterexample = counterExample;
+			mCounterexample = counterexample;
 			mPredicateUnifier = predicateUnifier;
 			mPrecondition = precondition;
 			mPostcondition = postcondition;
@@ -280,7 +316,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 				throw new UnsupportedOperationException("Interpolant consolidation and MCR cannot be combined");
 			}
 			return new StrategyModuleMcr<>(mServices, mLogger, mPrefs, mPredicateUnifier, mEmptyStackFactory,
-					strategyFactory, mCounterexample, mAbstraction, mTaskIdentifier, createMcrInterpolantProvider());
+					strategyFactory, mCounterexample.getWord(), mAbstraction, mTaskIdentifier,
+					createMcrInterpolantProvider());
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAcceleratedInterpolation() {
@@ -292,7 +329,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			}
 			final RefinementStrategy nestedStrategy = mPrefs.getAcceleratedInterpolationRefinementStrategy();
 			final IStrategySupplier<L> strategySupplier =
-					run -> constructStrategy(mServices, run, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+					(ctex) -> constructStrategy(mServices, ctex, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
 							mPredicateUnifier, mPrecondition, mPostcondition, nestedStrategy);
 
 			return new IpTcStrategyModuleAcceleratedInterpolation<>(mServices, mLogger, mCounterexample,
@@ -370,21 +407,35 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
 		}
 
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC5(final InterpolationTechnique technique,
+				final AssertCodeBlockOrder... order) {
+			return createIpTcStrategyModuleCVC5(-1, technique, order);
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleCVC5(final long timeoutInMillis,
+				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
+			return createModuleWrapperIfNecessary(
+					new IpTcStrategyModuleCvc5<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
+							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
+							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
+		}
+
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAbstractInterpretation() {
 			isOnlyDefaultPrePostConditions();
-			return createModuleWrapperIfNecessary(new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample,
-					mPredicateUnifier, mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
+			return createModuleWrapperIfNecessary(
+					new IpTcStrategyModuleAbstractInterpretation<>(mCounterexample.getWord(), mPredicateUnifier,
+							mServices, mPrefs.getIcfgContainer(), mPathProgramCache, mTaPrefs));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSifa() {
 			isOnlyDefaultPrePostConditions();
 			return createModuleWrapperIfNecessary(new IpTcStrategyModuleSifa<>(mServices, mLogger,
-					mPrefs.getIcfgContainer(), mCounterexample, mPredicateUnifier));
+					mPrefs.getIcfgContainer(), mCounterexample.getWord(), mPredicateUnifier));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModulePdr() {
 			return createModuleWrapperIfNecessary(new IpTcStrategyModulePdr<>(mServices, mLogger, mPrecondition,
-					mPostcondition, mCounterexample, mPredicateUnifier, mPrefs, mTransitionClazz));
+					mPostcondition, mCounterexample.getWord(), mPredicateUnifier, mPrefs, mTransitionClazz));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModulePreferences() {
@@ -418,14 +469,15 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 					mTaPrefs.overrideInterpolantAutomaton() ? mTaPrefs.interpolantAutomaton() : setting;
 			switch (realSetting) {
 			case STRAIGHT_LINE:
-				return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction, mCounterexample,
-						mEmptyStackFactory);
+				return new IpAbStrategyModuleStraightlineAll<>(mServices, mLogger, mAbstraction,
+						mCounterexample.getWord(), mEmptyStackFactory);
 			case CANONICAL:
 				return new IpAbStrategyModuleCanonical<>(mServices, mLogger, mAbstraction, mCounterexample,
 						mEmptyStackFactory, mPredicateUnifier);
 			case TOTALINTERPOLATION2:
-				return new IpAbStrategyModuleTotalInterpolation<>(mServices, mAbstraction, mCounterexample,
-						mPredicateUnifier, mPrefs, mCfgSmtToolkit, mPredicateFactoryInterpolAut);
+				return new IpAbStrategyModuleTotalInterpolation<>(mServices, mAbstraction,
+						mCounterexample.getControlConfigurations(), mPredicateUnifier, mPrefs, mCfgSmtToolkit,
+						mPredicateFactoryInterpolAut);
 			case ABSTRACT_INTERPRETATION:
 				final IIpTcStrategyModule<?, L> strategy =
 						preferenceIpTc == null ? createIpTcStrategyModulePreferences() : preferenceIpTc;
@@ -443,14 +495,13 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		private IInterpolantProvider<L> createMcrInterpolantProvider() {
 			final ManagedScript managedScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 			final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-			final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 			switch (mTaPrefs.getMcrInterpolantMethod()) {
 			case WP:
 				return new WpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
-						xnfConversionTechnique, mPredicateUnifier);
+						mPredicateUnifier);
 			case SP:
 				return new SpInterpolantProvider<>(mServices, mLogger, managedScript, simplificationTechnique,
-						xnfConversionTechnique, mPredicateUnifier);
+						mPredicateUnifier);
 			default:
 				throw new IllegalArgumentException("Setting " + mTaPrefs.getMcrInterpolantMethod() + " is unsupported");
 			}

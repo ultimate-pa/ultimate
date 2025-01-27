@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -51,7 +52,8 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
-	public <STE, TTE, SE, TE, SVL, TVL> void addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL> translator) {
+	public <STE, TTE, SE, TE, SVL, TVL, LOC> void
+			addTranslator(final ITranslator<STE, TTE, SE, TE, SVL, TVL, LOC> translator) {
 		mTranslatorSequence.addTranslator(translator);
 	}
 
@@ -70,15 +72,20 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 			translateProgramExecution(final IProgramExecution<STE, SE> programExecution) {
 		return mTranslatorSequence.translateProgramExecution(programExecution);
 	}
-	
+
 	@Override
-	public <SE> ProgramState<?>
-			translateProgramState(final ProgramState<SE> programState) {
+	public <STE, SE> Lasso<IProgramExecution<?, ?>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> lasso) {
+		return mTranslatorSequence.translateLassoProgramExecution(lasso);
+	}
+
+	@Override
+	public <SE> ProgramState<?> translateProgramState(final ProgramState<SE> programState) {
 		return mTranslatorSequence.translateProgramState(programState);
 	}
-	
+
 	@Override
-	public <SE> String translateProgramStateToString(ProgramState<SE> programState) {
+	public <SE> String translateProgramStateToString(final ProgramState<SE> programState) {
 		return mTranslatorSequence.translateProgramStateToString(programState);
 	}
 
@@ -88,8 +95,26 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
+	public <TE, SE, CTX> ProcedureContract<TE, ? extends TE> translateProcedureContract(
+			final ProcedureContract<SE, ? extends SE> contract, final CTX context, final Class<SE> clazz) {
+		return mTranslatorSequence.translateProcedureContract(contract, context, clazz);
+	}
+
+	@Override
 	public <SE> String translateExpressionToString(final SE expression, final Class<SE> clazz) {
 		return mTranslatorSequence.translateExpressionToString(expression, clazz);
+	}
+
+	@Override
+	public <SE, CTX> String translateExpressionWithContextToString(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return mTranslatorSequence.translateExpressionWithContextToString(expression, context, clazz);
+	}
+
+	@Override
+	public <SE, TE, CTX> TE translateExpressionWithContext(final SE expression, final CTX context,
+			final Class<SE> clazz) {
+		return mTranslatorSequence.translateExpressionWithContext(expression, context, clazz);
 	}
 
 	@Override
@@ -121,5 +146,4 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	public void destroy() {
 		mTranslatorSequence = null;
 	}
-
 }

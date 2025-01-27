@@ -143,8 +143,9 @@ public class ExpressionResultBuilder {
 		return this;
 	}
 
-	public ExpressionResultBuilder addAuxVar(final AuxVarInfo auxvar) {
+	public ExpressionResultBuilder addAuxVarWithDeclaration(final AuxVarInfo auxvar) {
 		mAuxVars.add(auxvar);
+		mDeclarations.add(auxvar.getVarDec());
 		return this;
 	}
 
@@ -165,14 +166,23 @@ public class ExpressionResultBuilder {
 
 	public ExpressionResultBuilder addAllExceptLrValueAndHavocAux(final ExpressionResult exprResult) {
 		addAllExceptLrValue(exprResult);
-		addStatements(CTranslationUtil.createHavocsForAuxVars(exprResult.getAuxVars()));
-		mAuxVars.clear();
+		havocAuxVars();
 		return this;
 	}
 
 	public ExpressionResultBuilder addAllExceptLrValue(final ExpressionResult exprResult) {
 		addStatements(exprResult.getStatements());
 		addAllExceptLrValueAndStatements(exprResult);
+		return this;
+	}
+
+	public ExpressionResultBuilder addAllExceptLrValueAndOverapproximation(final ExpressionResult exprResult) {
+		addStatements(exprResult.getStatements());
+		addDeclarations(exprResult.getDeclarations());
+		addAuxVars(exprResult.getAuxVars());
+		if (exprResult.getNeighbourUnionFields() != null && !exprResult.getNeighbourUnionFields().isEmpty()) {
+			addNeighbourUnionFields(exprResult.getNeighbourUnionFields());
+		}
 		return this;
 	}
 
@@ -281,6 +291,11 @@ public class ExpressionResultBuilder {
 	@Override
 	public String toString() {
 		return build().toString();
+	}
+
+	public void havocAuxVars() {
+		addStatements(CTranslationUtil.createHavocsForAuxVars(getAuxVars()));
+		clearAuxVars();
 	}
 
 	/**

@@ -26,7 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
@@ -71,11 +76,6 @@ public class StatementFactory {
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
 
-	public static AssignmentStatement constructAssignmentStatement(final ILocation loc, final LeftHandSide lhs,
-			final Expression rhs) {
-		return constructAssignmentStatement(loc, new LeftHandSide[] { lhs }, new Expression[] { rhs });
-	}
-
 	public static CallStatement constructCallStatement(final ILocation loc, final boolean isForall,
 			final VariableLHS[] variableLHSs, final String methodName, final Expression[] arguments) {
 		return new CallStatement(loc, isForall, variableLHSs, methodName, arguments);
@@ -86,4 +86,31 @@ public class StatementFactory {
 		return new IfStatement(loc, condition, thenPart, elsePart);
 	}
 
+	public static Statement constructIfStatement(final ILocation loc, final Expression condition,
+			final List<Statement> thenPart, final List<Statement> elsePart) {
+		return constructIfStatement(loc, condition, thenPart.toArray(Statement[]::new),
+				elsePart.toArray(Statement[]::new));
+	}
+
+	public static Statement constructIfStatement(final ILocation loc, final Expression condition,
+			final List<Statement> thenPart) {
+		return constructIfStatement(loc, condition, thenPart.toArray(Statement[]::new), new Statement[0]);
+	}
+
+	public static AtomicStatement constructAtomicStatement(final ILocation loc, final List<Statement> statements) {
+		return constructAtomicStatement(loc, statements.stream());
+	}
+
+	public static AtomicStatement constructAtomicStatement(final ILocation loc, final Stream<Statement> statements) {
+		return new AtomicStatement(loc,
+				statements.flatMap(StatementFactory::getFlattenedStatements).toArray(Statement[]::new));
+	}
+
+	private static Stream<Statement> getFlattenedStatements(final Statement statement) {
+		if (statement instanceof AtomicStatement) {
+			return Arrays.stream(((AtomicStatement) statement).getBody())
+					.flatMap(StatementFactory::getFlattenedStatements);
+		}
+		return Stream.of(statement);
+	}
 }
