@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *            Type of expression
  */
 public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithFiniteTrace<TE, E>, IResultWithCheck {
+implements IResultWithFiniteTrace<TE, E>, IResultWithCheck {
 	private final Check mCheckedSpecification;
 	private final List<ILocation> mFailurePath;
 	private final IProgramExecution<TE, E> mProgramExecution;
@@ -82,7 +82,7 @@ public class CounterExampleResult<ELEM extends IElement, TE extends IElement, E>
 		mCheckedSpecification = Check.getAnnotation(position);
 		mProgramExecution = pe;
 		mFailurePath = ResultUtil.getLocationSequence(pe);
-		mProgramExecutionAsString = translatorSequence.translateProgramExecution(mProgramExecution).toString();
+		mProgramExecutionAsString = null;// translatorSequence.translateProgramExecution(mProgramExecution).toString();
 	}
 
 	/**

@@ -131,16 +131,16 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
 	 *
-	 * @param counterexample
-	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
-	 *            will be constructed.
+	 * @param counterexample A trace that will be checked for feasibility and for which, if it is infeasible, a
+	 *                       refinement result will be constructed.
 	 *
-	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
-	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
-	 *            assert order modulation.
-	 * @param abstraction
-	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
-	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
+	 *                       Optionally, accompanied by the sequence of control configurations visited by the trace in
+	 *                       the program that is being verified. This sequence is used to judge the quality of proofs
+	 *                       ("perfect") and for assert order modulation.
+	 * @param abstraction    The initial abstraction representing the program. Various strategies require the initial
+	 *                       abstraction, e.g., to extract the complete alphabet, or to perform more complex
+	 *                       generalizations.
+	 * @param strategyType
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
@@ -151,6 +151,31 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
 		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, mPrefs.getRefinementStrategy());
+	}
+
+	/**
+	 * Construct Strategy with given type
+	 *
+	 * @param services
+	 * @param counterexample
+	 * @param abstraction
+	 * @param taskIdentifier
+	 * @param emptyStackFactory
+	 * @param preconditionProvider
+	 * @param postconditionProvider
+	 * @param strategyType
+	 * @return
+	 */
+	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
+			final RefinementStrategy strategyType) {
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
+		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
+		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+				predicateUnifier, precondition, postcondition, strategyType);
 	}
 
 	/**
@@ -525,5 +550,6 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		}
 
 	}
+
 
 }

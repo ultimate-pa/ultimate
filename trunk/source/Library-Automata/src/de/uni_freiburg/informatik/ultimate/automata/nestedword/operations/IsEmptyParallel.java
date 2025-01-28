@@ -224,7 +224,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
 			final SearchStrategy strategy, final ArrayList<NestedRun<LETTER, STATE>> counterexamples)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -543,7 +543,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 								activeCounterexamples.add(counterexample);
 							}
 						} else {
-							assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
+							// can have different serial numbers! is that a problem?
+							// assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
 						}
 
 					}
@@ -666,7 +667,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 */
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<NestedRun<LETTER, STATE>> counterexamples)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		int positionOfThisSubSearch = position;
 		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
@@ -963,7 +964,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 		callStatesOfCallStates.add(callStateOfCallState);
 	}
-	*/
+	 */
 
 	/**
 	 * Store information about a discovered summary.

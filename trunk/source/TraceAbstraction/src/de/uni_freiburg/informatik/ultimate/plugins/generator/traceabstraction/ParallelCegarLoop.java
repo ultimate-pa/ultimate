@@ -204,11 +204,12 @@ extends NwaCegarLoop<L> {
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
 				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz);
 
-		// TODO add argument strategyTyoe to constructStrategy
+
 		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(getServices(),
-				(Counterexample<L>) mCounterexample,
-				mInitialAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider());
+				new Counterexample<>(mCounterexample.getWord()), mInitialAbstraction,
+				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+				strategyType);
 
 		// start worker
 		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
