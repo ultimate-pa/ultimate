@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -150,41 +149,15 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		return constructStrategy(services, (IRun<L, ?>) counterexample, abstraction, taskIdentifier, emptyStackFactory,
+		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, mPrefs.getRefinementStrategy());
 	}
 
 	/**
 	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
-	 *
-	 * @param counterexample
-	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
-	 *            will be constructed.
-	 *
-	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
-	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
-	 *            assert order modulation.
-	 * @param abstraction
-	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
-	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
-			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
-			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
-			final RefinementStrategy strategyType) {
-		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
-		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
-		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		return constructStrategy(services, (IRun<L, ?>) counterexample, abstraction, taskIdentifier, emptyStackFactory,
-				predicateUnifier, precondition, postcondition, strategyType);
-	}
-
-	/**
-	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
-	 */
-	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
-			final IRun<L, ?> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPredicateUnifier predicateUnifier, final IPredicate precondition, final IPredicate postcondition,
 			final RefinementStrategy strategyType) {
@@ -192,7 +165,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		mPathProgramCache.addRun(counterexample.getWord());
 
 		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
-				(Counterexample<L>) counterexample, precondition, postcondition, predicateUnifier, abstraction,
+				counterexample, precondition, postcondition, predicateUnifier, abstraction,
 				emptyStackFactory);
 		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
 
@@ -331,7 +304,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			}
 			final RefinementStrategy nestedStrategy = mPrefs.getAcceleratedInterpolationRefinementStrategy();
 			final IStrategySupplier<L> strategySupplier =
-					(ctex) -> constructStrategy(mServices, (IRun<L, ?>) ctex, mAbstraction, mTaskIdentifier,
+					(ctex) -> constructStrategy(mServices, ctex, mAbstraction, mTaskIdentifier,
 							mEmptyStackFactory,
 							mPredicateUnifier, mPrecondition, mPostcondition, nestedStrategy);
 
