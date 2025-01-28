@@ -8,7 +8,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -159,11 +158,11 @@ implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultPro
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-		final IRefinementStrategy<L> strategy =
-				mStrategyFactory.constructStrategy(mServices, ((IRun<L, ?>) new Counterexample<>(counterexample)),
-						mAbstraction,
-						mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
-						mPredicateUnifier.getFalsePredicate(), refinementStrategy);
+
+		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices,
+				new Counterexample<>(counterexample), mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+				mPredicateUnifier, mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+				refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final List<L> trace = counterexample.asList();
 		final RefinementEngineStatisticsGenerator statistics = afe.getRefinementEngineStatistics();
