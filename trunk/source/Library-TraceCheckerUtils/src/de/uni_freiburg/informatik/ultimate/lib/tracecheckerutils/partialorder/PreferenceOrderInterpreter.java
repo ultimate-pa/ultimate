@@ -78,6 +78,9 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 		if ("seq_comp".equals(spec.get("builtin"))) {
 			return buildSequentialCompositionOrder();
 		}
+		if ("empty".equals(spec.get("builtin"))) {
+			return buildEmptyOrder();
+		}
 
 		// TODO add other builtin order types if needed
 		assert !spec.containsKey("builtin") : "unknown type of builtin order: " + spec.get("builtin");
@@ -97,6 +100,11 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 		// TODO add support for other combination operators here
 
 		throw new UnsupportedOperationException("Unknown type of preference order: " + spec);
+	}
+
+	// TODO add empty order
+	private IPreferenceOrder<L, IPredicate, ?> buildEmptyOrder() {
+		return null;
 	}
 
 	private IPreferenceOrder<L, IPredicate, ?> buildLoopLockstepOrder(final Map<String, Object> spec) {

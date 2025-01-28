@@ -17,25 +17,39 @@ options:
   de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
     # The preference order that GemCutter should use.
     Complex preference order for POR:
-      operator: ifelse
-      # The first preference order (used in the if case)
+      operator: sequential
       left:
         builtin: loop_lockstep
         iterations:
-          - [thread1Thread1of1ForFork0, 1]
-          - [thread2Thread1of1ForFork1, 2]
-      # The second preference order (used in the else case)
-      right:
-        builtin: loop_lockstep
-        iterations:
+          # Arbitrary choice that seems to not actually work - Implement empty order?
           - [thread1Thread1of1ForFork0, 1]
           - [thread2Thread1of1ForFork1, 1]
-      # The letters at which we switch to the if branch
-      # To find out the names, set a breakpoint and run Ultimate in debug mode.
+      right:
+        operator: ifelse
+        # The first preference order (used in the if case)
+        left:
+          builtin: loop_lockstep
+          iterations:
+            - [thread1Thread1of1ForFork0, 1]
+            - [thread2Thread1of1ForFork1, 2]
+          # The second preference order (used in the else case)
+        right:
+          builtin: loop_lockstep
+          iterations:
+            - [thread1Thread1of1ForFork0, 1]
+            - [thread2Thread1of1ForFork1, 1]
+        # The letters at which we switch to the if branch
+        # To find out the names, set a breakpoint and run Ultimate in debug mode.
+        switch_on:
+          - "[75] L32-->L34:"
+
+      # Letters for the sequential operator, this should
+      # be the letter for entering the if branch and the one
+      # for entering the else branch.     
       switch_on:
         - "[75] L32-->L34:"
+        - "[76] L32-->L46:"
 
-    # Additional options.
-    # For example, we expect GemCutter to find the simple invariant for the reduction in at most 10 iterations.
-    Limit iterations: 10
+    Read initial proof assertions from file if available: true
+    Limit iterations: 1
 

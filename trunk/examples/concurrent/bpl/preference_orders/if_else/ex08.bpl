@@ -5,13 +5,14 @@
  * Idea: Two threads, where one nondeterministically chooses to increment the value of x by 2*c or by c until it reaches n*c,
  *       while the other decrements the value of x by c for n iterations.
  *
- * The optimal schedules would be (t1 t2 t2)* in the cases where thread1 takes the then-branch, and (t1 t2)* if thread1 takes the else branch,
+ * The optimal schedules would be (t1 t2 t2)* in the cases where thread1 takes the if-branch, and (t1 t2)* if thread1 takes the else branch,
  * where t1, t2 stands for an iteration of the respective while-loop.
  */
 var n, x, c : int;
+var i, j : int;
 
 procedure ULTIMATE.start()
-modifies x;
+modifies x, i, j;
 {
   assume x == 0;
 
@@ -24,9 +25,8 @@ modifies x;
 }
 
 procedure thread1()
-modifies x;
+modifies x, i;
 {
-  var i : int;
   i := 0;
   
   if (*)
@@ -52,9 +52,8 @@ modifies x;
 }
 
 procedure thread2()
-modifies x;
+modifies x, j;
 {
-  var j : int;
   j := 0;
 
   while (j < n)
