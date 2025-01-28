@@ -1162,7 +1162,7 @@ public class CfgBuilder {
 						if (st.getPayload().toString().contains("__VERIFIER_nondet_")) {
 							// TODO better
 							endCurrentStatementSequence(st);
-							startNewStatementSequenceAndAddStatement(st, origin);
+							startNewStatementSequenceAndAddStatement(st);
 						}
 					} else {
 						addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
