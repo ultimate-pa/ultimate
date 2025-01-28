@@ -215,7 +215,13 @@ public enum Spec {
 	*/
 	REDUNDANCY(Group.REQUIREMENT,
 			"non-redundant",
-			"redundant");
+			"redundant"),
+	/**
+	 * Checks if a test goal is reachable
+	 */
+	TEST_GOAL_ANNOTATION(Group.REQUIREMENT,
+			"done",
+			"done");
 	// @formatter:on
 
 	/**
@@ -236,8 +242,7 @@ public enum Spec {
 	/**
 	 * Negative fallback message if specification type does not define any default negative message.
 	 */
-	private static final String FALLBACK_NEGATIVE_MESSAGE =
-			"a specification may be violated but has no negative message";
+	private static final String FALLBACK_NEGATIVE_MESSAGE = "a specification may be violated but has no negative message";
 
 	/**
 	 * Group of a specification type.
@@ -255,8 +260,7 @@ public enum Spec {
 	/**
 	 * Create a new specification type.
 	 *
-	 * @param group
-	 *            specification group for the specification type.
+	 * @param group specification group for the specification type.
 	 */
 	Spec(final Spec.Group group) {
 		this(group, null, null);
@@ -265,12 +269,9 @@ public enum Spec {
 	/**
 	 * Create a new specification type.
 	 *
-	 * @param group
-	 *            specification group for the specification type.
-	 * @param defaultPosMsg
-	 *            default positive message for the specification type.
-	 * @param defaultNegMsg
-	 *            default negative message for the specification type.
+	 * @param group         specification group for the specification type.
+	 * @param defaultPosMsg default positive message for the specification type.
+	 * @param defaultNegMsg default negative message for the specification type.
 	 */
 	Spec(final Spec.Group group, final String defaultPosMsg, final String defaultNegMsg) {
 		mGroup = group;
@@ -281,8 +282,7 @@ public enum Spec {
 	/**
 	 * Check if specification type is part of the given group.
 	 *
-	 * @param group
-	 *            specification group for the check.
+	 * @param group specification group for the check.
 	 *
 	 * @return {@code true} if specification type is part of the given group, otherwise {@link false}.
 	 */
@@ -293,8 +293,7 @@ public enum Spec {
 	/**
 	 * Check if specification type is part of a set of given groups.
 	 *
-	 * @param groups
-	 *            set of specification group for the check.
+	 * @param groups set of specification group for the check.
 	 *
 	 * @return {@code true} if specification type is part a set of given groups, otherwise {@link false}.
 	 */
@@ -308,10 +307,8 @@ public enum Spec {
 	 * If the given default message is a valid message of the specification type, then return the given default message.
 	 * Otherwise return the specified fallback message.
 	 *
-	 * @param defaultMsg
-	 *            default message of the specification type.
-	 * @param fallbackMsg
-	 *            fallback message for the specification type.
+	 * @param defaultMsg  default message of the specification type.
+	 * @param fallbackMsg fallback message for the specification type.
 	 *
 	 * @return default message for the specification type.
 	 */
