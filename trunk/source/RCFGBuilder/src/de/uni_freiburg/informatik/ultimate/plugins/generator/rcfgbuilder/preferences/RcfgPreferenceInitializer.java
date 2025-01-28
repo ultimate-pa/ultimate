@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock;
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsBreakOnNondet;
 
 		public boolean isConcurrencySafe() {
 			switch (this) {
@@ -132,35 +132,35 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT, DESC_ASSUME_FOR_ASSERT,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<>(LABEL_FAKE_NON_INCREMENTAL_SCRIPT, DEF_FAKE_NON_INCREMENTAL_SCRIPT,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_COMMAND, DEF_EXT_SOLVER_COMMAND, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_LOGIC, DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_CODE_BLOCK_SIZE, DEF_CODE_BLOCK_SIZE, PreferenceType.Combo,
-						CodeBlockSize.values()),
-				new UltimatePreferenceItem<>(LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES,
-						DEF_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_REMOVE_GOTO_EDGES, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_REMOVE_ASSUME_TRUE, DEF_REMOVE_ASSUME_TRUE, DESC_REMOVE_ASSUME_TRUE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_FUTURE_LIVE, DEF_FUTURE_LIVE, DESC_FUTURE_LIVE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DUMP_TO_FILE, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DUMP_UNSAT_CORE_BENCHMARK, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DUMP_MAIN_TRACK_BENCHMARK, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_COMPRESS_SMT_DUMP_FILE, false, DESC_COMPRESS_SMT_DUMP_FILE,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory),
-				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
-						PreferenceType.KeyValue),
-				getTestGenerationSettings(),
+			new UltimatePreferenceItem<>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT, DESC_ASSUME_FOR_ASSERT,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_SOLVER, DEF_SOLVER, PreferenceType.Combo, SolverMode.values()),
+			new UltimatePreferenceItem<>(LABEL_FAKE_NON_INCREMENTAL_SCRIPT, DEF_FAKE_NON_INCREMENTAL_SCRIPT,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_COMMAND, DEF_EXT_SOLVER_COMMAND, PreferenceType.String),
+			new UltimatePreferenceItem<>(LABEL_EXT_SOLVER_LOGIC, DEF_EXT_SOLVER_LOGIC, PreferenceType.String),
+			new UltimatePreferenceItem<>(LABEL_CODE_BLOCK_SIZE, DEF_CODE_BLOCK_SIZE, PreferenceType.Combo,
+					CodeBlockSize.values()),
+			new UltimatePreferenceItem<>(LABEL_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES,
+					DEF_CONTEXT_SWITCH_ONLY_AT_ATOMIC_BOUNDARIES, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_REMOVE_GOTO_EDGES, false, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_SIMPLIFY, false, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_CNF, false, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_REMOVE_ASSUME_TRUE, DEF_REMOVE_ASSUME_TRUE, DESC_REMOVE_ASSUME_TRUE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_FUTURE_LIVE, DEF_FUTURE_LIVE, DESC_FUTURE_LIVE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_DUMP_TO_FILE, false, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_DUMP_UNSAT_CORE_BENCHMARK, false, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_DUMP_MAIN_TRACK_BENCHMARK, false, PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_COMPRESS_SMT_DUMP_FILE, false, DESC_COMPRESS_SMT_DUMP_FILE,
+					PreferenceType.Boolean),
+			new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory),
+			new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
+					PreferenceType.KeyValue),
+			getTestGenerationSettings(),
 
 		};
 	}
