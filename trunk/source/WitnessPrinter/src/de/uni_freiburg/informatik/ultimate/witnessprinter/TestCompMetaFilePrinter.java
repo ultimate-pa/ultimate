@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GraphMLBaseWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -63,9 +64,9 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  * @author Max Barth max.barth95@gmx.de
  *
  */
-public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
+public class TestCompMetaFilePrinter<TTE, TE> extends GraphMLBaseWitnessGenerator<TTE, TE> {
 
-	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "\\exists" };
+	private static final String[] ACSL_SUBSTRING = { "\\old", "\\result", "\\exists" };
 
 	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;
@@ -176,7 +177,7 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 		final Element specification = dom.createElement("specification");
 
 		specification
-				.appendChild(dom.createTextNode(ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION)));
+		.appendChild(dom.createTextNode(ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_SPECIFICATION)));
 
 		rootEle.appendChild(specification);
 
@@ -199,7 +200,7 @@ public class TestCompMetaFilePrinter<TTE, TE> extends BaseWitnessGenerator<TTE, 
 		// <!ELEMENT architecture (#PCDATA)>
 		final Element architecture = dom.createElement("architecture");
 		architecture
-				.appendChild(dom.createTextNode(ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE)));
+		.appendChild(dom.createTextNode(ups.getString(PreferenceInitializer.LABEL_GRAPH_DATA_ARCHITECTURE)));
 		rootEle.appendChild(architecture);
 
 		// <!ELEMENT creationtime (#PCDATA)>

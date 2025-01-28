@@ -88,7 +88,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
@@ -135,7 +134,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
-	private int mIteration;
+	protected int mIteration;
 
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
@@ -522,18 +521,16 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 			if (!mTestGeneration.equals(TestGenerationMode.None)) {
 				final List<?> sequence = mCounterexample.getStateSequence();
-				for (int i = 0; i < sequence.size(); i++) {
-					if (sequence.get(i) instanceof ISLPredicate) {
-						final ISLPredicate stmt = (ISLPredicate) sequence.get(i);
+				for (final Object element : sequence) {
+					if (element instanceof ISLPredicate) {
+						final ISLPredicate stmt = (ISLPredicate) element;
 						if (stmt.getProgramPoint().getPayload().getAnnotations()
 								.containsKey(TestGoalAnnotation.class.getName())) {
 							for (final IcfgLocation node : stmt.getProgramPoint().getOutgoingNodes()) {
-								if (sequence.get(i) instanceof ISLPredicate) {
-									if (node.getPayload().getAnnotations()
-											.containsKey(TestGoalAnnotation.class.getName())) {
-										mResultBuilder.addResult(node, Result.TEST_GENERATION, programExecution, null,
-												null);
-									}
+								if ((element instanceof ISLPredicate) && node.getPayload().getAnnotations()
+										.containsKey(TestGoalAnnotation.class.getName())) {
+									mResultBuilder.addResult(node, Result.TEST_GENERATION, programExecution, null,
+											null);
 								}
 							}
 
@@ -815,7 +812,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
 			mErrorLocs.stream().filter(elem -> !mResults.containsKey(elem))
-					.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
+			.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
 			return this;
 		}
 

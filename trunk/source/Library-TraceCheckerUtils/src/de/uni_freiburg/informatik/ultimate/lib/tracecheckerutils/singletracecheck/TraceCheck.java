@@ -245,7 +245,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					cleanupAndUnlockSolver();
 				}
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-				if (!mAAA.mSucessfulReuse) {
+				if (true) {// TODO !mAAA.mSucessfulReuse) {
 
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(mTcSmtManager);
 					if (icfgProgramExecution != null) {
@@ -449,7 +449,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None) && !mAAA.mSucessfulReuse) { // TODO check for bugs
+		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) { // && !mAAA.mSucessfulReuse) { // TODO check for bugs
 			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb, vaOrder);
 			final boolean mExportTests = true;
 			if (mExportTests) {
@@ -466,21 +466,21 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						final Integer index = representative.getKey();
 						final Term indexedVar = representative.getValue();
 						final Term valueT;
-					try {
-						valueT = funGetValue.apply(indexedVar);
+						try {
+							valueT = funGetValue.apply(indexedVar);
 						} catch (final UnsupportedOperationException uoe) {
-						// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
-						// crash while using SMTInterpol on quantified formulas. See {@link
-						// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
-						// is able to produce values for the sorts `Int` and `Bool` this catch block
-						// should be removed.
-						if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
-							continue;
-						} else {
-							throw uoe;
+							// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+							// crash while using SMTInterpol on quantified formulas. See {@link
+							// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+							// is able to produce values for the sorts `Int` and `Bool` this catch block
+							// should be removed.
+							if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+								continue;
+							} else {
+								throw uoe;
+							}
 						}
-					}
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
+						rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 
 					}
 				}
@@ -494,8 +494,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
 			final IcfgProgramExecutionBuilder<L> rpeb, final int vaOrder) {
 		final TestVector testV = new TestVector();
-		final ArrayList<Term> varAssignment = new ArrayList<Term>();
-		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<Pair<Term, Term>>();
+		final ArrayList<Term> varAssignment = new ArrayList<>();
+		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
 
 		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 			final IProgramVar bv = entry.getKey();
@@ -510,29 +510,25 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
 						if (indexedVar.toStringDirect().contains("nondet")) {
 							if (evenRepresentative) {
-								if (index >= 0) { // TODO how can this be an issue?
+								// TODO Not sure if save, but by far the best solution
+								if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
+									final StatementSequence stsq =
+											(StatementSequence) rpeb.mTrace.asList().get(index);
 
-									// TODO Not sure if save, but by far the best solution
-									if (rpeb.mTrace.asList().get(index) instanceof StatementSequence) {
-										final StatementSequence stsq =
-												(StatementSequence) rpeb.mTrace.asList().get(index);
-
-										final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
-												.matcher(stsq.getPayload().toString());
-										if (m.find()) {
-											final String type = m.group(1);
-											testV.addValueAssignment(valueT, index, type);
-											final TermTransferrer test = new TermTransferrer(
-													mCfgManagedScript.getScript(), mTcSmtManager.getScript());
-											final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-													test.transform(indexedVar), test.transform(valueT));
-											final Pair<Term, Term> varValuePair = new Pair<Term, Term>(
-													test.transform(indexedVar), test.transform(valueT));
-											varAssignmentPair.add(varValuePair);
-											varAssignment.add(varEqValue);
-										}
+									final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
+											.matcher(stsq.getPayload().toString());
+									if (m.find()) {
+										final String type = m.group(1);
+										testV.addValueAssignment(valueT, index, type);
+										final TermTransferrer test = new TermTransferrer(
+												mCfgManagedScript.getScript(), mTcSmtManager.getScript());
+										final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+												test.transform(indexedVar), test.transform(valueT));
+										final Pair<Term, Term> varValuePair = new Pair<>(
+												test.transform(indexedVar), test.transform(valueT));
+										varAssignmentPair.add(varValuePair);
+										varAssignment.add(varEqValue);
 									}
-
 								}
 								evenRepresentative = !evenRepresentative;
 							} else {
@@ -545,7 +541,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 				}
 			}
 		}
-		final boolean vaReuse = true;
+		final boolean vaReuse = false; // TODO deacitave in merge
 		if (vaReuse) {
 			final L stmt = nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
 			if (stmt instanceof StatementSequence) {
@@ -558,7 +554,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					vaReuseAnno.mPrecedingProcedure = statementBranch.getPrecedingProcedure();
 					vaReuseAnno.mLocationOfPrecedingProcedure =
 							mProcedureToCallLoc.get(statementBranch.getPrecedingProcedure());
-					vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1, mAAA.mVAsInPrefix);
+					//					vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1, mAAA.mVAsInPrefix);
 				}
 			}
 		}
@@ -646,10 +642,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	protected void cleanupAndUnlockSolver() {
 		mTcSmtManager.echo(mTraceCheckLock, new QuotedObject("finished trace check"));
-		if (mAAA.mSucessfulReuse) {
-			mTcSmtManager.pop(mTraceCheckLock, 1);
-		}
-		mAAA.mSucessfulReuse = false;
+		//		if (mAAA.mSucessfulReuse) {
+		//			mTcSmtManager.pop(mTraceCheckLock, 1);
+		//		}
+		//		mAAA.mSucessfulReuse = false;
 		mTcSmtManager.pop(mTraceCheckLock, 1);
 		mTcSmtManager.unlock(mTraceCheckLock);
 	}

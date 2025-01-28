@@ -28,28 +28,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderInsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderMixInsideOutside;
@@ -60,17 +48,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.As
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * This class implements the possibility to partially (and in different order) annotate and assert the statements of a
@@ -79,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Betimt Musa (musab@informatik.uni-freiburg.de)
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * @author Max Barth (Max.Barth@lmu.de)
  */
 
 public class AnnotateAndAsserter<L extends IAction> {
@@ -88,32 +66,17 @@ public class AnnotateAndAsserter<L extends IAction> {
 
 	private final ManagedScript mMgdScriptTc;
 
-	protected final ManagedScript mMgdScriptTc;
-	protected final NestedWord<L> mTrace;
-	protected LBool mSatisfiable;
-	protected final NestedFormulas<L, Term, Term> mSSA;
-	protected ModifiableNestedFormulas<L, Term, Term> mAnnotSSA;
+	private LBool mSatisfiable;
+	private final NestedFormulas<L, Term, Term> mSSA;
+	private ModifiableNestedFormulas<L, Term, Term> mAnnotSSA;
+
+	private final AnnotateAndAssertCodeBlocks<L> mAnnotateAndAssertCodeBlocks;
 
 	private final TraceCheckStatisticsGenerator mTcbg;
 
 	private final AssertCodeBlockOrder mAssertCodeBlocksOrder;
 	private int mCheckSat;
 	private int mAssertedStatements;
-
-	public boolean mSucessfulReuse = false;
-	private VarAssignmentReuseAnnotation mVAforReuse = null;
-	private VarAssignmentReuseAnnotation mCurrentVA;
-	private VarAssignmentReuseAnnotation mDefaultVA;
-	final LinkedHashSet<String> nondetsInTrace = new LinkedHashSet<String>();
-	final LinkedHashSet<String> nondetsInTraceAfterPreviousVA = new LinkedHashSet<String>();
-	final HashMap<String, String> nondetNameToType = new HashMap<>();
-	public ArrayList<VarAssignmentReuseAnnotation> mVAsInPrefix = new ArrayList<VarAssignmentReuseAnnotation>();
-	final HashMap<String, String> procedureToCallLoc = new HashMap<>();
-	private int mReuseCandidatePosition = 0;
-	private final Integer mHighestVaOrderInTrace = -1;
-	private boolean reuseUnsatpossible;
-	private final ArrayList<Pair<Term, Term>> mValueAssignmentUsedForReuse = new ArrayList<Pair<Term, Term>>();
-	private final TestGenReuseMode mTestGenReuseMode;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc, final NestedFormulas<L, Term, Term> nestedSSA,
 			final AnnotateAndAssertCodeBlocks<L> aaacb, final TraceCheckStatisticsGenerator tcbg,
@@ -124,130 +87,123 @@ public class AnnotateAndAsserter<L extends IAction> {
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
+		mAssertCodeBlocksOrder = assertCodeBlocksOrder;
+		mCheckSat = 0;
+		mAssertedStatements = 0;
+		buildAnnotatedSsaAndAssertTerms();
 	}
 
-	public void buildAnnotatedSsaAndAssertTerms() {
-		if (mAnnotSSA != null) {
-			throw new AssertionError("already build");
-		}
-		assert mSatisfiable == null;
-
-		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
+	private void buildAnnotatedSsaAndAssertTerms() {
+		mAnnotSSA = new ModifiableNestedFormulas<>(mSSA.getCounterexample(), new TreeMap<Integer, Term>());
 
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
 
-		final Collection<Integer> callPositions = new ArrayList<>();
-		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
-		for (int i = 0; i < mTrace.length(); i++) {
-			if (mTrace.isCallPosition(i)) {
-				callPositions.add(i);
+		// Report benchmark
+		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
+
+		final List<Set<Integer>> partitions = getAssertOrder(mAssertCodeBlocksOrder)
+				.partition(mSSA.getCounterexample());
+
+		mLogger.info(String.format("Assert order %s partitioned %s statements into %s equivalence classes.",
+				mAssertCodeBlocksOrder, mSSA.getCounterexample().length(), partitions.size()));
+		mSatisfiable = annotateAndAssert(mSSA.getTrace(), partitions);
+		mLogger.info(String.format("Assert order %s issued %s check-sat command(s) and asserted %s of %s statements.",
+				mAssertCodeBlocksOrder, mCheckSat, mAssertedStatements, mSSA.getCounterexample().length()));
+
+		mLogger.info("Assert order " + mAssertCodeBlocksOrder + " issued " + mCheckSat + " check-sat command(s)");
+		mLogger.info("Conjunction of SSA is " + mSatisfiable);
+	}
+
+	private IAssertOrder<L> getAssertOrder(final AssertCodeBlockOrder order) {
+		switch (order.getAssertCodeBlockOrderType()) {
+		case NOT_INCREMENTALLY:
+			return new AssertOrderNotIncrementally<>();
+		case OUTSIDE_LOOP_FIRST1:
+			return new AssertOrderOutsideLoopFirst1<>();
+		case OUTSIDE_LOOP_FIRST2:
+			return new AssertOrderOutsideLoopFirst2<>();
+		case INSIDE_LOOP_FIRST1:
+			return new AssertOrderInsideLoopFirst1<>();
+		case MIX_INSIDE_OUTSIDE:
+			return new AssertOrderMixInsideOutside<>();
+		case TERMS_WITH_SMALL_CONSTANTS_FIRST:
+			return new AssertOrderSmallConstantsFirst<>();
+		case SMT_FEATURE_HEURISTIC:
+			return new AssertOrderSmtFeatureHeuristic<>(order.getSmtFeatureHeuristicScoringMethod(),
+					order.getSmtFeatureHeuristicNumPartitions(), order.getSmtFeatureHeuristicThreshold(),
+					order.getSmtFeatureHeuristicPartitioningType(), mLogger);
+		case SHUFFLED_SINGLETONS:
+			return new AssertOrderShuffledSingletons<>();
+		default:
+			throw new AssertionError("unknown heuristic " + order);
+		}
+	}
+
+	private LBool annotateAndAssert(final NestedWord<? extends IAction> trace, final List<Set<Integer>> partitions) {
+		LBool sat = null;
+		boolean isFirstIteration = true;
+		for (final Set<Integer> partition : partitions) {
+			buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(trace, partition, isFirstIteration);
+			mAssertedStatements += partition.size();
+			mCheckSat++;
+			sat = mMgdScriptTc.getScript().checkSat();
+			// Report benchmarks
+			mTcbg.reportNewCheckSat();
+			mTcbg.reportNewAssertedCodeBlocks(partition.size());
+			if (sat == LBool.UNSAT) {
+				return sat;
+			}
+			isFirstIteration = false;
+		}
+		return sat;
+	}
+
+	/**
+	 * Annotate and assert every statement <i>i</i> from the given trace, such that <i>i</i> is an element of the given
+	 * integer set stmtsToAssert.
+	 */
+	private void buildAnnotatedSsaAndAssertTermsWithPriorizedOrder(final NestedWord<? extends IAction> trace,
+			final Set<Integer> stmtsToAssert, final boolean assertPendingContexts) {
+		for (final Integer i : stmtsToAssert) {
+			if (trace.isCallPosition(i)) {
 				mAnnotSSA.setGlobalVarAssignmentAtPos(i,
 						mAnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
 				mAnnotSSA.setLocalVarAssignmentAtPos(i,
 						mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
 				mAnnotSSA.setOldVarAssignmentAtPos(i,
 						mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
-
 			} else {
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
-
-			// ensure we are not considering currentVA as reuseCandidate
-
-			if (i < mTrace.length() - 1 && !mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-
-				// calling loc version
-				if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc)) {
-					if (mTrace.getSymbol(i) instanceof Call) {
-						final Call call = (Call) mTrace.getSymbol(i);
-						if (procedureToCallLoc.containsKey(call.getSucceedingProcedure())) {
-							procedureToCallLoc.remove(call.getSucceedingProcedure());
-						}
-						procedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
-					}
-				}
-
-				if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
-					final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
-					ifStatementHasNondetAddToSet(i, statementBranch);
-					if (statementBranch.getPayload().getAnnotations()
-							.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-						final VarAssignmentReuseAnnotation vaInTrace = (VarAssignmentReuseAnnotation) statementBranch
-								.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-						// prefix
-						if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchPrefix) && reuse) {
-							mVAsInPrefix.add(vaInTrace);
-							if (i <= mReuseCandidatePosition) { // we check only branches, (not current VA)
-								if (i < mReuseCandidatePosition) {
-									if (branchCount < mVAforReuse.mVAsInVAPrefix.size()) { //
-										if (!mVAforReuse.mVAsInVAPrefix.get(branchCount).equals(vaInTrace)) {
-											reuse = false;
-										}
-									} else {
-										reuse = false;
-									}
-								} else if (i == mReuseCandidatePosition) {
-									nondetsInTraceAfterPreviousVA.clear();
-								}
-								branchCount += 1;
-							} else {
-								reuse = false;
-							}
-							// Ensure we do not consider currentVA for reuse
-						} else {
-							// default reuse
-							mVAforReuse = vaInTrace;
-							nondetsInTraceAfterPreviousVA.clear();
-							if (mTestGenReuseMode.equals(TestGenReuseMode.ReuseUNSATmatchCalloc)) {
-								final String precedingProc = statementBranch.getPrecedingProcedure();
-								// Check if annotated test-goal and current test-goal are in the same procedure
-								// And have the same calling location (incoming icfg edge)
-								if (!mVAforReuse.getPrecedingProcedure().equals(precedingProc)
-										&& mVAforReuse.mLocationOfPrecedingProcedure
-												.equals(procedureToCallLoc.get(precedingProc))) {
-									reuseUnsatpossible = false;
-								}
-							}
-
-						}
-					}
-				}
-			}
 		}
 
-		assert callPositions.containsAll(mTrace.getCallPositions());
-		assert mTrace.getCallPositions().containsAll(callPositions);
-
-		// number that the pending context. The first pending context has
-		// number -1, the second -2, ...
-		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
-		for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
-			assert mTrace.isPendingReturn(positionOfPendingReturn);
-			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks
-						.annotateAndAssertPendingContext(positionOfPendingReturn, pendingContextCode);
-				mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
+		if (assertPendingContexts) {
+			// Number that the pending context. The first pending context has
+			// number -2, the second -3, the third -4, ...
+			// (the number -1 is reserved for the precondition)
+			int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
+			for (final Integer positionOfPendingReturn : mSSA.getTrace().getPendingReturns().keySet()) {
+				assert trace.isPendingReturn(positionOfPendingReturn);
+				{
+					final Term annotated = mAnnotateAndAssertCodeBlocks
+							.annotateAndAssertPendingContext(positionOfPendingReturn, pendingContextCode);
+					mAnnotSSA.setPendingContext(positionOfPendingReturn, annotated);
+				}
+				{
+					final Term annotated = mAnnotateAndAssertCodeBlocks
+							.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn,
+									pendingContextCode);
+					mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
+				}
+				{
+					final Term annotated = mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntPendingContext(
+							positionOfPendingReturn, pendingContextCode);
+					mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
+				}
+				pendingContextCode++;
 			}
-			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks
-						.annotateAndAssertLocalVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
-				mAnnotSSA.setLocalVarAssignmentAtPos(positionOfPendingReturn, annotated);
-			}
-			{
-				final Term annotated = mAnnotateAndAssertCodeBlocks
-						.annotateAndAssertOldVarAssignemntPendingContext(positionOfPendingReturn, pendingContextCode);
-				mAnnotSSA.setOldVarAssignmentAtPos(positionOfPendingReturn, annotated);
-			}
-			pendingContextCode++;
 		}
-		mSatisfiable = mMgdScriptTc.getScript().checkSat();
-
-		// Report benchmarks
-		mTcbg.reportNewCheckSat();
-		mTcbg.reportNewCodeBlocks(mTrace.length());
-		mTcbg.reportNewAssertedCodeBlocks(mTrace.length());
-		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
 
 	public LBool isInputSatisfiable() {
@@ -258,162 +214,4 @@ public class AnnotateAndAsserter<L extends IAction> {
 		return mAnnotSSA;
 	}
 
-	private String getUniqueIdentifierForTestCaseName() {
-		String identifier = "UnsatReuse" + mSSA.getTrace().hashCode();
-		identifier += mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1).hashCode();
-		return identifier;
-	}
-
-	private void getReuseCandidate() {
-		// start after currentVA
-		for (int i = mTrace.length() - 2; i > 0; i--) {
-			if (mSSA.getTrace().getSymbol(i) instanceof StatementSequence) {
-				final StatementSequence statementBranch = (StatementSequence) mSSA.getTrace().getSymbol(i);
-				if (statementBranch.getPayload().getAnnotations()
-						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-					final VarAssignmentReuseAnnotation reuseCandidate = (VarAssignmentReuseAnnotation) statementBranch
-							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-					if (!reuseCandidate.mVarAssignmentPair.isEmpty()) {
-						mVAforReuse = reuseCandidate;
-						mReuseCandidatePosition = i;
-						break;
-					} else {
-						mVAforReuse = null;
-					}
-				}
-			}
-		}
-
-	}
-
-	private void ifStatementHasNondetAddToSet(final int i, final StatementSequence statementBranch) {
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) {
-			if (statementBranch.toString().contains("nondet")) {
-				final Set<FunctionSymbol> nonTheorySymbolsInTerm =
-						SmtUtils.extractNonTheoryFunctionSymbols(mSSA.getFormulaFromValidNonCallPos(i));
-				final Matcher m =
-						Pattern.compile("__VERIFIER_nondet_(\\w*)").matcher(statementBranch.getPayload().toString());
-				if (m.find()) {
-					for (final FunctionSymbol symbol : nonTheorySymbolsInTerm) {
-						if (symbol.getName().contains("nondet")) {
-							nondetsInTrace.add(symbol.getName());
-							nondetsInTraceAfterPreviousVA.add(symbol.getName());
-							nondetNameToType.put(symbol.getName(), m.group(1));
-						}
-					}
-				}
-			}
-		}
-	}
-
-	private ArrayList<Term> getNonDetsAsTermsReuse() {
-		assert mTestGenReuseMode.equals(TestGenReuseMode.Reuse);
-		final ArrayList<Term> nondetsAsTerms = new ArrayList<Term>();
-		final ArrayList<Pair<Term, Term>> varAssignmentPairs = mVAforReuse.mVarAssignmentPair;
-		for (int i = 0; i < varAssignmentPairs.size(); i++) { // TODO optimize in one loop over all nondets in trace
-			// This "nondet" in Trace is in the VA
-			final String nondetInVA = varAssignmentPairs.get(i).getFirst().toStringDirect();
-			if (nondetsInTrace.contains(nondetInVA.substring(1, nondetInVA.length() - 1))) {
-				final Term value = varAssignmentPairs.get(i).getSecond();
-				final Term reuseVaTerm = createTermFromVA(varAssignmentPairs.get(i).getFirst().toStringDirect(), value);
-				nondetsAsTerms.add(reuseVaTerm);
-			}
-		}
-		return nondetsAsTerms;
-	}
-
-	private ArrayList<Term> getNonDetsAsTermsReuseUNSAT() {
-		assert reuseUnsatpossible;
-		final ArrayList<Term> nondetsAsTerms = new ArrayList<Term>();
-		final ArrayList<Pair<Term, Term>> varAssignmentPairs = mVAforReuse.mVarAssignmentPair;
-
-		boolean inputBetweenTestGoals = false;
-		int nondetPositionCount = 0;
-		final TestVector testV = new TestVector();
-
-		for (final String nondet : nondetsInTrace) {
-			boolean nondetNotInVA = true;
-			Term value = null;
-			for (int i = 0; i < varAssignmentPairs.size(); i++) { // TODO optimize in one loop over all nondets in trace
-				// This "nondet" in Trace is in the VA
-				if (varAssignmentPairs.get(i).getFirst().toStringDirect().contains(nondet)) {
-					nondetNotInVA = false;
-					value = varAssignmentPairs.get(i).getSecond();
-					final Term reuseVaTerm =
-							createTermFromVA(varAssignmentPairs.get(i).getFirst().toStringDirect(), value);
-					nondetsAsTerms.add(reuseVaTerm);
-					break;
-				}
-			}
-			if (nondetNotInVA && nondetsInTraceAfterPreviousVA.contains(nondet) && reuseUnsatpossible) {
-				// TODO verhindern, dass beim 2.checksat das hier nochmal gemacht wird!!
-
-				// System.out.println("ALARM: " + nondet + " not in VA");
-				inputBetweenTestGoals = true;
-				value = null; // null will be used as value zero
-				final Term reuseVaTerm = createTermFromVA(nondet, value);
-
-				nondetsAsTerms.add(reuseVaTerm);
-			}
-
-			testV.addValueAssignment(value, nondetPositionCount, nondetNameToType.get(nondet));
-			// increase at the end of loop
-			nondetPositionCount += 1;
-		}
-		if (inputBetweenTestGoals) {
-			mTcbg.reportInputVectorsExtended();
-			exportTest(testV);
-		}
-		return nondetsAsTerms;
-
-	}
-
-	private void exportTest(final TestVector testV) {
-		try {
-			if (!testV.isEmpty()) {
-				mTcbg.reportTestExported();
-				TestExporter.getInstance().exportTests(testV, getUniqueIdentifierForTestCaseName(), true);
-			}
-		} catch (final Exception e) {
-			// TODO TestGeneration Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-	private void getCurrentVA() {
-		final L lastStmt = mSSA.getTrace().getSymbol(mSSA.getTrace().length() - 1);
-		if (lastStmt instanceof StatementSequence) {
-			final StatementSequence lastStmtSeq = (StatementSequence) lastStmt;
-			if (lastStmtSeq.getPayload().getAnnotations().containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-				mCurrentVA = (VarAssignmentReuseAnnotation) lastStmtSeq.getPayload().getAnnotations()
-						.get(VarAssignmentReuseAnnotation.class.getName());
-			}
-		}
-	}
-
-	private void removeCheckIfCovered() {
-		assert reuseUnsatpossible;
-		if (mVAforReuse.mNegatedVA) {
-			return;
-		}
-		if (mCurrentVA.mVAofOppositeBranch.mCoveredTestGoal) {
-			return;
-		}
-		mTcbg.reportSuccessfullReuse();
-		mTcbg.reportUNSAToptimizations();
-		if (mVAforReuse.equals(mDefaultVA)) {
-			System.out.println("OtherBranchRemoveCheckDefault");
-			mCurrentVA.mVAofOppositeBranch.removeCheck();
-			mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace,
-					new ArrayList<VarAssignmentReuseAnnotation>());
-			return;
-		}
-
-		// amount of nondets in VA + Between testgoals matches total amount of inputs
-		assert nondetsInTrace.size() == nondetsInTraceAfterPreviousVA.size() + mVAforReuse.mVarAssignmentPair.size();
-		System.out.println("OtherBranchRemoveCheck");
-		mCurrentVA.mVAofOppositeBranch.removeCheck();
-		mCurrentVA.mVAofOppositeBranch.setVa(mValueAssignmentUsedForReuse, mHighestVaOrderInTrace, mVAsInPrefix);
-
-	}
 }

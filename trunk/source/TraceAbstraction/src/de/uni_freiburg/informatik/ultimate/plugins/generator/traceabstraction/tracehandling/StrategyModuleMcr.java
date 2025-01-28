@@ -8,6 +8,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.Mcr.IMcrResultProvider;
 
 public class StrategyModuleMcr<L extends IIcfgTransition<?>>
-		implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultProvider<L> {
+implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultProvider<L> {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final StrategyFactory<L> mStrategyFactory;
@@ -159,7 +160,8 @@ public class StrategyModuleMcr<L extends IIcfgTransition<?>>
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
 		final IRefinementStrategy<L> strategy =
-				mStrategyFactory.constructStrategy(mServices, new Counterexample<>(counterexample), mAbstraction,
+				mStrategyFactory.constructStrategy(mServices, ((IRun<L, ?>) new Counterexample<>(counterexample)),
+						mAbstraction,
 						mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
 						mPredicateUnifier.getFalsePredicate(), refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);

@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
-		implements Callable<WorkerThreadResult<L, A>> {
+implements Callable<WorkerThreadResult<L, A>> {
 
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
@@ -100,11 +100,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	// for error automata
 	private final boolean mUseGoalSetForIsEmpty;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 
 	// Globals for Difference (Interpolant Automaton Enhancement)
-	protected HoareAnnotationFragments<L> mHaf;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 
 	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
@@ -136,7 +134,6 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mStrategy = strategy;
 		mCurrentErrorLoc = currentErrorLoc;
 		mSimplificationTechnique = pref.getSimplificationTechnique();
-		mXnfConversionTechnique = pref.getXnfConversionTechnique();
 		mIcfg = rootNode;
 		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
 
@@ -155,7 +152,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				// in this setting we dont use error automata
 				mAbstraction = null;
 
-				mThreadResult = new WorkerThreadResult<L, A>(null, null, null, false, null, false, AutomatonType.ERROR,
+				mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
 						mCsToolkit.getManagedScript(), mCounterexample, null);
 				return mThreadResult;
 			}
@@ -180,7 +177,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount(mCounterexample)) {
+					.getPathProgramCache().getPathProgramCount((Word<L>) mCounterexample)) {
 				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
@@ -268,7 +265,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
-				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique, mXnfConversionTechnique,
+				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
 				mIteration);
 		mInterpolAutomaton = null;
@@ -279,10 +276,10 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 				final VarAssignmentReuseAnnotation pLocAnnoVA =
 						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
-								.get(VarAssignmentReuseAnnotation.class.getName());
+						.get(VarAssignmentReuseAnnotation.class.getName());
 				// If it contains a VA it should contain a TG
 				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.containsKey(TestGoalAnnotation.class.getName());
+				.containsKey(TestGoalAnnotation.class.getName());
 				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
 						.getAnnotations().get(TestGoalAnnotation.class.getName());
 
@@ -340,7 +337,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	 * mStateFactoryForRefinement
 	 * mRefinementResult
 	 * mInterpolAutomaton
-	*/
+	 */
 	public WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(mIteration); // TODO warning global var
 		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -381,7 +378,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		computeAutomataDifference(mAbstraction, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<L, A>(subtrahend,
+		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend,
 				subtrahendBeforeEnhancement, predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode,
 				useErrorAutomaton, automatonType, mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory);
 
@@ -401,7 +398,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
-			throws AutomataLibraryException, AssertionError {
+					throws AutomataLibraryException, AssertionError {
 		if (automatonType.equals(AutomatonType.ERROR) || enhanceMode == InterpolantAutomatonEnhancement.NONE) {
 			return;
 		}
@@ -438,13 +435,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
-					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
+					// TODO merge removed hoare annotation stuff
 				}
 				diff.removeDeadEnds();
-				if (mComputeHoareAnnotation) {
-					mHaf.addDeadEndDoubleDeckers(diff);
-				}
 			}
 
 		} finally {
@@ -476,8 +469,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) {
 		final String taskDescription = "WORKER: constructing difference of abstraction (" + minuend.size()
-				+ "states) and " + automatonType + " automaton (currently " + subtrahend.size() + " states, "
-				+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
+		+ "states) and " + automatonType + " automaton (currently " + subtrahend.size() + " states, "
+		+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
 		return new RunningTaskInfo(getClass(), taskDescription);
 	}
 
@@ -549,10 +542,10 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	}
 
 	private DeterministicInterpolantAutomaton<L>
-			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
-					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-					final InterpolantAutomatonEnhancement enhanceMode) {
+	constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;

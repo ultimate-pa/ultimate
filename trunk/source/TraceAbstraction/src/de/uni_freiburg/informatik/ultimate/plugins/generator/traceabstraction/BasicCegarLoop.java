@@ -136,7 +136,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  *            The type of abstraction refined by the CEGAR loop
  */
 public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
-		extends AbstractCegarLoop<L, A> {
+extends AbstractCegarLoop<L, A> {
 
 	public enum AutomatonType {
 		FLOYD_HOARE, ERROR;
@@ -183,7 +183,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	protected IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
 
 	protected InterpolationTechnique mInterpolationTechnique;
-
+	protected Class<L> mTransitionClazz;
 	private boolean mFirstReuseDump = true;
 
 	public BasicCegarLoop(final DebugIdentifier name, final A initialAbstraction, final IIcfg<?> rootNode,
@@ -203,7 +203,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		mInterpolationTechnique = interpolation;
 		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
 				&& taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL;
-		mHaf = new HoareAnnotationFragments<>(mLogger, hoareAnnotationLocs, mPref.getHoareAnnotationPositions());
+
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
 				mPredicateFactory, computeProof);
@@ -352,7 +352,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
-					+ " with TraceHistMax " + traceHistogramMax;
+			+ " with TraceHistMax " + traceHistogramMax;
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 
 			mRefinementResult = new TimeoutRefinementEngineResult(new Lazy<>(() -> null),
@@ -434,7 +434,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	protected static boolean
-			isInterpolantAutomatonOfSingleStateType(final INestedWordAutomaton<?, IPredicate> automaton) {
+	isInterpolantAutomatonOfSingleStateType(final INestedWordAutomaton<?, IPredicate> automaton) {
 		Class<? extends IPredicate> typeofState = null;
 		for (final IPredicate state : automaton.getStates()) {
 			if (typeofState == null) {
@@ -464,8 +464,6 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		}
 		// Use all edges of the interpolant automaton that is already constructed as an
 		// initial cache for the Hoare triple checker.
-		final HoareTripleCheckerCache initialCache =
-				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		final HoareTripleCheckerCache initialCache =
 				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
@@ -513,7 +511,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		final PathProgram pp = ppcr.getPathProgram();
 		final IcfgLocation errorLoc =
 				((ISLPredicate) mCounterexample.getStateSequence().get(mCounterexample.getStateSequence().size() - 1))
-						.getProgramPoint();
+				.getProgramPoint();
 		final VpAlphabet<L> newVpAlphabet = Cfg2Automaton.extractVpAlphabet(mIcfg, !mPref.interprocedural());
 		final VpAlphabet<L> oldVpAlphabet = new VpAlphabet<>(newVpAlphabet, (Map<L, L>) newTransition2OldTransition);
 		final INestedWordAutomaton<L, IPredicate> pathProgramAutomaton =
@@ -524,7 +522,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 		final INestedWordAutomaton<L, IPredicate> intersection =
 				new Intersect<>(new AutomataLibraryServices(getServices()), mPredicateFactoryResultChecking,
 						(INwaOutgoingLetterAndTransitionProvider<L, IPredicate>) mAbstraction, pathProgramAutomaton)
-								.getResult();
+				.getResult();
 		return new IsEmpty<>(new AutomataLibraryServices(getServices()), intersection).getResult();
 	}
 
@@ -570,7 +568,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	protected void checkEnhancement(
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> inputInterpolantAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton)
-			throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
+					throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
 		if (!new Accepts<>(new AutomataLibraryServices(getServices()), interpolantAutomaton,
 				(NestedWord<L>) mCounterexample.getWord(), true, false).getResult()) {
 
@@ -582,8 +580,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 				// suppress any exception, throw assertion error instead
 			}
 			throw new AssertionError("enhanced interpolant automaton in iteration " + getIteration()
-					+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
-					+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
+			+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
+			+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
 		}
 		assert isInterpolantAutomatonOfSingleStateType(
 				new RemoveUnreachable<>(new AutomataLibraryServices(getServices()), interpolantAutomaton).getResult());
@@ -646,10 +644,10 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	private DeterministicInterpolantAutomaton<L>
-			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
-					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-					final InterpolantAutomatonEnhancement enhanceMode) {
+	constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
@@ -714,7 +712,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 	}
 
 	private class TimeoutRefinementEngineResult
-			extends BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> {
+	extends BasicRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> {
 
 		public TimeoutRefinementEngineResult(final Lazy<IHoareTripleChecker> htc,
 				final Lazy<IPredicateUnifier> predicateUnifier) {

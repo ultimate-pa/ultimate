@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -149,7 +150,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+		return constructStrategy(services, (IRun<L, ?>) counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, mPrefs.getRefinementStrategy());
 	}
 
@@ -175,7 +176,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
-		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+		return constructStrategy(services, (IRun<L, ?>) counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, strategyType);
 	}
 
@@ -191,7 +192,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		mPathProgramCache.addRun(counterexample.getWord());
 
 		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
-				counterexample, precondition, postcondition, predicateUnifier, abstraction, emptyStackFactory);
+				(Counterexample<L>) counterexample, precondition, postcondition, predicateUnifier, abstraction,
+				emptyStackFactory);
 		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
 
 		switch (strategyType) {
@@ -329,11 +331,12 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			}
 			final RefinementStrategy nestedStrategy = mPrefs.getAcceleratedInterpolationRefinementStrategy();
 			final IStrategySupplier<L> strategySupplier =
-					(ctex) -> constructStrategy(mServices, ctex, mAbstraction, mTaskIdentifier, mEmptyStackFactory,
+					(ctex) -> constructStrategy(mServices, (IRun<L, ?>) ctex, mAbstraction, mTaskIdentifier,
+							mEmptyStackFactory,
 							mPredicateUnifier, mPrecondition, mPostcondition, nestedStrategy);
 
-			return new IpTcStrategyModuleAcceleratedInterpolation<>(mServices, mLogger, mCounterexample,
-					mPredicateUnifier, mPrefs, strategySupplier, mTransitionClazz);
+					return new IpTcStrategyModuleAcceleratedInterpolation<>(mServices, mLogger, mCounterexample,
+							mPredicateUnifier, mPrefs, strategySupplier, mTransitionClazz);
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleAcceleratedTraceCheck() {
@@ -446,7 +449,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		}
 
 		private IIpTcStrategyModule<?, L>
-				createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, L> trackStrategyModule) {
+		createModuleWrapperIfNecessary(final IIpTcStrategyModule<?, L> trackStrategyModule) {
 			final boolean useInterpolantConsolidation = mPrefs.getUseInterpolantConsolidation();
 			if (useInterpolantConsolidation) {
 				isOnlyDefaultPrePostConditions();
@@ -480,7 +483,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 						mPredicateFactoryInterpolAut);
 			case ABSTRACT_INTERPRETATION:
 				final IIpTcStrategyModule<?, L> strategy =
-						preferenceIpTc == null ? createIpTcStrategyModulePreferences() : preferenceIpTc;
+				preferenceIpTc == null ? createIpTcStrategyModulePreferences() : preferenceIpTc;
 				return new IpAbStrategyModuleAbstractInterpretation<>(mAbstraction, mCounterexample, mPredicateUnifier,
 						(IpTcStrategyModuleAbstractInterpretation<L>) strategy, mEmptyStackFactory);
 			case MCR:

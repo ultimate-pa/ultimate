@@ -120,13 +120,10 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 						.getFinalStates()) {
 					if (errorStateIsTestGoalWithId(errorState, testGoalId)) {
 						final BasicPredicate errorStateAsBP = new BasicPredicate(trace.length() + testGoalId, null,
-								errorState.getFormula(), null, null, null);
-
+								null, null, null);
 						mResult.addState(false, true, errorStateAsBP);
 
-						for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
-							final IPredicate f = it.next();
-
+						for (final IPredicate f : mResult.getInitialStates()) {
 							final L letter = ((L) trace.getSymbol(i).getSource().getOutgoingEdges().get(0).getLabel());
 							mResult.addInternalTransition(f, letter, errorStateAsBP);
 							break;
@@ -141,11 +138,9 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 			final Iterable<IncomingInternalTransition<L, IPredicate>> incomingedge) {
 		assert false;
 		final BasicPredicate errorStateAsBP =
-				new BasicPredicate(mResult.size(), null, testGoal.getFormula(), null, null, null);
+				new BasicPredicate(mResult.size(), null, null, null, null);
 		mResult.addState(false, true, errorStateAsBP);
-		for (final Iterator<IPredicate> it = mResult.getInitialStates().iterator(); it.hasNext();) {
-			final IPredicate f = it.next();
-
+		for (final IPredicate f : mResult.getInitialStates()) {
 			final L letter = incomingedge.iterator().next().getLetter();
 			mResult.addInternalTransition(f, letter, errorStateAsBP);
 			break;
@@ -183,11 +178,9 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 
 		if (state.getProgramPoint().getPayload().getAnnotations().containsKey(TestGoalAnnotation.class.getName())) {
 			for (final IcfgLocation node : state.getProgramPoint().getOutgoingNodes()) {
-				if (state instanceof ISLPredicate) {
-					if (node.getPayload().getAnnotations().containsKey(TestGoalAnnotation.class.getName())) {
-						return true;
+				if ((state instanceof ISLPredicate) && node.getPayload().getAnnotations().containsKey(TestGoalAnnotation.class.getName())) {
+					return true;
 
-					}
 				}
 			}
 

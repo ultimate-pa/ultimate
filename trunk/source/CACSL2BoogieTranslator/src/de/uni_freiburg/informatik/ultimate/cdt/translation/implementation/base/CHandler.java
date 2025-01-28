@@ -130,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -224,12 +225,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
@@ -453,8 +454,8 @@ public class CHandler {
 				mLocationFactory);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
-						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), true)
+				? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
+						mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), true)
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
@@ -555,8 +556,8 @@ public class CHandler {
 				mLocationFactory);
 		mDataRaceChecker =
 				mSettings.checkDataRaces()
-						? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
-								mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), false)
+				? new DataRaceChecker(mAuxVarInfoBuilder, mMemoryHandler, mTypeHandler, mTypeSizeComputer,
+						mTypeSizes, mProcedureManager, mExpressionTranslation.getFunctionDeclarations(), false)
 						: null;
 		mExprResultTransformer =
 				new ExpressionResultTransformer(this, mMemoryHandler, mStructHandler, mExpressionTranslation,
@@ -622,7 +623,7 @@ public class CHandler {
 	}
 
 	private void
-			signalTranslationRestartWithDifferentSettings(final TranslationSettings.SettingsChange settingsChange) {
+	signalTranslationRestartWithDifferentSettings(final TranslationSettings.SettingsChange settingsChange) {
 		assert mIsPrerun : "currently only checking the restart flag after the prerunner -- might change it perhaps "
 				+ "(in MainTranslator).";
 
@@ -868,7 +869,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
 			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
-					: "subtraction is not allowed in pointer arithmetic, right?";
+			: "subtraction is not allowed in pointer arithmetic, right?";
 
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
@@ -880,7 +881,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
 			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
-					: "subtraction is not allowed in pointer arithmetic, right?";
+			: "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr =
@@ -1910,8 +1911,8 @@ public class CHandler {
 		// mLogger für statistik
 		final IfStatement ifStmt;
 		if (mTestGenerationBranchCoverage && !loc.toString().contains("C: if (0) ; else __assert_fail")) {
-			final ArrayList<Statement> thenArray = new ArrayList<Statement>();
-			final ArrayList<Statement> elseArray = new ArrayList<Statement>();
+			final ArrayList<Statement> thenArray = new ArrayList<>();
+			final ArrayList<Statement> elseArray = new ArrayList<>();
 			final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
 
 			final Statement assertFalseThen =
@@ -2523,7 +2524,7 @@ public class CHandler {
 				ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
 					if (mTestGenerationBranchCoverage) {
-						final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList<Statement>();
+						final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList<>();
 						final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
 						final ILocation loc1 = mLocationFactory.createCLocation(node);
 						final Statement assertFalseThen =
@@ -2593,7 +2594,7 @@ public class CHandler {
 		if (locC != null) {
 			assert cond != null;
 			if (mTestGenerationBranchCoverage) {
-				final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList<Statement>();
+				final ArrayList<Statement> ifBlockWithTestGoal = new ArrayList<>();
 				final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
 				final ILocation loc1 = mLocationFactory.createCLocation(node);
 				final Statement assertFalseThen =
@@ -3210,7 +3211,7 @@ public class CHandler {
 			} else if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.VOID
 					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
 					|| ((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
-							&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.VOID) {
+					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.VOID) {
 				throw new UnsupportedSyntaxException(loc,
 						"unsupported cast: " + exprPointsToType + " pointer  to " + newPointsToType + " pointer");
 			}
@@ -3416,7 +3417,7 @@ public class CHandler {
 		}
 		if (equalsInitializer.getInitializerClause() instanceof CASTLiteralExpression
 				&& ((CASTLiteralExpression) equalsInitializer.getInitializerClause())
-						.getKind() == IASTLiteralExpression.lk_string_literal) {
+				.getKind() == IASTLiteralExpression.lk_string_literal) {
 			final CASTLiteralExpression lit = (CASTLiteralExpression) equalsInitializer.getInitializerClause();
 			/*
 			 * subtracting -1 because lit.getValue includes the quotation marks (-2) and we will add a termination
@@ -3509,11 +3510,11 @@ public class CHandler {
 			// do not havoc when the type of the field is "compatible"
 			if (rightHandSideWithConversionsApplied.getCType().equals(er.getLrValue().getCType())
 					|| rightHandSideWithConversionsApplied.getCType().getUnderlyingType() instanceof CPrimitive
-							&& er.getLrValue().getCType() instanceof CPrimitive
-							&& ((CPrimitive) rightHandSideWithConversionsApplied.getCType().getUnderlyingType())
-									.getGeneralType().equals(((CPrimitive) er.getLrValue().getCType()).getGeneralType())
-							&& mMemoryHandler.calculateSizeOf(loc, rightHandSideWithConversionsApplied
-									.getCType()) == mMemoryHandler.calculateSizeOf(loc, er.getLrValue().getCType())) {
+					&& er.getLrValue().getCType() instanceof CPrimitive
+					&& ((CPrimitive) rightHandSideWithConversionsApplied.getCType().getUnderlyingType())
+					.getGeneralType().equals(((CPrimitive) er.getLrValue().getCType()).getGeneralType())
+					&& mMemoryHandler.calculateSizeOf(loc, rightHandSideWithConversionsApplied
+							.getCType()) == mMemoryHandler.calculateSizeOf(loc, er.getLrValue().getCType())) {
 
 				builder.resetLrValue(rVal);
 				final ExpressionResult assignment =
@@ -3668,10 +3669,10 @@ public class CHandler {
 						throw new IncorrectSyntaxException(loc, msg);
 					}
 				} else // this means we are in the translation unit
-				if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
-					// Function contract
-					mContract.add(acslNode);
-				}
+					if (acslNode instanceof Contract || acslNode instanceof LoopAnnot) {
+						// Function contract
+						mContract.add(acslNode);
+					}
 			}
 			try {
 				mAcsl = main.nextACSLStatement();

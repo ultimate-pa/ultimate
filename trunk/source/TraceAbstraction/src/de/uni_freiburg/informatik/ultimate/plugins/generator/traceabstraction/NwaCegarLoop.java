@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -156,7 +157,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private final boolean mUseHeuristicEmptinessCheck;
 	private final ScoringMethod mScoringMethod;
 	private final AStarHeuristic mAStarHeuristic;
-	private final Integer mAStarRandomHeuristicSeed;
+	protected final Integer mAStarRandomHeuristicSeed;
 
 	protected final NwaHoareProofProducer<L> mProofUpdater;
 
@@ -192,6 +193,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		}
 	}
 
+
 	protected NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
@@ -210,13 +212,13 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				if (mUseHeuristicEmptinessCheck) {
 					mCounterexample = new IsEmptyHeuristic<>(new AutomataLibraryServices(getServices()), abstraction,
 							IHeuristic.getHeuristic(mAStarHeuristic, mScoringMethod, mAStarRandomHeuristicSeed))
-									.getNestedRun();
+							.getNestedRun();
 
 					assert checkIsEmptyHeuristic(abstraction) : "IsEmptyHeuristic did not match IsEmpty";
 				} else {
 					mCounterexample =
 							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
-									.getNestedRun();
+							.getNestedRun();
 				}
 			} finally {
 				mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
@@ -275,10 +277,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
 							.get(TestGoalAnnotation.class.getName());
 
-					if (pLocAnno instanceof TestGoalAnnotation) {
-						if (mTestGoalWorkingSet.contains(((TestGoalAnnotation) pLocAnno).mId)) {
-							longTraceGoalStates.add(testGoal);
-						}
+					if ((pLocAnno instanceof TestGoalAnnotation) && mTestGoalWorkingSet.contains(((TestGoalAnnotation) pLocAnno).mId)) {
+						longTraceGoalStates.add(testGoal);
 					}
 				}
 				if (!mTestGeneration.equals(TestGenerationMode.NaiveMultiGoal)) {
@@ -295,12 +295,12 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 					mCounterexample =
 							new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
-									.getNestedRun();
+							.getNestedRun();
 				}
 			} else {
 				mCounterexample =
 						new IsEmpty<>(new AutomataLibraryServices(getServices()), abstraction, mSearchStrategy)
-								.getNestedRun();
+						.getNestedRun();
 			}
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
@@ -316,33 +316,33 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final Function<NestedRun<L, IPredicate>, String> toStr =
 				a -> a.getWord().asList().stream().map(b -> "T" + b.hashCode()).collect(Collectors.joining(" "));
 
-		if (isEmptyHeuristicCex == null && isEmptyCex == null) {
-			return true;
-		}
-		if (isEmptyHeuristicCex != null && isEmptyCex == null) {
-			mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
-			mLogger.fatal("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
-			return false;
-		}
-		if (isEmptyHeuristicCex == null && isEmptyCex != null) {
-			mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
-			mLogger.fatal("IsEmpty         : " + toStr.apply(isEmptyCex));
-			return false;
-		}
-		if (isEmptyHeuristicCex != null && isEmptyCex != null) {
-			if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
-				if (isEmptyHeuristicCex.getLength() > isEmptyCex.getLength()) {
-					mLogger.warn("IsEmptyHeuristic and IsEmpty found a path, but isEmptyHeuristic was longer!");
-				} else {
-					mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
+				if (isEmptyHeuristicCex == null && isEmptyCex == null) {
+					return true;
 				}
-				mLogger.info("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
-				mLogger.info("IsEmpty         : " + toStr.apply(isEmptyCex));
-			}
-			return true;
-		}
-		mLogger.fatal("Should not happen");
-		return false;
+				if (isEmptyHeuristicCex != null && isEmptyCex == null) {
+					mLogger.fatal("IsEmptyHeuristic found a path but IsEmpty did not.");
+					mLogger.fatal("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
+					return false;
+				}
+				if (isEmptyHeuristicCex == null && isEmptyCex != null) {
+					mLogger.fatal("IsEmptyHeuristic found no path but IsEmpty did.");
+					mLogger.fatal("IsEmpty         : " + toStr.apply(isEmptyCex));
+					return false;
+				}
+				if (isEmptyHeuristicCex != null && isEmptyCex != null) {
+					if (!NestedRun.isEqual(isEmptyHeuristicCex, isEmptyCex)) {
+						if (isEmptyHeuristicCex.getLength() > isEmptyCex.getLength()) {
+							mLogger.warn("IsEmptyHeuristic and IsEmpty found a path, but isEmptyHeuristic was longer!");
+						} else {
+							mLogger.info("IsEmptyHeuristic and IsEmpty found a path, but they differ");
+						}
+						mLogger.info("IsEmptyHeuristic: " + toStr.apply(isEmptyHeuristicCex));
+						mLogger.info("IsEmpty         : " + toStr.apply(isEmptyCex));
+					}
+					return true;
+				}
+				mLogger.fatal("Should not happen");
+				return false;
 	}
 
 	private boolean checkForDangerInvariantAndReport() {
@@ -387,10 +387,10 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 				final VarAssignmentReuseAnnotation pLocAnnoVA =
 						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
-								.get(VarAssignmentReuseAnnotation.class.getName());
+						.get(VarAssignmentReuseAnnotation.class.getName());
 				// If it contains a VA it should contain a TG
 				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.containsKey(TestGoalAnnotation.class.getName());
+				.containsKey(TestGoalAnnotation.class.getName());
 				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
 						.getAnnotations().get(TestGoalAnnotation.class.getName());
 				System.out.println(pLocAnnoTG.mId);
@@ -467,7 +467,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
-			throws AutomataLibraryException, AssertionError {
+					throws AutomataLibraryException, AssertionError {
 		try {
 			mLogger.debug("Start constructing difference");
 			final PowersetDeterminizer<L, IPredicate> psd =
@@ -494,17 +494,15 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				}
 			}
 
-			if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
-				// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
-				// mPredicateFactoryResultChecking, mCounterexample, false);
-				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
-					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
-							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
-							mPref.interprocedural(), mPredicateFactory);
-					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
-							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
-							null, (NestedRun<L, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
-				}
+			// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+			// mPredicateFactoryResultChecking, mCounterexample, false);
+			if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration()) && (mFaultLocalizationMode != RelevanceAnalysisMode.NONE)) {
+				final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+						getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+						mPref.interprocedural(), mPredicateFactory);
+				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
+						mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
+						null, (NestedRun<L, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
 			}
 
 			if (mPref.dumpAutomata()) {
@@ -551,9 +549,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 			final var unifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
 					mPredicateFactory, mCsToolkit.getSymbolTable(), mSimplificationTechnique);
 			assert NwaFloydHoareValidityCheck
-					.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
-							new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction, true)
-					.getResult() : "Not inductive";
+			.forInterpolantAutomaton(mServices, mCsToolkit.getManagedScript(),
+					new IncrementalHoareTripleChecker(mCsToolkit, false), unifier, mAbstraction, true)
+			.getResult() : "Not inductive";
 		}
 	}
 
@@ -620,7 +618,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	 */
 	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
-			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
+					throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
@@ -674,12 +672,12 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
 		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
 				CounterexampleSearchStrategy.class)) {
-		case BFS:
-			return SearchStrategy.BFS;
-		case DFS:
-			return SearchStrategy.DFS;
-		default:
-			throw new IllegalArgumentException();
+				case BFS:
+					return SearchStrategy.BFS;
+				case DFS:
+					return SearchStrategy.DFS;
+				default:
+					throw new IllegalArgumentException();
 		}
 	}
 
