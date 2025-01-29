@@ -333,16 +333,31 @@ extends NwaCegarLoop<L> {
 				// dont search for counterexamples unnecessarily BUSY WAITING!
 				if ((mCounterexample == null && !didntFindCexLastIteration) || abstractionWasRefined) {
 					mLogger.info("Searching for Counterexample");
-					isAbstractionEmpty(); // isEmptyParallel
-					if (mCounterexample != null) {
-						mLogger.info("Found new Counterexample!");
-						didntFindCexLastIteration = false;
+
+					final boolean isAbstractionEmpty = super.isAbstractionEmpty();
+					if (isAbstractionEmpty) {
+						mResultBuilder.addResultForAllRemaining(Result.SAFE);
+						mExec.shutdownNow();
+						return;
 					}
-					if (mCounterexample == null) {
-						mLogger.info("Did not Find a Counterexample!");
-						didntFindCexLastIteration = true;
-						assert runningThreads > 0;
-						// there are probably still threads running
+					assert mCounterexample != null;// we terminate if isAbstractionEmpty
+					final List<L> trace = mCounterexample.getWord().asList();
+					final int traceHash = trace.hashCode();
+					if (mAllCounterexamples.containsKey(traceHash)) {
+						mCounterexample = null; // BFS cex is already being checked
+						isAbstractionEmpty(); // isEmptyParallel
+						if (mCounterexample != null) {
+							mLogger.info("Found new Counterexample!");
+							didntFindCexLastIteration = false;
+						}
+						if (mCounterexample == null) {
+							mLogger.info("Did not Find a Counterexample!");
+							didntFindCexLastIteration = true;
+							assert runningThreads > 0;
+							// there are probably still threads running
+						}
+					} else {
+						mLogger.info("Found new Counterexample via BFS!");
 					}
 				}
 				// Doesnt Need to come before search because of initial counterexample, we skip search
