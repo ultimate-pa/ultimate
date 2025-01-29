@@ -53,7 +53,11 @@
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
     <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/gemcutter/svcomp-Reach-32bit-GemCutter_Default.epf</option>
 
+    <!-- Set this option to false, as it is unsound for Boogie. -->
+    <option name="&#45;-rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
     <include>${benchmark_path}/../../../trunk/examples/concurrent/bpl/weaver-benchmarks/generated/parallel/misc-2-unrolled.wvr.yml</include>
+    <include>${benchmark_path}/../../../trunk/examples/concurrent/bpl/weaver-benchmarks/generated/parallel/barrier-loop.wvr.yml</include>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
@@ -70,6 +74,9 @@
     <option name="&#45;-force-no-wrapper" />
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
     <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/gemcutter/svcomp-Reach-32bit-GemCutter_Default.epf</option>
+
+    <!-- Set this option to false, as it is unsound for Boogie. -->
+    <option name="&#45;-rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
 
     <includesfile>${benchmark_path}/../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
