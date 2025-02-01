@@ -205,8 +205,11 @@ extends NwaCegarLoop<L> {
 				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz);
 
 
+		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+
 		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(getServices(),
-				new Counterexample<>(mCounterexample.getWord()), mInitialAbstraction,
+				counterexample, mInitialAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				strategyType);
