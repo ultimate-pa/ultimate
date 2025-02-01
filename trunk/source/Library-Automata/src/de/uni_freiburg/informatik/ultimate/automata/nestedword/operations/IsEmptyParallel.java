@@ -743,20 +743,17 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				}
 				if (runToGoal != null) {
 					assert run != null;
-					assert (succ.equals(runToGoal.getStateAtPosition(0)));
-					return run.concatenate(runToGoal);
+					if (succ.equals(runToGoal.getStateAtPosition(0))) {
+						return run.concatenate(runToGoal);
+					}
 
 				}
 
 			}
-		} else
-
-		{
+		} else {
 			assert false; // should be handled before
-			// getAcceptingRunHelperInternal(state, stateK);
 		}
 		return null;
-
 	}
 
 	/**
