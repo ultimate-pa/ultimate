@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -192,7 +193,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	public boolean wasBackwardsPredicatesComputationRequested() {
 		return mConstructBackwardInterpolantSequence == ConstructBackwardSequence.YES
 				|| mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT
-						&& !isForwardSequencePerfect();
+				&& !isForwardSequencePerfect();
 	}
 
 	public boolean wasBackwardSequenceConstructed() {
@@ -239,7 +240,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		cleanupAndUnlockSolver();
 
 		{
-			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
+			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().size();
 			final int numberOfConjunctsInUnsatCore;
 			if (mUnsatCores == UnsatCores.IGNORE) {
 				numberOfConjunctsInUnsatCore = 0;
@@ -261,7 +262,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core! trace length " + mTrace.length()
-				+ " unsat-core size " + unsatCore.size();
+		+ " unsat-core size " + unsatCore.size();
 
 		final Set<IProgramVar>[] liveVariables;
 		if (USE_LIVE_VARIABLES_INSTEAD_OF_RELEVANT_VARIABLES) {
@@ -323,7 +324,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsBp =
 						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
-								.getPredicates();
+						.getPredicates();
 
 				assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
@@ -380,7 +381,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 * Construct representation of the trace formula that contains only the conjuncts that occur in the unsat core.
 	 */
 	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate>
-			constructRelevantTransFormulas(final Set<Term> unsatCore) {
+	constructRelevantTransFormulas(final Set<Term> unsatCore) {
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
 			rtf = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
@@ -503,12 +504,15 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			mRelevantVars = relevantVars;
 		}
 
+
+
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), QuantifiedFormula.EXISTS,
-					nonLiveVars, pred.getFormula());
+					transferSet(nonLiveVars),
+					((HistoryRecordingScript) mCfgManagedScript.getScript()).transferTermToWorker(pred.getFormula()));
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
 			final Term pushed = PartialQuantifierElimination.eliminateLight(mServices, mCfgManagedScript, projectedT);
@@ -523,7 +527,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		private final Set<IProgramVar>[] mRelevantVars;
 
 		public LiveVariablesPostprocessorBackward(final Set<IProgramVar>[] relevantVars) {
-			super();
 			mRelevantVars = relevantVars;
 		}
 
@@ -532,7 +535,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
 			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), QuantifiedFormula.FORALL,
-					nonLiveVars, pred.getFormula());
+					transferSet(nonLiveVars),
+					((HistoryRecordingScript) mCfgManagedScript.getScript()).transferTermToWorker(pred.getFormula()));
 			// apply only a parsimonious quantifier elimination,
 			// we use a quantifier elimination postprocessor later
 			final Term pushed = PartialQuantifierElimination.eliminateLight(mServices, mCfgManagedScript, projectedT);
@@ -575,6 +579,17 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			if (!relevantVars.contains(bv)) {
 				result.add(bv.getTermVariable());
 			}
+		}
+		return result;
+	}
+
+	private Set<TermVariable> transferSet(final Set<TermVariable> inSet) {
+		final Set<TermVariable> result = new HashSet<>();
+		for (final TermVariable tv : inSet) {
+			final HistoryRecordingScript script = ((HistoryRecordingScript) mCfgManagedScript.getScript());
+			final TermVariable transferredTV = (TermVariable) script.transferTermToWorker(tv);
+			script.addTermVariableToMap(transferredTV, tv);
+			result.add(transferredTV);
 		}
 		return result;
 	}
