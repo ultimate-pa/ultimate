@@ -105,6 +105,9 @@ extends NwaCegarLoop<L> {
 	private Integer mCounterexamplesChecked = 0;
 	private Integer mRefinementsDone = 0;
 
+	// need global program cache
+	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
+
 	/**
 	 *
 	 * Compute Initial Abstraction, can be reused
@@ -202,7 +205,7 @@ extends NwaCegarLoop<L> {
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
 
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
-				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz);
+				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz, mProgramCache);
 
 
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
@@ -383,7 +386,7 @@ extends NwaCegarLoop<L> {
 					addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample);
 					// mCounterexample is being checked, make sure next thread gets a new one
 					mCounterexample = null;
-					isAbstractionEmpty();
+					// isAbstractionEmpty(); Only if we have loop instead of if
 				}
 			} finally {
 				// TODO if (updateBudget) {
@@ -423,6 +426,7 @@ extends NwaCegarLoop<L> {
 		mLogger.info("Difference in Main");
 		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
 				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
+
 
 		mAbstraction = diff.getResult();
 
@@ -550,9 +554,12 @@ extends NwaCegarLoop<L> {
 			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmptyParallel.SearchStrategy.BFS, allCounterexamples).getNestedRun();
-		} else {
+		} else if(useGoalSetForIsEmpty){
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
 					Collections.emptySet(), possibleEndPoints).getNestedRun();
+		} else {
+			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, IsEmpty.SearchStrategy.BFS)
+					.getNestedRun();
 		}
 
 	}
@@ -604,20 +611,11 @@ extends NwaCegarLoop<L> {
 			assert mFaultLocalizationMode == RelevanceAnalysisMode.NONE;
 
 			if (REMOVE_DEAD_ENDS) {
-				if (mComputeHoareAnnotation) {
-					//					final Difference<L, IPredicate> difference = (Difference<L, IPredicate>) diff;
-					//					mHaf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
-				}
 				diff.removeDeadEnds();
-				if (mComputeHoareAnnotation) {
-					//					mHaf.addDeadEndDoubleDeckers(diff);
-				}
 			}
-
 			return diff;
 		} finally {
 		}
-
 	}
 
 	/**
