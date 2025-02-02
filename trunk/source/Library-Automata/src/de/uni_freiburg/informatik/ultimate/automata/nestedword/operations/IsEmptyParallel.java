@@ -724,7 +724,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				NestedRun<LETTER, STATE> runToGoal;
 				NestedRun<LETTER, STATE> run = null;
 				if (startpq.isCall()) {
-					markCallVisited(state, stateK);
+					// markCallVisited(state, stateK);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(state, succ), startpq.getCounterexamplesUnderConsideration());
 
@@ -732,7 +732,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
 					}
 				} else if (startpq.isReturn()) {
-					markCallVisited(stateK, state);
+					// markCallVisited(stateK, state);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(stateK, succ), startpq.getCounterexamplesUnderConsideration());
 					addSummary(stateK, succ, state, symbol);
@@ -1016,10 +1016,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					if (startStates.contains(run.getStateAtPosition(i))) {
 						return run.getSubRun(i, run.getLength() - 1);
 					}
+					System.out.println("Cutting off from suffix " + run.getStateAtPosition(i));
+
 				}
-				return null;
-				//				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
-				//						+ " run is " + run.getStateSequence());
+				//				return null;
+				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
+						+ " run is " + run.getStateSequence());
 			}
 			run = mReconstructionOneStepRun.concatenate(run);
 			state = run.getStateAtPosition(0);
