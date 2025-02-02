@@ -40,7 +40,6 @@ type_errorstring = "Type Error"
 witness_errorstring = "InvalidWitnessErrorResult"
 exception_errorstring = "ExceptionOrErrorResult"
 safety_string = "Ultimate proved your program to be correct"
-testGen_string = "TestGeneration"
 all_spec_string = "AllSpecificationsHoldResult"
 unsafety_string = "Ultimate proved your program to be incorrect"
 mem_deref_false_string = "pointer dereference may fail"
@@ -90,8 +89,6 @@ class _PropParser:
         self.ltlformula = None
         self.mem_cleanup = False
         self.data_race = False
-        self.cover_error = False
-        self.cover_edges = False
 
         for match in self.prop_regex.finditer(self.content):
             init, formula = match.groups()
@@ -126,7 +123,6 @@ class _PropParser:
                 self.mem_cleanup = True
             elif formula == "G ! data-race":
                 self.data_race = True
-
             elif not check_string_contains(
                 self.word_regex.findall(formula), self.forbidden_words
             ):
@@ -180,13 +176,7 @@ class _PropParser:
 
     def is_data_race(self):
         return self.data_race
-    
-    def is_cover_error(self):
-        return self.cover_error
 
-    def is_cover_edges(self):
-        return self.cover_edges
-         
 
 class _AbortButPrint(Exception):
     def __init__(self, value):
@@ -247,7 +237,6 @@ def get_java():
         candidates = [
             "java.exe",
             "C:\\Program Files\\Java\\jdk-11\\bin\\java.exe",
-            "C:\\Program Files\\Java\\jdk-11.0.17\\bin\\java.exe",
             "C:\\Program Files\\Eclipse Adoptium\\jdk-11*-hotspot\\bin\\java.exe",
         ]
     else:  # Unix-like
@@ -430,13 +419,7 @@ def run_ultimate(ultimate_call, prop, verbose=False):
                 if blank_lines < 1:
                     blank_lines += 1
                 else:
-                    reading_error_path = False 
-        elif prop.is_cover_error():
-            if line.find(testGen_string) != -1:
-                result = "DONE"
-        elif prop.is_cover_edges():
-            if line.find(testGen_string) != -1:
-                result = "DONE"
+                    reading_error_path = False
         else:
             if line.find(safety_string) != -1 or line.find(all_spec_string) != -1:
                 result = "TRUE"
@@ -614,7 +597,8 @@ def check_witness_type(witness, type):
     elif witness.endswith(".graphml"):
         valid = check_witness_type_graphml(witness, type)
     else:
-        print("Unsupported witness type", witness.rpartition(".")[2])
+        print(f'Unexpected witness file ending .{witness.rpartition(".")[2]}. '
+              'The witness has to end with .yml, .yaml, or .graphml.')
     if not valid:
         sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
 
@@ -934,12 +918,6 @@ def create_settings_search_string(prop, architecture):
     elif prop.is_data_race():
         print("Checking for data races")
         settings_search_string = "DataRace"
-    elif prop.is_cover_error():
-        print("Generating Tests to Cover Error")
-        settings_search_string = "CoverError"
-    elif prop.is_cover_edges():
-        print("Generating Tests to Cover Branches")
-        settings_search_string = "CoverEdges" 
     else:
         print("Checking for ERROR reachability")
         settings_search_string = "Reach"
@@ -959,10 +937,6 @@ def get_toolchain_path(prop, witnessmode):
         search_string = "*MemDerefMemtrack.xml"
     elif prop.is_ltl():
         search_string = "*LTL.xml"
-    elif prop.is_cover_error():
-        search_string = "*CoverError.xml"
-    elif prop. is_cover_edges():
-        search_string = "*CoverEdges.xml"
     else:
         search_string = "*Reach.xml"
 

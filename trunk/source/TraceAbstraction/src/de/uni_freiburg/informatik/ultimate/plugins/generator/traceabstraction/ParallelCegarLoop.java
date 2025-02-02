@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -549,11 +548,9 @@ extends NwaCegarLoop<L> {
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		assert useGoalSetForIsEmpty || possibleEndPoints == null;
 		if (mParallelSearchSrategy) {
-			final ArrayList<NestedRun<L, IPredicate>> allCounterexamples =
-					new ArrayList<>(mAllCounterexamples.values());
 			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-					IsEmptyParallel.SearchStrategy.BFS, allCounterexamples).getNestedRun();
+					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples).getNestedRun();
 		} else if(useGoalSetForIsEmpty){
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
 					Collections.emptySet(), possibleEndPoints).getNestedRun();

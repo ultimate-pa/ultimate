@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
@@ -206,7 +207,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
 	 * currently checked by a thread
 	 */
-	private final HashMap<Integer, NestedRun<LETTER, STATE>> mActiveCounterexamples = null;
+	private final HashMap<Integer, NestedRun<LETTER, IPredicate>> mActiveCounterexamples;
 
 	/**
 	 * Constructor for parallel search strategy. Gets as additional argument the list of all counterexamples currently
@@ -223,7 +224,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	public IsEmptyParallel(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
-			final SearchStrategy strategy, final ArrayList<NestedRun<LETTER, STATE>> counterexamples)
+			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, IPredicate>> counterexamples)
 					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -242,8 +243,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-
-		mAcceptingRun = getAcceptingRunParallel(counterexamples);
+		mActiveCounterexamples = counterexamples;
+		mAcceptingRun = getAcceptingRunParallel(mActiveCounterexamples.keySet());
 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -470,7 +471,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *
 	 */
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
-			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
+			final ArrayList<Integer> counterexamples) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
 
 		if (mSummaryReturnPred.containsKey(state)) {
@@ -478,23 +479,24 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final Map<STATE, STATE> succ2ReturnPred = mSummaryReturnPred.get(state);
 			final Map<STATE, LETTER> succ2ReturnSymbol = mSummaryReturnSymbol.get(state);
 			for (final Entry<STATE, STATE> entry : succ2ReturnPred.entrySet()) {
-				final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
+				final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 				final STATE succ = entry.getKey();
 				assert succ2ReturnSymbol.containsKey(succ);
 				final STATE returnPred = entry.getValue();
 				final LETTER symbol = succ2ReturnSymbol.get(succ);
 				int currentScore = 0;
-				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
+				for (final int cexHash : counterexamples) {
+					final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
 					if (counterexample.getLength() > position) {
 
 						IcfgLocation programPoint = null;
-						final STATE stateInCEx = counterexample.getStateAtPosition(position);
+						final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
 						if (stateInCEx instanceof Return || succ instanceof Return) {
 							// programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 							// if (programPoint.equals(((Return) succ).getProgramPoint())) {
 							if (symbol == counterexample.getSymbol(position - 1)) {
 								currentScore += 1;
-								activeCounterexamples.add(counterexample);
+								activeCounterexamples.add(cexHash);
 							}
 							// } else {
 							// assert !counterexample.getStateAtPosition(position).equals(succ);
@@ -504,7 +506,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 							if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 								if (symbol == counterexample.getSymbol(position - 1)) {
 									currentScore += 1;
-									activeCounterexamples.add(counterexample);
+									activeCounterexamples.add(cexHash);
 								}
 							} else {
 								assert !counterexample.getStateAtPosition(position).equals(succ);
@@ -523,14 +525,15 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
+			final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
-				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
+				for (final int cexHash : counterexamples) {
+					final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
 					if (counterexample.getLength() > position) {
 
 						IcfgLocation programPoint = null;
-						final STATE stateInCEx = counterexample.getStateAtPosition(position);
+						final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
 						if (stateInCEx instanceof ISLPredicate) {
 							programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 						} else {
@@ -540,7 +543,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 							if (symbol == counterexample.getSymbol(position - 1)) {
 								currentScore += 1;
-								activeCounterexamples.add(counterexample);
+								activeCounterexamples.add(cexHash);
 							}
 						} else {
 							// can have different serial numbers! is that a problem?
@@ -558,14 +561,15 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
+			final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
-				for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
+				for (final int cexHash : counterexamples) {
+					final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
 					if (counterexample.getLength() > position) {
 
 						IcfgLocation programPoint = null;
-						final STATE stateInCEx = counterexample.getStateAtPosition(position);
+						final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
 						if (stateInCEx instanceof ISLPredicate) {
 							programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 						} else {
@@ -575,7 +579,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 							if (symbol == counterexample.getSymbol(position - 1)) {
 								currentScore += 1;
-								activeCounterexamples.add(counterexample);
+								activeCounterexamples.add(cexHash);
 							}
 						} else {
 							assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
@@ -596,14 +600,15 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				stateK)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
+			final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 			if ((!mForbiddenStates.contains(succ))) {
 				for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
 					int currentScore = 0;
-					for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
+					for (final int cexHash : counterexamples) {
+						final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
 						if (counterexample.getLength() > position) {
 							IcfgLocation programPoint = null;
-							final STATE stateInCEx = counterexample.getStateAtPosition(position);
+							final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
 							if (stateInCEx instanceof ISLPredicate) {
 								programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 							} else {
@@ -613,7 +618,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 							if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 								if (symbol == counterexample.getSymbol(position - 1)) {
 									currentScore += 1;
-									activeCounterexamples.add(counterexample);
+									activeCounterexamples.add(cexHash);
 								}
 							} else {
 								assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
@@ -631,15 +636,16 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	}
 
 	private PriorityQueue<PQState> pickStartToExplore(final Collection<STATE> states,
-			final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
+			final Set<Integer> set) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
 
 		for (final STATE state : states) {
-			final ArrayList<NestedRun<LETTER, STATE>> activeCounterexamples = new ArrayList<>();
+			final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 			int currentScore = 0;
-			for (final NestedRun<LETTER, STATE> counterexample : counterexamples) {
+			for (final int cexHash : set) {
 				IcfgLocation programPoint = null;
-				final STATE stateInCEx = counterexample.getStateAtPosition(0);
+
+				final STATE stateInCEx = (STATE) mActiveCounterexamples.get(cexHash).getStateAtPosition(0);
 				if (stateInCEx instanceof ISLPredicate) {
 					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 				} else {
@@ -648,9 +654,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 				if (programPoint.equals(((ISLPredicate) state).getProgramPoint())) {
 					currentScore += 1;
-					activeCounterexamples.add(counterexample);
+					activeCounterexamples.add(cexHash);
 				} else {
-					assert !counterexample.getStateAtPosition(0).equals(state);
+					assert !mActiveCounterexamples.get(cexHash).getStateAtPosition(0).equals(state);
 				}
 
 			}
@@ -666,7 +672,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *
 	 */
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
-			final DoubleDecker<STATE> pair, final ArrayList<NestedRun<LETTER, STATE>> counterexamples)
+			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
 					throws AutomataOperationCanceledException {
 		int positionOfThisSubSearch = position;
 		if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -760,14 +766,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * Parallel
 	 */
 	@SuppressWarnings("squid:S1698")
-	private NestedRun<LETTER, STATE> getAcceptingRunParallel(final ArrayList<NestedRun<LETTER, STATE>> counterexamples)
+	private NestedRun<LETTER, STATE> getAcceptingRunParallel(final Set<Integer> set)
 			throws AutomataOperationCanceledException {
 
-		if (counterexamples.isEmpty()) {
+		if (set.isEmpty()) {
 			return getAcceptingRun(mStartStates); // TODO not clear if thats what we want
 		}
 
-		final PriorityQueue<PQState> pqStart = pickStartToExplore(mStartStates, counterexamples);
+		final PriorityQueue<PQState> pqStart = pickStartToExplore(mStartStates, set);
 		// assert !pqStart.isEmpty(); // if abstraction is empty, there might not be a start anymore
 		while (!pqStart.isEmpty()) {
 			final PQState startpq = pqStart.poll();
@@ -777,8 +783,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final NestedRun<LETTER, STATE> runToGoal = constructRunFromStateToNextBranch(0,
 					new DoubleDecker<>(mDummyEmptyStackState, start), startpq.getCounterexamplesUnderConsideration());
 			if (runToGoal != null) {
-				for (final NestedRun<LETTER, STATE> cex : counterexamples) {
-					assert cex.getWord().asList().hashCode() != runToGoal.getWord().asList().hashCode();
+				for (final Integer cexHash : set) {
+					assert cexHash != runToGoal.getWord().asList().hashCode();
 				}
 				return runToGoal;
 			}
@@ -1011,8 +1017,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						return run.getSubRun(i, run.getLength() - 1);
 					}
 				}
-				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
-						+ " run is " + run.getStateSequence());
+				return null;
+				//				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
+				//						+ " run is " + run.getStateSequence());
 			}
 			run = mReconstructionOneStepRun.concatenate(run);
 			state = run.getStateAtPosition(0);
@@ -1154,13 +1161,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		STATE mState;
 		STATE mSucc;
 		STATE mStateK;
-		ArrayList<NestedRun<LETTER, STATE>> mCounterexamples = new ArrayList<>();
+		ArrayList<Integer> mCounterexamples = new ArrayList<>();
 		LETTER mSymbol;
 		boolean mCallTransition;
 		boolean mReturnTransition;
 
 		public PQState(final int score, final STATE state, final LETTER symbol, final STATE succ, final STATE stateK,
-				final ArrayList<NestedRun<LETTER, STATE>> counterexamples, final boolean call, final boolean ret) {
+				final ArrayList<Integer> counterexamples, final boolean call, final boolean ret) {
 			mScore = score;
 			mState = state;
 			mSucc = succ;
@@ -1200,7 +1207,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			return mSymbol;
 		}
 
-		public ArrayList<NestedRun<LETTER, STATE>> getCounterexamplesUnderConsideration() {
+		public ArrayList<Integer> getCounterexamplesUnderConsideration() {
 			return mCounterexamples;
 		}
 	}
