@@ -112,6 +112,22 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
 			final PredicateFactory predicateFactory,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz,
+			final PathProgramCache<L> programCache) {
+		mLogger = logger;
+		mTaPrefs = taPrefsForInterpolantConsolidation;
+		mPrefs = prefs;
+		mInitialIcfg = initialIcfg;
+		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
+		mPredicateFactory = predicateFactory;
+		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
+		mPathProgramCache = programCache;
+		mTransitionClazz = transitionClazz;
+	}
+
+	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
+			final PredicateFactory predicateFactory,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz) {
 		mLogger = logger;
 		mTaPrefs = taPrefsForInterpolantConsolidation;

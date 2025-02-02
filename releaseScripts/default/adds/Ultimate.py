@@ -141,25 +141,6 @@ class _PropParser:
                 self.ltlformula = formula
             else:
                 raise RuntimeError("The formula {0} is unknown".format(formula))
-        for match in self.prop_regex_testcomp.finditer(self.content):
-            init, formula = match.groups()
-
-            fun_match = self.funid_regex.match(init)
-            if not fun_match:
-                raise RuntimeError("No init specified in this check")
-            if self.init and self.init != fun_match.group(1):
-                raise RuntimeError(
-                    "We do not support multiple and different init functions (have seen {0} and {1}".format(
-                        self.init, fun_match.group(1)
-                    )
-                )
-            self.init = fun_match.group(1)
-            if formula == "COVER EDGES(@CALL(reach_error))":
-                self.cover_error = True
-            elif formula == "COVER EDGES(@DECISIONEDGE)":
-                self.cover_edges = True
-            else:
-                raise RuntimeError("The formula {0} is unknown".format(formula))
 
     def get_init_method(self):
         return self.init
