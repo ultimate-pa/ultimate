@@ -92,7 +92,7 @@ extends NwaCegarLoop<L> {
 
 	private final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
 	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>();
-	private final HashMap<Integer, NestedRun<L, IPredicate>> mAllCounterexamples = new HashMap<>();
+	private final HashMap<Integer, NestedRun<L, ?>> mAllCounterexamples = new HashMap<>();
 
 	private final boolean useGoalSetForIsEmpty;
 	private final boolean mParallelSearchSrategy;
@@ -267,7 +267,6 @@ extends NwaCegarLoop<L> {
 
 							final List<L> trace = workerResult.getCounterexample().getWord().asList();
 							final int traceHash = trace.hashCode();
-							// mTraceHashToThread.remove(traceHash);
 
 							// mInterations equals the amount of refinements
 							mCegarLoopBenchmark.announceNextIteration();
@@ -382,10 +381,10 @@ extends NwaCegarLoop<L> {
 					mCounterexamplesChecked += 1;
 					mLogger.info("Counterexamples: " + mCounterexamplesChecked);
 					// add mCounterexample to list such that we dont get it twice in our search
-					addCounterexampleToSet((NestedRun<L, IPredicate>) mCounterexample);
+					addCounterexampleToSet((NestedRun<L, ?>) mCounterexample);
 					// mCounterexample is being checked, make sure next thread gets a new one
 					mCounterexample = null;
-					// isAbstractionEmpty(); Only if we have loop instead of if
+					isAbstractionEmpty(); // Prevents us from doing BFS on same abstraction in next iteration
 				}
 			} finally {
 				// TODO if (updateBudget) {
@@ -466,10 +465,9 @@ extends NwaCegarLoop<L> {
 							.get(TestGoalAnnotation.class.getName());
 					if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
 						continue;
-					} else {
-						if (pLocAnno instanceof TestGoalAnnotation) {
-							mActiveErrorLocs.add(testGoal);
-						}
+					}
+					if (pLocAnno instanceof TestGoalAnnotation) {
+						mActiveErrorLocs.add(testGoal);
 					}
 				}
 			}
@@ -533,14 +531,13 @@ extends NwaCegarLoop<L> {
 	/*
 	 * Only add a counterexample if it is being checked by a thread otherwise we are unsound
 	 */
-	private void addCounterexampleToSet(final NestedRun<L, IPredicate> counterexample) {
+	private void addCounterexampleToSet(final NestedRun<L, ?> counterexample) {
 		final List<L> trace = counterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		if (mAllCounterexamples.containsKey(traceHash)) {
 			throw new AssertionError("IsEmpty(Parallel) Found the same counterexample twice!");
-		} else {
-			mAllCounterexamples.put(traceHash, counterexample);
 		}
+		mAllCounterexamples.put(traceHash, counterexample);
 	}
 
 	@Override
@@ -565,7 +562,6 @@ extends NwaCegarLoop<L> {
 	 * Difference is calculated twice first in worker and then in master.
 	 * We need the worker CFG script here
 	 */
-	@SuppressWarnings("unchecked")
 	private IOpWithDelayedDeadEndRemoval<L, IPredicate> computeAutomataDifference(
 			final INestedWordAutomaton<L, IPredicate> minuend, final WorkerThreadResult<L, A> workerResult,
 			final PredicateFactoryRefinement stateFactoryForRefinement)

@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
@@ -207,7 +206,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
 	 * currently checked by a thread
 	 */
-	private final HashMap<Integer, NestedRun<LETTER, IPredicate>> mActiveCounterexamples;
+	private final HashMap<Integer, NestedRun<LETTER, ?>> mActiveCounterexamples;
 
 	/**
 	 * Constructor for parallel search strategy. Gets as additional argument the list of all counterexamples currently
@@ -224,7 +223,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	public IsEmptyParallel(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
-			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, IPredicate>> counterexamples)
+			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, ?>> counterexamples)
 					throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -486,7 +485,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				final LETTER symbol = succ2ReturnSymbol.get(succ);
 				int currentScore = 0;
 				for (final int cexHash : counterexamples) {
-					final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
+					final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
 					if (counterexample.getLength() > position) {
 
 						IcfgLocation programPoint = null;
@@ -529,7 +528,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
 				for (final int cexHash : counterexamples) {
-					final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
+					final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
 					if (counterexample.getLength() > position) {
 
 						IcfgLocation programPoint = null;
@@ -565,7 +564,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			if ((!mForbiddenStates.contains(succ))) {
 				int currentScore = 0;
 				for (final int cexHash : counterexamples) {
-					final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
+					final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
 					if (counterexample.getLength() > position) {
 
 						IcfgLocation programPoint = null;
@@ -605,7 +604,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
 					int currentScore = 0;
 					for (final int cexHash : counterexamples) {
-						final NestedRun<LETTER, IPredicate> counterexample = mActiveCounterexamples.get(cexHash);
+						final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
 						if (counterexample.getLength() > position) {
 							IcfgLocation programPoint = null;
 							final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
@@ -749,10 +748,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				}
 				if (runToGoal != null) {
 					assert run != null;
-					if (succ.equals(runToGoal.getStateAtPosition(0))) {
-						return run.concatenate(runToGoal);
-					}
-
+					assert succ.equals(runToGoal.getStateAtPosition(0));
+					return run.concatenate(runToGoal);
 				}
 
 			}
