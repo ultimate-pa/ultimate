@@ -104,7 +104,13 @@ public interface ITraceCheckPreferences {
 		/**
 		 * First assert everything from the witness, then the rest.
 		 */
-		WITNESS_FIRST
+		WITNESS_FIRST,
+
+		/**
+		 * First assert everything from the witness, then every action that has a shared variable with the previous
+		 * partition.
+		 */
+		WITNESS_VARIABLE
 	}
 
 	public enum SmtFeatureHeuristicPartitioningType {

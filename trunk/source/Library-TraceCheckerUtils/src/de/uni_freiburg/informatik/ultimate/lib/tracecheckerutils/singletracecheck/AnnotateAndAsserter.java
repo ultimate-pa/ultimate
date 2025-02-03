@@ -44,9 +44,11 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.As
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderNotIncrementally;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst1;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderOutsideLoopFirst2;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderRelatedVariables;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderShuffledSingletons;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderWitnessHierarchical;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderWitnessSimple;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
@@ -133,6 +135,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 				order.getSmtFeatureHeuristicPartitioningType(), mLogger);
 		case SHUFFLED_SINGLETONS -> new AssertOrderShuffledSingletons<>();
 		case WITNESS_FIRST -> new AssertOrderWitnessSimple<>();
+		case WITNESS_VARIABLE -> new AssertOrderRelatedVariables<>(AssertOrderUtils::isWitnessAction,
+				order.getSmtFeatureHeuristicNumPartitions());
 		};
 	}
 
