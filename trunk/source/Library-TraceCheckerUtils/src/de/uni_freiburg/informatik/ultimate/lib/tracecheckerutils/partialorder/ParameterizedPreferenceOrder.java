@@ -83,7 +83,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 
 	@Override
 	public boolean isPositional() {
-		return true;
+		return false;
 	}
 
 	@Override

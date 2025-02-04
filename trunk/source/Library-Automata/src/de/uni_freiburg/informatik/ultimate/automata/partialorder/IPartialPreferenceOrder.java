@@ -44,6 +44,13 @@ public interface IPartialPreferenceOrder<L, S1, S2> {
 
 	IPartialComparator<L> getPartialOrder(S1 programState, S2 monitorState);
 
+	/**
+	 * Determines if the order is positional or not.
+	 *
+	 * @return true if the ordering may differ depending on the program state, false if it is guaranteed to be the same
+	 *         for all program states. Note that the order may still vary depending on the monitor state, if the order
+	 *         has a monitor automaton (see {@link #getMonitor()}).
+	 */
 	boolean isPositional();
 
 	INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor();

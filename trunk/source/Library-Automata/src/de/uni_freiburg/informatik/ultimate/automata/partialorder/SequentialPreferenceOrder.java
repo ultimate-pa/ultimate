@@ -76,7 +76,7 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 
 	@Override
 	public boolean isPositional() {
-		return true;
+		return mFirstOrder.isPositional() || mSecondOrder.isPositional();
 	}
 
 	@Override
