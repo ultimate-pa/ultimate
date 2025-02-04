@@ -96,7 +96,7 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 
 	@Override
 	public S getEmptyStackState() {
-		throw new UnsupportedOperationException("preference order automata do not have stacks");
+		return null;
 	}
 
 	@Override

@@ -78,7 +78,7 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 
 	@Override
 	public State getEmptyStackState() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override

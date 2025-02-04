@@ -92,7 +92,7 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 
 	@Override
 	public S getEmptyStackState() {
-		throw new UnsupportedOperationException("sequential preference order automata do not have stacks");
+		return null;
 	}
 
 	@Override
