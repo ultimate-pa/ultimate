@@ -90,8 +90,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class CExpressionTranslator {
 
-	private final TranslationSettings mSettings;
-
 	private final MemoryHandler mMemoryHandler;
 	private final StaticObjectsHandler mStaticObjectsHandler;
 
@@ -100,17 +98,40 @@ public class CExpressionTranslator {
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
+	private final CheckMode mPointerSubtractionAndComparisonValidityCheckMode;
+	private final CheckMode mDivisionByZeroOfIntegerTypes;
+	private final CheckMode mDivisionByZeroOfFloatingTypes;
+	private final CheckMode mCheckSignedIntegerBounds;
+
+	private final boolean mEnforceIfForConditional;
+
 	public CExpressionTranslator(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ExpressionResultTransformer exprResultTransformer,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes,
 			final StaticObjectsHandler staticObjectsHandler) {
-		mSettings = settings;
+		this(memoryHandler, expressionTranslation, exprResultTransformer, auxVarInfoBuilder, typeSizes,
+				staticObjectsHandler, settings.getPointerSubtractionAndComparisonValidityCheckMode(),
+				settings.getDivisionByZeroOfIntegerTypes(), settings.getDivisionByZeroOfFloatingTypes(),
+				settings.checkSignedIntegerBounds(), settings.enforceIfForConditional());
+	}
+
+	private CExpressionTranslator(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
+			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final TypeSizes typeSizes, final StaticObjectsHandler staticObjectsHandler,
+			final CheckMode pointerSubtractionAndComparisonValidityCheckMode,
+			final CheckMode divisionByZeroOfIntegerTypes, final CheckMode divisionByZeroOfFloatingTypes,
+			final CheckMode checkSignedIntegerBounds, final boolean enforceIfForConditional) {
 		mMemoryHandler = memoryHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
 		mExpressionTranslation = expressionTranslation;
 		mExprResultTransformer = exprResultTransformer;
 		mTypeSizes = typeSizes;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mPointerSubtractionAndComparisonValidityCheckMode = pointerSubtractionAndComparisonValidityCheckMode;
+		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
+		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
+		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
+		mEnforceIfForConditional = enforceIfForConditional;
 	}
 
 	/**
@@ -159,7 +180,7 @@ public class CExpressionTranslator {
 					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);
 			final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
 					right.getLrValue().getValue(), SFO.POINTER_OFFSET);
-			switch (mSettings.getPointerSubtractionAndComparisonValidityCheckMode()) {
+			switch (mPointerSubtractionAndComparisonValidityCheckMode) {
 			case ASSERTandASSUME:
 				final Statement assertStm = new AssertStatement(loc, baseEquality);
 				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
@@ -808,7 +829,7 @@ public class CExpressionTranslator {
 		// * assignment.
 		// */
 
-		if (opPositive.getStatements().isEmpty() && opNegative.getStatements().isEmpty()) {
+		if (!mEnforceIfForConditional && opPositive.getStatements().isEmpty() && opNegative.getStatements().isEmpty()) {
 			// neither second nor third operand have side-effects, we can translate to
 			// a Boogie if-then-else expression
 			resultBuilder.addAllExceptLrValue(opCondition, opPositive, opNegative);
@@ -911,9 +932,9 @@ public class CExpressionTranslator {
 
 		final CheckMode checkMode;
 		if (divisorType.isIntegerType()) {
-			checkMode = mSettings.getDivisionByZeroOfIntegerTypes();
+			checkMode = mDivisionByZeroOfIntegerTypes;
 		} else if (divisorType.isFloatingType()) {
-			checkMode = mSettings.getDivisionByZeroOfFloatingTypes();
+			checkMode = mDivisionByZeroOfFloatingTypes;
 		} else {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
@@ -999,7 +1020,7 @@ public class CExpressionTranslator {
 	private void addIntegerBoundsCheck(final ILocation loc, final ExpressionResultBuilder erb,
 			final CPrimitive resultType, final int operation, final Expression... operands) {
 
-		if (mSettings.checkSignedIntegerBounds() == CheckMode.IGNORE || !resultType.isIntegerType()
+		if (mCheckSignedIntegerBounds == CheckMode.IGNORE || !resultType.isIntegerType()
 				|| mTypeSizes.isUnsigned(resultType)) {
 			// nothing to do
 			return;
@@ -1039,13 +1060,13 @@ public class CExpressionTranslator {
 	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression leftPtr,
 			final Expression rightPtr, final ExpressionResultBuilder erb) {
 
-		if (mSettings.getPointerSubtractionAndComparisonValidityCheckMode() == CheckMode.IGNORE) {
+		if (mPointerSubtractionAndComparisonValidityCheckMode == CheckMode.IGNORE) {
 			// do not check anything
 			return erb;
 		}
 		final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals, leftPtr,
 				rightPtr, SFO.POINTER_BASE);
-		switch (mSettings.getPointerSubtractionAndComparisonValidityCheckMode()) {
+		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
 		case ASSERTandASSUME:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
 			final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
@@ -1143,4 +1164,13 @@ public class CExpressionTranslator {
 
 	}
 
+	/**
+	 * Returns a copy of {@code this}, where all checks for undefined behavior are disable (without changing
+	 * {@code this}).
+	 */
+	public CExpressionTranslator disableChecksForUndefinedBehavior() {
+		return new CExpressionTranslator(mMemoryHandler, mExpressionTranslation, mExprResultTransformer,
+				mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, CheckMode.IGNORE, CheckMode.IGNORE,
+				CheckMode.IGNORE, CheckMode.IGNORE, mEnforceIfForConditional);
+	}
 }

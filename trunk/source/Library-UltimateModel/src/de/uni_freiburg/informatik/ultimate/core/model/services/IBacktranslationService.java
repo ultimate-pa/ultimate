@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.core.model.services;
 
 import java.util.List;
-import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
@@ -95,9 +94,6 @@ public interface IBacktranslationService {
 		public Lasso(final X stem, final X loop) {
 			mStem = stem;
 			mLoop = loop;
-
-			assert Objects.equals(mStem.getTraceElementClass(), mLoop.getTraceElementClass());
-			assert Objects.equals(mStem.getExpressionClass(), mLoop.getExpressionClass());
 		}
 
 		public X getStem() {
@@ -106,14 +102,6 @@ public interface IBacktranslationService {
 
 		public X getLoop() {
 			return mLoop;
-		}
-
-		public Class<?> getTraceElementClass() {
-			return mStem.getTraceElementClass();
-		}
-
-		public Class<?> getExpressionClass() {
-			return mStem.getExpressionClass();
 		}
 	}
 }

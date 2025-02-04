@@ -441,7 +441,7 @@ public class IcfgUtils {
 
 			// When reachability was confirmed, do not search any further.
 			if (canReach != LBool.SAT) {
-				successors.stream().forEach(worklist::add);
+				worklist.addAll(successors);
 			}
 		}
 

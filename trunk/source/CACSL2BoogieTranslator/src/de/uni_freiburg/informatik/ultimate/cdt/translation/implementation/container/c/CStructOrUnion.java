@@ -130,7 +130,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
-			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
+			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
 		return mFieldTypes[idx];
 	}
@@ -214,7 +214,7 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		assert !isIncomplete() : "Cannot get a field type in an incomplete struct type.";
 		final int idx = Arrays.asList(mFieldNames).indexOf(id);
 		if (idx < 0) {
-			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
+			throw new IllegalArgumentException("Field not in struct: " + id);
 		}
 		if (getBitFieldWidths().size() < idx) {
 			return -1;

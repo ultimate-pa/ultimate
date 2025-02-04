@@ -303,6 +303,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		private int mQuantifiedConditions;
 		private int mTraceChecks;
 		private int mUnknownTraceChecks;
+		private int mUnsatisfiedConditions;
 		private int mImperfectProofs;
 
 		public Statistics() {
@@ -313,6 +314,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			declareCounter("QuantifiedConditions", () -> mQuantifiedConditions);
 			declareCounter("TraceChecks", () -> mTraceChecks);
 			declareCounter("UnknownTraceChecks", () -> mUnknownTraceChecks);
+			declareCounter("UnsatisfiedConditions", () -> mUnsatisfiedConditions);
 			declareCounter("ImperfectProofs", () -> mImperfectProofs);
 		}
 
@@ -342,6 +344,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			final LBool feasibility = result.getCounterexampleFeasibility();
 			if (feasibility == LBool.UNKNOWN) {
 				mUnknownTraceChecks++;
+			} else if (feasibility == LBool.SAT) {
+				mUnsatisfiedConditions++;
 			} else if (feasibility == LBool.UNSAT && !result.somePerfectSequenceFound()) {
 				mImperfectProofs++;
 			}

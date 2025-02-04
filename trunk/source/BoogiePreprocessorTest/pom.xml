@@ -31,6 +31,11 @@
 	<version>0.3.0</version>
 	<packaging>eclipse-test-plugin</packaging>
 
+	<properties>
+		<sonar.sources></sonar.sources>
+		<sonar.tests>src/</sonar.tests>
+	</properties>
+
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>

@@ -138,10 +138,10 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst = (x -> new TermTransferrer(mgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
-					const2RepTv, true).transform(x));
+			mConst2RepTvSubst = x -> new TermTransferrer(mgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
+					const2RepTv, true).transform(x);
 		} else {
-			mConst2RepTvSubst = (x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x));
+			mConst2RepTvSubst = x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x);
 		}
 
 		final Triple<Term[], int[], int[]> triple = generateInterpolationInput(mgdScriptTc, annotatdSsa,
@@ -211,7 +211,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 
 			// We add the precondition to the first term unless the first term is a
 			// non-pending call
-			if (i==0 && !(trace.isCallPosition(i) && !trace.isPendingCall(i))) {
+			if (i == 0 && !(trace.isCallPosition(i) && !trace.isPendingCall(i))) {
 				terms.add(annotSsa.getPrecondition());
 			}
 
@@ -220,27 +220,24 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				terms.add(annotSsa.getPrecondition());
 			}
 
-
 			final Term term = SmtUtils.and(mgdScriptTc.getScript(), terms);
 			// Check whether the last position (position i-1) is a position where we want to
 			// compute interpolants. If not we do not want to start a new interpolation
 			// input formulas afterwards but append the current annotated ssa term(s) to the
 			// last interpolation input.
-			final boolean yetSomethingAddedForCurrentSubtree = (interpolInputList.size() > startOfCurrentSubtree);
+			final boolean yetSomethingAddedForCurrentSubtree = interpolInputList.size() > startOfCurrentSubtree;
 			final boolean startNewFormula = (!yetSomethingAddedForCurrentSubtree
 					|| !skippedInnerProcedurePositions.contains(i - 1)) && !terms.isEmpty();
 			if (startNewFormula) {
 				interpolInputList.add(term);
 				treeInterpolantStructure.add(startOfCurrentSubtree);
-			} else {
-				if (!terms.isEmpty()) {
-					// can only append if there is a term
-					final int lastPosition = interpolInputList.size() - 1;
-					final Term newFormula = SmtUtils.and(mgdScriptTc.getScript(), interpolInputList.get(lastPosition),
-							term);
-					assert newFormula != null : "newFormula must be != null";
-					interpolInputList.set(lastPosition, newFormula);
-				}
+			} else if (!terms.isEmpty()) {
+				// can only append if there is a term
+				final int lastPosition = interpolInputList.size() - 1;
+				final Term newFormula = SmtUtils.and(mgdScriptTc.getScript(), interpolInputList.get(lastPosition),
+						term);
+				assert newFormula != null : "newFormula must be != null";
+				interpolInputList.set(lastPosition, newFormula);
 			}
 			if (i != annotSsa.getTrace().length() - 1) {
 				// after the last formula there is no interpolant
@@ -260,7 +257,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		final Term[] interpolInput = interpolInputList.toArray(new Term[interpolInputList.size()]);
 
 		final int[] startOfSubtree = integerListToIntArray(treeInterpolantStructure);
-		return new Triple<Term[], int[], int[]>(interpolInput, startOfSubtree, positionMapping);
+		return new Triple<>(interpolInput, startOfSubtree, positionMapping);
 	}
 
 	private static <L extends IAction> List<Term> getAnnotatedFormulasForInternalPosition(
@@ -369,10 +366,17 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				pred = mPredicateFactory.newDontCarePredicate(null);
 			} else if (craigInterpolPos == SKIPPED_POSITION_FOR_REPETITION) {
 				if (mTrace.isCallPosition(i)) {
-					// We were unable to find a predicate in this context
-					// Hence, all formulas between this position and the call were overapproximated
-					// and hence irrelevant.
-					pred = mPredicateUnifier.getTruePredicate();
+					if (mTrace.isPendingCall(i)) {
+						// We take the predecessor predicate.
+						// If pending call is not asserted, local variables cannot occur in this
+						// predicate.
+						pred = result[i - 1];
+					} else {
+						// We were unable to find a predicate in this context
+						// Hence, all formulas between this position and the call were overapproximated
+						// and hence irrelevant.
+						pred = mPredicateUnifier.getTruePredicate();
+					}
 				} else if (mTrace.isReturnPosition(i)) {
 					if (mTrace.isPendingReturn(i)) {
 						throw new AssertionError("Pending returns are unsupported");
@@ -396,7 +400,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 						pred = callPredecessor;
 					} else {
 						pred = mPredicateUnifier.getOrConstructPredicateForConjunction(
-								Arrays.asList(new IPredicate[] { callPredecessor, returnPredecessor }));
+								Arrays.asList(callPredecessor, returnPredecessor));
 					}
 				} else if (i == 0) {
 					pred = mPrecondition;

@@ -82,7 +82,7 @@ public class CACSLBacktranslationValueProvider
 	public int getColumnNumberFromStep(final CACSLLocation step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
 		if (stepInfo.contains(StepInfo.PROC_CALL) || stepInfo.contains(StepInfo.PROC_RETURN)) {
 			// Use the end location (should be the location of the closing parenthesis)
-			return step.getEndColumn();
+			return step.getEndColumn() - 1;
 		}
 		if ((stepInfo.contains(StepInfo.CONDITION_EVAL_TRUE) || stepInfo.contains(StepInfo.CONDITION_EVAL_FALSE))
 				&& step instanceof CLocation) {

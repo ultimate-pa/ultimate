@@ -234,8 +234,8 @@ public class StandardFunctionHandler {
 	 */
 	public Result translateStandardFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final IASTIdExpression astIdExpression) {
-		assert node
-				.getFunctionNameExpression() == astIdExpression : "astIdExpression is not the name of the called function";
+		assert node.getFunctionNameExpression() == astIdExpression
+				: "astIdExpression is not the name of the called function";
 		final String name = astIdExpression.getName().toString();
 
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
@@ -1568,8 +1568,8 @@ public class StandardFunctionHandler {
 		final Expression atomicCond = ExpressionFactory.and(loc, conjuncts);
 
 		// overapproximated assert used in case some memory order is unsupported
-		final Statement overapproxAssert =
-				modelUnsupportedFeature(loc, "memory order (only sequential consistency is supported)");
+		final Statement overapproxAssert = ExpressionTranslation.modelUnsupportedFeature(loc,
+				"memory order (only sequential consistency is supported)");
 
 		// Try to avoid unnecessary IfStatements
 		final Statement statement;
@@ -2512,8 +2512,7 @@ public class StandardFunctionHandler {
 		final String identifier = SFO.RES;
 		final DeclarationInformation declarationInformation = new DeclarationInformation(
 				StorageClass.IMPLEMENTATION_OUTPARAM, mProcedureManager.getCurrentProcedureID());
-		final LeftHandSide[] lhs =
-				new LeftHandSide[] { new VariableLHS(loc, type, identifier, declarationInformation) };
+		final LeftHandSide[] lhs = { new VariableLHS(loc, type, identifier, declarationInformation) };
 		final AssignmentStatement retValAssignment =
 				new AssignmentStatement(loc, lhs, new Expression[] { transformedArg.getLrValue().getValue() });
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
@@ -3601,14 +3600,6 @@ public class StandardFunctionHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
 	}
 
-	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
-		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
-		new Overapprox(reason, loc).annotate(assertFalse);
-		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
-		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
-				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
-	}
-
 	/**
 	 * Overapproximate the reachability of unsupported functions by translating them to while(true) assert false; where
 	 * the assert is labeled with an overapproximation
@@ -3616,7 +3607,7 @@ public class StandardFunctionHandler {
 	private Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
 			final String name, final CType returnType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addStatement(modelUnsupportedFeature(loc, name));
+		builder.addStatement(ExpressionTranslation.modelUnsupportedFeature(loc, name));
 		if (!returnType.isVoidType()) {
 			final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, AUXVAR.NONDET);
 			builder.addAuxVarWithDeclaration(auxVar);

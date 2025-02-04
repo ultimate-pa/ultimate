@@ -1,12 +1,12 @@
 [L9]               int a = 5;
 [L11]  EXPR        a++
 [L11]  CALL, EXPR  f(a++)
-       VAL         [\old(b)=5]
+       VAL         [\at(b, Pre)=5]
 [L4]   EXPR        ++b
 [L4]               return ++b;
 [L11]  RET, EXPR   f(a++)
 [L11]  CALL, EXPR  f(f(a++))
-       VAL         [\old(b)=6]
+       VAL         [\at(b, Pre)=6]
 [L4]   EXPR        ++b
 [L4]               return ++b;
 [L11]  RET, EXPR   f(f(a++))

@@ -150,6 +150,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
@@ -259,6 +260,14 @@ public class CHandler {
 	private static final boolean POINTER_CAST_IS_UNSUPPORTED_SYNTAX = false;
 
 	private static final boolean ADD_HAVOCS_AT_SCOPE_END = true;
+
+	/**
+	 * We translate a string literal to the pointer variable that points to the address where the string is stored. If
+	 * this flag is set we add an overapproximation flag to this variable if it refers to a large string literal. <br />
+	 * This is required for soundness because we omit the initialization of large string literals. A setting determine
+	 * the size from which a string is "large".
+	 */
+	private static final boolean OVERAPPROX_FLAG_LARGE_STRING_LITERAL = false;
 
 	private final MemoryHandler mMemoryHandler;
 
@@ -761,7 +770,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTArraySubscriptExpression node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final ExpressionResult array = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
+		final ExpressionResult array = (ExpressionResult) main.dispatch(node.getArrayExpression());
 		final ExpressionResult subscript =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, node.getArgument());
 		return handleArraySubscriptExpression(array, subscript, node);
@@ -837,8 +846,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plus:
 		case IASTBinaryExpression.op_minus: {
-			assert checkSubstractPointerArith(node, leftOperand,
-					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
+					: "subtraction is not allowed in pointer arithmetic, right?";
 
 			// if we are "adding" arrays, they must be treated as pointers
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
@@ -849,8 +858,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_plusAssign:
 		case IASTBinaryExpression.op_minusAssign: {
-			assert checkSubstractPointerArith(node, leftOperand,
-					rightOperand) : "subtraction is not allowed in pointer arithmetic, right?";
+			assert checkSubstractPointerArith(node, leftOperand, rightOperand)
+					: "subtraction is not allowed in pointer arithmetic, right?";
 
 			final ExpressionResult rl = mExprResultTransformer.transformDecaySwitchRexBoolToInt(leftOperand, loc, node);
 			final ExpressionResult rr =
@@ -865,11 +874,8 @@ public class CHandler {
 		}
 		case IASTBinaryExpression.op_binaryAnd:
 		case IASTBinaryExpression.op_binaryOr:
-		case IASTBinaryExpression.op_binaryXor: {
-			final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
-			final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
-			return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
-		}
+		case IASTBinaryExpression.op_binaryXor:
+			return handleBitwiseOperation(node, loc, leftOperand, rightOperand);
 		case IASTBinaryExpression.op_binaryAndAssign:
 		case IASTBinaryExpression.op_binaryOrAssign:
 		case IASTBinaryExpression.op_binaryXorAssign: {
@@ -906,6 +912,38 @@ public class CHandler {
 			final String msg = "Unknown or unsupported unary operation";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+	}
+
+	private ExpressionResult handleBitwiseOperation(final IASTBinaryExpression node, final ILocation loc,
+			final ExpressionResult leftOperand, final ExpressionResult rightOperand) {
+		// If the left operand and the right operand are both bools, simply translate it to a boolean expression.
+		if (leftOperand.getLrValue().isBoogieBool() && rightOperand.getLrValue().isBoogieBool()) {
+			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+			final ExpressionResult rl = mExprResultTransformer.switchToRValue(leftOperand, loc, node);
+			final ExpressionResult rr = mExprResultTransformer.switchToRValue(rightOperand, loc, node);
+			builder.addAllExceptLrValue(rl, rr);
+			final Expression leftValue = rl.getLrValue().getValue();
+			final Expression rightValue = rr.getLrValue().getValue();
+			Operator operator;
+			switch (node.getOperator()) {
+			case IASTBinaryExpression.op_binaryAnd:
+				operator = Operator.LOGICAND;
+				break;
+			case IASTBinaryExpression.op_binaryOr:
+				operator = Operator.LOGICOR;
+				break;
+			case IASTBinaryExpression.op_binaryXor:
+				operator = Operator.COMPNEQ;
+				break;
+			default:
+				throw new AssertionError("Unexpected operator " + node.getOperator());
+			}
+			final Expression resultExpr = ExpressionFactory.newBinaryExpression(loc, operator, leftValue, rightValue);
+			return builder.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitive.CPrimitives.INT), true)).build();
+		}
+		final ExpressionResult rl = mExprResultTransformer.transformSwitchRexBoolToInt(leftOperand, loc, node);
+		final ExpressionResult rr = mExprResultTransformer.transformSwitchRexBoolToInt(rightOperand, loc, node);
+		return mCExpressionTranslator.handleBitwiseArithmeticOperation(loc, node.getOperator(), rl, rr);
 	}
 
 	private static boolean checkSubstractPointerArith(final IASTBinaryExpression node,
@@ -1361,8 +1399,8 @@ public class CHandler {
 		} else if (node instanceof ICASTKnRFunctionDeclarator) {
 			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
 
-			assert funcDecl.getParameterDeclarations().length == funcDecl
-					.getParameterNames().length : "implicit int declarations are forbidden from C99 on, this is one, right?";
+			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length
+					: "implicit int declarations are forbidden from C99 on, this is one, right?";
 
 			final CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
 			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
@@ -1486,8 +1524,12 @@ public class CHandler {
 		if (hasContinue) {
 			bodyBlock.add(new Label(loc, loopLabel));
 		}
-		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
-		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
+		final ExpressionResult cond = dispatchLoopCondition(main, node.getCondition(), loc);
+		resultBuilder.addDeclarations(cond.getDeclarations());
+		bodyBlock.addAll(handleLoopCondition(loc, cond));
+		final Expression loopCond =
+				ExpressionFactory.createBooleanLiteral(LocationFactory.createIgnoreLocation(loc), true);
+		return buildLoopResult(main, node, loopCond, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTEqualsInitializer node) {
@@ -1547,8 +1589,23 @@ public class CHandler {
 						"Uninplemented type of for loop initialization: " + initializer.getClass());
 			}
 		}
-		final List<Statement> bodyBlock =
-				new ArrayList<>(handleLoopCondition(loc, main, node.getConditionExpression(), resultBuilder));
+		final List<Statement> bodyBlock = new ArrayList<>();
+		final Expression loopCond;
+		if (node.getConditionExpression() == null) {
+			// If the loop condition is omitted, we just translate it to while (true) {...}
+			loopCond = ExpressionFactory.createBooleanLiteral(LocationFactory.createIgnoreLocation(loc), true);
+		} else {
+			final ExpressionResult condResult = dispatchLoopCondition(main, node.getConditionExpression(), loc);
+			if (condResult.hasNoSideEffects()) {
+				// If the condition has no side-effects, translate the loop to while (cond) {...}
+				loopCond = condResult.getLrValue().getValue();
+			} else {
+				// Otherwise translate it to while (true) if (cond) {} else { break; } }
+				resultBuilder.addDeclarations(condResult.getDeclarations());
+				loopCond = ExpressionFactory.createBooleanLiteral(LocationFactory.createIgnoreLocation(loc), true);
+				bodyBlock.addAll(handleLoopCondition(loc, condResult));
+			}
+		}
 		final boolean hasContinue = CdtASTUtils.containsContinue(node.getBody());
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
@@ -1582,7 +1639,7 @@ public class CHandler {
 		updateStmtsAndDeclsAtScopeEnd(bodyBlockBuilder, node);
 		endScope();
 		resultBuilder.addDeclarations(bodyBlockBuilder.getDeclarations());
-		return buildLoopResult(main, loc, node, bodyBlockBuilder.getStatements(), resultBuilder);
+		return buildLoopResult(main, node, loopCond, bodyBlockBuilder.getStatements(), resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
@@ -1970,7 +2027,9 @@ public class CHandler {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
-		stmt.add(new Label(loc, label));
+		// Mark the label with the attribute { :auxiliary_label false}
+		stmt.add(new Label(loc, label, new NamedAttribute[] { new NamedAttribute(loc, "auxiliary_label",
+				new Expression[] { ExpressionFactory.createBooleanLiteral(loc, false) }) }));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult res = (ExpressionResult) r;
@@ -2081,9 +2140,15 @@ public class CHandler {
 		// Overapproximate string literals of length STRING_OVERAPPROXIMATION_THRESHOLD
 		// or longer
 		if (stringLiteral.getByteValues().size() >= mSettings.getStringOverapproximationThreshold()) {
-			// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is performed.
-			// This is unsound, but does not lead to any wrong results in SV-COMP.
-			return new StringLiteralResult(addressRValue, List.of(), stringLiteral);
+			final List<Overapprox> overapprox;
+			if (OVERAPPROX_FLAG_LARGE_STRING_LITERAL) {
+				overapprox = List.of(new Overapprox("Large string literal", actualLoc));
+			} else {
+				// FIXME Frank 2024-11-18: We omit the overapproximation flag, even thought no initialization is
+				// performed. This is unsound, but does not lead to any wrong results in SV-COMP.
+				overapprox = List.of();
+			}
+			return new StringLiteralResult(addressRValue, overapprox, stringLiteral);
 		}
 		final ExpressionResult exprRes = mInitHandler.writeStringLiteral(actualLoc, addressRValue, stringLiteral, node);
 		assert !exprRes.hasLRValue();
@@ -2613,9 +2678,19 @@ public class CHandler {
 		if (hasContinue) {
 			bodyBlock.add(new Label(loc, loopLabel));
 		}
-		bodyBlock.addAll(handleLoopCondition(loc, main, node.getCondition(), resultBuilder));
+		final ExpressionResult cond = dispatchLoopCondition(main, node.getCondition(), loc);
+		final Expression loopCond;
+		if (cond.hasNoSideEffects()) {
+			// If the condition has no side-effects, translate the loop to while (cond) {...}
+			loopCond = cond.getLrValue().getValue();
+		} else {
+			// Otherwise translate it to while (true) if (cond) {} else { break; } }
+			resultBuilder.addDeclarations(cond.getDeclarations());
+			loopCond = ExpressionFactory.createBooleanLiteral(LocationFactory.createIgnoreLocation(loc), true);
+			bodyBlock.addAll(handleLoopCondition(loc, cond));
+		}
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
-		return buildLoopResult(main, loc, node, bodyBlock, resultBuilder);
+		return buildLoopResult(main, node, loopCond, bodyBlock, resultBuilder);
 	}
 
 	public Result visit(final IDispatcher main, final IGNUASTCompoundStatementExpression node) {
@@ -3621,42 +3696,32 @@ public class CHandler {
 		mInnerMostLoopLabel.pop();
 	}
 
-	private List<Statement> handleLoopCondition(final ILocation loc, final IDispatcher main, final IASTExpression cond,
-			final ExpressionResultBuilder resultBuilder) {
-		if (cond == null) {
-			// If the condition is not present in a for-loop, we can omit the if-statement
-			return List.of();
-		}
-		final ExpressionResult condResult = (ExpressionResult) main.dispatch(cond);
-		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, condResult.getDeclarations(),
-				condResult.getAuxVars());
-		final ExpressionResult condTransformed =
-				mExprResultTransformer.transformSwitchRexIntToBool(condResult, loc, cond);
-		final List<Statement> result = new ArrayList<>(condTransformed.getStatements());
-		resultBuilder.addDeclarations(condTransformed.getDeclarations());
+	private ExpressionResult dispatchLoopCondition(final IDispatcher main, final IASTExpression node,
+			final ILocation loc) {
+		final ExpressionResult result = (ExpressionResult) main.dispatch(node);
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, result.getDeclarations(), result.getAuxVars());
+		return mExprResultTransformer.transformSwitchRexIntToBool(result, loc, node);
+	}
+
+	private static List<Statement> handleLoopCondition(final ILocation loc, final ExpressionResult cond) {
+		final List<Statement> result = new ArrayList<>(cond.getStatements());
 		// Insert an if-statement: if (cond) {} else break;
 		// Note: we could invert the condition and omit the then branch, but we want to keep the negation consistent in
 		// C and Boogie.
 		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
-		final Statement[] havocs =
-				CTranslationUtil.createHavocsForAuxVars(condTransformed.getAuxVars()).toArray(Statement[]::new);
-		final IfStatement ifStmt = new IfStatement(loc, condTransformed.getLrValue().getValue(), havocs,
+		final Statement[] havocs = CTranslationUtil.createHavocsForAuxVars(cond.getAuxVars()).toArray(Statement[]::new);
+		final IfStatement ifStmt = new IfStatement(loc, cond.getLrValue().getValue(), havocs,
 				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }));
-		condTransformed.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
+		cond.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
 		result.add(ifStmt);
 		return result;
 	}
 
-	private Result buildLoopResult(final IDispatcher main, final ILocation loc, final IASTStatement node,
+	private Result buildLoopResult(final IDispatcher main, final IASTStatement node, final Expression cond,
 			final List<Statement> bodyBlock, final ExpressionResultBuilder resultBuilder) {
 		final LoopInvariantSpecification[] spec = extractLoopInvariants(main, node);
-		final ILocation igLoc = LocationFactory.createIgnoreLocation(loc);
-		// Create a while true statement, the condition is handled inside the loop in an if
-		// Note that the "true" condition should be ignored during backtranslation (as it does not correspond to the
-		// condition in the C code), but the loop itself should not be ignored, otherwise we don't export any loop
-		// invariants.
-		final WhileStatement whileStmt = new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(igLoc, true),
-				spec, bodyBlock.toArray(Statement[]::new));
+		final WhileStatement whileStmt = new WhileStatement(mLocationFactory.createCLocation(node), cond, spec,
+				bodyBlock.toArray(Statement[]::new));
 		resultBuilder.getOverappr().stream().forEach(a -> a.annotate(whileStmt));
 		resultBuilder.addStatement(whileStmt);
 

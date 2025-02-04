@@ -738,9 +738,9 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		return mStatistics;
 	}
 
-	private final class Statistics extends AbstractStatisticsDataProvider {
-		private int mIndependenceStatisticsCounter = 0;
-		private int mPersistentSetStatisticsCounter = 0;
+	private static final class Statistics extends AbstractStatisticsDataProvider {
+		private int mIndependenceStatisticsCounter;
+		private int mPersistentSetStatisticsCounter;
 
 		private void reportIndependenceStatistics(final IIndependenceRelation<?, ?> relation) {
 			final StatisticsData data = new StatisticsData();

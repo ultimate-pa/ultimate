@@ -1,7 +1,7 @@
 -startup
-plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar
+plugins/org.eclipse.equinox.launcher_1.6.800.v20240513-1750.jar
 --launcher.library
-plugins/org.eclipse.equinox.launcher.gtk.linux.x86_64_1.1.1300.v20200819-0940
+plugins/org.eclipse.equinox.launcher.gtk.linux.x86_64_1.2.1000.v20240506-2123
 -nosplash
 -consoleLog
 -vmargs

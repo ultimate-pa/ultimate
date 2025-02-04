@@ -501,7 +501,7 @@ def write_ltl(ltlformula):
     return ltl_file_path
 
 
-def create_cli_settings(prop, validate_witness, architecture, c_file):
+def create_cli_settings(prop, validate_witness, witness_type, architecture, input_files):
     # append detected init method
     ret = ["--cacsl2boogietranslator.entry.function", prop.get_init_method()]
 
@@ -524,6 +524,14 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
             "--preprocessor.replace.while.statements.and.if-then-else.statements"
         )
         ret.append("false")
+        # For YAML violation witnesses:
+        # - disable procedure inlining and
+        # - enforce if statements for conditional expressions
+        if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
+            ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
+            ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
+            ret.append("--cacsl2boogietranslator.always.translate.conditional.expressions.to.if-statements")
+            ret.append("true")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -543,10 +551,10 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append("--witnessprinter.graph.data.programhash")
 
         if is_windows():
-            sha_call = call_desperate(["certutil", "-hashfile", c_file[0], "SHA256"])
+            sha_call = call_desperate(["certutil", "-hashfile", input_files[0], "SHA256"])
             sha = sha_call.communicate()[0].split()[3]
         else:
-            sha_call = call_desperate(["sha256sum", c_file[0]])
+            sha_call = call_desperate(["sha256sum", input_files[0]])
             sha = sha_call.communicate()[0].split()[0]
         ret.append(sha.decode("utf-8", "ignore"))
 
@@ -589,30 +597,28 @@ def check_witness_type(witness, type):
     elif witness.endswith(".graphml"):
         valid = check_witness_type_graphml(witness, type)
     else:
-        print("Unsupported witness type", witness.rpartition(".")[2])
+        print(f'Unexpected witness file ending .{witness.rpartition(".")[2]}. '
+              'The witness has to end with .yml, .yaml, or .graphml.')
     if not valid:
         sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
 
 
 def check_witness_type_yaml(witness, type):
-    if type == "correctness_witness":
-        is_violation = False
-    elif type == "violation_witness":
-        is_violation = True
-    else:
-        print("Unknown witness type", type)
-        return False
     with open(witness) as f:
         witness_content = f.read()
-    entry_types = re.findall(r'entry_type["\']?\s*:\s*["\']?(.*?)["\'\n]', witness_content)
-    are_violation_sequence = [e == "violation_sequence" for e in entry_types]
-    if is_violation and not all(are_violation_sequence):
-        print("Provided witness has other entry types than violation sequence, but your "
-              "specified witness has type violation_witness.")
-        return False
-    if not is_violation and any(are_violation_sequence):
-        print("Provided witness has at least one violation sequence, but your specified"
-              "witness has type correctness_witness.")
+    has_violation_sequence = re.search(r'entry_type["\']?\s*:\s*["\']?violation_sequence', witness_content)
+    if type == "correctness_witness":
+        if has_violation_sequence:
+            print("Provided witness has at least one violation sequence, but your specified"
+                "witness has type correctness_witness.")
+            return False
+    elif type == "violation_witness":
+        if "entry_type" in witness_content and not has_violation_sequence:
+            print("Provided witness has other entry types than violation sequence, but your "
+                "specified witness has type violation_witness.")
+            return False
+    else:
+        print("Unknown witness type", type)
         return False
     return True
 
@@ -875,6 +881,7 @@ def parse_args():
             [args.file[0], witness],
             args.full_output,
             args.validate,
+            args.witness_type,
             extras,
         )
     else:
@@ -884,6 +891,7 @@ def parse_args():
             [args.file[0]],
             args.full_output,
             args.validate,
+            None,
             extras,
         )
 
@@ -963,6 +971,7 @@ def main():
         input_files,
         verbose,
         validate_witness,
+        witness_type,
         extras,
     ) = parse_args()
     prop = _PropParser(property_file)
@@ -978,7 +987,7 @@ def main():
     # create manual settings that override settings files for witness passthrough (collecting various things)
     # and for witness validation
     cli_arguments = create_cli_settings(
-        prop, validate_witness, architecture, input_files
+        prop, validate_witness, witness_type, architecture, input_files
     )
     if not validate_witness:
         input_files = add_ltl_file_if_necessary(prop, input_files)

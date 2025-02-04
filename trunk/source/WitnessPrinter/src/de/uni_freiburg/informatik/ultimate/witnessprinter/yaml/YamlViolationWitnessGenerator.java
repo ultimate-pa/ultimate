@@ -64,7 +64,6 @@ public class YamlViolationWitnessGenerator<TE, E> {
 	private final ILogger mLogger;
 	private final YamlWitnessWriter mWriter;
 	private final ProgramStatePrinter<TE, E> mProgramStatePrinter;
-	private final Map<String, String> mProgramHashes;
 
 	private static final boolean PRODUCE_ASSUMPTIONS = false;
 
@@ -83,9 +82,9 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		final FormatVersion formatVersion =
 				FormatVersion.fromString(mPreferences.getString(PreferenceInitializer.LABEL_YAML_FORMAT_VERSION));
 		final String version = new UltimateCore().getUltimateVersionString();
-		mProgramHashes = Map.of(filename, hash);
+		final Map<String, String> programHashes = Map.of(filename, hash);
 		mWriter = YamlWitnessWriter.construct(formatVersion,
-				new MetadataProvider(formatVersion, producer, version, mProgramHashes, spec, arch, "C"));
+				new MetadataProvider(formatVersion, producer, version, programHashes, spec, arch, "C"));
 	}
 
 	private Witness getWitness() {
@@ -93,12 +92,11 @@ public class YamlViolationWitnessGenerator<TE, E> {
 		for (int i = 0; i < mExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = mExecution.getTraceElement(i);
 			final TE currentStep = currentATE.getStep();
-			final int startLine = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
-			final int startColumn = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
+			final int line = mStringProvider.getLineNumberFromStep(currentStep, currentATE.getStepInfo());
+			final int column = mStringProvider.getColumnNumberFromStep(currentStep, currentATE.getStepInfo());
 			final String function = mStringProvider.getFunctionFromStep(currentStep);
 			final String filename = mStringProvider.getFileNameFromStep(currentStep);
-			final Location currentLocation =
-					new Location(filename, mProgramHashes.get(filename), startLine, startColumn, function);
+			final Location currentLocation = new Location(filename, line, column, function);
 
 			if (PRODUCE_ASSUMPTIONS && mStringProvider.isValidAssumptionLocation(currentStep)) {
 				final String previousState = mProgramStatePrinter.stateAsExpression(

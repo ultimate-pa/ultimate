@@ -485,14 +485,6 @@ public class TypeHandler implements ITypeHandler {
 		if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
 			isStructOrUnion = StructOrUnion.STRUCT;
 		} else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
-			// Currently the translation of unions that contain floats is unsound in the integer translation
-			// Therefore we throw an exception, s.t. we can continue in the bitvector translation, where this is
-			// correctly handled.
-			if (!mTranslationSettings.isBitvectorTranslation()
-					&& fTypes.stream().anyMatch(x -> x.getUnderlyingType().isFloatingType())) {
-				throw new UnsupportedSyntaxException(loc,
-						"floats in unions are not supported in the integer translation.");
-			}
 			isStructOrUnion = StructOrUnion.UNION;
 		} else {
 			throw new UnsupportedOperationException();

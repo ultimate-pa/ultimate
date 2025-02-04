@@ -112,7 +112,8 @@ public class RCFGBacktranslator extends
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
 		for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
 			if (!(elem instanceof CodeBlock)) {
-				throw new AssertionError("unknown rcfg element");
+				throw new AssertionError(
+						"Transition is not a CodeBlock: " + elem.getClass().getSimpleName() + " " + elem);
 			}
 			addCodeBlock(elem, null, null, null, null, atomicTeList, null);
 		}

@@ -249,7 +249,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			case NO_SECOND_CHANCE:
 			case EAGER_CONSERVATIVE: {
 				final boolean conservativeSuccessorCandidateSelection =
-						mPref.interpolantAutomatonEnhancement() == mPref.interpolantAutomatonEnhancement();
+						mPref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
 				final boolean secondChance =
 						mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 				final NondeterministicInterpolantAutomaton<L> nondet =

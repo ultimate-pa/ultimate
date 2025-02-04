@@ -7,8 +7,6 @@
 	<locations>
 		<location includeAllPlatforms="true" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
 			<repository id="ultimate-dependencies" location="https://struebli.informatik.uni-freiburg.de/p2-repository-ultimate-dependencies/"/>
-			<unit id="com.lmax.disruptor" version="3.3.5"/>
-			<unit id="org.yaml.snakeyaml" version="2.2.0"/>
 		</location>
 		<location includeAllPlatforms="true" includeConfigurePhase="true" includeSource="false" type="InstallableUnit">
 			<repository id="eclipse-releases" location="https://download.eclipse.org/releases/2024-06"/>
@@ -61,6 +59,36 @@
 		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="false" missingManifest="generate" type="Maven">
 			<dependencies>
 				<dependency>
+					<groupId>com.lmax</groupId>
+					<artifactId>disruptor</artifactId>
+					<version>3.4.4</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>io.github.uuverifiers</groupId>
+					<artifactId>eldarica_2.12</artifactId>
+					<version>2.1</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>io.github.uuverifiers</groupId>
+					<artifactId>princess_2.12</artifactId>
+					<version>2024-11-08</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>net.sf.trove4j</groupId>
+					<artifactId>trove4j</artifactId>
+					<version>3.0.3</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.apache.commons</groupId>
+					<artifactId>commons-lang3</artifactId>
+					<version>3.17.0</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
 					<groupId>org.ops4j.pax.logging</groupId>
 					<artifactId>pax-logging-api</artifactId>
 					<version>2.2.7</version>
@@ -70,6 +98,24 @@
 					<groupId>org.ops4j.pax.logging</groupId>
 					<artifactId>pax-logging-log4j2</artifactId>
 					<version>2.2.7</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.scala-lang</groupId>
+					<artifactId>scala-library</artifactId>
+					<version>2.12.20</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>org.yaml</groupId>
+					<artifactId>snakeyaml</artifactId>
+					<version>2.3</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>xerces</groupId>
+					<artifactId>xercesImpl</artifactId>
+					<version>2.12.2</version>
 					<type>jar</type>
 				</dependency>
 			</dependencies>

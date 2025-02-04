@@ -31,6 +31,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class DebugPredicate implements IPredicate {
 
@@ -75,7 +76,23 @@ public class DebugPredicate implements IPredicate {
 
 	@Override
 	public int hashCode() {
-		return mSerialNumber;
+		return HashUtils.hashJenkins(31, mSerialNumber);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj instanceof final DebugPredicate other && mSerialNumber == other.mSerialNumber) {
+			// Different predicates with the same serial number must not be used within the same context.
+			// Hence we throw an exception if they are compared for equality.
+			// The only case in which two DebugPredicate are considered equal is reference equality (case 1 above).
+			//
+			// This aligns with the implementation in BasicPredicate and UnknownState.
+			throw new UnsupportedOperationException("different predicates with same serial number");
+		}
+		return false;
 	}
 
 }

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
@@ -59,38 +61,29 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
  */
 public class ACSLPrettyPrinter {
 	public static String print(final ACSLNode node) {
-		if (node instanceof CodeAnnotStmt) {
-			return print(((CodeAnnotStmt) node).getCodeStmt());
-		}
-		if (node instanceof Assertion) {
-			return "//@ assert " + printExpression(((Assertion) node).getFormula()) + ";";
-		}
-		if (node instanceof Expression) {
-			return printExpression((Expression) node);
-		}
-		if (node instanceof GhostDeclaration) {
-			final GhostDeclaration decl = (GhostDeclaration) node;
+		switch (node) {
+		case final CodeAnnotStmt codeAnnot:
+			return print(codeAnnot.getCodeStmt());
+		case final Assertion assertion:
+			return "//@ assert " + printExpression(assertion.getFormula()) + ";";
+		case final Expression expr:
+			return printExpression(expr);
+		case final GhostDeclaration decl:
 			return printGhostDeclaration(decl.getType(), decl.getIdentifier(), decl.getExpr());
-		}
-		if (node instanceof GlobalGhostDeclaration) {
-			final GlobalGhostDeclaration decl = (GlobalGhostDeclaration) node;
+		case final GlobalGhostDeclaration decl:
 			return printGhostDeclaration(decl.getType(), decl.getIdentifier(), decl.getExpr());
-		}
-		if (node instanceof GhostUpdate) {
-			final GhostUpdate update = (GhostUpdate) node;
+		case final GhostUpdate update:
 			return String.format("//@ ghost %s = %s;", update.getIdentifier(), printExpression(update.getExpr()));
+		case final LoopInvariant loopInv:
+			return "//@ loop invariant " + printExpression(loopInv.getFormula()) + ";";
+		case final Requires req:
+			return "//@ requires " + printExpression(req.getFormula()) + ";";
+		case final Ensures ens:
+			return "//@ ensures " + printExpression(ens.getFormula()) + ";";
+		default:
+			// TODO: Add more cases
+			return node.toString();
 		}
-		if (node instanceof LoopInvariant) {
-			return "//@ loop invariant " + printExpression(((LoopInvariant) node).getFormula()) + ";";
-		}
-		if (node instanceof Requires) {
-			return "//@ requires " + printExpression(((Requires) node).getFormula()) + ";";
-		}
-		if (node instanceof Ensures) {
-			return "//@ requires " + printExpression(((Ensures) node).getFormula()) + ";";
-		}
-		// TODO: Add more cases
-		return node.toString();
 	}
 
 	private static String printGhostDeclaration(final ACSLType type, final String identifier, final Expression expr) {
@@ -103,57 +96,46 @@ public class ACSLPrettyPrinter {
 	}
 
 	private static String printExpression(final Expression expression) {
-		if (expression instanceof BooleanLiteral) {
-			return "\\" + ((BooleanLiteral) expression).getValue();
-		}
-		if (expression instanceof IntegerLiteral) {
-			return ((IntegerLiteral) expression).getValue();
-		}
-		if (expression instanceof RealLiteral) {
-			return ((RealLiteral) expression).getValue();
-		}
-		if (expression instanceof IdentifierExpression) {
-			return ((IdentifierExpression) expression).getIdentifier();
-		}
-		if (expression instanceof BinaryExpression) {
-			return printBinaryExpression((BinaryExpression) expression);
-		}
-		if (expression instanceof UnaryExpression) {
-			return printUnaryExpression((UnaryExpression) expression);
-		}
-		if (expression instanceof IfThenElseExpression) {
-			final IfThenElseExpression ite = (IfThenElseExpression) expression;
+		switch (expression) {
+		case final BooleanLiteral boolLit:
+			return "\\" + boolLit.getValue();
+		case final IntegerLiteral intLit:
+			return intLit.getValue();
+		case final RealLiteral realLit:
+			return realLit.getValue();
+		case final IdentifierExpression id:
+			return id.getIdentifier();
+		case final BinaryExpression bin:
+			return printBinaryExpression(bin);
+		case final UnaryExpression unary:
+			return printUnaryExpression(unary);
+		case final IfThenElseExpression ite:
 			return String.format("(%s ? %s : %s)", printExpression(ite.getCondition()),
 					printExpression(ite.getThenPart()), printExpression(ite.getElsePart()));
-		}
-		if (expression instanceof ValidExpression) {
-			return String.format("\\valid(%s)", printExpression(((ValidExpression) expression).getFormula()));
-		}
-		if (expression instanceof FieldAccessExpression) {
-			final FieldAccessExpression f = (FieldAccessExpression) expression;
+		case final ValidExpression valid:
+			return String.format("\\valid(%s)", printExpression(valid.getExpression()));
+		case final FieldAccessExpression f:
 			return String.format("(%s).%s", printExpression(f.getStruct()), f.getField());
-		}
-		if (expression instanceof OldValueExpression) {
-			return String.format("\\old(%s)", printExpression(((OldValueExpression) expression).getFormula()));
-		}
-		if (expression instanceof ArrayAccessExpression) {
-			return printArrayAccessExpression((ArrayAccessExpression) expression);
-		}
-		if (expression instanceof CastExpression) {
-			final CastExpression cast = (CastExpression) expression;
+		case final OldValueExpression old:
+			return String.format("\\old(%s)", printExpression(old.getExpression()));
+		case final ArrayAccessExpression arrayAccess:
+			return String.format("%s[%s]", printExpression(arrayAccess.getArray()),
+					printExpression(arrayAccess.getIndex()));
+		case final CastExpression cast:
 			return String.format("(%s) %s", cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
-		}
-		if (expression instanceof ACSLResultExpression) {
+		case final ACSLResultExpression res:
 			return "\\result";
+		case final AtLabelExpression at:
+			return String.format("\\at(%s, %s)", printExpression(at.getExpression()), at.getLabel());
+		case final QuantifierExpression quantifier:
+			final String quantor = quantifier.isUniversal() ? "\\forall" : "\\exists";
+			final String vars = Arrays.stream(quantifier.getVariables())
+					.map(x -> x.getType().getTypeName() + " " + x.getName()).collect(Collectors.joining(", "));
+			return String.format("%s %s; %s", quantor, vars, printExpression(quantifier.getSubformula()));
+		default:
+			// TODO: Add more cases
+			return expression.toString();
 		}
-		// TODO: Add more cases
-		return expression.toString();
-	}
-
-	private static String printArrayAccessExpression(final ArrayAccessExpression expression) {
-		return printExpression(expression.getArray()) + "["
-				+ Arrays.stream(expression.getIndices()).map(x -> printExpression(x)).collect(Collectors.joining(", "))
-				+ "]";
 	}
 
 	private static String printUnaryExpression(final UnaryExpression expression) {

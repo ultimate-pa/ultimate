@@ -212,6 +212,12 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	/** Checks if the waypoint matches with the statement. Assumption waypoints are not matched */
 	private boolean matchesWaypoint(final LETTER statement, final Waypoint waypoint) {
 		if (waypoint instanceof WaypointBranching && matchesStartLocation(statement, waypoint)) {
+			// For switch-statements the constraint can be an integer constant or "default".
+			// For now, we don't support this.
+			if (!"true".equals(waypoint.getConstraint()) && !"false".equals(waypoint.getConstraint())) {
+				throw new UnsupportedOperationException(
+						"Branching waypoints at switch statements are not supported yet.");
+			}
 			final ConditionAnnotation conditionAnnot = ConditionAnnotation.getAnnotation(statement);
 			return conditionAnnot != null
 					&& Boolean.parseBoolean(waypoint.getConstraint()) == !conditionAnnot.isNegated();
@@ -243,8 +249,17 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			return false;
 		}
 		final Location witnessLoc = waypoint.getLocation();
-		return programLoc.getStartLine() == witnessLoc.getLine()
-				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getStartColumn());
+		if (programLoc.getStartLine() == witnessLoc.getLine()) {
+			if (witnessLoc.getColumn() == null) {
+				return true;
+			}
+			if (programLoc.toString().contains("?")) {
+				throw new UnsupportedOperationException(
+						"Location matching for conditional expressions is not supported yet.");
+			}
+			return witnessLoc.getColumn() == programLoc.getStartColumn();
+		}
+		return false;
 	}
 
 	/** Returns true if the end line and column of the statement match the location of the waypoint */
@@ -255,7 +270,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		}
 		final Location witnessLoc = waypoint.getLocation();
 		return programLoc.getEndLine() == witnessLoc.getLine()
-				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getEndColumn());
+				&& (witnessLoc.getColumn() == null || witnessLoc.getColumn() == programLoc.getEndColumn() - 1);
 	}
 
 	/** Creates a ProductPredicate with the counters */

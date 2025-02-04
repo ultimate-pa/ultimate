@@ -74,9 +74,9 @@ public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallR
 				final IOverallResultEvaluator<ChcOverallResult> overallResultDeterminer) {
 			final ChcOverallResult expectedResult = expectedResultEvaluation.getExpectedResult();
 			final ChcOverallResult actualResult = overallResultDeterminer.getOverallResult();
+			final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
 
 			if (mOverridenExpectedVerdict != null) {
-				final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
 				final Pattern pattern = Pattern.compile(mOverridenExpectedVerdict, Pattern.CASE_INSENSITIVE);
 				if (pattern.matcher(actualResult.toString()) != null || pattern.matcher(overallResultMsg) != null) {
 					mTestResult = TestResult.IGNORE;
@@ -102,7 +102,7 @@ public class ChcTestResultDecider extends ThreeTierTestResultDecider<ChcOverallR
 			}
 
 			mCategory = "results don't match";
-			mMessage = "expected: " + expectedResult + " actual: " + actualResult;
+			mMessage = "expected: " + expectedResult + " actual: " + actualResult + "   " + overallResultMsg;
 			mTestResult = TestResult.FAIL;
 		}
 

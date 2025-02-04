@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
@@ -245,19 +246,24 @@ public final class Boogie2ACSL {
 			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			final var range = getRangeForCType(pair.getSecond());
 
-			if (context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition) {
+			if (isFunctionDefinition(context)) {
 				// In the context of a function definition, i.e., when backtranslating a contract, we can backtranslate
 				// invars directly.
 				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);
 			}
 
-			// In all other contexts, in particular for invariants inside a function body, we use \old() to indicate
-			// that we are referring to the original value of the parameter in C (because params can be re-assigned).
-			return new BacktranslatedExpression(new OldValueExpression(new IdentifierExpression(pair.getFirst())),
+			// In all other contexts, in particular for invariants inside a function body, we use \at(_, Pre) (as \old
+			// is only allowed for function contracts in ACSL) to indicate that we are referring to the original value
+			// of the parameter in C (because params can be re-assigned).
+			return new BacktranslatedExpression(new AtLabelExpression(new IdentifierExpression(pair.getFirst()), "Pre"),
 					pair.getSecond(), range);
 		}
 		mReporter.accept("Unknown variable: " + expr.getIdentifier());
 		return null;
+	}
+
+	private static boolean isFunctionDefinition(final ILocation context) {
+		return context instanceof CLocation && ((CLocation) context).getNode() instanceof IASTFunctionDefinition;
 	}
 
 	private BacktranslatedExpression constructFloat(final BitvecLiteral sign, final BitvecLiteral exponent,
@@ -521,7 +527,7 @@ public final class Boogie2ACSL {
 		final BigInterval rightRange = rhs.getRange();
 		final BigInterval resultRange = leftRange.euclideanDivide(rightRange);
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression());
-		if (leftRange.isStrictlyNonNegative()) {
+		if (leftRange.isNonNegative()) {
 			if (resultRange.isSingleton()) {
 				return translateIntegerLiteral(resultRange.getMinValue());
 			}
@@ -536,16 +542,16 @@ public final class Boogie2ACSL {
 				new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression()),
 				new IntegerLiteral("1"));
 		final Expression expr;
-		if (rightRange.isStrictlyNonNegative()) {
+		if (rightRange.isNonNegative()) {
 			expr = posExpr;
-		} else if (rightRange.isStrictlyNonPositive()) {
+		} else if (rightRange.isNonPositive()) {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
-		if (leftRange.isStrictlyNonPositive()) {
+		if (leftRange.isNonPositive()) {
 			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
@@ -569,7 +575,7 @@ public final class Boogie2ACSL {
 		}
 		final Expression baseExpr = new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression());
 		final BigInterval resultRange = leftRange.euclideanModulo(rightRange);
-		if (leftRange.isStrictlyNonNegative()) {
+		if (leftRange.isNonNegative()) {
 			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
@@ -579,16 +585,16 @@ public final class Boogie2ACSL {
 		final Expression negExpr = new BinaryExpression(Operator.ARITHMINUS,
 				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
 		final Expression expr;
-		if (rightRange.isStrictlyNonNegative()) {
+		if (rightRange.isNonNegative()) {
 			expr = posExpr;
-		} else if (rightRange.isStrictlyNonPositive()) {
+		} else if (rightRange.isNonPositive()) {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
 					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
-		if (leftRange.isStrictlyNonPositive()) {
+		if (leftRange.isNonPositive()) {
 			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
@@ -747,7 +753,14 @@ public final class Boogie2ACSL {
 				return null;
 			}
 			range = innerTrans.getRange();
-			resultExpr = new OldValueExpression(innerTrans.getExpression());
+			// In ACSL \old is only allowed in function contracts.
+			// Therefore we translate an old-expression old(x) in Boogie to either \old(x), if the context is a function
+			// (which means that the expression is present in a contract), or \at(x, Pre) otherwise.
+			if (isFunctionDefinition(context)) {
+				resultExpr = new OldValueExpression(innerTrans.getExpression());
+			} else {
+				resultExpr = new AtLabelExpression(innerTrans.getExpression(), "Pre");
+			}
 			cType = innerTrans.getCType();
 			break;
 		}
@@ -796,7 +809,7 @@ public final class Boogie2ACSL {
 			if (translatedIndex == null) {
 				return null;
 			}
-			result = new ArrayAccessExpression(result, new Expression[] { translatedIndex.getExpression() });
+			result = new ArrayAccessExpression(result, translatedIndex.getExpression());
 			resultType = ((CArray) resultType).getValueType();
 		}
 		final var range = getRangeForCType(resultType);

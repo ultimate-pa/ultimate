@@ -95,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -396,8 +395,8 @@ public class FunctionHandler {
 			// 3) ,4)
 			mCHandler.updateStmtsAndDeclsAtScopeEnd(bodyResultBuilder, node);
 
-			assert bodyResultBuilder.getAuxVars().isEmpty() : String.format("Body still contains aux vars: %s",
-					bodyResultBuilder.getAuxVars());
+			assert bodyResultBuilder.getAuxVars().isEmpty()
+					: String.format("Body still contains aux vars: %s", bodyResultBuilder.getAuxVars());
 			assert bodyResultBuilder.getOverappr().isEmpty();
 			assert bodyResultBuilder.getLrValue() == null;
 
@@ -780,7 +779,7 @@ public class FunctionHandler {
 	private static void checkNumberOfArguments(final ILocation loc, final String calleeName,
 			final IASTInitializerClause[] arguments, final Procedure calleeProcDecl, final CFunction calleeProcCType,
 			final boolean isCalleeSignatureNotYetDetermined) {
-		if (isCalleeSignatureNotYetDetermined || (arguments.length == calleeProcDecl.getInParams().length)) {
+		if (isCalleeSignatureNotYetDetermined || arguments.length == calleeProcDecl.getInParams().length) {
 			return;
 		}
 		if (calleeProcDecl.getInParams().length == 1 && calleeProcDecl.getInParams()[0].getType() == null
@@ -1190,7 +1189,8 @@ public class FunctionHandler {
 			return Optional.empty();
 		case OVERAPPROXIMATE_BEHAVIOUR: {
 			// Implement the function using while (true) assert false;
-			final Statement statement = StandardFunctionHandler.modelUnsupportedFeature(loc, name);
+			final Statement statement =
+					ExpressionTranslation.modelUnsupportedFeature(loc, "undefined function " + name);
 			final Body body = mProcedureManager.constructBody(loc, new VariableDeclaration[0],
 					new Statement[] { statement }, name);
 			final Procedure result = new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(),

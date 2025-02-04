@@ -204,20 +204,6 @@ public class ExpressionResultTransformer {
 		return transform(dispatched, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_BOOL_TO_INT);
 	}
 
-	public ExpressionResult transformDispatchSwitchRexBoolToInt(final IDispatcher main, final ILocation loc,
-			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression node) {
-		final IASTNode hook = main.getAcslHook();
-		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(node, hook);
-		return transform(dispatched, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_BOOL_TO_INT);
-	}
-
-	public ExpressionResult transformDispatchSwitchRexIntToBool(final IDispatcher main, final ILocation loc,
-			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression node) {
-		final IASTNode hook = main.getAcslHook();
-		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(node, hook);
-		return transform(dispatched, null, loc, hook, Transformation.SWITCH_TO_RVALUE, Transformation.REX_INT_TO_BOOL);
-	}
-
 	public ExpressionResult transformDecaySwitchRexBoolToInt(final ExpressionResult expr, final ILocation loc,
 			final IASTNode hook) {
 		return transform(expr, null, loc, hook, Transformation.DECAY_ARRAY_TO_POINTER, Transformation.SWITCH_TO_RVALUE,

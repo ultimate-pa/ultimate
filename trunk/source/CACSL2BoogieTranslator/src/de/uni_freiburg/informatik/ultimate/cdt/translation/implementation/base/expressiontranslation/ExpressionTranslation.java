@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -41,7 +42,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -65,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3.FloatingPointLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
@@ -156,8 +161,8 @@ public abstract class ExpressionTranslation {
 			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final ExpressionResult exprResult);
 
-	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left,
-			final CPrimitive lhsType, final CPrimitive rhsType, final Expression right, final int operator) {
+	private Expression constructTypeCheckForShift(final ILocation loc, final Expression left, final CPrimitive lhsType,
+			final CPrimitive rhsType, final Expression right, final int operator) {
 		Expression rhsNonNegative;
 		{
 			final Expression zero = constructLiteralForIntegerType(loc, rhsType, BigInteger.ZERO);
@@ -349,8 +354,21 @@ public abstract class ExpressionTranslation {
 		return new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rValue).build();
 	}
 
-	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype,
-			ExpressionResultBuilder expressionResultBuilder);
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
+			final ExpressionResultBuilder expressionResultBuilder) {
+		final var constraint = getTypeConstraint(loc, expr, ctype);
+		if (constraint.isPresent()) {
+			expressionResultBuilder.addStatement(new AssumeStatement(loc, constraint.get()));
+		}
+	}
+
+	/**
+	 * Returns a constraint for the given {@code cType} that is required for the model of the translated expression
+	 * {@code expr}. If the modelling does not require such a type constraint, the function can return
+	 * {@code Optional.empty()}.
+	 */
+	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
+			final CType cType);
 
 	public Expression constructNullPointer(final ILocation loc) {
 		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
@@ -612,4 +630,12 @@ public abstract class ExpressionTranslation {
 	 * lowest bits that fit in type.
 	 */
 	public abstract Expression convertInfinitePrecisionExpression(ILocation loc, Expression exp, CPrimitive type);
+
+	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
+		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
+		new Overapprox(reason, loc).annotate(assertFalse);
+		new Check(Spec.UNSUPPORTED_FEATURE).annotate(assertFalse);
+		return new WhileStatement(loc, ExpressionFactory.createBooleanLiteral(loc, true),
+				new LoopInvariantSpecification[0], new Statement[] { assertFalse });
+	}
 }

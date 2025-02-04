@@ -78,9 +78,8 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractEx
 
 	@Override
 	public void findExpectedResult(final UltimateRunDefinition ultimateRunDefinition) {
-		final File file = ultimateRunDefinition.selectPrimaryInputFile();
 		final Set<OVERALL_RESULT> expectedResult = new HashSet<>();
-		if (file != null) {
+		for (final File file : ultimateRunDefinition.getInput()) {
 			final String filename = file.getName();
 			for (final Entry<String, OVERALL_RESULT> entry : mFilenameKeywords.entrySet()) {
 				if (filename.matches(entry.getKey())) {
@@ -107,7 +106,8 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractEx
 		if (expectedResult.isEmpty()) {
 			super.mExpectedResult = null;
 			super.mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
-			super.mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";
+			super.mExpectedResultEvaluation =
+					"Neither filename nor path nor first line contains a keyword that defines the expected result";
 		} else if (expectedResult.size() == 1) {
 			super.mExpectedResult = expectedResult.iterator().next();
 			super.mEvaluationStatus = ExpectedResultFinderStatus.EXPECTED_RESULT_FOUND;
@@ -118,6 +118,5 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> extends AbstractEx
 			super.mExpectedResultEvaluation = "Error: annotation given by keywords is inconsistent";
 		}
 	}
-
 
 }
