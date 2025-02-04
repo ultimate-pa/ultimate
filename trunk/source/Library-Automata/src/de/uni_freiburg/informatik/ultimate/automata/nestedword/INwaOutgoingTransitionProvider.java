@@ -80,6 +80,6 @@ public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends INwaBasis
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
-		return new NwaToUltimateModel<LETTER, STATE>(services).transformToUltimateModel(this);
+		return new NwaToUltimateModel<>(services, this).transformToUltimateModel();
 	}
 }
