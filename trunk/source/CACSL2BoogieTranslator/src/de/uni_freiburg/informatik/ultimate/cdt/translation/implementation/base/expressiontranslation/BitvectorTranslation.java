@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieTypeConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -1494,6 +1495,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					new VariableLHS[] { auxvar.getLhs() }, ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE, arguments);
 
 			final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(arg);
+			CTranslationUtil.addSequencePoint(loc, resultBuilder);
 			resultBuilder.addAuxVarWithDeclaration(auxvar);
 			resultBuilder.addStatement(result);
 			resultBuilder.setLrValue(llv);

@@ -252,10 +252,13 @@ public class StandardFunctionHandler {
 						transformedName, node.getFileLocation()));
 			}
 			final ILocation loc = mLocationFactory.createCLocation(node);
-			// TODO: There is a sequence point after the evaluations of the function designator and the actual arguments
-			// but before the actual call. (C11 6.5.2.2.10)
-			// TO achieve this, we probably need an auxiliary function to dispatch the arguments (and possibly some
-			// exceptions, e.g. for string literals)
+			// There is a sequence point after the evaluations of the function designator and the actual arguments but
+			// before the actual call (C11 6.5.2.10)
+			// This also applies to library function. This is currently handled in functionModel.handleFunction.
+
+			// TDOO: But it would be nicer to have two methods (dispatching arguments and modelling function itself),
+			// then we could simply add a sequence point here, instead of every method. This would however require a
+			// major refactoring, as we also cannot use a functional interface in this case.
 			final ExpressionResultBuilder builder =
 					new ExpressionResultBuilder((ExpressionResult) functionModel.handleFunction(main, node, loc, name));
 			// There is a sequence point immediately before a library function returns. (C11 7.1.4.3)
@@ -1158,6 +1161,10 @@ public class StandardFunctionHandler {
 			builder.addAllExceptLrValue(argRes);
 		}
 
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+
 		final var nondetString = getNondetStringOrNull(loc);
 		builder.addAllExceptLrValue(nondetString).setLrValue(nondetString.getLrValue());
 
@@ -1180,6 +1187,10 @@ public class StandardFunctionHandler {
 				builder.addAllExceptLrValue(argRes);
 			}
 		}
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+
 		builder.addOverapprox(new Overapprox(name, loc));
 		return builder.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
 	}
@@ -1188,9 +1199,14 @@ public class StandardFunctionHandler {
 			final String name) {
 		checkArguments(loc, 1, name, node.getArguments());
 		// Just dispatch the argument and return a non-deterministic string
-		return new ExpressionResultBuilder()
-				.addAllExceptLrValue((ExpressionResult) main.dispatch(node.getArguments()[0]))
-				.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder()
+				.addAllExceptLrValue((ExpressionResult) main.dispatch(node.getArguments()[0]));
+
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+
+		return builder.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
 	}
 
 	private ExpressionResult getNondetStringOrNull(final ILocation loc) {
@@ -1257,6 +1273,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
 		builder.addAllExceptLrValue(pointer, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final ExpressionResult write =
 				mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(), mExpressionTranslation
 						.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.BOOL), BigInteger.ZERO));
@@ -1277,7 +1296,11 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
-		builder.addAllExceptLrValue(pointer, memoryOrder).addAllIncludingLrValue(
+		builder.addAllExceptLrValue(pointer, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+		builder.addAllIncludingLrValue(
 				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue()));
 		return builder.build();
 	}
@@ -1292,6 +1315,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		builder.addAllExceptLrValue(pointer1, pointer2, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		// Make sure that only the read, but not the write is atomic
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
 		final ExpressionResult write =
@@ -1310,6 +1336,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		builder.addAllExceptLrValue(pointer1, pointer2, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer2.getLrValue());
 		builder.addAllExceptLrValue(read);
 		// Make sure that only the write, but not the read is atomic
@@ -1330,6 +1359,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[3]);
 		builder.addAllExceptLrValue(pointer1, pointer2, pointer3, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final ExpressionResult read0 = mExprResultTransformer.readPointerValue(loc, pointer1.getLrValue());
 		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder();
 		final ExpressionResult read1 = mExprResultTransformer.readPointerValue(loc, pointer2.getLrValue());
@@ -1410,6 +1442,9 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
 		final var resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(pointer, expectedResult,
 				desiredResult, weakResult, successMemoryOrder, failureMemoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
 		final boolean mayFailSpuriously = !ExpressionFactory.isFalseLiteral(weakResult.getLrValue().getValue());
 
 		// Introduce an auxvar indicating whether the function is successful, i.e., the exchange was performed.
@@ -1472,8 +1507,12 @@ public class StandardFunctionHandler {
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[1]);
-		return new ExpressionResultBuilder().addAllExceptLrValue(pointer, memoryOrder)
-				.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue())).build();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(pointer, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+		return builder.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue()))
+				.build();
 	}
 
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -1487,6 +1526,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult memoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		builder.addAllExceptLrValue(pointer, valueResult, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		// Make sure that only the write, but not the read is atomic
 		final ExpressionResult write = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
 				valueResult.getLrValue().getValue());
@@ -1504,6 +1546,9 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue(pointer, valueResult, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final ExpressionResultBuilder atomicBuilder =
 				new ExpressionResultBuilder(mExprResultTransformer.readPointerValue(loc, pointer.getLrValue()));
 		atomicBuilder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
@@ -1523,6 +1568,9 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[2]);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue(pointer, operand, memoryOrder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
 		final ExpressionResultBuilder atomicBuilder = new ExpressionResultBuilder(read);
 		final Expression newValue;
@@ -1600,6 +1648,9 @@ public class StandardFunctionHandler {
 		// The second argument of va_start has to be the rightmost fixed parameter
 		// (according to the C standard section 7.16.1.3.4). Therefore we simply dispatch it here.
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final String procedure = mProcedureManager.getCurrentProcedureID();
 		final IdentifierExpression rhs = new IdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), SFO.VARARGS,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procedure));
@@ -1616,6 +1667,10 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder resultBuilder =
 				new ExpressionResultBuilder().addAllExceptLrValue(pRex).setLrValue(pRex.getLrValue());
+
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
 
 		// Translate va_end(valist) to ULTIMATE.dealloc({ base: valist!base, offset: 0 }) to ensure the memory to be
 		// freed
@@ -1651,6 +1706,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult dst = (ExpressionResult) main.dispatch(arguments[0]);
 		builder.addAllExceptLrValue(dst);
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[1]));
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final AuxVarInfo auxVarInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 				new CPointer(new CPrimitive(CPrimitives.CHAR)), AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(auxVarInfo);
@@ -1668,6 +1726,10 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue(argResult);
+
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		final var resultType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo resultInfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, AUXVAR.RETURNED);
@@ -1778,6 +1840,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult argResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(argResult);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final Expression expr = argResult.getLrValue().getValue();
 		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
 		if (mSettings.checkSignedIntegerBounds() != CheckMode.IGNORE && resultType.isIntegerType()
@@ -1829,6 +1894,10 @@ public class StandardFunctionHandler {
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]);
 			builder.addAllExceptLrValue(argRes);
 		}
+
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		// declare loop counter ctr
 		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
@@ -1921,6 +1990,10 @@ public class StandardFunctionHandler {
 			builder.addAllExceptLrValue(argRes);
 		}
 
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+
 		// declare loop counter ctr
 		final AuxVarInfo ctr = mAuxVarInfoBuilder.constructAuxVarInfo(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), SFO.AUXVAR.LOOPCTR);
@@ -2003,6 +2076,8 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
+		final List<ExpressionResult> args = new ArrayList<>();
+
 		for (int i = 0; i < arguments.length; i++) {
 			if (i < firstArgumentToWrite) {
 				// Don't dispatch string literals
@@ -2013,8 +2088,15 @@ public class StandardFunctionHandler {
 				continue;
 			}
 
-			final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[i]);
-			builder.addAllExceptLrValue(pointer);
+			args.add(mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[i]));
+		}
+
+		builder.addAllExceptLrValue(args);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
+
+		for (final ExpressionResult pointer : args) {
 			// Write a non-deterministic value to the given address, but make sure the value is in range
 			final CType valueType = ((CPointer) pointer.getCType()).getPointsToType();
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, valueType, SFO.AUXVAR.NONDET);
@@ -2083,22 +2165,15 @@ public class StandardFunctionHandler {
 			final IASTInitializerClause mem1, final IASTInitializerClause mem2) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult arg0 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem1);
-		builder.addDeclarations(arg0.getDeclarations());
-		builder.addStatements(arg0.getStatements());
-		builder.addOverapprox(arg0.getOverapprs());
-		builder.addAuxVars(arg0.getAuxVars());
-		builder.addNeighbourUnionFields(arg0.getNeighbourUnionFields());
+		final ExpressionResult arg1 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem2);
+
+		builder.addAllExceptLrValue(arg0, arg1);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		builder.addStatements(
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, arg0.getLrValue().getValue()));
-
-		final ExpressionResult arg1 = mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, mem2);
-		builder.addDeclarations(arg1.getDeclarations());
-		builder.addStatements(arg1.getStatements());
-		builder.addOverapprox(arg1.getOverapprs());
-		builder.addAuxVars(arg1.getAuxVars());
-		builder.addNeighbourUnionFields(arg1.getNeighbourUnionFields());
-
 		builder.addStatements(
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, arg1.getLrValue().getValue()));
 
@@ -2144,6 +2219,10 @@ public class StandardFunctionHandler {
 		resultBuilder.addAllExceptLrValue(dest);
 		resultBuilder.addAllExceptLrValue(src);
 
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
+
 		final AuxVarInfo auxvarinfo =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, dest.getLrValue().getCType(), SFO.AUXVAR.STRCPYRES);
 
@@ -2175,11 +2254,11 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult arg =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		builder.addDeclarations(arg.getDeclarations());
-		builder.addStatements(arg.getStatements());
-		builder.addOverapprox(arg.getOverapprs());
-		builder.addAuxVars(arg.getAuxVars());
-		builder.addNeighbourUnionFields(arg.getNeighbourUnionFields());
+		builder.addAllExceptLrValue(arg);
+
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		builder.addStatements(
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, arg.getLrValue().getValue()));
@@ -2231,6 +2310,10 @@ public class StandardFunctionHandler {
 		builder.addDeclarations(argC.getDeclarations()).addStatements(argC.getStatements())
 				.addOverapprox(argC.getOverapprs()).addAuxVars(argC.getAuxVars())
 				.addNeighbourUnionFields(argC.getNeighbourUnionFields());
+
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		// introduce fresh aux variable
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
@@ -2320,6 +2403,9 @@ public class StandardFunctionHandler {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// TODO: Also write the return value to the pointer, if it is not NULL
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		builder.addAllIncludingLrValue(handleVerifierNonDet(main, loc, new CPrimitive(CPrimitives.LONG)));
 		return builder.build();
 	}
@@ -2330,6 +2416,9 @@ public class StandardFunctionHandler {
 		checkArguments(loc, 1, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		// Return a non-deterministic aux-var as an overapproximation
 		// (since we cannot be sure, if the call was interrupted)
 		final CType retType = new CPrimitive(CPrimitives.UINT);
@@ -2374,6 +2463,9 @@ public class StandardFunctionHandler {
 		}
 
 		final Expression[] threadId = mThreadIdManager.updateForkedThreadId(arguments[0], main, loc, node, builder);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final ForkStatement fs = new ForkStatement(loc, threadId, methodName, forkArguments);
 		mProcedureManager.registerForkStatement(fs);
 		builder.addStatement(fs);
@@ -2475,6 +2567,9 @@ public class StandardFunctionHandler {
 			builder.addAllExceptLrValue(argAddressOfResultPointer);
 			argAddressOfResultPointerLr = argAddressOfResultPointer.getLrValue();
 		}
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		final JoinStatement js;
 		if (argAddressOfResultPointerLr.isNullPointerConstant()) {
@@ -2525,6 +2620,9 @@ public class StandardFunctionHandler {
 				new AssignmentStatement(loc, lhs, new Expression[] { transformedArg.getLrValue().getValue() });
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		erb.addAllExceptLrValue(transformedArg);
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, erb);
 		erb.addStatement(retValAssignment);
 		erb.addStatement(new ReturnStatement(loc));
 
@@ -2545,6 +2643,9 @@ public class StandardFunctionHandler {
 		// Therefore we just dispatch the argument and return a non-deterministic value (indicating success)
 		builder.addAllExceptLrValue(
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]));
+		// There is a sequence point after the evaluations of the function designator and the actual arguments
+		// but before the actual call. (C11 6.5.2.2.10)
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final CType retType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo retValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(retValue);
@@ -2644,6 +2745,8 @@ public class StandardFunctionHandler {
 		final Expression index = arg.getLrValue().getValue();
 		erb.addAllExceptLrValue(arg);
 
+		CTranslationUtil.addSequencePoint(loc, erb);
+
 		// auxvar for procedure's return value
 		final CType cType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
@@ -2683,6 +2786,7 @@ public class StandardFunctionHandler {
 		final AssignmentStatement unlockMutex = mMemoryHandler.constructMutexArrayAssignment(loc, index, false);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder();
 		erb.addAllExceptLrValue(arg1);
+		CTranslationUtil.addSequencePoint(loc, erb);
 		erb.addStatement(unlockMutex);
 		erb.setLrValue(new RValue(mTypeSizes.constructLiteralForIntegerType(loc, returnType, value),
 				new CPrimitive(CPrimitives.INT)));
@@ -2722,6 +2826,7 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
+		CTranslationUtil.addSequencePoint(loc, erb);
 		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
 				ExpressionFactory.createBooleanLiteral(loc, false))).build();
 	}
@@ -2734,8 +2839,10 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult result = mExprResultTransformer
 				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc,
-				name, mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue())).build();
+		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(result);
+		CTranslationUtil.addSequencePoint(loc, erb);
+		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
+				result.getLrValue().getValue())).build();
 	}
 
 	/**
@@ -2769,10 +2876,10 @@ public class StandardFunctionHandler {
 
 				final ExpressionResult result = mExprResultTransformer
 						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-				return new ExpressionResultBuilder()
-						.addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc, name,
-								mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
-						.build();
+				final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(result);
+				CTranslationUtil.addSequencePoint(loc, erb);
+				return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(),
+						Spec.ASSERT, result.getLrValue().getValue(), errorMsg)).build();
 			}
 			/* WARNING: this case should be never reached since the msg should be always a string literal */
 			throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
@@ -2836,6 +2943,8 @@ public class StandardFunctionHandler {
 		result.addAllExceptLrValue(convertedArgC);
 		result.addAllExceptLrValue(convertedArgN);
 
+		CTranslationUtil.addSequencePoint(loc, result);
+
 		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, voidPointerType, SFO.AUXVAR.MEMSETRES);
 		result.addAuxVarWithDeclaration(auxvar);
@@ -2863,6 +2972,7 @@ public class StandardFunctionHandler {
 				IASTBinaryExpression.op_multiply, nmemb.getLrValue().getValue(), mTypeSizeComputer.getSizeT(),
 				size.getLrValue().getValue(), mTypeSizeComputer.getSizeT());
 		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(nmemb, size);
+		CTranslationUtil.addSequencePoint(loc, result);
 
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
@@ -2888,6 +2998,7 @@ public class StandardFunctionHandler {
 
 		final ExpressionResultBuilder resultBuilder =
 				new ExpressionResultBuilder().addAllExceptLrValue(pRex).setLrValue(pRex.getLrValue());
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
 
 		/*
 		 * Add checks for validity of the to be freed pointer if required.
@@ -2913,6 +3024,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult exprResConverted =
 				mExprResultTransformer.performImplicitConversion(exprRes, mTypeSizeComputer.getSizeT(), loc);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(exprResConverted);
+		CTranslationUtil.addSequencePoint(loc, erb);
 		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addAuxVarWithDeclaration(auxvar);
@@ -2972,6 +3084,8 @@ public class StandardFunctionHandler {
 		resultBuilder.addAllExceptLrValue(ptr);
 		resultBuilder.addAllExceptLrValue(size);
 
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
+
 		final AuxVarInfo auxvarinfo =
 				mAuxVarInfoBuilder.constructAuxVarInfo(loc, ptr.getLrValue().getCType(), SFO.AUXVAR.REALLOCRES);
 
@@ -3020,7 +3134,9 @@ public class StandardFunctionHandler {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult arg2 =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
-		return new ExpressionResultBuilder().addAllExceptLrValue(arg1, arg2).setLrValue(arg1.getLrValue()).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(arg1, arg2);
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
+		return resultBuilder.setLrValue(arg1.getLrValue()).build();
 	}
 
 	private static ExpressionResult handleAbort(final ILocation loc) {
@@ -3115,6 +3231,7 @@ public class StandardFunctionHandler {
 		}
 
 		final ExpressionResultBuilder rtr = new ExpressionResultBuilder().addAllExceptLrValue(results);
+		CTranslationUtil.addSequencePoint(loc, rtr);
 		for (final Expression a : args) {
 			// could just take the first as there is only one, but it's so easy to make it more general..
 			rtr.addStatement(new AssumeStatement(loc, a));
@@ -3133,7 +3250,9 @@ public class StandardFunctionHandler {
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
 		final RValue rvalue =
 				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue());
-		return new ExpressionResultBuilder().addAllExceptLrValue(arg).setLrValue(rvalue).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(arg);
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
+		return resultBuilder.setLrValue(rvalue).build();
 	}
 
 	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -3142,7 +3261,9 @@ public class StandardFunctionHandler {
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
 		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
 				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
-		return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(args);
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
+		return resultBuilder.setLrValue(rvalue).build();
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -3196,6 +3317,7 @@ public class StandardFunctionHandler {
 		// Write the (converted) result of the operation to the third argument
 		final ExpressionResult resPointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
 		builder.addAllExceptLrValue(resPointer);
+		CTranslationUtil.addSequencePoint(loc, builder);
 		builder.addAllExceptLrValue(mExprResultTransformer.makePointerAssignment(loc, resPointer.getLrValue(),
 				mExpressionTranslation.convertInfinitePrecisionExpression(loc, infinitePrecisionExpr, resultType)));
 		// If the infinite precision result fits in the given type, return 0 otherwise 1.
@@ -3230,10 +3352,13 @@ public class StandardFunctionHandler {
 		final ExpressionResult rr =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
 
+		final ExpressionResultBuilder rightBuilder = new ExpressionResultBuilder(rr);
+		CTranslationUtil.addSequencePoint(loc, rightBuilder);
+
 		// Note: this works because SMTLIB already ensures that all comparisons return false if one of the arguments is
 		// NaN
 
-		return mCEpressionTranslator.handleRelationalOperators(loc, op, rl, rr);
+		return mCEpressionTranslator.handleRelationalOperators(loc, op, rl, rightBuilder.build());
 	}
 
 	/**
@@ -3267,11 +3392,12 @@ public class StandardFunctionHandler {
 				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
-		final ExpressionResult rtr = new ExpressionResultBuilder()
-				.addAllExceptLrValue(leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult).setLrValue(lrVal)
-				.build();
+		final ExpressionResultBuilder rtr =
+				new ExpressionResultBuilder().addAllExceptLrValue(leftRvaluedResult, rightRvaluedResult);
+		CTranslationUtil.addSequencePoint(loc, rtr);
+		rtr.addAllExceptLrValue(nanLResult, nanRResult).setLrValue(lrVal).build();
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
-		return rtr;
+		return rtr.build();
 	}
 
 	private Result handleFloatBuiltinIsLessGreater(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -3304,6 +3430,10 @@ public class StandardFunctionHandler {
 		leftOp = newOps.getFirst();
 		rightOp = newOps.getSecond();
 
+		final var builder = new ExpressionResultBuilder(rightOp);
+		CTranslationUtil.addSequencePoint(loc, builder);
+		rightOp = builder.build();
+
 		final ExpressionResult lessThan =
 				mCEpressionTranslator.handleRelationalOperators(loc, IASTBinaryExpression.op_lessThan, leftOp, rightOp);
 		final ExpressionResult greaterThan = mCEpressionTranslator.handleRelationalOperators(loc,
@@ -3332,14 +3462,6 @@ public class StandardFunctionHandler {
 			final ILocation loc) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
-		final AuxVarInfo auxvarinfo =
-				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.RETURNED);
-		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
-		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
-
-		final LRValue returnValue = new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT));
-		resultBuilder.setLrValue(returnValue);
-
 		// dispatch all arguments
 		for (final IASTInitializerClause arg : node.getArguments()) {
 			if (isStringLiteral(arg)) {
@@ -3349,6 +3471,15 @@ public class StandardFunctionHandler {
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arg);
 			resultBuilder.addAllExceptLrValue(argRes);
 		}
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
+
+		final AuxVarInfo auxvarinfo =
+				mAuxVarInfoBuilder.constructAuxVarInfo(loc, new CPrimitive(CPrimitives.INT), SFO.AUXVAR.RETURNED);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
+		resultBuilder.addStatement(new HavocStatement(loc, new VariableLHS[] { auxvarinfo.getLhs() }));
+
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), new CPrimitive(CPrimitives.INT));
+		resultBuilder.setLrValue(returnValue);
 
 		return resultBuilder.build();
 	}
@@ -3373,6 +3504,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult argRes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, node.getArguments()[0]);
 		builder.addAllExceptLrValue(argRes);
+		CTranslationUtil.addSequencePoint(loc, builder);
 		final Expression arg = argRes.getLrValue().getValue();
 		final CPrimitive type = new CPrimitive(CPrimitives.INT);
 		final Expression a = mExpressionTranslation.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(97));
@@ -3420,6 +3552,7 @@ public class StandardFunctionHandler {
 		resultBuilder.addAllExceptLrValue(dest);
 		resultBuilder.addAllExceptLrValue(src);
 		resultBuilder.addAllExceptLrValue(size);
+		CTranslationUtil.addSequencePoint(loc, resultBuilder);
 
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, dest.getLrValue().getCType(), auxVar);
 
@@ -3583,6 +3716,7 @@ public class StandardFunctionHandler {
 		for (final IASTInitializerClause argument : arguments) {
 			builder.addAllExceptLrValue((ExpressionResult) main.dispatch(argument));
 		}
+		CTranslationUtil.addSequencePoint(loc, builder);
 
 		final ExpressionResult overapproxCall = constructOverapproximationForFunctionCall(loc, methodName, resultType);
 		builder.addAllExceptLrValue(overapproxCall);
@@ -3605,7 +3739,9 @@ public class StandardFunctionHandler {
 		for (final IASTInitializerClause argument : arguments) {
 			results.add((ExpressionResult) main.dispatch(argument));
 		}
-		return new ExpressionResultBuilder().addAllExceptLrValue(results).build();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(results);
+		CTranslationUtil.addSequencePoint(loc, builder);
+		return builder.build();
 	}
 
 	/**
@@ -3657,6 +3793,7 @@ public class StandardFunctionHandler {
 			builder.addAllExceptLrValue(dispatched);
 			translatedArgs[i] = dispatched.getLrValue().getValue();
 		}
+		CTranslationUtil.addSequencePoint(loc, builder);
 		VariableLHS[] retValue;
 		if (resultType.isVoidType()) {
 			retValue = new VariableLHS[0];
