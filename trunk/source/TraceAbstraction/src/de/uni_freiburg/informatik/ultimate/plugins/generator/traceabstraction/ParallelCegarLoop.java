@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -81,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 extends NwaCegarLoop<L> {
 
-	boolean mNoThreadFree;
 	boolean mComputeHoareAnnotation;
 
 	ExecutorService mExec;
@@ -198,14 +198,19 @@ extends NwaCegarLoop<L> {
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
 
+		// copy everything TODO: copy service, all globals at the end of this method
+		final TAPreferences tap = new TAPreferences(mServices);
+		final ILogger dummyLogger = ILogger.getDummyLogger();
+		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(dummyLogger);
+
 		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
+				new TaCheckAndRefinementPreferences<>(getServices(), tap, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
 
-		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
+
 		cacheCopy.copyCache(mProgramCache);
-		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
+		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(dummyLogger, tap, taCheckAndRefinementPrefs,
 				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz, cacheCopy);
 
 
@@ -218,9 +223,10 @@ extends NwaCegarLoop<L> {
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				strategyType);
 
+
 		// start worker
-		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
-				mCegarLoopBenchmark, iterationServices, freshToolKit, mStrategyFactory, mInitialAbstraction,
+		return new CegarWorkerThread<>(dummyLogger, tap, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
+				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, mInitialAbstraction,
 				predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
 				mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode);
 	}
