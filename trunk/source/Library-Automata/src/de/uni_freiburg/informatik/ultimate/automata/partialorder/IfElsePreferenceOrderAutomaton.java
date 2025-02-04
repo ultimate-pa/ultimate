@@ -187,8 +187,7 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 
 		OptionalEither<S1, S2> getOriginalState(S state);
 
-		public class Default<S1, S2> implements IIfElseStateFactory<S1, S2, OptionalEither<S1, S2>> {
-
+		class Default<S1, S2> implements IIfElseStateFactory<S1, S2, OptionalEither<S1, S2>> {
 			@Override
 			public OptionalEither<S1, S2> createNewStateLeft(final S1 state) {
 				return new OptionalEither.Left<>(state);

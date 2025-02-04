@@ -51,26 +51,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.OptionalEither;
  *            The state type of the combination. If mAutomaton is using the default state factory, this will be
  *            {@code OptionalEither<S1,S2>}.
  */
-
 public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder<L, S0, S> {
 
 	private final IPreferenceOrder<L, S0, S1> mFirstOrder;
 	private final IPreferenceOrder<L, S0, S2> mSecondOrder;
-	private final ImmutableSet<L> mIfBranchLetters;
 	private final IIfElseStateFactory<S1, S2, S> mStateFactory;
-	private IfElsePreferenceOrderAutomaton<L, S1, S2, S> mAutomaton;
+	private final IfElsePreferenceOrderAutomaton<L, S1, S2, S> mAutomaton;
 
 	public IfElsePreferenceOrder(final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
 			final ImmutableSet<L> ifBranchLetters, final IIfElseStateFactory<S1, S2, S> stateFactory) {
 		mFirstOrder = fst;
 		mSecondOrder = snd;
-		mIfBranchLetters = ifBranchLetters;
 		mStateFactory = stateFactory;
+		mAutomaton =
+				new IfElsePreferenceOrderAutomaton<>(fst.getMonitor(), snd.getMonitor(), ifBranchLetters, stateFactory);
 	}
 
-	public static <L, S0, S1, S2> IfElsePreferenceOrder<L, S0, S1, S2, OptionalEither<S1, S2>> create(
-			final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
-			final ImmutableSet<L> ifBranchLetters) {
+	public static <L, S0, S1, S2> IfElsePreferenceOrder<L, S0, S1, S2, ?> create(final IPreferenceOrder<L, S0, S1> fst,
+			final IPreferenceOrder<L, S0, S2> snd, final ImmutableSet<L> ifBranchLetters) {
 		return new IfElsePreferenceOrder<>(fst, snd, ifBranchLetters, new IIfElseStateFactory.Default<>());
 	}
 
@@ -81,10 +79,6 @@ public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder
 
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, S> getMonitor() {
-		if (mAutomaton == null) {
-			mAutomaton = new IfElsePreferenceOrderAutomaton<>(mFirstOrder.getMonitor(), mSecondOrder.getMonitor(),
-					mIfBranchLetters, mStateFactory);
-		}
 		return mAutomaton;
 	}
 
@@ -100,5 +94,4 @@ public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder
 			return mSecondOrder.getOrder(programState, original);
 		}
 	}
-
 }

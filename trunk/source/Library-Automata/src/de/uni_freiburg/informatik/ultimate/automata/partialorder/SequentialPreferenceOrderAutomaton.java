@@ -133,20 +133,20 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 	@Override
 	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		switch (mStateFactory.getOriginalState(state)) {
+		case Either.Left(final S1 original) when mApplyFunctionAfterTransition && mLeftAutomaton.isFinal(original)
+				&& mTransitionLetters.contains(letter):
+			// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
+			return () -> new TransformIterator<>(
+					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
+							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
+					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+							mStateFactory.createNewStateRight(transition.getSucc())));
+		case Either.Left(final S1 original) when mLeftAutomaton.isFinal(original)
+				&& mTransitionLetters.contains(letter):
+			return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
+					successor -> new OutgoingInternalTransition<>(letter,
+							mStateFactory.createNewStateRight(successor)));
 		case Either.Left(final S1 original):
-			if (mLeftAutomaton.isFinal(original) && mTransitionLetters.contains(letter)) {
-				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
-				if (mApplyFunctionAfterTransition) {
-					return () -> new TransformIterator<>(
-							new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
-									q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
-							transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-									mStateFactory.createNewStateRight(transition.getSucc())));
-				}
-				return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
-						successor -> new OutgoingInternalTransition<>(letter,
-								mStateFactory.createNewStateRight(successor)));
-			}
 			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
 							mStateFactory.createNewStateLeft(transition.getSucc())));

@@ -76,8 +76,8 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 
 	@Override
 	public Comparator<L> getOrder(final S1 stateProgram, final State stateMonitor) {
-		final String lastThread = stateMonitor.getThread();
-		final int lastIndex = stateMonitor.getIndex();
+		final String lastThread = stateMonitor.thread();
+		final int lastIndex = stateMonitor.index();
 		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
 	}
 

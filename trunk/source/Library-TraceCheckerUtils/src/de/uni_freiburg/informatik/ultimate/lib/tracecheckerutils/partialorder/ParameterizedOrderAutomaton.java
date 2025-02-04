@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -44,23 +47,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class ParameterizedOrderAutomaton<L extends IAction>
 		implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State> {
 	private final List<Integer> mMaxSteps;
-	private final Map<Integer, Map<Integer, State>> mCreatedStates = new HashMap<>();
 	private final List<String> mThreads;
-	private final String mInitialThread;
-	private final java.util.function.Predicate<L> mIsStep;
 	private final VpAlphabet<L> mAlphabet;
+	private final Predicate<L> mIsStep;
+
+	private final Map<Integer, Map<Integer, State>> mCreatedStates;
+	private final State mInitialState;
 
 	public ParameterizedOrderAutomaton(final List<Integer> maxSteps, final List<String> threads,
-			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
+			final VpAlphabet<L> alphabet, final Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
 		mThreads = threads;
 		mIsStep = isStep;
 		mAlphabet = alphabet;
-		for (int index = 0; index < mThreads.size(); index++) {
-			mCreatedStates.put(index, new HashMap<>());
-		}
-		mInitialThread = threads.get(0);
 
+		mCreatedStates = IntStream.range(0, mThreads.size()).mapToObj(Integer::valueOf)
+				.collect(Collectors.toMap(Function.identity(), i -> new HashMap<>()));
+		mInitialState = getOrCreateState(threads.get(0), 0, 0);
 	}
 
 	@Override
@@ -80,24 +83,17 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 
 	@Override
 	public Iterable<State> getInitialStates() {
-		final var initial = getOrCreateState(mInitialThread, 0, 0);
-		return Set.of(initial);
+		return Set.of(mInitialState);
 	}
 
 	private State getOrCreateState(final String thread, final int index, final int counter) {
 		final Map<Integer, State> counterMap = mCreatedStates.get(index);
-		if (counterMap.get(counter) == null) {
-			final State state = new State(thread, index, counter);
-			counterMap.put(counter, state);
-			mCreatedStates.put(index, counterMap);
-		}
-		return counterMap.get(counter);
-
+		return counterMap.computeIfAbsent(counter, x -> new State(thread, index, counter));
 	}
 
 	@Override
 	public boolean isInitial(final State state) {
-		return (state.getIndex() == 0 && state.getCounter() == 0);
+		return state.index() == 0 && state.counter() == 0;
 	}
 
 	@Override
@@ -118,14 +114,14 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 	@Override
 	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(final State state, final L letter) {
 		if (mIsStep.test(letter)) {
-			if (letter.getPrecedingProcedure() != state.getThread()) {
+			if (letter.getPrecedingProcedure() != state.thread()) {
 				// return Set.of(new OutgoingInternalTransition<>(letter,
 				// getOrCreateState(mThreads.get(mThreads.size()-1), mThreads.size()-1 , 0)));
 
 				// return Set.of(new OutgoingInternalTransition<>(letter, state));
 
 				final String nextThread = letter.getPrecedingProcedure();
-				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.getIndex());
+				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.index());
 				assert nextIndex != -1 : "Unknown thread " + nextThread + " not in " + mThreads;
 
 				if (mMaxSteps.get(nextIndex) == 1) {
@@ -136,13 +132,13 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 				return Set.of(new OutgoingInternalTransition<>(letter, getOrCreateState(nextThread, nextIndex, 1)));
 
 			}
-			if (state.getCounter() == mMaxSteps.get(state.getIndex()) - 1) {
-				final int nextThreadIndex = ((state.getIndex() + 1) % mThreads.size());
+			if (state.counter() == mMaxSteps.get(state.index()) - 1) {
+				final int nextThreadIndex = (state.index() + 1) % mThreads.size();
 				return Set.of(new OutgoingInternalTransition<>(letter,
 						getOrCreateState(mThreads.get(nextThreadIndex), nextThreadIndex, 0)));
 			}
 			return Set.of(new OutgoingInternalTransition<>(letter,
-					getOrCreateState(state.getThread(), state.getIndex(), state.getCounter() + 1)));
+					getOrCreateState(state.thread(), state.index(), state.counter() + 1)));
 		}
 		return Set.of(new OutgoingInternalTransition<>(letter, state));
 	}
@@ -158,48 +154,11 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 		throw new UnsupportedOperationException();
 	}
 
-	public static final class State {
-		private final String mThread;
-		private final int mIndex;
-		private final int mCounter;
-
-		public State(final String thread, final int index, final int counter) {
-			mThread = thread;
-			mIndex = index;
-			mCounter = counter;
-		}
-
-		public String getThread() {
-			return mThread;
-		}
-
-		public int getIndex() {
-			return mIndex;
-		}
-
-		public int getCounter() {
-			return mCounter;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final State other = (State) obj;
-			return Objects.equals(mThread, other.mThread) && mIndex == other.mIndex && mCounter == other.mCounter;
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(mThread, mIndex, mCounter);
+	// TODO should thread really be part of the state? It is already represented by the index.
+	public record State(String thread, int index, int counter) {
+		public State {
+			assert index >= 0 : "thread index must be non-negative, but was " + index;
+			assert counter >= 0 : "step counter must be non-negative, but was " + counter;
 		}
 	}
-
 }
