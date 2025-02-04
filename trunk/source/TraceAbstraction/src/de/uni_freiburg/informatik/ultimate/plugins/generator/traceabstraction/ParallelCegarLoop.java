@@ -104,7 +104,7 @@ extends NwaCegarLoop<L> {
 	private Integer mCounterexamplesChecked = 0;
 	private Integer mRefinementsDone = 0;
 
-	// need global program cache
+	// need global program cache, but worker need to get copy otherwise we synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
 	/**
@@ -203,8 +203,10 @@ extends NwaCegarLoop<L> {
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
 
+		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
+		cacheCopy.copyCache(mProgramCache);
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
-				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz, mProgramCache);
+				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz, cacheCopy);
 
 
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
@@ -385,6 +387,16 @@ extends NwaCegarLoop<L> {
 					// mCounterexample is being checked, make sure next thread gets a new one
 					mCounterexample = null;
 					isAbstractionEmpty(); // Prevents us from doing BFS on same abstraction in next iteration
+					if (mCounterexample != null) {
+						mLogger.info("Found new Counterexample!");
+						didntFindCexLastIteration = false;
+					}
+					if (mCounterexample == null) {
+						mLogger.info("Did not Find a Counterexample!");
+						didntFindCexLastIteration = true;
+						assert runningThreads > 0;
+						// there are probably still threads running
+					}
 				}
 			} finally {
 				// TODO if (updateBudget) {

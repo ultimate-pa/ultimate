@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class PathProgramCache<LETTER> {
 
 	private final ILogger mLogger;
-	private final Map<Set<LETTER>, Integer> mKnownPathPrograms;
-	private final List<Integer> mTraceHashes;
+	private Map<Set<LETTER>, Integer> mKnownPathPrograms;
+	private List<Integer> mTraceHashes;
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
@@ -99,12 +99,25 @@ public class PathProgramCache<LETTER> {
 			mLogger.warn("You did not report this counterexample before!");
 			return 0;
 		}
-		return count.intValue();
+		return count;
 	}
 
 	public List<Integer> computeSortedHistrogram() {
 		final Integer[] visualizationArray = HistogramOfIterable.generateVisualizationArray(mKnownPathPrograms);
 		return Collections.unmodifiableList(Arrays.asList(visualizationArray));
+	}
+
+	public Map<Set<LETTER>, Integer> getPaths() {
+		return mKnownPathPrograms;
+	}
+
+	public final List<Integer> getHashes() {
+		return mTraceHashes;
+	}
+
+	public void copyCache(final PathProgramCache<LETTER> programCache) {
+		mKnownPathPrograms = programCache.getPaths();
+		mTraceHashes = getHashes();
 	}
 
 }
