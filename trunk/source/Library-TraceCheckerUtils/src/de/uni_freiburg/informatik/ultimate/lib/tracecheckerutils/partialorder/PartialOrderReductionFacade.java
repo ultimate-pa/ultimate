@@ -69,6 +69,9 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVi
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -132,7 +135,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IPersistentSetChoice<L, IPredicate> mPersistent;
 	private final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> mGetBudget;
 
+	private final boolean mPreferenceMonitorArtifact;
+
 	private final Statistics mStatistics = new Statistics();
+	private IElement mArtifact;
 
 	public PartialOrderReductionFacade(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs, final PartialOrderMode mode,
@@ -140,7 +146,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			StepType steptype, final String threads, final int maxStep, final boolean enableHeuristic,
 			final List<IIndependenceRelation<IPredicate, L>> independenceRelations,
 			final Function<SleepMapReduction<L, IPredicate, IPredicate>, IBudgetFunction<L, IPredicate>> getBudget,
-			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore) {
+			final Function<StateSplitter<IPredicate>, IDeadEndStore<?, IPredicate>> getDeadEndStore,
+			final boolean preferenceMonitorArtifact) {
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 
@@ -164,6 +171,8 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		if (enableHeuristic) {
 			steptype = StepType.LOOP;
 		}
+
+		mPreferenceMonitorArtifact = preferenceMonitorArtifact;
 		mPreferenceOrder =
 				getPreferenceOrder(complexPreferenceOrder, steptype, threads, maxStep, icfg, enableHeuristic);
 		// mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
@@ -217,6 +226,16 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 
 		if (order.getMonitor() != null) {
+			if (mPreferenceMonitorArtifact) {
+				try {
+					mArtifact =
+							new PreferenceMonitorToUltimateModel<>(mAutomataServices, order).transformToUltimateModel();
+				} catch (final AutomataOperationCanceledException e) {
+					throw new ToolchainCanceledException(e,
+							new RunningTaskInfo(getClass(), "storing preference monitor as artifact"));
+				}
+			}
+
 			final var splitter = mStateSplitter;
 			mDfsOrder = new Preference2DfsOrder<>(order, x -> {
 				final var y = (MonitorPredicate) splitter.getOriginal(x);
@@ -227,6 +246,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 
 		return order;
+	}
+
+	public IElement getArtifact() {
+		return mArtifact;
 	}
 
 	private Predicate<L> getStepDefinition(final IIcfg<?> icfg, final StepType steptype,

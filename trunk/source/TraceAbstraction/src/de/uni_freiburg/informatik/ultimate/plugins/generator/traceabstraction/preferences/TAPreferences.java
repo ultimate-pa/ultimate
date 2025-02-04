@@ -98,7 +98,7 @@ public final class TAPreferences {
 	private final IndependenceSettings mLbeIndependenceSettings;
 
 	public enum Artifact {
-		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
+		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG, PREFERENCE_MONITOR
 	}
 
 	public enum InterpolantAutomatonEnhancement {

@@ -127,7 +127,7 @@ public class PartialOrderAbstractionProvider<L extends IIcfgTransition<?>>
 						.withSyntacticCheck().cached().threadSeparated().build();
 		final PartialOrderReductionFacade<L> por = new PartialOrderReductionFacade<>(mServices, mPredicateFactory, icfg,
 				errorLocs, mPartialOrderMode, null, mOrderType, mDfsOrderSeed, mStepType, mThreadList, mMaxStep,
-				mEnableHeuristic, List.of(indep), null, null);
+				mEnableHeuristic, List.of(indep), null, null, false);
 
 		// actually apply POR to automaton
 		final NestedWordAutomaton<L, IPredicate> result = por.constructReduction(input, mStateFactory);

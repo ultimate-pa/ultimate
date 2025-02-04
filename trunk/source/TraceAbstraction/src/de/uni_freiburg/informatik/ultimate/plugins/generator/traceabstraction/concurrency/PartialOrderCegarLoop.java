@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMonitorStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -110,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IIpAbStrategyModule;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
@@ -197,7 +199,8 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		mPOR = new PartialOrderReductionFacade<>(services, predicateFactory, rootNode, errorLocs, mPartialOrderMode,
 				mPref.getComplexPreferenceOrderSpec(), mPref.getDfsOrderType(), mPref.getDfsOrderSeed(),
 				mPref.getOrderStepType(), mPref.getOrderThreads(), mPref.getOrderMaxStep(), mPref.getOrderHeuristic(),
-				relations, this::makeBudget, mSupportsDeadEnds ? this::createDeadEndStore : null);
+				relations, this::makeBudget, mSupportsDeadEnds ? this::createDeadEndStore : null,
+				mPref.artifact() == Artifact.PREFERENCE_MONITOR);
 		assert mSupportsDeadEnds == (mDeadEndStore != null);
 
 		mProgram = initialAbstraction;
@@ -339,6 +342,14 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 
 		mCounterexampleConComFound = false;
 		return super.isCounterexampleFeasible();
+	}
+
+	@Override
+	public IElement getArtifact() {
+		if (mPref.artifact() == Artifact.PREFERENCE_MONITOR) {
+			return mPOR.getArtifact();
+		}
+		return super.getArtifact();
 	}
 
 	@Override
