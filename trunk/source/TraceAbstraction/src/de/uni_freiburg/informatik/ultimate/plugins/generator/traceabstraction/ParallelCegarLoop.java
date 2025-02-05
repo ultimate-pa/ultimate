@@ -83,10 +83,10 @@ extends NwaCegarLoop<L> {
 
 	boolean mComputeHoareAnnotation;
 
-	ExecutorService mExec;
+	private final ExecutorService mExec;
 
-	int mThreadLimit; // Runtime.avalablecores or so
-	CompletionService<WorkerThreadResult<L, A>> mECS;
+	private int mThreadLimit; // Runtime.avalablecores or so
+	private final CompletionService<WorkerThreadResult<L, A>> mECS;
 	private final IIcfg<?> mRootNode;
 
 	private final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
@@ -102,6 +102,11 @@ extends NwaCegarLoop<L> {
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
 	private Integer mRefinementsDone = 0;
+	private Integer mCountTimeoutsInSearch = 0;
+	private Integer mCountFailedRunConstructions = 0;
+	private Integer mCountFailedToFindCex = 0;
+	private Integer mCountBfsFoundCex = 1;
+	private Integer maxActiveThreads = 0;
 
 	// need global program cache, but worker need to get copy otherwise we synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
@@ -363,11 +368,13 @@ extends NwaCegarLoop<L> {
 						}
 						if (mCounterexample == null) {
 							mLogger.info("Did not Find a Counterexample!");
+							mCountFailedToFindCex += 1;
 							didntFindCexLastIteration = true;
 							assert runningThreads > 0;
 							// there are probably still threads running
 						}
 					} else {
+						mCountBfsFoundCex += 1;
 						mLogger.info("Found new Counterexample via BFS!");
 					}
 				}
@@ -386,7 +393,6 @@ extends NwaCegarLoop<L> {
 					runningThreads += 1;
 
 					mCounterexamplesChecked += 1;
-					mLogger.info("Counterexamples: " + mCounterexamplesChecked);
 					// add mCounterexample to list such that we dont get it twice in our search
 					addCounterexampleToSet((NestedRun<L, ?>) mCounterexample);
 					// mCounterexample is being checked, make sure next thread gets a new one
@@ -398,11 +404,23 @@ extends NwaCegarLoop<L> {
 					}
 					if (mCounterexample == null) {
 						mLogger.info("Did not Find a Counterexample!");
+						mCountFailedToFindCex += 1;
 						didntFindCexLastIteration = true;
 						assert runningThreads > 0;
 						// there are probably still threads running
 					}
 				}
+				if (runningThreads > maxActiveThreads) {
+					maxActiveThreads = runningThreads;
+				}
+				mLogger.info("Iteration : " + getIteration());
+				mLogger.info("Refinements: " + mRefinementsDone);
+				mLogger.info("Counterexamples: " + mCounterexamplesChecked);
+				mLogger.info("SearchTimeout: " + mCountTimeoutsInSearch);
+				mLogger.info("RunConstructionFailed: " + mCountFailedRunConstructions);
+				mLogger.info("SearchFailed: " + mCountFailedToFindCex);
+				mLogger.info("BFS: " + mCountBfsFoundCex);
+				mLogger.info("ActiveThreads: " + maxActiveThreads);
 			} finally {
 				// TODO if (updateBudget) {
 				// final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
@@ -457,9 +475,6 @@ extends NwaCegarLoop<L> {
 		threadResult.garbageCollect();
 
 		// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
-
-		mLogger.info("Refinements: " + mRefinementsDone);
-		mLogger.info("Overalliterations: " + getIteration());
 		mLogger.info("Refinement done.");
 	}
 
@@ -562,9 +577,16 @@ extends NwaCegarLoop<L> {
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		assert useGoalSetForIsEmpty || possibleEndPoints == null;
 		if (mParallelSearchSrategy) {
-			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), abstraction,
+
+			final IsEmptyParallel search = new IsEmptyParallel<>(new AutomataLibraryServices(mServices), abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples).getNestedRun();
+					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples);
+			if (search.searchTimedOut()) {
+				mCountTimeoutsInSearch += 1;
+			}
+			mCountFailedRunConstructions += search.runConstructionFailedXTimes();
+			return search.getNestedRun();
+
 		} else if(useGoalSetForIsEmpty){
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
 					Collections.emptySet(), possibleEndPoints).getNestedRun();

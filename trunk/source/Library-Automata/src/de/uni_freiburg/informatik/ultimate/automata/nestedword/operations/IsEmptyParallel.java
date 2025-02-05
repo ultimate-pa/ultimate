@@ -199,6 +199,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 */
 	private final SearchStrategy mStrategy;
 
+	private final long mTimeOut;
+
+	private int countFailedRunConstruction = 0;
+	private boolean mTimedout = false;
+
 	private NestedRun<LETTER, STATE> mReconstructionOneStepRun;
 	private STATE mReconstructionPredK;
 
@@ -248,6 +253,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
+
+		final long start = System.currentTimeMillis();
+		mTimeOut = start + 30 * 1000;
 	}
 
 	/**
@@ -673,7 +681,16 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
 					throws AutomataOperationCanceledException {
+
+		if (System.currentTimeMillis() > mTimeOut) {
+			mTimedout = true;
+			return null;
+		}
 		int positionOfThisSubSearch = position;
+		//		if (mBacktracks >= mMaxBacktracks) {
+		//			return null;
+		//		}
+
 		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
@@ -752,6 +769,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					if (succ.equals(runToGoal.getStateAtPosition(0))) {
 						return run.concatenate(runToGoal);
 					}
+
+					countFailedRunConstruction += 1;
 				}
 			}
 		} else {
@@ -1135,25 +1154,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		return "Finished " + getOperationName() + ". Found accepting run of length " + mAcceptingRun.getLength();
 	}
 
-	private class Successor {
-		Integer mScore;
-		OutgoingInternalTransition<LETTER, STATE> mTransition;
-		ArrayList<NestedRun<LETTER, STATE>> mCounterexamples = new ArrayList<>();
+	public boolean searchTimedOut() {
+		return mTimedout;
+	}
 
-		public Successor(final int score, final OutgoingInternalTransition<LETTER, STATE> transition,
-				final ArrayList<NestedRun<LETTER, STATE>> counterexamples) {
-			mScore = score;
-			mTransition = transition;
-			mCounterexamples = counterexamples;
-		}
-
-		public Integer getScore() {
-			return mScore;
-		}
-
-		public ArrayList<NestedRun<LETTER, STATE>> getCounterexamplesUnderConsideration() {
-			return mCounterexamples;
-		}
+	public int runConstructionFailedXTimes() {
+		return countFailedRunConstruction;
 	}
 
 	private class PQState {
