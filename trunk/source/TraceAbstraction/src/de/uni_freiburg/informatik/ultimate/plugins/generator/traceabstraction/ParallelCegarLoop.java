@@ -215,7 +215,8 @@ extends NwaCegarLoop<L> {
 
 		cacheCopy.copyCache(mProgramCache);
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
-				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz, cacheCopy);
+				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz,
+				new PathProgramCache<>(mLogger));
 
 
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
