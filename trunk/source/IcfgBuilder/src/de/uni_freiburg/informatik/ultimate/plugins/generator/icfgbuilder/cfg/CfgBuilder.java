@@ -624,6 +624,8 @@ public class CfgBuilder {
 		 */
 		private Stack<BoogieIcfgLocation> mWhileExits;
 
+		private Map<String, Integer> mGotoTargetCounter;
+
 		/**
 		 * Builds the control flow graph of a single procedure according to a given implementation.
 		 *
@@ -644,6 +646,7 @@ public class CfgBuilder {
 			if (statements.length == 0) {
 				mEdges = new HashSet<>();
 			}
+			mGotoTargetCounter = BoogieUtils.countGotoTargets(statements);
 
 			mLabel2LocNodes = new HashMap<>();
 
@@ -743,6 +746,18 @@ public class CfgBuilder {
 				if (mRemoveAssumeTrueStmt && isPlainAssumeTrueStatement(st) && !isOverapproximation(st)) {
 					mRemovedAssumeTrueStatements++;
 					continue;
+				}
+				if (st instanceof final Label laSt) {
+					final int gotoTarget = mGotoTargetCounter.getOrDefault(laSt.getName(), 0);
+					if (gotoTarget == 0) {
+						// not target of a goto
+						continue;
+					} else if (gotoTarget == 1 && codeblock[i - 1] instanceof final GotoStatement goSt
+							&& goSt.getLabels().length == 1 && goSt.getLabels()[0].equals(laSt.getName())) {
+						// only target of a got in the line before. Skip both, goto and label
+						i--;
+						continue;
+					}
 				}
 				if (currentLocation instanceof StatementSequence && !(st instanceof CallStatement || isAssuAssiHavoc(st)
 						|| st instanceof Label || st instanceof AssertStatement || st instanceof WhileStatement)) {
