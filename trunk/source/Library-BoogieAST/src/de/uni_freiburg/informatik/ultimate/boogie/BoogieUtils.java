@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -103,6 +106,61 @@ public class BoogieUtils {
 			return true;
 		}
 		return containsOuterBreak(st.getElsePart());
+	}
+
+	public static Map<String, Integer> countGotoTargets(final Statement[] statementList) {
+		final Map<String, Integer> result = new HashMap<>();
+		countGotoTargets(result, statementList);
+		return result;
+	}
+
+	private static void countGotoTargets(final Map<String, Integer> map, final Statement[] statementList) {
+		for (final Statement st : statementList) {
+			countGotoTargets(map, st);
+		}
+	}
+
+	private static void countGotoTargets(final Map<String, Integer> map, final Statement st) {
+		switch (st) {
+		case final BreakStatement brSt:
+			return;
+		case final AssignmentStatement assiSt:
+			return;
+		case final AssumeStatement assuSt:
+			return;
+		case final HavocStatement havoSt:
+			return;
+		case final AssertStatement assSt:
+			return;
+		case final CallStatement caSt:
+			return;
+		case final JoinStatement joSt:
+			return;
+		case final ForkStatement foSt:
+			return;
+		case final Label laSt:
+			return;
+		case final ReturnStatement reSt:
+			return;
+		case final IfStatement ifSt:
+			countGotoTargets(ifSt.getThenPart());
+			countGotoTargets(ifSt.getElsePart());
+			return;
+		case final WhileStatement whiSt:
+			countGotoTargets(whiSt.getBody());
+			return;
+		case final AtomicStatement atoSt:
+			countGotoTargets(atoSt.getBody());
+			return;
+		case final GotoStatement goSt:
+			for (final String label : goSt.getLabels()) {
+				final Integer occ = map.getOrDefault(label, 0);
+				map.put(label, occ + 1);
+			}
+			return;
+		default:
+			throw new UnsupportedOperationException("Statement " + st.getClass() + " not supported");
+		}
 	}
 
 }
