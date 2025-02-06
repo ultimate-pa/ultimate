@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2023 Matthias Zumkeller
- * Copyright (C) 2023 University of Freiburg
+ * Copyright (C) 2025 Matthias Zumkeller
+ * Copyright (C) 2025 University of Freiburg
  *
  * This file is part of the ULTIMATE Proofs Library.
  *
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -52,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Check a given Empire annotation for validity
+ * Check a given Empire annotation for (disjunctive) validity
  *
  * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
  *
@@ -61,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <LETTER>
  *            The type of statements in the Petri program
  */
-public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
+public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
@@ -74,7 +73,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	private final IPetriNet<LETTER, PLACE> mNet;
 	private final Validity mValidity;
 
-	public EmpireValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public DisjunctiveEmpireValidityCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final MonolithicImplicationChecker implicationChecker, final BasicPredicateFactory factory,
 			final IPetriNet<LETTER, PLACE> net, final ModifiableGlobalsTable modifiableGlobals,
 			final EmpireAnnotation<PLACE> empire) {
@@ -116,13 +115,12 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		for (final Pair<Territory<PLACE>, IPredicate> pair : initialTerritories) {
 			final Set<IPredicate> lawSet = mEmpireAnnotation.getLawSet(pair.getFirst());
 			if (mImplicationChecker.checkImplication(trueIPredicate, false, mFactory.and(lawSet),
-					false) != Validity.VALID) {
-				mLogger.warn("Initial Territoriy maps to Law that does not evaluate to true:\n %s \n %s",
-						pair.getFirst(), pair.getSecond());
-				return Validity.INVALID;
+					false) == Validity.VALID) {
+				return Validity.VALID;
 			}
 		}
-		return Validity.VALID;
+		mLogger.warn("No initial Pair contains a law evaluating to true");
+		return Validity.INVALID;
 	}
 
 	private Validity checkSuccessorValidity(final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories) {
@@ -145,18 +143,18 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 				final var bystanders = territory.getRegions().stream()
 						.filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
 						.collect(Collectors.toSet());
-				final var equivalentTerritories = getEquivalentTerritories(transition, bystanders);
-				final var lawConjunction = getLawConjunction(equivalentTerritories);
 				final var successorPairs = mEmpireAnnotation.getSuccessorPairs(bystanders, successors);
-				final Validity contradiction = checkContradiction(lawConjunction, transition, territory);
+				final Validity contradiction = checkContradiction(law, transition, territory);
 				if (contradiction != Validity.VALID && successorPairs.isEmpty()) {
 					mLogger.warn(
 							"The pair:\n \t%s \n \thas no valid successor and does not evaluate to false with \n \ttransition %s",
 							pair, transition.getSymbol().getTransformula());
 					return Validity.INVALID;
 				}
-				final var hoareValidity = checkHoareValidity(successorPairs, lawConjunction, transition);
-				if (!hoareValidity) {
+				final var hoareValidity = checkHoareValidity(successorPairs, law, transition);
+				if (!hoareValidity && contradiction != Validity.VALID) {
+					mLogger.warn("The pair:\n \t%s \n \thas no valid successor for \n \ttransition %s", pair,
+							transition.getSymbol().getTransformula());
 					return Validity.INVALID;
 				}
 				for (final Pair<Territory<PLACE>, IPredicate> pair2 : successorPairs) {
@@ -216,13 +214,11 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition) {
 		for (final Pair<Territory<PLACE>, IPredicate> succPair : successorPairs) {
 			final var valid = checkHoareTriple(lawConjunction, succPair.getSecond(), transition);
-			if (!valid) {
-				mLogger.warn("Invalid Hoare Triple\n \tprecondition %s \taction %s \tpostcondition %s", lawConjunction,
-						transition.getSymbol().getTransformula(), succPair.getSecond());
-				return false;
+			if (valid) {
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 	List<Pair<Territory<PLACE>, IPredicate>> getStrongSuccessors(
@@ -236,27 +232,6 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 			}
 		}
 		return result;
-	}
-
-	private Set<Pair<Territory<PLACE>, IPredicate>> getEquivalentTerritories(final Transition<LETTER, PLACE> transition,
-			final Set<Region<PLACE>> bystanders) {
-		final var result = new HashSet<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
-			final var territory = pair.getFirst();
-			final var law = pair.getSecond();
-			if (!territory.getRegions().containsAll(bystanders) || !territory.enables(transition)) {
-				continue;
-			}
-			result.add(pair);
-		}
-		return result;
-	}
-
-	private IPredicate getLawConjunction(final Set<Pair<Territory<PLACE>, IPredicate>> pairs) {
-		final Set<IPredicate> lawSet = pairs.stream()
-				.map((Function<? super Pair<Territory<PLACE>, IPredicate>, ? extends IPredicate>) Pair::getSecond)
-				.collect(Collectors.toSet());
-		return mFactory.and(lawSet);
 	}
 
 	public Validity getValidity() {

@@ -53,10 +53,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.PlacesCoRelation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DisjunctiveEmpireValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -179,8 +179,8 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 		mStatistics.startEmpireValidity();
 		try {
 			final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-			final var checker = new EmpireValidityCheck<>(mServices, mMgdScript, implicationChecker, mFactory, mProgram,
-					mModifiableGlobals, empire);
+			final var checker = new DisjunctiveEmpireValidityCheck<>(mServices, mMgdScript, implicationChecker,
+					mFactory, mProgram, mModifiableGlobals, empire);
 			return checker.getValidity() != Validity.INVALID;
 		} finally {
 			mStatistics.stopEmpireValidity();
