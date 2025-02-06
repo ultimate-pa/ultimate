@@ -213,10 +213,11 @@ extends NwaCegarLoop<L> {
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
 
 
+		// TODO maybe we need to make the copy on the worker thread, if so everything needs to be moved i guess
 		cacheCopy.copyCache(mProgramCache);
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
 				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz,
-				new PathProgramCache<>(mLogger));
+				cacheCopy);
 
 
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);

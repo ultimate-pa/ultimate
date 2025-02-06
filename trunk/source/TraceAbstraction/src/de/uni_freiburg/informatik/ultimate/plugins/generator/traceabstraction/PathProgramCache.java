@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class PathProgramCache<LETTER> {
 
 	private final ILogger mLogger;
-	private Map<Set<LETTER>, Integer> mKnownPathPrograms;
-	private List<Integer> mTraceHashes;
+	private final Map<Set<LETTER>, Integer> mKnownPathPrograms;
+	private final List<Integer> mTraceHashes;
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
@@ -116,8 +116,8 @@ public class PathProgramCache<LETTER> {
 	}
 
 	public void copyCache(final PathProgramCache<LETTER> programCache) {
-		mKnownPathPrograms = programCache.getPaths();
-		mTraceHashes = getHashes();
+		mKnownPathPrograms.putAll(programCache.getPaths());
+		mTraceHashes.addAll(programCache.getHashes());
 	}
 
 }
