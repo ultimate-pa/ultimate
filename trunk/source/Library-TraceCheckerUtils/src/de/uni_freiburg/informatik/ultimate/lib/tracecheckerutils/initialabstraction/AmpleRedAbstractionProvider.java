@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AmpleReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
@@ -97,6 +98,10 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		// get visitor
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> originalAutomaton =
 				mUnderlying.getInitialAbstraction(icfg, errorLocs);
+
+		assert new IsDeterministic<>(mAutomataServices, originalAutomaton).getResult()
+				: "input automaton for ample set reduction must be deterministic";
+
 		final AmpleReductionConstructingVisitor<L, IPredicate> visitor = new AmpleReductionConstructingVisitor<>(
 				originalAutomaton, originalAutomaton::isInitial, originalAutomaton::isFinal,
 				originalAutomaton.getVpAlphabet(), mAutomataServices, mStateFactory, persistent);
