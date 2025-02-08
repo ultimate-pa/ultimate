@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
@@ -234,7 +235,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					throws AutomataOperationCanceledException {
 		super(services);
 		mStart = System.nanoTime() / 1000000000;
-		mTimeOut = mStart + 30;
+		mTimeOut = mStart + 5; // 5 sec timeout atm
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
 		mStartStates = startStates;
@@ -401,6 +402,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		enqueueAndMarkVisited(startpair.getUp(), startpair.getDown());
 		// enqueueAndMarkVisitedCall(succ, state);
 		while (!isQueueEmpty()) {
+			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
+				mTimedout = true;
+				return null;
+			}
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
@@ -528,7 +533,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 									activeCounterexamples.add(cexHash);
 								}
 							} else {
-								assert !counterexample.getStateAtPosition(position).equals(succ);
+								assert succ instanceof UnknownState
+								|| !counterexample.getStateAtPosition(position).equals(succ);
 							}
 						} else {
 							assert false;
@@ -693,8 +699,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
 					throws AutomataOperationCanceledException {
-
-		if (System.nanoTime() / 1000000000 > mTimeOut) {
+		if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
 			mTimedout = true;
 			return null;
 		}
@@ -1043,6 +1048,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		STATE stateK = stateKin;
 		NestedRun<LETTER, STATE> run = new NestedRun<>(state);
 		while (!startStates.contains(state) || !mReconstructionStack.isEmpty()) {
+			if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
+				mTimedout = true;
+				return null;
+			}
 			if (!computeInternalSubRun(state, stateK) && !computeCallSubRun(state, stateK)
 					&& !computeReturnSubRun(state, stateK)) {
 				if (mLogger.isWarnEnabled()) {
@@ -1148,25 +1157,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 	public NestedRun<LETTER, STATE> getNestedRun() {
 		if (!getResult()) {
-			//		assert mAcceptingRun.getWord().getCallPositions().size() >= mAcceptingRun.getWord().getPendingReturns().size();
-			int countReturnsVsCalls = 0;
 			for (int i = 0; i < mAcceptingRun.getLength() - 1; i++) {
-				if (mAcceptingRun.getWord().isCallPosition(i)) {
-					countReturnsVsCalls += 1;
-				}
-				// not sure what a pending return is
-				if (mAcceptingRun.getWord().isReturnPosition(i) || mAcceptingRun.getWord().isPendingReturn(i)) {
-					countReturnsVsCalls -= 1;
-				}
 				if (mAcceptingRun.getWord().isPendingReturn(i)) {
+					countFailedRunConstruction += 1;
 					return null;
 				}
 			}
-			if (countReturnsVsCalls < 0) {
-				countFailedRunConstruction += 1;
-				//			return null;
-			}
-
 		}
 
 		return mAcceptingRun;

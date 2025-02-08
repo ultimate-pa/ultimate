@@ -106,8 +106,12 @@ extends NwaCegarLoop<L> {
 	private Integer mCountFailedRunConstructions = 0;
 	private Integer mCountFailedToFindCex = 0;
 	private Integer mCountBfsFoundCex = 1;
+	private Integer mCountIsEmptyParallel = 0;
 	private Integer maxActiveThreads = 0;
 	private long mSearchTime = 0;
+	private int mIterationsWithMaxThreads = 0;
+	private int mIterationsWithOneThread = 0;
+	private int mExceptionInWorker = 0;
 	// need global program cache, but worker need to get copy otherwise we synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
@@ -323,8 +327,11 @@ extends NwaCegarLoop<L> {
 						} catch (final ExecutionException | InterruptedException e) {
 							// TODO better handling of exceptions in worker thread
 							e.printStackTrace();
-							mExec.shutdownNow();
-							throw new AutomataLibraryException(null, e.getMessage());
+							mLogger.info("Trace Check Failed!!");
+							mExceptionInWorker += 1;
+							doneFuture.exceptionNow();
+							// mExec.shutdownNow();
+							// throw new AutomataLibraryException(null, e.getMessage());
 						} catch (final CancellationException e) {
 							mLogger.info("Worker was cancelled!");
 						}
@@ -382,7 +389,8 @@ extends NwaCegarLoop<L> {
 				}
 				// Doesnt Need to come before search because of initial counterexample, we skip search
 				// mCounterexample can be null if no counterexample was found, but threads are still running
-				if (runningThreads < mThreadLimit && mCounterexample != null) {
+				while (runningThreads < mThreadLimit && mCounterexample != null) {
+					mLogger.info("Main: Starting Thread");
 					final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 					final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 					mServices = iterationServices;
@@ -415,6 +423,12 @@ extends NwaCegarLoop<L> {
 				if (runningThreads > maxActiveThreads) {
 					maxActiveThreads = runningThreads;
 				}
+				if (runningThreads == mThreadLimit) {
+					mIterationsWithMaxThreads += 1;
+				}
+				if (runningThreads == 1) {
+					mIterationsWithOneThread += 1;
+				}
 				mLogger.info("Iteration : " + getIteration());
 				mLogger.info("Refinements: " + mRefinementsDone);
 				mLogger.info("Counterexamples: " + mCounterexamplesChecked);
@@ -422,8 +436,12 @@ extends NwaCegarLoop<L> {
 				mLogger.info("RunConstructionFailed: " + mCountFailedRunConstructions);
 				mLogger.info("SearchFailed: " + mCountFailedToFindCex);
 				mLogger.info("BFS: " + mCountBfsFoundCex);
+				mLogger.info("IsEmptyParallel: " + mCountIsEmptyParallel);
 				mLogger.info("ActiveThreads: " + maxActiveThreads);
+				mLogger.info("IterationsWithMaxThreads: " + mIterationsWithMaxThreads);
+				mLogger.info("IterationsWithONEThread: " + mIterationsWithOneThread);
 				mLogger.info("SearchTime: " + mSearchTime);
+				mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
 			} finally {
 				// TODO if (updateBudget) {
 				// final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
@@ -580,23 +598,36 @@ extends NwaCegarLoop<L> {
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		assert useGoalSetForIsEmpty || possibleEndPoints == null;
 		if (mParallelSearchSrategy) {
-
+			mLogger.info("start");
 			final IsEmptyParallel<L, IPredicate> search = new IsEmptyParallel<>(new AutomataLibraryServices(mServices),
 					abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples);
-			final NestedRun<L, IPredicate> result = search.getNestedRun();
+			NestedRun<L, IPredicate> result = search.getNestedRun();
 			if (search.searchTimedOut()) {
 				mCountTimeoutsInSearch += 1;
 			}
 			mSearchTime += search.getTimeSpend();
 			mCountFailedRunConstructions += search.runConstructionFailedXTimes();
+			// TODO deactivate the try for practice
 			try {
 				search.checkResult(mStateFactoryForRefinement);
 			} catch (final AutomataLibraryException e) {
 				e.printStackTrace();
 				assert false;
 			}
+			if (result != null) {
+				mCountIsEmptyParallel += 1;
+			} else {
+				final NestedRun<L, IPredicate> dfs = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction,
+						IsEmpty.SearchStrategy.DFS).getNestedRun();
+				final List<L> trace = dfs.getWord().asList();
+				final int traceHash = trace.hashCode();
+				if (!mAllCounterexamples.containsKey(traceHash)) {
+					result = dfs;
+				}
+			}
+			mLogger.info("end");
 			return result;
 
 		} else if(useGoalSetForIsEmpty){
