@@ -107,7 +107,7 @@ extends NwaCegarLoop<L> {
 	private Integer mCountFailedToFindCex = 0;
 	private Integer mCountBfsFoundCex = 1;
 	private Integer maxActiveThreads = 0;
-
+	private long mSearchTime = 0;
 	// need global program cache, but worker need to get copy otherwise we synchronize
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
@@ -423,6 +423,7 @@ extends NwaCegarLoop<L> {
 				mLogger.info("SearchFailed: " + mCountFailedToFindCex);
 				mLogger.info("BFS: " + mCountBfsFoundCex);
 				mLogger.info("ActiveThreads: " + maxActiveThreads);
+				mLogger.info("SearchTime: " + mSearchTime);
 			} finally {
 				// TODO if (updateBudget) {
 				// final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
@@ -580,14 +581,23 @@ extends NwaCegarLoop<L> {
 		assert useGoalSetForIsEmpty || possibleEndPoints == null;
 		if (mParallelSearchSrategy) {
 
-			final IsEmptyParallel search = new IsEmptyParallel<>(new AutomataLibraryServices(mServices), abstraction,
+			final IsEmptyParallel<L, IPredicate> search = new IsEmptyParallel<>(new AutomataLibraryServices(mServices),
+					abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples);
+			final NestedRun<L, IPredicate> result = search.getNestedRun();
 			if (search.searchTimedOut()) {
 				mCountTimeoutsInSearch += 1;
 			}
+			mSearchTime += search.getTimeSpend();
 			mCountFailedRunConstructions += search.runConstructionFailedXTimes();
-			return search.getNestedRun();
+			try {
+				search.checkResult(mStateFactoryForRefinement);
+			} catch (final AutomataLibraryException e) {
+				e.printStackTrace();
+				assert false;
+			}
+			return result;
 
 		} else if(useGoalSetForIsEmpty){
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),

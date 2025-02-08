@@ -118,6 +118,9 @@ public class HistoryRecordingScript extends WrapperScript {
 	 * maps for the termvariables for boogievars
 	 */
 	public void addTermVariableToMap(final TermVariable workerTv, final TermVariable mainTv) {
+		if (mMainScript == null) {
+			return;
+		}
 		assert !workerTv.equals(mainTv);
 		workerTermVariableToMainTermVariable.put(workerTv, mainTv);
 	}

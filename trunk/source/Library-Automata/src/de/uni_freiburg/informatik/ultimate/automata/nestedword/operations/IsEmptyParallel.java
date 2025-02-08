@@ -199,6 +199,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 */
 	private final SearchStrategy mStrategy;
 
+	private long mStart = 0;
+	private long mTimeSpendSearching = 0;
 	private final long mTimeOut;
 
 	private int countFailedRunConstruction = 0;
@@ -231,6 +233,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, ?>> counterexamples)
 					throws AutomataOperationCanceledException {
 		super(services);
+		mStart = System.nanoTime() / 1000000000;
+		mTimeOut = mStart + 30;
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
 		mStartStates = startStates;
@@ -254,8 +258,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			mLogger.info(exitMessage());
 		}
 
-		final long start = System.currentTimeMillis();
-		mTimeOut = start + 30 * 1000;
+
 	}
 
 	/**
@@ -356,6 +359,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		callPreds.add(stateK);
 	}
 
+	private void unmarkCall(final STATE state, final STATE stateK) {
+
+		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
+		assert callPreds != null;
+		callPreds.remove(stateK);
+
+	}
 	/**
 	 * @return true iff the state pair (state,stateK) was already visited.
 	 */
@@ -384,7 +394,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		// mSummaryReturnSymbol.clear();
 		mReconstructionStack.clear();
 		mReturnSubRun.clear();
-		assert isQueueEmpty();
+		if (!isQueueEmpty()) {
+			return null;
+		}
 		// is it a call or a internal predi?
 		enqueueAndMarkVisited(startpair.getUp(), startpair.getDown());
 		// enqueueAndMarkVisitedCall(succ, state);
@@ -682,7 +694,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
 					throws AutomataOperationCanceledException {
 
-		if (System.currentTimeMillis() > mTimeOut) {
+		if (System.nanoTime() / 1000000000 > mTimeOut) {
 			mTimedout = true;
 			return null;
 		}
@@ -709,7 +721,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			}
 		} else {
 			mVisitedPairs.clear();
-			return getAcceptingRun(pair);
+			try {
+				return getAcceptingRun(pair);
+			} catch (final AssertionError ae) {
+				return null;
+			}finally {
+
+			}
+
 		}
 
 		// equality intended here
@@ -740,12 +759,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				NestedRun<LETTER, STATE> runToGoal;
 				NestedRun<LETTER, STATE> run = null;
 				if (startpq.isCall()) {
-					// markCallVisited(state, stateK);
+					markCallVisited(state, stateK);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(state, succ), startpq.getCounterexamplesUnderConsideration());
 
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
+					} else {
+						unmarkCall(state, stateK);
 					}
 				} else if (startpq.isReturn()) {
 					// markCallVisited(stateK, state);
@@ -754,6 +775,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					addSummary(stateK, succ, state, symbol);
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.MINUS_INFINITY, succ);
+					} else {
+						//						unmarkCall(stateK, state);
 					}
 
 				} else {
@@ -845,7 +868,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				continue;
 			}
 			if (getCallStatesOfCallState(stateK).isEmpty()) {
-				assert false;
+				//				assert false;
+
 			}
 			for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
 				addSummary(stateK, succ, state, symbol);
@@ -1036,7 +1060,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					System.out.println("Cutting off from suffix " + run.getStateAtPosition(i));
 
 				}
-				//				return null;
 				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
 						+ " run is " + run.getStateSequence());
 			}
@@ -1124,7 +1147,34 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	}
 
 	public NestedRun<LETTER, STATE> getNestedRun() {
+		if (!getResult()) {
+			//		assert mAcceptingRun.getWord().getCallPositions().size() >= mAcceptingRun.getWord().getPendingReturns().size();
+			int countReturnsVsCalls = 0;
+			for (int i = 0; i < mAcceptingRun.getLength() - 1; i++) {
+				if (mAcceptingRun.getWord().isCallPosition(i)) {
+					countReturnsVsCalls += 1;
+				}
+				// not sure what a pending return is
+				if (mAcceptingRun.getWord().isReturnPosition(i) || mAcceptingRun.getWord().isPendingReturn(i)) {
+					countReturnsVsCalls -= 1;
+				}
+				if (mAcceptingRun.getWord().isPendingReturn(i)) {
+					return null;
+				}
+			}
+			if (countReturnsVsCalls < 0) {
+				countFailedRunConstruction += 1;
+				//			return null;
+			}
+
+		}
+
 		return mAcceptingRun;
+	}
+
+	public long getTimeSpend() {
+		mTimeSpendSearching = System.nanoTime() / 1000000000 - mStart;
+		return mTimeSpendSearching;
 	}
 
 	@Override
