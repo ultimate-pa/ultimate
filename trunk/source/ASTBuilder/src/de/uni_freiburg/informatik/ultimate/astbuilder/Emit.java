@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Emits classes etc.
@@ -225,15 +226,35 @@ public class Emit {
 	 *            node.
 	 */
 	public void emitClassDeclaration(final Node node) {
+		final String abstractModifier = node.isAbstract() ? "abstract " : EMPTY_STRING;
 		final String extendsClause = getBaseClass(node).map(name -> " extends " + name).orElse(EMPTY_STRING);
 		final String implementsClause =
 				node.getInterfaces() != null ? " implements " + node.getInterfaces() : EMPTY_STRING;
-		mWriter.println("public " + (node.isAbstract() ? "abstract " : EMPTY_STRING) + "class " + node.getName()
-				+ extendsClause + implementsClause + " {");
+
+		final String sealedModifier;
+		final String permitsClause;
+		if (isSealed(node) && node.isAbstract()) {
+			sealedModifier = "sealed ";
+			permitsClause = " permits " + mGrammar.getNodeTable().values().stream()
+					.filter(n -> node.equals(n.getParent())).map(Node::getName).collect(Collectors.joining(", "));
+		} else if (isSealed(node)) {
+			sealedModifier = "final ";
+			permitsClause = EMPTY_STRING;
+		} else {
+			sealedModifier = node.getParent() != null && isSealed(node.getParent()) ? "non-sealed " : EMPTY_STRING;
+			permitsClause = EMPTY_STRING;
+		}
+
+		mWriter.println("public " + abstractModifier + sealedModifier + "class " + node.getName() + extendsClause
+				+ implementsClause + permitsClause + " {");
 	}
 
 	protected Optional<String> getBaseClass(final Node node) {
 		return Optional.ofNullable(node.getParent()).map(Node::getName);
+	}
+
+	protected boolean isSealed(final Node node) {
+		return true;
 	}
 
 	/**

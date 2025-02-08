@@ -6,7 +6,7 @@ import java.util.HashSet;
 /**
  * Represents a node.
  */
-public class Node {
+public final class Node {
     /**
      * The name of this node.
      */
