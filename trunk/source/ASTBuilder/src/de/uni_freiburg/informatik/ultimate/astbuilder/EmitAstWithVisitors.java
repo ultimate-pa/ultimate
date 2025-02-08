@@ -132,6 +132,11 @@ public abstract class EmitAstWithVisitors extends Emit {
 	}
 
 	@Override
+	protected boolean isSealed(final Node node) {
+		return !isNonClassicNode(node);
+	}
+
+	@Override
 	public void emitNodeHook(final Node node) {
 		if (node.name.equals(getVisitorName())) {
 			emitVisitorHook();
