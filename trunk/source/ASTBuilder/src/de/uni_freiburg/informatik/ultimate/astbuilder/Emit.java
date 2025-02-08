@@ -32,6 +32,7 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -224,9 +225,15 @@ public class Emit {
 	 *            node.
 	 */
 	public void emitClassDeclaration(final Node node) {
+		final String extendsClause = getBaseClass(node).map(name -> " extends " + name).orElse(EMPTY_STRING);
+		final String implementsClause =
+				node.getInterfaces() != null ? " implements " + node.getInterfaces() : EMPTY_STRING;
 		mWriter.println("public " + (node.isAbstract() ? "abstract " : EMPTY_STRING) + "class " + node.getName()
-				+ (node.getParent() != null ? (" extends " + node.getParent().getName()) : EMPTY_STRING)
-				+ (node.getInterfaces() != null ? (" implements " + node.getInterfaces()) : EMPTY_STRING) + " {");
+				+ extendsClause + implementsClause + " {");
+	}
+
+	protected Optional<String> getBaseClass(final Node node) {
+		return Optional.ofNullable(node.getParent()).map(Node::getName);
 	}
 
 	/**
