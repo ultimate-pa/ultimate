@@ -847,5 +847,9 @@ public final class Boogie2ACSL {
 		public String toString() {
 			return ACSLPrettyPrinter.print(mExpression);
 		}
+
+		public BacktranslatedExpression asOldExpression() {
+			return new BacktranslatedExpression(new OldValueExpression(mExpression), mCType, mRange);
+		}
 	}
 }

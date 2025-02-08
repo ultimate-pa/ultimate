@@ -274,6 +274,11 @@ Expression ::=
 	| { /** This can be used as call forall parameter, or as if or 
 	     * while condition.  In all other places it is forbidden. */ 
 		WildcardExpression }
+	| { /** This is used to represent addresses in backtranslated program executions.
+	     *  There is no corresponding grammar rule for the parser. */
+	    FakePointerExpression }
+		base : Expression
+		offset : Expression
 	);
  
 ACSLType ::= 
