@@ -751,20 +751,17 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final Contract node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final ArrayList<Specification> spec = new ArrayList<>();
-		// First we catch the case that a contract is at a FunctionDefinition
-		if (node instanceof IASTFunctionDefinition) {
-			final String msg = "Syntax Error, Contracts on FunctionDefinition are not allowed";
-			throw new IncorrectSyntaxException(loc, msg);
-		}
 
+		final ArrayList<Specification> spec = new ArrayList<>();
 		for (final ContractStatement stmt : node.getContractStmt()) {
 			spec.addAll(Arrays.asList(((ContractResult) main.dispatch(stmt, main.getAcslHook())).getSpecs()));
 		}
+
 		if (node.getBehaviors() != null && node.getBehaviors().length != 0) {
 			final String msg = "Not yet implemented: Behaviour";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+
 		// TODO : node.getCompleteness();
 		mSpecType = ACSLHandler.SPEC_TYPE.NOT;
 		return new ContractResult(spec.toArray(new Specification[spec.size()]));
