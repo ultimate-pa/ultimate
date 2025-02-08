@@ -452,8 +452,8 @@ public class Emit {
 
 	private void emitParams1(final Parameter[] parameters) {
 		/* collect enum types */
-		for (int i = 0; i < parameters.length; i++) {
-			String ptype = parameters[i].getType();
+		for (final Parameter parameter : parameters) {
+			String ptype = parameter.getType();
 			if (ptype.startsWith("!")) {
 				/* java 1.5 enum types */
 				int nextComma = ptype.indexOf(',', 1);
@@ -484,7 +484,7 @@ public class Emit {
 				mWriter.println(builder.toString());
 				mWriter.println("    }");
 				mWriter.println();
-				parameters[i].setType(enumName);
+				parameter.setType(enumName);
 				mEnumTypes.add(enumName);
 			} else if (ptype.startsWith(",")) {
 				int idx = 0;
@@ -499,13 +499,13 @@ public class Emit {
 					ptype = ptype.substring(nextComma);
 				}
 				mWriter.println();
-				parameters[i].setType("int");
+				parameter.setType("int");
 			}
 		}
 
-		for (int i = 0; i < parameters.length; i++) {
-			formatComment(mWriter, "    ", parameters[i].getComment());
-			mWriter.println("    " + parameters[i].getType() + BLANK + parameters[i].getName() + SEMICOLON);
+		for (final Parameter parameter : parameters) {
+			formatComment(mWriter, "    ", parameter.getComment());
+			mWriter.println("    " + parameter.getType() + BLANK + parameter.getName() + SEMICOLON);
 			mWriter.println();
 		}
 	}
@@ -514,9 +514,9 @@ public class Emit {
 		mWriter.println("        StringBuffer sb = new StringBuffer();");
 		mWriter.println("        sb.append(\"" + name + "\").append('[');");
 		String comma = EMPTY_STRING;
-		for (int i = 0; i < parameters.length; i++) {
-			final String pname = parameters[i].getName();
-			final String ptype = parameters[i].getType();
+		for (final Parameter parameter : parameters) {
+			final String pname = parameter.getName();
+			final String ptype = parameter.getType();
 			if (ptype.endsWith("[]")) {
 				if (!EMPTY_STRING.equals(comma)) {
 					mWriter.println("        sb" + comma + SEMICOLON);
@@ -531,12 +531,12 @@ public class Emit {
 	}
 
 	private void emitParams3(final Parameter[] parameters) {
-		for (int i = 0; i < parameters.length; i++) {
+		for (final Parameter parameter : parameters) {
 			mWriter.println();
 
-			final String pname = parameters[i].getName();
-			final String ptype = parameters[i].getType();
-			final String pcomment = parameters[i].getComment();
+			final String pname = parameter.getName();
+			final String ptype = parameter.getType();
+			final String pcomment = parameter.getComment();
 			final String cpname = capitalize(pname);
 			String getName = "get" + cpname;
 			String setName = "set" + cpname;
@@ -572,11 +572,11 @@ public class Emit {
 			mWriter.println("        return " + pname + SEMICOLON);
 			mWriter.println("    }");
 
-			if (parameters[i].isWriteable()) {
+			if (parameter.isWriteable()) {
 				mWriter.println();
 				formatComment(mWriter, "    ", setComment);
 				mWriter.println("    public void " + setName + OPEN_PARENTHESIS + ptype + BLANK + pname + ") {");
-				if (parameters[i].isWriteableOnce) {
+				if (parameter.isWriteableOnce) {
 					mWriter.println("        //Writeable only once");
 					mWriter.println("        if(this." + pname + " != null && " + pname + " != this." + pname + "){");
 					mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");

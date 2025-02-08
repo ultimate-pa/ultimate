@@ -67,7 +67,6 @@ public abstract class EmitAstWithVisitors extends Emit {
 	protected final String mTimestamp;
 
 	public EmitAstWithVisitors() {
-		super();
 		final TimeZone tz = TimeZone.getTimeZone("UTC");
 		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 		df.setTimeZone(tz);
@@ -153,20 +152,19 @@ public abstract class EmitAstWithVisitors extends Emit {
 		mWriter.println("        List<" + getRootClassName() + "> children = super.getOutgoingNodes();");
 		final Parameter[] parameters = node.getParameters();
 		System.out.println(node.getName() + " has " + parameters.length + " parameters");
-		for (int i = 0; i < parameters.length; i++) {
+		for (final Parameter parameter : parameters) {
 
-			if (isNoRegularChild(parameters[i].getType())) {
+			if (isNoRegularChild(parameter.getType())) {
 				continue;
 			}
-			System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
+			System.out.println(parameter.getName() + " is an array? " + isArray(parameter.getType()));
 
-			if (isArray(parameters[i].getType())) {
-				mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
-				mWriter.println(
-						String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
+			if (isArray(parameter.getType())) {
+				mWriter.println(String.format("        if(%s!=null){", parameter.getName()));
+				mWriter.println(String.format("            children.addAll(Arrays.asList(%s));", parameter.getName()));
 				mWriter.println("        }");
 			} else {
-				mWriter.println("        children.add(" + parameters[i].getName() + CLOSE_PARENTHESIS_SEMICOLON);
+				mWriter.println("        children.add(" + parameter.getName() + CLOSE_PARENTHESIS_SEMICOLON);
 			}
 		}
 		mWriter.println("        return children;");
@@ -279,12 +277,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 	}
 
 	private static String getBaseType(final Parameter param) {
-		return param.getType().replaceAll("\\[\\]", "");
+		return param.getType().replace("[]", "");
 	}
 
 	protected boolean needsArraysPackage(final Node node) {
 		final Predicate<String> isNoRegularChild = this::isNoRegularChild;
-		return Arrays.stream(node.getParameters()).map(p -> p.getType()).filter(isNoRegularChild.negate())
+		return Arrays.stream(node.getParameters()).map(Parameter::getType).filter(isNoRegularChild.negate())
 				.anyMatch(EmitAstWithVisitors::isArray);
 	}
 

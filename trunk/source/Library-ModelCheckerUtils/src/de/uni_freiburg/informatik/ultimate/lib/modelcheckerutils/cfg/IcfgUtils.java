@@ -184,8 +184,8 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> boolean areReachableProgramPointsRegistered(final IIcfg<LOC> icfg) {
-		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
-				.collect(Collectors.toSet());
+		final Set<IcfgLocation> reachableProgramPoints =
+				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
 		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
 				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
@@ -198,8 +198,8 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> boolean areRegisteredProgramPointsReachable(final IIcfg<LOC> icfg) {
-		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
-				.collect(Collectors.toSet());
+		final Set<IcfgLocation> reachableProgramPoints =
+				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
 		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
 				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());

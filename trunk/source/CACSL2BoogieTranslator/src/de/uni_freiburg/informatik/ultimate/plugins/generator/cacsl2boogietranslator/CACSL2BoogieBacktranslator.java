@@ -698,27 +698,20 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	private static boolean isPointerBase(final Expression expr) {
-		if (expr instanceof IdentifierExpression) {
-			return ((IdentifierExpression) expr).getIdentifier().endsWith(SFO.POINTER_BASE);
-		}
-		return false;
+		return expr instanceof final IdentifierExpression id && id.getIdentifier().endsWith(SFO.POINTER_BASE);
 	}
 
 	private static boolean isOldPointerBase(final Expression expr) {
-		if (expr instanceof UnaryExpression) {
-			return ((UnaryExpression) expr).getOperator() == Operator.OLD
-					&& isPointerBase(((UnaryExpression) expr).getExpr());
-		}
-		return false;
+		return expr instanceof final UnaryExpression unary && unary.getOperator() == Operator.OLD
+				&& isPointerBase(unary.getExpr());
 	}
 
 	private static boolean isPointerOffsetFor(final Expression expr, final String name, final boolean isOld) {
-		if (isOld && expr instanceof UnaryExpression) {
-			final var uexp = (UnaryExpression) expr;
+		if (isOld && expr instanceof final UnaryExpression uexp) {
 			return uexp.getOperator() == Operator.OLD && isPointerOffsetFor(uexp.getExpr(), name, false);
 		}
-		if (!isOld && expr instanceof IdentifierExpression) {
-			final var identifier = ((IdentifierExpression) expr).getIdentifier();
+		if (!isOld && expr instanceof final IdentifierExpression idExpr) {
+			final var identifier = idExpr.getIdentifier();
 			return identifier.startsWith(name) && identifier.endsWith(SFO.POINTER_OFFSET);
 		}
 		return false;
@@ -747,7 +740,7 @@ public class CACSL2BoogieBacktranslator extends
 		// printCFG(cfg, mLogger::info);
 		final boolean oldValue = mGenerateBacktranslationWarnings;
 		mGenerateBacktranslationWarnings = false;
-		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c),
+		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, this::translateCFGEdge,
 				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger, mServices));
 		translated = reduceCFGs(translated);
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
@@ -787,7 +780,7 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public ProcedureContract<BacktranslatedExpression, BacktranslatedExpression> translateProcedureContract(
 			final ProcedureContract<Expression, ? extends Expression> oldContract, final ILocation context) {
-		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+		if (context instanceof final CACSLLocation loc && loc.ignoreDuringBacktranslation()) {
 			return null;
 		}
 
@@ -805,8 +798,7 @@ public class CACSL2BoogieBacktranslator extends
 	private <TVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource, final ILocation loc,
 			final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
 		final MultigraphEdge<TVL, CACSLLocation> edge;
-		if (loc instanceof CLocation) {
-			final CLocation cloc = (CLocation) loc;
+		if (loc instanceof final CLocation cloc) {
 			if (cloc.ignoreDuringBacktranslation()) {
 				// we skip all clocs that can be ignored, i.e. things that
 				// belong to internal structures
@@ -853,8 +845,7 @@ public class CACSL2BoogieBacktranslator extends
 					edge = new MultigraphEdge<>(currentSource, cloc, lastTarget);
 				}
 			}
-		} else if (loc instanceof ACSLLocation) {
-			final ACSLLocation aloc = (ACSLLocation) loc;
+		} else if (loc instanceof final ACSLLocation aloc) {
 			edge = new MultigraphEdge<>(currentSource, aloc, lastTarget);
 		} else {
 			// invalid location
@@ -947,7 +938,7 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public BacktranslatedExpression translateExpressionWithContext(final Expression expression,
 			final ILocation context) {
-		if (context instanceof CACSLLocation && ((CACSLLocation) context).ignoreDuringBacktranslation()) {
+		if (context instanceof final CACSLLocation loc && loc.ignoreDuringBacktranslation()) {
 			return null;
 		}
 		return mBoogie2ACSL.translateExpression(expression, context);
@@ -1086,7 +1077,6 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	private class CheckForTempVars extends BoogieTransformer {
-
 		private boolean mAllAreTemp = true;
 
 		protected boolean areAllTemp() {
