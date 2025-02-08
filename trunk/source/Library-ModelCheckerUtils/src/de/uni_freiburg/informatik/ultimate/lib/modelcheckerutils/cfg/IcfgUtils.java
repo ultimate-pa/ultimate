@@ -90,7 +90,7 @@ public class IcfgUtils {
 	 * Collect all program points that are predecessors or successors of an {@link IIcfgCallTransition}.
 	 */
 	public static <LOC extends IcfgLocation> Set<LOC> getCallerAndCalleePoints(final IIcfg<LOC> icfg) {
-		return new IcfgEdgeIterator(icfg).asStream().filter(e -> e instanceof IIcfgCallTransition<?>)
+		return new IcfgEdgeIterator(icfg).asStream().filter(IIcfgCallTransition.class::isInstance)
 				.flatMap(e -> Stream.of((LOC) e.getSource(), (LOC) e.getTarget())).collect(Collectors.toSet());
 	}
 
@@ -98,7 +98,7 @@ public class IcfgUtils {
 	 * Collect all program points that are predecessors of an {@link IIcfgReturnTransition}.
 	 */
 	public static <LOC extends IcfgLocation> Set<LOC> getReturnPredecessorPoints(final IIcfg<LOC> icfg) {
-		return new IcfgEdgeIterator(icfg).asStream().filter(e -> e instanceof IIcfgReturnTransition)
+		return new IcfgEdgeIterator(icfg).asStream().filter(IIcfgReturnTransition.class::isInstance)
 				.map(x -> (LOC) x.getSource()).collect(Collectors.toSet());
 	}
 

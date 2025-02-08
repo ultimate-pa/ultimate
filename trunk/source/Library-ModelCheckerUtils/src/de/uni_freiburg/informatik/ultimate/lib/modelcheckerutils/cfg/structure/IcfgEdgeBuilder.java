@@ -90,7 +90,7 @@ public class IcfgEdgeBuilder {
 
 	public IcfgEdge constructSequentialComposition(final IcfgLocation source, final IcfgLocation target,
 			final IcfgEdge first, final IcfgEdge second) {
-		final List<IcfgEdge> codeblocks = Arrays.asList(new IcfgEdge[] { first, second });
+		final List<IcfgEdge> codeblocks = Arrays.asList(first, second);
 		return constructSequentialComposition(source, target, codeblocks, false, false, true);
 	}
 
@@ -110,9 +110,8 @@ public class IcfgEdgeBuilder {
 
 		final List<UnmodifiableTransFormula> transFormulasWithBE =
 				transitions.stream().map(IcfgEdgeBuilder::getTransformulaWithBE).collect(Collectors.toList());
-		final UnmodifiableTransFormula tfWithBE =
-				TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript, simplify, elimQuants, false,
-						mSimplificationTechnique, transFormulasWithBE);
+		final UnmodifiableTransFormula tfWithBE = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+				mManagedScript, simplify, elimQuants, false, mSimplificationTechnique, transFormulasWithBE);
 
 		final IcfgInternalTransition rtr = mEdgeFactory.createInternalTransition(source, target, null, tf, tfWithBE);
 		ModelUtils.mergeAnnotations(transitions, rtr);
@@ -153,10 +152,9 @@ public class IcfgEdgeBuilder {
 		final IIcfgSymbolTable symbolTable = mCfgSmtToolkit.getSymbolTable();
 		final Set<IProgramNonOldVar> modifiableGlobalsOfCallee =
 				mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProc);
-		final UnmodifiableTransFormula tf =
-				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mManagedScript, simplify, elimQuants, false,
-						callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, mLogger, mServices,
-						mSimplificationTechnique, symbolTable, modifiableGlobalsOfCallee);
+		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialCompositionWithCallAndReturn(mManagedScript,
+				simplify, elimQuants, false, callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf,
+				mLogger, mServices, mSimplificationTechnique, symbolTable, modifiableGlobalsOfCallee);
 
 		final UnmodifiableTransFormula tfWithBE;
 		if (intermediateTrans instanceof IActionWithBranchEncoders) {
@@ -210,9 +208,8 @@ public class IcfgEdgeBuilder {
 				transFormulasWithBE.toArray(new UnmodifiableTransFormula[transFormulasWithBE.size()]);
 		final TermVariable[] branchIndicatorArray =
 				branchEncodersAndTransitions.keySet().toArray(new TermVariable[branchEncodersAndTransitions.size()]);
-		final UnmodifiableTransFormula parallelWithBranchIndicators =
-				TransFormulaUtils.parallelComposition(mLogger, mServices, mManagedScript, branchIndicatorArray, false,
-						isInternal, tfWithBEArray);
+		final UnmodifiableTransFormula parallelWithBranchIndicators = TransFormulaUtils.parallelComposition(mLogger,
+				mServices, mManagedScript, branchIndicatorArray, false, isInternal, tfWithBEArray);
 
 		final IcfgInternalTransition rtr =
 				mEdgeFactory.createInternalTransition(source, target, null, parallelTf, parallelWithBranchIndicators);

@@ -511,8 +511,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (!REDUCE_STATES) {
 			return validPreState;
 		}
-		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
-		requiredVars.addAll(getVars(action));
+		final Set<IProgramVarOrConst> requiredVars = new HashSet<>(getVars(action));
 		requiredVars.addAll(succ.getVariables());
 		requiredVars.addAll(getMissingOldVars(requiredVars));
 
