@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -104,7 +103,7 @@ public class IcfgEdgeBuilder {
 		assert onlyInternal(transitions) : "You cannot have calls or returns in normal sequential compositions";
 
 		final List<UnmodifiableTransFormula> transFormulas =
-				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+				transitions.stream().map(IcfgEdge::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mManagedScript,
 				simplify, elimQuants, false, mSimplificationTechnique, transFormulas);
 
@@ -196,7 +195,7 @@ public class IcfgEdgeBuilder {
 		final boolean isInternal = true;
 
 		final List<UnmodifiableTransFormula> transFormulas =
-				transitions.stream().map(IcfgUtils::getTransformula).collect(Collectors.toList());
+				transitions.stream().map(IcfgEdge::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula[] tfArray =
 				transFormulas.toArray(new UnmodifiableTransFormula[transFormulas.size()]);
 		final UnmodifiableTransFormula parallelTf = TransFormulaUtils.parallelComposition(mLogger, mServices,
@@ -249,7 +248,7 @@ public class IcfgEdgeBuilder {
 	public IcfgEdge constructAndConnectInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
 			final IcfgLocation target, final Term term) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
-		final UnmodifiableTransFormula oldTf = IcfgUtils.getTransformula(oldTransition);
+		final UnmodifiableTransFormula oldTf = oldTransition.getTransformula();
 
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
 		final Set<TermVariable> oldFreeVars = new HashSet<>(Arrays.asList(oldTf.getFormula().getFreeVars()));
