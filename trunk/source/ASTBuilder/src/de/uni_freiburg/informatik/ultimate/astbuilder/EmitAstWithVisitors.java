@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Predicate;
@@ -104,24 +105,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 	@Override
 	public void emitClassDeclaration(final Node node) {
-		final StringBuilder classDecl = new StringBuilder(MIN_SIZE_EMIT_CLASS_DECLARATION);
-		classDecl.append("public ");
-		if (node.isAbstract()) {
-			classDecl.append("abstract ");
-		}
-		classDecl.append("class ").append(node.getName());
-
-		if (node.getParent() != null) {
-			classDecl.append(" extends ").append(node.getParent().getName());
-		} else if (!isNonClassicNode(node)) {
-			classDecl.append(" extends ").append(getRootClassName());
-		}
-
-		if (node.getInterfaces() != null) {
-			classDecl.append(" implements ").append(node.getInterfaces());
-		}
-		classDecl.append(" {");
-		mWriter.println(classDecl.toString());
+		super.emitClassDeclaration(node);
 		if (isNonClassicNode(node)) {
 			return;
 		}
@@ -133,6 +117,18 @@ public abstract class EmitAstWithVisitors extends Emit {
 		mWriter.println(
 				"    private static final java.util.function.Predicate<" + getRootClassName() + "> VALIDATOR = ");
 		mWriter.println("			" + getRootClassName() + ".VALIDATORS.get(" + node.getName() + ".class);");
+	}
+
+	@Override
+	protected Optional<String> getBaseClass(final Node node) {
+		final var baseClass = super.getBaseClass(node);
+		if (baseClass.isPresent()) {
+			return baseClass;
+		}
+		if (isNonClassicNode(node)) {
+			return Optional.empty();
+		}
+		return Optional.of(getRootClassName());
 	}
 
 	@Override
