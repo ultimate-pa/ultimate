@@ -149,9 +149,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Collection<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		mLogger.info(String.format(
-				"Applying trace abstraction to ICFG %s that has %s procedures, %s locations, %s initial locations, %s loop locations, and %s error locations.",
+				"Applying trace abstraction to ICFG %s that has %d procedures, %d locations, %d edges, %d initial locations, %d loop locations, and %d error locations.",
 				icfg.getIdentifier(), icfg.getProcedureEntryNodes().size(), IcfgUtils.getNumberOfLocations(icfg),
-				icfg.getInitialNodes().size(), icfg.getLoopLocations().size(), numberOfErrorLocs));
+				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
+				numberOfErrorLocs));
 		if (numberOfErrorLocs <= 0) {
 			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
 					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, numberOfErrorLocs);
