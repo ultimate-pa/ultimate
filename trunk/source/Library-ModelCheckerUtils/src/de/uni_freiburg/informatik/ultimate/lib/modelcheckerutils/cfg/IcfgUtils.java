@@ -187,8 +187,8 @@ public class IcfgUtils {
 		final Set<IcfgLocation> reachableProgramPoints =
 				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
-		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
-				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		final Set<LOC> registeredProgramPoints =
+				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
 		final Set<IcfgLocation> diff = new HashSet<>(reachableProgramPoints);
 		diff.removeAll(registeredProgramPoints);
 		if (!diff.isEmpty()) {
@@ -201,15 +201,14 @@ public class IcfgUtils {
 		final Set<IcfgLocation> reachableProgramPoints =
 				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
-		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
-				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		final Set<LOC> registeredProgramPoints =
+				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
 		final Set<IcfgLocation> diff = new HashSet<>(registeredProgramPoints);
 		diff.removeAll(reachableProgramPoints);
 		// ExitNodes are registered even if they are not reachable (the optimization
 		// where we omit ExitNodes would require many case distinctions and would only
 		// save a few nodes).
-		final Set<LOC> exitProgramPoints = icfg.getProcedureExitNodes().entrySet().stream().map(Entry::getValue)
-				.collect(Collectors.toSet());
+		final Set<LOC> exitProgramPoints = icfg.getProcedureExitNodes().values().stream().collect(Collectors.toSet());
 		diff.removeAll(exitProgramPoints);
 		if (!diff.isEmpty()) {
 			throw new AssertionError("Program points registered but not reachable: " + diff);
