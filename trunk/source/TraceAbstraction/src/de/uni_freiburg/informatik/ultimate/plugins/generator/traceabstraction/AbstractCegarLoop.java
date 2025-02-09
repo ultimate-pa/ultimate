@@ -407,9 +407,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			boolean updateBudget = true;
 			try {
 				mCegarLoopBenchmark.announceNextIteration();
+
+				if (mDumper != null) {
+					mDumper.close();
+				}
 				if (mPref.dumpAutomata()) {
 					mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 				}
+
 				try {
 					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
 					final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
