@@ -2,58 +2,68 @@
 /*
  * Author: Marcel Ebbinghaus
  *
- * Idea: Three threads, where the first increments the value of y by 2 n times
- *       the second increments the value of x by 1 2n times
- *		 and the third decrements the value of x and y by 1 2n times
- * Optimal Order would be: Combination of (t1,t3,t3)^n and (t2,t3)^2n, so something like (t1,t2,t2,t3,t3)^n
- *       where t1, t2, t3 stands for an iteration of the respective while-loop
+ * Idea: Three threads, where the first increments the value of y by 2*c for n iterations
+ *       the second increments the value of x by c for 2n iterations
+ *       and the third decrements the value of x and y by c for 2n iterations.
+ *
+ * The optimal schedues would be some combination of (t1 t3 t3)* and (t2 t3)*, so something like (t1 t2 t2 t3 t3)*
+ *       where t1, t2, t3 stands for an iteration of the respective while-loop.
  *
  */
-var i, j, k, n, x, y: int;
+var n, x, y, c: int;
+var i, j: int;
 
 procedure ULTIMATE.start()
-modifies i, j, k, n, x, y;
+modifies x, y, i, j;
 {
- atomic {
-  i := 0;
-  j := 0;
-  k := 0;
-  x := 0;
-  y := 0;}
-  fork 1   thread1();
-  fork 2   thread2();
-  fork 3   thread3();
+  assume x == 0 && y == 0;
+
+  fork 1 thread1();
+  fork 2 thread2();
+  fork 3 thread3();
   join 1;
   join 2;
   join 3;
-  assert (x == 0 && y == 0);
+
+  assert x == 0 && y == 0;
 }
 
 procedure thread1()
-modifies i, y;
+modifies y, i;
 {
-  while (i < n) {
+  var i : int;
+  i := 0;
+
+  while (i < n)
+  {
     i := i + 1;
-	y := y + 2;
+    y := y + 2*c;
   }
 }
 
 procedure thread2()
-modifies j, x;
+modifies x, j;
 {
-  while (j < (2 * n)) {
+  var j : int;
+  j := 0;
+
+  while (j < 2 * n)
+  {
     j := j + 1;
-	x := x + 1;
+    x := x + c;
   }
 }
 
 procedure thread3()
-modifies k, x, y;
+modifies x, y, i, j;
 {
-  while (k < (2 * n)) {
+  var k : int;
+  k := 0;
+
+  while (k < 2 * n)
+  {
     k := k + 1;
-	x := x - 1;
-	y := y - 1;
+    x := x - c;
+    y := y - c;
   }
 }
-
