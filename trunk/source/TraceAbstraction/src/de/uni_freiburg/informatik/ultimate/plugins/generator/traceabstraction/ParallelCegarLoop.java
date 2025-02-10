@@ -223,7 +223,6 @@ extends NwaCegarLoop<L> {
 				mIcfg, predicateFactory, predicateFactoryInterpolantAutomata, mTransitionClazz,
 				cacheCopy);
 
-
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
 		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
 
@@ -231,7 +230,7 @@ extends NwaCegarLoop<L> {
 				counterexample, mInitialAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-				strategyType);
+				strategyType, mProgramCache);
 
 
 		// start worker
@@ -610,13 +609,14 @@ extends NwaCegarLoop<L> {
 			mSearchTime += search.getTimeSpend();
 			mCountFailedRunConstructions += search.runConstructionFailedXTimes();
 			// TODO deactivate the try for practice
+			boolean correct = false;
 			try {
-				search.checkResult(mStateFactoryForRefinement);
+				correct = search.checkResult(mStateFactoryForRefinement);
 			} catch (final AutomataLibraryException e) {
 				e.printStackTrace();
 				assert false;
 			}
-			if (result != null) {
+			if (result != null && correct) {
 				mCountIsEmptyParallel += 1;
 			} else {
 				final NestedRun<L, IPredicate> dfs = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction,

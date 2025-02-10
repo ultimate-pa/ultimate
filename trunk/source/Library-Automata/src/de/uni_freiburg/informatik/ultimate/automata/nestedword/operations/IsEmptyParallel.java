@@ -363,7 +363,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private void unmarkCall(final STATE state, final STATE stateK) {
 
 		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
-		assert callPreds != null;
+		if (callPreds == null) {
+			throw new AssertionError();
+		}
 		callPreds.remove(stateK);
 
 	}
@@ -499,13 +501,17 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
 
 		if (mSummaryReturnPred.containsKey(state)) {
-			assert mSummaryReturnSymbol.containsKey(state);
+			if (!mSummaryReturnSymbol.containsKey(state)) {
+				throw new AssertionError();
+			}
 			final Map<STATE, STATE> succ2ReturnPred = mSummaryReturnPred.get(state);
 			final Map<STATE, LETTER> succ2ReturnSymbol = mSummaryReturnSymbol.get(state);
 			for (final Entry<STATE, STATE> entry : succ2ReturnPred.entrySet()) {
 				final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 				final STATE succ = entry.getKey();
-				assert succ2ReturnSymbol.containsKey(succ);
+				if (!succ2ReturnSymbol.containsKey(succ)) {
+					throw new AssertionError();
+				}
 				final STATE returnPred = entry.getValue();
 				final LETTER symbol = succ2ReturnSymbol.get(succ);
 				int currentScore = 0;
@@ -533,11 +539,13 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 									activeCounterexamples.add(cexHash);
 								}
 							} else {
-								assert succ instanceof UnknownState
-								|| !counterexample.getStateAtPosition(position).equals(succ);
+								if (!(succ instanceof UnknownState
+										|| !counterexample.getStateAtPosition(position).equals(succ))) {
+									throw new AssertionError();
+								}
 							}
 						} else {
-							assert false;
+							throw new AssertionError();
 						}
 
 					}
@@ -545,6 +553,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 				pq.add(new PQState(currentScore, returnPred, symbol, succ, state, activeCounterexamples, false, true));
 			}
+			// after we process a summary we must not process the return anymore!!
+			return pq;
 		}
 
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
@@ -562,7 +572,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						if (stateInCEx instanceof ISLPredicate) {
 							programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 						} else {
-							assert false;
+							throw new AssertionError();
 						}
 
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
@@ -598,7 +608,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 						if (stateInCEx instanceof ISLPredicate) {
 							programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 						} else {
-							assert false;
+							throw new AssertionError();
 						}
 
 						if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
@@ -607,7 +617,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 								activeCounterexamples.add(cexHash);
 							}
 						} else {
-							assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
+							if (counterexample.getStateAtPosition(position).equals(transition.getSucc())) {
+								throw new AssertionError();
+							}
 						}
 
 					}
@@ -637,7 +649,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 							if (stateInCEx instanceof ISLPredicate) {
 								programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 							} else {
-								assert false;
+								throw new AssertionError();
 							}
 
 							if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
@@ -646,7 +658,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 									activeCounterexamples.add(cexHash);
 								}
 							} else {
-								assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
+								if (counterexample.getStateAtPosition(position).equals(transition.getSucc())) {
+									throw new AssertionError();
+								}
 							}
 
 						}
@@ -674,14 +688,16 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				if (stateInCEx instanceof ISLPredicate) {
 					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
 				} else {
-					assert false;
+					throw new AssertionError();
 				}
 
 				if (programPoint.equals(((ISLPredicate) state).getProgramPoint())) {
 					currentScore += 1;
 					activeCounterexamples.add(cexHash);
 				} else {
-					assert !mActiveCounterexamples.get(cexHash).getStateAtPosition(0).equals(state);
+					if (mActiveCounterexamples.get(cexHash).getStateAtPosition(0).equals(state)) {
+						throw new AssertionError();
+					}
 				}
 
 			}
@@ -755,7 +771,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			while (!pqStart.isEmpty()) {
 				final PQState startpq = pqStart.poll();
 
-				assert (startpq != null);
+				if (startpq == null) {
+					throw new AssertionError();
+				}
 				state = startpq.getState(); // only needed for sumamry
 				stateK = startpq.getStateK();
 				final STATE succ = startpq.getSucc();
@@ -775,9 +793,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					}
 				} else if (startpq.isReturn()) {
 					// markCallVisited(stateK, state);
+					addSummary(stateK, succ, state, symbol);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(stateK, succ), startpq.getCounterexamplesUnderConsideration());
-					addSummary(stateK, succ, state, symbol);
+
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.MINUS_INFINITY, succ);
 					} else {
@@ -792,7 +811,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					}
 				}
 				if (runToGoal != null) {
-					assert run != null;
+					if (run == null) {
+						throw new AssertionError();
+					}
 					// assert succ.equals(runToGoal.getStateAtPosition(0)); // TODO make this assertion work
 					if (succ.equals(runToGoal.getStateAtPosition(0))) {
 						return run.concatenate(runToGoal);
@@ -802,7 +823,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				}
 			}
 		} else {
-			assert false; // should be handled before
+			throw new AssertionError(); // should be handled before
 		}
 		return null;
 	}
@@ -829,7 +850,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					new DoubleDecker<>(mDummyEmptyStackState, start), startpq.getCounterexamplesUnderConsideration());
 			if (runToGoal != null) {
 				for (final Integer cexHash : set) {
-					assert cexHash != runToGoal.getWord().asList().hashCode();
+					if (cexHash == runToGoal.getWord().asList().hashCode()) {
+						throw new AssertionError();
+					}
 				}
 				return runToGoal;
 			}
@@ -893,13 +916,16 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 */
 	private void processSummaries(final STATE state, final STATE stateK) {
 		if (mSummaryReturnPred.containsKey(state)) {
-
-			assert mSummaryReturnSymbol.containsKey(state);
+			if (!mSummaryReturnSymbol.containsKey(state)) {
+				throw new AssertionError();
+			}
 			final Map<STATE, STATE> succ2ReturnPred = mSummaryReturnPred.get(state);
 			final Map<STATE, LETTER> succ2ReturnSymbol = mSummaryReturnSymbol.get(state);
 			for (final Entry<STATE, STATE> entry : succ2ReturnPred.entrySet()) {
 				final STATE succ = entry.getKey();
-				assert succ2ReturnSymbol.containsKey(succ);
+				if (!succ2ReturnSymbol.containsKey(succ)) {
+					throw new AssertionError();
+				}
 				final STATE returnPred = entry.getValue();
 				final LETTER symbol = succ2ReturnSymbol.get(succ);
 				if (!wasVisited(succ, stateK)) {
@@ -926,7 +952,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			succK2run = new HashMap<>();
 			mInternalSubRun.put(succ, succK2run);
 		}
-		assert succK2run.get(succK) == null;
+		if (succK2run.get(succK) != null) {
+			throw new AssertionError();
+		}
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.INTERNAL_POSITION, succ);
 		succK2run.put(succK, run);
 	}
@@ -941,7 +969,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			final STATE stateK) {
 		// mLogger.debug("Call SubrunInformation: From ("+succ+","+succK+") can go to ("+state+","+stateK+")");
 		// equality intended here
-		assert state == succK;
+		if (state != succK) {
+			throw new AssertionError();
+		}
 		Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> succK2stateK2Run = mCallSubRun.get(succ);
 		Map<STATE, STATE> succK2FirstStateK = mCallFirst.get(succ);
 		if (succK2stateK2Run == null) {
@@ -976,14 +1006,20 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = mReturnSubRun.get(succ);
 		Map<STATE, STATE> succK2PredStateK = mReturnPredStateK.get(succ);
 		if (succK2SubRun == null) {
-			assert succK2PredStateK == null;
+			if (succK2PredStateK != null) {
+				throw new AssertionError();
+			}
 			succK2SubRun = new HashMap<>();
 			mReturnSubRun.put(succ, succK2SubRun);
 			succK2PredStateK = new HashMap<>();
 			mReturnPredStateK.put(succ, succK2PredStateK);
 		}
-		assert !succK2SubRun.containsKey(succK);
-		assert !succK2PredStateK.containsKey(succK);
+		if (succK2SubRun.containsKey(succK)) {
+			throw new AssertionError();
+		}
+		if (succK2PredStateK.containsKey(succK)) {
+			throw new AssertionError();
+		}
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.MINUS_INFINITY, succ);
 		succK2SubRun.put(succK, run);
 		succK2PredStateK.put(succK, stateK);
@@ -1023,7 +1059,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		Map<STATE, STATE> succ2ReturnPred = mSummaryReturnPred.get(stateBeforeCall);
 		Map<STATE, LETTER> succ2ReturnSymbol = mSummaryReturnSymbol.get(stateBeforeCall);
 		if (succ2ReturnPred == null) {
-			assert succ2ReturnSymbol == null;
+			if (succ2ReturnSymbol != null) {
+				throw new AssertionError();
+			}
 			succ2ReturnPred = new HashMap<>();
 			mSummaryReturnPred.put(stateBeforeCall, succ2ReturnPred);
 			succ2ReturnSymbol = new HashMap<>();
@@ -1032,7 +1070,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		// update only if there is not already an entry
 		if (!succ2ReturnPred.containsKey(stateAfterReturn)) {
 			succ2ReturnPred.put(stateAfterReturn, stateBeforeReturn);
-			assert !succ2ReturnSymbol.containsKey(stateAfterReturn);
+			if (succ2ReturnSymbol.containsKey(stateAfterReturn)) {
+				throw new AssertionError();
+			}
 			succ2ReturnSymbol.put(stateAfterReturn, returnSymbol);
 		}
 	}
@@ -1132,7 +1172,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		final Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = mReturnSubRun.get(state);
 		if (succK2SubRun != null) {
 			final Map<STATE, STATE> succK2PredStateK = mReturnPredStateK.get(state);
-			assert succK2PredStateK != null;
+			if (succK2PredStateK == null) {
+				throw new AssertionError();
+			}
 			final NestedRun<LETTER, STATE> run = succK2SubRun.get(stateK);
 			final STATE predK = succK2PredStateK.get(stateK);
 			if (run != null) {

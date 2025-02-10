@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class PathProgramCache<LETTER> {
 
 	private final ILogger mLogger;
-	private final Map<Set<LETTER>, Integer> mKnownPathPrograms;
-	private final List<Integer> mTraceHashes;
+	private  Map<Set<LETTER>, Integer> mKnownPathPrograms;
+	private  List<Integer> mTraceHashes;
 
 	public PathProgramCache(final ILogger logger) {
 		mLogger = logger;
@@ -99,7 +99,7 @@ public class PathProgramCache<LETTER> {
 			mLogger.warn("You did not report this counterexample before!");
 			return 0;
 		}
-		return count;
+		return count.intValue();
 	}
 
 	public List<Integer> computeSortedHistrogram() {

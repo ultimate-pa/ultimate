@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *            Type of expression
  */
 public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
+implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
 
 	private final Check mCheckedSpecification;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
@@ -103,8 +103,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 		// programExecution may be null
 		mProgramExecution = programExecution;
-		mProgramExecutionAsString = mProgramExecution == null ? null
-				: translatorSequence.translateProgramExecution(mProgramExecution).toString();
+		mProgramExecutionAsString = null; // Not yet supported in Parallel
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 	}
 
