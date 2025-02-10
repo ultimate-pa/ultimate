@@ -12,6 +12,9 @@
  *
  * Not entirely sure this is actually formally meaningful anymore, since now the combinations (t1 t3 t3)*
  *       and (t2 t3)* on their own are no longer enough to fully "exhaust" the while loop in thread 3.
+ *
+ * This is likely also solvable via the sequential operator, using a schedule like (t1 t3 t3)* (t2 t3)*,
+ * so presumably a thread-based solution isn't actually necessary.
  */
 var n, x, c: int;
 
