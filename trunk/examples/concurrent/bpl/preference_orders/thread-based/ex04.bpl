@@ -11,10 +11,10 @@
  *
  */
 var n, x, y, c: int;
-var i, j: int;
+var i, j, k: int;
 
 procedure ULTIMATE.start()
-modifies x, y, i, j;
+modifies x, y, i, j, k;
 {
   assume x == 0 && y == 0;
 
@@ -55,7 +55,7 @@ modifies x, j;
 }
 
 procedure thread3()
-modifies x, y, i, j;
+modifies x, y, k;
 {
   var k : int;
   k := 0;
