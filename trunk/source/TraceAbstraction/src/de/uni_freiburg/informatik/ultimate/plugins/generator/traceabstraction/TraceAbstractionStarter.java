@@ -165,7 +165,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mArtifact = null;
 		final List<ProvenCegarLoopResult<L>> results;
 		if (IcfgUtils.isConcurrent(icfg)) {
-			results = analyseConcurrentProgram(icfg);
+			throw new AssertionError("Petri Net CEGAR loop not relevant for Parallel");
+			//			results = analyseConcurrentProgram(icfg);
 		} else {
 			results = analyseSequentialProgram(icfg);
 		}
@@ -213,12 +214,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void logSettings() {
-		String settings = "Automizer settings:";
-		settings += " Hoare:" + mPrefs.getHoareSettings().getHoarePositions();
-		settings += " " + (mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
-		settings += " Interpolation:" + mPrefs.interpolation();
-		settings += " Determinization: " + mPrefs.interpolantAutomatonEnhancement();
-		mLogger.info(settings);
+		StringBuilder settings = new StringBuilder("Automizer settings:");
+		settings.append(" Hoare:").append(mPrefs.getHoareSettings().getHoarePositions());
+		settings.append(" ").append(mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
+		settings.append(" Interpolation:").append(mPrefs.interpolation());
+		settings.append(" Determinization: ").append(mPrefs.interpolantAutomatonEnhancement());
+		mLogger.info(settings.toString());
 	}
 
 	/**
@@ -255,7 +256,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private static <L extends IIcfgTransition<?>> boolean
-			resultsHaveSufficientInstances(final List<? extends CegarLoopResult<L>> results) {
+	resultsHaveSufficientInstances(final List<? extends CegarLoopResult<L>> results) {
 		boolean res = true;
 		for (final CegarLoopResult<L> r : results) {
 			if (r.resultStream().allMatch(a -> a != Result.UNSAFE)) {
@@ -451,7 +452,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		cegarStatistics.aggregateBenchmarkData(clres.getCegarLoopStatisticsGenerator());
 		if (clres.getCegarLoopStatisticsGenerator().getBenchmarkType() instanceof PetriCegarStatisticsType) {
 			cegarStatistics
-					.aggregateBenchmarkData(new PetriCegarLoopStatisticsGenerator(mCegarFactory.getStatistics()));
+			.aggregateBenchmarkData(new PetriCegarLoopStatisticsGenerator(mCegarFactory.getStatistics()));
 		} else {
 			cegarStatistics.aggregateBenchmarkData(mCegarFactory.getStatistics());
 		}
@@ -461,7 +462,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private static Map<IIcfgForkTransitionThreadCurrent<IcfgLocation>, IcfgLocation>
-			getInUseErrorNodeMap(final IIcfg<?> icfg) {
+	getInUseErrorNodeMap(final IIcfg<?> icfg) {
 		return icfg.getCfgSmtToolkit().getConcurrencyInformation().getInUseErrorNodeMap();
 	}
 
@@ -517,7 +518,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 			for (final TraceAbstractionBenchmarks benchmark : entry.getValue()) {
 				final String shortDescription = getBenchmarkDescription(ident, i);
 				mResultReporter
-						.reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark));
+				.reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark));
 				i++;
 			}
 		}
