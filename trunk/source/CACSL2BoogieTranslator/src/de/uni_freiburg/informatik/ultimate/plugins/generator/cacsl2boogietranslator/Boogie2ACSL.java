@@ -31,7 +31,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -53,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
@@ -67,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BacktranslatedACSLValue.BacktranslatedExpression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BigInterval;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -126,7 +125,7 @@ public final class Boogie2ACSL {
 		final var oldVarEqualities = computeOldVarEqualities(cFun, modifiableGlobals);
 		if (oldVarEqualities.isPresent()) {
 			return new BacktranslatedExpression(
-					new BinaryExpression(Operator.LOGICAND, mainExpression.getExpression(), oldVarEqualities.get()),
+					new BinaryExpression(Operator.LOGICAND, mainExpression.expression(), oldVarEqualities.get()),
 					new CPrimitive(CPrimitives.INT), BigInterval.booleanRange());
 		}
 
@@ -135,7 +134,9 @@ public final class Boogie2ACSL {
 
 	private Optional<Expression> computeOldVarEqualities(final String proc,
 			final Set<de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression> modifiableGlobals) {
-		final var modifiableNames = modifiableGlobals.stream().map(e -> e.getIdentifier()).collect(Collectors.toSet());
+		final var modifiableNames = modifiableGlobals.stream()
+				.map(de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression::getIdentifier)
+				.collect(Collectors.toSet());
 		final boolean modifiesMemory = modifiableNames.stream().anyMatch(name -> name.startsWith(SFO.MEMORY));
 
 		return mSymbolTable.getGlobalScope().entrySet().stream().flatMap(
@@ -348,63 +349,63 @@ public final class Boogie2ACSL {
 		case "NaN":
 			return new BacktranslatedExpression(new RealLiteral(String.valueOf(Float.NaN)));
 		case "bvadd":
-			final Expression addition = new BinaryExpression(Operator.ARITHPLUS, translatedArguments[0].getExpression(),
-					translatedArguments[1].getExpression());
+			final Expression addition = new BinaryExpression(Operator.ARITHPLUS, translatedArguments[0].expression(),
+					translatedArguments[1].expression());
 			return new BacktranslatedExpression(new BinaryExpression(Operator.ARITHMOD, addition,
 					new IntegerLiteral(String.valueOf(1L << bitSize))));
 		case "bvmul":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.ARITHMUL,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvsub":
-			final Expression sub = new BinaryExpression(Operator.ARITHMINUS, translatedArguments[0].getExpression(),
-					translatedArguments[1].getExpression());
+			final Expression sub = new BinaryExpression(Operator.ARITHMINUS, translatedArguments[0].expression(),
+					translatedArguments[1].expression());
 			return new BacktranslatedExpression(
 					new BinaryExpression(Operator.ARITHMOD, sub, new IntegerLiteral(String.valueOf(1L << bitSize))));
 		case "bvand":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.BITAND,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvor":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.BITOR,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvxor":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.BITXOR,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvshl":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.BITSHIFTLEFT,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvashr":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.BITSHIFTRIGHT,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvslt":
 		case "bvult":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.COMPLT,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvsle":
 		case "bvule":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.COMPLEQ,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvsgt":
 		case "bvugt":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.COMPGT,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvsge":
 		case "bvuge":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.COMPGEQ,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvsdiv":
 		case "bvudiv":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.ARITHDIV,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvsrem":
 		case "bvurem":
 			return new BacktranslatedExpression(new BinaryExpression(Operator.ARITHMOD,
-					translatedArguments[0].getExpression(), translatedArguments[1].getExpression()));
+					translatedArguments[0].expression(), translatedArguments[1].expression()));
 		case "bvneg":
 			return new BacktranslatedExpression(
-					new UnaryExpression(UnaryExpression.Operator.MINUS, translatedArguments[0].getExpression()));
+					new UnaryExpression(UnaryExpression.Operator.MINUS, translatedArguments[0].expression()));
 		case "bvnot":
-			return new BacktranslatedExpression(new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT,
-					translatedArguments[0].getExpression()));
+			return new BacktranslatedExpression(
+					new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT, translatedArguments[0].expression()));
 		default:
 			mReporter.accept("Missing case for function " + function);
 			return null;
@@ -462,11 +463,11 @@ public final class Boogie2ACSL {
 		final var split =
 				value.abs().divideAndRemainder(mTypeSizes.getMaxValueOfPrimitiveType(ulonglong).add(BigInteger.ONE));
 		final Expression upper = new CastExpression(AcslTypeUtils.translateCTypeToAcslType(resultType),
-				translateIntegerLiteral(split[0]).getExpression());
+				translateIntegerLiteral(split[0]).expression());
 		final Expression shift = new IntegerLiteral(String.valueOf(8 * mTypeSizes.getSize(ulonglong.getType())));
 		Expression result = new BinaryExpression(Operator.BITSHIFTLEFT, upper, shift);
 		if (split[1].signum() != 0) {
-			result = new BinaryExpression(Operator.BITOR, result, translateIntegerLiteral(split[1]).getExpression());
+			result = new BinaryExpression(Operator.BITOR, result, translateIntegerLiteral(split[1]).expression());
 		}
 		if (value.signum() < 0) {
 			result = new UnaryExpression(UnaryExpression.Operator.MINUS, result);
@@ -523,24 +524,22 @@ public final class Boogie2ACSL {
 		if (lhs == null || rhs == null) {
 			return null;
 		}
-		final BigInterval leftRange = lhs.getRange();
-		final BigInterval rightRange = rhs.getRange();
+		final BigInterval leftRange = lhs.range();
+		final BigInterval rightRange = rhs.range();
 		final BigInterval resultRange = leftRange.euclideanDivide(rightRange);
-		final Expression baseExpr = new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression());
+		final Expression baseExpr = new BinaryExpression(Operator.ARITHDIV, lhs.expression(), rhs.expression());
 		if (leftRange.isNonNegative()) {
 			if (resultRange.isSingleton()) {
 				return translateIntegerLiteral(resultRange.getMinValue());
 			}
-			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
+			return new BacktranslatedExpression(baseExpr, lhs.cType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
 		// (they only coincide, if the left operand is positive)
 		final Expression posExpr = new BinaryExpression(Operator.ARITHMINUS,
-				new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression()),
-				new IntegerLiteral("1"));
+				new BinaryExpression(Operator.ARITHDIV, lhs.expression(), rhs.expression()), new IntegerLiteral("1"));
 		final Expression negExpr = new BinaryExpression(Operator.ARITHPLUS,
-				new BinaryExpression(Operator.ARITHDIV, lhs.getExpression(), rhs.getExpression()),
-				new IntegerLiteral("1"));
+				new BinaryExpression(Operator.ARITHDIV, lhs.expression(), rhs.expression()), new IntegerLiteral("1"));
 		final Expression expr;
 		if (rightRange.isNonNegative()) {
 			expr = posExpr;
@@ -548,15 +547,15 @@ public final class Boogie2ACSL {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
-					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
+					new BinaryExpression(Operator.COMPGEQ, rhs.expression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
 		if (leftRange.isNonPositive()) {
-			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
+			return new BacktranslatedExpression(expr, lhs.cType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
-				new BinaryExpression(Operator.COMPGEQ, lhs.getExpression(), new IntegerLiteral("0")), baseExpr, expr),
-				lhs.getCType(), resultRange);
+				new BinaryExpression(Operator.COMPGEQ, lhs.expression(), new IntegerLiteral("0")), baseExpr, expr),
+				lhs.cType(), resultRange);
 	}
 
 	private BacktranslatedExpression translateModulo(final BacktranslatedExpression lhs,
@@ -564,8 +563,8 @@ public final class Boogie2ACSL {
 		if (lhs == null || rhs == null) {
 			return null;
 		}
-		final BigInterval leftRange = lhs.getRange();
-		final BigInterval rightRange = rhs.getRange();
+		final BigInterval leftRange = lhs.range();
+		final BigInterval rightRange = rhs.range();
 		if (rightRange.isStrictlyPositive()) {
 			final var minModRange = new BigInterval(BigInteger.ZERO, rightRange.getMinValue().subtract(BigInteger.ONE));
 			if (minModRange.contains(leftRange)) {
@@ -573,17 +572,17 @@ public final class Boogie2ACSL {
 				return lhs;
 			}
 		}
-		final Expression baseExpr = new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression());
+		final Expression baseExpr = new BinaryExpression(Operator.ARITHMOD, lhs.expression(), rhs.expression());
 		final BigInterval resultRange = leftRange.euclideanModulo(rightRange);
 		if (leftRange.isNonNegative()) {
-			return new BacktranslatedExpression(baseExpr, lhs.getCType(), resultRange);
+			return new BacktranslatedExpression(baseExpr, lhs.cType(), resultRange);
 		}
 		// If the left operand might be negative, we need to translate euclidian modulo to remainder
 		// (they only coincide, if the left operand is positive)
 		final Expression posExpr = new BinaryExpression(Operator.ARITHPLUS,
-				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
+				new BinaryExpression(Operator.ARITHMOD, lhs.expression(), rhs.expression()), rhs.expression());
 		final Expression negExpr = new BinaryExpression(Operator.ARITHMINUS,
-				new BinaryExpression(Operator.ARITHMOD, lhs.getExpression(), rhs.getExpression()), rhs.getExpression());
+				new BinaryExpression(Operator.ARITHMOD, lhs.expression(), rhs.expression()), rhs.expression());
 		final Expression expr;
 		if (rightRange.isNonNegative()) {
 			expr = posExpr;
@@ -591,15 +590,15 @@ public final class Boogie2ACSL {
 			expr = negExpr;
 		} else {
 			expr = new IfThenElseExpression(
-					new BinaryExpression(Operator.COMPGEQ, rhs.getExpression(), new IntegerLiteral("0")), posExpr,
+					new BinaryExpression(Operator.COMPGEQ, rhs.expression(), new IntegerLiteral("0")), posExpr,
 					negExpr);
 		}
 		if (leftRange.isNonPositive()) {
-			return new BacktranslatedExpression(expr, lhs.getCType(), resultRange);
+			return new BacktranslatedExpression(expr, lhs.cType(), resultRange);
 		}
 		return new BacktranslatedExpression(new IfThenElseExpression(
-				new BinaryExpression(Operator.COMPGEQ, lhs.getExpression(), new IntegerLiteral("0")), baseExpr, expr),
-				lhs.getCType(), resultRange);
+				new BinaryExpression(Operator.COMPGEQ, lhs.expression(), new IntegerLiteral("0")), baseExpr, expr),
+				lhs.cType(), resultRange);
 	}
 
 	private BacktranslatedExpression translateBinaryExpression(
@@ -607,10 +606,10 @@ public final class Boogie2ACSL {
 			final boolean isNegated) {
 		final BacktranslatedExpression lhs = translateExpression(expression.getLeft(), context, isNegated);
 		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, isNegated);
-		final BigInterval leftRange = lhs == null ? BigInterval.unbounded() : lhs.getRange();
-		final BigInterval rightRange = rhs == null ? BigInterval.unbounded() : rhs.getRange();
-		final CType leftType = lhs == null ? null : lhs.getCType();
-		final CType rightType = rhs == null ? null : rhs.getCType();
+		final BigInterval leftRange = lhs == null ? BigInterval.unbounded() : lhs.range();
+		final BigInterval rightRange = rhs == null ? BigInterval.unbounded() : rhs.range();
+		final CType leftType = lhs == null ? null : lhs.cType();
+		final CType rightType = rhs == null ? null : rhs.cType();
 		final Operator operator;
 		final BigInterval range;
 		CType resultType;
@@ -709,14 +708,14 @@ public final class Boogie2ACSL {
 		if (range.isSingleton()) {
 			return translateIntegerLiteral(range.getMinValue());
 		}
-		Expression resultingLhs = lhs.getExpression();
+		Expression resultingLhs = lhs.expression();
 		if (!fitsInType(range, resultType)) {
 			resultType = determineTypeForRange(range);
 			if (resultType != null) {
 				resultingLhs = new CastExpression(AcslTypeUtils.translateCTypeToAcslType(resultType), resultingLhs);
 			}
 		}
-		final Expression resultExpr = new BinaryExpression(operator, resultingLhs, rhs.getExpression());
+		final Expression resultExpr = new BinaryExpression(operator, resultingLhs, rhs.expression());
 		return new BacktranslatedExpression(resultExpr, resultType, range);
 	}
 
@@ -732,9 +731,9 @@ public final class Boogie2ACSL {
 			if (innerTrans == null) {
 				return null;
 			}
-			range = innerTrans.getRange().negate();
-			resultExpr = new UnaryExpression(UnaryExpression.Operator.MINUS, innerTrans.getExpression());
-			cType = innerTrans.getCType();
+			range = innerTrans.range().negate();
+			resultExpr = new UnaryExpression(UnaryExpression.Operator.MINUS, innerTrans.expression());
+			cType = innerTrans.cType();
 			break;
 		}
 		case LOGICNEG: {
@@ -743,8 +742,8 @@ public final class Boogie2ACSL {
 				return null;
 			}
 			range = BigInterval.booleanRange();
-			resultExpr = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, innerTrans.getExpression());
-			cType = innerTrans.getCType();
+			resultExpr = new UnaryExpression(UnaryExpression.Operator.LOGICNEG, innerTrans.expression());
+			cType = innerTrans.cType();
 			break;
 		}
 		case OLD: {
@@ -752,16 +751,16 @@ public final class Boogie2ACSL {
 			if (innerTrans == null) {
 				return null;
 			}
-			range = innerTrans.getRange();
+			range = innerTrans.range();
 			// In ACSL \old is only allowed in function contracts.
 			// Therefore we translate an old-expression old(x) in Boogie to either \old(x), if the context is a function
 			// (which means that the expression is present in a contract), or \at(x, Pre) otherwise.
 			if (isFunctionDefinition(context)) {
-				resultExpr = new OldValueExpression(innerTrans.getExpression());
+				resultExpr = new OldValueExpression(innerTrans.expression());
 			} else {
-				resultExpr = new AtLabelExpression(innerTrans.getExpression(), "Pre");
+				resultExpr = new AtLabelExpression(innerTrans.expression(), "Pre");
 			}
-			cType = innerTrans.getCType();
+			cType = innerTrans.cType();
 			break;
 		}
 		default:
@@ -802,54 +801,17 @@ public final class Boogie2ACSL {
 			mReporter.accept("Cannot backtranslate array access to array " + expression.getArray());
 			return null;
 		}
-		Expression result = array.getExpression();
-		CType resultType = array.getCType();
+		Expression result = array.expression();
+		CType resultType = array.cType();
 		for (final var index : expression.getIndices()) {
 			final BacktranslatedExpression translatedIndex = translateExpression(index, context);
 			if (translatedIndex == null) {
 				return null;
 			}
-			result = new ArrayAccessExpression(result, translatedIndex.getExpression());
+			result = new ArrayAccessExpression(result, translatedIndex.expression());
 			resultType = ((CArray) resultType).getValueType();
 		}
 		final var range = getRangeForCType(resultType);
 		return new BacktranslatedExpression(result, resultType, range);
-	}
-
-	public static final class BacktranslatedExpression {
-		private final Expression mExpression;
-		private final CType mCType;
-		private final BigInterval mRange;
-
-		public BacktranslatedExpression(final Expression expression) {
-			this(expression, null, BigInterval.unbounded());
-		}
-
-		public BacktranslatedExpression(final Expression expression, final CType cType, final BigInterval range) {
-			mExpression = expression;
-			mCType = cType;
-			mRange = Objects.requireNonNull(range);
-		}
-
-		public Expression getExpression() {
-			return mExpression;
-		}
-
-		public CType getCType() {
-			return mCType;
-		}
-
-		public BigInterval getRange() {
-			return mRange;
-		}
-
-		@Override
-		public String toString() {
-			return ACSLPrettyPrinter.print(mExpression);
-		}
-
-		public BacktranslatedExpression asOldExpression() {
-			return new BacktranslatedExpression(new OldValueExpression(mExpression), mCType, mRange);
-		}
 	}
 }
