@@ -79,7 +79,6 @@ implements Callable<WorkerThreadResult<L, A>> {
 	// each worker needs one of their own:
 	private final int mIteration;
 	private final IRun<L, ?> mCounterexample;
-	private INestedWordAutomaton<L, IPredicate> mAbstraction; // abstraction at the point the worker was spawned
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	// each worker needs one of their own, but creates it themself:
@@ -104,15 +103,17 @@ implements Callable<WorkerThreadResult<L, A>> {
 
 	// Globals for Difference (Interpolant Automaton Enhancement)
 	protected static final boolean REMOVE_DEAD_ENDS = true;
+	private final ParallelCegarLoop<L, A> mMainThread;
 
 	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
 			final int iteration, final CegarLoopResultBuilder resultBuilder,
 			final CegarLoopStatisticsGenerator statistcs, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final StrategyFactory<L> strategyFactory,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final PredicateFactory predicateFactory,
+			final PredicateFactory predicateFactory,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
-			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode) {
+			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
+			final ParallelCegarLoop<L, A> mainThread) {
 
 		mLogger = logger;
 		mPref = pref;
@@ -126,7 +127,6 @@ implements Callable<WorkerThreadResult<L, A>> {
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mStrategyFactory = strategyFactory;
-		mAbstraction = abstraction;
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
@@ -136,7 +136,7 @@ implements Callable<WorkerThreadResult<L, A>> {
 		mSimplificationTechnique = pref.getSimplificationTechnique();
 		mIcfg = rootNode;
 		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
-
+		mMainThread = mainThread;
 	}
 
 	@Override
@@ -150,7 +150,6 @@ implements Callable<WorkerThreadResult<L, A>> {
 
 			if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
 				// in this setting we dont use error automata
-				mAbstraction = null;
 
 				mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
 						mCsToolkit.getManagedScript(), mCounterexample, null);
@@ -162,7 +161,6 @@ implements Callable<WorkerThreadResult<L, A>> {
 			constructRefinementAutomaton(automatonType);
 
 			mThreadResult = refineAbstractionInternally();
-			mAbstraction = null;
 		} catch (AutomataLibraryException | ToolchainCanceledException e) {
 			// TODO deal with failure
 		}
@@ -266,10 +264,11 @@ implements Callable<WorkerThreadResult<L, A>> {
 
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
-				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
+				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
+				mMainThread.getAbstraction(),
 				mIteration);
 		mInterpolAutomaton = null;
-		for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+		for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
 			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
 			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
 					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
@@ -375,7 +374,8 @@ implements Callable<WorkerThreadResult<L, A>> {
 		// method, but it seems better to save them
 		// at the end of the htc lifecycle instead of there
 		mLogger.info("Difference in Worker for Generalization");
-		computeAutomataDifference(mAbstraction, subtrahend, subtrahendBeforeEnhancement, predicateUnifier,
+		computeAutomataDifference(mMainThread.getAbstraction(), subtrahend, subtrahendBeforeEnhancement,
+				predicateUnifier,
 				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend,

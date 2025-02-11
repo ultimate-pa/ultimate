@@ -195,7 +195,7 @@ extends NwaCegarLoop<L> {
 
 		// Create PredicateFactoryForInterpolantAutomata with worker script
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), mPredicateFactory,
+				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
 						mComputeHoareAnnotation);
 
 		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
@@ -227,7 +227,7 @@ extends NwaCegarLoop<L> {
 		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
 
 		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(getServices(),
-				counterexample, mInitialAbstraction,
+				counterexample, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 				strategyType, mProgramCache);
@@ -235,9 +235,9 @@ extends NwaCegarLoop<L> {
 
 		// start worker
 		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
-				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, mInitialAbstraction,
+				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory,
 				predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-				mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode);
+				mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode, this);
 	}
 
 	/*
@@ -590,6 +590,23 @@ extends NwaCegarLoop<L> {
 			throw new AssertionError("IsEmpty(Parallel) Found the same counterexample twice!");
 		}
 		mAllCounterexamples.put(traceHash, counterexample);
+	}
+
+	/*
+	 * Data race warining, it can happen we getAbstraction an Main thread refines abstracion so it is updated but
+	 * unlikely right NOt sure if we get a copy ??
+	 *
+	 *
+	 * worker.getAbstraction() Aber wir erstelln keine kopie!!
+	 *
+	 * definitiv kann sich die abtraction ändern wärend wir im worker damit arbeiten. Aber vlt ist kein problem?
+	 * wahrscheinlich schon
+	 *
+	 * bessert wir machen eine copy die nach difference wieder weggeworfen wird
+	 *
+	 */
+	public INestedWordAutomaton<L, IPredicate> getAbstraction() {
+		return mAbstraction;
 	}
 
 	@Override
