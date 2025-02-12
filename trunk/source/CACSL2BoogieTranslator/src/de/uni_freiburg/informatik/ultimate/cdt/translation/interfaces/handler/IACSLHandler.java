@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.NullPointer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
@@ -337,6 +338,8 @@ public interface IACSLHandler {
 
 	Result visit(IDispatcher main, IfThenElseExpression node);
 
+	Result visit(IDispatcher main, NullPointer node);
+
 	/**
 	 * Fallback method for unhandled ACSLNodes.
 	 *
@@ -347,5 +350,4 @@ public interface IACSLHandler {
 	 * @return a result object
 	 */
 	Result visit(IDispatcher main, ACSLNode node);
-
 }
