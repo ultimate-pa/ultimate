@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  *            The type of automaton states
  */
 
-//TODO: think about what statistics to collect
 public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S> {
 	INwaOutgoingLetterAndTransitionProvider<L, S> mOriginalAutomaton;
 	private final Predicate<S> mIsInitial;
@@ -56,7 +55,6 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 	private final IPersistentSetChoice<L, S> mPersistent;
 	private final HashMap<S, Set<L>> mAmpleSets;
 
-	// TODO: remove once we've proper statistics
 	public int mPruningCounter; // count the number of pruned ts
 	public int mNonTrivialCounter; // count the number of non-trivial ample sets
 	public int mLoopCausedTrivial; // Originally non-trivial ample sets that became trivial bc of (A4: Cycle condition)

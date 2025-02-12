@@ -94,7 +94,7 @@ public class AmpleReduction<L, S> {
 		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
-		// TODO: Remove logger output once the statistics work
+		// TODO: turn warning off
 		mLogger.warn("Starting ample reduction"); // yellow so I can find it in console output
 		traverse();
 		mLogger.info("Finished ample reduction");

@@ -114,6 +114,8 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		final NestedWordAutomaton<L, IPredicate> redAutomaton = visitor.getReductionAutomaton();
 		mStatistics.stopTimer();
 		mStatistics.mLoopCausedTrivial = visitor.mLoopCausedTrivial;
+		mStatistics.mPrunedTS = visitor.mPruningCounter;
+		mStatistics.mNonTrivialAS = visitor.mNonTrivialCounter;
 		mStatistics.mReductionStates = redAutomaton.getStates().size();
 		mStatistics.mReductionTS = redAutomaton.computeNumberOfInternalTransitions();
 		return redAutomaton;
@@ -121,16 +123,14 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		/*
-		 * class AmpleRedStatistics extends AbstractStatisticsDataProvider { public AmpleRedStatistics() {
-		 * declareCounter("TEST", () -> 42); forward("Underlying", mUnderlying::getStatistics); } }
-		 */
 		return mStatistics;
 	}
 
 	private class AmpleRedStatistics extends AbstractStatisticsDataProvider {
 		// private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
 		int mLoopCausedTrivial = 0;
+		int mPrunedTS = 0;
+		int mNonTrivialAS = 0;
 		int mReductionTS = 0;
 		int mReductionStates = 0;
 		TimeTracker mReductionTime = new TimeTracker();
@@ -139,6 +139,8 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 			// forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 			declareTimeTracker("Time to compute Ample Reduction", mReductionTime);
 			declareCounter("Trivial Ample Sets caused by loops", () -> mLoopCausedTrivial);
+			declareCounter("Number of non-trivial ample sets", () -> mNonTrivialAS);
+			declareCounter("Number of pruned transitions", () -> mPrunedTS);
 			declareCounter("Number of transitions in reduction automaton", () -> mReductionTS);
 			declareCounter("Number of states in reduction automaton", () -> mReductionStates);
 			forward("Underlying", mUnderlying::getStatistics);
