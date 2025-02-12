@@ -135,12 +135,26 @@ public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOut
 		switch (mStateFactory.getOriginalState(state)) {
 		case Either.Left(final S1 original) when mApplyFunctionAfterTransition && mLeftAutomaton.isFinal(original)
 				&& mTransitionLetters.contains(letter):
-			// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
-			return () -> new TransformIterator<>(
-					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
-							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
+			// TODO (Dominik 2025-02-12) We duplicate some logic here due to an apparent compiler bug.
+			// For more information, see the comment in IfElsePreferenceOrderAutomaton#internalSuccessors.
+			if (mApplyFunctionAfterTransition && mLeftAutomaton.isFinal(original)
+					&& mTransitionLetters.contains(letter)) {
+				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
+				return () -> new TransformIterator<>(
+						new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
+								q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
+						transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+								mStateFactory.createNewStateRight(transition.getSucc())));
+			} else if (mLeftAutomaton.isFinal(original) && mTransitionLetters.contains(letter)) {
+				System.err.println("Inconsistent evaluation of switch guard and if condition");
+				return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
+						successor -> new OutgoingInternalTransition<>(letter,
+								mStateFactory.createNewStateRight(successor)));
+			}
+			System.err.println("Inconsistent evaluation of switch guard and if condition");
+			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateRight(transition.getSucc())));
+							mStateFactory.createNewStateLeft(transition.getSucc())));
 		case Either.Left(final S1 original) when mLeftAutomaton.isFinal(original)
 				&& mTransitionLetters.contains(letter):
 			return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),

@@ -137,11 +137,30 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 		// Automaton is currently in the initial State
 		// letter represents transition into if branch -> transition into left automaton
 		case IfThenElseState.Initial() when mIfBranchLetters.contains(letter):
+			// TODO (Dominik 2025-02-12) We duplicate some logic here that should not be necessary.
+			// The reason for this duplication is that we observed strange behaviour that we can currently only explain
+			// by an apparent compiler bug: the "when" guard in the line above seems to be simply ignored; and this
+			// case body is entered regardless of what the guard evaluates to.
+			//
+			// To reproduce this strange behaviour, follow the instructions in mattermost [1] for the example ex08.bpl,
+			// and set breakpoints in this as well as the next case body. You will observe that the breakpoint in this
+			// case body is also hit for letter=[76] despite it not being in mIfBranchLetters, and the breakpoint in the
+			// next case body is never hit.
+			//
+			// [1] https://chat.sopranium.de/swt/pl/8jye3n4jqjyijqrtgnr8itdbbe
+			if (mIfBranchLetters.contains(letter)) {
+				return () -> new TransformIterator<>(
+						new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
+								q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
+						transition -> new OutgoingInternalTransition<>(transition.getLetter(),
+								mStateFactory.createNewStateLeft(transition.getSucc())));
+			}
+			System.err.println("Inconsistent evaluation of switch guard and if condition");
 			return () -> new TransformIterator<>(
-					new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
-							q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
+					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
+							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateLeft(transition.getSucc())));
+							mStateFactory.createNewStateRight(transition.getSucc())));
 
 		// Automaton is currently in the initial State
 		// but letter doesn't represent transition into if branch
