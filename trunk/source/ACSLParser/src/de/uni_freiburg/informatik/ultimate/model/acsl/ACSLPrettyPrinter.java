@@ -35,13 +35,17 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.AtLabelExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BaseAddrExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BlockLengthExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalGhostDeclaration;
@@ -49,10 +53,16 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.NotDefinedExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.NullPointer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.SizeOfExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.SyntacticNamingExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 
@@ -100,37 +110,36 @@ public class ACSLPrettyPrinter {
 		case final ACSLResultExpression res -> "\\result";
 		case final ArrayAccessExpression arrayAccess ->
 				"%s[%s]".formatted(printExpression(arrayAccess.getArray()), printExpression(arrayAccess.getIndex()));
-		// TODO ArrayStoreExpression
 		case final AtLabelExpression at -> "\\at(%s, %s)".formatted(printExpression(at.getExpression()), at.getLabel());
-		// TODO BaseAddrExpression
+		case final BaseAddrExpression base -> "\\base_addr{%s}".formatted(printExpression(base.getExpression()));
 		case final BinaryExpression bin -> printBinaryExpression(bin);
-		// TODO BitvecLiteral
-		// TODO BitVectorAccessExpression
-		// TODO BlockLengthExpression
+		case final BlockLengthExpression block ->
+				"\\block_length{%s}".formatted(printExpression(block.getExpression()));
 		case final BooleanLiteral boolLit -> "\\" + boolLit.getValue();
 		case final CastExpression cast ->
 				"(%s) %s".formatted(cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
 		case final FieldAccessExpression f -> "(%s).%s".formatted(printExpression(f.getStruct()), f.getField());
-		// TODO FreeableExpression
-		// TODO FunctionApplication
+		case final FreeableExpression freeable -> "\\freeable{%s}".formatted(printExpression(freeable.getExpression()));
+		case final FunctionApplication function -> "%s(%s)".formatted(function.getIdentifier(),
+				Arrays.stream(function.getArguments()).map(x -> printExpression(x)).collect(Collectors.joining(", ")));
 		case final IdentifierExpression id -> id.getIdentifier();
 		case final IfThenElseExpression ite -> "(%s ? %s : %s)".formatted(printExpression(ite.getCondition()),
 				printExpression(ite.getThenPart()), printExpression(ite.getElsePart()));
 		case final IntegerLiteral intLit -> intLit.getValue();
-		// TODO MallocableExpression
-		// TODO NotDefinedExpression
-		// TODO NullPointer
+		case final MallocableExpression malloc -> "\\mallocable{%s}".formatted(printExpression(malloc.getExpression()));
+		case final NotDefinedExpression nd ->
+				throw new AssertionError("NotDefinedExpression should not be shown as a string, "
+						+ "it should be only used for unsupported ACSL expressions.");
+		case final NullPointer np -> "\\null";
 		case final OldValueExpression old -> "\\old(%s)".formatted(printExpression(old.getExpression()));
 		case final QuantifierExpression quantifier -> printQuantifierExpression(quantifier);
 		case final RealLiteral realLit -> realLit.getValue();
-		// TODO SizeOfExpression
-		// TODO StringLiteral
-		// TODO SyntacticNamingExpression
+		case final SizeOfExpression sizeof -> "sizeof(%s)".formatted(printExpression(sizeof.getExpression()));
+		case final StringLiteral string -> "\"%s\"".formatted(string.getValue());
+		case final SyntacticNamingExpression naming ->
+				"%s : %s".formatted(naming.getIdentifier(), printExpression(naming.getFormula()));
 		case final UnaryExpression unary -> printUnaryExpression(unary);
 		case final ValidExpression valid -> "\\valid(%s)".formatted(printExpression(valid.getExpression()));
-		// TODO WildCardExpression
-
-		default -> expression.toString();
 		};
 	}
 
