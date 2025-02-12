@@ -78,6 +78,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	public Comparator<L> getOrder(final S1 stateProgram, final State stateMonitor) {
 		final String lastThread = stateMonitor.thread();
 		final int lastIndex = stateMonitor.index();
+		// TODO: HashMap from states to comparator s.t. only one comparator is constructed per state
 		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
 	}
 
@@ -104,6 +105,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 		private final int mLastIndex;
 		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
+		// TODO: HashMap (or HashRelation) from pairs (a,b) to its compare value which is then used in compare below
 
 		/**
 		 * Construct a new Comparator.

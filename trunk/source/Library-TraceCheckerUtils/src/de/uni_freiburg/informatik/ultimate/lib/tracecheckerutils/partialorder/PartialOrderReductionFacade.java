@@ -26,9 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -256,19 +259,35 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final Set<IProgramVar> effectiveGlobalVars) {
 
 		switch (steptype) {
-		case ALL_READ_WRITE:
-			return x -> (!x.getTransformula().getInVars().isEmpty()
-					|| !x.getTransformula().getAssignedVars().isEmpty());
-		case ALL_WRITE:
-			return x -> !x.getTransformula().getAssignedVars().isEmpty();
-		case GLOBAL_READ_WRITE:
-			return x -> x.getTransformula().getInVars().keySet().stream().anyMatch(v -> effectiveGlobalVars.contains(v))
-					|| x.getTransformula().getAssignedVars().stream().anyMatch(v -> effectiveGlobalVars.contains(v));
-		case GLOBAL_WRITE:
-			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> effectiveGlobalVars.contains(v));
-		case LOOP:
-			final var loopHeads = icfg.getLoopLocations();
-			return x -> loopHeads.contains(x.getTarget());
+			case ALL_READ_WRITE:
+				return x -> (!x.getTransformula().getInVars().isEmpty()
+						|| !x.getTransformula().getAssignedVars().isEmpty());
+			case ALL_WRITE:
+				return x -> !x.getTransformula().getAssignedVars().isEmpty();
+			case GLOBAL_READ_WRITE:
+				return x -> x.getTransformula().getInVars().keySet().stream()
+						.anyMatch(v -> effectiveGlobalVars.contains(v))
+						|| x.getTransformula().getAssignedVars().stream()
+								.anyMatch(v -> effectiveGlobalVars.contains(v));
+			case GLOBAL_WRITE:
+				return x -> x.getTransformula().getAssignedVars().stream()
+						.anyMatch(v -> effectiveGlobalVars.contains(v));
+			case LOOP:
+				final var loopHeads = mIcfg.getLoopLocations();
+				final Set<IcfgEdge> loopEdges = new HashSet<>();
+				for (final var loopHead : loopHeads) {
+					final Deque<IcfgEdge> worklist = new ArrayDeque<>(loopHead.getOutgoingEdges());
+					while (!worklist.isEmpty()) {
+						final IcfgEdge edge = worklist.removeFirst();
+						if (edge.getTarget().equals(loopHead)) {
+							loopEdges.add(edge);
+							continue;
+						}
+						worklist.addAll(edge.getTarget().getOutgoingEdges());
+					}
+				}
+
+				return x -> loopEdges.contains(x);
 		}
 		throw new UnsupportedOperationException("Unknown step type: " + steptype);
 	}
@@ -309,28 +328,29 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	private IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType, final long randomOrderSeed,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs) {
 		switch (orderType) {
-		case BY_SERIAL_NUMBER:
-			final Set<String> errorThreads =
-					errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
-			return new ConstantDfsOrder<>(
-					Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
-							.thenComparing(Comparator.comparing(
-									(Function<? super L, ? extends String>) IIcfgTransition::getPrecedingProcedure))
-							.thenComparing(Comparator.comparingInt(Object::hashCode)));
-		case PSEUDO_LOCKSTEP:
-			return new BetterLockstepOrder<>(this::normalizePredicate);
-		case RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, false);
-		case POSITIONAL_RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
-		case LOOP_LOCKSTEP:
-			final var order =
-					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
-			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
-					x -> ((PredicateWithLastThread) x).getLastThread());
-			return order;
-		default:
-			throw new UnsupportedOperationException("Unknown order type: " + orderType);
+			case BY_SERIAL_NUMBER:
+				final Set<String> errorThreads =
+						errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
+				return new ConstantDfsOrder<>(
+						Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
+								.thenComparing(Comparator.comparing(
+										(Function<? super L, ? extends String>) IIcfgTransition::getPrecedingProcedure))
+								.thenComparing(Comparator.comparingInt(Object::hashCode)));
+			case PSEUDO_LOCKSTEP:
+				return new BetterLockstepOrder<>(this::normalizePredicate);
+			case RANDOM:
+				return new RandomDfsOrder<>(randomOrderSeed, false);
+			case POSITIONAL_RANDOM:
+				return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
+			case LOOP_LOCKSTEP:
+				final var order =
+						new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
+				mStateSplitter =
+						StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
+								x -> ((PredicateWithLastThread) x).getLastThread());
+				return order;
+			default:
+				throw new UnsupportedOperationException("Unknown order type: " + orderType);
 		}
 	}
 
@@ -457,32 +477,32 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		final IIndependenceRelation<IPredicate, L> independence = mIndependenceRelations.get(0);
 
 		switch (mMode) {
-		// DFS-based modes
-		case SLEEP_NEW_STATES:
-			applyDfs(
-					new MinimalSleepSetReduction<>(input, new ISleepSetStateFactory.MinimalReduction<>(),
-							lift(independence, getOriginal), lift(order)),
-					visitorProvider, lift(order), getOriginal.compose(Pair::getFirst));
-			break;
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			final var extract = getOriginal.compose(Pair<R, ImmutableSet<L>>::getFirst);
-			applyDfs(
-					new PersistentSetReduction<>(
-							new MinimalSleepSetReduction<>(input, new ISleepSetStateFactory.MinimalReduction<>(),
-									lift(independence, getOriginal), lift(order)),
-							lift(mPersistent, extract)),
-					visitorProvider, lift(order), getOriginal.compose(Pair::getFirst));
-			break;
-		case PERSISTENT_SETS:
-			applyDfs(new PersistentSetReduction<>(input, lift(mPersistent, getOriginal)), visitorProvider, order,
-					getOriginal);
-			break;
-		case NONE:
-			applyDfs(input, visitorProvider, order, getOriginal);
-			break;
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
+			// DFS-based modes
+			case SLEEP_NEW_STATES:
+				applyDfs(
+						new MinimalSleepSetReduction<>(input, new ISleepSetStateFactory.MinimalReduction<>(),
+								lift(independence, getOriginal), lift(order)),
+						visitorProvider, lift(order), getOriginal.compose(Pair::getFirst));
+				break;
+			case PERSISTENT_SLEEP_NEW_STATES:
+			case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
+				final var extract = getOriginal.compose(Pair<R, ImmutableSet<L>>::getFirst);
+				applyDfs(
+						new PersistentSetReduction<>(
+								new MinimalSleepSetReduction<>(input, new ISleepSetStateFactory.MinimalReduction<>(),
+										lift(independence, getOriginal), lift(order)),
+								lift(mPersistent, extract)),
+						visitorProvider, lift(order), getOriginal.compose(Pair::getFirst));
+				break;
+			case PERSISTENT_SETS:
+				applyDfs(new PersistentSetReduction<>(input, lift(mPersistent, getOriginal)), visitorProvider, order,
+						getOriginal);
+				break;
+			case NONE:
+				applyDfs(input, visitorProvider, order, getOriginal);
+				break;
+			default:
+				throw new UnsupportedOperationException("Unsupported POR mode: " + mMode);
 		}
 	}
 
@@ -587,17 +607,17 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	// Some fields of this class may become fields of the respective ITraversal implementations.
 	private ITraversal<L> buildReducedTraversal(final PartialOrderMode mode, final ITraversal<L> underlying) {
 		switch (mode) {
-		case NONE:
-			return underlying;
-		case SLEEP_NEW_STATES:
-			return buildSleepTraversal(underlying);
-		case PERSISTENT_SETS:
-			return new PersistentSetTraversal(underlying);
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return buildSleepTraversal(new PersistentSetTraversal(underlying));
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
+			case NONE:
+				return underlying;
+			case SLEEP_NEW_STATES:
+				return buildSleepTraversal(underlying);
+			case PERSISTENT_SETS:
+				return new PersistentSetTraversal(underlying);
+			case PERSISTENT_SLEEP_NEW_STATES:
+			case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
+				return buildSleepTraversal(new PersistentSetTraversal(underlying));
+			default:
+				throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
 		}
 	}
 
