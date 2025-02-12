@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FakePointerExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GhostUpdate;
@@ -111,8 +110,6 @@ public class ACSLPrettyPrinter {
 		case final BooleanLiteral boolLit -> "\\" + boolLit.getValue();
 		case final CastExpression cast ->
 				"(%s) %s".formatted(cast.getCastedType().getTypeName(), printExpression(cast.getExpression()));
-		case final FakePointerExpression pointer ->
-				"{%s:%s}".formatted(printExpression(pointer.getBase()), printExpression(pointer.getOffset()));
 		case final FieldAccessExpression f -> "(%s).%s".formatted(printExpression(f.getStruct()), f.getField());
 		// TODO FreeableExpression
 		// TODO FunctionApplication

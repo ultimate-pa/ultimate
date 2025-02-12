@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Boogie2ACSL.BacktranslatedExpression;
 
 /**
  *
@@ -52,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  *
  */
 public class CACSLBacktranslationValueProvider
-		implements IBacktranslationValueProvider<CACSLLocation, BacktranslatedExpression> {
+		implements IBacktranslationValueProvider<CACSLLocation, BacktranslatedACSLValue> {
 
 	@Override
 	public int getStartLineNumberFromStep(final CACSLLocation step) {
@@ -114,8 +113,9 @@ public class CACSLBacktranslationValueProvider
 	}
 
 	@Override
-	public String getStringFromExpression(final BacktranslatedExpression expression) {
-		return ACSLPrettyPrinter.print(expression.getExpression());
+	public String getStringFromExpression(final BacktranslatedACSLValue expression) {
+		// Both BacktranslatedExpression and FakePointer have suitable toString() implementations.
+		return expression.toString();
 	}
 
 	private String getStringFromIASTNode(final IASTNode currentStepNode) {
