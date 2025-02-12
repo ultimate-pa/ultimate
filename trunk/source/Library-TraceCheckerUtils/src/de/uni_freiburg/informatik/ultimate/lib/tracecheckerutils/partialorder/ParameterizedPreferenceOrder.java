@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrde
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Implementation of the Parameterized Preference Order.
@@ -54,6 +56,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
+	private final HashMap<Pair<S1, State>, PreferenceOrderComparator<L>> mComparatorsCache = new HashMap<>();
 
 	/**
 	 * Construct a new Parameterized Preference Order.
@@ -78,8 +81,16 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	public Comparator<L> getOrder(final S1 stateProgram, final State stateMonitor) {
 		final String lastThread = stateMonitor.thread();
 		final int lastIndex = stateMonitor.index();
-		// TODO: HashMap from states to comparator s.t. only one comparator is constructed per state
-		return new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
+
+		// TODO: HashMap from states to comparator s.t. only one comparator is constructed per pair of states
+		final Pair<S1, State> pair = new Pair<>(stateProgram, stateMonitor);
+		if (mComparatorsCache.containsKey(pair)) {
+			return mComparatorsCache.get(pair);
+		}
+		final PreferenceOrderComparator<L> comparator =
+				new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
+		mComparatorsCache.put(pair, comparator);
+		return comparator;
 	}
 
 	@Override
@@ -105,6 +116,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 		private final int mLastIndex;
 		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
+		private final HashMap<Pair<L, L>, Integer> mComparisonsCache = new HashMap<>();
 		// TODO: HashMap (or HashRelation) from pairs (a,b) to its compare value which is then used in compare below
 
 		/**
@@ -134,18 +146,27 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 				return -1;
 			}
 
+			final Pair<L, L> pair = new Pair<>(x, y);
+			if (mComparisonsCache.containsKey(pair)) {
+				return mComparisonsCache.get(pair);
+			}
+
 			// start the comparison from the current index
 			final int xThreadIndex = DataStructureUtils.indexOf(mThreads, x.getPrecedingProcedure(), mLastIndex);
 			final int yThreadIndex = DataStructureUtils.indexOf(mThreads, y.getPrecedingProcedure(), mLastIndex);
 			final boolean xBefore = xThreadIndex < mLastIndex;
 			final boolean yBefore = yThreadIndex < mLastIndex;
 			if (xBefore && !yBefore) {
+				mComparisonsCache.put(pair, 1);
 				return 1;
 			}
 			if (yBefore && !xBefore) {
+				mComparisonsCache.put(pair, -1);
 				return -1;
 			}
-			return Integer.compare(xThreadIndex, yThreadIndex);
+			final int r = Integer.compare(xThreadIndex, yThreadIndex);
+			mComparisonsCache.put(pair, r);
+			return r;
 		}
 
 		@Override
