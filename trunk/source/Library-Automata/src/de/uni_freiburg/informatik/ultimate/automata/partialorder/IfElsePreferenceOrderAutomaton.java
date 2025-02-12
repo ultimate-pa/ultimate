@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.OptionalEither;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
@@ -107,18 +106,18 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 	@Override
 	public boolean isInitial(final S state) {
 		return switch (mStateFactory.getOriginalState(state)) {
-		case OptionalEither.Right(final S2 original) -> false;
-		case OptionalEither.Left(final S1 original) -> false;
-		case OptionalEither.Neither() -> true;
+		case IfThenElseState.Else(final S2 original) -> false;
+		case IfThenElseState.Then(final S1 original) -> false;
+		case IfThenElseState.Initial() -> true;
 		};
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
 		return switch (mStateFactory.getOriginalState(state)) {
-		case OptionalEither.Left(final S1 original) -> mLeftAutomaton.isFinal(original);
-		case OptionalEither.Right(final S2 original) -> mRightAutomaton.isFinal(original);
-		case OptionalEither.Neither() -> false;
+		case IfThenElseState.Then(final S1 original) -> mLeftAutomaton.isFinal(original);
+		case IfThenElseState.Else(final S2 original) -> mRightAutomaton.isFinal(original);
+		case IfThenElseState.Initial() -> false;
 		};
 	}
 
@@ -137,7 +136,7 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 		switch (mStateFactory.getOriginalState(state)) {
 		// Automaton is currently in the initial State
 		// letter represents transition into if branch -> transition into left automaton
-		case OptionalEither.Neither() when mIfBranchLetters.contains(letter):
+		case IfThenElseState.Initial() when mIfBranchLetters.contains(letter):
 			return () -> new TransformIterator<>(
 					new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
 							q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
@@ -147,7 +146,7 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 		// Automaton is currently in the initial State
 		// but letter doesn't represent transition into if branch
 		// -> letter leads into else branch -> transition into right automaton
-		case OptionalEither.Neither():
+		case IfThenElseState.Initial():
 			return () -> new TransformIterator<>(
 					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
 							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
@@ -155,13 +154,13 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 							mStateFactory.createNewStateRight(transition.getSucc())));
 
 		// Automaton is already in if branch
-		case OptionalEither.Left(final S1 original):
+		case IfThenElseState.Then(final S1 original):
 			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
 							mStateFactory.createNewStateLeft(transition.getSucc())));
 
 		// Automaton is already in else branch
-		case OptionalEither.Right(final S2 original):
+		case IfThenElseState.Else(final S2 original):
 			return () -> new TransformIterator<>(mRightAutomaton.internalSuccessors(original, letter).iterator(),
 					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
 							mStateFactory.createNewStateRight(transition.getSucc())));
@@ -185,26 +184,26 @@ public class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoin
 
 		S createNewBeginningState();
 
-		OptionalEither<S1, S2> getOriginalState(S state);
+		IfThenElseState<S1, S2> getOriginalState(S state);
 
-		class Default<S1, S2> implements IIfElseStateFactory<S1, S2, OptionalEither<S1, S2>> {
+		class Default<S1, S2> implements IIfElseStateFactory<S1, S2, IfThenElseState<S1, S2>> {
 			@Override
-			public OptionalEither<S1, S2> createNewStateLeft(final S1 state) {
-				return new OptionalEither.Left<>(state);
+			public IfThenElseState<S1, S2> createNewStateLeft(final S1 state) {
+				return new IfThenElseState.Then<>(state);
 			}
 
 			@Override
-			public OptionalEither<S1, S2> createNewStateRight(final S2 state) {
-				return new OptionalEither.Right<>(state);
+			public IfThenElseState<S1, S2> createNewStateRight(final S2 state) {
+				return new IfThenElseState.Else<>(state);
 			}
 
 			@Override
-			public OptionalEither<S1, S2> createNewBeginningState() {
-				return new OptionalEither.Neither<>();
+			public IfThenElseState<S1, S2> createNewBeginningState() {
+				return new IfThenElseState.Initial<>();
 			}
 
 			@Override
-			public OptionalEither<S1, S2> getOriginalState(final OptionalEither<S1, S2> state) {
+			public IfThenElseState<S1, S2> getOriginalState(final IfThenElseState<S1, S2> state) {
 				return state;
 			}
 		}

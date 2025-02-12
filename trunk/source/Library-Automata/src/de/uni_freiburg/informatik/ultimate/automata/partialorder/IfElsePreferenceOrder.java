@@ -33,7 +33,6 @@ import java.util.Comparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IfElsePreferenceOrderAutomaton.IIfElseStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.OptionalEither;
 
 /**
  * Order representing a combination of two given orders mFirstOrder and mSecondOrder that chooses which of the two
@@ -85,12 +84,12 @@ public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder
 	@Override
 	public Comparator<L> getOrder(final S0 programState, final S monitorState) {
 		switch (mStateFactory.getOriginalState(monitorState)) {
-		case OptionalEither.Neither():
+		case IfThenElseState.Initial():
 			// Lambda Expression representing the empty order
 			return (a, b) -> 0;
-		case OptionalEither.Left(final S1 original):
+		case IfThenElseState.Then(final S1 original):
 			return mFirstOrder.getOrder(programState, original);
-		case OptionalEither.Right(final S2 original):
+		case IfThenElseState.Else(final S2 original):
 			return mSecondOrder.getOrder(programState, original);
 		}
 	}
