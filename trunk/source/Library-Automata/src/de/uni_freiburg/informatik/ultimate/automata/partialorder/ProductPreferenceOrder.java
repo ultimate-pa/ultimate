@@ -29,15 +29,21 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ProductPreferenceOrderAutomaton.IProductPreferenceOrderStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder<L, S0, S> {
 	private final IPreferenceOrder<L, S0, S1> mFirstOrder;
 	private final IPreferenceOrder<L, S0, S2> mSecondOrder;
 	private final IProductPreferenceOrderStateFactory<S1, S2, S> mStateFactory;
 	private final ProductPreferenceOrderAutomaton<L, S1, S2, S> mAutomaton;
+
+	private final Map<Pair<S0, S>, ProductComparator<L>> mCachedComparators = new HashMap<>();
 
 	public ProductPreferenceOrder(final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
 			final IProductPreferenceOrderStateFactory<S1, S2, S> stateFactory) {
@@ -71,5 +77,18 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 		// Alternatively, we could construct the full transitive closure of the union
 		// of mFirstOrder and mSecondOrder, but that seems unnecessarily inefficient.
 		return null;
+	}
+
+	private static class ProductComparator<L> implements Comparator<L> {
+		private final Map<Pair<L, L>, Integer> mComparisonResults = new HashMap<>();
+
+		public ProductComparator(final Comparator<L> lessX, final Comparator<L> lessY, final Set<L> alphabet) {
+			// TODO compute transitive closure of union of lessX and lessY, and store it in mComparisonResults
+		}
+
+		@Override
+		public int compare(final L o1, final L o2) {
+			return mComparisonResults.get(new Pair<>(o1, o2));
+		}
 	}
 }
