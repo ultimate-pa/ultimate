@@ -137,7 +137,7 @@ public class ACSLPrettyPrinter {
 		case final SizeOfExpression sizeof -> "sizeof(%s)".formatted(printExpression(sizeof.getExpression()));
 		case final StringLiteral string -> "\"%s\"".formatted(string.getValue());
 		case final SyntacticNamingExpression naming ->
-				"%s : %s".formatted(naming.getIdentifier(), printExpression(naming.getFormula()));
+				"%s : %s".formatted(naming.getIdentifier(), printExpression(naming.getExpression()));
 		case final UnaryExpression unary -> printUnaryExpression(unary);
 		case final ValidExpression valid -> "\\valid(%s)".formatted(printExpression(valid.getExpression()));
 		};

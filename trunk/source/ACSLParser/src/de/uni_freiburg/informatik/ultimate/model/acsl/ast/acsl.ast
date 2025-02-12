@@ -237,7 +237,7 @@ Expression ::=
 	| { SyntacticNamingExpression }
 		/** special construct is used in assumes clauses */
 		identifier : String
-		formula : Expression										
+		expression : Expression										
 	| { IdentifierExpression }
 		identifier : String
 	| { FunctionApplication }
