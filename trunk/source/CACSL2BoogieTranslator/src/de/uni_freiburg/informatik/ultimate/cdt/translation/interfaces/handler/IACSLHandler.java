@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
@@ -143,6 +144,17 @@ public interface IACSLHandler extends IHandler {
 	 * @return a result object
 	 */
 	Result visit(IDispatcher main, IdentifierExpression node);
+
+	/**
+	 * Translates an QuantifierExpression.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, QuantifierExpression node);
 
 	/**
 	 * Translates an Contract.

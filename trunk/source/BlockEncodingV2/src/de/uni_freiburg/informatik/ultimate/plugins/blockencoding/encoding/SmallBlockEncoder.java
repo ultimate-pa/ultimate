@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -133,7 +132,7 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 				continue;
 			}
 
-			final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
+			final UnmodifiableTransFormula tf = edge.getTransformula();
 			Term term;
 			try {
 				term = mDnfTransformer.transform(tf.getFormula());

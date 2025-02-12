@@ -32,7 +32,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.logic.Model;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
-public class ChcSolution extends BasePayloadContainer {
+/**
+ * Represents the output of a CHC solver, consisting of a satisfiabilitya verdict (represented as {@see LBool}), and
+ * possibly additional information such as a model, a derivation or an UNSAT core.
+ */
+public final class ChcSolution extends BasePayloadContainer {
 	private static final long serialVersionUID = -4389502364282768199L;
 
 	private final LBool mSatisfiability;
@@ -48,14 +52,35 @@ public class ChcSolution extends BasePayloadContainer {
 		mUnsatCore = unsatCore;
 	}
 
+	/**
+	 * Create a new solution representing a {@code SAT} verdict.
+	 *
+	 * @param model
+	 *            Optionally, a model produced by the solver. May be null.
+	 * @return the new instance
+	 */
 	public static ChcSolution sat(final Model model) {
 		return new ChcSolution(LBool.SAT, model, null, null);
 	}
 
+	/**
+	 * Create a new solution representing an {@code UNSAT} verdict.
+	 *
+	 * @param derivation
+	 *            Optionally, a derivation produced by the solver. May be null.
+	 * @param unsatCore
+	 *            Optionally, an UNSAT core produced by the solver. May be null.
+	 * @return the new instance
+	 */
 	public static ChcSolution unsat(final Derivation derivation, final Set<HornClause> unsatCore) {
 		return new ChcSolution(LBool.UNSAT, null, derivation, unsatCore);
 	}
 
+	/**
+	 * Create a new solution representing an {@code UNKNOWN} verdict.
+	 *
+	 * @return the new instance
+	 */
 	public static ChcSolution unknown() {
 		return new ChcSolution(LBool.UNKNOWN, null, null, null);
 	}

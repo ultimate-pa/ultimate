@@ -30,7 +30,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 /**
- * Represents a non-empty interval of {@link BigInteger}s.
+ * Represents a non-empty interval of {@link BigInteger}s and implements interval arithmetic operations.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
@@ -38,21 +38,46 @@ public class BigInterval {
 	private final BigInteger mMinValue;
 	private final BigInteger mMaxValue;
 
+	/**
+	 * Creates a new non-empty interval.
+	 *
+	 * @param minValue
+	 *            The interval's lower bound, or {@code null} if the interval is unbounded from below.
+	 * @param maxValue
+	 *            The interval's upper bound, or {@code null} if the interval is unbounded from above.
+	 */
 	public BigInterval(final BigInteger minValue, final BigInteger maxValue) {
 		mMinValue = minValue;
 		mMaxValue = maxValue;
-		assert mMinValue == null || mMaxValue == null
-				|| maxValue.compareTo(minValue) >= 0 : "empty interval not supported";
+		assert mMinValue == null || mMaxValue == null || maxValue.compareTo(minValue) >= 0
+				: "empty interval not supported";
 	}
 
+	/**
+	 * Creates an interval that is unbounded from below and above.
+	 *
+	 * @return the interval (-\infty, +infty)
+	 */
 	public static BigInterval unbounded() {
 		return new BigInterval(null, null);
 	}
 
+	/**
+	 * Creates an interval representing possible values of a boolean.
+	 *
+	 * @return the interval [0, 1]
+	 */
 	public static BigInterval booleanRange() {
 		return new BigInterval(BigInteger.ZERO, BigInteger.ONE);
 	}
 
+	/**
+	 * Creates a singleton interval.
+	 *
+	 * @param value
+	 *            the single value in the interval
+	 * @return the interval [value, value].
+	 */
 	public static BigInterval singleton(final BigInteger value) {
 		return new BigInterval(value, value);
 	}
@@ -71,10 +96,18 @@ public class BigInterval {
 		return mMaxValue;
 	}
 
+	/**
+	 * Counts the number of elements in the interval
+	 *
+	 * @return the length, or {@code null} if the interval is infinite
+	 */
 	public BigInteger length() {
 		return mMinValue != null && mMaxValue != null ? mMaxValue.subtract(mMinValue).add(BigInteger.ONE) : null;
 	}
 
+	/**
+	 * @return {@code true} if this interval contains exactly one element, {@code false} otherwise
+	 */
 	public boolean isSingleton() {
 		return mMinValue != null && mMaxValue != null && mMinValue.equals(mMaxValue);
 	}
@@ -87,11 +120,11 @@ public class BigInterval {
 		return mMaxValue != null && mMaxValue.signum() == -1;
 	}
 
-	public boolean isStrictlyNonNegative() {
+	public boolean isNonNegative() {
 		return mMinValue != null && mMinValue.signum() >= 0;
 	}
 
-	public boolean isStrictlyNonPositive() {
+	public boolean isNonPositive() {
 		return mMaxValue != null && mMaxValue.signum() <= 0;
 	}
 
@@ -99,6 +132,13 @@ public class BigInterval {
 		return isSingleton() && mMinValue.signum() == 0;
 	}
 
+	/**
+	 * Determines whether this interval is a superset of another given interval.
+	 *
+	 * @param subset
+	 *            the other interval
+	 * @return {@code true} if this interval contains all elements of {@code subset}, or {@code false} otherwise
+	 */
 	public boolean contains(final BigInterval subset) {
 		final boolean minBoundOk =
 				mMinValue == null || (subset.mMinValue != null && mMinValue.compareTo(subset.mMinValue) <= 0);
@@ -107,36 +147,70 @@ public class BigInterval {
 		return minBoundOk && maxBoundOk;
 	}
 
+	/**
+	 * Determines if this interval contains a given integer.
+	 *
+	 * @param element
+	 *            the integer to check for membership
+	 * @return {@code true} if the given integer is within the interval, {@code false} otherwise
+	 */
 	public boolean contains(final BigInteger element) {
 		final boolean minBoundOk = mMinValue == null || mMinValue.compareTo(element) <= 0;
 		final boolean maxBoundOk = mMaxValue == null || mMaxValue.compareTo(element) >= 0;
 		return minBoundOk && maxBoundOk;
 	}
 
+	/**
+	 * Computes the smallest interval that contains the union of this interval with another given interval.
+	 *
+	 * @param other
+	 *            the second interval
+	 * @return the joined interval
+	 */
 	public BigInterval join(final BigInterval other) {
 		final var minValue = mMinValue == null || other.mMinValue == null ? null : mMinValue.min(other.mMinValue);
 		final var maxValue = mMaxValue == null || other.mMaxValue == null ? null : mMaxValue.max(other.mMaxValue);
 		return new BigInterval(minValue, maxValue);
 	}
 
+	/**
+	 * Computes the intersection of this interval with another given interval
+	 *
+	 * @param other
+	 *            the second interval
+	 * @return the intersection interval, or {@code null} if the intersection is empty
+	 */
 	public BigInterval intersect(final BigInterval other) {
 		final var minValue = mMinValue == null ? other.mMinValue
 				: other.mMinValue == null ? mMinValue : mMinValue.max(other.mMinValue);
 		final var maxValue = mMaxValue == null ? other.mMaxValue
 				: other.mMaxValue == null ? mMaxValue : mMaxValue.min(other.mMaxValue);
-		if (maxValue.compareTo(mMinValue) < 0) {
+		if (maxValue.compareTo(minValue) < 0) {
 			// empty interval not supported
 			return null;
 		}
 		return new BigInterval(minValue, maxValue);
 	}
 
+	/**
+	 * Computes the interval containing exactly all values {@code -x} for elements {@code x} of this interval.
+	 *
+	 * @return the negated interval
+	 */
 	public BigInterval negate() {
 		final var minValue = mMaxValue == null ? null : mMaxValue.negate();
 		final var maxValue = mMinValue == null ? null : mMinValue.negate();
 		return new BigInterval(minValue, maxValue);
 	}
 
+	/**
+	 * Computes the interval containing exactly all values {@code abs(x)} for elements {@code x} of this interval.
+	 *
+	 * For instance, if this interval is [-4, -3], the returned interval is [3, 4]. If this interval is [-3, 5], the
+	 * returned interval is [0, 5].
+	 *
+	 * @return the interval for the absolute value of the elements
+	 */
 	public BigInterval abs() {
 		if (mMinValue != null && mMinValue.signum() >= 0) {
 			// zero-or-positive interval
@@ -153,12 +227,28 @@ public class BigInterval {
 		return new BigInterval(BigInteger.ZERO, maxValue);
 	}
 
+	/**
+	 * Computes the interval containing exactly all values {@code x+y} for elements {@code x} of this interval and
+	 * elements {@code y} of another given interval.
+	 *
+	 * @param other
+	 *            the second interval
+	 * @return the interval for the sums of the elements
+	 */
 	public BigInterval add(final BigInterval other) {
 		final var minValue = mMinValue == null || other.getMinValue() == null ? null : mMinValue.add(other.mMinValue);
 		final var maxValue = mMaxValue == null || other.getMaxValue() == null ? null : mMaxValue.add(other.mMaxValue);
 		return new BigInterval(minValue, maxValue);
 	}
 
+	/**
+	 * Computes the interval containing exactly all values {@code x-y} for elements {@code x} of this interval and
+	 * elements {@code y} of another given interval.
+	 *
+	 * @param subtrahend
+	 *            the second interval
+	 * @return the interval for the differences of the elements
+	 */
 	public BigInterval subtract(final BigInterval subtrahend) {
 		final var minValue =
 				mMinValue == null || subtrahend.mMaxValue == null ? null : mMinValue.subtract(subtrahend.mMaxValue);
@@ -167,6 +257,14 @@ public class BigInterval {
 		return new BigInterval(minValue, maxValue);
 	}
 
+	/**
+	 * Computes the smallest interval containing all values {@code x*y} for elements {@code x} of this interval and
+	 * elements {@code y} of another given interval.
+	 *
+	 * @param other
+	 *            the second interval
+	 * @return the interval containing all possible products
+	 */
 	public BigInterval multiply(final BigInterval other) {
 		if (mMinValue == null || mMaxValue == null || other.mMinValue == null || other.mMaxValue == null) {
 			return BigInterval.unbounded();
@@ -179,6 +277,17 @@ public class BigInterval {
 		return new BigInterval(minValue, maxValue);
 	}
 
+	/**
+	 * Computes the smallest interval containing all values {@code x/y} for elements {@code x} of this interval and
+	 * elements {@code y} of another given interval, where {@code x/y} denotes euclidean division.
+	 *
+	 * Note that if the divisor interval contains 0, as division by 0 is unspecified, the unbounded interval (-\infty,
+	 * +\infty) is returned.
+	 *
+	 * @param divisor
+	 *            the second interval
+	 * @return the interval containing all possible quotients
+	 */
 	public BigInterval euclideanDivide(final BigInterval divisor) {
 		if (divisor.contains(BigInteger.ZERO)) {
 			// Division by zero is unspecified, so we assume it can yield any number.
@@ -243,6 +352,13 @@ public class BigInterval {
 		return quotient.add(BigInteger.ONE);
 	}
 
+	/**
+	 * The smallest interval containing all values {@code mod(x, divisor)} for elements {@code x} of this interval.
+	 *
+	 * @param divisor
+	 *            a non-zero divisor
+	 * @return the interval containing all possible modulo results
+	 */
 	public BigInterval euclideanModulo(final BigInteger divisor) {
 		assert !BigInteger.ZERO.equals(divisor) : "divisor ZERO not supported";
 
@@ -265,6 +381,17 @@ public class BigInterval {
 		return new BigInterval(BigInteger.ZERO, absDivisor.subtract(BigInteger.ONE));
 	}
 
+	/**
+	 * The smallest interval containing all values {@code mod(x, y)} for elements {@code x} of this interval and
+	 * elements {@code y} of another given interval.
+	 *
+	 * Note that since modulo 0 is unspecified, if the divisor interval contains 0, the unbounded interval (-\infty,
+	 * +\infty) will be returned.
+	 *
+	 * @param divisor
+	 *            the interval of divisors
+	 * @return the interval containing all possible modulo results
+	 */
 	// Code adapted from https://stackoverflow.com/a/56918042 (there shown for truncating remainder)
 	public BigInterval euclideanModulo(final BigInterval divisor) {
 		if (divisor.contains(BigInteger.ZERO)) {

@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -744,9 +745,9 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
-			final ExpressionResultBuilder expressionResultBuilder) {
+	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final CType cType) {
 		// do nothing. not needed for bitvectors
+		return Optional.empty();
 	}
 
 	@Override

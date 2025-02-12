@@ -52,8 +52,8 @@ public final class ReqCheckRtInconsistentResult<LOC extends IElement> extends Re
 	public String getLongDescription() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getShortDescription());
-		sb.append(CoreUtil.getPlatformLineSeparator());
 		if (mFailurePath != null) {
+			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append("We found a FailurePath: ");
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append(mFailurePath);

@@ -100,6 +100,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mCheckComplement;
 	private boolean mCheckRedundancy;
 	private boolean mReportTrivialConsistency;
+	private boolean mGenerateFailurePath;
 
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
@@ -139,15 +140,18 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mReportTrivialConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY);
 		mSeparateInvariantHandling = prefs.getBoolean(Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS);
+		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
 
 		// log preferences
-		mLogger.info(String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
-				mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
-				Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
-				Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
-				Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling));
+		mLogger.info(
+				String.format("%s=%s, %s=%s, %s=%s, %s=%s, %s=%s, %s=%s", Pea2BoogiePreferences.LABEL_CHECK_VACUITY,
+						mCheckVacuity, Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_RANGE, mCombinationNum,
+						Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY, mCheckConsistency,
+						Pea2BoogiePreferences.LABEL_REPORT_TRIVIAL_RT_CONSISTENCY, mReportTrivialConsistency,
+						Pea2BoogiePreferences.LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS, mSeparateInvariantHandling,
+						Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH, mGenerateFailurePath));
 
 		final List<Declaration> decls = new ArrayList<>(mSymbolTable.getDeclarations());
 		RtInconcistencyConditionGenerator rticGenerator;
@@ -212,10 +216,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 * non-terminal state if pea 2 is. If this is the case, they have a word "in common" and are NOT complements of each
 	 * other.
 	 *
-	 * @param peas
-	 *            List of peas, should contain only two elements
-	 * @param bl
-	 *            A boogie location used for all statements.
+	 * @param peas List of peas, should contain only two elements
+	 * @param bl   A boogie location used for all statements.
 	 * @return The assertion for non-complementness
 	 */
 	private Statement genAssertComplement(final ReqPeas reqPeasOriginal, final ReqPeas reqPeasTotal,
@@ -242,19 +244,19 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			totalPeaAccepts = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, totalPeaRejects);
 
 			complementPeaAccepts = genPcInSinkExpression(reqPeasComplement, bl);
-			complementPeaRejects =
-					ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, complementPeaAccepts);
+			complementPeaRejects = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG,
+					complementPeaAccepts);
 		}
 		final Expression bothAccept = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
 				totalPeaAccepts, complementPeaAccepts);
 		final Expression bothReject = ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICAND,
 				totalPeaRejects, complementPeaRejects);
 
-		final Expression bothAcceptOrBothReject =
-				ExpressionFactory.newBinaryExpression(bl, BinaryExpression.Operator.LOGICOR, bothAccept, bothReject);
+		final Expression bothAcceptOrBothReject = ExpressionFactory.newBinaryExpression(bl,
+				BinaryExpression.Operator.LOGICOR, bothAccept, bothReject);
 
-		final Expression assertion =
-				ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, bothAcceptOrBothReject);
+		final Expression assertion = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG,
+				bothAcceptOrBothReject);
 
 		final ReqCheck check = new ReqCheck(Spec.COMPLEMENT);
 		final String label = "Complement_" + reqPeasTotal.toString() + "_" + reqPeasComplement.toString();
@@ -328,8 +330,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// get all automata for which conditions should be generated
 
-		final List<Entry<PatternType<?>, PhaseEventAutomata>> consideredAutomata =
-				mRtInconcistencyConditionGenerator.getRelevantRequirements(mReqPeas);
+		final List<Entry<PatternType<?>, PhaseEventAutomata>> consideredAutomata = mRtInconcistencyConditionGenerator
+				.getRelevantRequirements(mReqPeas);
 
 		final int count = consideredAutomata.size();
 
@@ -399,8 +401,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		if (expr == null) {
 			if (mReportTrivialConsistency) {
-				final ILocation loc =
-						mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(subset[0].getValue())).getLoc();
+				final ILocation loc = mSymbolTable.getIdentifierExpression(mSymbolTable.getPcName(subset[0].getValue()))
+						.getLoc();
 				final AssertStatement fakeElem = createAssert(ExpressionFactory.createBooleanLiteral(loc, true), check,
 						"RTINCONSISTENT_" + getAssertLabel(subset));
 				mPeaResultUtil.intrinsicRtConsistencySuccess(fakeElem);
@@ -456,12 +458,9 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	 * assertion expresses that the automaton always stays in the early phases and never reaches the last phase. It may
 	 * be false if all phases of the automaton are part of the last phase, in which case this function returns null.
 	 *
-	 * @param req
-	 *            The requirement for which vacuity is checked.
-	 * @param aut
-	 *            The automaton for which vacuity is checked.
-	 * @param bl
-	 *            A boogie location used for all statements.
+	 * @param req The requirement for which vacuity is checked.
+	 * @param aut The automaton for which vacuity is checked.
+	 * @param bl  A boogie location used for all statements.
 	 * @return The assertion for non-vacousness or null if the assertion would be false.
 	 */
 	private Statement genAssertNonVacuous(final PatternType<?> req, final PhaseEventAutomata aut,
@@ -532,8 +531,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 			assertionList.remove(i);
 			assertionList.add(assertionDiscard.get(i));
 			final Expression assertion = ExpressionFactory.and(bl, assertionList);
-			final Expression assertionNegated =
-					ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG, assertion);
+			final Expression assertionNegated = ExpressionFactory.constructUnaryExpression(bl, Operator.LOGICNEG,
+					assertion);
 			final List<String> reqIds = new ArrayList<>();
 			final List<String> peaNames = new ArrayList<>();
 			for (final Entry<CounterTrace, PhaseEventAutomata> pea : mReqPeas.get(i).getCounterTrace2Pea()) {
@@ -576,10 +575,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	/**
 	 * Generate the disjunction of a list of expressions.
 	 *
-	 * @param exprs
-	 *            list of expressions.
-	 * @param bl
-	 *            Boogie location.
+	 * @param exprs list of expressions.
+	 * @param bl    Boogie location.
 	 * @return the CNF of a list of expressions.
 	 */
 	private Expression genDisjunction(final List<Expression> exprs, final BoogieLocation bl) {

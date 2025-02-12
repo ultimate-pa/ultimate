@@ -134,7 +134,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// ========================================================================
 
 	public static final String LABEL_PETRI_LBE_ONESHOT = "Apply one-shot large block encoding in concurrent analysis";
-	private static final boolean DEF_PETRI_LBE_ONESHOT = true;
+	private static final boolean DEF_PETRI_LBE_ONESHOT = false;
 
 	public static final String LABEL_INDEPENDENCE_PLBE =
 			"Independence relation used for large block encoding in concurrent analysis";

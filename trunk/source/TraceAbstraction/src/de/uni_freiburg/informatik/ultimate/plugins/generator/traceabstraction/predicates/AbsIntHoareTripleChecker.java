@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -511,8 +510,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (!REDUCE_STATES) {
 			return validPreState;
 		}
-		final Set<IProgramVarOrConst> requiredVars = new HashSet<>();
-		requiredVars.addAll(getVars(action));
+		final Set<IProgramVarOrConst> requiredVars = new HashSet<>(getVars(action));
 		requiredVars.addAll(succ.getVariables());
 		requiredVars.addAll(getMissingOldVars(requiredVars));
 
@@ -628,7 +626,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 			log.accept(getMsgPreBefore(preState));
 			log.accept(getMsgPreAfter(validPreLinState));
 		}
-		log.accept(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
+		log.accept(transition.getTransformula().getClosedFormula() + " (" + transition + ")");
 		log.accept(getMsgPost(succ));
 		log.accept("--");
 

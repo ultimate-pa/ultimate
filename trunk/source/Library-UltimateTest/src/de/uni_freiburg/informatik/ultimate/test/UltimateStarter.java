@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * This class wraps the Ultimate application and allows to start it without setting an IController <ToolchainListType>
  * object.
  *
- * Call runUltimate() to execute it and complete after processing the results (to release resources).
+ * Call {@code runUltimate()} to execute it and {@code complete()} after processing the results (to release resources).
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

@@ -186,12 +186,7 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 		}
 
 		final List<Entry<String, Integer>> nemesis = new ArrayList<>(nemesisMap.entrySet());
-		Collections.sort(nemesis, new Comparator<Entry<String, Integer>>() {
-			@Override
-			public int compare(final Entry<String, Integer> o1, final Entry<String, Integer> o2) {
-				return -o1.getValue().compareTo(o2.getValue());
-			}
-		});
+		Collections.sort(nemesis, Comparator.<Entry<String, Integer>, Integer> comparing(Entry::getValue).reversed());
 
 		sb.append("################# Reasons for !SUCCESS #################")
 				.append(CoreUtil.getPlatformLineSeparator());

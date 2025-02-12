@@ -92,6 +92,9 @@ TIMEOUT:
 - task: bitwiseOrUnsigned.c
   settings: BlockEncodingV2AutomizerC-FP-MaxSaneBE.epf
   toolchain: BlockEncodingV2AutomizerC.xml
+- task: ACSL-at.c
+  settings: AutomizerC-BitvectorTranslation.epf
+  toolchain: AutomizerC.xml
 
 unable to decide satisfiability of path constraint:
 - task: array10_pattern_simplified.c
