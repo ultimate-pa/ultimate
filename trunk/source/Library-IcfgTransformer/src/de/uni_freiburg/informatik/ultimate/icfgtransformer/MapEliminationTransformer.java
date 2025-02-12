@@ -8,7 +8,6 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -72,7 +71,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 				saveTransformula(retTrans.getAssignmentOfReturn(), sourceLocation, targetLocation);
 				saveTransformula(retTrans.getLocalVarsAssignmentOfCall(), sourceLocation, targetLocation);
 			} else {
-				final TransFormula transformula = IcfgUtils.getTransformula(transition);
+				final TransFormula transformula = transition.getTransformula();
 				saveTransformula(transformula, sourceLocation, targetLocation);
 			}
 

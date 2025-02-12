@@ -236,7 +236,7 @@ Expression ::=
 		struct : Expression
 		field : String
 	| { SizeOfExpression }
-		/** checks the size of differnent things, like in C */
+		/** checks the size of different things, like in C */
 		expression : ?&Expression
 		logicType : ?&ACSLType
 	| { OldValueExpression }
@@ -254,7 +254,7 @@ Expression ::=
 		/** gets the memory block length of a certain pointer */
 		expression : Expression
 	| { SyntacticNamingExpression }
-		/** special contruct is used in assumes clauses */
+		/** special construct is used in assumes clauses */
 		identifier : String
 		formula : Expression										
 	| { IdentifierExpression }

@@ -957,6 +957,11 @@ public class CExpressionTranslator {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
 
+		if (ExpressionFactory.isTrueLiteral(divisorNotZero)) {
+			// Avoid the creation of trivial statements
+			return divisorExpRes;
+		}
+
 		final Statement additionalStatement;
 		if (checkMode == CheckMode.ASSUME) {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
