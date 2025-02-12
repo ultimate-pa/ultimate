@@ -44,8 +44,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * On-the-fly intersection of two nested word automata.
- * 
+ * On-the-fly product automaton of two nested word automata. This can be used for intersection, union, and other
+ * operations.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
