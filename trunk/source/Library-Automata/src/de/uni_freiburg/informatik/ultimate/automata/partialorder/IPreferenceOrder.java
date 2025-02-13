@@ -29,10 +29,33 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 
 import java.util.Comparator;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
 /**
- * Interface for (total) preference orders, used in partial order reduction.
+ * Interface for (positional, monitor-based) lexicographic preference orders, used in partial order reduction.
+ *
+ * A preference order is an ordering on the words over some alphabet. Its purpose is to indicate a preference regarding
+ * which interleavings should preferably be included as representatives in a reduction of some language (usually, the
+ * error traces of a program). When combined with an independence relation, a preference order defines a particular
+ * reduction: namely, the reduction where the minimal words (wrt. the preference order) of each equivalence class are
+ * kept and all other words in the equivalence class are removed. (This definition of the reduction can be similarly
+ * extended to semi-commutativity relations.)
+ *
+ * We primarily use lexicographic preference orders, as the resulting reduction can be effectively constructed using
+ * e.g. the sleep set technique. The orders represented by this interface are a generalization of the classic
+ * lexicographic orders, in so far as the underlying order on the alphabet is allowed to change depending on the prefix
+ * of the word up to the letters being compared. We have two mechanisms to allow the order to change:
+ * <ul>
+ * <li>First, the order on the alphabet may differ depending on the current state of the reduced automaton (the program)
+ * reached by the prefix. If that is the case, we say the order is <em>positional</em>.</li>
+ * <li>Second, the preference order may be equipped with an additional total deterministic finite automaton over the
+ * program alphabet, and the order on the alphabet may differ depending on the current state of this <em>monitor</em>
+ * automaton reached by the prefix. If that is the case, we say the order is <em>monitor-based</em>.</li>
+ * </ul>
+ *
+ * Generally, implementations of this interface may represent partial (i.e. non-total) orders on words. However, this
+ * may lead to non-minimal reductions. It is recommended to totalize a preference order before using it to compute a
+ * reduction.
  *
  * @param <L>
  *            letter type
@@ -41,12 +64,44 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
  * @param <S2>
  *            monitor state type
  */
-public interface IPreferenceOrder<L, S1, S2> extends IPartialPreferenceOrder<L, S1, S2> {
-
+public interface IPreferenceOrder<L, S1, S2> {
+	/**
+	 * Determines the order on the program alphabet to be used after any prefix word which reaches the given states in
+	 * the program resp. the monitor automaton.
+	 *
+	 * The returned order may be a partial order. In Java terminology, it does not have to be <em>consistent with
+	 * {@code equals()}</em>.
+	 *
+	 * Multiple invocations with the same arguments must return comparators that are equal (according to their
+	 * {@code equals()} method) to each other, though they do not have to be the same instance. Moreover, to achieve
+	 * good performance, the same should hold for equally-behaving comparators returned for different arguments.
+	 *
+	 * @param programState
+	 *            the state reached in the program
+	 * @param monitorState
+	 *            the state reached in the monitor automaton returned by {@link #getMonitor()}, if {@link #getMonitor()}
+	 *            does not return {@code null}. Otherwise, this parameter is always {@code null}.
+	 * @return the order on the alphabet
+	 */
 	Comparator<L> getOrder(S1 programState, S2 monitorState);
 
-	@Override
-	default IPartialComparator<L> getPartialOrder(final S1 programState, final S2 monitorState) {
-		return IPartialComparator.fromNonPartialComparator(getOrder(programState, monitorState), true);
-	}
+	/**
+	 * Determines if the ordering returned by {@link #getOrder(S1, S2)} may differ depending on the supplied program
+	 * state or not.
+	 *
+	 * Note that the order may still vary depending on the monitor state, if the order has a monitor automaton (see
+	 * {@link #getMonitor()}) the order is positional or not.
+	 *
+	 * @return {@code true} if the order is positional, {@code false} otherwise.
+	 */
+	boolean isPositional();
+
+	/**
+	 * Retrieves the monitor automaton, if this instance is a monitor-based lexicographic preference order.
+	 *
+	 * Multiple calls to this method must return the same instance.
+	 *
+	 * @return the monitor automaton, or {@code null} if this instance is not monitor-based
+	 */
+	INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor();
 }
