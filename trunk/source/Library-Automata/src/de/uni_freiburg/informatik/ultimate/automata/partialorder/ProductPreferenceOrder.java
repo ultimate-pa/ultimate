@@ -66,6 +66,12 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 
 	@Override
 	public Comparator<L> getOrder(final S0 programState, final S monitorState) {
+		final Pair<S0, S> key =
+				isPositional() ? new Pair<>(programState, monitorState) : new Pair<>(null, monitorState);
+		return mCachedComparators.computeIfAbsent(key, k -> createOrder(k.getFirst(), k.getSecond()));
+	}
+
+	private ProductComparator<L> createOrder(final S0 programState, final S monitorState) {
 		// This is the hard part.
 		// Given Objects a and b that we want to compare, we need to:
 		// 1. Check if elements are comparable based on one of the original orders.
