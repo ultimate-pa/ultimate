@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -69,7 +68,6 @@ public class EmpireComputation<L, P> {
 	private final MonolithicImplicationChecker mImplicationChecker;
 
 	private final EmpireAnnotation<P> mEmpire;
-	private final Map<IPredicate, Set<IPredicate>> mPredicatePlacesMap;
 
 	public enum SuccessorComputationMode {
 		CO_RELATION, NO_CORELATION
@@ -95,13 +93,9 @@ public class EmpireComputation<L, P> {
 		mImplicationChecker = implicationChecker;
 
 		final var mTerrPlacePairs = symbolicExecution();
-		final var territorySetPairs = mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), Set.of(p.getSecond())))
-				.collect(Collectors.toSet());
-		final var postProcessing =
-				new PostProcessing<>(services, territorySetPairs, predicateFactory, implicationChecker);
-		final var processedPairs = postProcessing.getProcessedPairs();
-		mPredicatePlacesMap = postProcessing.getPredicatePlacesMap();
-		mEmpire = new EmpireAnnotation<>(processedPairs);
+		final var territoryLawPairs =
+				mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), p.getSecond())).collect(Collectors.toSet());
+		mEmpire = new EmpireAnnotation<>(territoryLawPairs);
 	}
 
 	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
@@ -121,13 +115,9 @@ public class EmpireComputation<L, P> {
 		mImplicationChecker = implicationChecker;
 
 		final var mTerrPlacePairs = symbolicExecution();
-		final var territorySetPairs = mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), Set.of(p.getSecond())))
-				.collect(Collectors.toSet());
-		final var postProcessing =
-				new PostProcessing<>(services, territorySetPairs, predicateFactory, implicationChecker);
-		final var processedPairs = postProcessing.getProcessedPairs();
-		mPredicatePlacesMap = postProcessing.getPredicatePlacesMap();
-		mEmpire = new EmpireAnnotation<>(processedPairs);
+		final var territoryLawPairs =
+				mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), p.getSecond())).collect(Collectors.toSet());
+		mEmpire = new EmpireAnnotation<>(territoryLawPairs);
 	}
 
 	public EmpireAnnotation<P> getEmpire() {
@@ -433,9 +423,5 @@ public class EmpireComputation<L, P> {
 			}
 		}
 		return necessaryTransitions;
-	}
-
-	public Map<IPredicate, Set<IPredicate>> getPredicatePlaceMap() {
-		return mPredicatePlacesMap;
 	}
 }
