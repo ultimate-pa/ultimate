@@ -110,7 +110,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	 * @param <L>
 	 *            The type of letters
 	 */
-	public static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
+	private static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final int mLastIndex;
 		private final Comparator<L> mFallback;
@@ -133,13 +133,12 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 				final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mLastIndex = lastIndex;
-			mFallback = fallback;
-			mThreads = threads;
+			mFallback = Objects.requireNonNull(fallback);
+			mThreads = Objects.requireNonNull(threads);
 		}
 
 		@Override
 		public int compare(final L x, final L y) {
-
 			if (x.getPrecedingProcedure() == mLastThread) {
 				return -1;
 			}
@@ -177,15 +176,9 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 			if (this == obj) {
 				return true;
 			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			final PreferenceOrderComparator<L> other = (PreferenceOrderComparator<L>) obj;
-			return Objects.equals(mFallback, other.mFallback) && Objects.equals(mLastThread, other.mLastThread)
-					&& Objects.equals(mThreads, other.mThreads) && mLastIndex == other.mLastIndex;
+			return obj instanceof final PreferenceOrderComparator<?> other && mLastIndex == other.mLastIndex
+					&& mFallback.equals(other.mFallback) && mLastThread.equals(other.mLastThread)
+					&& mThreads.equals(other.mThreads);
 		}
 	}
 }
