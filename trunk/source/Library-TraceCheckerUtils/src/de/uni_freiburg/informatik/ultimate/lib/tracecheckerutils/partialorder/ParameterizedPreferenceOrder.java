@@ -56,7 +56,11 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
 	private final Comparator<L> mDefaultComparator =
 			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
-	private final HashMap<Pair<S1, State>, PreferenceOrderComparator<L>> mComparatorsCache = new HashMap<>();
+
+	// TODO (Dominik 2025-02-13): This cache only makes sense if PreferenceOrderComparator caches information (see
+	// comment there). Also, if we want to cache this, we could just make it a field of the State class and thus avoid
+	// the HashMap overhead (memory overhead [when there are many entries], lookup overhead, code complication).
+	private final HashMap<State, PreferenceOrderComparator<L>> mComparatorsCache = new HashMap<>();
 
 	/**
 	 * Construct a new Parameterized Preference Order.
@@ -79,16 +83,14 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 
 	@Override
 	public Comparator<L> getOrder(final S1 stateProgram, final State stateMonitor) {
+		if (mComparatorsCache.containsKey(stateMonitor)) {
+			return mComparatorsCache.get(stateMonitor);
+		}
+
 		final String lastThread = stateMonitor.thread();
 		final int lastIndex = stateMonitor.index();
-
-		final Pair<S1, State> pair = new Pair<>(stateProgram, stateMonitor);
-		if (mComparatorsCache.containsKey(pair)) {
-			return mComparatorsCache.get(pair);
-		}
-		final PreferenceOrderComparator<L> comparator =
-				new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
-		mComparatorsCache.put(pair, comparator);
+		final var comparator = new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
+		mComparatorsCache.put(stateMonitor, comparator);
 		return comparator;
 	}
 
@@ -115,6 +117,9 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 		private final int mLastIndex;
 		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
+
+		// TODO (Dominik 2025-02-13): Does this cache bring performance benefits?
+		// It seems not clear to me that a HashMap-lookup is significantly more efficient than the actual comparison.
 		private final HashMap<Pair<L, L>, Integer> mComparisonsCache = new HashMap<>();
 
 		/**
