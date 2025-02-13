@@ -39,7 +39,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -191,15 +190,6 @@ public class ACSLHandler implements IACSLHandler {
 		// Use a copy of CExpressionTranslator, where all checks for UB are disabled.
 		mCExpressionTranslator = chandler.getCExpressionTranslator().disableChecksForUndefinedBehavior();
 		mCHandler = chandler;
-	}
-
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final IDispatcher main, final IASTNode node) {
-		throw new UnsupportedOperationException("Implementation Error: Use CHandler for: " + node.getClass());
 	}
 
 	@Override
