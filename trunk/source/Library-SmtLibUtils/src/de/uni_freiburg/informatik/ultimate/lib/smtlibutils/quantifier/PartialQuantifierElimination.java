@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IteRemover;
@@ -48,24 +47,7 @@ public class PartialQuantifierElimination {
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term termMain, final SimplificationTechnique simplificationTechnique) {
-		Term term = termMain;
-		if ((((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null)) {
-			if (!mgdScript.getScript().getTheory().equals(term.getTheory())) {
-				final TermTransferrer tf = new TermTransferrer(
-						((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript(),
-						mgdScript.getScript());
-				term = tf.transform(termMain);
-
-				final Term tmp = eliminateLight(services, mgdScript, term);
-
-				final TermTransferrer tfBack = new TermTransferrer(mgdScript.getScript(),
-						((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript());
-
-				return tfBack.transform(QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL,
-						simplificationTechnique, tmp));
-
-			}
-		}
+		final Term term = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(termMain);
 		final Term tmp = eliminateLight(services, mgdScript, term);
 		return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, simplificationTechnique,
 				tmp);
@@ -73,32 +55,7 @@ public class PartialQuantifierElimination {
 
 	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term termMain) {
-		Term term = termMain;
-		if ((((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null)) {
-			if (!mgdScript.getScript().getTheory().equals(term.getTheory())) {
-				final TermTransferrer tf = new TermTransferrer(
-						((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript(),
-						mgdScript.getScript());
-				term = tf.transform(termMain);
-
-				final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
-				final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
-				// FIXME 20230601 Matthias: The following line seems useless. The input should
-				// always be in CommuHash Normal Form.
-				final Term chnf = new CommuhashNormalForm(services, mgdScript.getScript()).transform(nnf);
-				final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, false, PqeTechniques.LIGHT,
-						SimplificationTechnique.NONE, chnf);
-				assert (CommuhashUtils.isInCommuhashNormalForm(result,
-						CommuhashUtils.COMMUTATIVE_OPERATORS)) : "Output not in commuhash form";
-
-				final TermTransferrer tfBack = new TermTransferrer(mgdScript.getScript(),
-						((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript());
-
-				return tfBack.transform(result);
-
-			}
-		}
-
+		final Term term = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(termMain);
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
 		// FIXME 20230601 Matthias: The following line seems useless. The input should
@@ -117,22 +74,7 @@ public class PartialQuantifierElimination {
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 			final SimplificationTechnique simplificationTechnique, final Term termMain) {
-		Term term = termMain;
-		if ((((HistoryRecordingScript) mgdScript.getScript()).getMainScript() != null)) {
-			if (!mgdScript.getScript().getTheory().equals(term.getTheory())) {
-				final TermTransferrer tf = new TermTransferrer(
-						((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript(),
-						mgdScript.getScript());
-				term = tf.transform(termMain);
-
-				final TermTransferrer tfBack = new TermTransferrer(mgdScript.getScript(),
-						((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript());
-
-				final Term tmp = eliminateLight(services, mgdScript, term);
-				return tfBack.transform(QuantifierPushTermWalker.eliminate(services, mgdScript, applyDistributivity,
-						quantifierEliminationTechniques, simplificationTechnique, tmp));
-			}
-		}
+		final Term term = ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(termMain);
 		final Term tmp = eliminateLight(services, mgdScript, term);
 		return QuantifierPushTermWalker.eliminate(services, mgdScript, applyDistributivity,
 				quantifierEliminationTechniques, simplificationTechnique, tmp);
