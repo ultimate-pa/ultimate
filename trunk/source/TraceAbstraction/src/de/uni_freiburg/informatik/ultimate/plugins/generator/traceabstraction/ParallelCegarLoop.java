@@ -230,7 +230,7 @@ extends NwaCegarLoop<L> {
 				counterexample, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-				strategyType, cacheCopy);
+				strategyType, mProgramCache);
 
 
 		// start worker
