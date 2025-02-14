@@ -31,7 +31,7 @@ import java.util.Comparator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IPreferenceOrder;
 
 /**
  * Preference order based on a given IDfsOrder.

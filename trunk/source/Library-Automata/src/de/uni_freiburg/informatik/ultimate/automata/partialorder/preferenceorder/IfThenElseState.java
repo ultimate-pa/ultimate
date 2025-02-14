@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder;
 
 import java.util.Objects;
 

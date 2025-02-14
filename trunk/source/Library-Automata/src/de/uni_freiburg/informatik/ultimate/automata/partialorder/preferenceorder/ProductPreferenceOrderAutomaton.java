@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder;
 
 import java.util.ArrayList;
 
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <S>
  *            state type of the product Monitor
  */
-public class ProductPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
+class ProductPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S1> mLeftAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mRightAutomaton;
 	private final IProductPreferenceOrderStateFactory<S1, S2, S> mStateFactory;

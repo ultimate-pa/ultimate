@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutg
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonTransition.Transition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 
 /**

@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.partialorder;
+package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder;
 
 import java.util.ArrayList;
 
@@ -54,8 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Transfor
  * @param <S>
  *            state type of monitor of the sequentialization
  */
-public class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
-
+class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetterAndTransitionProvider<L, S> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S1> mLeftAutomaton;
 	private final INwaOutgoingLetterAndTransitionProvider<L, S2> mRightAutomaton;
 	private final ImmutableSet<L> mTransitionLetters;
