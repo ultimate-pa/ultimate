@@ -230,7 +230,7 @@ extends NwaCegarLoop<L> {
 				counterexample, mAbstraction,
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-				strategyType, mProgramCache);
+				strategyType, cacheCopy);
 
 
 		// start worker
@@ -284,9 +284,6 @@ extends NwaCegarLoop<L> {
 
 							final List<L> trace = workerResult.getCounterexample().getWord().asList();
 							final int traceHash = trace.hashCode();
-
-							// mInterations equals the amount of refinements
-							mCegarLoopBenchmark.announceNextIteration();
 
 							// If Error automaton terminate immediately
 							if (mPref.stopAfterFirstViolation()
@@ -455,6 +452,9 @@ extends NwaCegarLoop<L> {
 	private void refinement(final WorkerThreadResult<L, A> threadResult)
 			throws AutomataOperationCanceledException, AutomataLibraryException {
 		assert threadResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
+
+		// mInterations equals the amount of refinements
+		mCegarLoopBenchmark.announceNextIteration();
 
 		final List<L> trace = threadResult.getCounterexample().getWord().asList();
 		final int traceHash = trace.hashCode();

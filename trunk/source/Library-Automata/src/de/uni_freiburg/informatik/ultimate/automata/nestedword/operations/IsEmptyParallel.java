@@ -203,7 +203,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private long mStart = 0;
 	private long mTimeSpendSearching = 0;
 	private final long mTimeOut;
-
+	private int mCountRecursionSteps = 0; // To prevent stack overflows
 	private int countFailedRunConstruction = 0;
 	private boolean mTimedout = false;
 
@@ -715,7 +715,12 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
 					throws AutomataOperationCanceledException {
+		mCountRecursionSteps += 1;
 		if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
+			mTimedout = true;
+			return null;
+		}
+		if (mCountRecursionSteps > 700) {
 			mTimedout = true;
 			return null;
 		}
@@ -825,6 +830,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		} else {
 			throw new AssertionError(); // should be handled before
 		}
+		mCountRecursionSteps -= 1;
 		return null;
 	}
 
