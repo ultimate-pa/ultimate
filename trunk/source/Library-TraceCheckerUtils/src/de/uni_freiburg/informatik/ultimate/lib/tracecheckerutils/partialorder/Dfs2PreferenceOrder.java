@@ -57,12 +57,11 @@ public class Dfs2PreferenceOrder<L, S1, S2> implements IPreferenceOrder<L, S1, S
 
 	@Override
 	public boolean isPositional() {
-		return true;
+		return mDFSOrder.isPositional();
 	}
 
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, S2> getMonitor() {
 		return null;
 	}
-
 }
