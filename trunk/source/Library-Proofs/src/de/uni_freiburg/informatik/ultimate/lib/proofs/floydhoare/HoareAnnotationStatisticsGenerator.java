@@ -31,7 +31,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
-public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
+class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
 
 	private int mFormulaSimplifications;
 	private long mFormulaSimplificationTreeSizeReduction;
