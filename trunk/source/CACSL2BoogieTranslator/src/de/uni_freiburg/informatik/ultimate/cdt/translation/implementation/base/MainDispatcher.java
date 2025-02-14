@@ -327,7 +327,7 @@ public class MainDispatcher implements IDispatcher {
 		case final LoopVariant looopVar -> mAcslHandler.visit(this, looopVar);
 		case final LoopAssigns loopAss -> mAcslHandler.visit(this, loopAss);
 		case final LoopAnnot loopAnnot -> mAcslHandler.visit(this, loopAnnot);
-		case final NullPointer np -> mAcslHandler.visit(null, np);
+		case final NullPointer np -> mAcslHandler.visit(this, np);
 		default -> mAcslHandler.visit(this, n);
 		};
 	}
