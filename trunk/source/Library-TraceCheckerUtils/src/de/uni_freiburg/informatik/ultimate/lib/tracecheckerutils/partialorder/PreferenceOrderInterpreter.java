@@ -42,6 +42,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.Dfs2PreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IfElsePreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrder;
