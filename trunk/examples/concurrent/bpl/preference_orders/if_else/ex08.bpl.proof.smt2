@@ -18,6 +18,9 @@
 (< i n)
 (< (+ i 1) n)
 (<= i n)
+
+(>= (+ i 1) n)
+
 (< j n)
 (< (+ j 1) n)
 (<= j n)
@@ -25,8 +28,10 @@
 # Ideally we want i == j as an invariant.
 (= i j)
 (= i (+ j 1))
+(= i (+ j 2))
 (= (+ i 1) j)
 
 # When both threads are done, we have i=n and due to i==j also j=n.
 (= i n)
 (= j n)
+(= (+ i 1) n)

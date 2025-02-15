@@ -21,34 +21,47 @@ options:
       left:
         builtin: loop_lockstep
         iterations:
-          # Arbitrary choice that seems to not actually work - Implement empty order?
-          - [thread1Thread1of1ForFork0, 1]
+          # Prefer ULTIMATE.start as long as possible, i.e., until both threads have forked
+          # Then prefer thread2, until (see switch_on) it has initialized its loop counter.
+          - [ULTIMATE.start, 1]
           - [thread2Thread1of1ForFork1, 1]
+          - [thread1Thread1of1ForFork0, 1]
       right:
-        operator: ifelse
-        # The first preference order (used in the if case)
+        operator: sequential
         left:
           builtin: loop_lockstep
           iterations:
+            # Prefer thread1 until (see switch_on) it has made the if/else decision (after initializing its loop counter)
             - [thread1Thread1of1ForFork0, 1]
-            - [thread2Thread1of1ForFork1, 2]
-          # The second preference order (used in the else case)
-        right:
-          builtin: loop_lockstep
-          iterations:
-            - [thread1Thread1of1ForFork0, 1]
+            - [ULTIMATE.start, 1]
             - [thread2Thread1of1ForFork1, 1]
-        # The letters at which we switch to the if branch
-        # To find out the names, set a breakpoint and run Ultimate in debug mode.
+        right:
+          operator: ifelse
+          # The first preference order (used in the if case)
+          left:
+            builtin: loop_lockstep
+            iterations:
+              - [thread1Thread1of1ForFork0, 1]
+              - [thread2Thread1of1ForFork1, 2]
+            # The second preference order (used in the else case)
+          right:
+            builtin: loop_lockstep
+            iterations:
+              - [thread1Thread1of1ForFork0, 1]
+              - [thread2Thread1of1ForFork1, 1]
+          # The letters at which we switch to the if branch
+          # To find out the names, set a breakpoint and run Ultimate in debug mode.
+          switch_on:
+            - "[75] L32-->L34:"
+
+        # Letters for the sequential operator, this should
+        # be the letter for entering the if branch and the one
+        # for entering the else branch.
         switch_on:
           - "[75] L32-->L34:"
-
-      # Letters for the sequential operator, this should
-      # be the letter for entering the if branch and the one
-      # for entering the else branch.     
+          - "[76] L32-->L46:"
       switch_on:
-        - "[75] L32-->L34:"
-        - "[76] L32-->L46:"
+        - "[89] $Ultimate##0-->L59-1"
 
     Read initial proof assertions from file if available: true
     Limit iterations: 1
