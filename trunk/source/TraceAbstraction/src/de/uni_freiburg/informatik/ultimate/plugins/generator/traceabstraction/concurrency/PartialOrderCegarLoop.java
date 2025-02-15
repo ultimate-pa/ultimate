@@ -302,13 +302,17 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 			// TODO Temporary code for ease of debugging. Should be removed before merge.
 			if (mCounterexample != null && LOG_CTEX_RUN) {
 				mLogger.warn("Found counterexample run:");
+				final int maxThreadLen =
+						mIcfg.getProcedureEntryNodes().keySet().stream().mapToInt(String::length).max().orElse(0);
 				for (int i = 0; i < mCounterexample.getLength(); ++i) {
 					final var state = (IPredicate) mCounterexample.getStateSequence().get(i);
 					final List<IPredicate> conjuncts = getConjuncts(state);
-					mLogger.warn(conjuncts);
+					mLogger.warn(state);
 					if (i < mCounterexample.getWord().length()) {
 						final var statement = mCounterexample.getSymbol(i);
-						mLogger.warn("\t" + statement);
+						mLogger.warn("");
+						mLogger.warn("\t\t%-" + maxThreadLen + "s\t%s", statement.getPrecedingProcedure(), statement);
+						mLogger.warn("");
 					}
 				}
 			}
