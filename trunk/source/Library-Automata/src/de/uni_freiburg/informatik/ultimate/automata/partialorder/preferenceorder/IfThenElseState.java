@@ -36,14 +36,26 @@ public sealed interface IfThenElseState<X, Y> {
 	record Then<X, Y>(X value) implements IfThenElseState<X, Y> {
 		@Override
 		public int hashCode() {
+			// Override hashCode() such that Then(x) and Else(x) hash differently
 			return Objects.hash(17, value);
+		}
+
+		@Override
+		public String toString() {
+			return "Then[" + value + "]";
 		}
 	}
 
 	record Else<X, Y>(Y value) implements IfThenElseState<X, Y> {
 		@Override
 		public int hashCode() {
+			// Override hashCode() such that Then(x) and Else(x) hash differently
 			return Objects.hash(23, value);
+		}
+
+		@Override
+		public String toString() {
+			return "Else[" + value + "]";
 		}
 	}
 

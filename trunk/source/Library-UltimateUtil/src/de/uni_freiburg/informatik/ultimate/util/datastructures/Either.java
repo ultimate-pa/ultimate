@@ -40,6 +40,11 @@ public sealed interface Either<X, Y> {
 			// Override hashCode() such that Left(x) and Right(x) hash differently.
 			return Objects.hash(17, value);
 		}
+
+		@Override
+		public String toString() {
+			return "Left[" + value + "]";
+		}
 	}
 
 	record Right<X, Y>(Y value) implements Either<X, Y> {
@@ -47,6 +52,11 @@ public sealed interface Either<X, Y> {
 		public int hashCode() {
 			// Override hashCode() such that Left(x) and Right(x) hash differently.
 			return Objects.hash(23, value);
+		}
+
+		@Override
+		public String toString() {
+			return "Right[" + value + "]";
 		}
 	}
 }

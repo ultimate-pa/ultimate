@@ -641,6 +641,11 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 		public IPredicate getInterpolants() {
 			return mAnnotation;
 		}
+
+		@Override
+		public String toString() {
+			return "MLPredicateWithInterpolants[interpolants=" + getInterpolants() + ", " + mUnderlying + "]";
+		}
 	}
 
 	private final class InformationStorageFactory

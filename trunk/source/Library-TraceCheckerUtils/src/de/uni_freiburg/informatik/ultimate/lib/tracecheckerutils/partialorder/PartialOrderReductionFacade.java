@@ -857,5 +857,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		public M getMonitorState() {
 			return mAnnotation;
 		}
+
+		@Override
+		public String toString() {
+			return "MonitorPredicate[monitorState=" + getMonitorState() + ", " + mUnderlying + "]";
+		}
 	}
 }

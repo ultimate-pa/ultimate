@@ -133,7 +133,7 @@ public class SleepSetStateFactoryForRefinement<L> implements ISleepSetStateFacto
 
 		@Override
 		public String toString() {
-			return "SleepPredicate [underlying: " + mUnderlying + ", sleep set: " + mAnnotation + "]";
+			return "SleepPredicate[sleepSet=" + mAnnotation + ", " + mUnderlying + "]";
 		}
 
 		@Override
