@@ -26,17 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
@@ -125,20 +124,15 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 		}
 
 		final var loopHeads = mIcfg.getLoopLocations();
-		final Set<IcfgEdge> loopEdges = new HashSet<>();
-		for (final var loopHead : loopHeads) {
-			final Deque<IcfgEdge> worklist = new ArrayDeque<>(loopHead.getOutgoingEdges());
-			while (!worklist.isEmpty()) {
-				final IcfgEdge edge = worklist.removeFirst();
-				if (edge.getTarget().equals(loopHead)) {
-					loopEdges.add(edge);
-					continue;
-				}
-				worklist.addAll(edge.getTarget().getOutgoingEdges());
-			}
-		}
+		final Set<IcfgEdge> loopEdges =
+				loopHeads.stream().flatMap(PreferenceOrderInterpreter::getLoopClosingEdges).collect(Collectors.toSet());
 
-		return new ParameterizedPreferenceOrder<>(steps, threads, mAlphabet, x -> loopEdges.contains(x));
+		return new ParameterizedPreferenceOrder<>(steps, threads, mAlphabet, loopEdges::contains);
+	}
+
+	private static Stream<IcfgEdge> getLoopClosingEdges(final IcfgLocation loopHead) {
+		return new IcfgEdgeIterator(loopHead.getOutgoingEdges()).asStream()
+				.filter(loopHead.getIncomingEdges()::contains);
 	}
 
 	private IPreferenceOrder<L, IPredicate, ?> buildSequentialCompositionOrder() {
