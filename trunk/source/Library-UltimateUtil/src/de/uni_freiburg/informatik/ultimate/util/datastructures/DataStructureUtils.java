@@ -37,7 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -476,12 +475,11 @@ public class DataStructureUtils {
 	}
 
 	private static <T> int indexOfWithinRange(final List<T> list, final T elem, final int start, final int end) {
-		for (int i = start; i < end; i++) {
-			if (Objects.equals(elem, list.get(i))) {
-				return i;
-			}
+		final int index = list.subList(start, end).indexOf(elem);
+		if (index == -1) {
+			return -1;
 		}
-		return -1;
+		return index + start;
 	}
 
 	/**

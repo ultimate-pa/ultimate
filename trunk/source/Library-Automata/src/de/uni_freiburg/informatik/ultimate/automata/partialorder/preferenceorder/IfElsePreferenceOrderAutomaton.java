@@ -100,19 +100,15 @@ class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetter
 
 	@Override
 	public boolean isInitial(final S state) {
-		return switch (mStateFactory.getOriginalState(state)) {
-		case IfThenElseState.Else(final S2 original) -> false;
-		case IfThenElseState.Then(final S1 original) -> false;
-		case IfThenElseState.Initial() -> true;
-		};
+		return mStateFactory.getOriginalState(state) instanceof IfThenElseState.Initial();
 	}
 
 	@Override
 	public boolean isFinal(final S state) {
 		return switch (mStateFactory.getOriginalState(state)) {
+		case IfThenElseState.Initial() -> false;
 		case IfThenElseState.Then(final S1 original) -> mLeftAutomaton.isFinal(original);
 		case IfThenElseState.Else(final S2 original) -> mRightAutomaton.isFinal(original);
-		case IfThenElseState.Initial() -> false;
 		};
 	}
 
