@@ -77,19 +77,19 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 
 	private IPreferenceOrder<L, IPredicate, ?> interpret(final Map<String, Object> spec) {
 		switch ((String) spec.get("builtin")) {
-			case "loop_lockstep":
-				return buildLoopLockstepOrder(spec);
-			case "seq_comp":
-				return buildSequentialCompositionOrder();
-			case "empty":
-				return buildEmptyOrder();
-			// TODO add other builtin order types if needed
-			case null:
-				// handled below
-				break;
+		case "loop_lockstep":
+			return buildLoopLockstepOrder(spec);
+		case "seq_comp":
+			return buildSequentialCompositionOrder();
+		case "empty":
+			return buildEmptyOrder();
+		// TODO add other builtin order types if needed
+		case null:
+			// handled below
+			break;
 
-			default:
-				throw new UnsupportedOperationException("unknown type of builtin order: " + spec.get("builtin"));
+		default:
+			throw new UnsupportedOperationException("unknown type of builtin order: " + spec.get("builtin"));
 		}
 
 		assert spec.containsKey("operator") : "neither builtin order nor order combination operator: " + spec;
