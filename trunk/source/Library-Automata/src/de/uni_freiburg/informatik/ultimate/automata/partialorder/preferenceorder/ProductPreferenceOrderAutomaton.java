@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.ProductPreferenceOrder.IProductPreferenceOrderStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -155,13 +156,5 @@ class ProductPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLette
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
 		throw new UnsupportedOperationException("returns are not supported");
-	}
-
-	public interface IProductPreferenceOrderStateFactory<S1, S2, S> extends IStateFactory<S> {
-		S createProductState(S1 leftState, S2 rightState);
-
-		S1 getLeftState(S state);
-
-		S2 getRightState(S state);
 	}
 }

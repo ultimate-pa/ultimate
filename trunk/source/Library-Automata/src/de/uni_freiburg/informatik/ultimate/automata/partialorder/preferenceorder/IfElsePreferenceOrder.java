@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorde
 import java.util.Comparator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -63,9 +64,8 @@ public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder
 				new IfElsePreferenceOrderAutomaton<>(fst.getMonitor(), snd.getMonitor(), ifBranchLetters, stateFactory);
 	}
 
-	public static <L, S0, S1, S2> IPreferenceOrder<L, S0, IfThenElseState<S1, S2>> create(
-			final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
-			final ImmutableSet<L> ifBranchLetters) {
+	public static <L, S> IPreferenceOrder<L, S, ?> create(final IPreferenceOrder<L, S, ?> fst,
+			final IPreferenceOrder<L, S, ?> snd, final ImmutableSet<L> ifBranchLetters) {
 		return new IfElsePreferenceOrder<>(fst, snd, ifBranchLetters, new IIfElseStateFactory.Default<>());
 	}
 
@@ -89,6 +89,38 @@ public class IfElsePreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder
 			return mFirstOrder.getOrder(programState, original);
 		case IfThenElseState.Else(final S2 original):
 			return mSecondOrder.getOrder(programState, original);
+		}
+	}
+
+	public interface IIfElseStateFactory<S1, S2, S> extends IStateFactory<S> {
+		S createNewStateLeft(S1 state);
+
+		S createNewStateRight(S2 state);
+
+		S createNewBeginningState();
+
+		IfThenElseState<S1, S2> getOriginalState(S state);
+
+		class Default<S1, S2> implements IIfElseStateFactory<S1, S2, IfThenElseState<S1, S2>> {
+			@Override
+			public IfThenElseState<S1, S2> createNewStateLeft(final S1 state) {
+				return new IfThenElseState.Then<>(state);
+			}
+
+			@Override
+			public IfThenElseState<S1, S2> createNewStateRight(final S2 state) {
+				return new IfThenElseState.Else<>(state);
+			}
+
+			@Override
+			public IfThenElseState<S1, S2> createNewBeginningState() {
+				return new IfThenElseState.Initial<>();
+			}
+
+			@Override
+			public IfThenElseState<S1, S2> getOriginalState(final IfThenElseState<S1, S2> state) {
+				return state;
+			}
 		}
 	}
 }

@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedPreferenceOrder.State;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class ParameterizedOrderAutomaton<L extends IAction>
-		implements INwaOutgoingLetterAndTransitionProvider<L, ParameterizedOrderAutomaton.State> {
+class ParameterizedOrderAutomaton<L extends IAction> implements INwaOutgoingLetterAndTransitionProvider<L, State> {
 	private final List<Integer> mMaxSteps;
 	private final List<String> mThreads;
 	private final VpAlphabet<L> mAlphabet;
@@ -152,13 +152,5 @@ public class ParameterizedOrderAutomaton<L extends IAction>
 	public Iterable<OutgoingReturnTransition<L, State>> returnSuccessors(final State state, final State hier,
 			final L letter) {
 		throw new UnsupportedOperationException();
-	}
-
-	// TODO should thread really be part of the state? It is already represented by the index.
-	public record State(String thread, int index, int counter) {
-		public State {
-			assert index >= 0 : "thread index must be non-negative, but was " + index;
-			assert counter >= 0 : "step counter must be non-negative, but was " + counter;
-		}
 	}
 }

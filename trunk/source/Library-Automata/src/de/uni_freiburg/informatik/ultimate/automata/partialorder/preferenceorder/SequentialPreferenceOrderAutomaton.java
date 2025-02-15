@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrder.ISequentialStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Either;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -188,30 +189,5 @@ class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLe
 	@Override
 	public Iterable<OutgoingReturnTransition<L, S>> returnSuccessors(final S state, final S hier, final L letter) {
 		throw new UnsupportedOperationException("returns are not supported");
-	}
-
-	public interface ISequentialStateFactory<S1, S2, S> extends IStateFactory<S> {
-		S createNewStateLeft(S1 state);
-
-		S createNewStateRight(S2 state);
-
-		Either<S1, S2> getOriginalState(S state);
-
-		public class Default<S1, S2> implements ISequentialStateFactory<S1, S2, Either<S1, S2>> {
-			@Override
-			public Either<S1, S2> createNewStateLeft(final S1 state) {
-				return new Either.Left<>(state);
-			}
-
-			@Override
-			public Either<S1, S2> createNewStateRight(final S2 state) {
-				return new Either.Right<>(state);
-			}
-
-			@Override
-			public Either<S1, S2> getOriginalState(final Either<S1, S2> state) {
-				return state;
-			}
-		}
 	}
 }

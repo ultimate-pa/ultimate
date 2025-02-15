@@ -31,12 +31,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.ParameterizedOrderAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -50,7 +50,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @param <S1>
  *            The type of states
  */
-public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPreferenceOrder<L, S1, State> {
+public class ParameterizedPreferenceOrder<L extends IAction, S1>
+		implements IPreferenceOrder<L, S1, ParameterizedPreferenceOrder.State> {
 	private final List<Integer> mMaxSteps;
 	private final List<String> mThreads;
 	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
@@ -75,7 +76,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	 *            Function that determines the step type
 	 */
 	public ParameterizedPreferenceOrder(final List<Integer> maxSteps, final List<String> threads,
-			final VpAlphabet<L> alphabet, final java.util.function.Predicate<L> isStep) {
+			final VpAlphabet<L> alphabet, final Predicate<L> isStep) {
 		mMaxSteps = maxSteps;
 		mThreads = threads;
 		mMonitor = new ParameterizedOrderAutomaton<>(mMaxSteps, mThreads, alphabet, isStep);
@@ -102,6 +103,62 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1> implements IPre
 	@Override
 	public INwaOutgoingLetterAndTransitionProvider<L, State> getMonitor() {
 		return mMonitor;
+	}
+
+	/**
+	 * The type of states in the monitor automaton of an {@link ParameterizedPreferenceOrder}.
+	 */
+	// This type has to be public such that users of ParameterizedPreferenceOrder can refer to states, e.g. to pass them
+	// to #getOrder(). However, the internal structure of this class is hidden outside the package.
+	// (This is also the reason why the class is not a record.)
+	public static final class State {
+		private final String mThread;
+		private final int mIndex;
+		private final int mCounter;
+
+		// only package-visible (classes outside this package should not create states)
+		State(final String thread, final int index, final int counter) {
+			assert index >= 0 : "thread index must be non-negative, but was " + index;
+			assert counter >= 0 : "step counter must be non-negative, but was " + counter;
+
+			mThread = Objects.requireNonNull(thread);
+			mIndex = index;
+			mCounter = counter;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mCounter, mIndex, mThread);
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			return obj instanceof final State other && mCounter == other.mCounter && mIndex == other.mIndex
+					&& mThread.equals(other.mThread);
+		}
+
+		@Override
+		public String toString() {
+			return "State[thread=" + mThread + ", index=" + mIndex + ", counter=" + mCounter + "]";
+		}
+
+		// only package-visible (internal structure of states should be hidden from classes outside this package)
+		String thread() {
+			return mThread;
+		}
+
+		// only package-visible (internal structure of states should be hidden from classes outside this package)
+		int index() {
+			return mIndex;
+		}
+
+		// only package-visible (internal structure of states should be hidden from classes outside this package)
+		int counter() {
+			return mCounter;
+		}
 	}
 
 	/**

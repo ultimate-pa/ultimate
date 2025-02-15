@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.ProductPreferenceOrderAutomaton.IProductPreferenceOrderStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder<L, S0, S> {
@@ -52,6 +52,11 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 		mStateFactory = stateFactory;
 		mAutomaton = new ProductPreferenceOrderAutomaton<>(mFirstOrder.getMonitor(), mSecondOrder.getMonitor(),
 				mStateFactory);
+	}
+
+	public static <L, S> IPreferenceOrder<L, S, ?> create(final IPreferenceOrder<L, S, ?> fst,
+			final IPreferenceOrder<L, S, ?> snd) {
+		return new ProductPreferenceOrder<>(fst, snd, new IProductPreferenceOrderStateFactory.Default<>());
 	}
 
 	@Override
@@ -83,6 +88,31 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 		// Alternatively, we could construct the full transitive closure of the union
 		// of mFirstOrder and mSecondOrder, but that seems unnecessarily inefficient.
 		return null;
+	}
+
+	public interface IProductPreferenceOrderStateFactory<S1, S2, S> extends IStateFactory<S> {
+		S createProductState(S1 leftState, S2 rightState);
+
+		S1 getLeftState(S state);
+
+		S2 getRightState(S state);
+
+		class Default<S1, S2> implements IProductPreferenceOrderStateFactory<S1, S2, Pair<S1, S2>> {
+			@Override
+			public Pair<S1, S2> createProductState(final S1 leftState, final S2 rightState) {
+				return new Pair<>(leftState, rightState);
+			}
+
+			@Override
+			public S1 getLeftState(final Pair<S1, S2> state) {
+				return state.getFirst();
+			}
+
+			@Override
+			public S2 getRightState(final Pair<S1, S2> state) {
+				return state.getSecond();
+			}
+		}
 	}
 
 	private static class ProductComparator<L> implements Comparator<L> {

@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorde
 import java.util.Comparator;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrderAutomaton.ISequentialStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Either;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
@@ -67,9 +67,8 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 		mApplyFunctionAfterTransition = applyFunctionAfterTransition;
 	}
 
-	public static <L, S0, S1, S2> SequentialPreferenceOrder<L, S0, S1, S2, Either<S1, S2>> create(
-			final IPreferenceOrder<L, S0, S1> fst, final IPreferenceOrder<L, S0, S2> snd,
-			final ImmutableSet<L> transitionLetters) {
+	public static <L, S> IPreferenceOrder<L, S, ?> create(final IPreferenceOrder<L, S, ?> fst,
+			final IPreferenceOrder<L, S, ?> snd, final ImmutableSet<L> transitionLetters) {
 		return new SequentialPreferenceOrder<>(fst, snd, transitionLetters, new ISequentialStateFactory.Default<>(),
 				true);
 	}
@@ -95,6 +94,31 @@ public class SequentialPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceO
 			return mFirstOrder.getOrder(programState, original);
 		case Either.Right(final S2 original):
 			return mSecondOrder.getOrder(programState, original);
+		}
+	}
+
+	public interface ISequentialStateFactory<S1, S2, S> extends IStateFactory<S> {
+		S createNewStateLeft(S1 state);
+
+		S createNewStateRight(S2 state);
+
+		Either<S1, S2> getOriginalState(S state);
+
+		class Default<S1, S2> implements ISequentialStateFactory<S1, S2, Either<S1, S2>> {
+			@Override
+			public Either<S1, S2> createNewStateLeft(final S1 state) {
+				return new Either.Left<>(state);
+			}
+
+			@Override
+			public Either<S1, S2> createNewStateRight(final S2 state) {
+				return new Either.Right<>(state);
+			}
+
+			@Override
+			public Either<S1, S2> getOriginalState(final Either<S1, S2> state) {
+				return state;
+			}
 		}
 	}
 }
