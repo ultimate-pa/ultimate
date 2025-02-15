@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorde
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DeterminismUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -38,8 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
  * Automaton representing a combination of two given monitors mFirstAutomaton and mSecondAutomaton that chooses which of
@@ -127,7 +126,7 @@ class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetter
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
+	public List<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		switch (mStateFactory.getOriginalState(state)) {
 		// Automaton is currently in the initial State
 		// letter represents transition into if branch -> transition into left automaton
@@ -144,40 +143,39 @@ class IfElsePreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLetter
 			//
 			// [1] https://chat.sopranium.de/swt/pl/8jye3n4jqjyijqrtgnr8itdbbe
 			if (mIfBranchLetters.contains(letter)) {
-				return () -> new TransformIterator<>(
-						new NestedIteratorNoopConstruction<>(mLeftAutomaton.getInitialStates().iterator(),
-								q -> mLeftAutomaton.internalSuccessors(q, letter).iterator()),
-						transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-								mStateFactory.createNewStateLeft(transition.getSucc())));
+				final S1 leftInitial = DeterminismUtil.getInitialState(mLeftAutomaton);
+				final var successor =
+						DeterminismUtil.getTotalDeterministicInternalSuccessor(mLeftAutomaton, leftInitial, letter);
+				return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateLeft(successor)));
+			} else {
+				System.err.println(
+						getClass().getSimpleName() + ": Inconsistent evaluation of switch guard and if condition");
+				final S2 rightInitial = DeterminismUtil.getInitialState(mRightAutomaton);
+				final var successor =
+						DeterminismUtil.getTotalDeterministicInternalSuccessor(mRightAutomaton, rightInitial, letter);
+				return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(successor)));
 			}
-			System.err.println("Inconsistent evaluation of switch guard and if condition");
-			return () -> new TransformIterator<>(
-					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
-							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateRight(transition.getSucc())));
 
-		// Automaton is currently in the initial State
-		// but letter doesn't represent transition into if branch
-		// -> letter leads into else branch -> transition into right automaton
+			// Automaton is currently in the initial State
+			// but letter doesn't represent transition into if branch
+			// -> letter leads into else branch -> transition into right automaton
 		case IfThenElseState.Initial():
-			return () -> new TransformIterator<>(
-					new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
-							q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateRight(transition.getSucc())));
+			final S2 rightInitial = DeterminismUtil.getInitialState(mRightAutomaton);
+			final S2 successor =
+					DeterminismUtil.getTotalDeterministicInternalSuccessor(mRightAutomaton, rightInitial, letter);
+			return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(successor)));
 
 		// Automaton is already in if branch
 		case IfThenElseState.Then(final S1 original):
-			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateLeft(transition.getSucc())));
+			final S1 thenSuccessor =
+					DeterminismUtil.getTotalDeterministicInternalSuccessor(mLeftAutomaton, original, letter);
+			return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateLeft(thenSuccessor)));
 
 		// Automaton is already in else branch
 		case IfThenElseState.Else(final S2 original):
-			return () -> new TransformIterator<>(mRightAutomaton.internalSuccessors(original, letter).iterator(),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateRight(transition.getSucc())));
+			final S2 elseSuccessor =
+					DeterminismUtil.getTotalDeterministicInternalSuccessor(mRightAutomaton, original, letter);
+			return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(elseSuccessor)));
 		}
 	}
 

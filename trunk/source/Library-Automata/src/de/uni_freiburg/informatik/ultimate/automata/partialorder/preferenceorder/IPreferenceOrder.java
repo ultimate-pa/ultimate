@@ -99,6 +99,9 @@ public interface IPreferenceOrder<L, S1, S2> {
 	/**
 	 * Retrieves the monitor automaton, if this instance is a monitor-based lexicographic preference order.
 	 *
+	 * The monitor automaton must be a total deterministic finite automaton, i.e., every state must have exactly one
+	 * outgoing (internal) transition for every letter in the alphabet. It must not have call or return transitions.
+	 *
 	 * Multiple calls to this method must return the same instance.
 	 *
 	 * @return the monitor automaton, or {@code null} if this instance is not monitor-based

@@ -29,7 +29,9 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DeterminismUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -39,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Either;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
  * Automaton representing the monitor of the sequentialization of two given monitors mLeftAutomaton and mRightAutomaton.
@@ -130,7 +130,7 @@ class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLe
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
+	public List<OutgoingInternalTransition<L, S>> internalSuccessors(final S state, final L letter) {
 		switch (mStateFactory.getOriginalState(state)) {
 		case Either.Left(final S1 original) when mApplyFunctionAfterTransition && mLeftAutomaton.isFinal(original)
 				&& mTransitionLetters.contains(letter):
@@ -138,35 +138,45 @@ class SequentialPreferenceOrderAutomaton<L, S1, S2, S> implements INwaOutgoingLe
 			// For more information, see the comment in IfElsePreferenceOrderAutomaton#internalSuccessors.
 			if (mApplyFunctionAfterTransition && mLeftAutomaton.isFinal(original)
 					&& mTransitionLetters.contains(letter)) {
-				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
-				return () -> new TransformIterator<>(
-						new NestedIteratorNoopConstruction<>(mRightAutomaton.getInitialStates().iterator(),
-								q -> mRightAutomaton.internalSuccessors(q, letter).iterator()),
-						transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-								mStateFactory.createNewStateRight(transition.getSucc())));
+				// Transition from final state of mLeftAutomaton to successor of the initial state of mRightAutomaton
+				final S2 rightInitial = DeterminismUtil.getInitialState(mRightAutomaton);
+				final S2 rightSuccessor =
+						DeterminismUtil.getTotalDeterministicInternalSuccessor(mRightAutomaton, rightInitial, letter);
+				return List.of(
+						new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(rightSuccessor)));
 			} else if (mLeftAutomaton.isFinal(original) && mTransitionLetters.contains(letter)) {
-				System.err.println("Inconsistent evaluation of switch guard and if condition");
-				return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
-						successor -> new OutgoingInternalTransition<>(letter,
-								mStateFactory.createNewStateRight(successor)));
+				System.err.println(
+						getClass().getSimpleName() + ": Inconsistent evaluation of switch guard and if condition");
+
+				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
+				final S2 rightInitial = DeterminismUtil.getInitialState(mRightAutomaton);
+				return List
+						.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(rightInitial)));
+			} else {
+				System.err.println(
+						getClass().getSimpleName() + ": Inconsistent evaluation of switch guard and if condition");
+
+				// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
+				final S1 leftSuccessor =
+						DeterminismUtil.getTotalDeterministicInternalSuccessor(mLeftAutomaton, original, letter);
+				return List
+						.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateLeft(leftSuccessor)));
 			}
-			System.err.println("Inconsistent evaluation of switch guard and if condition");
-			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateLeft(transition.getSucc())));
 		case Either.Left(final S1 original) when mLeftAutomaton.isFinal(original)
 				&& mTransitionLetters.contains(letter):
-			return () -> new TransformIterator<>(mRightAutomaton.getInitialStates().iterator(),
-					successor -> new OutgoingInternalTransition<>(letter,
-							mStateFactory.createNewStateRight(successor)));
+			// Transition from the final states of mLeftAutomaton to the initial state of mRightAutomaton
+			final S2 rightInitial = DeterminismUtil.getInitialState(mRightAutomaton);
+			return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(rightInitial)));
 		case Either.Left(final S1 original):
-			return () -> new TransformIterator<>(mLeftAutomaton.internalSuccessors(original, letter).iterator(),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateLeft(transition.getSucc())));
+			// Transition within mLeftAutomaton
+			final S1 leftSuccessor =
+					DeterminismUtil.getTotalDeterministicInternalSuccessor(mLeftAutomaton, original, letter);
+			return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateLeft(leftSuccessor)));
 		case Either.Right(final S2 original):
-			return () -> new TransformIterator<>(mRightAutomaton.internalSuccessors(original, letter).iterator(),
-					transition -> new OutgoingInternalTransition<>(transition.getLetter(),
-							mStateFactory.createNewStateRight(transition.getSucc())));
+			// Transition within mRightAutomaton
+			final S2 rightSuccessor =
+					DeterminismUtil.getTotalDeterministicInternalSuccessor(mRightAutomaton, original, letter);
+			return List.of(new OutgoingInternalTransition<>(letter, mStateFactory.createNewStateRight(rightSuccessor)));
 		}
 	}
 
