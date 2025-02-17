@@ -421,10 +421,6 @@ public class HistoryRecordingScript extends WrapperScript {
 		mScript.exit();
 	}
 
-	public void exitWorkerOnly() {
-		mScript.exit();
-	}
-
 	@Override
 	public Theory getTheory() {
 		return mScript.getTheory();

@@ -177,7 +177,7 @@ extends NwaCegarLoop<L> {
 		// Set the Main Script
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 		.setMainScript(mCsToolkit.getManagedScript());
-
+		//		freshToolKit.getManagedScript().setVariableManager(mCsToolkit.getManagedScript().getVariableManager());
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
 		final Map<TermVariable, IProgramVar> varMap =
 				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
@@ -489,7 +489,7 @@ extends NwaCegarLoop<L> {
 		}
 
 		// Kill the worker script
-		((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exitWorkerOnly();
+		((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
 
 		// Not sure if necessary
 		threadResult.garbageCollect();
