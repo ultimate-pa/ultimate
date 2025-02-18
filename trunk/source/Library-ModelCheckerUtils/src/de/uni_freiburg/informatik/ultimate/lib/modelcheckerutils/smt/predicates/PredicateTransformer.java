@@ -202,8 +202,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		return mOperationProvider.projectExistentially(addAuxVarsOfCall(callTF, crpip.getFreshTermVariables()), result);
 	}
 
-
-
 	public C weakestPrecondition(final P p, final R tf) {
 		final C constraint = mOperationProvider.getConstraint(p);
 		if (mOperationProvider.isConstraintValid(constraint)) {
@@ -231,7 +229,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		if (!oldVarAssignments.getAuxVars().isEmpty()) {
 			throw new AssertionError(TransFormulaUtils.OLD_VAR_ASSIGNMENTS_MUST_NOT_CONTAIN_AUX_VARS);
 		}
-
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				Collections.emptySet(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);

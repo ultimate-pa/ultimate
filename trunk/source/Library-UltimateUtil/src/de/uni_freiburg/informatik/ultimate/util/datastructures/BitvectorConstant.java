@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.math.BigInteger;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -247,7 +248,7 @@ public class BitvectorConstant {
 		private final boolean mIsBoolean;
 		private final boolean mIsAssociative;
 
-		private BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
+		BvOp(final int arity, final boolean isBoolean, final boolean isAssoc) {
 			mArity = arity;
 			mIsBoolean = isBoolean;
 			mIsAssociative = isAssoc;
@@ -277,12 +278,11 @@ public class BitvectorConstant {
 	}
 
 	public enum ExtendOperation {
-		sign_extend(BvOp.sign_extend),
-		zero_extend(BvOp.zero_extend),;
+		sign_extend(BvOp.sign_extend), zero_extend(BvOp.zero_extend),;
 
 		private final BvOp mBvOp;
 
-		private ExtendOperation(final BvOp bvop) {
+		ExtendOperation(final BvOp bvop) {
 			mBvOp = bvop;
 		}
 
@@ -296,13 +296,11 @@ public class BitvectorConstant {
 	private final BigInteger mIndex;
 
 	public BitvectorConstant(final BigInteger value, final BigInteger index) {
-		super();
 		mValue = computeUnifiedValue(value, index);
 		mIndex = index;
 	}
 
 	public BitvectorConstant(final BigInteger value, final String index) {
-		super();
 		final BigInteger indexAsBi = new BigInteger(index);
 		mValue = computeUnifiedValue(value, indexAsBi);
 		mIndex = indexAsBi;
@@ -337,11 +335,7 @@ public class BitvectorConstant {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mIndex == null ? 0 : mIndex.hashCode());
-		result = prime * result + (mValue == null ? 0 : mValue.hashCode());
-		return result;
+		return Objects.hash(mIndex, mValue);
 	}
 
 	@Override
@@ -602,8 +596,7 @@ public class BitvectorConstant {
 		return toSignedInt(mValue, mIndex);
 	}
 
-	public static BitvectorConstantOperationResult apply(final BvOp sbo,
-			final BitvectorConstant... operands) {
+	public static BitvectorConstantOperationResult apply(final BvOp sbo, final BitvectorConstant... operands) {
 		if (operands == null) {
 			throw new IllegalArgumentException("No operands");
 		}
@@ -688,7 +681,7 @@ public class BitvectorConstant {
 		}
 
 		public boolean getBooleanResult() {
-			return mBooleanResult.booleanValue();
+			return mBooleanResult;
 		}
 
 		public BitvectorConstant getBvResult() {

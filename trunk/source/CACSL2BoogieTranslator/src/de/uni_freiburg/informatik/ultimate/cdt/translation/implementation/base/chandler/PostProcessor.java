@@ -245,7 +245,7 @@ public class PostProcessor {
 					decl.addAll(declareCurrentRoundingModeVar(loc));
 				}
 			}
-			final BvOp[] importantBvOperations = new BvOp[] { BvOp.bvadd, BvOp.bvneg };
+			final BvOp[] importantBvOperations = { BvOp.bvadd, BvOp.bvneg };
 			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantBvOperations);
 		}
 		assert decl.stream().allMatch(Objects::nonNull);
@@ -272,7 +272,7 @@ public class PostProcessor {
 				attributes[1] = new NamedAttribute(loc, "bitsize",
 						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(bitsize)) });
 				final String identifier = "C_" + cPrimitive.name();
-				final String[] typeParams = new String[0];
+				final String[] typeParams = {};
 				final ASTType astType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams, astType));
 			}
@@ -323,7 +323,7 @@ public class PostProcessor {
 								ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
 			}
 			final String identifier = "C_" + cPrimitive.name();
-			final String[] typeParams = new String[0];
+			final String[] typeParams = {};
 			decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams));
 		}
 		return decls;
@@ -341,7 +341,7 @@ public class PostProcessor {
 			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibRmIdentifier) });
 		}
-		final String[] typeParamsRM = new String[0];
+		final String[] typeParamsRM = {};
 		decls.add(new TypeDeclaration(loc, attributesRM, false,
 				BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, typeParamsRM));
 
@@ -508,7 +508,7 @@ public class PostProcessor {
 		final String outInt = "outInt";
 		final VarList realParam =
 				new VarList(ignoreLoc, new String[] {}, new PrimitiveType(ignoreLoc, BoogieType.TYPE_REAL, SFO.REAL));
-		final VarList[] oneRealParam = new VarList[] { realParam };
+		final VarList[] oneRealParam = { realParam };
 		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt },
 				new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, SFO.INT));
 
@@ -676,8 +676,7 @@ public class PostProcessor {
 			}
 			builder.addAuxVars(firstElseRex.getAuxVars());
 
-			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
-			firstElseStmt.addAll(firstElseRex.getStatements());
+			final ArrayList<Statement> firstElseStmt = new ArrayList<>(firstElseRex.getStatements());
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
 						StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
@@ -694,8 +693,7 @@ public class PostProcessor {
 				}
 				builder.addAuxVars(currentRex.getAuxVars());
 
-				final ArrayList<Statement> newStmts = new ArrayList<>();
-				newStmts.addAll(currentRex.getStatements());
+				final ArrayList<Statement> newStmts = new ArrayList<>(currentRex.getStatements());
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
 							StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },

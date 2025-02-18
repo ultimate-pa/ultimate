@@ -134,8 +134,8 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 	private HavocStatement constructBoogieHavocStatementOfUnmappedOutVars() {
 		// Variable occurs in inVars, but not in outVars
 		final Set<TermVariable> hvcVar = mTransformula.getInVars().entrySet().stream()
-				.filter(entry -> !mTransformula.getOutVars().keySet().contains(entry.getKey()))
-				.map(entry -> entry.getValue()).collect(Collectors.toSet());
+				.filter(entry -> !mTransformula.getOutVars().containsKey(entry.getKey())).map(entry -> entry.getValue())
+				.collect(Collectors.toSet());
 
 		assert hvcVar != null;
 
@@ -294,8 +294,7 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 	protected PoormanAbstractState<BACKING> prepareState(final PoormanAbstractState<BACKING> input) {
 
 		// Add temporary variables to the symbol table
-		final Set<IProgramVarOrConst> tempVars = new HashSet<>();
-		tempVars.addAll(mRenamedInVars.values());
+		final Set<IProgramVarOrConst> tempVars = new HashSet<>(mRenamedInVars.values());
 		tempVars.addAll(mNewOutVars);
 		tempVars.addAll(mNewAuxVars);
 		mBoogie2SmtSymbolTable

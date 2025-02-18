@@ -42,18 +42,15 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDag;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag.RegexDagNode;
 
 /**
- * Helper class to generate DAGs from human write-able strings.
- * DAGs can be specified in a heavily simplified version of the <i>trivial graph format</i> (TGF).
+ * Helper class to generate DAGs from human write-able strings. DAGs can be specified in a heavily simplified version of
+ * the <i>trivial graph format</i> (TGF).
  * <p>
- * To specify a DAG its nodes and forward edges have to be listed as a space-separated list.
- * Each node or edge has two attributes.
- * Nodes have a an id (natural number) and a label (word, typically a single letter).
- * Edges have a source (id of the source node) and a target (id of the target node).
- * Both attributes are separated by a dot ".". The dot can be omitted ("1.a" = "1a"
- * and "1.2" = "1.2").
- * In ambiguous cases the first attribute takes up as much as possible ("123" = "12.3", "12a" = "12.a").
- * The source and sink of the dag are detected automatically.
- * 
+ * To specify a DAG its nodes and forward edges have to be listed as a space-separated list. Each node or edge has two
+ * attributes. Nodes have a an id (natural number) and a label (word, typically a single letter). Edges have a source
+ * (id of the source node) and a target (id of the target node). Both attributes are separated by a dot ".". The dot can
+ * be omitted ("1.a" = "1a" and "1.2" = "1.2"). In ambiguous cases the first attribute takes up as much as possible
+ * ("123" = "12.3", "12a" = "12.a"). The source and sink of the dag are detected automatically.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  */
 public class RegexDagTestUtils {
@@ -65,16 +62,19 @@ public class RegexDagTestUtils {
 	private static final Pattern EDGE_PATTERN = Pattern.compile(EDGE_REGEX);
 
 	/**
-	 * Creates a DAG from a human-writable graph format.
-	 * For more information on the graph format see class documentation of {@link RegexDagTestUtils}.
-	 * @param listOfNodes Space-separated list of nodes of the form {@code 0.a} (the dot is optional).
-	 * @param listOfEdges Space-separated list of edges of the form {@code 0.1} (the dot is optional).
-	 *                    Backward edges are added automatically.
+	 * Creates a DAG from a human-writable graph format. For more information on the graph format see class
+	 * documentation of {@link RegexDagTestUtils}.
+	 *
+	 * @param listOfNodes
+	 *            Space-separated list of nodes of the form {@code 0.a} (the dot is optional).
+	 * @param listOfEdges
+	 *            Space-separated list of edges of the form {@code 0.1} (the dot is optional). Backward edges are added
+	 *            automatically.
 	 * @return DAG
 	 */
 	public static RegexDag<String> dag(final String listOfNodes, final String listOfEdges) {
 		final Map<String, RegexDagNode<String>> idToNode = new HashMap<>();
-		RegexDag<String> dag = new RegexDag<>(null);
+		final RegexDag<String> dag = new RegexDag<>(null);
 		for (final String nodeDescription : listOfNodes.split(SPLIT_REGEX)) {
 			mapNewNode(nodeDescription, idToNode);
 		}
@@ -114,7 +114,8 @@ public class RegexDagTestUtils {
 		source.connectOutgoing(target);
 	}
 
-	private static void findAndSetSourceAndSink(final Collection<RegexDagNode<String>> nodes, final RegexDag<String> dag) {
+	private static void findAndSetSourceAndSink(final Collection<RegexDagNode<String>> nodes,
+			final RegexDag<String> dag) {
 		for (final RegexDagNode<String> node : nodes) {
 			if (node.getOutgoingNodes().isEmpty()) {
 				if (dag.getSink() != null) {
@@ -134,7 +135,7 @@ public class RegexDagTestUtils {
 	public static RegexDag<String> linearDag(final String source, final String... successors) {
 		final RegexDag<String> dag = RegexDag.singleNodeDag(stringToRegexAtom(source));
 		for (final String next : successors) {
-			RegexDagNode<String> nextNode = new RegexDagNode<>(stringToRegexAtom(next));
+			final RegexDagNode<String> nextNode = new RegexDagNode<>(stringToRegexAtom(next));
 			dag.getSink().connectOutgoing(nextNode);
 			dag.setSink(nextNode);
 		}
@@ -151,28 +152,28 @@ public class RegexDagTestUtils {
 	}
 
 	/**
-	 * Creates a string in <i>trivial graph format</i> (TGF) from a simplified version of the format.
-	 * For more information on the graph format see class documentation of {@link RegexDagTestUtils}.
-	 * @param listOfNodes Space-separated list of nodes of the form {@code 0.a} (the dot is optional).
-	 * @param listOfEdges Space-separated list of edges of the form {@code 0.1} (the dot is optional).
-	 *                    Backward edges are added automatically.
+	 * Creates a string in <i>trivial graph format</i> (TGF) from a simplified version of the format. For more
+	 * information on the graph format see class documentation of {@link RegexDagTestUtils}.
+	 *
+	 * @param listOfNodes
+	 *            Space-separated list of nodes of the form {@code 0.a} (the dot is optional).
+	 * @param listOfEdges
+	 *            Space-separated list of edges of the form {@code 0.1} (the dot is optional). Backward edges are added
+	 *            automatically.
 	 * @return TGF
 	 */
 	public static String toTgf(final String listOfNodes, final String listOfEdges) {
-		// Alternative: convert input to DAG and DAG to TGF 
-		return listOfNodes
-				.replaceAll(SPLIT_REGEX, "\n")
-				.replaceAll(NODE_REGEX, "$1 $2")
-				+ "\n#\n"
-				+ listOfEdges
-				.replaceAll(SPLIT_REGEX, "\n")
-				.replaceAll(EDGE_REGEX, "$1 $2 forward\n$2 $1 backward")
+		// Alternative: convert input to DAG and DAG to TGF
+		return listOfNodes.replaceAll(SPLIT_REGEX, "\n").replaceAll(NODE_REGEX, "$1 $2") + "\n#\n"
+				+ listOfEdges.replaceAll(SPLIT_REGEX, "\n").replaceAll(EDGE_REGEX, "$1 $2 forward\n$2 $1 backward")
 				+ (listOfEdges.isEmpty() ? "" : "\n");
 	}
 
 	/**
 	 * Sorts each section of a TGF file line-wise.
-	 * @param tgf String trivial graph format (TGF)
+	 *
+	 * @param tgf
+	 *            String trivial graph format (TGF)
 	 * @return String in trivial graph format such that in each section the lines are sorted alphabetically
 	 */
 	public static String sortTgf(final String tgf) {
@@ -190,20 +191,17 @@ public class RegexDagTestUtils {
 	}
 
 	/**
-	 * Constructs an expected dag from a list of nodes and edges (see {@link #toTgf(String, String)})
-	 * and compares the expected dag with the actual dag using {@link Assert#assertEquals(String, String)}.
+	 * Constructs an expected dag from a list of nodes and edges (see {@link #toTgf(String, String)}) and compares the
+	 * expected dag with the actual dag using {@link Assert#assertEquals(String, String)}.
 	 * <p>
-	 * Caution: This method is very fragile. Usually we had to check graph isomorphism, which is complicated.
-	 * We compare the trivial graph format (TGF) representation which is faster but unreliable.
-	 * TGFs can differ for isomorph graph because of different node ids
-	 * A benefit of comparing TGFs is human-readable output for failed asserts.
+	 * Caution: This method is very fragile. Usually we had to check graph isomorphism, which is complicated. We compare
+	 * the trivial graph format (TGF) representation which is faster but unreliable. TGFs can differ for isomorph graph
+	 * because of different node ids A benefit of comparing TGFs is human-readable output for failed asserts.
 	 */
 	public static void assertEq(final String nodesExpected, final String edgesExpected,
 			final RegexDag<String> actualDag) {
 		// leading \n makes jUnit's output ("expected <...> but was <...>") more readable
-		Assert.assertEquals(
-				"\n" + sortTgf(toTgf(nodesExpected, edgesExpected)),
-				"\n" + sortTgf(actualDag.toString()));
+		Assert.assertEquals("\n" + sortTgf(toTgf(nodesExpected, edgesExpected)), "\n" + sortTgf(actualDag.toString()));
 		// TODO assert source and sink nodes are set correctly
 	}
 }

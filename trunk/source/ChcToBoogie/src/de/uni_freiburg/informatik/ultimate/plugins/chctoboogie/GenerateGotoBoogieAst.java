@@ -133,12 +133,13 @@ public class GenerateGotoBoogieAst {
 		final Map<HcPredicateSymbol, Label> predSymbolToLabel = new LinkedHashMap<>();
 		final Map<Label, Integer> predLabelToNumber = new LinkedHashMap<>();
 		{
-			Integer predsymCounter = 0;
+			int predsymCounter = 0;
 			// generate the labels
 			// for (final HcPredicateSymbol predSym : mChcInfo.getHornClausesSorted().getDomain()) {
 			for (final HcPredicateSymbol predSym : mChcInfo.getAllReachablePredSymbols()) {
 				final Label label = new Label(loc, mHelper.predSymToMethodName(predSym));
-				final Integer number = predsymCounter++;
+				final Integer number = predsymCounter;
+				predsymCounter++;
 				predSymbolToLabel.put(predSym, label);
 				predLabelToNumber.put(label, number);
 			}

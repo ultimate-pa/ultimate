@@ -58,8 +58,8 @@ public class ArithmeticUtilsTest {
 	}
 
 	/**
-	 * Tests for the special case where the divisior is not divisible by the
-	 * divident and the result of the Java division is 0.
+	 * Tests for the special case where the divisior is not divisible by the divident and the result of the Java
+	 * division is 0.
 	 */
 	@Test
 	public void euclideanDivAndMod2() {
@@ -121,6 +121,5 @@ public class ArithmeticUtilsTest {
 	public void multiplicativeInverse03() {
 		ArithmeticUtils.multiplicativeInverse(BigInteger.valueOf(2), BigInteger.valueOf(4));
 	}
-
 
 }

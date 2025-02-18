@@ -40,17 +40,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
 /**
- * Assume we have a quantified term in which we cannot trivially push
- * the quantifier further because we have
- * - an existentially quantified conjunction, or
- * - an universally quantified disjunction.
- * We partition the parameters of the conjunction (resp. disjunction) such that
- * two parameters are equivalent if some quantified variable occurs in both.
- * If the resulting partition is not trivial (i.e., does not consist of a single
- * equivalence class) we push the quantifier one step such that we
- * obtain a conjunction (resp. disjunction) that has one param for each
- * equivalence class. The param is a quantified formula whose variables
- * are those that occur in the equivalence class
+ * Assume we have a quantified term in which we cannot trivially push the quantifier further because we have - an
+ * existentially quantified conjunction, or - an universally quantified disjunction. We partition the parameters of the
+ * conjunction (resp. disjunction) such that two parameters are equivalent if some quantified variable occurs in both.
+ * If the resulting partition is not trivial (i.e., does not consist of a single equivalence class) we push the
+ * quantifier one step such that we obtain a conjunction (resp. disjunction) that has one param for each equivalence
+ * class. The param is a quantified formula whose variables are those that occur in the equivalence class
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -91,14 +87,14 @@ public class ParameterPartition {
 				for (final Term term : equivalenceClass) {
 					quantifiedVarsInClass.addAll(param2quantifiedVars.getImage(term));
 				}
-				final Term connectedEquivalenceClass = QuantifierUtils.applyDualFiniteConnective(script,
-						et.getQuantifier(), equivalenceClass);
+				final Term connectedEquivalenceClass =
+						QuantifierUtils.applyDualFiniteConnective(script, et.getQuantifier(), equivalenceClass);
 				final Term quantified = SmtUtils.quantifier(script, et.getQuantifier(), quantifiedVarsInClass,
 						connectedEquivalenceClass);
 				resultParams.add(quantified);
 			}
-			mTermWithPushedQuantifier = QuantifierUtils.applyDualFiniteConnective(script, et.getQuantifier(),
-					resultParams);
+			mTermWithPushedQuantifier =
+					QuantifierUtils.applyDualFiniteConnective(script, et.getQuantifier(), resultParams);
 		}
 	}
 

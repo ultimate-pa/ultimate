@@ -10,7 +10,6 @@ public class VersionResponse extends ApiResponse {
 	private final String mUltimateVersion;
 
 	public VersionResponse(final String version) {
-		super();
 		setStatusError();
 		mUltimateVersion = version;
 	}

@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
-
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -51,7 +50,7 @@ public class PreprocessorAnnotation extends AbstractAnnotations {
 	}
 
 	public void annotate(final IElement elem) {
-		if(elem == null){
+		if (elem == null) {
 			return;
 		}
 		elem.getPayload().getAnnotations().put(Activator.PLUGIN_ID, this);

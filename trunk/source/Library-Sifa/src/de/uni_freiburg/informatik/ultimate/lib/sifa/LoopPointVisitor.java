@@ -39,20 +39,19 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Star;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.Union;
 
 /**
- * Returns the loop point of a starred regex over the alphabet {@code T}.
- * The loop point is the location at which the loop starts and ends.
- * The regex has to be simple and unambiguous as defined in Tarjan's 1981 paper
- * <a href="https://dl.acm.org/citation.cfm?id=322273">Fast Algorithms for Solving Path Problems</a>.
- * This means in particular that the regex e* has L(e) ∌ ε.
+ * Returns the loop point of a starred regex over the alphabet {@code T}. The loop point is the location at which the
+ * loop starts and ends. The regex has to be simple and unambiguous as defined in Tarjan's 1981 paper
+ * <a href="https://dl.acm.org/citation.cfm?id=322273">Fast Algorithms for Solving Path Problems</a>. This means in
+ * particular that the regex e* has L(e) ∌ ε.
  * <p>
  * This visitor must be applied to a star.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <T> Abbreviation for long type – this class isn't supposed to be actually generic
+ * @param <T>
+ *            Abbreviation for long type – this class isn't supposed to be actually generic
  */
-public class LoopPointVisitor<T extends IIcfgTransition<IcfgLocation>>
-		implements IRegexVisitor<T, IcfgLocation, Void> {
+public class LoopPointVisitor<T extends IIcfgTransition<IcfgLocation>> implements IRegexVisitor<T, IcfgLocation, Void> {
 
 	@Override
 	public IcfgLocation visit(final Star<T> star, final Void argument) {

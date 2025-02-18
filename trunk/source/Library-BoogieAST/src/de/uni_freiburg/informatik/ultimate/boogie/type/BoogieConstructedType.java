@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * A Constructed type is a
+ *
  * @author hoenicke
  *
  */
@@ -69,7 +70,7 @@ public class BoogieConstructedType extends BoogieType {
 		}
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType substitutePlaceholders(final int depth, final BoogieType[] substType) {
 		if (parameters.length == 0) {
@@ -89,7 +90,7 @@ public class BoogieConstructedType extends BoogieType {
 		return createConstructedType(constr, newParam);
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType incrementPlaceholders(final int depth, final int incDepth) {
 		if (parameters.length == 0) {
@@ -109,7 +110,7 @@ public class BoogieConstructedType extends BoogieType {
 		return createConstructedType(constr, newParam);
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected boolean unify(final int depth, final BoogieType other, final BoogieType[] substitution) {
 		if (!(other instanceof BoogieConstructedType)) {
@@ -137,7 +138,7 @@ public class BoogieConstructedType extends BoogieType {
 		return false;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected boolean isUnifiableTo(final int depth, final BoogieType other, final ArrayList<BoogieType> subst) {
 		if (this == other || other == TYPE_ERROR) {
@@ -166,6 +167,7 @@ public class BoogieConstructedType extends BoogieType {
 	public BoogieTypeConstructor getConstr() {
 		return constr;
 	}
+
 	public BoogieType getParameter(final int i) {
 		return parameters[i];
 	}
@@ -175,10 +177,12 @@ public class BoogieConstructedType extends BoogieType {
 	}
 
 	/**
-	 * Computes a string representation.  It uses depth to compute artificial
-	 * names for the placeholders.
-	 * @param depth the number of placeholders outside this expression.
-	 * @param needParentheses true if parentheses should be set for constructed types
+	 * Computes a string representation. It uses depth to compute artificial names for the placeholders.
+	 *
+	 * @param depth
+	 *            the number of placeholders outside this expression.
+	 * @param needParentheses
+	 *            true if parentheses should be set for constructed types
 	 * @return a string representation of this type.
 	 */
 	@Override
@@ -192,7 +196,7 @@ public class BoogieConstructedType extends BoogieType {
 			sb.append("(");
 		}
 		sb.append(constr.getName());
-		for (final BoogieType pType: parameters) {
+		for (final BoogieType pType : parameters) {
 			sb.append(" ").append(pType.toString(depth, true));
 		}
 		if (needParentheses) {
@@ -207,11 +211,10 @@ public class BoogieConstructedType extends BoogieType {
 		for (int i = 0; i < parameters.length; i++) {
 			astParamTypes[i] = parameters[i].toASTType(loc, depth);
 		}
-		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
-			NamedType(loc, this, constr.getName(), astParamTypes);
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType(loc, this, constr.getName(), astParamTypes);
 	}
 
-	//@Override
+	// @Override
 	@Override
 	public boolean isFinite() {
 		if (realType != this) {

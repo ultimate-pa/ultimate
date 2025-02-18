@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -83,8 +84,7 @@ public class SegmentationMap {
 	}
 
 	public Set<IProgramVar> getAuxVars() {
-		final Set<IProgramVar> variables = new HashSet<>();
-		variables.addAll(getBoundVars());
+		final Set<IProgramVar> variables = new HashSet<>(getBoundVars());
 		variables.addAll(getValueVars());
 		return variables;
 	}
@@ -180,7 +180,8 @@ public class SegmentationMap {
 	}
 
 	private static List<IProgramVarOrConst> sortProgramVars(final Collection<IProgramVarOrConst> programVars) {
-		return programVars.stream().sorted((x, y) -> x.toString().compareTo(y.toString())).collect(Collectors.toList());
+		return programVars.stream().sorted(Comparator.comparing(IProgramVarOrConst::toString))
+				.collect(Collectors.toList());
 	}
 
 	public Segmentation getSegmentation(final IProgramVarOrConst variable) {

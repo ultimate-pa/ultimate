@@ -178,9 +178,8 @@ public class LargeBlockEncoding {
 				final BoogieIcfgLocation successor = (BoogieIcfgLocation) outgoing.getTarget();
 				final List<CodeBlock> sequence = Arrays.asList((CodeBlock) incoming, (CodeBlock) outgoing);
 
-				final SequentialComposition comp =
-						mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false,
-								sequence, CfgBuilder.SIMPLIFICATION_TECHNIQUE);
+				final SequentialComposition comp = mCbf.constructSequentialComposition(predecessor, successor,
+						mSimplifyCodeBlocks, false, sequence, CfgBuilder.SIMPLIFICATION_TECHNIQUE);
 				ModelUtils.mergeAnnotations(comp, incoming, outgoing);
 				newEdges.add(comp);
 			}
@@ -291,8 +290,8 @@ public class LargeBlockEncoding {
 			return false;
 		}
 		assert edge instanceof StatementSequence || edge instanceof SequentialComposition
-				|| edge instanceof ParallelComposition || edge instanceof Summary
-				|| edge instanceof GotoEdge : "unexpected type of edge: " + edge.getClass().getSimpleName();
+				|| edge instanceof ParallelComposition || edge instanceof Summary || edge instanceof GotoEdge
+				: "unexpected type of edge: " + edge.getClass().getSimpleName();
 		return true;
 	}
 

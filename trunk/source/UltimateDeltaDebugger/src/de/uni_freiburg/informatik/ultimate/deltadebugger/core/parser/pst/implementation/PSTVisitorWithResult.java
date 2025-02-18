@@ -31,20 +31,20 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 
 /**
  * PST visitor with result.
- * 
+ *
  * @param <T>
  *            result type
  */
 public class PSTVisitorWithResult<T> implements IPSTVisitor {
 	private Optional<T> mResult;
-	
+
 	/**
 	 * Constructor with empty result.
 	 */
 	public PSTVisitorWithResult() {
 		mResult = Optional.empty();
 	}
-	
+
 	/**
 	 * @param initialValue
 	 *            Initial result.
@@ -52,11 +52,11 @@ public class PSTVisitorWithResult<T> implements IPSTVisitor {
 	public PSTVisitorWithResult(final T initialValue) {
 		mResult = Optional.of(initialValue);
 	}
-	
+
 	public Optional<T> getResult() {
 		return mResult;
 	}
-	
+
 	public void setResult(final T value) {
 		mResult = Optional.of(value);
 	}

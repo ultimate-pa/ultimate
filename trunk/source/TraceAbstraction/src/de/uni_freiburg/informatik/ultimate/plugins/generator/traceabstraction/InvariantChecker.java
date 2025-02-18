@@ -180,8 +180,8 @@ public class InvariantChecker {
 		}
 		final List<LoopFreeSegment<IcfgEdge>> validSegments = twoPointSubgraphsToSegments(validTpsds);
 		final List<LoopFreeSegment<IcfgEdge>> unknownSegments = twoPointSubgraphsToSegments(unknownTpsds);
-		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments = twoPointSubgraphsToSegments(
-				invalidTpsds);
+		final List<LoopFreeSegmentWithStatePair<IcfgEdge, Term>> invalidSegments =
+				twoPointSubgraphsToSegments(invalidTpsds);
 		mResultForUltimateUser = new AnnotationCheckResult<>(Activator.PLUGIN_ID, mServices.getBacktranslationService(),
 				validSegments, unknownSegments, invalidSegments, nonCycleFreeSubgraphs, Collections.emptyList());
 	}
@@ -397,8 +397,7 @@ public class InvariantChecker {
 		} else if ((edge instanceof IIcfgCallTransition) || (edge instanceof IIcfgReturnTransition)) {
 			// omit this edge, do nothing
 		} else {
-			throw new UnsupportedOperationException(
-					"Unsupported kind of edge " + edge.getClass().getSimpleName());
+			throw new UnsupportedOperationException("Unsupported kind of edge " + edge.getClass().getSimpleName());
 		}
 	}
 
@@ -657,7 +656,6 @@ public class InvariantChecker {
 
 		public TwoPointSubgraphDefinition(final IcfgLocation startLocation, final Set<IcfgEdge> subgraphEdges,
 				final IcfgLocation endLocation) {
-			super();
 			mStartLocation = startLocation;
 			mSubgraphEdges = subgraphEdges;
 			mEndLocation = endLocation;

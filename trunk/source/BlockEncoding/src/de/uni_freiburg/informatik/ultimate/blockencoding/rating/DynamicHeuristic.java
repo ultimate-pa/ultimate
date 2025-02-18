@@ -1,31 +1,31 @@
 /*
  * Copyright (C) 2013-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
@@ -41,12 +41,11 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 
 /**
- * The basic idea behind this heuristic is to compute, while converting, a
- * average rating value per edge. Per preference we store some maximum
- * threshold, which should not be reached anyway.
- * 
+ * The basic idea behind this heuristic is to compute, while converting, a average rating value per edge. Per preference
+ * we store some maximum threshold, which should not be reached anyway.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class DynamicHeuristic implements IRatingHeuristic {
 
@@ -63,31 +62,26 @@ public class DynamicHeuristic implements IRatingHeuristic {
 	/**
 	 * @param strategy
 	 */
-	public DynamicHeuristic(RatingStrategy strategy) {
+	public DynamicHeuristic(final RatingStrategy strategy) {
 		this.strategy = strategy;
-		supportedStrategies = new ArrayList<RatingStrategy>();
-		supportedStrategies
-				.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
-		supportedStrategies
-				.add(RatingStrategy.DISJUNCTIVE_MULTI_STATEMENT_RATING);
+		supportedStrategies = new ArrayList<>();
+		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
+		supportedStrategies.add(RatingStrategy.DISJUNCTIVE_MULTI_STATEMENT_RATING);
 	}
 
 	@Override
-	public void init(String givenPref) {
+	public void init(final String givenPref) {
 		maxThreshold = Integer.parseInt(givenPref);
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.
-	 * IRatingHeuristic
-	 * #isRatingBoundReached(de.uni_freiburg.informatik.ultimate.
-	 * blockencoding.rating.interfaces.IRating)
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces. IRatingHeuristic
+	 * #isRatingBoundReached(de.uni_freiburg.informatik.ultimate. blockencoding.rating.interfaces.IRating)
 	 */
 	@Override
-	public boolean isRatingBoundReached(IRating rating,
-			List<IMinimizedEdge> edgeLevel) {
+	public boolean isRatingBoundReached(final IRating rating, final List<IMinimizedEdge> edgeLevel) {
 		if (!supportedStrategies.contains(strategy)) {
 			throw new IllegalArgumentException("Illegal Strategy chosen!");
 		}
@@ -102,20 +96,16 @@ public class DynamicHeuristic implements IRatingHeuristic {
 			edges++;
 		}
 
-		if (source != null) {
-			if (source.getIncomingEdges() == null
-					|| source.getIncomingEdges().isEmpty()
-					|| containsOnlyCalls(edgeLevel)) {
-				// we take all edges which begin at an entry node
-				// (other idea, is to do the same with the same to all edges
-				// which end in error location)
-				countOfEdges += edges;
-				return true;
-			}
+		if ((source != null) && (source.getIncomingEdges() == null || source.getIncomingEdges().isEmpty()
+				|| containsOnlyCalls(edgeLevel))) {
+			// we take all edges which begin at an entry node
+			// (other idea, is to do the same with the same to all edges
+			// which end in error location)
+			countOfEdges += edges;
+			return true;
 		}
 		// here we compute what the new average value would be
-		final int newThreshold = (totalRatingValue + totalRating)
-				/ (countOfEdges + edges);
+		final int newThreshold = (totalRatingValue + totalRating) / (countOfEdges + edges);
 		// now check if the new threshold is under the maximum given there
 		if (newThreshold <= maxThreshold) {
 			// so everything is all right, we can take this edge level
@@ -126,7 +116,7 @@ public class DynamicHeuristic implements IRatingHeuristic {
 		return false;
 	}
 
-	private boolean containsOnlyCalls(List<IMinimizedEdge> edges) {
+	private boolean containsOnlyCalls(final List<IMinimizedEdge> edges) {
 		for (final IMinimizedEdge checkEdge : edges) {
 			if (!(checkEdge.isBasicEdge())) {
 				return false;
@@ -140,7 +130,7 @@ public class DynamicHeuristic implements IRatingHeuristic {
 	}
 
 	@Override
-	public boolean isRatingStrategySupported(RatingStrategy strategy) {
+	public boolean isRatingStrategySupported(final RatingStrategy strategy) {
 		return supportedStrategies.contains(strategy);
 	}
 }

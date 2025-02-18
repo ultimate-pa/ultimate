@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHashRelation;
 
 /**
- * @deprecated Superseded by {@link XnfScout}. We keep this class only for
- *             comparisons during debugging.
+ * @deprecated Superseded by {@link XnfScout}. We keep this class only for comparisons during debugging.
  *
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -59,7 +58,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
 @Deprecated
 public class DerScout extends CondisTermTransducer<DerApplicability> {
 
-	public enum Adk { ATOM, DISJUNCTION, CONJUNCTION;
+	public enum Adk {
+		ATOM, DISJUNCTION, CONJUNCTION;
+
 		public static Adk getCorrespondingFiniteConnective(final int quantifier) {
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				return Adk.DISJUNCTION;
@@ -69,6 +70,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 				throw new AssertionError("unknown value " + quantifier);
 			}
 		}
+
 		public static Adk getDualFiniteConnective(final int quantifier) {
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				return Adk.CONJUNCTION;
@@ -79,14 +81,12 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 			}
 		}
 	}
+
 	public final TermVariable mEliminatee;
 	public final Script mScript;
 	public final int mQuantifier;
 
-
-
 	public DerScout(final TermVariable eliminatee, final Script script, final int quantifier) {
-		super();
 		mEliminatee = eliminatee;
 		mScript = script;
 		mQuantifier = quantifier;
@@ -152,8 +152,8 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		return result;
 	}
 
-	private static DerApplicability multiply(final List<DerApplicability> transducedArguments, final Adk subTermConnective,
-			final Adk ownConnective) throws AssertionError {
+	private static DerApplicability multiply(final List<DerApplicability> transducedArguments,
+			final Adk subTermConnective, final Adk ownConnective) throws AssertionError {
 		BigInteger cases = BigInteger.ONE;
 		BigInteger withoutDer = BigInteger.ONE;
 		BigInteger withoutVar = BigInteger.ONE;
@@ -168,6 +168,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		}
 		return new DerApplicability(ownConnective, cases, withoutDer, withoutVar);
 	}
+
 	private static DerApplicability add(final List<DerApplicability> transducedArguments, final Adk subTermConnective,
 			final Adk ownConnective) throws AssertionError {
 		BigInteger cases = BigInteger.ZERO;
@@ -185,8 +186,6 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		return new DerApplicability(ownConnective, cases, withoutDer, withoutVar);
 	}
 
-
-
 	private static List<Integer> computeMaximum(final List<Integer> list1, final List<Integer> list2) {
 		List<Integer> larger;
 		List<Integer> smaller;
@@ -197,12 +196,11 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 			larger = list2;
 			smaller = list1;
 		}
-		for (int i=0; i<smaller.size(); i++) {
+		for (int i = 0; i < smaller.size(); i++) {
 			larger.set(i, Integer.max(larger.get(i), smaller.get(i)));
 		}
 		return larger;
 	}
-
 
 	public static class DerApplicability {
 		private final Adk mAdk;
@@ -212,7 +210,6 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 
 		public DerApplicability(final Adk adk, final BigInteger cases, final BigInteger withoutDerCases,
 				final BigInteger withoutVarCases) {
-			super();
 			mAdk = adk;
 			mCases = cases;
 			mWitoutDerCases = withoutDerCases;
@@ -243,8 +240,8 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 	}
 
 	/**
-	 * Heuristic for selecting an eliminatee that preferably can be eliminated and
-	 * that can be eliminated with a preferably small blowup of the formula's size.
+	 * Heuristic for selecting an eliminatee that preferably can be eliminated and that can be eliminated with a
+	 * preferably small blowup of the formula's size.
 	 */
 	public static TermVariable selectBestEliminatee(final Script script, final int quantifier,
 			final List<TermVariable> eliminatees, final List<Term> currentDualFiniteParams) {
@@ -275,19 +272,18 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		return result;
 	}
 
-
-	public static int computeRecommendation(final Script script, final Set<TermVariable> eliminatees, final Term[] dualFiniteParams,
-			final int quantifier) {
+	public static int computeRecommendation(final Script script, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int quantifier) {
 
 		final Map<TermVariable, List<DerApplicability>> map = new HashMap<>();
 		for (final TermVariable eliminatee : eliminatees) {
-			final List<DerApplicability> list = new ArrayList<DerApplicability>();
+			final List<DerApplicability> list = new ArrayList<>();
 			for (final Term param : dualFiniteParams) {
-				final DerApplicability da = new DerScout(eliminatee, script, quantifier)
-						.transduce(param);
+				final DerApplicability da = new DerScout(eliminatee, script, quantifier).transduce(param);
 				list.add(da);
 			}
-			final DerApplicability appl = multiply(list, Adk.getCorrespondingFiniteConnective(quantifier), Adk.getDualFiniteConnective(quantifier));
+			final DerApplicability appl = multiply(list, Adk.getCorrespondingFiniteConnective(quantifier),
+					Adk.getDualFiniteConnective(quantifier));
 			final BigInteger nonElimCases = appl.getWithoutDerCases().subtract(appl.getWithoutVarCases());
 			final boolean eliminationGuarantee = nonElimCases.equals(BigInteger.ZERO);
 			if (eliminationGuarantee) {
@@ -308,7 +304,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		}
 		double currentMax = paramScore[0];
 		int currentMaxIndex = 0;
-		for (int i=1;i<paramScore.length;i++) {
+		for (int i = 1; i < paramScore.length; i++) {
 			if (paramScore[i] > currentMax) {
 				currentMaxIndex = i;
 				currentMax = paramScore[i];
@@ -318,7 +314,7 @@ public class DerScout extends CondisTermTransducer<DerApplicability> {
 		if (currentMax > 0.0) {
 			return currentMaxIndex;
 		} else {
-			return - 1;
+			return -1;
 		}
 	}
 }

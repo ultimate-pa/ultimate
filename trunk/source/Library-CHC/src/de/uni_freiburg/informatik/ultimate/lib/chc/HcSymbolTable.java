@@ -170,7 +170,8 @@ public class HcSymbolTable extends DefaultIcfgSymbolTable implements ITerm2Expre
 			final List<Term> dummyTerms = new ArrayList<>();
 			int dummyVarCounter = 0;
 			for (final Sort sort : functionParameterSorts) {
-				dummyTerms.add(mManagedScript.variable("dummyVar" + dummyVarCounter++, sort));
+				dummyTerms.add(mManagedScript.variable("dummyVar" + dummyVarCounter, sort));
+				dummyVarCounter++;
 			}
 			dummyAt = (ApplicationTerm) mManagedScript.getScript().term(functionName,
 					dummyTerms.toArray(new Term[dummyTerms.size()]));

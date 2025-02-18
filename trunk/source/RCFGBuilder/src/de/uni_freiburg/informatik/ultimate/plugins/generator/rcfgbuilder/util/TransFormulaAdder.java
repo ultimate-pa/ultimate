@@ -130,8 +130,8 @@ public class TransFormulaAdder {
 	}
 
 	private static ForkSmtArguments constructForkSmtArguments(final ForkStatement st, final Boogie2SMT boogie2smt) {
-		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
-				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
+		final IIdentifierTranslator[] identifierTranslators =
+				{ boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
 		final MultiTermResult threadId =
 				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getThreadID());
 		if (!threadId.getAuxiliaryVars().isEmpty()) {
@@ -152,8 +152,8 @@ public class TransFormulaAdder {
 	}
 
 	private static JoinSmtArguments constructJoinSmtArguments(final JoinStatement st, final Boogie2SMT boogie2smt) {
-		final IIdentifierTranslator[] identifierTranslators = new IIdentifierTranslator[] {
-				boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
+		final IIdentifierTranslator[] identifierTranslators =
+				{ boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
 		final MultiTermResult threadId =
 				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getThreadID());
 		if (!threadId.getAuxiliaryVars().isEmpty()) {

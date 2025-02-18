@@ -418,8 +418,8 @@ public class CACSL2BoogieBacktranslator extends
 					}
 					translatedAtoTraceElems.add(ateBuilder.build());
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(nextIndex)));
-					assert checkCallStackTarget(mLogger,
-							translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+					assert checkCallStackTarget(mLogger, translatedAtoTraceElems)
+							: "callstack broken during handleCASTFunctionCallExpression";
 					return nextIndex;
 				}
 			}
@@ -428,8 +428,8 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtoTraceElems
 				.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, (CACSLLocation) cloc).build());
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStackTarget(mLogger,
-				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+		assert checkCallStackTarget(mLogger, translatedAtoTraceElems)
+				: "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
 
@@ -466,8 +466,8 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtoTraceElems.add(AtomicTraceElementBuilder
 				.fromReplaceElementAndStep(currentATE, (CACSLLocation) cloc, cloc).setStepInfo(stepInfo).build());
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStackTarget(mLogger,
-				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+		assert checkCallStackTarget(mLogger, translatedAtoTraceElems)
+				: "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
 

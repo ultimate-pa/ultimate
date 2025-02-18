@@ -90,8 +90,8 @@ public class Overapprox extends ModernAnnotations {
 		return result;
 	}
 
-	public static <TE extends IElement> HashRelation<String, ILocation> getOverapproximations(
-			final IProgramExecution<TE, ?> pe) {
+	public static <TE extends IElement> HashRelation<String, ILocation>
+			getOverapproximations(final IProgramExecution<TE, ?> pe) {
 		final HashRelation<String, ILocation> result = new HashRelation<>();
 		final Iterator<AtomicTraceElement<TE>> iter = pe.iterator();
 		while (iter.hasNext()) {

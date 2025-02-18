@@ -41,16 +41,16 @@ public class SmtCommandUtils {
 
 	public interface ISmtCommand<RT> {
 
-		public abstract RT executeWithScript(Script script);
+		RT executeWithScript(Script script);
 
-		public abstract RT executeWithExecutor(Executor executor, PrintWriter pw);
+		RT executeWithExecutor(Executor executor, PrintWriter pw);
 
 		/**
 		 *
 		 * @return the representation of the command that can be passed to an SMT solver
 		 */
 		@Override
-		public abstract String toString();
+		String toString();
 	}
 
 	public static class SetLogicCommand implements ISmtCommand<Void> {
@@ -92,7 +92,6 @@ public class SmtCommandUtils {
 		private final Object mValue;
 
 		public SetOptionCommand(final String opt, final Object value) {
-			super();
 			mOpt = opt;
 			mValue = value;
 		}
@@ -144,7 +143,6 @@ public class SmtCommandUtils {
 		private final Object mValue;
 
 		public SetInfoCommand(final String info, final Object value) {
-			super();
 			mInfo = info;
 			mValue = value;
 		}
@@ -187,7 +185,6 @@ public class SmtCommandUtils {
 		private final int mArity;
 
 		public DeclareSortCommand(final String sort, final int arity) {
-			super();
 			mSort = sort;
 			mArity = arity;
 		}
@@ -227,7 +224,6 @@ public class SmtCommandUtils {
 		private final Sort mDefinition;
 
 		public DefineSortCommand(final String sort, final Sort[] sortParams, final Sort definition) {
-			super();
 			mSort = sort;
 			mSortParams = sortParams;
 			mDefinition = definition;
@@ -281,7 +277,6 @@ public class SmtCommandUtils {
 		final Sort mResultSort;
 
 		public DeclareFunCommand(final String fun, final Sort[] paramSorts, final Sort resultSort) {
-			super();
 			mFun = fun;
 			mParamSorts = paramSorts;
 			mResultSort = resultSort;
@@ -349,7 +344,6 @@ public class SmtCommandUtils {
 
 		public DefineFunCommand(final String fun, final TermVariable[] params, final Sort resultSort,
 				final Term definition) {
-			super();
 			mFun = fun;
 			mParams = params;
 			mResultSort = resultSort;
@@ -407,7 +401,6 @@ public class SmtCommandUtils {
 		private final Term mTerm;
 
 		public AssertCommand(final Term term) {
-			super();
 			mTerm = term;
 		}
 
@@ -500,7 +493,6 @@ public class SmtCommandUtils {
 		final QuotedObject mMsg;
 
 		public EchoCommand(final QuotedObject msg) {
-			super();
 			mMsg = msg;
 		}
 
@@ -589,7 +581,6 @@ public class SmtCommandUtils {
 		final Term[] mTerms;
 
 		public GetValueCommand(final Term[] terms) {
-			super();
 			mTerms = terms;
 		}
 

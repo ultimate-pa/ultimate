@@ -88,8 +88,7 @@ public class ReqCheck extends Check {
 		return mEndline;
 	}
 
-	private void registerMessageOverrides(final EnumSet<Spec> types, final String[] reqIds,
-			final String[] peaNames) {
+	private void registerMessageOverrides(final EnumSet<Spec> types, final String[] reqIds, final String[] peaNames) {
 		final IMessageProvider mMsgProvider = getMessageProvider();
 
 		for (final Spec spec : types) {

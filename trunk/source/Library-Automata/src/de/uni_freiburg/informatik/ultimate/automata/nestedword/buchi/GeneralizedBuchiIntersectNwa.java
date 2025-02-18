@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Generalized Buchi NWA intersection - first operand is generalized Buchi NWA and the second operand is Buchi NWA.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author liyong
  * @param <LETTER>
@@ -59,23 +59,24 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 
-public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+public class GeneralizedBuchiIntersectNwa<LETTER, STATE>
+		implements IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 
 	private final Map<STATE, ProductState> mRes2prod = new HashMap<>();
-	
+
 	private final Map<STATE, Map<STATE, ProductState>> mFst2snd2res = new HashMap<>();
-	
+
 	private Set<STATE> mInitialStates;
-	
-	private int mAcceptanceSize;
+
+	private final int mAcceptanceSize;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
@@ -112,14 +113,14 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 		return initialStates;
 	}
 
-	private STATE getOrConstructState(STATE fst, STATE snd) {
+	private STATE getOrConstructState(final STATE fst, final STATE snd) {
 		Map<STATE, ProductState> snd2Res = mFst2snd2res.get(fst);
-		if(snd2Res == null) {
+		if (snd2Res == null) {
 			snd2Res = new HashMap<>();
 			mFst2snd2res.put(fst, snd2Res);
 		}
 		ProductState prodState = snd2Res.get(snd);
-		if(prodState == null) {
+		if (prodState == null) {
 			final STATE res = mStateFactory.intersectBuchi(fst, snd, 1);
 			prodState = new ProductState(fst, snd, res);
 			prodState.setAcceptanceSet(computeAcceptance(fst, snd));
@@ -128,17 +129,19 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 		}
 		return prodState.getRes();
 	}
-	
-	private Set<Integer> computeAcceptance(STATE fst, STATE snd) {
+
+	private Set<Integer> computeAcceptance(final STATE fst, final STATE snd) {
 		final Set<Integer> acc = new HashSet<>();
-		Set<Integer> fstAcc = mFstOperand.getAcceptanceLabels(fst);		
-		for(Integer index : fstAcc) {
-			acc.add(index);
+		final Set<Integer> fstAcc = mFstOperand.getAcceptanceLabels(fst);
+		acc.addAll(fstAcc);
+		final int fstSize = mFstOperand.getAcceptanceSize();
+		if (mSndOperand.isFinal(snd)) {
+			acc.add(fstSize);
 		}
-		int fstSize = mFstOperand.getAcceptanceSize();
-		if(mSndOperand.isFinal(snd)) acc.add(fstSize);
-		
-		if(acc.isEmpty()) return Collections.emptySet();
+
+		if (acc.isEmpty()) {
+			return Collections.emptySet();
+		}
 		return acc;
 	}
 
@@ -181,7 +184,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 		final STATE fst = mRes2prod.get(state).getFst();
 		return mFstOperand.lettersCall(fst);
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		final STATE fst = mRes2prod.get(state).getFst();
@@ -211,7 +214,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 					.internalSuccessors(prod.getSnd(), letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				STATE resSucc = getOrConstructState(fstSucc, sndSucc);
+				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
 				result.add(new OutgoingInternalTransition<>(letter, resSucc));
 			}
 		}
@@ -239,7 +242,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 					letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				STATE resSucc = getOrConstructState(fstSucc, sndSucc);
+				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
 				result.add(new OutgoingCallTransition<>(letter, resSucc));
 			}
 		}
@@ -267,7 +270,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 					sndHier, letter)) {
 				final STATE fstSucc = fstTrans.getSucc();
 				final STATE sndSucc = sndTrans.getSucc();
-				STATE resSucc = getOrConstructState(fstSucc, sndSucc);
+				final STATE resSucc = getOrConstructState(fstSucc, sndSucc);
 				result.add(new OutgoingReturnTransition<>(hier, letter, resSucc));
 			}
 		}
@@ -291,7 +294,6 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 		return 0;
 	}
 
-
 	@Override
 	public String sizeInformation() {
 		// TODO Auto-generated method stub
@@ -300,7 +302,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 
 	/**
 	 * Product state for Generalized Buchi automata.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @author liyong
 	 */
@@ -327,25 +329,27 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 		public STATE getRes() {
 			return mRes;
 		}
-		
-		public void setAcceptanceSet(Set<Integer> acceptance) {
+
+		public void setAcceptanceSet(final Set<Integer> acceptance) {
 			mAcceptanceSet = acceptance;
 		}
-		
+
 		public Set<Integer> getAcceptanceSet() {
 			return mAcceptanceSet;
 		}
 
 		@Override
 		public String toString() {
-			return "<" + mFst.toString() + "," + mSnd.toString() + "," + mAcceptanceSet.toString() +  ">";
+			return "<" + mFst.toString() + "," + mSnd.toString() + "," + mAcceptanceSet.toString() + ">";
 		}
 	}
 
 	@Override
-	public boolean isFinal(STATE state, int index) {
+	public boolean isFinal(final STATE state, final int index) {
 		final Set<Integer> acceptanceSet = mRes2prod.get(state).getAcceptanceSet();
-		if(acceptanceSet.isEmpty()) return false;
+		if (acceptanceSet.isEmpty()) {
+			return false;
+		}
 		return acceptanceSet.contains(index);
 	}
 
@@ -355,8 +359,7 @@ public class GeneralizedBuchiIntersectNwa<LETTER, STATE> implements IGeneralized
 	}
 
 	@Override
-	public Set<Integer> getAcceptanceLabels(STATE state) {
+	public Set<Integer> getAcceptanceLabels(final STATE state) {
 		return mRes2prod.get(state).getAcceptanceSet();
 	}
 }
-

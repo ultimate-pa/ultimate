@@ -104,7 +104,7 @@ public class EnumerateRuns {
 				i--;
 			}
 
-			return new PetriNetRun<L, P>(markings, new Word<>(letters), transitions);
+			return new PetriNetRun<>(markings, new Word<>(letters), transitions);
 		}
 	}
 }

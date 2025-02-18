@@ -2,22 +2,22 @@
  * Copyright (C) 2012-2015 Fabian Reiter
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,6 +36,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
@@ -65,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * <p>
  * The implementation follows the notation introduced in “Improved Ramsey-Based Büchi Complementation” by Breuers,
  * Löding and Olschewski (Springer, 2012).
- * 
+ *
  * @author Fabian Reiter
  * @param <LETTER>
  *            letter type
@@ -96,7 +97,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -252,7 +253,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	@Override
 	public STATE getEmptyStackState() {
-		return this.mEmptyStackState;
+		return mEmptyStackState;
 	}
 
 	@Override
@@ -426,7 +427,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// mLogger.warn("No nwa. Has no call alphabet.");
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		// mLogger.warn("No nwa. Has no return alphabet.");
@@ -614,7 +615,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	/**
 	 * Container for size info.
-	 * 
+	 *
 	 * @author Fabian Reiter
 	 */
 	private static class SizeInfoContainer {
@@ -697,12 +698,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	//
 	/**
 	 * Transition monoid automaton.
-	 * 
+	 *
 	 * @author Fabian Reiter
 	 */
 	private class TransitionMonoidAutomaton {
 		// number assigned to copy of τ(ε)
-		private final Integer mInitialStateTma = Integer.valueOf(0);
+		private final Integer mInitialStateTma = 0;
 
 		private final Integer mInitialTma = mInitialStateTma;
 
@@ -744,8 +745,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			final TransitionProfile tInit = new TransitionProfile(); // τ(ε)-copy
 			mapNum2Tp.put(iInit, tInit);
 			mapTp2Num.put(tInit, iInit);
-			mTransitionsOutTma.put(iInit, new HashMap<LETTER, Integer>());
-			mTransitionsInTma.put(iInit, new HashMap<LETTER, Set<Integer>>());
+			mTransitionsOutTma.put(iInit, new HashMap<>());
+			mTransitionsInTma.put(iInit, new HashMap<>());
 			int numOfStates = 1;
 			for (Integer iCurr = iInit; iCurr < numOfStates; ++iCurr) {
 				final TransitionProfile tCurr = mapNum2Tp.get(iCurr);
@@ -759,8 +760,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 						++numOfStates;
 						mapNum2Tp.put(iNext, tNext);
 						mapTp2Num.put(tNext, iNext);
-						mTransitionsOutTma.put(iNext, new HashMap<LETTER, Integer>());
-						mTransitionsInTma.put(iNext, new HashMap<LETTER, Set<Integer>>());
+						mTransitionsOutTma.put(iNext, new HashMap<>());
+						mTransitionsInTma.put(iNext, new HashMap<>());
 					}
 					// δ(i_curr, a) = i_next
 					mTransitionsOutTma.get(iCurr).put(a, iNext);
@@ -892,7 +893,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 		/**
 		 * Transition profile.
-		 * 
+		 *
 		 * @author Fabian Reiter
 		 */
 		private class TransitionProfile {
@@ -945,7 +946,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 						final Transition trans1x2 = new Transition(trans1.getQ1(), trans2.getQ2());
 						if (transProfileS.getTransitions().get(trans1) || transProfileT.getTransitions().get(trans2)) {
 							mTransitions.put(trans1x2, Boolean.TRUE);
-						} else if (!this.mTransitions.containsKey(trans1x2)) {
+						} else if (!mTransitions.containsKey(trans1x2)) {
 							mTransitions.put(trans1x2, Boolean.FALSE);
 						}
 					}
@@ -979,7 +980,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			 *         Assumes that ⟨s,t⟩ is an s-t-pair, i.e. that L(⟨s,t⟩) is “proper”.
 			 */
 			public boolean hasAcceptingLasso(final TransitionProfile transProfile) {
-				for (final Transition trans1 : this.mTransitions.keySet()) {
+				for (final Transition trans1 : mTransitions.keySet()) {
 					if (getOrigAutomaton().isInitial(trans1.getQ1())) {
 						final Transition trans2 = new Transition(trans1.getQ2(), trans1.getQ2());
 						if (transProfile.getTransitions().containsKey(trans2)
@@ -1022,8 +1023,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			private final STATE mQ2;
 
 			public Transition(final STATE state1, final STATE state2) {
-				this.mQ1 = state1;
-				this.mQ2 = state2;
+				mQ1 = state1;
+				mQ2 = state2;
 			}
 
 			STATE getQ1() {
@@ -1036,11 +1037,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 			@Override
 			public int hashCode() {
-				final int prime = 31;
-				int result = 1;
-				result = prime * result + ((mQ1 == null) ? 0 : mQ1.hashCode());
-				result = prime * result + ((mQ2 == null) ? 0 : mQ2.hashCode());
-				return result;
+				return Objects.hash(mQ1, mQ2);
 			}
 
 			@Override

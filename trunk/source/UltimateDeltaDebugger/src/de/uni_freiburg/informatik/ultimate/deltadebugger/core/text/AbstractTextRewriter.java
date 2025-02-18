@@ -36,18 +36,17 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.Rewrite
  * all to the original text. Only non-overlapping changes are allowed, i.e. all changed regions must be disjoint.
  * Multiple insertions at the same offset are allowed as long as the surrounding region is not deleted/replaced.
  * Subsequent insertions are appended to the existing insertion. Other than that the order of operations does not
- * matter.
- * All modifications are validated as early as possible (fail-fast). If an attempt to change an already changed range is
- * detected, a RewriteConflictException is thrown and the observable state is not modified. The merge method allows to
- * commit multiple changes together iff all of them can be applied.
- * This class is meant to be a simplified alternative to org.eclipse.text.edits.TextEdit. It has similiar behaviour but
- * additionally validates that all changes are within the original text bounds as early as possible.
+ * matter. All modifications are validated as early as possible (fail-fast). If an attempt to change an already changed
+ * range is detected, a RewriteConflictException is thrown and the observable state is not modified. The merge method
+ * allows to commit multiple changes together iff all of them can be applied. This class is meant to be a simplified
+ * alternative to org.eclipse.text.edits.TextEdit. It has similiar behaviour but additionally validates that all changes
+ * are within the original text bounds as early as possible.
  */
 public abstract class AbstractTextRewriter {
 	private final List<Change> mChanges;
-	
+
 	private int mDelta;
-	
+
 	/**
 	 * Creates a new rewriter instance for an arbitrary text of the specified length. The originalLength is used to
 	 * validate bounds of all operations.
@@ -58,7 +57,7 @@ public abstract class AbstractTextRewriter {
 	protected AbstractTextRewriter() {
 		this(new ArrayList<>(), 0);
 	}
-	
+
 	/**
 	 * Copy constructor.
 	 *
@@ -68,12 +67,12 @@ public abstract class AbstractTextRewriter {
 	protected AbstractTextRewriter(final AbstractTextRewriter other) {
 		this(new ArrayList<>(other.mChanges), other.mDelta);
 	}
-	
+
 	protected AbstractTextRewriter(final List<Change> changes, final int delta) {
 		mChanges = changes;
 		mDelta = delta;
 	}
-	
+
 	private void addAllOrNone(final List<Change> source) {
 		int nextSourceIndex = 0;
 		int lastDestIndex = -1;
@@ -103,7 +102,7 @@ public abstract class AbstractTextRewriter {
 			throw e;
 		}
 	}
-	
+
 	private void addNewChange(final int offset, final int endOffset, final String replacement) {
 		if (offset < 0 || offset > endOffset || endOffset > getOriginalLength()) {
 			throw new IndexOutOfBoundsException(
@@ -117,7 +116,7 @@ public abstract class AbstractTextRewriter {
 		mChanges.add(findInsertionIndex(newChange, 0), newChange);
 		mDelta += newChange.mReplacement.length() - newChange.length();
 	}
-	
+
 	/**
 	 * Applies all recorded changes to the original text.
 	 *
@@ -137,10 +136,9 @@ public abstract class AbstractTextRewriter {
 		sb.append(originalText, cursor, originalText.length());
 		return sb.toString();
 	}
-	
+
 	/**
-	 * Removes a range of text.
-	 * Equivalent to {@code replace(offset, endOffset, "")}
+	 * Removes a range of text. Equivalent to {@code replace(offset, endOffset, "")}
 	 *
 	 * @param offset
 	 *            inclusive start index to delete from
@@ -152,7 +150,7 @@ public abstract class AbstractTextRewriter {
 		addNewChange(offset, endOffset, "");
 		return this;
 	}
-	
+
 	private int findInsertionIndex(final Change change, final int startIndex) {
 		if (startIndex > mChanges.size()) {
 			throw new IllegalArgumentException();
@@ -173,33 +171,32 @@ public abstract class AbstractTextRewriter {
 		}
 		return low;
 	}
-	
+
 	/**
 	 * @return {@link #getRewrittenLength()} - {@link #getOriginalLength()}.
 	 */
 	public int getDelta() {
 		return mDelta;
 	}
-	
+
 	protected String getExceptionText(final Change change) {
 		return "[" + change.mOffset + ", " + change.mEndOffset + "]";
 	}
-	
+
 	protected List<Change> getMergedChanges(final AbstractTextRewriter other) {
 		return mergeSortedLists(mChanges, other.mChanges);
 	}
-	
+
 	protected abstract int getOriginalLength();
-	
+
 	protected abstract String getOriginalText();
-	
+
 	public int getRewrittenLength() {
 		return getOriginalLength() + mDelta;
 	}
-	
+
 	/**
-	 * Inserts a string at an offset.
-	 * Equivalent to {@code replace(offset, offset, text)}
+	 * Inserts a string at an offset. Equivalent to {@code replace(offset, offset, text)}
 	 *
 	 * @param offset
 	 *            index to insert at
@@ -211,11 +208,11 @@ public abstract class AbstractTextRewriter {
 		addNewChange(offset, offset, Objects.requireNonNull(text));
 		return this;
 	}
-	
+
 	public boolean isEmpty() {
 		return mChanges.isEmpty();
 	}
-	
+
 	private boolean isInsertedAfter(final Change newChange, final Change existing) {
 		// Keep order of multiple insertions at the same offset
 		if (newChange.mOffset >= existing.mEndOffset) {
@@ -226,10 +223,10 @@ public abstract class AbstractTextRewriter {
 		throw new RewriteConflictException("New change " + getExceptionText(newChange)
 				+ " conflicts with previous change " + getExceptionText(existing));
 	}
-	
+
 	/**
-	 * Add all changes from the other rewriter to this instance.
-	 * In case of a RewriteConflictException this instance is not modified.
+	 * Add all changes from the other rewriter to this instance. In case of a RewriteConflictException this instance is
+	 * not modified.
 	 * <p>
 	 * Throws an {@link IllegalArgumentException} if original length in both rewriters is not the same.
 	 *
@@ -245,7 +242,7 @@ public abstract class AbstractTextRewriter {
 		mDelta += other.mDelta;
 		return this;
 	}
-	
+
 	private List<Change> mergeSortedLists(final List<Change> lhs, final List<Change> rhs) {
 		final List<Change> merged = new ArrayList<>(lhs.size() + rhs.size());
 		int left = 0;
@@ -263,7 +260,7 @@ public abstract class AbstractTextRewriter {
 		merged.addAll(rhs.subList(right, rhs.size()));
 		return merged;
 	}
-	
+
 	/**
 	 * Computes a character's offset in the rewritten text for a given offset in the original text.
 	 *
@@ -290,7 +287,7 @@ public abstract class AbstractTextRewriter {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Replaces a range of text.
 	 *
@@ -306,7 +303,7 @@ public abstract class AbstractTextRewriter {
 		addNewChange(offset, endOffset, Objects.requireNonNull(replacement));
 		return this;
 	}
-	
+
 	/**
 	 * Wraps a change.
 	 */
@@ -314,13 +311,13 @@ public abstract class AbstractTextRewriter {
 		protected final int mOffset;
 		protected final int mEndOffset;
 		protected final String mReplacement;
-		
+
 		protected Change(final int offset, final int endOffset, final String replacement) {
 			mOffset = offset;
 			mEndOffset = endOffset;
 			mReplacement = replacement;
 		}
-		
+
 		protected int length() {
 			return mEndOffset - mOffset;
 		}

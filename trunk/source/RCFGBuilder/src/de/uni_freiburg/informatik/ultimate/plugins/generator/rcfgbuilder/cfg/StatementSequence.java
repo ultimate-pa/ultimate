@@ -63,6 +63,7 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 
 	private final List<Statement> mStatements;
 	private String mPrettyPrintedStatements;
+
 	/**
 	 * mOrigin stores the origin of this InternalEdge, which could be either be the ensures specification, the requires
 	 * specification or the implementation of a program.
@@ -89,12 +90,12 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	public void addStatement(final Statement st) {
 		addStatement(st, -1);
 	}
-	
+
 	/**
-	 * Add a new {@link Statement} to this statement sequence at the specified index(use an index of -1 to append to the list). Only internal statements are allowed, i.e., no Call,
-	 * Return, Summary.
+	 * Add a new {@link Statement} to this statement sequence at the specified index(use an index of -1 to append to the
+	 * list). Only internal statements are allowed, i.e., no Call, Return, Summary.
 	 */
-	public void addStatement(final Statement st, int index) {
+	public void addStatement(final Statement st, final int index) {
 		if (!(st instanceof AssumeStatement) && !(st instanceof AssignmentStatement) && !(st instanceof HavocStatement)
 				&& !(st instanceof CallStatement)) {
 			throw new IllegalArgumentException("Only Assignment, Assume and HavocStatement allowed in InternalEdge."
@@ -105,10 +106,9 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 		} else {
 			mStatements.add(index, st);
 		}
-		
+
 		mPrettyPrintedStatements = null;
 	}
-
 
 	@Visualizable
 	public List<Statement> getStatements() {
@@ -136,8 +136,7 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 	}
 
 	/**
-	 * We call a StatementSequence trivial if it is empty or contains only `assume
-	 * true` statements.
+	 * We call a StatementSequence trivial if it is empty or contains only `assume true` statements.
 	 */
 	public boolean isTrivial() {
 		if (mStatements.isEmpty()) {

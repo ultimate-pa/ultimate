@@ -36,30 +36,30 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Represents a store term somewhere in the program and the location in the program where that
- * store happens; colloquially: a "write location".
+ * Represents a store term somewhere in the program and the location in the program where that store happens;
+ * colloquially: a "write location".
  *
  * A StoreInfo is identified by a {@link SubtreePosition} and an {@link EdgeInfo}. (It represents the store term at that
  * position in the edge's transition formula.)
  *
  * A write location has the following properties:
  * <ul>
- *  <li> the program location it occurs in
- *  <li> the store term that does the "write" to the array
- *  <li> the (program-level) {@link ArrayGroup} that is concerned (i.e. both the base array of the store term and the
- *    array on the other side of the equation belong to it)
- *  <li> if the store term is inside a multidimensional write (i.e., if it's array is not a TermVariable but a select
- *       term):  <br>
- *       the indices in the enclosing store terms (in a {@link MultiDimensionalStore}, the normal case, they coincide
- *       with the indices of the select term used to access the array, but we do not assume/require that)
- *  <li> the index term of the store
+ * <li>the program location it occurs in
+ * <li>the store term that does the "write" to the array
+ * <li>the (program-level) {@link ArrayGroup} that is concerned (i.e. both the base array of the store term and the
+ * array on the other side of the equation belong to it)
+ * <li>if the store term is inside a multidimensional write (i.e., if it's array is not a TermVariable but a select
+ * term): <br>
+ * the indices in the enclosing store terms (in a {@link MultiDimensionalStore}, the normal case, they coincide with the
+ * indices of the select term used to access the array, but we do not assume/require that)
+ * <li>the index term of the store
  * </ul>
  * The last three parameters are extracted from the store term for convenience. The "value" argument of the store term
- *  (which may contain another store) is ignored.
+ * (which may contain another store) is ignored.
  *
  * (Note that a storeInfo is not identified only by the program location and the store term. That store Term may appear
- *    in many places in the TransFormula! In particular the enclosing indices may change. We want a different StoreInfo
- *    for each occurrence of that store Term in that TransFormula!)
+ * in many places in the TransFormula! In particular the enclosing indices may change. We want a different StoreInfo for
+ * each occurrence of that store Term in that TransFormula!)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
@@ -76,8 +76,8 @@ public class StoreInfo {
 	private final Term mStoreIndex;
 
 	/**
-	 * StoreIndexInfos are unified by a map in {@link StoreIndexFreezerIcfgTransformer}.
-	 * They are given an id at construction, we use this for equals and hashcode, too.
+	 * StoreIndexInfos are unified by a map in {@link StoreIndexFreezerIcfgTransformer}. They are given an id at
+	 * construction, we use this for equals and hashcode, too.
 	 * <p>
 	 * Conceptually, a StoreInfo is determined by {@link #mEdgeInfo} and {@link #mStoreTerm}.
 	 */
@@ -91,7 +91,6 @@ public class StoreInfo {
 
 	private final SubtreePosition mPositionOfStoredValueRelativeToEquality;
 
-
 	/**
 	 *
 	 * @param edgeInfo
@@ -101,16 +100,11 @@ public class StoreInfo {
 	 * @param enclosingIndices
 	 * @param iProgramConst
 	 */
-	public StoreInfo(final int id, final EdgeInfo edgeInfo, final SubtreePosition subTreePosition,
-			final Term storeTerm, final ArrayGroup array, final ArrayIndex enclosingIndices,
-			final IProgramConst locLit, final ArrayEqualityLocUpdateInfo enclosingEquality,
-			final SubtreePosition posRelativeToEquality) {
-		assert this instanceof NoStoreInfo ||
-			(Objects.nonNull(edgeInfo) &&
-					Objects.nonNull(storeTerm) &&
-					Objects.nonNull(array) &&
-					Objects.nonNull(locLit) &&
-					id >= 0);
+	public StoreInfo(final int id, final EdgeInfo edgeInfo, final SubtreePosition subTreePosition, final Term storeTerm,
+			final ArrayGroup array, final ArrayIndex enclosingIndices, final IProgramConst locLit,
+			final ArrayEqualityLocUpdateInfo enclosingEquality, final SubtreePosition posRelativeToEquality) {
+		assert this instanceof NoStoreInfo || (Objects.nonNull(edgeInfo) && Objects.nonNull(storeTerm)
+				&& Objects.nonNull(array) && Objects.nonNull(locLit) && id >= 0);
 
 		mEdgeInfo = edgeInfo;
 		mSubtreePosition = subTreePosition;
@@ -161,6 +155,7 @@ public class StoreInfo {
 	 * enclosing stores.
 	 * <p>
 	 * See also {@link StoreInfo}.
+	 *
 	 * @return
 	 */
 	public ArrayIndex getEnclosingIndices() {
@@ -192,10 +187,7 @@ public class StoreInfo {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + mId;
-		return result;
+		return Objects.hash(mId);
 	}
 
 	@Override
@@ -239,6 +231,7 @@ public class StoreInfo {
 
 	/**
 	 * Tree position of the mStoreTerm in mEdgeInfo's formula.
+	 *
 	 * @return
 	 */
 	public SubtreePosition getPosition() {
@@ -257,10 +250,10 @@ public class StoreInfo {
 	 * @param locLit
 	 * @return
 	 */
-	public static StoreInfo buildStoreInfo(final int siId, final EdgeInfo edge,
-			final SubtreePosition subTreePosition, final ApplicationTerm term, final ArrayGroup arrayGroup,
-			final ArrayIndex enclosingStoreIndices, final IProgramConst locLit,
-			final ArrayEqualityLocUpdateInfo enclosingEquality, final SubtreePosition posRelativeToOutermost) {
+	public static StoreInfo buildStoreInfo(final int siId, final EdgeInfo edge, final SubtreePosition subTreePosition,
+			final ApplicationTerm term, final ArrayGroup arrayGroup, final ArrayIndex enclosingStoreIndices,
+			final IProgramConst locLit, final ArrayEqualityLocUpdateInfo enclosingEquality,
+			final SubtreePosition posRelativeToOutermost) {
 		return new StoreInfo(siId, edge, subTreePosition, term, arrayGroup, enclosingStoreIndices, locLit,
 				enclosingEquality, posRelativeToOutermost);
 	}

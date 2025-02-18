@@ -32,19 +32,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Counter that stores one number for each given object of type E.
- * Counting starts with 0.
+ * Counter that stores one number for each given object of type E. Counting starts with 0.
  *
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <E>
  */
 public class MultiElementCounter<E> {
-	private final Map<E, Integer> mCounter = new HashMap<E, Integer>();
+	private final Map<E, Integer> mCounter = new HashMap<>();
 
 	/**
-	 * Increase the counter for element by one and return the
-	 * increased number.
+	 * Increase the counter for element by one and return the increased number.
 	 */
 	public Integer increment(final E element) {
 		final Integer lastIndex = mCounter.get(element);
@@ -58,10 +56,8 @@ public class MultiElementCounter<E> {
 		return newIndex;
 	}
 
-
 	/**
-	 * Increase the counter for element by k and return the
-	 * increased number.
+	 * Increase the counter for element by k and return the increased number.
 	 */
 	public Integer increment(final E element, final int k) {
 		final Integer lastIndex = mCounter.get(element);
@@ -95,7 +91,7 @@ public class MultiElementCounter<E> {
 	}
 
 	public static <E> MultiElementCounter<E> add(final MultiElementCounter<E> mec1, final MultiElementCounter<E> mec2) {
-		final Set<E> allElems =  new HashSet<>(mec1.getElements());
+		final Set<E> allElems = new HashSet<>(mec1.getElements());
 		allElems.addAll(mec2.getElements());
 		final MultiElementCounter<E> result = new MultiElementCounter<>();
 		for (final E elem : allElems) {
@@ -105,11 +101,9 @@ public class MultiElementCounter<E> {
 		return result;
 	}
 
-
 	@Override
 	public String toString() {
 		return String.valueOf(mCounter);
 	}
-
 
 }

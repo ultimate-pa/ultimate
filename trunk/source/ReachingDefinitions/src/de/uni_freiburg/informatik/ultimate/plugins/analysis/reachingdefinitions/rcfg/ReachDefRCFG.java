@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg;
@@ -41,17 +41,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
- * 
- * {@link ReachDefRCFG} computes a DefUse set that is expressed as
- * {@link ReachDefStatementAnnotation} annotation for each edge of an RCFG.
- * 
+ *
+ * {@link ReachDefRCFG} computes a DefUse set that is expressed as {@link ReachDefStatementAnnotation} annotation for
+ * each edge of an RCFG.
+ *
  * It makes the following assumptions:
  * <ul>
  * <li>A
  * </ul>
- * 
+ *
  * @author dietsch
- * 
+ *
  */
 public class ReachDefRCFG extends BaseObserver {
 
@@ -90,11 +90,7 @@ public class ReachDefRCFG extends BaseObserver {
 		}
 		final ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
 
-		final LinkedHashSet<IcfgEdge> remaining = new LinkedHashSet<>();
-
-		for (final IcfgEdge next : BoogieIcfgContainer.extractStartEdges(node)) {
-			remaining.add(next);
-		}
+		final LinkedHashSet<IcfgEdge> remaining = new LinkedHashSet<>(BoogieIcfgContainer.extractStartEdges(node));
 
 		while (!remaining.isEmpty()) {
 			if (mLogger.isDebugEnabled()) {
@@ -111,12 +107,10 @@ public class ReachDefRCFG extends BaseObserver {
 				mLogger.debug("                    Fixpoint reached: " + fxpReached);
 			}
 			if (!fxpReached) {
-				for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
-					remaining.add(next);
-				}
+				remaining.addAll(current.getTarget().getOutgoingEdges());
 			}
 		}
-		
+
 		mLogger.debug("bla");
 	}
 }

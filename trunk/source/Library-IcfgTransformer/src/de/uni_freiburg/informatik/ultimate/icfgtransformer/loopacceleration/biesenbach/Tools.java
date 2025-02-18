@@ -2,38 +2,27 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.bie
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 
-public class Tools{
-	
+public class Tools {
+
 	private Tools() {
-	    throw new IllegalStateException("Utility class");
-	  }
+		throw new IllegalStateException("Utility class");
+	}
 
 	public static <T> Deque<T> cloneDeque(final Deque<T> deque) {
-		final Deque<T> clone = new ArrayDeque<>();
-		for (final T item : deque) {
-			clone.add(item);
-		}
+		final Deque<T> clone = new ArrayDeque<>(deque);
 		return clone;
 	}
-	
-	public static UnmodifiableTransFormula negateUnmodifiableTransFormula(final ManagedScript mMgScript, final UnmodifiableTransFormula unmodifiableTransFormula){
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(unmodifiableTransFormula.getInVars(), 
-				unmodifiableTransFormula.getOutVars(), false, unmodifiableTransFormula.getNonTheoryConsts(), 
-				false, unmodifiableTransFormula.getBranchEncoders(), true);
+
+	public static UnmodifiableTransFormula negateUnmodifiableTransFormula(final ManagedScript mMgScript,
+			final UnmodifiableTransFormula unmodifiableTransFormula) {
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(unmodifiableTransFormula.getInVars(),
+				unmodifiableTransFormula.getOutVars(), false, unmodifiableTransFormula.getNonTheoryConsts(), false,
+				unmodifiableTransFormula.getBranchEncoders(), true);
 		tfb.setFormula(mMgScript.getScript().term("not", unmodifiableTransFormula.getFormula()));
 		tfb.setInfeasibility(unmodifiableTransFormula.isInfeasible());
 		tfb.finishConstruction(mMgScript);

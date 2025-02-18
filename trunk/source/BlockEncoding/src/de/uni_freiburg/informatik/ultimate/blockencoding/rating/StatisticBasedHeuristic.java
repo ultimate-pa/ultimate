@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.rating;
 
@@ -37,18 +37,16 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingSta
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * To determine a good boundary, which is later used to estimate a good edge
- * level, we use here statistic values of the minimized program. These
- * statistical values are determined during the minimization process.
- * 
+ * To determine a good boundary, which is later used to estimate a good edge level, we use here statistic values of the
+ * minimized program. These statistical values are determined during the minimization process.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 
 	/**
-	 * TODO: Strategies for which we can use these statistics, should be entered
-	 * in this list!
+	 * TODO: Strategies for which we can use these statistics, should be entered in this list!
 	 */
 	private final ArrayList<RatingStrategy> mSupportedStrategies;
 	private final ILogger mLogger;
@@ -59,7 +57,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	public StatisticBasedHeuristic(final RatingStrategy strategy, final ILogger logger) {
 		super(strategy);
 		mLogger = logger;
-		mSupportedStrategies = new ArrayList<RatingStrategy>();
+		mSupportedStrategies = new ArrayList<>();
 		mSupportedStrategies.add(RatingStrategy.DISJUNCTIVE_STMTCOUNT);
 		mSupportedStrategies.add(RatingStrategy.USED_VARIABLES_RATING);
 		mSupportedStrategies.add(RatingStrategy.DISJUNCTIVE_VARIABLES_RATING);
@@ -78,8 +76,7 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 			givenPref = computeMultiplicativeBoundary(givenPref);
 			break;
 		default:
-			throw new IllegalArgumentException(
-					"Statistic Based Heuristic is not supported for this kind of rating");
+			throw new IllegalArgumentException("Statistic Based Heuristic is not supported for this kind of rating");
 		}
 		super.init(givenPref);
 	}
@@ -118,7 +115,8 @@ public class StatisticBasedHeuristic extends ConfigurableHeuristic {
 	 */
 	private String computeUsedVarBoundary() {
 		// Basically we take here the arithmetic mean of min and max
-		final int meanValue = (int) (1.5 * ((EncodingStatistics.minDiffVariablesInOneEdge + EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
+		final int meanValue = (int) (1.5
+				* ((EncodingStatistics.minDiffVariablesInOneEdge + EncodingStatistics.maxDiffVariablesInOneEdge) / 2));
 		return Integer.toString(meanValue);
 	}
 

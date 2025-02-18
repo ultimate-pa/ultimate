@@ -121,8 +121,8 @@ public final class ConstructRealloc {
 				new VarList(ignoreLoc, new String[] { SFO.REALLOC_SIZE }, mTypeHandler.cType2AstType(ignoreLoc, sizeT));
 		final VarList outP =
 				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList[] inParams = new VarList[] { inPPtr, inPSize };
-		final VarList[] outParams = new VarList[] { outP };
+		final VarList[] inParams = { inPPtr, inPSize };
+		final VarList[] outParams = { outP };
 
 		{
 			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], reallocProcName, new String[0],

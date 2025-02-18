@@ -54,16 +54,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
  * Replace e.g.,
- * <pre> (x % 256) == y </ pre>
+ *
+ * <pre>
+ *  (x % 256) == y </ pre>
  * by the following disjunction
  * <pre>
- * (0 <= x && x < 256) && x == y || (-256 <= x && x < 0) && (x + 256) == y ||
- * (256 <= x && x < 256 + 256) && (x - 256) == y || (x < -256 || 256 + 256 <= x)
- * && (x % 256) == y
- * </ pre>
  *
- * TODO: This class is not yet finished and the existing code was not properly
- * evaluated.
+ * (0 <= x && x < 256) && x == y || (-256 <= x && x < 0) && (x + 256) == y || (256 <= x && x < 256 + 256) && (x - 256)
+ * == y || (x < -256 || 256 + 256 <= x) && (x % 256) == y </ pre>
+ *
+ * TODO: This class is not yet finished and the existing code was not properly evaluated.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -88,12 +88,11 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	private static final BigInteger BITLENGTH128_VALUE = new BigInteger("340282366920938463463374607431768211456");
 
 	/**
-	 * @param useNeighbors If set to false we obtain the underapproximation where we
-	 *                     assume that the modulo operator is the identity for the
-	 *                     first argument.
+	 * @param useNeighbors
+	 *            If set to false we obtain the underapproximation where we assume that the modulo operator is the
+	 *            identity for the first argument.
 	 */
 	public ModuloNeighborTransformation(final IUltimateServiceProvider services, final boolean useNeighbors) {
-		super();
 		mServices = services;
 		if (!useNeighbors) {
 			// TODO: Implement no-neighbor case

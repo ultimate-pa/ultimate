@@ -61,19 +61,16 @@ public class CommuhashNormalForm {
 
 	private static final boolean DEBUG_LOG_SIZES = false;
 	/**
-	 * Use an SMT solver to check equivalence of input and output. Note that this
-	 * check can be questionable. We typically transform to
-	 * {@link CommuhashNormalForm} after receiving a formula from an external
-	 * source, e.g., Craig interpolants of an SMT solver. At this time there might
-	 * temporarily other formulas on the solver's assertion stack and hamper the
-	 * meaningfulness of this check test.
+	 * Use an SMT solver to check equivalence of input and output. Note that this check can be questionable. We
+	 * typically transform to {@link CommuhashNormalForm} after receiving a formula from an external source, e.g., Craig
+	 * interpolants of an SMT solver. At this time there might temporarily other formulas on the solver's assertion
+	 * stack and hamper the meaningfulness of this check test.
 	 */
 	private static final boolean DEBUG_CHECK_CORRECTNESS = false;
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 
 	public CommuhashNormalForm(final IUltimateServiceProvider services, final Script script) {
-		super();
 		mServices = services;
 		mScript = script;
 	}
@@ -90,8 +87,8 @@ public class CommuhashNormalForm {
 					new DebugMessage("DAG size before CommuhashNormalForm {0}, DAG size after CommuhashNormalForm {1}",
 							new DagSizePrinter(term), new DagSizePrinter(result)));
 		}
-		assert (!DEBUG_CHECK_CORRECTNESS || Util.checkSat(mScript,
-				mScript.term("distinct", term, result)) != LBool.SAT) : "CommuhashNormalForm transformation unsound";
+		assert (!DEBUG_CHECK_CORRECTNESS || Util.checkSat(mScript, mScript.term("distinct", term, result)) != LBool.SAT)
+				: "CommuhashNormalForm transformation unsound";
 		return result;
 	}
 
@@ -103,14 +100,13 @@ public class CommuhashNormalForm {
 			if (CommuhashUtils.isKnownToBeCommutative(funcname)) {
 				final Sort resultSort =
 						appTerm.getFunction().isReturnOverload() ? appTerm.getFunction().getReturnSort() : null;
-				final Term simplified = constructlocallySimplifiedTermWithSortedParams(funcname,
-						null, resultSort, newArgs);
+				final Term simplified =
+						constructlocallySimplifiedTermWithSortedParams(funcname, null, resultSort, newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
 			}
 		}
-
 
 		/**
 		 * @param resultSort
@@ -120,8 +116,8 @@ public class CommuhashNormalForm {
 		private Term constructlocallySimplifiedTermWithSortedParams(final String funcname, final BigInteger[] indices,
 				final Sort resultSort, final Term[] params) {
 			final Term[] sortedParams = CommuhashUtils.sortByHashCode(params);
-			final Term simplified = SmtUtils.unfTerm(mScript, funcname,
-					SmtUtils.toStringArray(indices), resultSort, sortedParams);
+			final Term simplified =
+					SmtUtils.unfTerm(mScript, funcname, SmtUtils.toStringArray(indices), resultSort, sortedParams);
 			return simplified;
 		}
 

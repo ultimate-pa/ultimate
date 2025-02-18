@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Additionally to {@link GameGraphChanges} it can also remember changed buechi transitions.<br/>
  * A FairGameGraphChanges object can then be used to undo made changes for a fair game graph by using
  * {@link FairGameGraph#undoChanges(GameGraphChanges)}.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of buechi automaton
@@ -61,14 +61,13 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	 * Creates a new fair game graph changes object with no changes at default.
 	 */
 	public FairGameGraphChanges() {
-		super();
 		mChangedBuechiTransitions = new NestedMap3<>();
 	}
 
 	/**
 	 * Stores information about an added buechi transition.<br/>
 	 * Nullifies changes if the given transition was removed before.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the added buechi transition
 	 * @param a
@@ -83,7 +82,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	/**
 	 * Gets the information about changed buechi transitions.<br/>
 	 * Stored as (source, letter, destination, type of change).
-	 * 
+	 *
 	 * @return The information about changed buechi transitions
 	 */
 	public NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> getChangedBuechiTransitions() {
@@ -92,7 +91,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.GameGraphChanges#merge(de.uni_freiburg.informatik.ultimate
 	 * .automata.nwalibrary.operations.buchiReduction.GameGraphChanges, boolean)
@@ -137,7 +136,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	/**
 	 * Stores information about an removed buechi transition.<br/>
 	 * Nullifies changes if the given transition was added before.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the removed buechi transition
 	 * @param a
@@ -151,7 +150,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.GameGraphChanges#toString()
 	 */
@@ -228,7 +227,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	/**
 	 * Stores information about a changed buechi transition.<br/>
 	 * Nullifies changes if the given buechi transition was added before if it was now removed or vice versa.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the changed buechi transition
 	 * @param a

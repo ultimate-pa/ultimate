@@ -133,8 +133,8 @@ public class BoogiePreprocessorBacktranslator
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
-		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
+				: "callstack of initial program execution already broken";
 
 		final List<BoogieASTNode> newTrace = new ArrayList<>();
 		final List<ProgramState<Expression>> newProgramStates = new ArrayList<>();
@@ -201,7 +201,7 @@ public class BoogiePreprocessorBacktranslator
 			}
 
 			final AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
-			if (elem instanceof WhileStatement ) {
+			if (elem instanceof WhileStatement) {
 				assert checkProcedureNames(elem, ate);
 				// If trace element was an AssumeStatement, the UnstructureCode was used and we
 				// have to compute the StepInfo.
@@ -270,8 +270,8 @@ public class BoogiePreprocessorBacktranslator
 			i++;
 		}
 
-		assert checkCallStackTarget(mLogger, actualAtomicTrace) : "callstack broke during translation by "
-				+ getClass().getSimpleName();
+		assert checkCallStackTarget(mLogger, actualAtomicTrace)
+				: "callstack broke during translation by " + getClass().getSimpleName();
 		return new BoogieProgramExecution(partialProgramStateMapping, actualAtomicTrace,
 				programExecution.isConcurrent());
 	}

@@ -51,7 +51,7 @@ public final class ResultSummarizer {
 	public enum ToolchainResult {
 		NORESULT(-1), GENERICRESULT(0), CORRECT(1), UNPROVABLE(2), TIMEOUT(3), INCORRECT(4), SYNTAXERROR(5), ERROR(5);
 
-		private int mValue;
+		private final int mValue;
 
 		ToolchainResult(final int i) {
 			mValue = i;

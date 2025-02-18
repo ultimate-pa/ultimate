@@ -221,8 +221,8 @@ public class StaticObjectsHandler {
 			return;
 		}
 		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
-		assert oldCDec != null : "We have a Boogie declaration, we should also have a C declaration: "
-				+ oldBoogieDec.getIdentifier();
+		assert oldCDec != null
+				: "We have a Boogie declaration, we should also have a C declaration: " + oldBoogieDec.getIdentifier();
 
 		final TypeDeclaration newBoogieDec = new TypeDeclaration(oldBoogieDec.getLocation(),
 				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
@@ -245,8 +245,6 @@ public class StaticObjectsHandler {
 
 	public void addStatementsForUltimateInit(final List<Statement> stmts) {
 		assert !mIsFrozen;
-		for (final Statement stmt : stmts) {
-			mStatementsForUltimateInit.add(stmt);
-		}
+		mStatementsForUltimateInit.addAll(stmts);
 	}
 }

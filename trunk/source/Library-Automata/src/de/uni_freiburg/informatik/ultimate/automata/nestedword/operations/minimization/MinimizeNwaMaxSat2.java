@@ -141,20 +141,20 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 	private AbstractMaxSatSolver<T> createSolver(final String filename) {
 		switch (mSettings.getSolverMode()) {
-			case EXTERNAL:
-				return new DimacsMaxSatSolver<>(mServices, filename);
-			case HORN:
-				return new HornMaxSatSolver<>(mServices);
-			case TRANSITIVITY:
-				if (hasNoReturnTransitions(mOperand)) {
-					// we can omit transitivity clauses if the operand has no return transitions
-					return new GeneralMaxSatSolver<>(mServices);
-				}
-				return createTransitivitySolver();
-			case GENERAL:
+		case EXTERNAL:
+			return new DimacsMaxSatSolver<>(mServices, filename);
+		case HORN:
+			return new HornMaxSatSolver<>(mServices);
+		case TRANSITIVITY:
+			if (hasNoReturnTransitions(mOperand)) {
+				// we can omit transitivity clauses if the operand has no return transitions
 				return new GeneralMaxSatSolver<>(mServices);
-			default:
-				throw new IllegalArgumentException("Unknown solver mode: " + mSettings.getSolverMode());
+			}
+			return createTransitivitySolver();
+		case GENERAL:
+			return new GeneralMaxSatSolver<>(mServices);
+		default:
+			throw new IllegalArgumentException("Unknown solver mode: " + mSettings.getSolverMode());
 		}
 	}
 
@@ -434,8 +434,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			final Set<STATE> succs1, final Set<STATE> succs2);
 
 	/**
-	 * NOTE: This method can also be used in {@link MinimizeNwaPmaxSatDirect} because it is necessary for
-	 * correctness.
+	 * NOTE: This method can also be used in {@link MinimizeNwaPmaxSatDirect} because it is necessary for correctness.
 	 */
 	protected final void generateTransitionConstraintGeneralReturnHelperSymmetric(final T linPredPair,
 			final T hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
@@ -447,8 +446,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				succsToRemove);
 		/*
 		 * Optimization: If a state from the second set is known to be similar to another one from the first set, we
-		 * should not try to add a clause for the other direction (as it will be found out again that they are
-		 * similar).
+		 * should not try to add a clause for the other direction (as it will be found out again that they are similar).
 		 */
 		succs2.removeAll(succsToRemove);
 
@@ -885,10 +883,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			if (mSolverMode == null) {
 				throw new IllegalArgumentException("No solver mode set.");
 			}
-			if (mSolverMode == SolverMode.HORN) {
-				if (!mUseTransitionHornClauses) {
-					throw new IllegalArgumentException("For using the Horn solver you must use Horn clauses.");
-				}
+			if ((mSolverMode == SolverMode.HORN) && !mUseTransitionHornClauses) {
+				throw new IllegalArgumentException("For using the Horn solver you must use Horn clauses.");
 			}
 		}
 

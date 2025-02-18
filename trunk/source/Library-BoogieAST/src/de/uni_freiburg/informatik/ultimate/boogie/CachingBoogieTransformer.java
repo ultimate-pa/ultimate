@@ -33,9 +33,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 
 /**
  * Applies a cache in order to avoid recomputation of the result of processExpression, if we already computed the result
- * for the given argument before (i.e., if the same subexpression occurs more than once).
- * Caution: The result of this BoogieTransformer is only guaranteed to be the same as BoogieTransformer, if
- * processExpression has no side effects.
+ * for the given argument before (i.e., if the same subexpression occurs more than once). Caution: The result of this
+ * BoogieTransformer is only guaranteed to be the same as BoogieTransformer, if processExpression has no side effects.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -53,6 +52,5 @@ public class CachingBoogieTransformer extends BoogieTransformer {
 		}
 		return result;
 	}
-
 
 }

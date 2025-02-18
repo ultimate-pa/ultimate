@@ -583,7 +583,7 @@ public class TypeChecker extends BaseObserver {
 				}
 			}
 		}
-		mProc2ModfiedGlobals.put(name, new HashSet<String>());
+		mProc2ModfiedGlobals.put(name, new HashSet<>());
 		for (final Specification s : proc.getSpecification()) {
 			if (s instanceof RequiresSpecification) {
 				final BoogieType t = typecheckExpression(((RequiresSpecification) s).getFormula());
@@ -763,12 +763,10 @@ public class TypeChecker extends BaseObserver {
 				return;
 			}
 			for (int i = 0; i < arguments.length; i++) {
-				if (call.isForall()) {
-					/* check for wildcard expression and just skip them. */
-					if (arguments[i] instanceof WildcardExpression) {
-						arguments[i].setType(inParams[i].getType());
-						continue;
-					}
+				/* check for wildcard expression and just skip them. */
+				if (call.isForall() && (arguments[i] instanceof WildcardExpression)) {
+					arguments[i].setType(inParams[i].getType());
+					continue;
 				}
 				final BoogieType t = typecheckExpression(arguments[i]);
 				if (!inParams[i].getType().unify(t, typeParams)) {
@@ -960,7 +958,7 @@ public class TypeChecker extends BaseObserver {
 		final HashSet<String> labels = new HashSet<>();
 		processLabels(labels, body.getBlock());
 		/* Finally check statements */
-		typecheckBlock(new Stack<String>(), labels, body.getBlock());
+		typecheckBlock(new Stack<>(), labels, body.getBlock());
 		mVarScopes.endScope();
 	}
 

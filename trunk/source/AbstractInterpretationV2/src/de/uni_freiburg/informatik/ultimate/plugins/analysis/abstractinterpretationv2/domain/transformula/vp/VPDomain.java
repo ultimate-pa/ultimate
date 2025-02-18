@@ -174,7 +174,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>> implements I
 	public <LOC> void afterFixpointComputation(final IAbstractInterpretationResult<EqState, ACTION, LOC> result) {
 
 		// report VPDomainBenchmark
-		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().keySet().size());
+		mBenchmark.setLocationsCounter(result.getLoc2SingleStates().size());
 		for (final Entry<LOC, EqState> l2s : result.getLoc2SingleStates().entrySet()) {
 			mBenchmark.reportStatsForLocation(l2s.getValue().getConstraint()::getStatistics);
 		}

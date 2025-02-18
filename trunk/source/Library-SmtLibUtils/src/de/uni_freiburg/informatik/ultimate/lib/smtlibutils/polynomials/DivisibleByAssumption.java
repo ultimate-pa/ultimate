@@ -10,23 +10,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * 
+ *
  * An assumption that represents Terms that declare something to be divisible by something else.
- * 
+ *
  * @author LeonardFichtner
  *
  */
-public class DivisibleByAssumption extends AbstractAssumption{
+public class DivisibleByAssumption extends AbstractAssumption {
 
 	private final LinkedList<Term> mModTerms;
-	
+
 	public DivisibleByAssumption(final Script script, final Term dividend, final Term divisor) {
 		super(script, dividend.getSort(), DivisibleByAssumption::equalZero);
 		mModTerms = new LinkedList<>();
 		mModTerms.add(SmtUtils.mod(script, dividend, divisor));
 	}
-	
-	public DivisibleByAssumption(final Script script, final Sort sort, final DivisibleByAssumption... assumptions){
+
+	public DivisibleByAssumption(final Script script, final Sort sort, final DivisibleByAssumption... assumptions) {
 		super(script, sort, DivisibleByAssumption::equalZero);
 		assert assumptions.length > 1 : "This constructor only makes sense for 2 or more assumptions";
 		mModTerms = assumptions[0].getModTerms();
@@ -34,11 +34,11 @@ public class DivisibleByAssumption extends AbstractAssumption{
 			mModTerms.addAll(assumptions[i].getModTerms());
 		}
 	}
-	
+
 	private static Term equalZero(final Script script, final Sort sort, final Term term) {
-		if(SmtSortUtils.isIntSort(sort)) {
+		if (SmtSortUtils.isIntSort(sort)) {
 			return equalZeroInt(script, sort, term);
-		}else {
+		} else {
 			throw new UnsupportedOperationException("This method is not implemented for this sort.");
 		}
 	}
@@ -46,12 +46,12 @@ public class DivisibleByAssumption extends AbstractAssumption{
 	private static Term equalZeroInt(final Script script, final Sort sort, final Term term) {
 		return SmtUtils.binaryEquality(script, term, SmtUtils.constructIntValue(script, BigInteger.ZERO));
 	}
-	
+
 	@Override
 	public boolean hasContractedForm() {
 		return false;
 	}
-	
+
 	@Override
 	protected Term[] getConjunctsForExplicitForm() {
 		final Term[] conjuncts = new Term[mModTerms.size()];
@@ -62,13 +62,13 @@ public class DivisibleByAssumption extends AbstractAssumption{
 		}
 		return conjuncts;
 	}
-	
+
 	@Override
 	protected Term constructContractedLhs() {
 		return toExplicitTerm();
 	}
-	
-	private LinkedList<Term> getModTerms(){
+
+	private LinkedList<Term> getModTerms() {
 		return mModTerms;
 	}
 }

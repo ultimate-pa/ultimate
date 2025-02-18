@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 public class FloatSupportInUltimate {
 	//@formatter:off
 
-	private final static String[] SUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
+	private final static String[] SUPPORTED_FLOAT_OPERATIONS_ARRAY = {
 			"sqrt",
 			"__isinf",
 			"__finite",
@@ -119,7 +119,7 @@ public class FloatSupportInUltimate {
 			"fesetround",
 	};
 
-	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
+	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = {
 			// from math.h
 			"frexp",
 			"ldexp",

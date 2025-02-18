@@ -169,8 +169,8 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 				|| mCoRelatedCutoffEvents.containsPair(c1, c2.getPredecessorEvent())
 				// we don't have to check this if we assume that c1 and c2 are not cutoff conditions
 				|| (c1.getPredecessorEvent().conditionMarkContains(c2));
-		assert result == isInCoRelationNaive(c1, c2) : String
-				.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
+		assert result == isInCoRelationNaive(c1, c2)
+				: String.format("contradictory co-Relation for %s,%s: normal=%b != %b=naive", c1, c2, result, !result);
 
 		if (result) {
 			mQueryCounterYes++;
@@ -268,8 +268,8 @@ public class ConditionEventsCoRelationB32<LETTER, PLACE> implements ICoRelation<
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = streamCoRelatedConditions(cond).collect(Collectors.toSet());
 		if (EXTENDED_ASSERTION_CHECKING) {
-			assert result
-					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+			assert result.equals(computeCoRelatatedConditionsInefficient(cond))
+					: "inconsistent co-relation information";
 		}
 		return result;
 	}

@@ -315,14 +315,15 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	@Override
 	public String sizeInformation() {
 		final int states = mStates.size();
-		String result = states + " states and " + mNumberTransitions + " transitions.";
+		final StringBuilder result = new StringBuilder().append(states).append(" states and ")
+				.append(mNumberTransitions).append(" transitions.");
 		if (mAcceptingComponentsAnalysis != null) {
 			final int transitions = mNumberTransitions.getSum();
 			final int cyclomaticComplexity = computeCyclomaticComplexity(transitions, states,
 					mAcceptingComponentsAnalysis.getSccComputation().getBalls().size());
-			result += " cyclomatic complexity: " + cyclomaticComplexity;
+			result.append(" cyclomatic complexity: ").append(cyclomaticComplexity);
 		}
-		return result;
+		return result.toString();
 	}
 
 	private static int computeCyclomaticComplexity(final int numberOfTransitions, final int numberOfStates,
@@ -494,7 +495,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
-		return () -> new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<SummaryReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -1067,8 +1068,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 				} else {
 					addNewDownStates(cont, succSc, cont.getDownStates().keySet());
 				}
-				assert !containsCallTransition(state, trans.getLetter(), succ) : OPERAND_CONTAINS_TRANSITION_TWICE
-						+ state + trans.getSucc();
+				assert !containsCallTransition(state, trans.getLetter(), succ)
+						: OPERAND_CONTAINS_TRANSITION_TWICE + state + trans.getSucc();
 				cont.addInternalOutgoing(trans);
 				succSc.addInternalIncoming(new IncomingInternalTransition<>(state, trans.getLetter()));
 				getNumberTransitions().incIn();
@@ -1096,8 +1097,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 						addedSelfloop = true;
 					}
 				}
-				assert !containsCallTransition(state, trans.getLetter(), succ) : OPERAND_CONTAINS_TRANSITION_TWICE
-						+ state + trans.getSucc();
+				assert !containsCallTransition(state, trans.getLetter(), succ)
+						: OPERAND_CONTAINS_TRANSITION_TWICE + state + trans.getSucc();
 				cont.addCallOutgoing(trans);
 				succCont.addCallIncoming(new IncomingCallTransition<>(state, trans.getLetter()));
 				getNumberTransitions().incCa();
@@ -1135,8 +1136,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 						addedSelfloop = true;
 					}
 				}
-				assert !containsReturnTransition(state, down, trans.getLetter(),
-						succ) : OPERAND_CONTAINS_TRANSITION_TWICE + state + trans.getSucc();
+				assert !containsReturnTransition(state, down, trans.getLetter(), succ)
+						: OPERAND_CONTAINS_TRANSITION_TWICE + state + trans.getSucc();
 				cont.addReturnOutgoing(trans);
 				succCont.addReturnIncoming(new IncomingReturnTransition<>(cont.getState(), down, trans.getLetter()));
 				addReturnSummary(state, down, trans.getLetter(), succ);
@@ -1153,7 +1154,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 				final Set<STATE> propagatedDownStates) {
 			Set<STATE> newDownStates = null;
 			for (final STATE downs : propagatedDownStates) {
-				if (!cont.getDownStates().keySet().contains(downs)) {
+				if (!cont.getDownStates().containsKey(downs)) {
 					if (newDownStates == null) {
 						newDownStates = new HashSet<>();
 					}
@@ -1704,7 +1705,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		 *         to maintain backward compatibility. In the future we return triples reachable in resulting automaton.
 		 */
 		public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
-			return () -> new Iterator<UpDownEntry<STATE>>() {
+			return () -> new Iterator<>() {
 				private Iterator<STATE> mUpIterator;
 				private STATE mUp;
 				private Iterator<STATE> mDownIterator;

@@ -59,7 +59,7 @@ public class MSODTestResultDecider extends ThreeTierTestResultDecider<LBool> {
 		return new MSODTestResultEvaluator();
 	}
 
-	private class MSODTestResultEvaluator implements ITestResultEvaluation<LBool> {
+	private static class MSODTestResultEvaluator implements ITestResultEvaluation<LBool> {
 		private TestResult mTestResult;
 		private String mCategory;
 		private String mMessage;

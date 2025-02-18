@@ -39,9 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Try to eliminate existentially quantified variables in terms. Therefore we
- * use that the term ∃v.v=c∧φ[v] is equivalent to term φ[c]. Resp. we use that
- * the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
+ * Try to eliminate existentially quantified variables in terms. Therefore we use that the term ∃v.v=c∧φ[v] is
+ * equivalent to term φ[c]. Resp. we use that the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
  */
 public class PartialQuantifierElimination {
 
@@ -67,8 +66,7 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Auxiliary method that replaces old calls to quantifier elimination. This
-	 * method is a temporary workaround.
+	 * Auxiliary method that replaces old calls to quantifier elimination. This method is a temporary workaround.
 	 */
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
@@ -79,8 +77,7 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Auxiliary method that replaces old calls to quantifier elimination. This
-	 * method is a temporary workaround.
+	 * Auxiliary method that replaces old calls to quantifier elimination. This method is a temporary workaround.
 	 */
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final SimplificationTechnique simplificationTechnique, final Term term) {

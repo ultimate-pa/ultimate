@@ -49,10 +49,9 @@ public class TermContextTransformationEngine<C> {
 	private static final boolean DEBUG_CHECK_INTERMEDIATE_RESULT = false;
 	private static final boolean DEBUG_NONTERMINATION = false;
 	/**
-	 * Optimization for ApplicationTerm: While determining the position of the last
-	 * change, we omit positions where the result is the neutral element. Rationale:
-	 * the neutral element will not strengthen the critical constraint and hence
-	 * cannot justify another repetition.
+	 * Optimization for ApplicationTerm: While determining the position of the last change, we omit positions where the
+	 * result is the neutral element. Rationale: the neutral element will not strengthen the critical constraint and
+	 * hence cannot justify another repetition.
 	 */
 	private static final boolean SMART_REPETITIONS = true;
 
@@ -63,21 +62,19 @@ public class TermContextTransformationEngine<C> {
 	private final TermWalker<C> mTermWalker;
 	private final ArrayDeque<Task> mStack;
 
-
 	/**
-	 * @param siblingOrder Order in which we iterate over parameters of
-	 *                     {@link ApplicationTerm}s.
+	 * @param siblingOrder
+	 *            Order in which we iterate over parameters of {@link ApplicationTerm}s.
 	 */
 	private TermContextTransformationEngine(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder) {
-		super();
 		mSiblingOrder = siblingOrder;
 		mTermWalker = termWalker;
 		mStack = new ArrayDeque<>();
 	}
 
 	/**
-	 * @param siblingOrder Order in which we iterate over parameters of
-	 *                     {@link ApplicationTerm}s.
+	 * @param siblingOrder
+	 *            Order in which we iterate over parameters of {@link ApplicationTerm}s.
 	 */
 	public static <C> Term transform(final TermWalker<C> termWalker, final Comparator<Term> siblingOrder,
 			final C initialContext, final Term term) {
@@ -116,7 +113,6 @@ public class TermContextTransformationEngine<C> {
 		private final C mContext;
 
 		public Task(final C context) {
-			super();
 			mContext = context;
 		}
 
@@ -265,8 +261,8 @@ public class TermContextTransformationEngine<C> {
 		Task doStep() {
 			final Task result;
 			if (mResultSubformula != null) {
-				final Term res = mTermWalker.constructResultForQuantifiedFormula(super.mContext, mOriginal,
-						mResultSubformula);
+				final Term res =
+						mTermWalker.constructResultForQuantifiedFormula(super.mContext, mOriginal, mResultSubformula);
 				final Task old = mStack.pop();
 				assert old == this;
 				result = new AscendResultTask(super.mContext, res);
@@ -308,8 +304,7 @@ public class TermContextTransformationEngine<C> {
 	}
 
 	/**
-	 * Returns true iff fun is conjunction or disjunction and term is the absorbing
-	 * element of this operation.
+	 * Returns true iff fun is conjunction or disjunction and term is the absorbing element of this operation.
 	 */
 	private static boolean isAbsorbingElementConDis(final FunctionSymbol fun, final Term term) {
 		return (fun.getName().equals("and") || fun.getName().equals("or"))
@@ -317,15 +312,12 @@ public class TermContextTransformationEngine<C> {
 	}
 
 	/**
-	 * Returns true iff fun is conjunction or disjunction and term is the neutral
-	 * element of this operation.
+	 * Returns true iff fun is conjunction or disjunction and term is the neutral element of this operation.
 	 */
 	private static boolean isNeutralElementConDis(final FunctionSymbol fun, final Term term) {
 		return (fun.getName().equals("and") || fun.getName().equals("or"))
 				&& SmtUtils.isNeutralElement(fun.getName(), term);
 	}
-
-
 
 	public abstract static class TermWalker<C> {
 
@@ -341,12 +333,12 @@ public class TermContextTransformationEngine<C> {
 		protected abstract Term constructResultForApplicationTerm(C context, ApplicationTerm originalApplicationTerm,
 				Term[] result);
 
-		protected abstract Term constructResultForQuantifiedFormula(C context, QuantifiedFormula originalQuantifiedFormula,
-				Term resultSubformula);
+		protected abstract Term constructResultForQuantifiedFormula(C context,
+				QuantifiedFormula originalQuantifiedFormula, Term resultSubformula);
 
 		/**
-		 * Auxiliary method for checking intermediate results. Only called if
-		 * {@link DEBUG_CHECK_INTERMEDIATE_RESULT} is set.
+		 * Auxiliary method for checking intermediate results. Only called if {@link DEBUG_CHECK_INTERMEDIATE_RESULT} is
+		 * set.
 		 *
 		 */
 		protected abstract void checkIntermediateResult(C context, Term input, Term output);
@@ -354,7 +346,7 @@ public class TermContextTransformationEngine<C> {
 
 	public interface DescendResult {
 
-		public Term getTerm();
+		Term getTerm();
 
 	}
 
@@ -362,7 +354,6 @@ public class TermContextTransformationEngine<C> {
 		private final Term mIntermediateResult;
 
 		public IntermediateResultForDescend(final Term intermediateResult) {
-			super();
 			mIntermediateResult = intermediateResult;
 		}
 
@@ -377,7 +368,6 @@ public class TermContextTransformationEngine<C> {
 		private final Term mFinalResult;
 
 		public FinalResultForAscend(final Term finalResult) {
-			super();
 			mFinalResult = finalResult;
 		}
 

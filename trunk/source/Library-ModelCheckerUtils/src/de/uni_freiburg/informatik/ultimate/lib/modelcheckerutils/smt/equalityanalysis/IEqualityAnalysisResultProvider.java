@@ -49,7 +49,8 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 	/**
 	 * Announce to the analysis that all the given constants are pairwise distinct (like literals are).
 	 *
-	 * @param collection constants to announce as literals.
+	 * @param collection
+	 *            constants to announce as literals.
 	 */
 	void announceAdditionalLiterals(Collection<IProgramConst> collection);
 
@@ -61,6 +62,7 @@ public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 
 	/**
 	 * only these arrays are tracked "intensively" i.e. using weak equivalences
+	 *
 	 * @param trackedArrays
 	 */
 	void setTrackedArrays(List<String> trackedArrays);

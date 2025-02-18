@@ -27,6 +27,6 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE>, ACTION, VARDE
 	 * @return true iff the Hoare triple holds.
 	 */
 	boolean isPostSound(final DisjunctiveAbstractState<STATE> preState,
-			final DisjunctiveAbstractState<STATE> hierachicalPreState,
-			final DisjunctiveAbstractState<STATE> postState, final ACTION transition);
+			final DisjunctiveAbstractState<STATE> hierachicalPreState, final DisjunctiveAbstractState<STATE> postState,
+			final ACTION transition);
 }

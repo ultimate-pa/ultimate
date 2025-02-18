@@ -7,14 +7,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlobally;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvarianceBoundL2Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL12Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseBoundL1Pattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseDelayPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.AbsencePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariancePattern;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -254,7 +254,7 @@ public class ReqToInOut {
 			addEffectSet(S.getFreeVars());
 		} else {
 			scopeNotImplementedWarning(pattern);
-			;
+
 		}
 	}
 

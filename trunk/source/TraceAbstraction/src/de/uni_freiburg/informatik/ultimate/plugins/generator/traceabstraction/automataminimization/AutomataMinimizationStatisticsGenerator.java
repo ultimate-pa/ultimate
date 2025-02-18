@@ -32,17 +32,15 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class AutomataMinimizationStatisticsGenerator implements IStatisticsDataProvider {
-	
+
 	private final long mAutomataMinimizationTime;
 	private final boolean mMinimizatonAttempt;
 	private final boolean mNontrivialMinimizaton;
 	private final long mStatesRemovedByMinimization;
 
-
-
-	public AutomataMinimizationStatisticsGenerator(final long automataMinimizationTime, final boolean minimizatonAttempt,
-			final boolean nontrivialMinimizaton, final long statesRemovedByMinimization) {
-		super();
+	public AutomataMinimizationStatisticsGenerator(final long automataMinimizationTime,
+			final boolean minimizatonAttempt, final boolean nontrivialMinimizaton,
+			final long statesRemovedByMinimization) {
 		mAutomataMinimizationTime = automataMinimizationTime;
 		mMinimizatonAttempt = minimizatonAttempt;
 		mNontrivialMinimizaton = nontrivialMinimizaton;
@@ -51,7 +49,8 @@ public class AutomataMinimizationStatisticsGenerator implements IStatisticsDataP
 
 	@Override
 	public Object getValue(final String key) {
-		final AutomataMinimizationStatisticsDefinitions keyEnum = Enum.valueOf(AutomataMinimizationStatisticsDefinitions.class, key);
+		final AutomataMinimizationStatisticsDefinitions keyEnum =
+				Enum.valueOf(AutomataMinimizationStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case AutomataMinimizationTime:
 			return mAutomataMinimizationTime;

@@ -218,8 +218,8 @@ public class ConditionConditionCoRelation<LETTER, PLACE> implements ICoRelation<
 	public Set<Condition<LETTER, PLACE>> computeCoRelatatedConditions(final Condition<LETTER, PLACE> cond) {
 		final Set<Condition<LETTER, PLACE>> result = mCoRelatedConditions.getImage(cond);
 		if (EXTENDED_ASSERTION_CHECKING) {
-			assert result
-					.equals(computeCoRelatatedConditionsInefficient(cond)) : "inconsistent co-relation information";
+			assert result.equals(computeCoRelatatedConditionsInefficient(cond))
+					: "inconsistent co-relation information";
 		}
 		return result;
 	}
@@ -245,8 +245,8 @@ public class ConditionConditionCoRelation<LETTER, PLACE> implements ICoRelation<
 	public int computeMaximalDegree() {
 		final Function<Condition<LETTER, PLACE>, Integer> computeDegree =
 				(c -> mCoRelatedConditions.getImage(c).size());
-		final Integer max = mCoRelatedConditions.getDomain().stream().map(computeDegree).max(Integer::compare)
-				.orElse(Integer.valueOf(0));
+		final Integer max =
+				mCoRelatedConditions.getDomain().stream().map(computeDegree).max(Integer::compare).orElse(0);
 		return max;
 	}
 

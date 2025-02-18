@@ -75,7 +75,8 @@ public class NestedWordAutomatonFactory<LETTER, STATE> extends INestedWordAutoma
 	protected INestedWordAutomaton<LETTER, STATE> createWithAlphabets(final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
 		return new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-				new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), (IEmptyStackStateFactory<STATE>) mAutomaton.getStateFactory());
+				new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet),
+				(IEmptyStackStateFactory<STATE>) mAutomaton.getStateFactory());
 	}
 
 	@Override

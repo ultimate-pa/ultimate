@@ -107,8 +107,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 * @param additionalInitialLocations
 	 *            Locations which are also considered initial in the resulting CFG.
 	 * @param loopLocationFilter
-	 * 		      {@link Predicate} that decides which loop locations of the original
-	 *            program should also be loop locations of the path program
+	 *            {@link Predicate} that decides which loop locations of the original program should also be loop
+	 *            locations of the path program
 	 * @return A {@link PathProgramConstructionResult} that contains the {@link PathProgram} and an explicit mapping
 	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
@@ -270,8 +270,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			ModelUtils.copyAnnotations(originalIcfg, pp);
 
 			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc, mOldTransition2NewTransition);
-			assert !mResult.getPathProgram().getInitialNodes()
-					.isEmpty() : "You cannot have a path program that does not start at an initial location";
+			assert !mResult.getPathProgram().getInitialNodes().isEmpty()
+					: "You cannot have a path program that does not start at an initial location";
 		}
 
 		private PathProgramConstructionResult getResult() {

@@ -51,7 +51,8 @@ public class DnfToExplicitValue extends TermTransformer {
 	}
 
 	/**
-	 * @param term The disjunct of a DNF
+	 * @param term
+	 *            The disjunct of a DNF
 	 */
 	@Override
 	protected void convert(final Term term) {

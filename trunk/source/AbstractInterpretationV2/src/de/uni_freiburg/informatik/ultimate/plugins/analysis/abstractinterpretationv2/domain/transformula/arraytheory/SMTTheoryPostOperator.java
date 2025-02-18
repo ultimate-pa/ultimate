@@ -96,8 +96,6 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 
 			final List<Term> postProcessed = postProcessStrongestPost(resTerm);
 
-			;
-
 			result.addAll(
 					postProcessed.stream().map(term -> mStateFactory.getOrConstructState(term, oldstate.getVariables()))
 							.collect(Collectors.toList()));
@@ -109,7 +107,8 @@ public class SMTTheoryPostOperator implements IAbstractPostOperator<SMTTheorySta
 
 	private List<Term> postProcessStrongestPost(final Term term) {
 
-		final Term eliminated = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_QUICK, term);
+		final Term eliminated = PartialQuantifierElimination.eliminateCompat(mServices, mCsToolkit.getManagedScript(),
+				SimplificationTechnique.SIMPLIFY_QUICK, term);
 
 		// final Term conjunction = dropQuantifiedConjuncts(resTerm);
 

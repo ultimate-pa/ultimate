@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 
 	public AffineTerm() {
-		super();
 	}
 
 	/**
@@ -185,7 +184,8 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 	}
 
 	@Override
-	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Term abstractVariable, final Rational coeff) {
+	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Term abstractVariable,
+			final Rational coeff) {
 		final Term[] factors = new Term[2];
 		factors[0] = abstractVariable;
 		factors[1] = SmtUtils.rational2Term(script, coeff, mSort);
@@ -238,8 +238,8 @@ public class AffineTerm extends AbstractGeneralizedAffineTerm<Term> {
 		final HashMap<Term, Rational> newAbstractVariable2Coefficient = new HashMap<>();
 		for (final Entry<Term, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			if (!entry.getKey().equals(monomialOfSubject.getSingleVariable())) {
-				final Rational newCoefficient = PolynomialTermUtils.bringValueInRange(entry.getValue().negate(),
-						getSort());
+				final Rational newCoefficient =
+						PolynomialTermUtils.bringValueInRange(entry.getValue().negate(), getSort());
 				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
 			}
 		}

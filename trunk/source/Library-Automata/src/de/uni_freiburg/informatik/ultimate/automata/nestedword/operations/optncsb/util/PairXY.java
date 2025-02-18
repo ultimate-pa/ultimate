@@ -29,11 +29,11 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util;
 
 public class PairXY<X, Y> implements IPair<X, Y> {
-	
-	private X x;
-	private Y y;
-	
-	public PairXY(X x, Y y) {
+
+	private final X x;
+	private final Y y;
+
+	public PairXY(final X x, final Y y) {
 		this.x = x;
 		this.y = y;
 	}
@@ -49,18 +49,19 @@ public class PairXY<X, Y> implements IPair<X, Y> {
 		// TODO Auto-generated method stub
 		return y;
 	}
-	
+
 	@Override
-	public boolean equals(Object o) {
-		if(! (o instanceof IPair)) return false;
-		PairXY<X, Y> other = (PairXY<X, Y>)o;
-		return x.equals(other.x)
-			&& y.equals(other.y);
+	public boolean equals(final Object o) {
+		if (!(o instanceof IPair)) {
+			return false;
+		}
+		final PairXY<X, Y> other = (PairXY<X, Y>) o;
+		return x.equals(other.x) && y.equals(other.y);
 	}
-	
+
 	@Override
-    public int hashCode(){
-      return x.hashCode() + 31*y.hashCode();
-    }	
+	public int hashCode() {
+		return x.hashCode() + 31 * y.hashCode();
+	}
 
 }

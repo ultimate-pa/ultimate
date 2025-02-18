@@ -588,8 +588,8 @@ public class CExpressionTranslator {
 		builder.addAuxVarWithDeclaration(auxvar);
 
 		// assign the old value to the temporary variable
-		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
-		final Expression[] oldValue = new Expression[] { exprRes.getLrValue().getValue() };
+		final LeftHandSide[] tmpAsLhs = { auxvar.getLhs() };
+		final Expression[] oldValue = { exprRes.getLrValue().getValue() };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue));
 		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
@@ -649,8 +649,8 @@ public class CExpressionTranslator {
 				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue());
 
 		// assign the old value to the temporary variable
-		final LeftHandSide[] tmpAsLhs = new LeftHandSide[] { auxvar.getLhs() };
-		final Expression[] newValue = new Expression[] { valueXcremented };
+		final LeftHandSide[] tmpAsLhs = { auxvar.getLhs() };
+		final Expression[] newValue = { valueXcremented };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, newValue));
 
 		builder.setLrValue(new RValue(valueXcremented, oType, false, false));
@@ -894,8 +894,8 @@ public class CExpressionTranslator {
 	 */
 	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
 			final CType ctype, final int op, final Expression value) {
-		assert op == IASTBinaryExpression.op_plus
-				|| op == IASTBinaryExpression.op_minus : "has to be either minus or plus";
+		assert op == IASTBinaryExpression.op_plus || op == IASTBinaryExpression.op_minus
+				: "has to be either minus or plus";
 		final Expression valueIncremented;
 		if (ctype instanceof CPointer) {
 			final CPointer cPointer = (CPointer) ctype;

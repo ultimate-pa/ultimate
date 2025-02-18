@@ -53,21 +53,15 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 
 /**
- * Simplification that is based on the ideas of {@link SimplifyDDA}. Unlike
- * {@link SimplifyDDA} we do not use an SMT solver but check implications only
- * pairwise implications between polynomials. Like {@link SimplifyDDA} we use
- * the context of subformulas (resp. the polynomials in the context for
- * implications checks). This simplification is less effective that
- * {@link SimplifyDDA} because we cannot detect implications that involve more
- * than two literals. However this simplification is usually much faster than
- * {@link SimplifyDDA}. In some cases it could be more effective than
- * {@link SimplifyDDA} because currently {@link SimplifyDDA} considers
- * quantified subformulas as atoms. <br />
- * TOOO 20210421 Matthias: There is still some room for improving efficiency.
- * Currently we transform very often the same terms to
- * {@link PolynomialRelation}s. We could store the the context as
- * {@link PolynomialRelation}s instead of terms or add a cache from which one
- * can obtain the {@link PolynomialRelation} of a term.
+ * Simplification that is based on the ideas of {@link SimplifyDDA}. Unlike {@link SimplifyDDA} we do not use an SMT
+ * solver but check implications only pairwise implications between polynomials. Like {@link SimplifyDDA} we use the
+ * context of subformulas (resp. the polynomials in the context for implications checks). This simplification is less
+ * effective that {@link SimplifyDDA} because we cannot detect implications that involve more than two literals. However
+ * this simplification is usually much faster than {@link SimplifyDDA}. In some cases it could be more effective than
+ * {@link SimplifyDDA} because currently {@link SimplifyDDA} considers quantified subformulas as atoms. <br />
+ * TOOO 20210421 Matthias: There is still some room for improving efficiency. Currently we transform very often the same
+ * terms to {@link PolynomialRelation}s. We could store the the context as {@link PolynomialRelation}s instead of terms
+ * or add a cache from which one can obtain the {@link PolynomialRelation} of a term.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -76,17 +70,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	/**
-	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms
-	 * of the form `x ≠ l ∨ φ(x)` by `x ≠ l ∨ φ(l)`, where l is a literal (of sort
-	 * Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
-	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a
-	 * select term `(select a k)`.)
+	 * Replace terms of the form `x = l ∧ φ(x)` by `x = l ∧ φ(l)` and replace terms of the form `x ≠ l ∨ φ(x)` by `x ≠ l
+	 * ∨ φ(l)`, where l is a literal (of sort Real, Int, or BitVec) and x is a variable in a {@link PolynomialRelation}
+	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = true;
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		super();
 		mServices = services;
 		mMgdScript = mgdScript;
 	}
@@ -140,14 +131,14 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	/**
-	 * Use equalities of the form `x=l` (where x is a constant symbol or variable
-	 * and l is a number) to substitute all occurrences of x by the number l.
+	 * Use equalities of the form `x=l` (where x is a constant symbol or variable and l is a number) to substitute all
+	 * occurrences of x by the number l.
 	 *
-	 * @param context Term that we check for equalities. This term is not added to
-	 *                the result. E.g., in the
-	 *                {@link PolyPacSimplificationTermWalker} this is the critical
-	 *                constraint.
-	 * @param term    Term in which we apply the substitution.
+	 * @param context
+	 *            Term that we check for equalities. This term is not added to the result. E.g., in the
+	 *            {@link PolyPacSimplificationTermWalker} this is the critical constraint.
+	 * @param term
+	 *            Term in which we apply the substitution.
 	 */
 	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();

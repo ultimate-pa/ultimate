@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Yong Li (liyong@ios.ac.cn)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,22 +46,23 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
- * only sound for a special class of automata whose working title is TABA (termination analysis Büchi automata).
- * But with simpler implementation in package optncsb
- * 
+ * only sound for a special class of automata whose working title is TABA (termination analysis Büchi automata). But
+ * with simpler implementation in package optncsb
+ *
  * @author Yong Li (liyong@ios.ac.cn)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class BuchiComplementNCSBSimple<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -73,7 +74,8 @@ public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOper
 	 */
 	public BuchiComplementNCSBSimple(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
@@ -118,9 +120,9 @@ public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOper
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
 		/*
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		*/
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 */
 		for (int i = 0; i < 11; ++i) {
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 1, i));
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 2, i));
@@ -148,8 +150,8 @@ public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOper
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean underApproximationOfComplement)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		boolean correct;
@@ -170,7 +172,7 @@ public final class BuchiComplementNCSBSimple<LETTER, STATE> extends UnaryNwaOper
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics result = new AutomataOperationStatistics();

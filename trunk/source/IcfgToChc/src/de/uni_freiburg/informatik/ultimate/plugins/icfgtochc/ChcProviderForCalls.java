@@ -507,9 +507,7 @@ public class ChcProviderForCalls implements IChcProvider {
 
 	private boolean assertNoFreeVars(final List<HcHeadVar> headVars, final Set<HcVar> bodyVars, final Term constraint) {
 		// compute all variables that only occur in the
-		final Set<TermVariable> auxVars = new LinkedHashSet<>();
-		auxVars.addAll(Arrays.asList(constraint.getFreeVars()));
-
+		final Set<TermVariable> auxVars = new LinkedHashSet<>(Arrays.asList(constraint.getFreeVars()));
 		if (headVars != null) {
 			auxVars.removeAll(headVars.stream().map(hv -> hv.getTermVariable()).collect(Collectors.toList()));
 		}
@@ -621,8 +619,8 @@ public class ChcProviderForCalls implements IChcProvider {
 					} else {
 						// "assign" case --> other var for body, substitute that "unprimed" version, primed
 						// version is already in substitution
-						assert substitutionMapping.containsKey(outTv) : "subs should have been added during head "
-								+ "processing";
+						assert substitutionMapping.containsKey(outTv)
+								: "subs should have been added during head " + "processing";
 						firstPredArgs.add(bodyVar.getTermVariable());
 						substitutionMapping.put(inTv, bodyVar.getTermVariable());
 					}
@@ -752,8 +750,8 @@ public class ChcProviderForCalls implements IChcProvider {
 					} else {
 						// "assign" case --> other var for body, substitute that "unprimed" version, primed
 						// version is already in substitution
-						assert substitutionMapping.containsKey(outTv) : "subs should have been added during head "
-								+ "processing";
+						assert substitutionMapping.containsKey(outTv)
+								: "subs should have been added during head " + "processing";
 						firstPredArgs.add(bodyVar.getTermVariable());
 						substitutionMapping.put(inTv, bodyVar.getTermVariable());
 					}

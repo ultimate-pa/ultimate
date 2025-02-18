@@ -44,11 +44,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Preprocessing step for partial array quantifier elimination. If we have a
- * term of the form <code>arr1 != arr2</ code> (the negation of the form where
- * we can apply DER) we replace it by <code>∃ aux. arr1[aux] != arr2[aux]</
- * code> (Analogously for universal quantification.) Presumes that the input has
- * NNF. Provides all auxiliary variables that have been introduced.
+ * Preprocessing step for partial array quantifier elimination. If we have a term of the form
+ * <code>arr1 != arr2</ code> (the negation of the form where
+ * we can apply DER) we replace it by <code>∃ aux. arr1[aux] != arr2[aux]</ code> (Analogously for universal
+ * quantification.) Presumes that the input has NNF. Provides all auxiliary variables that have been introduced.
  *
  * @author Matthias Heizmann
  *
@@ -62,19 +61,19 @@ public class ArrayEqualityExplicator {
 
 	public ArrayEqualityExplicator(final ManagedScript mgdScript, final int quantifier, final TermVariable eliminatee,
 			final Term inputTerm, final List<BinaryEqualityRelation> bers) {
-		final List<TermVariable> newAuxVars = new ArrayList<TermVariable>();
+		final List<TermVariable> newAuxVars = new ArrayList<>();
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final BinaryEqualityRelation ber : bers) {
 			if (ber.getRelationSymbol() != getDerRelationSymbol(quantifier).negate()) {
 				throw new IllegalArgumentException("incompatible relation");
 			}
-			final Term elementwiseComparison = constructElementwiseEquality(mgdScript, quantifier, ber.getLhs(),
-					ber.getRhs(), newAuxVars);
+			final Term elementwiseComparison =
+					constructElementwiseEquality(mgdScript, quantifier, ber.getLhs(), ber.getRhs(), newAuxVars);
 			substitutionMapping.put(ber.toTerm(mgdScript.getScript()), elementwiseComparison);
 		}
 		mResultTerm = Substitution.apply(mgdScript, substitutionMapping, inputTerm);
-		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm,
-				CommuhashUtils.COMMUTATIVE_OPERATORS) : "input not in commuhash normal form";
+		assert CommuhashUtils.isInCommuhashNormalForm(inputTerm, CommuhashUtils.COMMUTATIVE_OPERATORS)
+				: "input not in commuhash normal form";
 		if (mResultTerm.equals(inputTerm)) {
 			throw new AssertionError("Substitution failed: " + substitutionMapping);
 		}
@@ -132,8 +131,8 @@ public class ArrayEqualityExplicator {
 		final List<Term> indexEntries = new ArrayList<>();
 		int offset = 0;
 		for (final Sort sort : mds.getIndexSorts()) {
-			final TermVariable auxIndex = mgdScript.constructFreshTermVariable(AUX_VAR_PREFIX + "_entry" + offset,
-					sort);
+			final TermVariable auxIndex =
+					mgdScript.constructFreshTermVariable(AUX_VAR_PREFIX + "_entry" + offset, sort);
 			indexEntries.add(auxIndex);
 			newAuxVars.add(auxIndex);
 			offset++;

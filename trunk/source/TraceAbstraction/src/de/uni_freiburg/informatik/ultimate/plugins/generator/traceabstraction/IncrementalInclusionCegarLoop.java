@@ -300,11 +300,10 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			ia.switchToReadonlyMode();
 		}
 		if (mPref.dumpAutomata()) {
-			for (int i = 0; i < mInterpolantAutomata.size(); i++) {
+			for (final AbstractInterpolantAutomaton<L> element : mInterpolantAutomata) {
 				final String filename =
 						"EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + getIteration();
-				super.writeAutomatonToFile(mInterpolantAutomata.get(i), filename);
-				mInterpolantAutomata.get(i);
+				super.writeAutomatonToFile(element, filename);
 			}
 		}
 	}

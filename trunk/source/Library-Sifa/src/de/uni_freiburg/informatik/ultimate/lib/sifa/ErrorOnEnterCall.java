@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * Throws an exception or error when used to register an enter call transition.
- * Use when you don't expect any enter call transitions.
+ * Throws an exception or error when used to register an enter call transition. Use when you don't expect any enter call
+ * transitions.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -48,8 +48,8 @@ public final class ErrorOnEnterCall implements IEnterCallRegistrar {
 
 	@Override
 	public void registerEnterCall(final String callee, final IPredicate calleeInput) {
-		throw new AssertionError(String.format("Did not expect any enter calls "
-				+ "but received enter call %s with input %s.", callee, calleeInput));
+		throw new AssertionError(String.format(
+				"Did not expect any enter calls " + "but received enter call %s with input %s.", callee, calleeInput));
 	}
 
 }

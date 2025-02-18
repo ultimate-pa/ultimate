@@ -87,8 +87,7 @@ public class DangerInvariantUtils {
 			final ManagedScript mgdScript, final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final BasicPredicateFactory predicateFactory, final ILogger logger) {
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
-				new PredicateTransformer<>(mgdScript,
-						new TermDomainOperationProvider(services, mgdScript));
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final Collection<IPredicate> predecessors = new ArrayList<>();
 		for (final Entry<IAction, IPredicate> entry : succs.getSetOfPairs()) {
 			final Term pre = constructPreInternal(logger, predicateFactory, csToolkit, pt,
@@ -113,7 +112,8 @@ public class DangerInvariantUtils {
 			final CfgSmtToolkit csToolkit, final PredicateTransformer<Term, IPredicate, TransFormula> pt,
 			final TransFormula tf, final IPredicate succPred, final IUltimateServiceProvider services) {
 		final Term wp = pt.weakestPrecondition(predicateFactory.not(succPred), tf);
-		final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(services, csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
+		final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(services,
+				csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
 		final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
 		return pre;
 	}

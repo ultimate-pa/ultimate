@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
  */
 public class MultiReplaceChange extends HddChange {
 	private final List<String> mReplacements;
-	
+
 	MultiReplaceChange(final IPSTNode node, final List<String> replacements) {
 		super(node);
 		if (replacements.isEmpty()) {
@@ -46,12 +46,11 @@ public class MultiReplaceChange extends HddChange {
 		}
 		mReplacements = replacements;
 	}
-	
+
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		rewriter.replace(getNode(), mReplacements.get(0));
 	}
-	
 
 	@Override
 	public Optional<HddChange> createAlternativeChange() {
@@ -61,7 +60,6 @@ public class MultiReplaceChange extends HddChange {
 		return Optional.empty();
 	}
 
-	
 	@Override
 	public String toString() {
 		return "Replace " + getNode() + " (by one of ["

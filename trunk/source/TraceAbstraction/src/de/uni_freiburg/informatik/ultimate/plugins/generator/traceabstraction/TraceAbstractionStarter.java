@@ -209,12 +209,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void logSettings() {
-		String settings = "Automizer settings:";
-		settings += " Hoare:" + mPrefs.getHoareSettings().getHoarePositions();
-		settings += " " + (mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
-		settings += " Interpolation:" + mPrefs.interpolation();
-		settings += " Determinization: " + mPrefs.interpolantAutomatonEnhancement();
-		mLogger.info(settings);
+		final StringBuilder settings = new StringBuilder("Automizer settings:");
+		settings.append(" Hoare:").append(mPrefs.getHoareSettings().getHoarePositions());
+		settings.append(" ").append(mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
+		settings.append(" Interpolation:").append(mPrefs.interpolation());
+		settings.append(" Determinization: ").append(mPrefs.interpolantAutomatonEnhancement());
+		mLogger.info(settings.toString());
 	}
 
 	/**

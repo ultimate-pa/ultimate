@@ -32,7 +32,7 @@ public final class SourceDocumentLocationPrinter {
 	private SourceDocumentLocationPrinter() {
 		// static access
 	}
-	
+
 	/**
 	 * @param document
 	 *            Document.
@@ -52,18 +52,18 @@ public final class SourceDocumentLocationPrinter {
 		if (offset == endOffset) {
 			return builder;
 		}
-		
+
 		final int endingLineNumber = document.getLineNumber(endOffset - 1);
 		final int endingLineColumn = document.getColumnNumber(endOffset);
 		if (startingLineNumber == endingLineNumber) {
 			builder.append(" - ").append(endingLineColumn);
 			return builder;
 		}
-		
+
 		builder.append(" - ").append("Line ").append(endingLineNumber).append(", Column ").append(endingLineColumn);
 		return builder;
 	}
-	
+
 	/**
 	 * @param document
 	 *            Document.
@@ -77,7 +77,7 @@ public final class SourceDocumentLocationPrinter {
 			final StringBuilder builder) {
 		return appendTo(document, range.offset(), range.endOffset(), builder);
 	}
-	
+
 	/**
 	 * @param document
 	 *            Document.
@@ -90,7 +90,7 @@ public final class SourceDocumentLocationPrinter {
 	public static String makeString(final ISourceDocument document, final int offset, final int endOffset) {
 		return appendTo(document, offset, endOffset, new StringBuilder()).toString();
 	}
-	
+
 	/**
 	 * @param document
 	 *            Document.

@@ -27,7 +27,7 @@
 
 /**
  * This is the core package of the delta debugger.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core;

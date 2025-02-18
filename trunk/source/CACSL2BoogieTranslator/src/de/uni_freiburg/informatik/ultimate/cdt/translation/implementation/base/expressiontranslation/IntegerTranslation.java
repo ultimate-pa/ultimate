@@ -740,8 +740,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	public Pair<Expression, Expression> constructOverflowCheckForArithmeticExpression(final ILocation loc,
 			final int operation, final CPrimitive resultType, final Expression lhsOperand,
 			final Expression rhsOperand) {
-		assert resultType.isIntegerType()
-				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+		assert resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)
+				: "Overflow check only for signed integer types";
 		assert List.of(IASTBinaryExpression.op_multiply, IASTBinaryExpression.op_multiplyAssign,
 				IASTBinaryExpression.op_plus, IASTBinaryExpression.op_plusAssign, IASTBinaryExpression.op_minus,
 				IASTBinaryExpression.op_minusAssign, IASTBinaryExpression.op_divide,
@@ -755,8 +755,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	@Override
 	public Pair<Expression, Expression> constructOverflowCheckForUnaryExpression(final ILocation loc,
 			final int operation, final CPrimitive resultType, final Expression operand) {
-		assert resultType.isIntegerType()
-				&& !mTypeSizes.isUnsigned(resultType) : "Overflow check only for signed integer types";
+		assert resultType.isIntegerType() && !mTypeSizes.isUnsigned(resultType)
+				: "Overflow check only for signed integer types";
 		assert operation == IASTUnaryExpression.op_minus;
 
 		final Expression operationResult = constructUnaryExpression(loc, operation, operand, resultType);

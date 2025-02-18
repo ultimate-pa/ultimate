@@ -66,8 +66,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_TOOLLOCATION, DEF_TOOLLOCATION, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_TOOLARGUMENT, DEF_TOOLARGUMENT, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_PROPERTYFROMFILE, DEF_PROPERTYFROMFILE,
-						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PROPERTYFROMFILE, DEF_PROPERTYFROMFILE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PPROPERTY, DEF_PPROPERTY, PreferenceType.MultilineString),
 				new UltimatePreferenceItem<>(LABEL_OPTIMIZE_SBE, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_OPTIMIZE_REWRITEASSUME, false, PreferenceType.Boolean), };

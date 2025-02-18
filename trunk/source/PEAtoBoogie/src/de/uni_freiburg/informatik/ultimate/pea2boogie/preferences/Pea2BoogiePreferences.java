@@ -45,7 +45,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_TRANSFOMER_MODE = "PEA Transformation Mode";
 	public static final PEATransformerMode TRANSFOMER_MODE = PEATransformerMode.REQ_CHECK;
-	private static final String DESC_TRANSFOMER_MODE = "Switches between checking requirements and generating tests for requirements.";
+	private static final String DESC_TRANSFOMER_MODE =
+			"Switches between checking requirements and generating tests for requirements.";
 
 	public static final String LABEL_CHECK_VACUITY = "Check vacuity";
 	private static final boolean DEF_CHECK_VACUITY = true;
@@ -79,21 +80,25 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 			Note: A value of one can be used to check rt-inconsistency with invariants.""";
 	public static final String LABEL_REPORT_TRIVIAL_RT_CONSISTENCY = "Report trivial rt-consistency";
 	private static final boolean DEF_REPORT_TRIVIAL_RT_CONSISTENCY = false;
-	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY = "Generate a result even if rt-consistency is shown during the generation of the assertion";
+	private static final String DESC_REPORT_TRIVIAL_RT_CONSISTENCY =
+			"Generate a result even if rt-consistency is shown during the generation of the assertion";
 
-	public static final String LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS = "Always use all invariants during rt-inconsistency checks";
+	public static final String LABEL_RT_INCONSISTENCY_USE_ALL_INVARIANTS =
+			"Always use all invariants during rt-inconsistency checks";
 	private static final boolean DEF_RT_INCONSISTENCY_USE_ALL_INVARIANTS = true;
-	private static final String DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS = """
-			This setting controls whether invariant requirements are included in every rt-inconsistency check or if they\
-			 are treated as separate requirements. If enabled, each rt-inconsistency check is of the form \
-			Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.""";
+	private static final String DESC_RT_INCONSISTENCY_USE_ALL_INVARIANTS =
+			"""
+					This setting controls whether invariant requirements are included in every rt-inconsistency check or if they\
+					 are treated as separate requirements. If enabled, each rt-inconsistency check is of the form \
+					Invariants ∧ (check over all remaining requirements). If disabled, invariants are not treated separately.""";
 
 	public static final String LABEL_HISTORY_VARS = "Generate history vars ('v) in Encoding";
 	private static final boolean DEF_HISTORY_VARS = true;
-	private static final String DESC_HISTORY_VASRS = "Include history variables for PEA locations and state variables and state variables"
-			+ "in the encoding,.";
+	private static final String DESC_HISTORY_VASRS =
+			"Include history variables for PEA locations and state variables and state variables" + "in the encoding,.";
 
-	public static final String LABEL_GUESS_IN_OUT = "Use heuristic to find input/output definitions (if none are given)";
+	public static final String LABEL_GUESS_IN_OUT =
+			"Use heuristic to find input/output definitions (if none are given)";
 	private static final boolean DEF_GUESS_IN_OUT = true;
 	private static final String DESC_GUESS_IN_OUT = """
 			If there is no explicit definition of inputs, outputs and internal\

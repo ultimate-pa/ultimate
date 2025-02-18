@@ -102,8 +102,8 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
 
-		final List<Set<Integer>> partitions = getAssertOrder(mAssertCodeBlocksOrder)
-				.partition(mSSA.getCounterexample());
+		final List<Set<Integer>> partitions =
+				getAssertOrder(mAssertCodeBlocksOrder).partition(mSSA.getCounterexample());
 
 		mLogger.info(String.format("Assert order %s partitioned %s statements into %s equivalence classes.",
 				mAssertCodeBlocksOrder, mSSA.getCounterexample().length(), partitions.size()));

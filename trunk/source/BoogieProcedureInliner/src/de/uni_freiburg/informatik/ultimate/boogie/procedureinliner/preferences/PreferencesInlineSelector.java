@@ -98,7 +98,7 @@ public class PreferencesInlineSelector implements IInlineSelector {
 	}
 
 	@Override
-	public void setInlineFlags(final Map<String, CallGraphNode> callGraph, boolean programIsConcurrent) {
+	public void setInlineFlags(final Map<String, CallGraphNode> callGraph, final boolean programIsConcurrent) {
 		mProgramIsConcurrent = programIsConcurrent;
 		mLastInlinedCall = new HashMap<>();
 		final List<IEdgeFilter<CallGraphNode, CallGraphEdgeLabel>> updaterQueue = new ArrayList<>(2);

@@ -16,16 +16,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Transforms a {@link Term} which is "polynomial" into our
- * {@link PolynomialTerm} data structure. The result is an auxiliary error term
- * if the input was not polynomial.
+ * Transforms a {@link Term} which is "polynomial" into our {@link PolynomialTerm} data structure. The result is an
+ * auxiliary error term if the input was not polynomial.
  *
- * The transformation is done by an recursive algorithm. However, in order to
- * circumvent the problem that the performance of Java virtual machines is
- * rather poor for recursive methods calls we implement the algorithm by using
- * our {@link TermTransformer}. The {@link TermTransformer} allows us to
- * implement recursive algorithms for {@link Term}s without recursive methods
- * calls by explicitly using a stack.
+ * The transformation is done by an recursive algorithm. However, in order to circumvent the problem that the
+ * performance of Java virtual machines is rather poor for recursive methods calls we implement the algorithm by using
+ * our {@link TermTransformer}. The {@link TermTransformer} allows us to implement recursive algorithms for
+ * {@link Term}s without recursive methods calls by explicitly using a stack.
  *
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
@@ -35,14 +32,12 @@ public class PolynomialTermTransformer extends TermTransformer {
 	private final Script mScript;
 
 	/**
-	 * Predicate that defines which Terms might be variables of the
-	 * {@link PolynomialTerm}. Currently, every {@link TermVariable} and every
-	 * {@link ApplicationTerm} can be a variable of the result. In the future this
-	 * may become a parameter in order to allow users of this class to be more
-	 * restrictive.
+	 * Predicate that defines which Terms might be variables of the {@link PolynomialTerm}. Currently, every
+	 * {@link TermVariable} and every {@link ApplicationTerm} can be a variable of the result. In the future this may
+	 * become a parameter in order to allow users of this class to be more restrictive.
 	 */
-	private final Predicate<Term> mIsPolynomialVariable = (x -> ((x instanceof TermVariable)
-			|| (x instanceof ApplicationTerm)));
+	private final Predicate<Term> mIsPolynomialVariable =
+			(x -> ((x instanceof TermVariable) || (x instanceof ApplicationTerm)));
 
 	public PolynomialTermTransformer(final Script script) {
 		mScript = script;
@@ -93,7 +88,6 @@ public class PolynomialTermTransformer extends TermTransformer {
 		}
 		// Otherwise, the input cannot be converted to an PolynomialTerm.
 		inputIsNotPolynomial();
-		return;
 	}
 
 	/**
@@ -104,17 +98,15 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Currently, we support the SMT {@link Sort}s Int and Real (called numeric
-	 * sorts) and the bitvector sorts.
+	 * Currently, we support the SMT {@link Sort}s Int and Real (called numeric sorts) and the bitvector sorts.
 	 */
 	private static boolean hasSupportedSort(final Term term) {
 		return SmtSortUtils.isNumericSort(term.getSort()) || SmtSortUtils.isBitvecSort(term.getSort());
 	}
 
 	/**
-	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol}
-	 * represents an "polynomial function". We call a function an "polynomial
-	 * function" if it implements an addition, subtraction, multiplication, or real
+	 * Check if term is an {@link ApplicationTerm} whose {@link FunctionSymbol} represents an "polynomial function". We
+	 * call a function an "polynomial function" if it implements an addition, subtraction, multiplication, or real
 	 * number division.
 	 */
 	private static boolean isPolynomialFunction(final Term term) {
@@ -138,8 +130,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 		// TermTransformer descend to subformulas.
 		// Here, the arguments are the result of the "recursive" calls for the
 		// subformulas.
-		assert (isPolynomialFunctionSymbol(
-				appTerm.getFunction().getName())) : "We only descended for polynomial functions";
+		assert (isPolynomialFunctionSymbol(appTerm.getFunction().getName()))
+				: "We only descended for polynomial functions";
 		// First, we check if some of this arguments is the auxiliary error term.
 		// If this is the case, we report that input is not polynomial.
 		final IPolynomialTerm[] polynomialArgs = castAndCheckForNonPolynomialArguments(newArgs);
@@ -153,8 +145,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given
-	 * funName, if possible.
+	 * Create an IPolynomialTerm out of the polynomialArgs, according to the given funName, if possible.
 	 */
 	private IPolynomialTerm convertArgumentsToFunction(final IPolynomialTerm[] polynomialArgs, final String funName) {
 		switch (funName) {
@@ -203,8 +194,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Cast the interface IPolynomialTerm in a way that the TermTransformer accepts
-	 * the result for "setResult". Execute "setResult" afterwards.
+	 * Cast the interface IPolynomialTerm in a way that the TermTransformer accepts the result for "setResult". Execute
+	 * "setResult" afterwards.
 	 */
 	private void castAndSetResult(final IPolynomialTerm poly) {
 		if (poly instanceof PolynomialTerm) {
@@ -240,12 +231,10 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Determines whether the product of two polynomialTerms will most likely be
-	 * truly polynomial (not affine). (It can still happen, that the result is
-	 * affine, but we can't say that at this point in the code. The
-	 * PolynomialTerm-class should return an AffineTerm if that's the case. Why not
-	 * use PolynomialTerm everytime, then? Because of efficiency-reasons.) If the
-	 * result is truly polynomial it returns true, false otherwise.
+	 * Determines whether the product of two polynomialTerms will most likely be truly polynomial (not affine). (It can
+	 * still happen, that the result is affine, but we can't say that at this point in the code. The
+	 * PolynomialTerm-class should return an AffineTerm if that's the case. Why not use PolynomialTerm everytime, then?
+	 * Because of efficiency-reasons.) If the result is truly polynomial it returns true, false otherwise.
 	 */
 	private static boolean productWillBePolynomial(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
 		return !poly1.isAffine() || !poly2.isAffine() || (!poly1.isConstant() && !poly2.isConstant());
@@ -263,8 +252,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Returns true when one of the given Terms is truly polynomial (not
-	 * representable by an AffineTerm).
+	 * Returns true when one of the given Terms is truly polynomial (not representable by an AffineTerm).
 	 */
 	private static boolean someTermIsPolynomial(final IPolynomialTerm[] polynomialTerms) {
 		for (final IPolynomialTerm polynomialTerm : polynomialTerms) {
@@ -286,10 +274,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an
-	 * {@link PolynomialTerm} that represents the difference
-	 * <code>t1-t2-...-tn</code>, i.e., the {@link PolynomialTerm} that is
-	 * equivalent to <code>t1-(t2+...+tn)</code>
+	 * Given {@link PolynomialTerm}s <code>t1,t2,...,tn</code> construct an {@link PolynomialTerm} that represents the
+	 * difference <code>t1-t2-...-tn</code>, i.e., the {@link PolynomialTerm} that is equivalent to
+	 * <code>t1-(t2+...+tn)</code>
 	 */
 	private static IPolynomialTerm subtract(final IPolynomialTerm[] input) {
 		assert input.length > 1;
@@ -303,11 +290,9 @@ public class PolynomialTermTransformer extends TermTransformer {
 		return add(argumentsForSum);
 	}
 
-
 	/**
-	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s
-	 * by casting every single element. In case an element of the input is our
-	 * auxiliary error term we return null instead.
+	 * Convert an array of {@link Term}s into an an array of {@link PolynomialTerm}s by casting every single element. In
+	 * case an element of the input is our auxiliary error term we return null instead.
 	 */
 	private static IPolynomialTerm[] castAndCheckForNonPolynomialArguments(final Term[] terms) {
 		final IPolynomialTerm[] polynomialTerms = new IPolynomialTerm[terms.length];
@@ -325,9 +310,8 @@ public class PolynomialTermTransformer extends TermTransformer {
 	}
 
 	/**
-	 * Convert SMT {@link Term} into an {@link IPolynomialTerm}. We return null if
-	 * we the {@link Term} cannot be converted into an {@link IPolynomialTerm},
-	 * e.g., because its sort is Bool.
+	 * Convert SMT {@link Term} into an {@link IPolynomialTerm}. We return null if we the {@link Term} cannot be
+	 * converted into an {@link IPolynomialTerm}, e.g., because its sort is Bool.
 	 */
 	public static IPolynomialTerm convert(final Script script, final Term term) {
 		final IPolynomialTerm result;
@@ -369,7 +353,7 @@ public class PolynomialTermTransformer extends TermTransformer {
 		@Override
 		public void walk(final NonRecursive engine) {
 			final PolynomialTermTransformer transformer = (PolynomialTermTransformer) engine;
-			final Term[] oldArgs = new Term[] { mNumerator, mDivisorFactor };
+			final Term[] oldArgs = { mNumerator, mDivisorFactor };
 			final Term[] newArgs = transformer.getConverted(oldArgs);
 			final IPolynomialTerm[] polynomialArgs = castAndCheckForNonPolynomialArguments(newArgs);
 			if (polynomialArgs == null) {

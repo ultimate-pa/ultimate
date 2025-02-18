@@ -79,17 +79,14 @@ public class ComparativeSummary extends BaseTestSummary {
 		}
 
 		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> mismatches =
-				CoreUtil.where(partitionedResults.Error, new ITestSummaryResultPredicate() {
-					@Override
-					public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						final HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
-						for (final String tool : tools) {
-							if (!tool2entry.containsKey(tool)) {
-								return false;
-							}
+				CoreUtil.where(partitionedResults.Error, entry -> {
+					final HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
+					for (final String tool : tools) {
+						if (!tool2entry.containsKey(tool)) {
+							return false;
 						}
-						return true;
 					}
+					return true;
 				});
 
 		// HashSet<Entry<UltimateRunDefinition, ExtendedResult>> mismatchesSet =

@@ -63,7 +63,6 @@ public class JordanUpdate {
 	private final NestedMap2<Integer, Integer, Integer> mJordanBlockSizes;
 
 	public JordanUpdate(final JordanDecompositionStatus jordanDecompositionStatus, final List<JordanUpdatePart> parts) {
-		super();
 		mJordanDecompositionStatus = jordanDecompositionStatus;
 		mParts = parts;
 		if (jordanDecompositionStatus == JordanDecompositionStatus.UNSUPPORTED_EIGENVALUES) {
@@ -101,9 +100,9 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * Go through terms, get all variables and create a hash map varMatrixIndex with
-	 * variables as key and corresponding matrix index as value to save which column
-	 * corresponds to which variable and which row corresponds to which update.
+	 * Go through terms, get all variables and create a hash map varMatrixIndex with variables as key and corresponding
+	 * matrix index as value to save which column corresponds to which variable and which row corresponds to which
+	 * update.
 	 */
 	private static HashMap<Term, Integer> determineMatrixIndices(final LinearUpdate linearUpdate) {
 		final HashMap<Term, Integer> varMatrixIndex = new HashMap<>();
@@ -145,11 +144,10 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * Fills the row corresponding to variable of the updateMatrix where variable is
-	 * updated with polyRhs.
+	 * Fills the row corresponding to variable of the updateMatrix where variable is updated with polyRhs.
 	 */
-	private static void fillMatrixRow(final QuadraticMatrix updateMatrix,
-			final Map<Term, Integer> varMatrixIndexMap, final AffineTerm affineRhs, final TermVariable tv) {
+	private static void fillMatrixRow(final QuadraticMatrix updateMatrix, final Map<Term, Integer> varMatrixIndexMap,
+			final AffineTerm affineRhs, final TermVariable tv) {
 
 		final int n = updateMatrix.getDimension() - 1;
 		updateMatrix.setEntry(n, n, BigInteger.valueOf(1));
@@ -169,7 +167,6 @@ public class JordanUpdate {
 			updateMatrix.setEntry(varMatrixIndexMap.get(tv), n, determineConstant(affineRhs));
 		}
 	}
-
 
 	/**
 	 * Determine the coefficient of termVar in the {@link AffineTerm} affineRhs.
@@ -199,16 +196,15 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * Construct an {@link IPolynomialTerm} that represents the current iteration
-	 * (which is also the exponent of the Jordan matrix that we construct). The
-	 * result can be
+	 * Construct an {@link IPolynomialTerm} that represents the current iteration (which is also the exponent of the
+	 * Jordan matrix that we construct). The result can be
 	 * <li>`it` (can represent all iterations)
 	 * <li>`2*itHalf` (can represent even iterations)
 	 * <li>`2*itHalf+1` (can represent odd iterations)
 	 *
 	 * Note: We have to distinguish even and odd transitions
-	 * <li> if some eigenvalue is negative (currently we only support -1) or
-	 * <li> if some Jordan block is greater than 2.
+	 * <li>if some eigenvalue is negative (currently we only support -1) or
+	 * <li>if some Jordan block is greater than 2.
 	 */
 	private static IPolynomialTerm constructIterationCounter(final Script script, final Iterations itKind,
 			final TermVariable it, final TermVariable itHalf) {
@@ -233,8 +229,8 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * Construct map that assigns to the default TermVariable its closed from, where each
-	 * variable in the closed form is represented by its default TermVariable.
+	 * Construct map that assigns to the default TermVariable its closed from, where each variable in the closed form is
+	 * represented by its default TermVariable.
 	 */
 	public Map<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript, final TermVariable it,
 			final TermVariable itHalf, final Iterations itKind) {
@@ -247,8 +243,8 @@ public class JordanUpdate {
 		final Map<TermVariable, Term> closedFormMap = new HashMap<>();
 		for (final JordanUpdatePart part : mParts) {
 			// Compute matrix that represents closed form.
-			final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
-					part.getJordanDecomp(), itc, itKind);
+			final PolynomialTermMatrix closedFormMatrix =
+					PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, part.getJordanDecomp(), itc, itKind);
 			final Map<TermVariable, Term> closedFormPart = constructClosedForm(mgdScript, closedFormMatrix,
 					part.getLinearUpdate(), part.getVarMatrixIndexMap());
 			closedFormMap.putAll(closedFormPart);
@@ -257,15 +253,15 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * Construct map that assigns to the default TermVariable its closed from, where
-	 * each variable in the closed form is represented by its default TermVariable.
+	 * Construct map that assigns to the default TermVariable its closed from, where each variable in the closed form is
+	 * represented by its default TermVariable.
 	 */
 	public Map<TermVariable, Term> constructClosedForm(final ManagedScript mgdScript, final int k) {
 		final Map<TermVariable, Term> closedFormMap = new HashMap<>();
 		for (final JordanUpdatePart part : mParts) {
 			// Compute matrix that represents closed form.
-			final PolynomialTermMatrix closedFormMatrix = PolynomialTermMatrix.computeClosedFormMatrix(mgdScript,
-					part.getJordanDecomp(), k);
+			final PolynomialTermMatrix closedFormMatrix =
+					PolynomialTermMatrix.computeClosedFormMatrix(mgdScript, part.getJordanDecomp(), k);
 			final Map<TermVariable, Term> closedFormPart = constructClosedForm(mgdScript, closedFormMatrix,
 					part.getLinearUpdate(), part.getVarMatrixIndexMap());
 			closedFormMap.putAll(closedFormPart);
@@ -340,7 +336,8 @@ public class JordanUpdate {
 		return sum;
 	}
 
-	private static void addJordanCodeBlockSizes(final NestedMap2<Integer, Integer, Integer> sizes, final NestedMap2<Integer, Integer, Integer> addedSizes) {
+	private static void addJordanCodeBlockSizes(final NestedMap2<Integer, Integer, Integer> sizes,
+			final NestedMap2<Integer, Integer, Integer> addedSizes) {
 		for (final Triple<Integer, Integer, Integer> triple : addedSizes.entrySet()) {
 			final Integer amount = sizes.get(triple.getFirst(), triple.getSecond());
 			if (amount == null) {
@@ -351,10 +348,8 @@ public class JordanUpdate {
 		}
 	}
 
-
 	/**
-	 * @return true iff -1 is an eigenvalue or for eigenvalue 1 there is a Jordan
-	 *         block of size greater than 2.
+	 * @return true iff -1 is an eigenvalue or for eigenvalue 1 there is a Jordan block of size greater than 2.
 	 */
 	public boolean isAlternatingClosedFormRequired() {
 		final boolean minus1isEigenvalue = mJordanBlockSizes.containsKey(-1);
@@ -363,8 +358,7 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * @return true iff there is some Jordan block for eigenvalue 1 whose size is
-	 *         strictly greater than 2
+	 * @return true iff there is some Jordan block for eigenvalue 1 whose size is strictly greater than 2
 	 */
 	public boolean hasEv1JordanBlockStrictlyGreater2() {
 		if (!mJordanBlockSizes.containsKey(1)) {
@@ -395,9 +389,8 @@ public class JordanUpdate {
 	}
 
 	/**
-	 * The sum of the sizes of all block is the sum of the number of assigned scalar
-	 * variables, the number of readonly variables and one (one is for the numbers
-	 * that are added in the loop).
+	 * The sum of the sizes of all block is the sum of the number of assigned scalar variables, the number of readonly
+	 * variables and one (one is for the numbers that are added in the loop).
 	 */
 	public boolean isBlockSizeConsistent(final int numberOfAssignedVariables, final int numberOfReadonlyVariables) {
 		int blockSizeSum = 0;
@@ -411,19 +404,22 @@ public class JordanUpdate {
 		private final LinearUpdate mLinearUpdate;
 		private final Map<Term, Integer> mVarMatrixIndexMap;
 		private final JordanDecomposition mJordanDecomp;
+
 		public JordanUpdatePart(final LinearUpdate linearUpdate, final Map<Term, Integer> varMatrixIndexMap,
 				final JordanDecomposition jordanDecomp) {
-			super();
 			mLinearUpdate = linearUpdate;
 			mVarMatrixIndexMap = varMatrixIndexMap;
 			mJordanDecomp = jordanDecomp;
 		}
+
 		public LinearUpdate getLinearUpdate() {
 			return mLinearUpdate;
 		}
+
 		public Map<Term, Integer> getVarMatrixIndexMap() {
 			return mVarMatrixIndexMap;
 		}
+
 		public JordanDecomposition getJordanDecomp() {
 			return mJordanDecomp;
 		}

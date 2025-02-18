@@ -48,16 +48,16 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep
  */
 public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	private static final int SLEEP_TIME_MILLISEC = 10;
-	
+
 	private final SpeculativeSearchIterator<T> mSearchIterator;
 	private final ICancelableStepTest<T> mCancelableTest;
 	private final List<Future<?>> mPendingWorkers = new ArrayList<>();
 	private volatile boolean mStopRequested;
-	
+
 	/**
-	 * Constructs a new instance that can be used for one iteration.
-	 * Note that all concurrent access to the SpeculativeSearchIterator is synchronized on the searchIterator instance
-	 * and only the test function if executed without any synchronization.
+	 * Constructs a new instance that can be used for one iteration. Note that all concurrent access to the
+	 * SpeculativeSearchIterator is synchronized on the searchIterator instance and only the test function if executed
+	 * without any synchronization.
 	 *
 	 * @param searchIterator
 	 *            speculative iterator to work on
@@ -66,10 +66,10 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	 */
 	public ParallelSearchIteratorIterator(final SpeculativeSearchIterator<T> searchIterator,
 			final ICancelableStepTest<T> cancelableTest) {
-		this.mSearchIterator = searchIterator;
-		this.mCancelableTest = cancelableTest;
+		mSearchIterator = searchIterator;
+		mCancelableTest = cancelableTest;
 	}
-	
+
 	/**
 	 * Start iteration using the given number of worker threads that are started by the given executor service.
 	 *
@@ -89,7 +89,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			mPendingWorkers.add(executorService.submit(this::worker));
 		}
 	}
-	
+
 	/**
 	 * Wait until iteration has ended and return the result.
 	 *
@@ -101,7 +101,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 		if (mPendingWorkers.isEmpty()) {
 			throw new IllegalStateException("beginIteration has not been called");
 		}
-		
+
 		// Wait for all workers to return.
 		// This is important to ensure that
 		// - no exceptions are swallowed
@@ -122,10 +122,10 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			}
 			throw new RuntimeException("unexpected sneaky exception", e);
 		}
-		
+
 		return getCurrentStep();
 	}
-	
+
 	/**
 	 * @return The current step of the non-speculative iteration.
 	 */
@@ -134,7 +134,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			return mSearchIterator.getCurrentStep();
 		}
 	}
-	
+
 	private ISpeculativeTask<T> getNextTask() {
 		while (true) {
 			synchronized (mSearchIterator) {
@@ -143,7 +143,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 					return task;
 				}
 			}
-			
+
 			// Currently there is no speculative step available,
 			// but not all pending tasks have completed yet so there
 			// may be further steps available later
@@ -161,11 +161,11 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			}
 		}
 	}
-	
+
 	public boolean isStopRequested() {
 		return mStopRequested;
 	}
-	
+
 	/**
 	 * Begin and wait for iteration to end, then return the step.
 	 *
@@ -184,7 +184,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			throw new UncheckedInterruptedException(unexpected);
 		}
 	}
-	
+
 	/**
 	 * Checks if iteration has ended (either successfully or non-successfully) without blocking.
 	 *
@@ -196,7 +196,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 		}
 		return mPendingWorkers.stream().allMatch(Future::isDone);
 	}
-	
+
 	private void runTestAndCompleteTask(final ISpeculativeTask<T> task) {
 		final BooleanSupplier isCanceled = () -> task.isCanceled() || isStopRequested();
 		final Optional<Boolean> result = mCancelableTest.test(task.getStep(), isCanceled);
@@ -216,14 +216,14 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 			task.complete(result.get());
 		}
 	}
-	
+
 	/**
 	 * Request workers to stop the iteration.
 	 */
 	public void stopWorkers() {
 		mStopRequested = true;
 	}
-	
+
 	/**
 	 * Wait until iteration has ended for a limited time span only.
 	 *
@@ -238,7 +238,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	public boolean waitForEnd(final long timeout, final TimeUnit unit) throws InterruptedException {
 		long nanosLeft = unit.toNanos(timeout);
 		final long deadline = System.nanoTime() + nanosLeft;
-		
+
 		for (final Future<?> f : mPendingWorkers) {
 			if (!f.isDone()) {
 				if (nanosLeft <= 0L) {
@@ -256,7 +256,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 		}
 		return true;
 	}
-	
+
 	private void worker() {
 		try {
 			while (!isStopRequested()) {

@@ -51,32 +51,28 @@ public final class RegexDagUtils {
 	}
 
 	/** @see #sourceLocations(RegexDag, IDagOverlay) */
-	public static IcfgLocation singleSourceLocation(
-			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	public static IcfgLocation singleSourceLocation(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
 
 		return getOnly(sinkLocations(dag, overlay));
 	}
 
 	/** @see #nextLocations(RegexDag, Collection, Function, Function) */
-	public static Set<IcfgLocation> sourceLocations(
-			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	public static Set<IcfgLocation> sourceLocations(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
 
 		return nextLocations(overlay.sinks(dag), IIcfgTransition::getSource, overlay::successorsOf);
 	}
 
 	/** @see #sinkLocations(RegexDag, IDagOverlay) */
-	public static IcfgLocation singleSinkLocation(
-			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	public static IcfgLocation singleSinkLocation(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
 
 		return getOnly(sinkLocations(dag, overlay));
 	}
 
 	/** @see #nextLocations(RegexDag, Collection, Function, Function) */
-	public static Set<IcfgLocation> sinkLocations(
-			final RegexDag<IIcfgTransition<IcfgLocation>> dag,
+	public static Set<IcfgLocation> sinkLocations(final RegexDag<IIcfgTransition<IcfgLocation>> dag,
 			final IDagOverlay<IIcfgTransition<IcfgLocation>> overlay) {
 
 		return nextLocations(overlay.sinks(dag), IIcfgTransition::getTarget, overlay::predecessorsOf);
@@ -91,26 +87,30 @@ public final class RegexDagUtils {
 
 	/**
 	 *
-	 * Searches the IcfgLocations next to a given set of DAG nodes.
-	 * IcfgLocation L is included if and only if there is a path …
+	 * Searches the IcfgLocations next to a given set of DAG nodes. IcfgLocation L is included if and only if there is a
+	 * path …
 	 * <ul>
-	 * <li> starting at one of given DAG nodes
-	 * <li> ending at a RegexDagNode such that node's IcfgLocation closer to the starting nodes is L ✱
-	 * <li> visiting only RegexDagNodes without locations (that is, epsilon) in between
+	 * <li>starting at one of given DAG nodes
+	 * <li>ending at a RegexDagNode such that node's IcfgLocation closer to the starting nodes is L ✱
+	 * <li>visiting only RegexDagNodes without locations (that is, epsilon) in between
 	 * </ul>
 	 * <p>
-	 * ✱ In the ICFG the nodes are program locations. However, in the DAG the nodes are transitions between
-	 * two locations (a simple transition), one location (a loop), or no location (an epsilon node used
-	 * to model forks and joins in the program flow, or an empty set regex node).
-	 * The function {@code getLocationInStartPointDirection} returns the location closer to the starting nodes
-	 * for cases in which there are multiple IcfgLocations per RegexDagNode.
+	 * ✱ In the ICFG the nodes are program locations. However, in the DAG the nodes are transitions between two
+	 * locations (a simple transition), one location (a loop), or no location (an epsilon node used to model forks and
+	 * joins in the program flow, or an empty set regex node). The function {@code getLocationInStartPointDirection}
+	 * returns the location closer to the starting nodes for cases in which there are multiple IcfgLocations per
+	 * RegexDagNode.
 	 *
-	 * @param <T> Abbreviation for long type – this method isn't supposed to be actually generic
+	 * @param <T>
+	 *            Abbreviation for long type – this method isn't supposed to be actually generic
 	 *
-	 * @param startPoints Starting points for the search. Ideally no starting point can reach another
-	 *                    starting point using {@code getNodesInSeachDirection}.
-	 * @param getLocationInStartPointDirection See ✱
-	 * @param getNodesInSeachDirection Search direction, can also be used to respect DAG overlays
+	 * @param startPoints
+	 *            Starting points for the search. Ideally no starting point can reach another starting point using
+	 *            {@code getNodesInSeachDirection}.
+	 * @param getLocationInStartPointDirection
+	 *            See ✱
+	 * @param getNodesInSeachDirection
+	 *            Search direction, can also be used to respect DAG overlays
 	 *
 	 * @return IcfgLocations corresponding to the starting nodes in search direction
 	 */
@@ -121,9 +121,7 @@ public final class RegexDagUtils {
 
 		final Set<IcfgLocation> resultLocs = new HashSet<>();
 
-		final Queue<RegexDagNode<T>> worklist = new ArrayDeque<>();
-		worklist.addAll(startPoints);
-
+		final Queue<RegexDagNode<T>> worklist = new ArrayDeque<>(startPoints);
 		while (!worklist.isEmpty()) {
 			final RegexDagNode<T> node = worklist.remove();
 			final IRegex<T> regex = node.getContent();
@@ -141,9 +139,9 @@ public final class RegexDagUtils {
 		return resultLocs;
 	}
 
-	/**  Marks a regex by appending a unique marker literal. */
-	public static IRegex<IIcfgTransition<IcfgLocation>> markRegex(
-			final IRegex<IIcfgTransition<IcfgLocation>> regex, final IcfgLocation finalLocationAsMark) {
+	/** Marks a regex by appending a unique marker literal. */
+	public static IRegex<IIcfgTransition<IcfgLocation>> markRegex(final IRegex<IIcfgTransition<IcfgLocation>> regex,
+			final IcfgLocation finalLocationAsMark) {
 		return Regex.concat(regex, Regex.literal(new LocationMarkerTransition(finalLocationAsMark)));
 	}
 

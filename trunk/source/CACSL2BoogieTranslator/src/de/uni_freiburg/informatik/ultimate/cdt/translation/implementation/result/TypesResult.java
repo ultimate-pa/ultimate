@@ -36,10 +36,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 /**
  * Result that is returned whenever we dispatch a type specifier.
  *
- * TODO 2018-10-22 Matthias: It seems that this kind of result is
- * (sometimes) also returned when we dispatch a type declaration.
- * I think this is not desired any more and happens only for
- * historical reasons.
+ * TODO 2018-10-22 Matthias: It seems that this kind of result is (sometimes) also returned when we dispatch a type
+ * declaration. I think this is not desired any more and happens only for historical reasons.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Markus Lindenmann

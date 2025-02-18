@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -56,7 +57,8 @@ import java.util.stream.Collectors;
  * @param <MAP>
  *            Type of Map that is used to store the relation.
  */
-public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map<D, SET>> implements Iterable<Entry<D, R>> {
+public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map<D, SET>>
+		implements Iterable<Entry<D, R>> {
 	private static final String NOT_YET_IMPLEMENTED = "not yet implemented";
 
 	protected final MAP mMap;
@@ -125,10 +127,11 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	}
 
 	/**
-	 * Removes all pairs from the given relation from this relation.
-	 * (i.e., subtracts the argument relation from this one)
+	 * Removes all pairs from the given relation from this relation. (i.e., subtracts the argument relation from this
+	 * one)
 	 *
-	 * @param rel relation to subtract from this one
+	 * @param rel
+	 *            relation to subtract from this one
 	 */
 	public void removeAllPairs(final AbstractRelation<D, R, ?, ?> rel) {
 		for (final Entry<D, R> en : rel.getSetOfPairs()) {
@@ -163,7 +166,6 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		}
 		assert sanityCheck();
 	}
-
 
 	/**
 	 * Replaces all occurrences of an element on the left hand side of a pair in this relation by some other element.
@@ -204,14 +206,13 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	}
 
 	/**
-	 * @deprecated 2019-12-27 Matthias: I think this method should be replaced by a
-	 * constructor. Modifies the original object but there is no performance gain
-	 * because a temporary copy is constructed.
+	 * @deprecated 2019-12-27 Matthias: I think this method should be replaced by a constructor. Modifies the original
+	 *             object but there is no performance gain because a temporary copy is constructed.
 	 */
 	@Deprecated
 	public void transformElements(final Function<D, D> dTransformer, final Function<R, R> rTransformer) {
 		// TODO: would be nicer if we did not use HashRelation but something more generic for the copy
-		for (final Entry<D, R> pair : new HashRelation<D, R>(this)) {
+		for (final Entry<D, R> pair : new HashRelation<>(this)) {
 			removePair(pair.getKey(), pair.getValue());
 			addPair(dTransformer.apply(pair.getKey()), rTransformer.apply(pair.getValue()));
 		}
@@ -331,10 +332,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mMap == null) ? 0 : mMap.hashCode());
-		return result;
+		return Objects.hash(mMap);
 	}
 
 	@Override
@@ -360,7 +358,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 	}
 
 	private boolean sanityCheck() {
-		for (final Entry<D, SET> en : this.mMap.entrySet()) {
+		for (final Entry<D, SET> en : mMap.entrySet()) {
 			if (en.getKey() == null) {
 				return false;
 			}
@@ -374,21 +372,18 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 		return true;
 	}
 
-
-
 	public Set<Entry<D, SET>> entrySet() {
 		return mMap.entrySet();
 	}
 
 	/**
-	 * Returns a Set view of the pairs contained in this relation. The set is
-	 * backed by the relation, so changes to the map are reflected in the set,
-	 * and vice-versa.
+	 * Returns a Set view of the pairs contained in this relation. The set is backed by the relation, so changes to the
+	 * map are reflected in the set, and vice-versa.
 	 *
 	 * @return a set view of the pairs contained in this relation
 	 */
 	public Set<Map.Entry<D, R>> getSetOfPairs() {
-		return new Set<Map.Entry<D, R>>() {
+		return new Set<>() {
 
 			@Override
 			public boolean add(final Entry<D, R> arg0) {
@@ -427,7 +422,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 
 			@Override
 			public Iterator<Entry<D, R>> iterator() {
-				return new Iterator<Map.Entry<D, R>>() {
+				return new Iterator<>() {
 					private Entry<D, R> mNextEntry;
 					private Iterator<Entry<D, SET>> mOuterIterator;
 					private Iterator<R> mInnerIterator;
@@ -450,7 +445,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 						if (mInnerIterator != null) {
 							assert mInnerIterator.hasNext();
 							final R next = mInnerIterator.next();
-							return new Entry<D, R>() {
+							return new Entry<>() {
 								private final D mKey;
 								private final R mValue;
 								{
@@ -540,6 +535,7 @@ public abstract class AbstractRelation<D, R, SET extends Set<R>, MAP extends Map
 
 	/**
 	 * For all entries (k,v) of the map add the reverse pair (v,k) to this relation.
+	 *
 	 * @return true iff some new element was added
 	 */
 	public boolean reverseAddAll(final Map<R, D> map) {

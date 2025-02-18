@@ -408,8 +408,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		final LBool sat = mScript.checkSat();
 		if (sat == LBool.SAT) {
 			// Get all relevant variables
-			final ArrayList<Term> coefficients = new ArrayList<>();
-			coefficients.addAll(mTemplate.getCoefficients());
+			final ArrayList<Term> coefficients = new ArrayList<>(mTemplate.getCoefficients());
 			for (final SupportingInvariantGenerator sig : msi_generators) {
 				coefficients.addAll(sig.getCoefficients());
 			}

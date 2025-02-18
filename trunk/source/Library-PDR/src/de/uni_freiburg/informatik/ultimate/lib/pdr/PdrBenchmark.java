@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
  */
 public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches implements IStatisticsDataProvider {
 
-	private static final String[] STOPWATCHES = new String[] { PdrStatisticsDefinitions.PDR_RUNTIME.toString() };
+	private static final String[] STOPWATCHES = { PdrStatisticsDefinitions.PDR_RUNTIME.toString() };
 
 	@Override
 	public Collection<String> getKeys() {

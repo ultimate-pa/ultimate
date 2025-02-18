@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil.IReduce;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
-import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils.IExplicitConverter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 public final class ColumnDefinitionUtil {
 
 	// @formatter:off
-	private static final ColumnDefinition[] ADDITIONAL_DEFS = new ColumnDefinition[] {
+	private static final ColumnDefinition[] ADDITIONAL_DEFS = {
 			new ColumnDefinition("Folder", "Folder", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
 			new ColumnDefinition("File", "File", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
 			new ColumnDefinition("Settings", "Settings", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
@@ -65,7 +65,7 @@ public final class ColumnDefinitionUtil {
 
 	};
 
-	private static final IExtractionFunction[] FUN_ADDITIONAL_DEFS = new IExtractionFunction[] {
+	private static final IExtractionFunction[] FUN_ADDITIONAL_DEFS = {
 			((urd, tr, cat, message) -> urd.getInputFileFolders()),
 			((urd, tr, cat, message) -> urd.getInputFileNames().replace(',', ';')),
 			((urd, tr, cat, message) -> urd.getSettingsAbsolutePath()),
@@ -91,13 +91,8 @@ public final class ColumnDefinitionUtil {
 
 		final ICsvProvider<String> newProvider = new SimpleCsvProvider<>(csv.getColumnTitles());
 
-		final List<ConversionContext> conversionInfo = new ArrayList<>(
-				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<ConversionContext, ColumnDefinition>() {
-					@Override
-					public ConversionContext reduce(final ColumnDefinition entry) {
-						return entry.getConversionContext();
-					}
-				}));
+		final List<ConversionContext> conversionInfo = new ArrayList<>(CoreUtil.select(columnDefinitions,
+				(IReduce<ConversionContext, ColumnDefinition>) ColumnDefinition::getConversionContext));
 
 		final int rows = csv.getRowHeaders().size();
 		for (int i = 0; i < rows; ++i) {
@@ -128,13 +123,8 @@ public final class ColumnDefinitionUtil {
 		final HashSet<String> max = new HashSet<>();
 		final HashSet<String> avg = new HashSet<>();
 
-		final List<String> columnsToKeep =
-				new ArrayList<>(CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
-					@Override
-					public String reduce(final ColumnDefinition entry) {
-						return entry.getCsvColumnTitle();
-					}
-				}));
+		final List<String> columnsToKeep = new ArrayList<>(CoreUtil.select(columnDefinitions,
+				(IReduce<String, ColumnDefinition>) ColumnDefinition::getCsvColumnTitle));
 
 		int i = 0;
 		for (final ColumnDefinition.Aggregate aggregate : aggregates) {
@@ -154,71 +144,66 @@ public final class ColumnDefinitionUtil {
 			++i;
 		}
 
-		final ICsvProvider<String> newProvider =
-				CsvUtils.convertComplete(provider, new IExplicitConverter<ICsvProvider<?>, ICsvProvider<String>>() {
-					@Override
-					public ICsvProvider<String> convert(final ICsvProvider<?> input) {
-						final ICsvProvider<String> rtr = new SimpleCsvProvider<>(input.getColumnTitles());
-						final List<String> newRow = new ArrayList<>();
+		final ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider, input -> {
+			final ICsvProvider<String> rtr = new SimpleCsvProvider<>(input.getColumnTitles());
+			final List<String> newRow = new ArrayList<>();
 
-						int idx = 0;
+			int idx = 0;
 
-						for (final String columnTitle : input.getColumnTitles()) {
-							String finalValue = null;
-							BigDecimal numberValue = BigDecimal.ZERO;
-							final List<String> cells = new ArrayList<>();
+			for (final String columnTitle : input.getColumnTitles()) {
+				String finalValue = null;
+				BigDecimal numberValue = BigDecimal.ZERO;
+				final List<String> cells = new ArrayList<>();
 
-							for (final List<?> row : input.getTable()) {
-								final Object cell = row.get(idx);
-								if (cell != null) {
-									cells.add(cell.toString());
-								}
-							}
-
-							if (cells.isEmpty()) {
-								finalValue = "-";
-
-							} else if (sum.contains(columnTitle)) {
-								for (final String cell : cells) {
-									try {
-										numberValue = numberValue.add(new BigDecimal(cell));
-										finalValue = numberValue.toString();
-									} catch (final Exception ex) {
-										finalValue = cell;
-									}
-								}
-							} else if (max.contains(columnTitle)) {
-								for (final String cell : cells) {
-									try {
-										numberValue = numberValue.max(new BigDecimal(cell));
-										finalValue = numberValue.toString();
-									} catch (final Exception ex) {
-										finalValue = cell;
-									}
-								}
-							} else if (avg.contains(columnTitle)) {
-								final int size = cells.size();
-								for (final String cell : cells) {
-									try {
-										numberValue = numberValue.add(new BigDecimal(cell));
-										finalValue = numberValue.divide(new BigDecimal(size), 5, RoundingMode.HALF_UP)
-												.toString();
-									} catch (final Exception ex) {
-										finalValue = cell;
-									}
-								}
-							} else {
-								for (final String cell : cells) {
-									finalValue = cell;
-								}
-							}
-							idx++;
-							newRow.add(finalValue);
-						}
-						rtr.addRow(newRow);
-						return rtr;
+				for (final List<?> row : input.getTable()) {
+					final Object cell = row.get(idx);
+					if (cell != null) {
+						cells.add(cell.toString());
 					}
-				});
+				}
+
+				if (cells.isEmpty()) {
+					finalValue = "-";
+
+				} else if (sum.contains(columnTitle)) {
+					for (final String cell : cells) {
+						try {
+							numberValue = numberValue.add(new BigDecimal(cell));
+							finalValue = numberValue.toString();
+						} catch (final Exception ex) {
+							finalValue = cell;
+						}
+					}
+				} else if (max.contains(columnTitle)) {
+					for (final String cell : cells) {
+						try {
+							numberValue = numberValue.max(new BigDecimal(cell));
+							finalValue = numberValue.toString();
+						} catch (final Exception ex) {
+							finalValue = cell;
+						}
+					}
+				} else if (avg.contains(columnTitle)) {
+					final int size = cells.size();
+					for (final String cell : cells) {
+						try {
+							numberValue = numberValue.add(new BigDecimal(cell));
+							finalValue = numberValue.divide(new BigDecimal(size), 5, RoundingMode.HALF_UP).toString();
+						} catch (final Exception ex) {
+							finalValue = cell;
+						}
+					}
+				} else {
+					for (final String cell : cells) {
+						finalValue = cell;
+					}
+				}
+				idx++;
+				newRow.add(finalValue);
+			}
+			rtr.addRow(newRow);
+			return rtr;
+		});
 		return newProvider;
 	}
 
@@ -239,23 +224,15 @@ public final class ColumnDefinitionUtil {
 			final ExtendedResult extendedResult, final List<ColumnDefinition> columnDefinitions) {
 
 		// remove all columns that are marked for removal by column definitions
-		provider = CsvUtils.projectColumn(provider,
-				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
-					@Override
-					public String reduce(final ColumnDefinition entry) {
-						return entry.getCsvColumnTitle();
-					}
-				}));
+		provider = CsvUtils.projectColumn(provider, CoreUtil.select(columnDefinitions,
+				(IReduce<String, ColumnDefinition>) ColumnDefinition::getCsvColumnTitle));
 
 		// transform from multiple rows per UltimateTestCase to one (e.g. merge
 		// the different benchmark types into one row)
-		ICsvProvider<String> newProvider = reduceProvider(provider, CoreUtil.select(columnDefinitions,
-				new CoreUtil.IReduce<ColumnDefinition.Aggregate, ColumnDefinition>() {
-					@Override
-					public ColumnDefinition.Aggregate reduce(final ColumnDefinition entry) {
-						return entry.getSingleRunToOneRow();
-					}
-				}), columnDefinitions);
+		ICsvProvider<String> newProvider = reduceProvider(provider,
+				CoreUtil.select(columnDefinitions,
+						(IReduce<Aggregate, ColumnDefinition>) ColumnDefinition::getSingleRunToOneRow),
+				columnDefinitions);
 
 		// add the ultimate run definition in the beginning
 		newProvider = prefixCsvProvider(urd, extendedResult, newProvider);
@@ -325,7 +302,7 @@ public final class ColumnDefinitionUtil {
 	}
 
 	@FunctionalInterface
-	private static interface IExtractionFunction {
+	private interface IExtractionFunction {
 		String extract(final UltimateRunDefinition urd, final TestResult testResult, final String category,
 				final String message);
 	}

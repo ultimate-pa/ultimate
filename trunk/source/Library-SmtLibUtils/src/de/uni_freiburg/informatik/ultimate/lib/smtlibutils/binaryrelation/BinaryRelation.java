@@ -44,7 +44,6 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	protected final Term mRhs;
 
 	protected BinaryRelation(final RelationSymbol relationSymbol, final Term lhs, final Term rhs) {
-		super();
 		mRelationSymbol = relationSymbol;
 		mLhs = lhs;
 		mRhs = rhs;
@@ -63,9 +62,8 @@ public abstract class BinaryRelation implements IBinaryRelation {
 	}
 
 	/**
-	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a
-	 * greater-than relation symbol. Otherwise returns an equivalent term where
-	 * relation symbol and parameters are swapped.
+	 * Returns the term (relationSymbol lhsTerm rhsTerm) if relationSymbol is not a greater-than relation symbol.
+	 * Otherwise returns an equivalent term where relation symbol and parameters are swapped.
 	 */
 	public static Term constructLessNormalForm(final Script script, final RelationSymbol relationSymbol,
 			final Term lhsTerm, final Term rhsTerm) throws AssertionError {
@@ -169,28 +167,34 @@ public abstract class BinaryRelation implements IBinaryRelation {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final BinaryRelation other = (BinaryRelation) obj;
 		if (mLhs == null) {
-			if (other.mLhs != null)
+			if (other.mLhs != null) {
 				return false;
-		} else if (!mLhs.equals(other.mLhs))
+			}
+		} else if (!mLhs.equals(other.mLhs)) {
 			return false;
-		if (mRelationSymbol != other.mRelationSymbol)
+		}
+		if (mRelationSymbol != other.mRelationSymbol) {
 			return false;
+		}
 		if (mRhs == null) {
-			if (other.mRhs != null)
+			if (other.mRhs != null) {
 				return false;
-		} else if (!mRhs.equals(other.mRhs))
+			}
+		} else if (!mRhs.equals(other.mRhs)) {
 			return false;
+		}
 		return true;
 	}
-
-
 
 }

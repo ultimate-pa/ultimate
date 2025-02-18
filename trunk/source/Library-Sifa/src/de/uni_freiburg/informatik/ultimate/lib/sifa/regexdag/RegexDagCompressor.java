@@ -42,19 +42,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IDirectedGraph;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.IRegex;
 
 /**
- * Compresses RegexDags by merging nodes while conserving the DAG's language.
- * Use {@link #compress(RegexDag)} to compress a single DAG in-place.
+ * Compresses RegexDags by merging nodes while conserving the DAG's language. Use {@link #compress(RegexDag)} to
+ * compress a single DAG in-place.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class RegexDagCompressor<L> {
 
 	/**
-	 * Temporary table for grouping predecessors/successors of a node before merging each group.
-	 * Could also be a local variable, but recycling an existing map is more efficient than
-	 * creating a new one each time.
+	 * Temporary table for grouping predecessors/successors of a node before merging each group. Could also be a local
+	 * variable, but recycling an existing map is more efficient than creating a new one each time.
 	 */
 	private final Map<IRegex<L>, Set<RegexDagNode<L>>> mMergetable = new LinkedHashMap<>();
 
@@ -73,15 +73,16 @@ public class RegexDagCompressor<L> {
 	 * <p>
 	 * The compression is just "best effort":
 	 * <ul>
-	 * <li> The resulting DAG is not necessarily the minimum DAG.
-	 *      Sometimes an equivalent DAG with less nodes exists.
-	 * <li> The resulting DAG has no canonical form.
-	 *      Compressing two equivalent (but different) DAGs can yield different (but equivalent) results.
+	 * <li>The resulting DAG is not necessarily the minimum DAG. Sometimes an equivalent DAG with less nodes exists.
+	 * <li>The resulting DAG has no canonical form. Compressing two equivalent (but different) DAGs can yield different
+	 * (but equivalent) results.
 	 * </ul>
-	 * However, the compression is idempotent. In other words, compressing an already compressed DAG again has no effect.
+	 * However, the compression is idempotent. In other words, compressing an already compressed DAG again has no
+	 * effect.
 	 *
 	 *
-	 * @param dag DAG to be compressed in-place
+	 * @param dag
+	 *            DAG to be compressed in-place
 	 * @return The same DAG (now compressed)
 	 */
 	public RegexDag<L> compress(final RegexDag<L> dag) {
@@ -114,24 +115,24 @@ public class RegexDagCompressor<L> {
 			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> directionBaseToCandidates,
 			final Function<RegexDagNode<L>, Collection<RegexDagNode<L>>> directionCandidatesToBase) {
 		mMergetable.clear();
-		safeCandidates(baseNode, directionBaseToCandidates)
-				.forEach(this::addToMergetable);
-		mMergetable.entrySet().stream()
-				.forEach(this::groupToSingleNode);
+		safeCandidates(baseNode, directionBaseToCandidates).forEach(this::addToMergetable);
+		mMergetable.entrySet().stream().forEach(this::groupToSingleNode);
 	}
 
 	/**
 	 * Selects a group of candidates that never creates cycles when being merged in any way.
 	 * <p>
 	 * For example, consider the following graph during forward merging.
+	 *
 	 * <pre>
 	 *     ,––→ a ·············.
 	 *   base → b → c –,→ d ·····→ sink
 	 *     `––––––––––´
 	 * </pre>
-	 * Here the candidates {a, b} are selected. If d was also selected we could merge it with b which would
-	 * result in graph with cycles. Our selection process is just one of many. We could also select {a, d}, just {a},
-	 * or even {} – more research is needed on what to select to get the best compression results.
+	 *
+	 * Here the candidates {a, b} are selected. If d was also selected we could merge it with b which would result in
+	 * graph with cycles. Our selection process is just one of many. We could also select {a, d}, just {a}, or even {} –
+	 * more research is needed on what to select to get the best compression results.
 	 *
 	 * @return Either successors or predecessors (depending on direction) of a base node that can be merged without
 	 *         creating a cycle. Whether to merge or not still has to be decided based on the node labels.
@@ -163,15 +164,16 @@ public class RegexDagCompressor<L> {
 	/**
 	 * Merges two nodes by contracting one node (prey) into another (predator).
 	 * <p>
-	 * Copies incoming and outgoing edges from the pray node to the predator
-	 * without creating new parallel edges or selfloops.
+	 * Copies incoming and outgoing edges from the pray node to the predator without creating new parallel edges or
+	 * selfloops.
 	 * <p>
-	 * Unlinks the pray node from all its neighbors but not vice versa, that is,
-	 * the prey node still has references to its former neighbors
-	 * but the neighbors don't have references to the prey node.
+	 * Unlinks the pray node from all its neighbors but not vice versa, that is, the prey node still has references to
+	 * its former neighbors but the neighbors don't have references to the prey node.
 	 *
-	 * @param predator Node surviving the merge
-	 * @param prey Node to be consumed by the predator
+	 * @param predator
+	 *            Node surviving the merge
+	 * @param prey
+	 *            Node to be consumed by the predator
 	 */
 	private void merge(final RegexDagNode<L> predator, final RegexDagNode<L> prey) {
 		mMergedFlag = true;
@@ -232,20 +234,3 @@ public class RegexDagCompressor<L> {
 	}
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

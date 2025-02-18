@@ -112,11 +112,9 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 
 	private CongruenceClosure<ELEM> postProcessCcResult(final CongruenceClosure<ELEM> cc) {
 		CongruenceClosure<ELEM> result = cc;
-		if (CcSettings.UNIFY_CCS) {
-			// assert result.isFrozen();
-			if (cc.isFrozen()) {
-				result = addToPartialOrderCache(cc);
-			}
+		// assert result.isFrozen();
+		if (CcSettings.UNIFY_CCS && cc.isFrozen()) {
+			result = addToPartialOrderCache(cc);
 		}
 		return result;
 	}
@@ -873,8 +871,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 			filtered2.add(sc);
 		}
 
-		assert !filtered2.stream().anyMatch(sc -> sc.isInconsistent()) || filtered2
-				.size() == 1 : "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
+		assert !filtered2.stream().anyMatch(sc -> sc.isInconsistent()) || filtered2.size() == 1
+				: "not correctly normalized: there is a 'false' conjunct, but it is not the only conjunct";
 
 		if (filtered2.size() == 1 && filtered2.iterator().next().isInconsistent()) {
 			bmEnd(CcBmNames.BUILD_SET_CONSTRAINT_CONJUNCTION);
@@ -1027,7 +1025,7 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 		mBenchmark.pauseWatch(watch.name());
 	}
 
-	static enum CcBmNames {
+	enum CcBmNames {
 
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, REMOVE, IS_STRONGER_THAN_NO_CACHING, ADDNODE, REPORTCONTAINS,
 		REPORT_EQUALITY, REPORT_DISEQUALITY, PROJECT_TO_ELEMENTS, ADD_ALL_ELEMENTS, ALIGN_ELEMENTS, OVERALL,
@@ -1067,8 +1065,8 @@ public class CcManager<ELEM extends ICongruenceClosureElement<ELEM>> {
 	 */
 	public static <ELEM extends ICongruenceClosureElement<ELEM>> HashRelation<ELEM, ELEM> computeSplitInfo(
 			final CongruenceClosure<ELEM> ccWithBroaderPartition, final CongruenceClosure<ELEM> ccWithFinerPartition) {
-		assert CcManager.isPartitionStronger(ccWithBroaderPartition.mElementTVER,
-				ccWithFinerPartition.mElementTVER) : "assuming this has been checked already";
+		assert CcManager.isPartitionStronger(ccWithBroaderPartition.mElementTVER, ccWithFinerPartition.mElementTVER)
+				: "assuming this has been checked already";
 
 		final HashRelation<ELEM, ELEM> result = new HashRelation<>();
 

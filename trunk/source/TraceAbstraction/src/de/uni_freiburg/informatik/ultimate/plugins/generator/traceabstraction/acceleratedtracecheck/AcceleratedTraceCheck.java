@@ -229,12 +229,11 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 	private TraceCheckSpWp<L> checkTrace(final IPredicate precondition, final IPredicate postcondition,
 			final Counterexample<L> counterexample) {
-		final TraceCheckSpWp<L> tc =
-				new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<Integer, IPredicate>(), counterexample,
-						mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
-						mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
-						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
-						SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
+		final TraceCheckSpWp<L> tc = new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<>(), counterexample,
+				mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
+				mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
+				mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
+				SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
 		return tc;
 	}
 
@@ -517,7 +516,6 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 		public AcceleratedSegment(final int startPosition, final int endPosition,
 				final UnmodifiableTransFormula transitiveClosure) {
-			super();
 			mStartPosition = startPosition;
 			mEndPosition = endPosition;
 			mTransitiveClosure = transitiveClosure;

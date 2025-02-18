@@ -202,8 +202,8 @@ public class ThreadInstanceAdder {
 		// FIXME Matthias 2018-08-17: check method, especially for terminology and
 		// overapproximation flags
 
-		assert icfg.getProcedureEntryNodes().containsKey(threadInstanceName) : "Thread instance " + threadInstanceName
-				+ " missing.";
+		assert icfg.getProcedureEntryNodes().containsKey(threadInstanceName)
+				: "Thread instance " + threadInstanceName + " missing.";
 
 		// Add fork transition from callerNode to procedures entry node.
 		final IcfgLocation callerNode = fct.getSource();

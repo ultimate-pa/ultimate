@@ -117,7 +117,7 @@ public class MemoryModel_Unbounded extends BaseMemoryModel {
 			final boolean alsoInit = DataStructureUtils
 					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
 			final boolean alsoUncheckedRead = DataStructureUtils
-						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedReadRequired(), primitives);
+					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedReadRequired(), primitives);
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, primitives, alsoUncheckedWrite,
 					alsoInit, alsoUncheckedRead));
 		}

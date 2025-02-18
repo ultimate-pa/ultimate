@@ -44,9 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  * @param <ACTION>
  */
-public class EqTransitionRelation//<ACTION extends IIcfgTransition<IcfgLocation>>
+public class EqTransitionRelation// <ACTION extends IIcfgTransition<IcfgLocation>>
 		implements ITransitionRelation {
-
 
 	private final TransFormula mTf;
 	private final EqDisjunctiveConstraint<EqNode> mConstraint;
@@ -105,10 +104,9 @@ public class EqTransitionRelation//<ACTION extends IIcfgTransition<IcfgLocation>
 		return "EqTransRel: " + mConstraint.toString();
 	}
 
-
 	public Integer getStatistics(final VPStatistics stat) {
 		switch (stat) {
-		default :
+		default:
 			return mConstraint.getStatistics(stat);
 		}
 	}

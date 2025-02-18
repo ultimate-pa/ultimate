@@ -30,23 +30,23 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 public class PairXX<X> extends PairXY<X, X> {
 
-	public PairXX(X x, X y) {
+	public PairXX(final X x, final X y) {
 		super(x, y);
 		// TODO Auto-generated constructor stub
 	}
-	
-	@Override
-	public boolean equals(Object o) {
-		if(!(o instanceof IPair)) return false;
-		IPair other = (IPair)o;
- 		return getFstElement().equals(other.getFstElement())
-			&& getSndElement().equals(other.getSndElement());
-	}
-	
-    @Override
-    public int hashCode(){
-      return getFstElement().hashCode() + 31*getSndElement().hashCode();
-    }   
 
+	@Override
+	public boolean equals(final Object o) {
+		if (!(o instanceof IPair)) {
+			return false;
+		}
+		final IPair other = (IPair) o;
+		return getFstElement().equals(other.getFstElement()) && getSndElement().equals(other.getSndElement());
+	}
+
+	@Override
+	public int hashCode() {
+		return getFstElement().hashCode() + 31 * getSndElement().hashCode();
+	}
 
 }

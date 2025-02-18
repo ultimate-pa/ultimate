@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <L>
@@ -45,7 +45,7 @@ public interface IIpAbStrategyModule<L> {
 			List<QualifiedTracePredicates> imperfectIpps) throws AutomataOperationCanceledException;
 
 	/**
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 * @param <L>

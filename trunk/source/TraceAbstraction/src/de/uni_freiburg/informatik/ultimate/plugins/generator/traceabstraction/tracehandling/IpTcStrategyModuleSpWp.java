@@ -103,7 +103,7 @@ public abstract class IpTcStrategyModuleSpWp<LETTER extends IIcfgTransition<?>>
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 		final ManagedScript managedScript = createExternalManagedScript(getSolverSettings());
 
-		return new TraceCheckSpWp<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(), mCounterexample,
+		return new TraceCheckSpWp<>(mPrecondition, mPostcondition, new TreeMap<>(), mCounterexample,
 				mPrefs.getCfgSmtToolkit(), assertionOrder, mPrefs.getUnsatCores(), mPrefs.getUseLiveVariables(),
 				mServices, mPrefs.computeCounterexample(), mPredicateFactory, mPredicateUnifier,
 				mInterpolationTechnique, managedScript, simplificationTechnique, mPrefs.collectInterpolantStatistics());

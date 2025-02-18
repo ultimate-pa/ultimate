@@ -25,8 +25,8 @@
  * to convey the resulting work.
  */
 /**
- * This package provides support for Counting Automata. Our counting automata
- * are similar to the counting automata of the following publication.
+ * This package provides support for Counting Automata. Our counting automata are similar to the counting automata of
+ * the following publication.
  *
  * <pre>
  * 2019APLAS - Holík,Lengál,Saarikivi,Turonová,Veanes,Vojnar - Succinct Determinisation of Counting Automata via Sphere Construction

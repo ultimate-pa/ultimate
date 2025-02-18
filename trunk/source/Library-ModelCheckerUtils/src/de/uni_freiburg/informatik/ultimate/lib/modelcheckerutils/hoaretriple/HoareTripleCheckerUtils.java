@@ -110,8 +110,8 @@ public final class HoareTripleCheckerUtils {
 		final SubtermPropertyChecker quantifierFinder = new SubtermPropertyChecker(QuantifiedFormula.class::isInstance);
 		final Predicate<IPredicate> quantifierProtectionForPredicates;
 		if (UNKNOWN_FOR_ALL_QUANTIFIED_PREDICATES) {
-			quantifierProtectionForPredicates = (p -> unifier.isIntricatePredicate(p)
-					|| quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula()));
+			quantifierProtectionForPredicates =
+					(p -> unifier.isIntricatePredicate(p) || quantifierFinder.isSatisfiedBySomeSubterm(p.getFormula()));
 		} else {
 			quantifierProtectionForPredicates = (p -> unifier.isIntricatePredicate(p));
 		}

@@ -103,8 +103,8 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_RELATIVE);
 
-		final int transitionsInput = new NumberOfTransitions<LETTER, STATE>(mServices, getReach()).getResult();
-		final int transitionsOutput = new NumberOfTransitions<LETTER, STATE>(mServices, getResult()).getResult();
+		final int transitionsInput = new NumberOfTransitions<>(mServices, getReach()).getResult();
+		final int transitionsOutput = new NumberOfTransitions<>(mServices, getResult()).getResult();
 
 		result.addKeyValuePair(StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE, transitionsInput - transitionsOutput);
 		return result;
@@ -179,8 +179,8 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : result.internalSuccessors(state)) {
-				correct &= reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
-						outTrans.getSucc());
+				correct &=
+						reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : result.callSuccessors(state)) {

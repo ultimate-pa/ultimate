@@ -62,17 +62,17 @@ public class SPredicateWithWitnessNode extends SPredicate {
 
 	@Override
 	public String toString() {
-		String result = super.mSerialNumber + "#";
-		result += "(";
+		final StringBuilder result = new StringBuilder().append(super.mSerialNumber).append("#");
+		result.append("(");
 		// if (mProgramPoint != null) {
-		result += mProgramPoint.getDebugIdentifier();
+		result.append(mProgramPoint.getDebugIdentifier());
 		// }
-		result += ",";
-		result += mWitnessNode.getName();
-		result += ",";
-		result += mStutteringSteps;
-		result += ")";
-		return result;
+		result.append(",");
+		result.append(mWitnessNode.getName());
+		result.append(",");
+		result.append(mStutteringSteps);
+		result.append(")");
+		return result.toString();
 	}
 
 }

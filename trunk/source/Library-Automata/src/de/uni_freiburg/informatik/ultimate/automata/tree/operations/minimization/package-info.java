@@ -26,7 +26,7 @@
  */
 /**
  * Minimization operations for tree automata.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization;

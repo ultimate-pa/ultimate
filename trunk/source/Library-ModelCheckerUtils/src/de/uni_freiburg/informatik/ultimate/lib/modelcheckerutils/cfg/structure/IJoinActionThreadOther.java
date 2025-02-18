@@ -31,14 +31,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Classes that implement this interface represent an {@link IAction} that
- * defines the effect that a join has to the (non-control-flow)
- * variables of the system. A join is the transition that brings the system
- * from a forked procedure back to the joining procedure. This means that the
- * effect of the join is that
+ * Classes that implement this interface represent an {@link IAction} that defines the effect that a join has to the
+ * (non-control-flow) variables of the system. A join is the transition that brings the system from a forked procedure
+ * back to the joining procedure. This means that the effect of the join is that
  * <ul>
- * <li> variables that are assigned by the fork get the values that are returned by the procedure
- * <li> all local variables that occure only in the context of the forked procedure are havoced.
+ * <li>variables that are assigned by the fork get the values that are returned by the procedure
+ * <li>all local variables that occure only in the context of the forked procedure are havoced.
  * <ul/>
  *
  * @author Lars Nitzke (lars.nitzke@outlook.com)

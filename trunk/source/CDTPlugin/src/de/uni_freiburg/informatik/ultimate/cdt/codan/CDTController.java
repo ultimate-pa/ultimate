@@ -102,7 +102,7 @@ public class CDTController implements IController<RunDefinition> {
 		mChecker.setStorage(mToolchainData.getStorage());
 
 		mCurrentJob = new ManualReleaseToolchainJob("Run Ultimate...", mCore, this, new WrapperNode(null, ast),
-				new ModelType(Activator.PLUGIN_ID, Type.AST, new ArrayList<String>()), mLogger);
+				new ModelType(Activator.PLUGIN_ID, Type.AST, new ArrayList<>()), mLogger);
 		mCurrentJob.setUser(true);
 		mCurrentJob.schedule();
 		mCurrentJob.join();

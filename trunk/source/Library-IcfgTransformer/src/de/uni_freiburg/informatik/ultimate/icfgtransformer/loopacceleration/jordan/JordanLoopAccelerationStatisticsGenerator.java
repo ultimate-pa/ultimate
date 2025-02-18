@@ -47,7 +47,6 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables,
 			final int numberOfHavocedVariables, final int numberOfArrayWrites, final int numberOfReadonlyVariables,
 			final NestedMap2<Integer, Integer, Integer> eigenvalues, final String errorMessage) {
-		super();
 		mNumberOfAssignedVariables = numberOfAssignedVariables;
 		mNumberOfHavocedVariables = numberOfHavocedVariables;
 		mNumberOfReadonlyVariables = numberOfReadonlyVariables;

@@ -149,7 +149,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private final ArrayDeque<Map<TermVariable, Term>> mRenamingMaps;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		super();
 		mServices = services;
 		mMgdScript = mgdScript;
 		mRenamingMaps = new ArrayDeque<>();
@@ -574,8 +573,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);
-		final Set<TermVariable> freeVariables = new HashSet<>();
-		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
+		final Set<TermVariable> freeVariables = new HashSet<>(Arrays.asList(context.getFreeVars()));
 		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
 		final Map<TermVariable, Term> substitutionMapping =
 				constructFreshConstantSymbols(mgdScript, freeVariables, term, context);

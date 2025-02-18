@@ -63,12 +63,11 @@ public class InitializerResultBuilder {
 
 	public InitializerResultBuilder(final InitializerResult initializerResult) {
 		mRootDesignator = initializerResult.getRootDesignator();
-		mRootExpressionResult = initializerResult.hasRootExpressionResult() ?
-				new ExpressionResultBuilder()
-				.addAllExceptLrValue(initializerResult.getRootExpressionResult())
-				.setLrValue(initializerResult.getRootExpressionResult().getLrValue())
-				.build() :
-					null;
+		mRootExpressionResult =
+				initializerResult.hasRootExpressionResult()
+						? new ExpressionResultBuilder().addAllExceptLrValue(initializerResult.getRootExpressionResult())
+								.setLrValue(initializerResult.getRootExpressionResult().getLrValue()).build()
+						: null;
 		mChildren = initializerResult.isInitializerList() ? new ArrayList<>(initializerResult.getList()) : null;
 	}
 
@@ -90,7 +89,6 @@ public class InitializerResultBuilder {
 		mRootDesignator = new StructDesignator(fieldDesignatorName);
 		return this;
 	}
-
 
 	public InitializerResultBuilder setRootDesignator(final Integer arrayDesignatorNumber) {
 		if (mRootDesignator != null) {

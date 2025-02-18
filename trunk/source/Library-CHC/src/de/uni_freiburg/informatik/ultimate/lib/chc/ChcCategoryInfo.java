@@ -8,10 +8,7 @@ public class ChcCategoryInfo {
 
 	private boolean mContainsNonLinearHornClauses;
 
-
-
 	public ChcCategoryInfo(final Logics constraintLogic, final boolean containsNonLinearHornClauses) {
-		super();
 		mConstraintLogic = constraintLogic;
 		mContainsNonLinearHornClauses = containsNonLinearHornClauses;
 	}

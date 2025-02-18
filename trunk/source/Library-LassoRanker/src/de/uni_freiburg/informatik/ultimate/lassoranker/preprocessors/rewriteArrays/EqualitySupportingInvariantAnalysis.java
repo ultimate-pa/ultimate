@@ -103,7 +103,6 @@ public class EqualitySupportingInvariantAnalysis {
 			final IIcfgSymbolTable symbolTable, final ManagedScript mgdScript,
 			final UnmodifiableTransFormula originalStem, final UnmodifiableTransFormula originalLoop,
 			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
-		super();
 		mSymbolTable = symbolTable;
 		mScript = mgdScript;
 		mOriginalStem = originalStem;

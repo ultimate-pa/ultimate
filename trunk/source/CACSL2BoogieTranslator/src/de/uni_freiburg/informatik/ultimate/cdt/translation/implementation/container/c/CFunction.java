@@ -66,8 +66,8 @@ public class CFunction extends CType {
 		mTakesVarArgs = takesVarArgs;
 		mVarArgsUsage = varArgsUsage;
 		assert mVarArgsUsage != VarArgsUsage.USED || mTakesVarArgs : "Cannot use varargs but not have varargs";
-		assert mVarArgsUsage == VarArgsUsage.UNUSED
-				|| mTakesVarArgs : "Cannot have no varargs and not know about usage";
+		assert mVarArgsUsage == VarArgsUsage.UNUSED || mTakesVarArgs
+				: "Cannot have no varargs and not know about usage";
 	}
 
 	/**
@@ -203,8 +203,8 @@ public class CFunction extends CType {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("((");
-		for (int i = 0; i < mParamTypes.length; i++) {
-			appendCType(sb, mParamTypes[i].getType());
+		for (final CDeclaration mParamType : mParamTypes) {
+			appendCType(sb, mParamType.getType());
 			sb.append(" ");
 		}
 		if (mTakesVarArgs) {
@@ -230,9 +230,9 @@ public class CFunction extends CType {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
-		for (int i = 0; i < mParamTypes.length; i++) {
+		for (final CDeclaration mParamType : mParamTypes) {
 			sb.append(times);
-			sb.append(mParamTypes[i].getType().getUnderlyingType().toString());
+			sb.append(mParamType.getType().getUnderlyingType().toString());
 			times = "~X~";
 		}
 		if (mTakesVarArgs) {

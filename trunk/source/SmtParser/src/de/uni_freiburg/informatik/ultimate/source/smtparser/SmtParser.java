@@ -301,9 +301,9 @@ public class SmtParser implements ISource {
 			}
 			final IntBlastingMode intBlastingMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingMode, IntBlastingMode.class);
-			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations = mServices
-					.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getEnum(SmtParserPreferenceInitializer.LABEL_IntBlastingConstraintsForBitwiseOperations,
+			final ConstraintsForBitwiseOperations constraintsForBitwiseOperations =
+					mServices.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(
+							SmtParserPreferenceInitializer.LABEL_IntBlastingConstraintsForBitwiseOperations,
 							ConstraintsForBitwiseOperations.class);
 			final Script backEnd = SolverBuilder.buildScript(mServices, solverSettings);
 			script = new IntBlastingWrapper(mServices, mLogger, backEnd, intBlastingMode,

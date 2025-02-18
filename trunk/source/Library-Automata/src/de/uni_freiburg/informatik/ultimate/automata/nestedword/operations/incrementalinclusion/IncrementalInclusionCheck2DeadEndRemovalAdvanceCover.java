@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Jeffery Hsu (a71128@gmail.com)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 /**
  * This is an implementation of incremental inclusion check based on the Bn baseline Algorithm.<br/>
  * We use InclusionViaDIfference to check its correctness.
- * 
+ *
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
  *            letter type
@@ -103,7 +103,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 			} while (true);
 		}
 
-		public PseudoAutomata(final PseudoAutomata preAutomata, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn)
+		public PseudoAutomata(final PseudoAutomata preAutomata,
+				final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn)
 				throws AutomataOperationCanceledException {
 			associatedAutomata = bn;
 			prvPAutomata = preAutomata;
@@ -162,7 +163,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 						tempNodeData.hash = initStateA.hashCode();
 						tempNodeData.word = new NestedRun<>(initStateA);
 						if (!newNodes.containsKey(tempNodeData.aState)) {
-							newNodes.put(tempNodeData.aState, new LinkedList<NodeData>());
+							newNodes.put(tempNodeData.aState, new LinkedList<>());
 						}
 						newNodes.get(tempNodeData.aState).add(tempNodeData);
 						allNodes.add(tempNodeData);
@@ -196,7 +197,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 														.concatenate(new NestedWord<>(ATransition.getLetter(), -2)),
 												newStateSequence);
 										if (!newNodes.containsKey(tempNodeData.aState)) {
-											newNodes.put(tempNodeData.aState, new LinkedList<NodeData>());
+											newNodes.put(tempNodeData.aState, new LinkedList<>());
 										}
 										newNodes.get(tempNodeData.aState).add(tempNodeData);
 										allNodes.add(tempNodeData);
@@ -215,7 +216,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 						BHash = BHash | BState.hashCode();
 					}
 					for (final NodeData initNode : prvPAutomata.initialNodes) {
-						if (initNode.keep == true) {
+						if (initNode.keep) {
 							tempNodeData = new NodeData();
 							totalNodes++;
 							tempNodeData.parentNode = null;
@@ -232,14 +233,14 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 										break;
 									}
 								}
-								if (tempNodeData.accepting == true) {
+								if (tempNodeData.accepting) {
 									errorNodes.add(tempNodeData);
 								}
 							} else {
 								tempNodeData.accepting = false;
 							}
 							if (!newNodes.containsKey(tempNodeData.aState)) {
-								newNodes.put(tempNodeData.aState, new LinkedList<NodeData>());
+								newNodes.put(tempNodeData.aState, new LinkedList<>());
 							}
 							newNodes.get(tempNodeData.aState).add(tempNodeData);
 							allNodes.add(tempNodeData);
@@ -250,7 +251,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 						for (final NodeData preNode : currentNodes.get(key)) {
 							if (preNode.coveredBy == null) {
 								for (final Transition tran : prvPAutomata.internalSuccessors(preNode.aState)) {
-									if (tran.getSucc().keep == true) {
+									if (tran.getSucc().keep) {
 										tempNodeData = new NodeData();
 										totalNodes++;
 										tempNodeData.parentNode = preNode;
@@ -277,14 +278,14 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 													break;
 												}
 											}
-											if (tempNodeData.accepting == true) {
+											if (tempNodeData.accepting) {
 												errorNodes.add(tempNodeData);
 											}
 										} else {
 											tempNodeData.accepting = false;
 										}
 										if (!newNodes.containsKey(tempNodeData.aState)) {
-											newNodes.put(tempNodeData.aState, new LinkedList<NodeData>());
+											newNodes.put(tempNodeData.aState, new LinkedList<>());
 										}
 										newNodes.get(tempNodeData.aState).add(tempNodeData);
 										allNodes.add(tempNodeData);
@@ -452,10 +453,10 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 						}
 					}
 					if (!containsAllbnState) {
-						if (potenialACCCandidate == null || acc == false) {
+						if (potenialACCCandidate == null || !acc) {
 							newNodeInCompleteTree = true;
 							if (!completedNodes.containsKey(currentNodeSet1.aState)) {
-								completedNodes.put(currentNodeSet1.aState, new LinkedList<NodeData>());
+								completedNodes.put(currentNodeSet1.aState, new LinkedList<>());
 							}
 							completedNodes.get(currentNodeSet1.aState).addFirst(currentNodeSet1);
 							totalUniqueNodes++;
@@ -495,7 +496,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 				node.coveredBy = null;
 				completedNodes.get(node.aState).add(node);
 				if (!currentNodes.containsKey(node.aState)) {
-					currentNodes.put(node.aState, new LinkedList<NodeData>());
+					currentNodes.put(node.aState, new LinkedList<>());
 				}
 				currentNodes.get(node.aState).add(node);
 			}
@@ -537,13 +538,13 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 			i = 0;
 			for (final NodeData node : completedNodes.keySet()) {
 				for (final NodeData node2 : completedNodes.get(node)) {
-					if (node2.keep == true) {
+					if (node2.keep) {
 						i++;
 					}
 				}
 			}
 			for (final NodeData node2 : ACCNodes) {
-				if (node2.keep == true) {
+				if (node2.keep) {
 					i++;
 				}
 			}
@@ -707,7 +708,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	}
 
 	@Override
-	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
 		mLogger.info(startMessage());
 		super.addSubtrahend(nwa);
 		local_mB.add(nwa);
@@ -779,8 +781,9 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b,
-			final NestedRun<LETTER, STATE> ctrEx) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
+			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bi : b) {
@@ -807,7 +810,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 		return result;
 	}
 
-	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
+	public static <LETTER, STATE> void
+			abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(a)) {
 			throw new UnsupportedOperationException("Operation does not support call or return");
 		}

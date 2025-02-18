@@ -39,7 +39,6 @@ public class AcceleratedTraceCheckStatisticsGenerator implements IStatisticsData
 	private LBool mSatisfiability;
 
 	public AcceleratedTraceCheckStatisticsGenerator() {
-		super();
 		mSuccessfullAccelerations = 0;
 		mAccelerationAttempts = 0;
 		mSatisfiability = null;
@@ -47,8 +46,8 @@ public class AcceleratedTraceCheckStatisticsGenerator implements IStatisticsData
 
 	@Override
 	public Object getValue(final String key) {
-		final AcceleratedTraceCheckStatsticsDefinitions keyEnum = Enum
-				.valueOf(AcceleratedTraceCheckStatsticsDefinitions.class, key);
+		final AcceleratedTraceCheckStatsticsDefinitions keyEnum =
+				Enum.valueOf(AcceleratedTraceCheckStatsticsDefinitions.class, key);
 		switch (keyEnum) {
 		case SuccessfullAccelerations:
 			return mSuccessfullAccelerations;

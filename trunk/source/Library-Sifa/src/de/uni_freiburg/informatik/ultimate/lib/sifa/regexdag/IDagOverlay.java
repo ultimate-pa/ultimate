@@ -29,17 +29,20 @@ package de.uni_freiburg.informatik.ultimate.lib.sifa.regexdag;
 import java.util.Collection;
 
 /**
- * Overlay for {@link RegexDag} allowing to exclude some edges.
- * Overlaid DAGs may have multiple sources and sinks.
+ * Overlay for {@link RegexDag} allowing to exclude some edges. Overlaid DAGs may have multiple sources and sinks.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals inside RegexDagNodes
+ * @param <L>
+ *            Type of letters that are used inside regex literals inside RegexDagNodes
  */
 public interface IDagOverlay<L> {
 
 	Collection<RegexDagNode<L>> sources(RegexDag<L> dag);
+
 	Collection<RegexDagNode<L>> sinks(RegexDag<L> dag);
+
 	Collection<RegexDagNode<L>> successorsOf(RegexDagNode<L> node);
+
 	Collection<RegexDagNode<L>> predecessorsOf(RegexDagNode<L> node);
 }

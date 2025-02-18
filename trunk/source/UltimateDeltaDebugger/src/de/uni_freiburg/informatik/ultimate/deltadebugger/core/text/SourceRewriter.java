@@ -29,12 +29,12 @@ import java.util.List;
 
 /**
  * Rewrites text in a source document.
- * 
+ *
  * @see de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.AbstractTextRewriter
  */
 public class SourceRewriter extends AbstractTextRewriter {
 	private final ISourceDocument mDocument;
-	
+
 	/**
 	 * Creates a rewriter for the text in a source document.
 	 *
@@ -44,12 +44,12 @@ public class SourceRewriter extends AbstractTextRewriter {
 	public SourceRewriter(final ISourceDocument document) {
 		mDocument = document;
 	}
-	
+
 	protected SourceRewriter(final ISourceDocument document, final List<Change> mergeChanges, final int mergedDelta) {
 		super(mergeChanges, mergedDelta);
 		mDocument = document;
 	}
-	
+
 	/**
 	 * Copy constructor.
 	 *
@@ -60,16 +60,15 @@ public class SourceRewriter extends AbstractTextRewriter {
 		super(other);
 		mDocument = other.mDocument;
 	}
-	
+
 	@Override
 	public SourceRewriter delete(final int offset, final int endOffset) {
 		super.delete(offset, endOffset);
 		return this;
 	}
-	
+
 	/**
-	 * Removes a range of text.
-	 * Equivalent to {@code delete(location.offset(), location.endOffset())}
+	 * Removes a range of text. Equivalent to {@code delete(location.offset(), location.endOffset())}
 	 *
 	 * @param location
 	 *            range to delete
@@ -78,25 +77,24 @@ public class SourceRewriter extends AbstractTextRewriter {
 	public SourceRewriter delete(final ISourceRange location) {
 		return delete(location.offset(), location.endOffset());
 	}
-	
+
 	@Override
 	protected String getExceptionText(final Change change) {
 		return mDocument.newSourceRange(change.mOffset, change.mEndOffset).toString();
 	}
-	
+
 	@Override
 	protected final int getOriginalLength() {
 		return mDocument.getLength();
 	}
-	
+
 	@Override
 	protected String getOriginalText() {
 		return mDocument.getText();
 	}
-	
+
 	/**
-	 * Get rewritten text for the given range in the original text.
-	 * Note: not particularly efficient...
+	 * Get rewritten text for the given range in the original text. Note: not particularly efficient...
 	 *
 	 * @param offset
 	 *            inclusive start index
@@ -110,10 +108,9 @@ public class SourceRewriter extends AbstractTextRewriter {
 		final ISourceRange remapped = remapRange(offset, endOffset, includeInsertionsAtEnd);
 		return apply().substring(remapped.offset(), remapped.endOffset());
 	}
-	
+
 	/**
-	 * Get rewritten text for the given range in the original text.
-	 * Note: not particularly efficient...
+	 * Get rewritten text for the given range in the original text. Note: not particularly efficient...
 	 *
 	 * @param location
 	 *            original text range
@@ -124,20 +121,19 @@ public class SourceRewriter extends AbstractTextRewriter {
 	public String getRewrittenSubstring(final ISourceRange location, final boolean includeInsertionsAtEnd) {
 		return getRewrittenSubstring(location.offset(), location.endOffset(), includeInsertionsAtEnd);
 	}
-	
+
 	public ISourceDocument getSourceDocument() {
 		return mDocument;
 	}
-	
+
 	@Override
 	public SourceRewriter insert(final int offset, final String text) {
 		super.insert(offset, text);
 		return this;
 	}
-	
+
 	/**
-	 * Inserts a string at the end of a location.
-	 * Equivalent to {@code insert(location.endOffset(), text)}
+	 * Inserts a string at the end of a location. Equivalent to {@code insert(location.endOffset(), text)}
 	 *
 	 * @param location
 	 *            location to insert at
@@ -148,10 +144,9 @@ public class SourceRewriter extends AbstractTextRewriter {
 	public SourceRewriter insertAfter(final ISourceRange location, final String text) {
 		return insert(location.endOffset(), text);
 	}
-	
+
 	/**
-	 * Inserts a string at the beginning of a location.
-	 * Equivalent to {@code insert(location.offset(), text)}
+	 * Inserts a string at the beginning of a location. Equivalent to {@code insert(location.offset(), text)}
 	 *
 	 * @param location
 	 *            location to insert at
@@ -162,10 +157,10 @@ public class SourceRewriter extends AbstractTextRewriter {
 	public SourceRewriter insertBefore(final ISourceRange location, final String text) {
 		return insert(location.offset(), text);
 	}
-	
+
 	/**
-	 * Add all changes from the other rewriter to this instance.
-	 * In case of a RewriteConflictException this instance is not modified.
+	 * Add all changes from the other rewriter to this instance. In case of a RewriteConflictException this instance is
+	 * not modified.
 	 * <p>
 	 * Throws an {@link IllegalArgumentException} if document length in both rewriters is not the same.
 	 *
@@ -178,11 +173,10 @@ public class SourceRewriter extends AbstractTextRewriter {
 		super.merge(other);
 		return this;
 	}
-	
+
 	/**
-	 * Creates a new rewriter that contains all changes from this and the other instance.
-	 * If insertions at the same offset exist, the insertions in this instance take precedence over those from the
-	 * other.
+	 * Creates a new rewriter that contains all changes from this and the other instance. If insertions at the same
+	 * offset exist, the insertions in this instance take precedence over those from the other.
 	 * <p>
 	 * Throws an {@link IllegalArgumentException} if document length in both rewriters is not the same.
 	 *
@@ -196,7 +190,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 		}
 		return new SourceRewriter(mDocument, getMergedChanges(other), getDelta() + other.getDelta());
 	}
-	
+
 	/**
 	 * Computes a character range in the rewritten text for the given range in the original text.
 	 *
@@ -214,7 +208,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 		}
 		return new PlainSourceRange(remapOffset(offset, false), remapOffset(endOffset, includeInsertionsAtEnd));
 	}
-	
+
 	/**
 	 * Computes a character range in the rewritten text for the given range in the original text.
 	 *
@@ -227,7 +221,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 	public ISourceRange remapRange(final ISourceRange location, final boolean includeInsertionsAtEnd) {
 		return remapRange(location.offset(), location.endOffset(), includeInsertionsAtEnd);
 	}
-	
+
 	@Override
 	public SourceRewriter replace(final int offset, final int endOffset, final String replacement) {
 		super.replace(offset, endOffset, replacement);
@@ -235,8 +229,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 	}
 
 	/**
-	 * Replaces a range of text.
-	 * Equivalent to {@code replace(location.offset(), location.endOffset(), replacement)}
+	 * Replaces a range of text. Equivalent to {@code replace(location.offset(), location.endOffset(), replacement)}
 	 *
 	 * @param location
 	 *            range to replace

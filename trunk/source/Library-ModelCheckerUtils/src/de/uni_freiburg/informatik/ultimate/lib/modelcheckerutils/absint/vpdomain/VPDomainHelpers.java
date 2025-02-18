@@ -76,29 +76,29 @@ public class VPDomainHelpers {
 		return result;
 	}
 
-//	public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1,
-//			final Map<IProgramVar, TermVariable> map2) {
-//		return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
-//	}
-//
-//	public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
-//		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
-//	}
+	// public static Map<Term, Term> computeNormalizingSubstitution(final Map<IProgramVar, TermVariable> map1,
+	// final Map<IProgramVar, TermVariable> map2) {
+	// return computeNormalizingSubstitution(computeProgramVarMappingFromInVarOutVarMappings(map1, map2));
+	// }
+	//
+	// public static Map<Term, Term> computeNormalizingSubstitution(final TransFormula tf) {
+	// return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
+	// }
 
-//	/**
-//	 * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
-//	 * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
-//	 *
-//	 * @param c
-//	 * @return
-//	 */
-//	public static Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
-//		final Map<Term, Term> substitionMap = new HashMap<>();
-//		for (final Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
-//			substitionMap.put(en.getKey(), en.getValue().getTerm());
-//		}
-//		return substitionMap;
-//	}
+	// /**
+	// * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
+	// * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
+	// *
+	// * @param c
+	// * @return
+	// */
+	// public static Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
+	// final Map<Term, Term> substitionMap = new HashMap<>();
+	// for (final Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
+	// substitionMap.put(en.getKey(), en.getValue().getTerm());
+	// }
+	// return substitionMap;
+	// }
 
 	public static IProgramVar getProgramVar(final TermVariable newArray, final Map<IProgramVar, TermVariable> map) {
 		for (final Entry<IProgramVar, TermVariable> en : map.entrySet()) {
@@ -281,10 +281,8 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <NODE extends IEqNodeIdentifier<NODE>> boolean
-			constraintFreeOfVars(final Collection<Term> varsToProjectAway,
-					final EqConstraint<NODE> unfrozen,
-					final Script script) {
+	public static <NODE extends IEqNodeIdentifier<NODE>> boolean constraintFreeOfVars(
+			final Collection<Term> varsToProjectAway, final EqConstraint<NODE> unfrozen, final Script script) {
 		if (varsToProjectAway.isEmpty()) {
 			return true;
 		}
@@ -304,9 +302,9 @@ public class VPDomainHelpers {
 				}
 				mixArrayThirdArgs.add(((ApplicationTerm) node.getTerm()).getParameters()[2]);
 			} else {
-				final Set<Term> intersection = DataStructureUtils.intersection(
-						new HashSet<Term>(Arrays.asList(node.getTerm().getFreeVars())),
-						new HashSet<Term>(varsToProjectAway));
+				final Set<Term> intersection =
+						DataStructureUtils.intersection(new HashSet<Term>(Arrays.asList(node.getTerm().getFreeVars())),
+								new HashSet<>(varsToProjectAway));
 				if (!intersection.isEmpty()) {
 					assert false;
 					return false;
@@ -315,50 +313,48 @@ public class VPDomainHelpers {
 			}
 		}
 
-//		if (varsToProjectAway.stream().map(tv ->
-//			unfrozen.getAllNodes().stream()
-//				.anyMatch(node ->
-//					VPDomainHelpers.arrayContains(node.getTerm().getFreeVars(), tv)))
-//				.reduce((a, b) -> a || b)
-//			.get()) {
-//			assert false;
-//			return false;
-//		}
-		if (script != null && Arrays.asList(unfrozen.getTerm(script)
-				.getFreeVars()).stream()
-				.anyMatch(fv -> varsToProjectAway.contains(fv)
-						&& !mixArrayThirdArgs.contains(fv))) {
+		// if (varsToProjectAway.stream().map(tv ->
+		// unfrozen.getAllNodes().stream()
+		// .anyMatch(node ->
+		// VPDomainHelpers.arrayContains(node.getTerm().getFreeVars(), tv)))
+		// .reduce((a, b) -> a || b)
+		// .get()) {
+		// assert false;
+		// return false;
+		// }
+		if (script != null && Arrays.asList(unfrozen.getTerm(script).getFreeVars()).stream()
+				.anyMatch(fv -> varsToProjectAway.contains(fv) && !mixArrayThirdArgs.contains(fv))) {
 			assert false;
 			return false;
 		}
 		return true;
 	}
 
-//	public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
-//		final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
-//		return new Substitution(mgdScript, subs).transform(term);
-//	}
+	// public static Term normalizeTerm(final Term term, final TransFormula tf, final ManagedScript mgdScript) {
+	// final Map<Term, Term> subs = computeNormalizingSubstitution(tf);
+	// return new Substitution(mgdScript, subs).transform(term);
+	// }
 
-//	public static Term normalizeTerm(final Term t, final Map<IProgramVar, TermVariable> newInVars,
-//			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript mgdScript) {
-//		final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
-//		return new Substitution(mgdScript, subs).transform(t);
-//	}
+	// public static Term normalizeTerm(final Term t, final Map<IProgramVar, TermVariable> newInVars,
+	// final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript mgdScript) {
+	// final Map<Term, Term> subs = computeNormalizingSubstitution(newInVars, newOutVars);
+	// return new Substitution(mgdScript, subs).transform(t);
+	// }
 
-//	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf,
-//			final ManagedScript script) {
-//		return new ArrayIndex(index.stream()
-//				.map(t -> normalizeTerm(t, tf, script))
-//				.collect(Collectors.toList()));
-//	}
+	// public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final TransFormula tf,
+	// final ManagedScript script) {
+	// return new ArrayIndex(index.stream()
+	// .map(t -> normalizeTerm(t, tf, script))
+	// .collect(Collectors.toList()));
+	// }
 
-
-//	public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final Map<IProgramVar, TermVariable> newInVars,
-//			final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript script) {
-//		return new ArrayIndex(index.stream()
-//				.map(t -> normalizeTerm(t, newInVars, newOutVars, script))
-//				.collect(Collectors.toList()));
-//	}
+	// public static ArrayIndex normalizeArrayIndex(final ArrayIndex index, final Map<IProgramVar, TermVariable>
+	// newInVars,
+	// final Map<IProgramVar, TermVariable> newOutVars, final ManagedScript script) {
+	// return new ArrayIndex(index.stream()
+	// .map(t -> normalizeTerm(t, newInVars, newOutVars, script))
+	// .collect(Collectors.toList()));
+	// }
 
 	public static <T> boolean arrayContains(final T[] array, final T elem) {
 		for (final T t : array) {
@@ -377,8 +373,8 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <K, V> void transformRelationInPlace(final HashRelation<K, V> relation, final Function<K, K> kTransformer,
-			final Function<V, V> vTransformer) {
+	public static <K, V> void transformRelationInPlace(final HashRelation<K, V> relation,
+			final Function<K, K> kTransformer, final Function<V, V> vTransformer) {
 		for (final Entry<K, V> pair : new HashRelation<>(relation)) {
 			relation.removePair(pair.getKey(), pair.getValue());
 			relation.addPair(kTransformer.apply(pair.getKey()), vTransformer.apply(pair.getValue()));

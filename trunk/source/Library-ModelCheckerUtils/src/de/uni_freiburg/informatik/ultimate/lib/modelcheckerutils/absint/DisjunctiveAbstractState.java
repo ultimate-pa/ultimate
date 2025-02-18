@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PartialOrderCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -83,8 +84,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	private DisjunctiveAbstractState(final int maxSize, final Set<STATE> states) {
 		assert states != null;
 		assert haveSameVars(states);
-		assert states.stream().allMatch(
-				a -> !(a instanceof DisjunctiveAbstractState<?>)) : "Cannot nest AbstractMultiStates, use flatten() instead";
+		assert states.stream().allMatch(a -> !(a instanceof DisjunctiveAbstractState<?>))
+				: "Cannot nest AbstractMultiStates, use flatten() instead";
 		assert states.size() <= maxSize : "Set too large";
 		mMaxSize = maxSize;
 		mStates = states;
@@ -139,8 +140,8 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 
 	@Override
 	public DisjunctiveAbstractState<STATE> patch(final DisjunctiveAbstractState<STATE> dominator) {
-		assert mStates.size() != dominator.mStates
-				.size() : "Cannot apply symmetrical with differently sized multi-states";
+		assert mStates.size() != dominator.mStates.size()
+				: "Cannot apply symmetrical with differently sized multi-states";
 		final Set<STATE> newSet = newSet(mStates.size());
 		final Iterator<STATE> iter = mStates.iterator();
 		final Iterator<STATE> otherIter = dominator.mStates.iterator();
@@ -600,33 +601,29 @@ public class DisjunctiveAbstractState<STATE extends IAbstractState<STATE>>
 	 *
 	 */
 	private static <STATE extends IAbstractState<STATE>> List<STATE> getTopologicalOrder(final Set<STATE> states) {
-		final IPartialComparator<STATE> comparator = new IPartialComparator<STATE>() {
+		final IPartialComparator<STATE> comparator = (first, second) -> {
+			final SubsetResult firstIsCoveredSecond = first.isSubsetOf(second);
+			switch (firstIsCoveredSecond) {
+			case EQUAL:
+				return ComparisonResult.EQUAL;
+			case STRICT:
+				return ComparisonResult.STRICTLY_SMALLER;
+			case NON_STRICT:
+			case NONE:
+			default:
+				break;
+			}
 
-			@Override
-			public ComparisonResult compare(final STATE first, final STATE second) {
-				final SubsetResult firstIsCoveredSecond = first.isSubsetOf(second);
-				switch (firstIsCoveredSecond) {
-				case EQUAL:
-					return ComparisonResult.EQUAL;
-				case STRICT:
-					return ComparisonResult.STRICTLY_SMALLER;
-				case NON_STRICT:
-				case NONE:
-				default:
-					break;
-				}
-
-				final SubsetResult secondIsCoveredfirst = second.isSubsetOf(first);
-				switch (secondIsCoveredfirst) {
-				case EQUAL:
-					throw new AssertionError("Equal is symmetric");
-				case STRICT:
-					return ComparisonResult.STRICTLY_GREATER;
-				case NON_STRICT:
-				case NONE:
-				default:
-					return ComparisonResult.INCOMPARABLE;
-				}
+			final SubsetResult secondIsCoveredfirst = second.isSubsetOf(first);
+			switch (secondIsCoveredfirst) {
+			case EQUAL:
+				throw new AssertionError("Equal is symmetric");
+			case STRICT:
+				return ComparisonResult.STRICTLY_GREATER;
+			case NON_STRICT:
+			case NONE:
+			default:
+				return ComparisonResult.INCOMPARABLE;
 			}
 		};
 		final PartialOrderCache<STATE> poCache = new PartialOrderCache<>(comparator);

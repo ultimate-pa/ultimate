@@ -30,7 +30,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -102,7 +101,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.UltimateCdtExternalSettingsProvider.ToolchainDependency;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -195,12 +193,16 @@ public class CDTParser implements ISource {
 
 	/**
 	 * Dumps the AST of a specified translation unit and report AST problem nodes.
-	 * 
-	 * @param tu Translation unit of a parsed input file.
-	 * @param printFunc Operation that prints each {@link IASTNode} to a {@link PrintStream}.
-	 * @param desc Description of printing operation.
+	 *
+	 * @param tu
+	 *            Translation unit of a parsed input file.
+	 * @param printFunc
+	 *            Operation that prints each {@link IASTNode} to a {@link PrintStream}.
+	 * @param desc
+	 *            Description of printing operation.
 	 */
-	public void dumpAST(final IASTTranslationUnit tu, final BiConsumer<IASTNode, PrintStream> printFunc, final String desc) {
+	public void dumpAST(final IASTTranslationUnit tu, final BiConsumer<IASTNode, PrintStream> printFunc,
+			final String desc) {
 
 		if (mLogger.isDebugEnabled()) {
 			final String fileName = normalizeCdtFilename(tu.getFilePath());

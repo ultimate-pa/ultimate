@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 public abstract class HddChange implements IChangeHandle {
 	private final IPSTNode mNode;
 	private int mIndex = -1;
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -46,49 +46,49 @@ public abstract class HddChange implements IChangeHandle {
 	public HddChange(final IPSTNode node) {
 		mNode = node;
 	}
-	
+
 	/**
 	 * Applies a change.
-	 * 
+	 *
 	 * @param rewriter
 	 *            source rewriter
 	 */
 	public abstract void apply(SourceRewriter rewriter);
-	
+
 	public IPSTNode getNode() {
 		return mNode;
 	}
-	
+
 	@Override
 	public int getSequenceIndex() {
 		return mIndex;
 	}
-	
+
 	/**
 	 * @return {@code true} iff this change has a deferred change.
 	 */
 	public boolean hasDeferredChange() {
 		return false;
 	}
-	
+
 	public void setSequenceIndex(final int index) {
 		mIndex = index;
 	}
-	
+
 	/**
 	 * Updates the deferred change.
-	 * 
+	 *
 	 * @param deferredChangeMap
 	 *            map (PST node -> deferred change)
 	 */
 	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	/**
 	 * Creates an alternative change instance. Note that a new instance is required because the sequence index depends
 	 * on the containing list.
-	 * 
+	 *
 	 * @return an optional alternative to this change
 	 */
 	public Optional<HddChange> createAlternativeChange() {

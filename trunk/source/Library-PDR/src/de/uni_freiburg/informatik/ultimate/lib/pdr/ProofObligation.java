@@ -48,7 +48,7 @@ public final class ProofObligation {
 
 	/**
 	 * Create a new proofobligation, used by pdr.
-	 * 
+	 *
 	 * @param toBeBlocked
 	 *            {@link IPredicate} that needs to be blocked by pdr
 	 * @param location
@@ -68,51 +68,51 @@ public final class ProofObligation {
 	/**
 	 * If a query to the SMT-solver has already been seen and blocked, take its toBeBlocked and add it to the
 	 * corresponding frame.
-	 * 
+	 *
 	 * @param blockedQuery
 	 */
-	public final void addBlockedQuery(final Triple<IPredicate, IAction, IPredicate> blockedQuery) {
+	public void addBlockedQuery(final Triple<IPredicate, IAction, IPredicate> blockedQuery) {
 		mBlockedQueries.add(blockedQuery);
 	}
 
 	/**
 	 * Get the obligation
-	 * 
+	 *
 	 * @return
 	 */
-	public final IPredicate getToBeBlocked() {
+	public IPredicate getToBeBlocked() {
 		return mToBeBlocked;
 	}
 
 	/**
 	 * Get the location
-	 * 
+	 *
 	 * @return
 	 */
-	public final IcfgLocation getLocation() {
+	public IcfgLocation getLocation() {
 		return mLocation;
 	}
 
 	/**
 	 * Get the level
-	 * 
+	 *
 	 * @return
 	 */
-	public final int getLevel() {
+	public int getLevel() {
 		return mLevel;
 	}
 
 	/**
 	 * Get the queries to the SMT-solver that have already been blocked.
-	 * 
+	 *
 	 * @return
 	 */
-	public final List<Triple<IPredicate, IAction, IPredicate>> getBlockedQueries() {
+	public List<Triple<IPredicate, IAction, IPredicate>> getBlockedQueries() {
 		return mBlockedQueries;
 	}
 
 	@Override
-	public final String toString() {
+	public String toString() {
 		return getToBeBlocked().toString() + " at " + getLocation().toString() + " on level -" + getLevel();
 	}
 

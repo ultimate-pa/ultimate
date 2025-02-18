@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.externaltools;
 import java.io.File;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

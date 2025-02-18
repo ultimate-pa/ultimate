@@ -75,13 +75,13 @@ public final class CoenabledRelation<LETTER> {
 	 */
 	public static <PLACE, LETTER> CoenabledRelation<LETTER> fromPetriNet(final AutomataLibraryServices services,
 			final IPetriNet<LETTER, PLACE> petriNet)
-					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
 		final BranchingProcess<LETTER, PLACE> bp = new FinitePrefix<>(services, petriNet).getResult();
 		return new CoenabledRelation<>(computeFromBranchingProcess(bp));
 	}
 
 	private static <PLACE, LETTER> HashRelation<LETTER, LETTER>
-	computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
+			computeFromBranchingProcess(final BranchingProcess<LETTER, PLACE> bp) {
 		final HashRelation<LETTER, LETTER> hashRelation = new HashRelation<>();
 		final ICoRelation<LETTER, PLACE> coRelation = bp.getCoRelation();
 		final Collection<Event<LETTER, PLACE>> events = bp.getEvents();

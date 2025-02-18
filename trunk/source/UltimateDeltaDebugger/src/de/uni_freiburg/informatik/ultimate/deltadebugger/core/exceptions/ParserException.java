@@ -30,14 +30,13 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
  */
 public class ParserException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
 	 * Default constructor.
 	 */
 	public ParserException() {
-		super();
 	}
-	
+
 	/**
 	 * @param message
 	 *            Message.
@@ -45,7 +44,7 @@ public class ParserException extends RuntimeException {
 	public ParserException(final String message) {
 		super(message);
 	}
-	
+
 	/**
 	 * @param message
 	 *            Message.
@@ -55,7 +54,7 @@ public class ParserException extends RuntimeException {
 	public ParserException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
-	
+
 	/**
 	 * @param cause
 	 *            Cause.

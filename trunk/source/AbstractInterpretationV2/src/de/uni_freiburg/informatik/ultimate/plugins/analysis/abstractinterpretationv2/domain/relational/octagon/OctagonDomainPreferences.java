@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
  */
 public class OctagonDomainPreferences {
 
-	public static enum WideningOperator {
+	public enum WideningOperator {
 		SIMPLE, EXPONENTIAL, LITERAL;
 	}
 
-	public static enum LogMessageFormatting {
+	public enum LogMessageFormatting {
 		FULL_MATRIX, HALF_MATRIX, TERM;
 	}
 

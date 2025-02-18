@@ -2,22 +2,22 @@
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * Copyright (C) 2010-2015 wuxio
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Class that provides the Buchi emptiness check for nested word automata.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author wuxio
  * @version 2010-12-18
@@ -77,7 +77,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -145,7 +145,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	/**
 	 * Check if a Buchi nested word automaton accepts any nested lasso word.
-	 * 
+	 *
 	 * @return true iff nwa does not accept any nested lasso word.
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
@@ -170,9 +170,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 		// Get all initial states
 		// TODO: xw: check the consequence of casting
-		for (final STATE state : mOperand.getInitialStates()) {
-			initialStates.add(state);
-		}
+		initialStates.addAll(mOperand.getInitialStates());
 
 		// Reachability
 		// Bridge reachabilityBridge = new Bridge();
@@ -570,8 +568,8 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	@SuppressWarnings("unchecked")
 	NestedRun<LETTER, STATE> reconstructionAc(final STATE origin, final STATE destination) {
-		assert mReachabilityBridgeAc.containsPair(origin, destination) : "Pair (" + origin + ',' + destination
-				+ ") not contained";
+		assert mReachabilityBridgeAc.containsPair(origin, destination)
+				: "Pair (" + origin + ',' + destination + ") not contained";
 		final IBridgeRange bridgeRange = mReachabilityBridgeAc.getBridgeRange(origin, destination);
 		// Reconstruction-AC: case 1, version 2010-11-22
 		// TODO: xw: logical error check
@@ -654,12 +652,12 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			if (getClass() != obj.getClass()) {
 				return false;
 			}
-			return this.mSource == ((StatePair) obj).mSource && this.mTarget == ((StatePair) obj).mTarget;
+			return mSource == ((StatePair) obj).mSource && mTarget == ((StatePair) obj).mTarget;
 		}
 
 		@Override
 		public int hashCode() {
-			return (this.mSource.hashCode() + 41) * 41 + this.mTarget.hashCode();
+			return (mSource.hashCode() + 41) * 41 + mTarget.hashCode();
 		}
 
 		@Override
@@ -689,7 +687,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		private final STATE mSingleton;
 
 		public SingletonBridge(final STATE singleton) {
-			this.mSingleton = singleton;
+			mSingleton = singleton;
 		}
 
 		@Override
@@ -739,13 +737,13 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		void addElement(final STATE source, final STATE target, final IBridgeRange bridgeRange) {
 			assert !(mBridgeInOrder.containsKey(source) && mBridgeInOrder.get(source).containsKey(target));
 			if (!mBridgeInOrder.containsKey(source)) {
-				mBridgeInOrder.put(source, new HashMap<STATE, IBridgeRange>());
+				mBridgeInOrder.put(source, new HashMap<>());
 			}
 			mBridgeInOrder.get(source).put(target, bridgeRange);
 
 			assert !(mBridgeReverseOrder.containsKey(target) && mBridgeReverseOrder.get(target).containsKey(source));
 			if (!mBridgeReverseOrder.containsKey(target)) {
-				mBridgeReverseOrder.put(target, new HashMap<STATE, IBridgeRange>());
+				mBridgeReverseOrder.put(target, new HashMap<>());
 			}
 			mBridgeReverseOrder.get(target).put(source, bridgeRange);
 		}

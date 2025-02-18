@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Check if term contains some quantified subformula.
- * 
+ *
  * @author Matthias Heizmann
  * @deprecated Use {@link QuantifierUtils#isQuantifierFree(Term)} instead.
  *

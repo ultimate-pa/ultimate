@@ -77,14 +77,14 @@ public abstract class AbstractAnnotations implements IAnnotations {
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
 		if (mBackingMap == null) {
-			mBackingMap = new AbstractMap<String, Object>() {
-				private final Set<Entry<String, Object>> mEntrySet = new AbstractSet<Entry<String, Object>>() {
+			mBackingMap = new AbstractMap<>() {
+				private final Set<Entry<String, Object>> mEntrySet = new AbstractSet<>() {
 
 					private final String[] mAttribFields = getFieldNames();
 
 					@Override
 					public Iterator<Entry<String, Object>> iterator() {
-						return new Iterator<Entry<String, Object>>() {
+						return new Iterator<>() {
 							int fieldCount = 0;
 
 							@Override

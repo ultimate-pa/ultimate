@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -89,8 +90,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	private boolean assertPvocsAreComplete(final EqConstraint<EqNode> constraint) {
 		final Set<IProgramVarOrConst> set = constraint.getPvocs(mFactory.getSymbolTable()).stream()
 				.filter(pvoc -> !(pvoc instanceof IProgramOldVar))
-				.filter(pvoc -> !(pvoc instanceof HeapSepProgramConst))
-				.filter(pvoc -> !(pvoc instanceof ProgramConst))
+				.filter(pvoc -> !(pvoc instanceof HeapSepProgramConst)).filter(pvoc -> !(pvoc instanceof ProgramConst))
 				.filter(pvoc -> !mFactory.getEqConstraintFactory().getNonTheoryLiterals().contains(pvoc))
 				.collect(Collectors.toSet());
 		if (!mPvocs.containsAll(set)) {
@@ -122,11 +122,12 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState removeVariables(final Collection<IProgramVarOrConst> variables) {
 
-//		final Set<IProgramVarOrConst> variablesFiltered = variables.stream().filter(var -> var instanceof IProgramVar)
-//				.collect(Collectors.toSet());
+		// final Set<IProgramVarOrConst> variablesFiltered = variables.stream().filter(var -> var instanceof
+		// IProgramVar)
+		// .collect(Collectors.toSet());
 
 		final Set<Term> termsFromPvocs =
-//				variablesFiltered.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
+				// variablesFiltered.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 				variables.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
 		final EqConstraint<EqNode> projectedConstraint =
 				mFactory.getEqConstraintFactory().projectExistentially(termsFromPvocs, mConstraint, false);
@@ -154,17 +155,17 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public EqState patch(final EqState dominator) {
-		final EqState newState = this.removeVariables(dominator.getVariables());
+		final EqState newState = removeVariables(dominator.getVariables());
 		return newState.intersect(dominator);
 	}
 
 	@Override
 	public EqState intersect(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
-				mFactory.getEqConstraintFactory().conjoin(this.getConstraint(), other.getConstraint(), false);
+				mFactory.getEqConstraintFactory().conjoin(getConstraint(), other.getConstraint(), false);
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
-		newVariables.addAll(this.getVariables());
+		newVariables.addAll(getVariables());
 		newVariables.addAll(other.getVariables());
 
 		// return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
@@ -174,10 +175,10 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	@Override
 	public EqState union(final EqState other) {
 		final EqConstraint<EqNode> newConstraint =
-				mFactory.getEqConstraintFactory().disjoin(this.getConstraint(), other.getConstraint());
+				mFactory.getEqConstraintFactory().disjoin(getConstraint(), other.getConstraint());
 
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>();
-		newVariables.addAll(this.getVariables());
+		newVariables.addAll(getVariables());
 		newVariables.addAll(other.getVariables());
 
 		return mFactory.getEqState(newConstraint, newVariables);
@@ -206,8 +207,8 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public boolean isEqualTo(final EqState other) {
-		return this.isSubsetOf(other) == SubsetResult.EQUAL || (this.isSubsetOf(other) == SubsetResult.NON_STRICT
-				&& other.isSubsetOf(this) == SubsetResult.NON_STRICT);
+		return isSubsetOf(other) == SubsetResult.EQUAL
+				|| (isSubsetOf(other) == SubsetResult.NON_STRICT && other.isSubsetOf(this) == SubsetResult.NON_STRICT);
 	}
 
 	@Override
@@ -227,7 +228,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 			return SubsetResult.STRICT;
 		}
 
-		if (this.mConstraint.isStrongerThan(other.mConstraint)) {
+		if (mConstraint.isStrongerThan(other.mConstraint)) {
 			return SubsetResult.NON_STRICT;
 		} else {
 			return SubsetResult.NONE;
@@ -262,15 +263,13 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		return mFactory.stateToPredicate(this);
 	}
 
-
-
 	public boolean areUnequal(final EqNode node1, final EqNode node2, final boolean addNodesBeforeAnsweringQuery) {
 		return mConstraint.areUnequal(node1, node2, addNodesBeforeAnsweringQuery);
 	}
 
 	@Override
 	public boolean areEqual(final Term term1, final Term term2) {
-		final boolean addNodesIfNecessary  = mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery();
+		final boolean addNodesIfNecessary = mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery();
 
 		EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
@@ -292,7 +291,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public boolean areUnequal(final Term term1, final Term term2) {
-		final boolean addNodesIfNecessary  = mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery();
+		final boolean addNodesIfNecessary = mFactory.getVpDomainSettings().isAddNodesBeforeAnsweringQuery();
 
 		EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term1);
 		EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingNode(term2);
@@ -314,11 +313,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mConstraint == null) ? 0 : mConstraint.hashCode());
-		result = prime * result + ((mPvocs == null) ? 0 : mPvocs.hashCode());
-		return result;
+		return Objects.hash(mConstraint, mPvocs);
 	}
 
 	@Override
@@ -361,9 +356,7 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 		}
 
 		/*
-		 * TODO
-		 *  - rename pre-state to edge-naming
-		 *  - close conjunction
+		 * TODO - rename pre-state to edge-naming - close conjunction
 		 */
 		final Map<Term, Term> subsForPred = getSubstitutionForPredecessor(edge.getTransformula());
 
@@ -376,20 +369,20 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 
 			final EqConstraintFactory<EqNode> constraintFac = mFactory.getEqConstraintFactory();
 
-//			final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = Arrays.asList(new EqDisjunctiveConstraint<EqNode>[] {
-//					constraintFac.getDisjunctiveConstraint(Collections.singleton(mConstraint)),
-//					transRel.getEqConstraint() });
+			// final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = Arrays.asList(new
+			// EqDisjunctiveConstraint<EqNode>[] {
+			// constraintFac.getDisjunctiveConstraint(Collections.singleton(mConstraint)),
+			// transRel.getEqConstraint() });
 			final List<EqDisjunctiveConstraint<EqNode>> bothConstraints = new ArrayList<>();
 
-			final EqDisjunctiveConstraint<EqNode> predRenamed =
-					constraintFac.renameVariables(
-							constraintFac.getDisjunctiveConstraint(
-									Collections.singleton(mConstraint)), subsForPred);
+			final EqDisjunctiveConstraint<EqNode> predRenamed = constraintFac.renameVariables(
+					constraintFac.getDisjunctiveConstraint(Collections.singleton(mConstraint)), subsForPred);
 
 			bothConstraints.add(predRenamed);
 			bothConstraints.add(transRel.getEqConstraint());
 
-			final EqDisjunctiveConstraint<EqNode> resNotClosed = constraintFac.conjoinDisjunctiveConstraints(bothConstraints);
+			final EqDisjunctiveConstraint<EqNode> resNotClosed =
+					constraintFac.conjoinDisjunctiveConstraints(bothConstraints);
 			final EqDisjunctiveConstraint<EqNode> res = constraintFac.closeIfNecessary(resNotClosed);
 			result = new EqIntermediateState(res);
 		}
@@ -397,61 +390,62 @@ public class EqState implements IAbstractState<EqState>, IEqualityProvidingState
 	}
 
 	private Map<Term, Term> getSubstitutionForPredecessor(final TransFormula transRel) {
-//		final Set<TermVariable> varsToProject = new HashSet<>();
-//		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
-//				new IValueConstruction<IProgramVar, TermVariable>() {
-//
-//					@Override
-//					public TermVariable constructValue(final IProgramVar pv) {
-//						throw new AssertionError();
-////						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-////						varsToProject.add(result);
-////						return result;
-//					}
-//
-//				};
-//		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
-//				new ConstructionCache<>(substituentConstruction);
+		// final Set<TermVariable> varsToProject = new HashSet<>();
+		// final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
+		// new IValueConstruction<IProgramVar, TermVariable>() {
+		//
+		// @Override
+		// public TermVariable constructValue(final IProgramVar pv) {
+		// throw new AssertionError();
+		//// final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+		//// varsToProject.add(result);
+		//// return result;
+		// }
+		//
+		// };
+		// final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
+		// new ConstructionCache<>(substituentConstruction);
 
-//		final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
+		// final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
 		final Map<Term, Term> substitutionForPredecessor = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : transRel.getInVars().entrySet()) {
 			final IProgramVar pv = entry.getKey();
-//			if (entry.getValue() == transRel.getOutVars().get(pv)) {
-//				// special case, variable unchanged will be renamed when
-//				// considering outVars
-//			} else {
-//				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(pv);
-//				substitutionForTransFormula.put(entry.getValue(), substituent);
-//				if (p.getVars().contains(pv)) {
-				if (this.getVariables().contains(pv)) {
-//					substitutionForPredecessor.put(pv.getTermVariable(), substituent);
-					substitutionForPredecessor.put(pv.getTermVariable(), entry.getValue());
-				}
-//			}
+			// if (entry.getValue() == transRel.getOutVars().get(pv)) {
+			// // special case, variable unchanged will be renamed when
+			// // considering outVars
+			// } else {
+			// final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(pv);
+			// substitutionForTransFormula.put(entry.getValue(), substituent);
+			// if (p.getVars().contains(pv)) {
+			if (getVariables().contains(pv)) {
+				// substitutionForPredecessor.put(pv.getTermVariable(), substituent);
+				substitutionForPredecessor.put(pv.getTermVariable(), entry.getValue());
+			}
+			// }
 		}
 
-//		for (final Entry<IProgramVar, TermVariable> entry : transRel.getOutVars().entrySet()) {
-//			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
-//			if (!transRel.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
-//			if (!transRel.getInVars().containsKey(entry.getKey()) && this.getVariables().contains(entry.getKey())) {
-//			if (this.getVariables().contains(entry.getKey())) {
-//				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(entry.getKey());
-//				substitutionForPredecessor.put(entry.getKey().getTermVariable(), substituent);
-//				substitutionForPredecessor.put(entry.getKey().getTermVariable(), entry.getValue());
-//			}
-//		}
+		// for (final Entry<IProgramVar, TermVariable> entry : transRel.getOutVars().entrySet()) {
+		// substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
+		// if (!transRel.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
+		// if (!transRel.getInVars().containsKey(entry.getKey()) && this.getVariables().contains(entry.getKey())) {
+		// if (this.getVariables().contains(entry.getKey())) {
+		// final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(entry.getKey());
+		// substitutionForPredecessor.put(entry.getKey().getTermVariable(), substituent);
+		// substitutionForPredecessor.put(entry.getKey().getTermVariable(), entry.getValue());
+		// }
+		// }
 		return substitutionForPredecessor;
 	}
 
-//	/**
-//	 * Note that an EqState is a bad IEqualityProvidingIntermediateState because it does not contain information on any
-//	 * auxVar.
-//	 * TODO
-//	 */
-//	@Override
-//	public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
-//		return union((EqState) other);
-//	}
+	// /**
+	// * Note that an EqState is a bad IEqualityProvidingIntermediateState because it does not contain information on
+	// any
+	// * auxVar.
+	// * TODO
+	// */
+	// @Override
+	// public IEqualityProvidingIntermediateState join(final IEqualityProvidingIntermediateState other) {
+	// return union((EqState) other);
+	// }
 
 }

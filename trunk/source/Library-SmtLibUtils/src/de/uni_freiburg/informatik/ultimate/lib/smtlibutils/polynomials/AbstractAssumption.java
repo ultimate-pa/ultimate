@@ -6,17 +6,18 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-public abstract class AbstractAssumption implements IAssumption{
+public abstract class AbstractAssumption implements IAssumption {
 
 	protected final Sort mSort;
 	protected final Script mScript;
 	protected final TriFunction<Script, Sort, Term, Term> mRhsAppender;
 
 	protected abstract Term constructContractedLhs();
+
 	protected abstract Term[] getConjunctsForExplicitForm();
 
 	protected AbstractAssumption(final Script script, final Sort sort,
-								 final TriFunction<Script, Sort, Term, Term> rhsConstructor) {
+			final TriFunction<Script, Sort, Term, Term> rhsConstructor) {
 		mSort = sort;
 		mScript = script;
 		mRhsAppender = rhsConstructor;
@@ -32,7 +33,7 @@ public abstract class AbstractAssumption implements IAssumption{
 		Term lhs;
 		if (hasContractedForm()) {
 			lhs = constructContractedLhs();
-		}else {
+		} else {
 			return toExplicitTerm();
 		}
 		return mRhsAppender.apply(mScript, mSort, lhs);

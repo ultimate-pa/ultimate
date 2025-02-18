@@ -20,7 +20,6 @@ public abstract class HcVar implements IProgramVar {
 
 	private String mComment;
 
-
 	HcVar(final String globallyUniqueId, final TermVariable termVariable, final ApplicationTerm defaultConstant,
 			final ApplicationTerm primedConstant, final boolean isGlobal, final String procName) {
 		mProcName = procName;

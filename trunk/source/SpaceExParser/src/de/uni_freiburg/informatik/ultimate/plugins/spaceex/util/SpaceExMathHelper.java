@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,8 +63,9 @@ public class SpaceExMathHelper {
 	}
 
 	public enum Operator {
-		MULTIPLY(9), DIVIDE(9), ADD(8), SUBTRACT(8), LTEQ(7), GTEQ(7), LT(7), GT(7), EQ(7), DOUBLEEQ(7), AND(
-				6), DOUBLEAND(6), ANDTEXT(6), OR(5), DOUBLEOR(5), ORTEXT(5);
+		MULTIPLY(9), DIVIDE(9), ADD(8), SUBTRACT(8), LTEQ(7), GTEQ(7), LT(7), GT(7), EQ(7), DOUBLEEQ(7), AND(6),
+		DOUBLEAND(6), ANDTEXT(6), OR(5), DOUBLEOR(5), ORTEXT(5);
+
 		final int precedence;
 
 		Operator(final int p) {
@@ -143,8 +145,7 @@ public class SpaceExMathHelper {
 	}
 
 	/**
-	 * Function to convert a given formula postfix back notation to groups, the
-	 * DNF.
+	 * Function to convert a given formula postfix back notation to groups, the DNF.
 	 *
 	 * @param postfix
 	 * @return
@@ -158,11 +159,9 @@ public class SpaceExMathHelper {
 				final String operand1 = (!stack.isEmpty()) ? stack.pop() : "";
 				final String operand2 = (!stack.isEmpty()) ? stack.pop() : "";
 				/*
-				 * Cases: - two single operands - & is operator and no groups
-				 * exist yet --> initialize groups - & is operator and groups
-				 * exist -> update groups - | is operator and groups exists ->
-				 * add to finished groups - | is operator and no groups exists
-				 * --> add to finished groups
+				 * Cases: - two single operands - & is operator and no groups exist yet --> initialize groups - & is
+				 * operator and groups exist -> update groups - | is operator and groups exists -> add to finished
+				 * groups - | is operator and no groups exists --> add to finished groups
 				 */
 				if (mReplacement.containsKey(operand1)
 						&& (mReplacement.containsKey(operand2) || !operand2.contains("&")) && !operand2.isEmpty()) {
@@ -211,9 +210,7 @@ public class SpaceExMathHelper {
 		}
 		if (!stack.isEmpty() && !stack.peek().contains("&")) {
 			final String[] groups = stack.pop().replaceAll("(\\()|(\\))", "").split("\\|");
-			for (final String group : groups) {
-				openGroupstack.add(group);
-			}
+			Collections.addAll(openGroupstack, groups);
 		}
 		finishedGroups.addAll(openGroupstack);
 		return finishedGroups;
@@ -262,8 +259,7 @@ public class SpaceExMathHelper {
 	}
 
 	/**
-	 * Function to split a given expression into an array. e.g "x == 5" will
-	 * return [x,==,5].
+	 * Function to split a given expression into an array. e.g "x == 5" will return [x,==,5].
 	 *
 	 * @param expression
 	 * @return
@@ -350,8 +346,7 @@ public class SpaceExMathHelper {
 	}
 
 	/**
-	 * Function that checks whether a sign is an operator. e.g. "==" would be an
-	 * operator.
+	 * Function that checks whether a sign is an operator. e.g. "==" would be an operator.
 	 *
 	 * @param String
 	 *            sign

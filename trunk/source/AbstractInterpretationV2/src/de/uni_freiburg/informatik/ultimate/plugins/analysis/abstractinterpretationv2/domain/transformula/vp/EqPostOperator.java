@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicI
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.statistics.BenchmarkWithCounters;
@@ -282,7 +282,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 	}
 
-	private static enum BmNames {
+	private enum BmNames {
 
 		APPLY_NORMAL, APPLY_RETURN;
 

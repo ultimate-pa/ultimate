@@ -45,10 +45,11 @@ public class EdgeListEntry {
 	public IcfgLocation source;
 	public IcfgLocation target;
 	public Term term;
-	public EdgeListEntry(IcfgLocation s, IcfgLocation t, Term te){
+
+	public EdgeListEntry(final IcfgLocation s, final IcfgLocation t, final Term te) {
 		source = s;
 		target = t;
 		term = te;
-		
+
 	}
 }

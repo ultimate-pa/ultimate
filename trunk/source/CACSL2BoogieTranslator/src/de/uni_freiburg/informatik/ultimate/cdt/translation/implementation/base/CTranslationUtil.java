@@ -160,8 +160,7 @@ public class CTranslationUtil {
 
 		final List<Integer> result = new ArrayList<>();
 		while (true) {
-			result.add(Integer
-					.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
+			result.add(Integer.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
 
 			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
@@ -326,8 +325,8 @@ public class CTranslationUtil {
 			assert rExprdecl instanceof VariableDeclaration;
 			final VariableDeclaration varDecl = (VariableDeclaration) rExprdecl;
 
-			assert varDecl
-					.getVariables().length == 1 : "there are never two auxvars declared in one declaration, right??";
+			assert varDecl.getVariables().length == 1
+					: "there are never two auxvars declared in one declaration, right??";
 			final VarList vl = varDecl.getVariables()[0];
 			assert vl.getIdentifiers().length == 1 : "there are never two auxvars declared in one declaration, right??";
 			final String id = vl.getIdentifiers()[0];

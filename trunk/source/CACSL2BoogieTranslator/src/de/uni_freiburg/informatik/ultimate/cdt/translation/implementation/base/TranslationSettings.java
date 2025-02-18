@@ -30,6 +30,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -97,15 +99,13 @@ public final class TranslationSettings {
 		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
-		mPointerBaseValidity =
-				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, CheckMode.class);
+		mPointerBaseValidity = ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, CheckMode.class);
 		mPointerTargetFullyAllocated =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, CheckMode.class);
 		// mCheckFreeValid =
 		// prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
-		mCheckPointerSubtractionAndComparisonValidity =
-				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						CheckMode.class);
+		mCheckPointerSubtractionAndComparisonValidity = ups.getEnum(
+				CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, CheckMode.class);
 		mMemoryModelPreference = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
 		mFpToIeeeBvExtension = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_TO_IEEE_BV_EXTENSION);
 
@@ -114,10 +114,10 @@ public final class TranslationSettings {
 		mInRange = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
 		mCheckArrayAccessOffHeap =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.class);
-		mDivisionByZeroOfIntegerTypes = ups.getEnum(
-				CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.class);
-		mDivisionByZeroOfFloatingTypes = ups.getEnum(
-				CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.class);
+		mDivisionByZeroOfIntegerTypes =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.class);
+		mDivisionByZeroOfFloatingTypes =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.class);
 		mBitpreciseBitfields = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITPRECISE_BITFIELDS);
 		mBitvectorTranslation = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
@@ -367,10 +367,7 @@ public final class TranslationSettings {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mNewPreferredMemoryModel == null) ? 0 : mNewPreferredMemoryModel.hashCode());
-			return result;
+			return Objects.hash(mNewPreferredMemoryModel);
 		}
 
 		@Override

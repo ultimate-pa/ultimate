@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util;
 import java.math.BigInteger;
 
 /**
- * This class provides static methods that implement algorithms for Java's
- * arithmetic data types.
+ * This class provides static methods that implement algorithms for Java's arithmetic data types.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Katharina Wagner
@@ -43,9 +42,8 @@ public final class ArithmeticUtils {
 	}
 
 	/**
-	 * There exist several definitions the division operation and the modulo
-	 * operation. The Euclidean modulo is the modulo operation whose result is
-	 * always positive E.g., -8 modulo 7 is 6, because we have that -2*7+6=-8.
+	 * There exist several definitions the division operation and the modulo operation. The Euclidean modulo is the
+	 * modulo operation whose result is always positive E.g., -8 modulo 7 is 6, because we have that -2*7+6=-8.
 	 *
 	 */
 	public static BigInteger euclideanMod(final BigInteger dividend, final BigInteger divisor) {
@@ -53,9 +51,8 @@ public final class ArithmeticUtils {
 	}
 
 	/**
-	 * There exist several definitions the division operation and the modulo
-	 * operation. The Euclidean division is the divison operation whose remainder is
-	 * always positive E.g., -8 div 7 is -2, because we have that -2*7+6=-8.
+	 * There exist several definitions the division operation and the modulo operation. The Euclidean division is the
+	 * divison operation whose remainder is always positive E.g., -8 div 7 is -2, because we have that -2*7+6=-8.
 	 */
 	public static BigInteger euclideanDiv(final BigInteger dividend, final BigInteger divisor) {
 		final BigInteger nonEuclideanQuotient = dividend.divide(divisor);
@@ -70,18 +67,19 @@ public final class ArithmeticUtils {
 		} else {
 			result = nonEuclideanQuotient;
 		}
-		assert result.multiply(divisor).add(euclideanMod(dividend, divisor))
-				.equals(dividend) : "incorrect euclidean division";
+		assert result.multiply(divisor).add(euclideanMod(dividend, divisor)).equals(dividend)
+				: "incorrect euclidean division";
 		return result;
 	}
 
 	/**
 	 * Compute the multiplicative inverse of a number in the ring ℤ/nℤ.
 	 *
-	 * @param a       Number for which we compute the inverse. May be any integer
-	 *                that is coprime to the modulus. We apply the Euclidean modulus
-	 *                to interpret the number as an element of ℤ/nℤ.
-	 * @param modulus The `n` in ℤ/nℤ. Must be strictly greater than one.
+	 * @param a
+	 *            Number for which we compute the inverse. May be any integer that is coprime to the modulus. We apply
+	 *            the Euclidean modulus to interpret the number as an element of ℤ/nℤ.
+	 * @param modulus
+	 *            The `n` in ℤ/nℤ. Must be strictly greater than one.
 	 * @return Number `inv` such that `a*inv` is `1` in ℤ/nℤ.
 	 */
 	public static BigInteger multiplicativeInverse(final BigInteger a, final BigInteger modulus) {

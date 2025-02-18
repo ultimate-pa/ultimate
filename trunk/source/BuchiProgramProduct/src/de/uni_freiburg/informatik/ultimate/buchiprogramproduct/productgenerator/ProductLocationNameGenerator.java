@@ -99,32 +99,35 @@ public final class ProductLocationNameGenerator {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mIcfgDebugIdentifier == null) ? 0 : mIcfgDebugIdentifier.hashCode());
-			result = prime * result + ((mNwaState == null) ? 0 : mNwaState.hashCode());
-			return result;
+			return Objects.hash(mIcfgDebugIdentifier, mNwaState);
 		}
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (obj == null)
+			}
+			if (obj == null) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
+			}
 			final BuchiProgramDebugIdentifier other = (BuchiProgramDebugIdentifier) obj;
 			if (mIcfgDebugIdentifier == null) {
-				if (other.mIcfgDebugIdentifier != null)
+				if (other.mIcfgDebugIdentifier != null) {
 					return false;
-			} else if (!mIcfgDebugIdentifier.equals(other.mIcfgDebugIdentifier))
+				}
+			} else if (!mIcfgDebugIdentifier.equals(other.mIcfgDebugIdentifier)) {
 				return false;
+			}
 			if (mNwaState == null) {
-				if (other.mNwaState != null)
+				if (other.mNwaState != null) {
 					return false;
-			} else if (!mNwaState.equals(other.mNwaState))
+				}
+			} else if (!mNwaState.equals(other.mNwaState)) {
 				return false;
+			}
 			return true;
 		}
 	}

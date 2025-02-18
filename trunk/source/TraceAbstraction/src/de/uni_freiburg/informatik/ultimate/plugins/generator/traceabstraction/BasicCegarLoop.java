@@ -391,8 +391,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			}
 		}
 
-		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(),
-				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(), false)
+				: "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 
 		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
 		// In particular, NwaFloydHoareValidityCheck calls IncrementalHoareTripleChecker, which in the method

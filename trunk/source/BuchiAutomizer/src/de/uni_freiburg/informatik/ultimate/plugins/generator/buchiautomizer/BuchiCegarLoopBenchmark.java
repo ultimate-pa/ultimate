@@ -358,11 +358,10 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType {
 					mostDifficult = benchmark;
 					mostMotzkin = benchmark.getMotzkinApplications();
 				}
-			} else if (benchmark.getConstraintsSatisfiability() == LBool.UNKNOWN) {
-				if (benchmark.getMotzkinApplications() > mostMotzkin) {
-					mostDifficult = benchmark;
-					mostMotzkin = benchmark.getMotzkinApplications();
-				}
+			} else if ((benchmark.getConstraintsSatisfiability() == LBool.UNKNOWN)
+					&& (benchmark.getMotzkinApplications() > mostMotzkin)) {
+				mostDifficult = benchmark;
+				mostMotzkin = benchmark.getMotzkinApplications();
 			}
 		}
 		return mostDifficult;

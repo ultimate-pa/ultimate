@@ -275,10 +275,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param underApprox
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
-			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit, final SmtFunctionsAndAxioms smtSymbols,
-			final Script solver, final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
-			final IPredicate precondition, final IPredicate postcondition, final IcfgLocation startLocation,
-			final Set<IcfgLocation> errorLocations,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
+			final SmtFunctionsAndAxioms smtSymbols, final Script solver, final List<IcfgLocation> locations,
+			final List<IcfgInternalTransition> transitions, final IPredicate precondition,
+			final IPredicate postcondition, final IcfgLocation startLocation, final Set<IcfgLocation> errorLocations,
 			final ILinearInequalityInvariantPatternStrategy<Dnf<AbstractLinearInvariantPattern>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
 			final SimplificationTechnique simplicationTechnique, final Map<IcfgLocation, IPredicate> loc2underApprox,
@@ -506,8 +506,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 		final Dnf<LinearInequality> conjunctionDNF = XnfUtils.and(mServices, dnfs);
 
-		final int numOfMotzkinCoefficientsBeforeTransformation =
-				mMotzkinCoefficients2LinearInequalities.keySet().size();
+		final int numOfMotzkinCoefficientsBeforeTransformation = mMotzkinCoefficients2LinearInequalities.size();
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<>(conjunctionDNF.size());
 		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR
@@ -527,13 +526,13 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (ct == ConstraintsType.Normal) {
 			mDAGTreeSizeSumOfNormalConstraints += new DAGSize().treesize(result);
 			mMotzkinTransformationsForNormalConstraints += conjunctionDNF.size();
-			mMotzkinCoefficientsForNormalConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size()
-					- numOfMotzkinCoefficientsBeforeTransformation);
+			mMotzkinCoefficientsForNormalConstraints +=
+					(mMotzkinCoefficients2LinearInequalities.size() - numOfMotzkinCoefficientsBeforeTransformation);
 		} else if (ct == ConstraintsType.Approximation) {
 			mDAGTreeSizeSumOfApproxConstraints += new DAGSize().treesize(result);
 			mMotzkinTransformationsForApproxConstraints += conjunctionDNF.size();
-			mMotzkinCoefficientsForApproxConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size()
-					- numOfMotzkinCoefficientsBeforeTransformation);
+			mMotzkinCoefficientsForApproxConstraints +=
+					(mMotzkinCoefficients2LinearInequalities.size() - numOfMotzkinCoefficientsBeforeTransformation);
 		}
 
 		return result;
@@ -605,8 +604,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<List<LinearInequality>> conditionDNF_ = condition.getPolyhedra();
 		final Dnf<LinearInequality> conditionDNF = new Dnf<>();
 		for (final List<LinearInequality> list : conditionDNF_) {
-			final Collection<LinearInequality> newList = new ArrayList<>();
-			newList.addAll(list);
+			final Collection<LinearInequality> newList = new ArrayList<>(list);
 			conditionDNF.add(newList);
 		}
 		final Dnf<LinearInequality> negPatternDNF = mapAndNegatePattern(mServices, pattern, primedMapping);
@@ -673,7 +671,8 @@ public final class LinearInequalityInvariantPatternProcessor
 					mapToComplete.put(var, mapToCompleteWith.get(var));
 				} else {
 					final Term replacement =
-							SmtUtils.buildNewConstant(mSolver, prefix + var + "_" + (index++), SmtSortUtils.REAL_SORT);
+							SmtUtils.buildNewConstant(mSolver, prefix + var + "_" + index, SmtSortUtils.REAL_SORT);
+					index++;
 					mapToComplete.put(var, replacement);
 					mapToCompleteWith.put(var, replacement);
 				}
@@ -797,9 +796,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			// Add constraint IT_i ==> WP_i
 			if (!mErrorLocations.contains(loc) && mLoc2OverApproximation.containsKey(loc)) {
 				// First, negate predicate WP
-				final UnmodifiableTransFormula negatedWp =
-						TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(),
-								mServices);
+				final UnmodifiableTransFormula negatedWp = TransFormulaUtils.negate(mLoc2OverApproximation.get(loc),
+						super.mCsToolkit.getManagedScript(), mServices);
 				// Then convert the tranformula to linear inequalities
 				final Dnf<AbstractLinearInvariantPattern> negatedWpTemplate =
 						convertTransFormulaToPatternsForLinearInequalities(negatedWp);
@@ -842,9 +840,9 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	private void printConstraintFromStringBuilder(final StringBuilder sb) {
 		String s = sb.toString();
-		s = s.replaceAll("AND \\) OR", "\\) OR");
-		s = s.replaceAll("OR \n", "\n");
-		s = s.replaceAll("AND \n", "\n");
+		s = s.replace("AND ) OR", ") OR");
+		s = s.replace("OR \n", "\n");
+		s = s.replace("AND \n", "\n");
 		// s = s.replaceAll("\\(\\)", "(true)");
 		mLogger.debug(s);
 	}
@@ -1025,8 +1023,8 @@ public final class LinearInequalityInvariantPatternProcessor
 				}
 				final UnmodifiableTransFormula substitutedTf = TransFormulaUtils.substituteTermVars(
 						transition.getTransformula(), mCsToolkit.getManagedScript(), subsitutionMapping);
-				final UnmodifiableTransFormula guard = TransFormulaUtils.computeGuard(substitutedTf,
-						mCsToolkit.getManagedScript(), mServices);
+				final UnmodifiableTransFormula guard =
+						TransFormulaUtils.computeGuard(substitutedTf, mCsToolkit.getManagedScript(), mServices);
 				final UnmodifiableTransFormula negatedGuard =
 						TransFormulaUtils.negate(guard, mCsToolkit.getManagedScript(), mServices);
 				final LinearTransition linearTransition = mLinearizer.linearize(negatedGuard);
@@ -1436,7 +1434,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	@Override
-	public final Set<IProgramVar> getVariablesForInvariantPattern(final IcfgLocation location, final int round) {
+	public Set<IProgramVar> getVariablesForInvariantPattern(final IcfgLocation location, final int round) {
 		if (mStartLocation.equals(location) && !mSynthesizeEntryPattern) {
 			return Collections.emptySet();
 		} else if (mErrorLocations.contains(location)) {
@@ -1477,8 +1475,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		// Add conjuncts from transformula to each disjunct of the pattern as additional conjuncts
 		for (final Collection<AbstractLinearInvariantPattern> conjunctsInPattern : pattern) {
 			for (final Collection<AbstractLinearInvariantPattern> conjunctsInTransFormula : transFormulaAsLinIneqs) {
-				final Collection<AbstractLinearInvariantPattern> newConjuncts = new ArrayList<>();
-				newConjuncts.addAll(conjunctsInPattern);
+				final Collection<AbstractLinearInvariantPattern> newConjuncts = new ArrayList<>(conjunctsInPattern);
 				newConjuncts.addAll(conjunctsInTransFormula);
 				result.add(newConjuncts);
 			}

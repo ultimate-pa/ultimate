@@ -155,8 +155,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 		if (currentState.isBottom()) {
 			return currentState;
 		}
-		final CodeBlock codeBlock =
-				mCodeBlockFactory.constructStatementSequence(null, null, statement);
+		final CodeBlock codeBlock = mCodeBlockFactory.constructStatementSequence(null, null, statement);
 		final Collection<STATE> newStates = mSubDomain.getPostOperator().apply(currentState, codeBlock);
 		if (newStates.isEmpty()) {
 			return mSubDomain.createBottomState();
@@ -245,6 +244,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 	}
 
 	public Term eliminateQuantifier(final Term term) {
-		return PartialQuantifierElimination.eliminateCompat(mServices, getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, term);
+		return PartialQuantifierElimination.eliminateCompat(mServices, getManagedScript(),
+				SimplificationTechnique.SIMPLIFY_DDA, term);
 	}
 }

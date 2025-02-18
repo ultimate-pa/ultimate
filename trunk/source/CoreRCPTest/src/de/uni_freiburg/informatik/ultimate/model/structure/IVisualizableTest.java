@@ -10,10 +10,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 
 public abstract class IVisualizableTest<T extends IVisualizable> extends InterfaceTest<T> {
 
-	//TODO: Not exactly specified, if this is really specified in the interface! Check this!
+	// TODO: Not exactly specified, if this is really specified in the interface! Check this!
 	@Test
 	public void getVisualizationGraphNotNull() {
 		Assert.assertNotNull(instance.getVisualizationGraph());
 	}
-	
+
 }

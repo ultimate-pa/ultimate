@@ -93,9 +93,8 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 		if (iter.hasNext()) {
 			final ITransformulaTransformer first = iter.next();
 			final String ident = getIdentifier(iter, 1);
-			final BasicIcfg<OUTLOC> intermediateIcfg =
-					transform(logger, originalIcfg, funLocFacFirst, backtranslationTracker, outLocationClass, ident,
-							first);
+			final BasicIcfg<OUTLOC> intermediateIcfg = transform(logger, originalIcfg, funLocFacFirst,
+					backtranslationTracker, outLocationClass, ident, first);
 			mResultIcfg =
 					transformRest(intermediateIcfg, funLocFacRest, backtranslationTracker, outLocationClass, iter);
 		} else {
@@ -125,9 +124,8 @@ public class IcfgTransformerSequence<INLOC extends IcfgLocation, OUTLOC extends 
 		transformer.preprocessIcfg(originalIcfg);
 		final BasicIcfg<OUT> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final TransformedIcfgBuilder<IN, OUT> lst =
-				new TransformedIcfgBuilder<>(logger, funLocFac, backtranslationTracker, transformer, originalIcfg,
-						resultIcfg);
+		final TransformedIcfgBuilder<IN, OUT> lst = new TransformedIcfgBuilder<>(logger, funLocFac,
+				backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 		return resultIcfg;

@@ -34,20 +34,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.ISmtCommand;
 
-public class LoggingScriptForUnsatCoreBenchmarks extends
-		LoggingScriptForNonIncrementalBenchmarks {
-
+public class LoggingScriptForUnsatCoreBenchmarks extends LoggingScriptForNonIncrementalBenchmarks {
 
 	private LinkedList<ArrayList<ISmtCommand<?>>> mCommandStackAtLastGetUnsatCore;
 
-	public LoggingScriptForUnsatCoreBenchmarks(final Script script,
-			final String baseFilename, final String directory) {
+	public LoggingScriptForUnsatCoreBenchmarks(final Script script, final String baseFilename, final String directory) {
 		super(script, baseFilename, directory);
 	}
 
 	@Override
-	public Term[] getUnsatCore() throws SMTLIBException,
-			UnsupportedOperationException {
+	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
 		final Term[] result = super.getUnsatCore();
 		mCommandStackAtLastGetUnsatCore = deepCopyOfCommandStack();
 		return result;
@@ -60,9 +56,5 @@ public class LoggingScriptForUnsatCoreBenchmarks extends
 		}
 		super.exit();
 	}
-
-
-
-
 
 }
