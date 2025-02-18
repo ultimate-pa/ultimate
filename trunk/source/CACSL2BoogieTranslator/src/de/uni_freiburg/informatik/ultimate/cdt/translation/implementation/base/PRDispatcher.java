@@ -82,9 +82,9 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdInitializerExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
@@ -147,7 +147,7 @@ public class PRDispatcher implements IDispatcher {
 		case final IASTCaseStatement cs -> mCHandler.visit(this, cs);
 		case final IASTProblemStatement problem -> mCHandler.visit(this, problem);
 		case final IASTEqualsInitializer init -> mCHandler.visit(this, init);
-		case final CASTDesignatedInitializer init -> mCHandler.visit(this, init);
+		case final ICASTDesignatedInitializer init -> mCHandler.visit(this, init);
 		case final IASTInitializerList init -> mCHandler.visit(this, init);
 		case final IASTLiteralExpression lit -> mCHandler.visit(this, lit);
 		case final IASTIdExpression id -> mCHandler.visit(this, id);

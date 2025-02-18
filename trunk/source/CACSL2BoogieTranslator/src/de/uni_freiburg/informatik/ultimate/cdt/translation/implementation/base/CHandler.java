@@ -116,11 +116,10 @@ import org.eclipse.cdt.core.dom.ast.IProblemBinding;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
 import org.eclipse.cdt.core.dom.ast.IVariable;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTLiteralExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
+import org.eclipse.cdt.internal.core.dom.parser.c.ICInternalBinding;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -764,7 +763,7 @@ public class CHandler {
 		return result;
 	}
 
-	public Result visit(final IDispatcher main, final CASTDesignatedInitializer node) {
+	public Result visit(final IDispatcher main, final ICASTDesignatedInitializer node) {
 		return mInitHandler.handleDesignatedInitializer(main, mLocationFactory, node);
 	}
 
@@ -1461,8 +1460,8 @@ public class CHandler {
 			return true;
 		}
 		final IBinding binding = node.getName().resolveBinding();
-		if (binding instanceof CVariable) {
-			final IASTNode[] decls = ((CVariable) binding).getDeclarations();
+		if (binding instanceof ICInternalBinding) {
+			final IASTNode[] decls = ((ICInternalBinding) binding).getDeclarations();
 			// check if any of the declarations of this var are on heap, because then, all
 			// have to be on heap
 			if (decls != null && decls.length > 0) {
@@ -3272,10 +3271,10 @@ public class CHandler {
 			final IASTInitializerList initList = (IASTInitializerList) equalsInitializer.getInitializerClause();
 			return initList.getSize();
 		}
-		if (equalsInitializer.getInitializerClause() instanceof CASTLiteralExpression
-				&& ((CASTLiteralExpression) equalsInitializer.getInitializerClause())
+		if (equalsInitializer.getInitializerClause() instanceof IASTLiteralExpression
+				&& ((IASTLiteralExpression) equalsInitializer.getInitializerClause())
 						.getKind() == IASTLiteralExpression.lk_string_literal) {
-			final CASTLiteralExpression lit = (CASTLiteralExpression) equalsInitializer.getInitializerClause();
+			final IASTLiteralExpression lit = (IASTLiteralExpression) equalsInitializer.getInitializerClause();
 			/*
 			 * subtracting -1 because lit.getValue includes the quotation marks (-2) and we will add a termination
 			 * character (+1), for example the string literals "bla" will give us length 7, as C will store it as 'b'
