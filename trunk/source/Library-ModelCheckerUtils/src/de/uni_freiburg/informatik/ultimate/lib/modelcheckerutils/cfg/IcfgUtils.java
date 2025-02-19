@@ -44,22 +44,17 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -86,9 +81,20 @@ public class IcfgUtils {
 		})).collect(Collectors.toSet());
 	}
 
+	/**
+	 * Collect all program points that are predecessors or successors of an {@link IIcfgCallTransition}.
+	 */
 	public static <LOC extends IcfgLocation> Set<LOC> getCallerAndCalleePoints(final IIcfg<LOC> icfg) {
-		return new IcfgEdgeIterator(icfg).asStream().filter(e -> e instanceof IIcfgCallTransition<?>)
+		return new IcfgEdgeIterator(icfg).asStream().filter(IIcfgCallTransition.class::isInstance)
 				.flatMap(e -> Stream.of((LOC) e.getSource(), (LOC) e.getTarget())).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Collect all program points that are predecessors of an {@link IIcfgReturnTransition}.
+	 */
+	public static <LOC extends IcfgLocation> Set<LOC> getReturnPredecessorPoints(final IIcfg<LOC> icfg) {
+		return new IcfgEdgeIterator(icfg).asStream().filter(IIcfgReturnTransition.class::isInstance)
+				.map(x -> (LOC) x.getSource()).collect(Collectors.toSet());
 	}
 
 	public static boolean isConcurrent(final IIcfg<?> icfg) {
@@ -100,21 +106,6 @@ public class IcfgUtils {
 	 */
 	public static <LOC extends IcfgLocation> List<IcfgEdge> extractStartEdges(final IIcfg<LOC> icfg) {
 		return icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toList());
-	}
-
-	public static <T extends IIcfgTransition<?>> UnmodifiableTransFormula getTransformula(final T transition) {
-		if (transition instanceof IInternalAction) {
-			return ((IInternalAction) transition).getTransformula();
-		}
-		if (transition instanceof ICallAction) {
-			return ((ICallAction) transition).getLocalVarsAssignment();
-		}
-		if (transition instanceof IReturnAction) {
-			return ((IReturnAction) transition).getAssignmentOfReturn();
-		} else {
-			throw new UnsupportedOperationException(
-					"Dont know how to extract transformula from transition " + transition);
-		}
 	}
 
 	public static <LOC extends IcfgLocation> Set<LOC> getErrorLocations(final IIcfg<LOC> icfg) {
@@ -145,12 +136,16 @@ public class IcfgUtils {
 		return procErrorNodes.contains(loc);
 	}
 
+	public static <LOC extends IcfgLocation> Stream<LOC> getAllLocations(final IIcfg<LOC> icfg) {
+		return icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream());
+	}
+
 	public static <LOC extends IcfgLocation> int getNumberOfLocations(final IIcfg<LOC> icfg) {
-		int result = 0;
-		for (final Entry<String, Map<DebugIdentifier, LOC>> entry : icfg.getProgramPoints().entrySet()) {
-			result += entry.getValue().size();
-		}
-		return result;
+		return icfg.getProgramPoints().values().stream().mapToInt(Map::size).sum();
+	}
+
+	public static int getNumberOfEdges(final IIcfg<?> icfg) {
+		return getAllLocations(icfg).mapToInt(l -> l.getOutgoingEdges().size()).sum();
 	}
 
 	/**
@@ -189,11 +184,11 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> boolean areReachableProgramPointsRegistered(final IIcfg<LOC> icfg) {
-		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
-				.collect(Collectors.toSet());
+		final Set<IcfgLocation> reachableProgramPoints =
+				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
-		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
-				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		final Set<LOC> registeredProgramPoints =
+				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
 		final Set<IcfgLocation> diff = new HashSet<>(reachableProgramPoints);
 		diff.removeAll(registeredProgramPoints);
 		if (!diff.isEmpty()) {
@@ -203,18 +198,17 @@ public class IcfgUtils {
 	}
 
 	public static <LOC extends IcfgLocation> boolean areRegisteredProgramPointsReachable(final IIcfg<LOC> icfg) {
-		final Set<IcfgLocation> reachableProgramPoints = new IcfgEdgeIterator(icfg).asStream().map(x -> x.getTarget())
-				.collect(Collectors.toSet());
+		final Set<IcfgLocation> reachableProgramPoints =
+				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
-		final Set<LOC> registeredProgramPoints = icfg.getProgramPoints().entrySet().stream()
-				.flatMap(x -> x.getValue().entrySet().stream()).map(Entry::getValue).collect(Collectors.toSet());
+		final Set<LOC> registeredProgramPoints =
+				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
 		final Set<IcfgLocation> diff = new HashSet<>(registeredProgramPoints);
 		diff.removeAll(reachableProgramPoints);
 		// ExitNodes are registered even if they are not reachable (the optimization
 		// where we omit ExitNodes would require many case distinctions and would only
 		// save a few nodes).
-		final Set<LOC> exitProgramPoints = icfg.getProcedureExitNodes().entrySet().stream().map(Entry::getValue)
-				.collect(Collectors.toSet());
+		final Set<LOC> exitProgramPoints = icfg.getProcedureExitNodes().values().stream().collect(Collectors.toSet());
 		diff.removeAll(exitProgramPoints);
 		if (!diff.isEmpty()) {
 			throw new AssertionError("Program points registered but not reachable: " + diff);
@@ -223,17 +217,52 @@ public class IcfgUtils {
 	}
 
 	/**
+	 * Checks an invariant that must hold for {@link IIcfg}s: For every procedure entry node, there must be a
+	 * corresponding procedure exit node, and vice versa. This should hold, even if e.g. the exit node is unreachable.
+	 */
+	public static <LOC extends IcfgLocation> boolean checkMatchingEntryExitNodes(final IIcfg<LOC> icfg) {
+		final var entryNodes = icfg.getProcedureEntryNodes();
+		final var exitNodes = icfg.getProcedureExitNodes();
+
+		for (final var e : entryNodes.entrySet()) {
+			final var proc = e.getKey();
+			assert e.getValue() != null : "Entry node for procedure " + proc + " is null";
+
+			final var exit = exitNodes.get(proc);
+			if (exit == null) {
+				assert false : "No corresponding exit node for entry node with procedure " + proc;
+				return false;
+			}
+		}
+
+		for (final var e : exitNodes.entrySet()) {
+			final var proc = e.getKey();
+			assert e.getValue() != null : "Exit node for procedure " + proc + " is null";
+
+			final var entry = entryNodes.get(proc);
+			if (entry == null) {
+				assert false : "No corresponding entry node for exit node with procedure " + proc;
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * @return true iff loc is entry node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isEntry(final LOC loc, final IIcfg<LOC> icfg) {
-		return icfg.getProcedureEntryNodes().get(loc.getProcedure()).equals(loc);
+		final var entry = icfg.getProcedureEntryNodes().get(loc.getProcedure());
+		return entry.equals(loc);
 	}
 
 	/**
 	 * @return true iff loc is exit node of some procedure
 	 */
 	public static <LOC extends IcfgLocation> boolean isExit(final LOC loc, final IIcfg<LOC> icfg) {
-		return icfg.getProcedureExitNodes().get(loc.getProcedure()).equals(loc);
+		final var exit = icfg.getProcedureExitNodes().get(loc.getProcedure());
+		return loc.equals(exit);
 	}
 
 	/**
@@ -394,7 +423,7 @@ public class IcfgUtils {
 
 			// When reachability was confirmed, do not search any further.
 			if (canReach != LBool.SAT) {
-				successors.stream().forEach(worklist::add);
+				worklist.addAll(successors);
 			}
 		}
 

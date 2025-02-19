@@ -49,7 +49,22 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class IncrementalPlicationChecker {
 
 	public enum Validity {
-		VALID, INVALID, UNKNOWN, NOT_CHECKED
+		VALID, INVALID, UNKNOWN, NOT_CHECKED;
+
+		public Validity and(final Validity other) {
+			switch (this) {
+			case INVALID:
+				return INVALID;
+			case NOT_CHECKED:
+				return other == INVALID ? other : this;
+			case UNKNOWN:
+				return (other == NOT_CHECKED || other == INVALID) ? other : this;
+			case VALID:
+				return other;
+			default:
+				throw new AssertionError("unexpected validity " + this);
+			}
+		}
 	}
 
 	public static Validity convertLBool2Validity(final LBool lbool) {

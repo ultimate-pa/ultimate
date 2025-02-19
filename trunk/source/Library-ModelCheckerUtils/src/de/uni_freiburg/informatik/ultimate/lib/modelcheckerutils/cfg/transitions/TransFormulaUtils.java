@@ -67,13 +67,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SubtermPropertyChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.XnfDer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
@@ -160,8 +160,6 @@ public final class TransFormulaUtils {
 	 *            we apply to the resulting formula which produces an equivalent formula with less auxVars.
 	 * @param tranformToCNF
 	 *            whether or not the composed formula should be transformed to conjunctive normal form
-	 * @param xnfConversionTechnique
-	 *            If the formula is transformed to CNF, the technique to do so
 	 * @param simplificationTechnique
 	 *            If the formula is simplified, the technique to do so. Also applies if quantifiers are eliminated.
 	 * @param transFormula
@@ -171,8 +169,7 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
 			final boolean tryAuxVarElimination, final boolean tranformToCNF,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final List<UnmodifiableTransFormula> transFormula) {
+			final SimplificationTechnique simplificationTechnique, final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("sequential composition with%s formula simplification", simplify ? "" : "out");
 		}
@@ -310,7 +307,7 @@ public final class TransFormulaUtils {
 		}
 
 		if (tranformToCNF) {
-			final Term cnf = SmtUtils.toCnf(services, mgdScript, formula, xnfConversionTechnique);
+			final Term cnf = SmtUtils.toCnf(services, mgdScript, formula);
 			formula = cnf;
 		}
 
@@ -368,7 +365,6 @@ public final class TransFormulaUtils {
 	 *
 	 * @param logger
 	 * @param services
-	 * @param xnfConversionTechnique
 	 * @param isInternal
 	 *            Whether or not the resulting TF is meant to describe an internal transition (as opposed to a call or
 	 *            return). If so, the method ensures that the return value has internal normal form (see
@@ -377,8 +373,7 @@ public final class TransFormulaUtils {
 	public static UnmodifiableTransFormula parallelComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final TermVariable[] branchIndicators, final boolean tranformToCNF,
-			final XnfConversionTechnique xnfConversionTechnique, final boolean isInternal,
-			final UnmodifiableTransFormula... transFormulas) {
+			final boolean isInternal, final UnmodifiableTransFormula... transFormulas) {
 		logger.debug("parallel composition");
 
 		final boolean useBranchEncoders = branchIndicators != null;
@@ -425,7 +420,7 @@ public final class TransFormulaUtils {
 		}
 
 		if (tranformToCNF) {
-			resultFormula = SmtUtils.toCnf(services, mgdScript, resultFormula, xnfConversionTechnique);
+			resultFormula = SmtUtils.toCnf(services, mgdScript, resultFormula);
 		}
 
 		final Set<IProgramConst> nonTheoryConsts = Arrays.stream(transFormulas)
@@ -443,7 +438,6 @@ public final class TransFormulaUtils {
 	/**
 	 * Returns TransFormula that describes a sequence of code blocks that contains a pending call. Note the the scope of
 	 * inVars and outVars is different. Do not compose the result with the default/intraprocedural composition.
-	 *
 	 * @param beforeCall
 	 *            TransFormula that describes transition relation before the call.
 	 * @param callTf
@@ -467,9 +461,9 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula afterCall, final ILogger logger, final IUltimateServiceProvider services,
 			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfgSymbolTable symbolTable, final String procAtStart, final String procBeforeCall,
-			final String procAfterCall, final String procAtEnd, final ModifiableGlobalsTable modifiableGlobalsTable) {
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final String procAtStart, final String procBeforeCall, final String procAfterCall,
+			final String procAtEnd, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		assert procAtStart != null : "proc at start must not be null";
 		if (!procAtStart.equals(procBeforeCall)) {
 			throw new UnsupportedOperationException("proc change before call");
@@ -483,7 +477,7 @@ public final class TransFormulaUtils {
 			callAndBefore.add(callTf);
 			callAndBefore.add(oldVarsAssignment);
 			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify,
-					extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique, callAndBefore);
+					extPqe, transformToCNF, simplificationTechnique, callAndBefore);
 
 			// remove outVars that are not "interface variables"
 			// see isInterfaceVariable()
@@ -530,7 +524,7 @@ public final class TransFormulaUtils {
 			final List<UnmodifiableTransFormula> oldAssignAndAfterList = new ArrayList<>(Arrays.asList(afterCall));
 			oldAssignAndAfterList.add(0, globalVarsAssignment);
 			final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify,
-					extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique, oldAssignAndAfterList);
+					extPqe, transformToCNF, simplificationTechnique, oldAssignAndAfterList);
 
 			// remove inVars that are not "interface variables"
 			// see isInterfaceVariable()
@@ -550,8 +544,7 @@ public final class TransFormulaUtils {
 		}
 
 		final UnmodifiableTransFormula preliminaryResult = sequentialComposition(logger, services, mgdScript, simplify,
-				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
-				Arrays.asList(callAndBeforeTF, globalVarAssignAndAfterTF));
+				extPqe, transformToCNF, simplificationTechnique, Arrays.asList(callAndBeforeTF, globalVarAssignAndAfterTF));
 
 		// If the procedure does not change after the call, we already have
 		// the result. Otherwise we have to remove the inparams since they
@@ -671,7 +664,6 @@ public final class TransFormulaUtils {
 
 	/**
 	 * Returns a TransFormula that can be seen as procedure summary.
-	 *
 	 * @param callTf
 	 *            TransFormula that describes parameter assignment of call.
 	 * @param oldVarsAssignment
@@ -690,8 +682,8 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula procedureTf,
 			final UnmodifiableTransFormula returnTf, final ILogger logger, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final IIcfgSymbolTable symbolTable, final Set<IProgramNonOldVar> modifiableGlobalsOfCallee) {
+			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
+			final Set<IProgramNonOldVar> modifiableGlobalsOfCallee) {
 		// if (!callTf.getAuxVars().isEmpty()) {
 		// throw new UnsupportedOperationException(TransFormulaUtils.AUX_VARS_IN_CALL_TF);
 		// }
@@ -707,7 +699,7 @@ public final class TransFormulaUtils {
 
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript, simplify,
-				extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
+				extPqe, transformToCNF, simplificationTechnique,
 				Arrays.asList(callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf));
 
 		// remove invars except for
@@ -856,26 +848,44 @@ public final class TransFormulaUtils {
 
 	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript, final IUltimateServiceProvider services) {
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch encoders");
+		}
+
+		// yes! outVars of result are indeed the inVars of input
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
+						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
+		tfb.setFormula(computeGuardTermHelper(services, mgdScript, tf, true));
+		tfb.setInfeasibility(tf.isInfeasible());
+		return tfb.finishConstruction(mgdScript);
+	}
+
+	public static Term computeGuardTerm(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula tf, final boolean tryAuxVarElimination) {
+		final var term = computeGuardTermHelper(services, mgdScript, tf, tryAuxVarElimination);
+
+		// We substitute inVars by default vars of corresponding IProgramVars.
+		final var subst = tf.getInVars().entrySet().stream()
+				.collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey().getTermVariable()));
+		return Substitution.apply(mgdScript, subst, term);
+	}
+
+	private static Term computeGuardTermHelper(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final UnmodifiableTransFormula tf, final boolean tryAuxVarElimination) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
+		auxVars.addAll(tf.getBranchEncoders());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
 			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
 				auxVars.add(outVar);
 			}
 		}
-		if (!tf.getBranchEncoders().isEmpty()) {
-			throw new AssertionError("I think this does not make sense with branch enconders");
+
+		if (tryAuxVarElimination) {
+			return quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
 		}
-		// yes! outVars of result are indeed the inVars of input
-
-		final Term withoutAuxVars = quantifyAndTryToEliminateAuxVars(services, mgdScript, tf.getFormula(), auxVars);
-
-		final TransFormulaBuilder tfb =
-				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
-						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(withoutAuxVars);
-		tfb.setInfeasibility(tf.isInfeasible());
-		return tfb.finishConstruction(mgdScript);
+		return SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, auxVars, tf.getFormula());
 	}
 
 	/**
@@ -1278,6 +1288,12 @@ public final class TransFormulaUtils {
 	 */
 	public static UnmodifiableTransFormula decoupleArrayValues(final UnmodifiableTransFormula tf,
 			final ManagedScript mgdScript) {
+		// Dominik (2024-10-28) Array decoupling is currently broken for quantified formulas.
+		// If store terms occur beneath a quantifier, bound variables may escape.
+		if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
+			return tf;
+		}
+
 		final Map<TermVariable, TermVariable> oldAuxVar2newAuxVar = mgdScript.constructFreshCopies(tf.getAuxVars());
 		final Term renamed = Substitution.apply(mgdScript, oldAuxVar2newAuxVar, tf.getFormula());
 		final Triple<Term, List<TermVariable>, List<Term>> decoupled = decoupleArrayValues(renamed, mgdScript);

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Ultimate model of an automaton transition.
@@ -62,6 +63,7 @@ public final class AutomatonTransition
 		INITIAL
 	}
 
+	@Visualizable
 	private String mName;
 
 	/**

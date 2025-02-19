@@ -290,6 +290,9 @@ public class CDTParser implements ISource {
 			}
 		}
 
+		// Refresh the workspace
+		ResourcesPlugin.getWorkspace().getRoot().refreshLocal(IResource.DEPTH_INFINITE, null);
+
 		// TODO: The indexer is empty and I dont know why -- reindexing does not help
 		// CCorePlugin.getIndexManager().reindex(cProject);
 
@@ -530,7 +533,7 @@ public class CDTParser implements ISource {
 
 		// make project ready
 		project.open(NULL_MONITOR);
-		mLogger.info("Created temporary CDT project at %s", getFullPath(mProject));
+		mLogger.info("Created temporary CDT project at %s", getFullPath(project));
 		return project;
 	}
 
@@ -551,6 +554,9 @@ public class CDTParser implements ISource {
 			// causes the refresh manager to refresh the project 200ms later. This Job
 			// interferes with the resource change handler firing see: bug 271264
 			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, NULL_MONITOR);
+			Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_REFRESH, NULL_MONITOR);
+			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_BUILD, NULL_MONITOR);
+			Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_BUILD, NULL_MONITOR);
 		} catch (final Exception e) {
 			// Ignore
 		}

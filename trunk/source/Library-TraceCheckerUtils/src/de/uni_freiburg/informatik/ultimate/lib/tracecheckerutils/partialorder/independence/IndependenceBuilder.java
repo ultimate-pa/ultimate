@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.CachedIndependenceRelation.IIndependenceCache;
@@ -45,11 +46,15 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ab
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.abstraction.IndependenceRelationWithAbstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PredicateTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.DebugPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
  * Provides fluent API to create independence relations for software analysis. Usage of this API usually follows 3
@@ -57,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
  * <ol>
  * <li>Use a static method to create a new builder with a base independence relation.</li>
  * <li>Chain calls to instance methods to build a hierarchy of wrapper relations.</li>
- * <li>Call {@link IndependenceBuilder.ActionIndependenceBuilder#build()} to retrieve the constructed relation.</li>
+ * <li>Call {@link IndependenceBuilder#build()} to retrieve the constructed relation.</li>
  * </ol>
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
@@ -69,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
  * @param <B>
  *            (Implementation detail used to provide fluent API, not relevant to callers)
  */
-public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
+public abstract class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	private static final String UNCONDITIONAL_ERROR = "Condition transformation for unconditional relation is useless";
 
 	protected final IIndependenceRelation<S, L> mRelation;
@@ -93,11 +98,15 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	/**
 	 * Create a new instance, with a semantic independence relation as base. See
 	 * {@link SemanticIndependenceRelation::new} for details.
+	 *
+	 * @param mgdScript
+	 *            This script is used for SMT checks
 	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
+	public static <L extends IAction> PredicateActionIndependenceBuilder<L, ?> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
 			final boolean symmetric) {
-		return semantic(services, mgdScript, conditional, symmetric, null);
+		return new PredicateActionIndependenceBuilder.Impl<>(
+				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric));
 	}
 
 	/**
@@ -106,31 +115,20 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 *
 	 * @param mgdScript
 	 *            This script is used for SMT checks
-	 * @param transferrer
-	 *            TransFormulas of input actions and the formulae of input conditions are assumed to not be created by
-	 *            the given {@code mgdScript}, this is used to transfer them.
 	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
-			final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final TransferrerWithVariableCache transferrer, final boolean conditional, final boolean symmetric) {
-		return semantic(services, mgdScript, conditional, symmetric, transferrer);
-	}
-
-	/**
-	 * Create a new instance, with a semantic independence relation as base. See
-	 * {@link SemanticIndependenceRelation::new} for details.
-	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L> semantic(
+	public static <L extends IAction> PredicateActionIndependenceBuilder<L, ?> semantic(
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean conditional,
-			final boolean symmetric, final TransferrerWithVariableCache transferrer) {
-		return new PredicateActionIndependenceBuilder.Impl<>(
-				new SemanticIndependenceRelation<>(services, mgdScript, conditional, symmetric, transferrer));
+			final boolean symmetric, final SemanticIndependenceRelation.IndependenceConditions symbolicIndependenceMode,
+			final BasicPredicateFactory predicateFactory,
+			final SemanticIndependenceConditionGenerator independenceGenerator) {
+		return new PredicateActionIndependenceBuilder.Impl<>(new SemanticIndependenceRelation<>(services, mgdScript,
+				conditional, symmetric, symbolicIndependenceMode, predicateFactory, independenceGenerator));
 	}
 
 	/**
 	 * Create a new instance, with a syntactic independence relation as base.
 	 */
-	public static <L extends IAction, S> ActionIndependenceBuilder.Impl<L, S> syntactic() {
+	public static <L extends IAction, S> ActionIndependenceBuilder<L, S, ?> syntactic() {
 		return new ActionIndependenceBuilder.Impl<>(new SyntacticIndependenceRelation<>());
 	}
 
@@ -140,7 +138,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * @see IndependenceBuilder.ActionIndependenceBuilder#fromActionIndependence(IIndependenceRelation)
 	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#fromPredicateActionIndependence(IIndependenceRelation)
 	 */
-	public static <L, S> Impl<L, S> fromIndependence(final IIndependenceRelation<S, L> relation) {
+	public static <L, S> IndependenceBuilder<L, S, ?> fromIndependence(final IIndependenceRelation<S, L> relation) {
 		return new Impl<>(relation);
 	}
 
@@ -151,7 +149,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * @see IndependenceBuilder#fromIndependence(IIndependenceRelation)
 	 * @see IndependenceBuilder.ActionIndependenceBuilder#fromActionIndependence(IIndependenceRelation)
 	 */
-	public static <L extends IAction> PredicateActionIndependenceBuilder.Impl<L>
+	public static <L extends IAction> PredicateActionIndependenceBuilder<L, ?>
 			fromPredicateActionIndependence(final IIndependenceRelation<IPredicate, L> relation) {
 		return new PredicateActionIndependenceBuilder.Impl<>(relation);
 	}
@@ -162,7 +160,7 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 * @see IndependenceBuilder#fromIndependence(IIndependenceRelation)
 	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#fromPredicateActionIndependence(IIndependenceRelation)
 	 */
-	public static <L extends IAction, S> ActionIndependenceBuilder.Impl<L, S>
+	public static <L extends IAction, S> ActionIndependenceBuilder<L, S, ?>
 			fromActionIndependence(final IIndependenceRelation<S, L> relation) {
 		return new ActionIndependenceBuilder.Impl<>(relation);
 	}
@@ -228,6 +226,38 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
+	 * Union the current independence relation with the given relation (the given relation is queried first).
+	 */
+	public B unionLeft(final IIndependenceRelation<S, L> relation, final Function<Stream<S>, S> aggregateConditions) {
+		return unionLeft(List.of(relation), aggregateConditions);
+	}
+
+	/**
+	 * Union the current independence relation with the given relations (the given relations are queried in the given
+	 * order, before the current relation).
+	 */
+	public B unionLeft(final List<IIndependenceRelation<S, L>> relations,
+			final Function<Stream<S>, S> aggregateConditions) {
+		return union(relations, List.of(), aggregateConditions);
+	}
+
+	/**
+	 * Union the current independence relation with the given relation (the given relation is queried last).
+	 */
+	public B unionRight(final IIndependenceRelation<S, L> relation, final Function<Stream<S>, S> aggregateConditions) {
+		return unionRight(List.of(relation), aggregateConditions);
+	}
+
+	/**
+	 * Union the current independence relation with the given relations (the given relations are queried in the given
+	 * order, but after the current relation).
+	 */
+	public B unionRight(final List<IIndependenceRelation<S, L>> relations,
+			final Function<Stream<S>, S> aggregateConditions) {
+		return union(List.of(), relations, aggregateConditions);
+	}
+
+	/**
 	 * Union the current independence relation with the given relations.
 	 *
 	 * @see ActionIndependenceBuilder#withSyntacticCheck() for a common special case.
@@ -249,11 +279,33 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
+	 * Union the current independence relation with the given relations.
+	 *
+	 * @see ActionIndependenceBuilder#withSyntacticCheck() for a common special case.
+	 *
+	 * @param left
+	 *            A list of independence relations used as operands in the union. These relations are queried in the
+	 *            given order, before the current relation is queried.
+	 * @param right
+	 *            A list of independence relations used as operands in the union. These relations are queried in the
+	 *            given order, after the current relation is queried.
+	 */
+	public B union(final List<IIndependenceRelation<S, L>> left, final List<IIndependenceRelation<S, L>> right,
+			final Function<Stream<S>, S> aggregateConditions) {
+		final ArrayList<IIndependenceRelation<S, L>> relations = new ArrayList<>(left.size() + 1 + right.size());
+		relations.addAll(left);
+		relations.add(mRelation);
+		relations.addAll(right);
+
+		return mCreator.apply(new UnionIndependenceRelation<>(relations, aggregateConditions));
+	}
+
+	/**
 	 * Ensures the current relation is unconditional. If it already is, no change is made.
 	 *
-	 * @see IndependenceBuilder.Impl#unconditional()
-	 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#unconditional()
-	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#unconditional()
+	 * @see IndependenceBuilder#unconditional()
+	 * @see IndependenceBuilder.ActionIndependenceBuilder#unconditional()
+	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#unconditional()
 	 */
 	public B ensureUnconditional() {
 		if (mRelation.isConditional()) {
@@ -285,41 +337,43 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	 */
 	public B withFilteredConditions(final Predicate<S> filter) {
 		if (mRelation.isConditional()) {
-			return mCreator
-					.apply(new ConditionTransformingIndependenceRelation<>(mRelation, x -> filter.test(x) ? x : null));
+			final UnaryOperator<S> transformer = x -> filter.test(x) ? x : null;
+			return mCreator.apply(new ConditionTransformingIndependenceRelation<>(mRelation, transformer, transformer));
 		}
 		return mCreator.apply(mRelation);
 	}
 
 	/**
-	 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
-	 * methods.
+	 * Wraps the current relation in a layer that ensures it is unconditional. This also allows changing the type of
+	 * conditions.
+	 *
+	 * @see IndependenceBuilder#ensureUnconditional()
+	 * @see IndependenceBuilder.ActionIndependenceBuilder#unconditional()
 	 */
-	public static final class Impl<L, S> extends IndependenceBuilder<L, S, Impl<L, S>> {
+	public abstract <T> IndependenceBuilder<L, T, ?> unconditional();
+
+	/**
+	 * Wraps the current relation in a layer that transforms conditions. Must only be called for conditional relations.
+	 *
+	 * @see IndependenceBuilder.ActionIndependenceBuilder#withTransformedConditions(Function)
+	 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#withTransformedPredicates(Function)
+	 */
+	public abstract <T> IndependenceBuilder<L, T, ?> withTransformedConditions(final Function<T, S> transformer);
+
+	// Concrete sub-class. The combination of an abstract base class and this implementation is needed to implement
+	// methods where the type of the relation changes and hence mCreator is insufficient.
+	// All methods are declared on the (publicly visible) abstract base class.
+	private static final class Impl<L, S> extends IndependenceBuilder<L, S, Impl<L, S>> {
 		private Impl(final IIndependenceRelation<S, L> relation) {
 			super(relation, Impl::new);
 		}
 
-		/**
-		 * Wraps the current relation in a layer that ensures it is unconditional. This also allows changing the type of
-		 * conditions.
-		 *
-		 * @see IndependenceBuilder#ensureUnconditional()
-		 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#unconditional()
-		 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#unconditional()
-		 */
+		@Override
 		public <T> Impl<L, T> unconditional() {
 			return new Impl<>(ConditionTransformingIndependenceRelation.unconditional(mRelation));
 		}
 
-		/**
-		 * Wraps the current relation in a layer that transforms conditions. Must only be called for conditional
-		 * relations.
-		 *
-		 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#withTransformedConditions(Function)
-		 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedConditions(Function)
-		 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedPredicates(Function)
-		 */
+		@Override
 		public <T> Impl<L, T> withTransformedConditions(final Function<T, S> transformer) {
 			assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 			return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
@@ -327,8 +381,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
-	 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
-	 * methods.
+	 * An independence builder for relations over letters that implement {@link IAction}. Provides additional methods
+	 * specific to such actions.
 	 */
 	public abstract static class ActionIndependenceBuilder<L extends IAction, S, B extends ActionIndependenceBuilder<L, S, B>>
 			extends IndependenceBuilder<L, S, B> {
@@ -343,7 +397,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		 * independence.
 		 */
 		public B withSyntacticCheck() {
-			return unionLeft(new SyntacticIndependenceRelation<>());
+			// Trivial aggregation of symbolic conditions, as syntactic relation does not support them.
+			return unionLeft(new SyntacticIndependenceRelation<>(), conditions -> conditions.findAny().orElse(null));
 		}
 
 		/**
@@ -370,35 +425,39 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 		}
 
 		/**
-		 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
-		 * methods.
+		 * Wraps the current relation in a layer that ensures it is unconditional. This also allows changing the type of
+		 * conditions.
+		 *
+		 * @see IndependenceBuilder#ensureUnconditional()
+		 * @see IndependenceBuilder#unconditional()
 		 */
-		public static final class Impl<L extends IAction, S> extends ActionIndependenceBuilder<L, S, Impl<L, S>> {
+		@Override
+		public abstract <T> ActionIndependenceBuilder<L, T, ?> unconditional();
+
+		/**
+		 * Wraps the current relation in a layer that transforms conditions. Must only be called for conditional
+		 * relations.
+		 *
+		 * @see IndependenceBuilder#withTransformedConditions(Function)
+		 * @see IndependenceBuilder.PredicateActionIndependenceBuilder#withTransformedPredicates(Function)
+		 */
+		@Override
+		public abstract <T> ActionIndependenceBuilder<L, T, ?>
+				withTransformedConditions(final Function<T, S> transformer);
+
+		// Concrete sub-class. See IndependenceBuilder.Impl comments for explanation.
+		private static final class Impl<L extends IAction, S> extends ActionIndependenceBuilder<L, S, Impl<L, S>> {
 			private Impl(final IIndependenceRelation<S, L> relation) {
 				super(relation, Impl::new);
 			}
 
-			/**
-			 * Wraps the current relation in a layer that ensures it is unconditional. This also allows changing the
-			 * type of conditions.
-			 *
-			 * @see IndependenceBuilder#ensureUnconditional()
-			 * @see IndependenceBuilder.Impl#unconditional()
-			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#unconditional()
-			 */
-			public <T> Impl<L, T> unconditional() {
+			@Override
+			public <T> ActionIndependenceBuilder<L, T, ?> unconditional() {
 				return new Impl<>(ConditionTransformingIndependenceRelation.unconditional(mRelation));
 			}
 
-			/**
-			 * Wraps the current relation in a layer that transforms conditions. Must only be called for conditional
-			 * relations.
-			 *
-			 * @see IndependenceBuilder.Impl#withTransformedConditions(Function)
-			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedConditions(Function)
-			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedPredicates(Function)
-			 */
-			public <T> Impl<L, T> withTransformedConditions(final Function<T, S> transformer) {
+			@Override
+			public <T> ActionIndependenceBuilder<L, T, ?> withTransformedConditions(final Function<T, S> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
@@ -406,8 +465,8 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 	}
 
 	/**
-	 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
-	 * methods.
+	 * An independence builder for relations over letters that implement {@link IAction}, and with {@link IPredicate}
+	 * conditions. Provides additional methods specific to such actions and conditions.
 	 */
 	public static abstract class PredicateActionIndependenceBuilder<L extends IAction, B extends PredicateActionIndependenceBuilder<L, B>>
 			extends ActionIndependenceBuilder<L, IPredicate, B> {
@@ -431,36 +490,53 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 			return mCreator.apply(mRelation);
 		}
 
+		public abstract B transferTerms(final TransferrerWithVariableCache transferrer,
+				final PredicateTransferrer predicateTransferrer, final ICopyActionFactory<L> copyFactory,
+				final boolean transferOnlyConditions);
+
 		/**
-		 * Sub-class needed for the fluent API. Callers typically do not refer to this type explicitly, but may call its
-		 * methods.
+		 * Wraps the current relation in a layer that transforms the condition predicates. Must only be called for
+		 * conditional relations.
+		 *
+		 * @see IndependenceBuilder#withTransformedConditions(Function)
+		 * @see IndependenceBuilder.ActionIndependenceBuilder#withTransformedConditions(Function)
 		 */
-		public static final class Impl<L extends IAction> extends PredicateActionIndependenceBuilder<L, Impl<L>> {
+		public abstract B withTransformedPredicates(final UnaryOperator<IPredicate> transformer);
+
+		/**
+		 * Wraps the current relation in a layer that ensures that instances of {@link DebugPredicate} are not used as
+		 * conditions (i.e., they are replaced by the condition null).
+		 */
+		public abstract B ignoreDebugPredicates();
+
+		/**
+		 * Splits a condition into multiple parts ("disjuncts"), and checks independence for each disjunct separately.
+		 * If any disjunct induces independence, then the original condition is considered to induce independence.
+		 */
+		public abstract <C extends Collection<IPredicate>> B
+				withDisjunctivePredicates(final Function<IPredicate, C> getDisjuncts);
+
+		/**
+		 * Splits a condition into multiple parts ("disjuncts"), and checks independence for each disjunct separately.
+		 * If any disjunct induces independence, then the original condition is considered to induce independence.
+		 */
+		public abstract <C extends Collection<IPredicate>> B withDisjunctivePredicates(
+				final Function<IPredicate, C> getDisjuncts, final Function<List<IPredicate>, C> buildCollection,
+				final DisjunctiveConditionalIndependenceRelation.IConditionMerger<L, IPredicate, C> conditionMerger);
+
+		// Concrete sub-class. See IndependenceBuilder.Impl comments for explanation.
+		private static final class Impl<L extends IAction> extends PredicateActionIndependenceBuilder<L, Impl<L>> {
 			private Impl(final IIndependenceRelation<IPredicate, L> relation) {
 				super(relation, Impl::new);
 			}
 
-			/**
-			 * Wraps the current relation in a layer that ensures it is unconditional. This also allows changing the
-			 * type of conditions.
-			 *
-			 * @see IndependenceBuilder#ensureUnconditional()
-			 * @see IndependenceBuilder.Impl#unconditional()
-			 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#unconditional()
-			 */
+			@Override
 			public <T> ActionIndependenceBuilder.Impl<L, T> unconditional() {
 				return new ActionIndependenceBuilder.Impl<>(
 						ConditionTransformingIndependenceRelation.unconditional(mRelation));
 			}
 
-			/**
-			 * Wraps the current relation in a layer that transforms conditions. Must only be called for conditional
-			 * relations.
-			 *
-			 * @see IndependenceBuilder.Impl#withTransformedConditions(Function)
-			 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#withTransformedConditions(Function)
-			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedPredicates(Function)
-			 */
+			@Override
 			public <T> ActionIndependenceBuilder.Impl<L, T>
 					withTransformedConditions(final Function<T, IPredicate> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
@@ -468,23 +544,21 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 						new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
 
-			/**
-			 * Wraps the current relation in a layer that transforms the condition predicates. Must only be called for
-			 * conditional relations.
-			 *
-			 * @see IndependenceBuilder.Impl#withTransformedConditions(Function)
-			 * @see IndependenceBuilder.ActionIndependenceBuilder.Impl#withTransformedConditions(Function)
-			 * @see IndependenceBuilder.PredicateActionIndependenceBuilder.Impl#withTransformedConditions(Function)
-			 */
+			@Override
+			public Impl<L> transferTerms(final TransferrerWithVariableCache transferrer,
+					final PredicateTransferrer predicateTransferrer, final ICopyActionFactory<L> copyFactory,
+					final boolean transferOnlyConditions) {
+				return new Impl<>(new TermTransferringIndependenceRelation<>(mRelation, transferrer,
+						predicateTransferrer, copyFactory, transferOnlyConditions));
+			}
+
+			@Override
 			public Impl<L> withTransformedPredicates(final UnaryOperator<IPredicate> transformer) {
 				assert mRelation.isConditional() : UNCONDITIONAL_ERROR;
 				return new Impl<>(new ConditionTransformingIndependenceRelation<>(mRelation, transformer));
 			}
 
-			/**
-			 * Wraps the current relation in a layer that ensures that instances of {@link DebugPredicate} are not used
-			 * as conditions (i.e., they are replaced by the condition null).
-			 */
+			@Override
 			public Impl<L> ignoreDebugPredicates() {
 				if (mRelation.isConditional()) {
 					return withFilteredConditions(DebugPredicate.class::isInstance);
@@ -492,16 +566,25 @@ public class IndependenceBuilder<L, S, B extends IndependenceBuilder<L, S, B>> {
 				return this;
 			}
 
-			/**
-			 * Splits a condition into multiple parts ("disjuncts"), and checks independence for each disjunct
-			 * separately. If any disjunct induces independence, then the original condition is considered to induce
-			 * independence.
-			 */
+			@Override
 			public <C extends Collection<IPredicate>> Impl<L>
 					withDisjunctivePredicates(final Function<IPredicate, C> getDisjuncts) {
 				if (mRelation.isConditional()) {
 					return new Impl<>(new ConditionTransformingIndependenceRelation<>(
 							new DisjunctiveConditionalIndependenceRelation<>(mRelation), getDisjuncts));
+				}
+				return this;
+			}
+
+			@Override
+			public <C extends Collection<IPredicate>> Impl<L> withDisjunctivePredicates(
+					final Function<IPredicate, C> getDisjuncts, final Function<List<IPredicate>, C> buildCollection,
+					final DisjunctiveConditionalIndependenceRelation.IConditionMerger<L, IPredicate, C> conditionMerger) {
+				if (mRelation.isConditional()) {
+					return new Impl<>(new ConditionTransformingIndependenceRelation<>(
+							new DisjunctiveConditionalIndependenceRelation<>(mRelation, buildCollection,
+									conditionMerger),
+							getDisjuncts, x -> DataStructureUtils.getOneAndOnly(x, "condition")));
 				}
 				return this;
 			}

@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 
 /**
  * Class linearizing {@link UnmodifiableTransFormula}s. For improved performance and variable management, this class
@@ -68,7 +67,6 @@ public class CachedTransFormulaLinearizer {
 
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SmtFunctionsAndAxioms mSmtSymbols;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final CfgSmtToolkit mCsToolkit;
@@ -84,11 +82,9 @@ public class CachedTransFormulaLinearizer {
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final SmtFunctionsAndAxioms smtSymbols, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final SmtFunctionsAndAxioms smtSymbols, final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mCsToolkit = csToolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, false);
 		mSmtSymbols = smtSymbols;
@@ -169,7 +165,7 @@ public class CachedTransFormulaLinearizer {
 				new RewriteBooleans(mReplacementVarFactory, mCsToolkit.getManagedScript()), new RewriteIte(),
 				new RewriteUserDefinedTypes(mReplacementVarFactory, mCsToolkit.getManagedScript()),
 				new RewriteEquality(), new SimplifyPreprocessor(mServices, mSimplificationTechnique),
-				new DNF(mServices, mXnfConversionTechnique),
+				new DNF(mServices),
 				new SimplifyPreprocessor(mServices, mSimplificationTechnique), new RewriteTrueFalse(),
 				new RemoveNegation(), new RewriteStrictInequalities(), };
 	}

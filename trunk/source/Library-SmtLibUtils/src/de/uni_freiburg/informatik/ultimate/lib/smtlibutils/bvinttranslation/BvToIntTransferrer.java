@@ -61,7 +61,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	private final LinkedHashMap<Term, Term> mVariableMap; // Maps BV Var to
 															// Integer Var
 	private final LinkedHashMap<Term, Term> mReversedVarMap;
-	public final LinkedHashMap<Term, Term> mArraySelectConstraintMap;
+	public final LinkedHashMap<Term, Term> mArrayConstraintMap;
 	private final Set<Term> mOverapproxVariables;
 	private boolean mIsOverapproximation;
 
@@ -100,7 +100,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 		}
 
 		mReversedVarMap = new LinkedHashMap<>();
-		mArraySelectConstraintMap = new LinkedHashMap<>();
+		mArrayConstraintMap = new LinkedHashMap<>();
 		mOverapproxVariables = new HashSet<>();
 		mIsOverapproximation = false;
 		mTc = tc;
@@ -620,12 +620,12 @@ public class BvToIntTransferrer extends TermTransferrer {
 					assert mVariableMap.get(old.getVariables()[i]) != null;
 					newTermVars.add((TermVariable) newQuantifiedVar);
 
-					final Term arrayConstraint = mArraySelectConstraintMap.get(newQuantifiedVar);
+					final Term arrayConstraint = mArrayConstraintMap.get(newQuantifiedVar);
 					if (arrayConstraint != null) {
 						tvConstraints.add(arrayConstraint);
 					}
 
-					mArraySelectConstraintMap.remove(newQuantifiedVar);
+					mArrayConstraintMap.remove(newQuantifiedVar);
 				} else {
 					final TermVariable freshQVar = mScript.variable(old.getVariables()[i].getName(),
 							IntBlastingWrapper.translateSort(mScript, old.getVariables()[i].getSort()));
@@ -715,7 +715,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 					if (!mNutzTransformation) {
 						// select terms can act as variables
 
-						mArraySelectConstraintMap.put(args[0],
+						mArrayConstraintMap.put(args[0],
 								mTc.getSelectConstraint(appTerm, mScript.term(fsym.getName(), args)));
 						index = args[1];
 					} else {
@@ -1132,7 +1132,6 @@ public class BvToIntTransferrer extends TermTransferrer {
 				}
 
 				if (mNutzTransformation && SmtSortUtils.isArraySort(appTerm.getParameters()[0].getSort())) {
-
 					if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort().getArguments()[1])) {
 						final TermVariable quantifiedVar =
 								mNewScript.variable("AuxVar", SmtSortUtils.getIntSort(mNewScript));
@@ -1149,9 +1148,11 @@ public class BvToIntTransferrer extends TermTransferrer {
 						final Term subfromuls = SmtUtils.implies(mNewScript, bounds, equality);
 						final HashSet<TermVariable> newTermVars = new HashSet<TermVariable>();
 						newTermVars.add(quantifiedVar);
-						return SmtUtils.quantifier(mNewScript, 1, newTermVars, subfromuls);
+						final Term quantifiedEq = SmtUtils.quantifier(mNewScript, 1, newTermVars, subfromuls);
+						final Term quantifiedEqImpliesEq =
+								SmtUtils.implies(mNewScript, quantifiedEq, SmtUtils.equality(mNewScript, args));
+						mArrayConstraintMap.put(appTerm, quantifiedEqImpliesEq);
 					}
-
 				}
 
 				return SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript), translatedArgs);

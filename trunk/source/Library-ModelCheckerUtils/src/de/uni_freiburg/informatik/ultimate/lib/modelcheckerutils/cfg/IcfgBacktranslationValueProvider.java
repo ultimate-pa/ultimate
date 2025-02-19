@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
+import java.util.EnumSet;
+
+import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -35,8 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgBacktranslationValueProvider<L extends IAction>
-		implements IBacktranslationValueProvider<L, Term> {
+public class IcfgBacktranslationValueProvider<L extends IAction> implements IBacktranslationValueProvider<L, Term> {
 
 	@Override
 	public int getStartLineNumberFromStep(final L step) {
@@ -45,6 +47,16 @@ public class IcfgBacktranslationValueProvider<L extends IAction>
 
 	@Override
 	public int getEndLineNumberFromStep(final L step) {
+		return -1;
+	}
+
+	@Override
+	public int getLineNumberFromStep(final L step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
+		return -1;
+	}
+
+	@Override
+	public int getColumnNumberFromStep(final L step, final EnumSet<AtomicTraceElement.StepInfo> stepInfo) {
 		return -1;
 	}
 
@@ -74,7 +86,12 @@ public class IcfgBacktranslationValueProvider<L extends IAction>
 	}
 
 	@Override
-	public boolean containsProcedureCall(final Term expression) {
+	public String getFunctionFromStep(final L step) {
+		return null;
+	}
+
+	@Override
+	public boolean isValidAssumptionLocation(final L traceElement) {
 		return false;
 	}
 }

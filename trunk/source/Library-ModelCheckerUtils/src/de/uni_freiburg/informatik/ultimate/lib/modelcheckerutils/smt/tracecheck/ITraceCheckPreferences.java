@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeatureExtractionTermClassifier.ScoringMethod;
 
 /**
@@ -95,7 +94,12 @@ public interface ITraceCheckPreferences {
 		/**
 		 * Use the SMT feature heuristic together with additional parameters.
 		 */
-		SMT_FEATURE_HEURISTIC
+		SMT_FEATURE_HEURISTIC,
+
+		/**
+		 * See {@link AssertOrderShuffledSingletons}
+		 */
+		SHUFFLED_SINGLETONS,
 	}
 
 	public enum SmtFeatureHeuristicPartitioningType {
@@ -207,8 +211,6 @@ public interface ITraceCheckPreferences {
 	UnsatCores getUnsatCores();
 
 	SimplificationTechnique getSimplificationTechnique();
-
-	XnfConversionTechnique getXnfConversionTechnique();
 
 	CfgSmtToolkit getCfgSmtToolkit();
 

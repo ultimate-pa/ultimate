@@ -83,11 +83,6 @@ public abstract class WrapperVisitor<L, S, V extends IDfsVisitor<L, S>> implemen
 	}
 
 	@Override
-	public void delayState(final S state) {
-		mUnderlying.delayState(state);
-	}
-
-	@Override
 	public boolean isFinished() {
 		return mUnderlying.isFinished();
 	}

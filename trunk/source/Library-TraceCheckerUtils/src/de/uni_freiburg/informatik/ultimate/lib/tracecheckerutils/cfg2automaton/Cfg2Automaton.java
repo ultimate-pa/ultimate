@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -63,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SmtFreePredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
@@ -207,8 +207,8 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 								// graph-reachable in the ICFG
 							}
 						}
-					} else if (edge instanceof Summary) {
-						final Summary summaryEdge = (Summary) edge;
+					} else if (edge instanceof IIcfgSummaryTransition<?>) {
+						final IIcfgSummaryTransition<?> summaryEdge = (IIcfgSummaryTransition<?>) edge;
 						if (summaryEdge.calledProcedureHasImplementation()) {
 							if (!interprocedural) {
 								nwa.addInternalTransition(state, letterProvider.apply(summaryEdge), succState);
@@ -269,15 +269,19 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 		{
 			for (final Entry<IIcfgForkTransitionThreadCurrent<IcfgLocation>, List<ThreadInstance>> entry : icfg
 					.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().entrySet()) {
+
+				final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
+				final Term trueTerm = mgdScript.getScript().term("true");
+
 				final List<ThreadInstance> threadInstances = entry.getValue();
 				final List<IPredicate> notinUseStates = new ArrayList<>();
 				final List<IPredicate> inUseStates = new ArrayList<>();
 				for (final ThreadInstance ti : threadInstances) {
 					final String threadInstanceId = ti.getThreadInstanceName();
 					final IPredicate threadNotInUsePredicate = threadInstance2notinUseState.computeIfAbsent(
-							threadInstanceId, x -> createThreadNotInUsePredicate(x, net, predicateFactory));
+							threadInstanceId, x -> createThreadNotInUsePredicate(x, net, predicateFactory, trueTerm));
 					final IPredicate threadInUsePredicate = threadInstance2inUseState.computeIfAbsent(threadInstanceId,
-							x -> createThreadInUsePredicate(x, net, predicateFactory));
+							x -> createThreadInUsePredicate(x, net, predicateFactory, trueTerm));
 
 					notinUseStates.add(threadNotInUsePredicate);
 					inUseStates.add(threadInUsePredicate);
@@ -359,7 +363,7 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 					} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
 						throw new UnsupportedOperationException(
 								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
-					} else if (edge instanceof Summary) {
+					} else if (edge instanceof IIcfgSummaryTransition<?>) {
 						throw new UnsupportedOperationException(
 								"unsupported for concurrent analysis " + edge.getClass().getSimpleName());
 					} else {
@@ -387,17 +391,21 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private static <LETTER> IPredicate createThreadNotInUsePredicate(final String threadInstanceId,
-			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory) {
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory,
+			final Term predicateTerm) {
+		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
 		final String threadNotInUseString = threadInstanceId + "NotInUse";
-		final IPredicate threadNotInUsePredicate = predicateFactory.newDebugPredicate(threadNotInUseString);
+		final IPredicate threadNotInUsePredicate = predicateFactory.newPredicate(predicateTerm);
 		net.addPlace(threadNotInUsePredicate, true, false);
 		return threadNotInUsePredicate;
 	}
 
 	private static <LETTER> IPredicate createThreadInUsePredicate(final String threadInstanceId,
-			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory) {
+			final BoundedPetriNet<LETTER, IPredicate> net, final PredicateFactory predicateFactory,
+			final Term predicateTerm) {
+		// TODO (2020-09-03 Dominik) Label predicate with the string below; but use trueTerm (not dontCare).
 		final String threadInUseString = threadInstanceId + "InUse";
-		final IPredicate threadInUsePredicate = predicateFactory.newDebugPredicate(threadInUseString);
+		final IPredicate threadInUsePredicate = predicateFactory.newPredicate(predicateTerm);
 		net.addPlace(threadInUsePredicate, false, false);
 		return threadInUsePredicate;
 	}
@@ -450,8 +458,8 @@ public class Cfg2Automaton<LETTER extends IIcfgTransition<?>> {
 						if (!intraproceduralAnalysis) {
 							returnAlphabet.add((LETTER) edge);
 						}
-					} else if (edge instanceof Summary) {
-						final Summary summary = (Summary) edge;
+					} else if (edge instanceof IIcfgSummaryTransition<?>) {
+						final IIcfgSummaryTransition<?> summary = (IIcfgSummaryTransition<?>) edge;
 						if (summary.calledProcedureHasImplementation()) {
 							// do nothing if analysis is interprocedural
 							// add summary otherwise

@@ -44,7 +44,7 @@ public class TypeErrorResult<ELEM extends IElement> extends AbstractResultAtElem
 
 	public TypeErrorResult(final ELEM element, final String plugin, final IBacktranslationService translatorSequence,
 			final String longDescription) {
-		super(element, plugin, translatorSequence);
+		super(element, plugin);
 		mLongDescription = longDescription;
 	}
 

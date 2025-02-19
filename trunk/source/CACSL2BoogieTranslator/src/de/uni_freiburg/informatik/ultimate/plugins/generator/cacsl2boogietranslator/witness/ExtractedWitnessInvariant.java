@@ -27,8 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
-import java.util.Collection;
-
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
@@ -39,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
  *
@@ -49,22 +46,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntry {
 
 	private final String mInvariant;
-	private final ImmutableSet<String> mNodeLabels;
 	private final IASTNode mMatchedAstNode;
 
-	public ExtractedWitnessInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match) {
+	public ExtractedWitnessInvariant(final String invariant, final IASTNode match) {
 		mInvariant = invariant;
-		mNodeLabels = ImmutableSet.copyOf(nodeLabel);
 		mMatchedAstNode = match;
 	}
 
 	public String getInvariant() {
 		return mInvariant;
-	}
-
-	@Override
-	public ImmutableSet<String> getNodeLabels() {
-		return mNodeLabels;
 	}
 
 	private int getStartline() {

@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSort;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -196,7 +195,7 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 		final List<Term> disjunctsWithLocUpdatesAndLocInitialization = new ArrayList<>();
 //		for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
 		for (final Term disjunct :
-			SmtUtils.getDisjuncts(SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula(), XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION))) {
+			SmtUtils.getDisjuncts(SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula()))) {
 
 			if (!SmtUtils.isAtomicFormula(disjunct) &&
 					(!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or"))) {

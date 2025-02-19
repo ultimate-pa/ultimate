@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
@@ -233,7 +232,7 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 				mPredUnifier.getPredicateFactory(), mScript, mToolkit.getModifiableGlobalsTable(), mServices,
 				nestedWordLoopTrace, precondition, postcondition, Collections.emptySortedMap(),
 				mPredUnifier.getTruePredicate(), SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mToolkit.getSymbolTable());
+				mToolkit.getSymbolTable());
 		final List<IPredicate> loopInterpols =
 				itp.computeStrongestPostconditionSequence(rtf, Collections.emptyList()).getPredicates();
 		int j = start + 1;

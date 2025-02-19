@@ -35,6 +35,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.SMTInterpolConstants;
@@ -137,6 +138,7 @@ public class SystemTest {
 	class TestEnvironment extends ParseEnvironment {
 		int mExpectedErrors = 0;
 		int mExpectedUnsupported = 0;
+		LBool mLastStatus = null;
 
 		public TestEnvironment(final Script solver, final OptionMap options) {
 			super(solver, options);
@@ -167,6 +169,9 @@ public class SystemTest {
 				Assert.assertTrue("Expected errors did not occur", mExpectedErrors == 0);
 				mExpectedErrors = parseNumber(value);
 			}
+			if (info.equals(":status")) {
+				mLastStatus = LBool.valueOf(((String) value).toUpperCase());
+			}
 			super.setInfo(info, value);
 		}
 
@@ -180,6 +185,11 @@ public class SystemTest {
 		public void printResponse(final Object response) {
 			if ("unsupported".equals(response)) {
 				mExpectedUnsupported--;
+			}
+			if (mLastStatus != null
+					&& response instanceof LBool) {
+				Assert.assertEquals("Status differs", mLastStatus, response);
+				mLastStatus = null;
 			}
 			super.printResponse(response);
 		}

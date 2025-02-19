@@ -48,7 +48,7 @@ public class UserSpecifiedLimitReachedResultAtElement<ELEM extends IElement> ext
 	public UserSpecifiedLimitReachedResultAtElement(final String limit, final ELEM element, final String plugin,
 			final IBacktranslationService translatorSequence, final IProgramExecution<?, ?> programExecution,
 			final String longDescription) {
-		super(element, plugin, translatorSequence);
+		super(element, plugin);
 		mLongDescription = longDescription;
 		mLimit = limit;
 		if (programExecution != null) {

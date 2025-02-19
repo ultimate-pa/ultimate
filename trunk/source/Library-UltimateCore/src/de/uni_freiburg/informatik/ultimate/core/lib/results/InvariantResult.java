@@ -28,37 +28,52 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
- * Report an invariant that holds at ELEM which is a node in an Ultimate model. The invariant is given as an expression
- * of type E.
+ * Report an invariant that holds at ELEM which is a node in an Ultimate model.
  *
  * @author Matthias Heizmann
  */
 public class InvariantResult<ELEM extends IElement, E> extends AbstractResultAtElement<ELEM> {
-	private final String mInvariant;
+	private final E mInvariant;
+	private final boolean mIsLoopLocation;
+	private final Set<Check> mChecks;
 
 	@SuppressWarnings("unchecked")
-	public InvariantResult(final String plugin, final ELEM element, final IBacktranslationService translatorSequence,
-			final E invariant) {
-		super(element, plugin, translatorSequence);
-		mInvariant = translatorSequence.translateExpressionWithContextToString(invariant, getLocation(),
-				(Class<E>) invariant.getClass());
+
+	public InvariantResult(final String plugin, final ELEM element, final E invariant, final Set<Check> checks) {
+		super(element, plugin);
+		// TODO: Another class instead of this boolean flag?
+		final LoopEntryAnnotation loopAnnot = LoopEntryAnnotation.getAnnotation(element);
+		mIsLoopLocation = loopAnnot != null && loopAnnot.getLoopEntryType() == LoopEntryType.WHILE;
+		mInvariant = invariant;
+		mChecks = checks;
 	}
 
-	public String getInvariant() {
+	public E getInvariant() {
 		return mInvariant;
 	}
 
 	@Override
 	public String getShortDescription() {
-		return "Loop Invariant";
+		return mIsLoopLocation ? "Loop Invariant" : "Location Invariant";
 	}
 
 	@Override
 	public String getLongDescription() {
-		return "Derived loop invariant: " + mInvariant;
+		return (mIsLoopLocation ? "Derived loop invariant: " : "Derived location invariant: ") + mInvariant;
+	}
+
+	/**
+	 * Represents the specifications to whose proof this invariant belongs.
+	 */
+	public Set<Check> getChecks() {
+		return mChecks;
 	}
 }

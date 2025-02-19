@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -70,7 +69,6 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public static final boolean ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED = !false;
 
@@ -99,11 +97,10 @@ public class RewriteArrays2 extends LassoPreprocessor {
 			final UnmodifiableTransFormula originalLoop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants,
 			final IIcfgSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mOriginalStem = originalStem;
 		mOriginalLoop = originalLoop;
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
@@ -219,10 +216,10 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		final boolean overapproximate = true;
 		final TransFormulaLRWithArrayInformation stemTfwai =
 				new TransFormulaLRWithArrayInformation(mServices, lasso.getStem(), mReplacementVarFactory, mScript,
-						mBoogie2Smt, null, mSimplificationTechnique, mXnfConversionTechnique);
+						mBoogie2Smt, null, mSimplificationTechnique);
 		final TransFormulaLRWithArrayInformation loopTfwai =
 				new TransFormulaLRWithArrayInformation(mServices, lasso.getLoop(), mReplacementVarFactory, mScript,
-						mBoogie2Smt, stemTfwai, mSimplificationTechnique, mXnfConversionTechnique);
+						mBoogie2Smt, stemTfwai, mSimplificationTechnique);
 		final ArrayCellRepVarConstructor acrvc =
 				new ArrayCellRepVarConstructor(mReplacementVarFactory, mScript.getScript(), stemTfwai, loopTfwai);
 		final EqualityAnalysisResult equalityAnalysisAtHonda;
@@ -236,10 +233,10 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		mArrayIndexSupportingInvariants.addAll(equalityAnalysisAtHonda.constructListOfNotEquals(mScript.getScript()));
 		final TransFormulaLRWithArrayCells stem = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory,
 				mScript, stemTfwai, equalityAnalysisAtHonda, mBoogie2Smt, null, overapproximate, true,
-				mSimplificationTechnique, mXnfConversionTechnique);
+				mSimplificationTechnique);
 		final TransFormulaLRWithArrayCells loop = new TransFormulaLRWithArrayCells(mServices, mReplacementVarFactory,
 				mScript, loopTfwai, equalityAnalysisAtHonda, mBoogie2Smt, acrvc, overapproximate, false,
-				mSimplificationTechnique, mXnfConversionTechnique);
+				mSimplificationTechnique);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
 		assert !ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkStemImplication(mServices, mLogger, lasso, newLasso,
 				mBoogie2Smt, mScript) : "result of RewriteArrays too strong";

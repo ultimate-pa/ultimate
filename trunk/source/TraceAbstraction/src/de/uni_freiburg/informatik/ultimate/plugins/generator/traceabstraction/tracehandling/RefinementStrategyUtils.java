@@ -43,10 +43,10 @@ public class RefinementStrategyUtils {
 	}
 
 	/**
-	 * @return true iff classified term does not contain {@link SmtUtils#FLOATINGPOINT_SORT}.
+	 * @return true iff classified term does contain {@link SmtUtils#FLOATINGPOINT_SORT}.
 	 */
-	public static boolean hasNoFloats(final TermClassifier tc) {
-		return !tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT);
+	public static boolean hasFloats(final TermClassifier tc) {
+		return tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT);
 	}
 
 	/**

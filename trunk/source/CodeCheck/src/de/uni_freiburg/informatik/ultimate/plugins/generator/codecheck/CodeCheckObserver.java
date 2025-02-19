@@ -44,13 +44,10 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
@@ -74,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgSummaryTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -87,14 +85,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareMapping;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.FloydHoareUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
@@ -118,7 +119,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -136,8 +136,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private static final boolean OUTPUT_HOARE_ANNOTATION = true;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -185,8 +183,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable());
 		} else {
 			mPredicateUnifier = new PredicateUnifier(mLogger, mServices, mCsToolkit.getManagedScript(),
-					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE,
-					XNF_CONVERSION_TECHNIQUE);
+					mPredicateFactory, mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE);
 		}
 
 		final Map<String, Set<IcfgLocation>> proc2errNodes = mOriginalRoot.getProcedureErrorNodes();
@@ -337,8 +334,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			final AnnotatedProgramPoint current = stack.pop();
 			for (final AppEdge outEdge : new ArrayList<>(current.getOutgoingEdges())) {
 				final AnnotatedProgramPoint successor = outEdge.getTarget();
-				if (outEdge.getStatement() instanceof Summary
-						&& ((Summary) outEdge.getStatement()).calledProcedureHasImplementation()) {
+				if (outEdge.getStatement() instanceof IIcfgSummaryTransition<?>
+						&& ((IIcfgSummaryTransition<?>) outEdge.getStatement()).calledProcedureHasImplementation()) {
 					outEdge.disconnect();
 				}
 
@@ -518,8 +515,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportPositiveResults(mErrNodesOfAllProc);
 
 			if (OUTPUT_HOARE_ANNOTATION) {
-				createInvariantResults(procRootsToCheck, icfg, icfg.getCfgSmtToolkit(),
-						mServices.getBacktranslationService());
+				createInvariantAndContractResults(procRootsToCheck, icfg, mServices.getBacktranslationService());
 			}
 		} else if (overallResult == Result.UNSAFE) {
 			reportCounterexampleResult(realErrorProgramExecution);
@@ -534,58 +530,38 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void createInvariantResults(final List<AnnotatedProgramPoint> procRootsToCheck,
-			final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
-			final IBacktranslationService backTranslatorService) {
-		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
-
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
+	private void createInvariantAndContractResults(final List<AnnotatedProgramPoint> procRootsToCheck,
+			final IIcfg<IcfgLocation> icfg, final IBacktranslationService backTranslatorService) {
 		for (final AnnotatedProgramPoint pr : procRootsToCheck) {
-			final Map<IcfgLocation, Term> ha = computeHoareAnnotation(pr);
-			for (final Entry<IcfgLocation, Term> kvp : ha.entrySet()) {
-				final IcfgLocation locNode = kvp.getKey();
-				if (!locsForLoopLocations.contains(locNode)) {
-					// only compute loop invariants
-					continue;
-				}
+			final var floydHoare = computeHoareAnnotation(pr, icfg);
+			FloydHoareUtils.writeHoareAnnotationToLogger(icfg, floydHoare, mLogger, true);
 
-				final Term invariant = kvp.getValue();
-				if (invariant == null) {
-					continue;
-				}
-				mLogger.info("Invariant with dag size " + new DagSizePrinter(invariant));
+			// Annotate the ICFG with the computed Floyd-Hoare annotation, so it can be consumed by other plugins.
+			ProofAnnotation.addProof(icfg, floydHoare);
 
-				final InvariantResult<IIcfgElement, Term> invResult =
-						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, invariant);
-				reportResult(invResult);
-
-				if (trueterm.equals(invariant)) {
-					continue;
-				}
-				new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
-			}
+			FloydHoareUtils.createInvariantResults(Activator.PLUGIN_NAME, icfg, floydHoare, backTranslatorService,
+					this::reportResult);
+			FloydHoareUtils.createProcedureContractResults(mServices, Activator.PLUGIN_NAME, icfg, floydHoare,
+					backTranslatorService, this::reportResult);
 		}
 	}
 
 	private InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> createTraceCheck(
 			final NestedRun<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
+		final var trace = errorRun.getWord();
+		final var counterexample = new Counterexample<>(trace, TraceCheckUtils.getSequenceOfProgramPoints(trace));
+
 		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
 			try {
 				final InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> tc = new InterpolatingTraceCheckCraig<>(
 						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
-						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())),
-						mServices, mCsToolkit, mgdScriptTracechecks, mPredicateFactory, mPredicateUnifier,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, true, true, mGlobalSettings.getInterpolationMode(),
-						true, XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, false);
-				if (tc.getInterpolantComputationStatus().wasComputationSuccesful()) {
+						new TreeMap<Integer, IPredicate>(), counterexample, mServices, mCsToolkit, mgdScriptTracechecks,
+						mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, true,
+						mGlobalSettings.getInterpolationMode(), true, SIMPLIFICATION_TECHNIQUE, false);
+				if (tc.getInterpolantComputationStatus().wasComputationSuccessful()) {
 					return tc;
 				}
 			} catch (final Exception e) {
@@ -601,11 +577,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			 * The fallback interpolation mode is hardcoded for now
 			 */
 			return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-					new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
+					new TreeMap<Integer, IPredicate>(), counterexample, mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
-					mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
-					TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), true);
+					mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE, true);
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
@@ -613,23 +588,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// return LBool.UNSAT if trace is infeasible
 			try {
 				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
+						new TreeMap<Integer, IPredicate>(), counterexample, mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
 						mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateFactory, mPredicateUnifier,
-						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, XNF_CONVERSION_TECHNIQUE,
-						SIMPLIFICATION_TECHNIQUE,
-						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), true);
+						mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, SIMPLIFICATION_TECHNIQUE, true);
 			} catch (final Exception e) {
 				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
 				}
 
 				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
+						new TreeMap<Integer, IPredicate>(), counterexample, mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
 						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
-						mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
-						TraceCheckUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())), true);
+						mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE, true);
 			}
 		default:
 			throw new UnsupportedOperationException(
@@ -637,8 +609,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private Map<IcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
-		final Map<IcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
+	private FloydHoareMapping<IcfgLocation> computeHoareAnnotation(final AnnotatedProgramPoint pr,
+			final IIcfg<IcfgLocation> icfg) {
+		final Map<IcfgLocation, IPredicate> pp2HoareAnnotation = new HashMap<>();
 		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> pp2app = computeProgramPointToAnnotatedProgramPoints(pr);
 
 		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
@@ -648,9 +621,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					SmtUtils.orWithExtendedLocalSimplification(mCsToolkit.getManagedScript().getScript(), terms);
 			final Term simplifiedOrTerm = SmtUtils.simplify(mCsToolkit.getManagedScript(), orTerm, mServices,
 					SimplificationTechnique.SIMPLIFY_DDA);
-			pp2HoareAnnotation.put(kvp.getKey(), simplifiedOrTerm);
+			pp2HoareAnnotation.put(kvp.getKey(), mPredicateUnifier.getOrConstructPredicate(simplifiedOrTerm));
 		}
-		return pp2HoareAnnotation;
+
+		return new FloydHoareMapping<>(PrePostConditionSpecification.forIcfg(icfg, mPredicateUnifier),
+				pp2HoareAnnotation);
 	}
 
 	/**

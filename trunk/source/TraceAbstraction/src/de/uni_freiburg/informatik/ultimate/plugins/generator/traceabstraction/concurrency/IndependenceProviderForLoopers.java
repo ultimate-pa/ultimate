@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Hoa
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.TransferringHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PredicateTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.TransferrerWithVariableCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings;
@@ -124,16 +124,16 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 		final BasicPredicateFactory factory =
 				new BasicPredicateFactory(mServices, mIndependenceScript.get(), mCsToolkit.getSymbolTable());
 		final var unifier = new PredicateUnifier(mLogger, mServices, mIndependenceScript.get(), factory,
-				mCsToolkit.getSymbolTable(), SimplificationTechnique.NONE,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+				mCsToolkit.getSymbolTable(), SimplificationTechnique.NONE);
 
 		final IHoareTripleChecker underlyingHtc = HoareTripleCheckerUtils
 				.constructEfficientHoareTripleChecker(mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, unifier);
 
-		final var transferrer = new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(),
-				mIndependenceScript.get(), factory);
+		final var transferrer =
+				new TransferrerWithVariableCache(mCsToolkit.getManagedScript().getScript(), mIndependenceScript.get());
+		final var predicateTransferrer = new PredicateTransferrer(transferrer, null, factory);
 		final IHoareTripleChecker transferringHtc =
-				new TransferringHoareTripleChecker(underlyingHtc, transferrer, unifier);
+				new TransferringHoareTripleChecker(underlyingHtc, transferrer, predicateTransferrer, unifier);
 
 		final HoareTripleCheckerCache cache = extractCache(refinement.getHoareTripleChecker());
 		return new CachingHoareTripleChecker(mServices, transferringHtc, refinement.getPredicateUnifier(), cache);

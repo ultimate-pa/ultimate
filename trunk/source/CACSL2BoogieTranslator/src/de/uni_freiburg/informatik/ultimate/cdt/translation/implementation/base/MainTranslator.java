@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratedUnit;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.parser.MultiparseSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreRunner.PreRunnerResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings.SettingsChange;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
@@ -76,8 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.IdentifierMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedWitnessEntry;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.IExtractedCorrectnessWitness;
 
 public class MainTranslator {
 
@@ -88,15 +87,15 @@ public class MainTranslator {
 	private final WrapperNode mResult;
 
 	public MainTranslator(final IUltimateServiceProvider services, final ILogger logger,
-			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessEntries, final List<DecoratedUnit> units,
+			final IExtractedCorrectnessWitness witness, final List<DecoratedUnit> units,
 			final MultiparseSymbolTable symboltable, final ACSLNode acslAnnotation) {
 		mServices = services;
 		mLogger = logger;
-		mResult = run(witnessEntries, units, acslAnnotation, symboltable);
+		mResult = run(witness, units, acslAnnotation, symboltable);
 	}
 
-	private WrapperNode run(final HashRelation<IASTNode, IExtractedWitnessEntry> witnessEntries,
-			final List<DecoratedUnit> units, final ACSLNode acslAnnotation, final MultiparseSymbolTable mst) {
+	private WrapperNode run(final IExtractedCorrectnessWitness witness, final List<DecoratedUnit> units,
+			final ACSLNode acslAnnotation, final MultiparseSymbolTable mst) {
 
 		// if an additional Annotation was parsed put it into the root node
 		if (acslAnnotation != null) {
@@ -114,7 +113,7 @@ public class MainTranslator {
 			 * translation artifacts (i.e. things which only should be created once per multifile project) are only run
 			 * once after all translation units have been dispatched.
 			 */
-			final BoogieASTNode outputTU = translate(units, witnessEntries, mst);
+			final BoogieASTNode outputTU = translate(units, witness, mst);
 
 			return new WrapperNode(null, outputTU);
 		} catch (final IncorrectSyntaxException e) {
@@ -134,8 +133,8 @@ public class MainTranslator {
 		}
 	}
 
-	private BoogieASTNode translate(final List<DecoratedUnit> nodes,
-			final HashRelation<IASTNode, IExtractedWitnessEntry> witnessEntries, final MultiparseSymbolTable mst) {
+	private BoogieASTNode translate(final List<DecoratedUnit> nodes, final IExtractedCorrectnessWitness witness,
+			final MultiparseSymbolTable mst) {
 
 		assert !nodes.isEmpty() : "Received no nodes";
 
@@ -153,7 +152,8 @@ public class MainTranslator {
 
 			final IASTTranslationUnit tu = (IASTTranslationUnit) ldmNode.getCNode();
 			final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(tu.getRawSignature());
-			final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping);
+			final LineOffsetComputer lineOffsetComputer = new LineOffsetComputer(tu.getRawSignature());
+			final LocationFactory locationFactory = new LocationFactory(lineDirectiveMapping, lineOffsetComputer);
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping = new CACSL2BoogieBacktranslatorMapping();
 
 			final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
@@ -166,13 +166,11 @@ public class MainTranslator {
 			final Map<String, IASTNode> functionTable =
 					executePreRun(new FunctionTableBuilder(flatSymbolTable), nodes).getFunctionTable();
 
-			final PreRunner preRunner = executePreRun(new PreRunner(flatSymbolTable, functionTable), nodes);
-			// final NewPreRunner newPreRunner = executePreRun(new NewPreRunner(flatSymbolTable, functionTable,
-			// nameHandler), nodes);
-			final PreRunnerResult preRunnerResult = preRunner.getResult();
+			final Set<String> functionPointers =
+					executePreRun(new FunctionPointerVisitor(flatSymbolTable, functionTable), nodes).getResult();
 
 			final Set<IASTDeclaration> reachableDeclarations = initReachableDeclarations(nodes, functionTable,
-					preRunnerResult.getFunctionToIndex(), translationSettings.getEntryMethod());
+					functionPointers, translationSettings.getEntryMethod());
 
 			mLogger.info("Built tables and reachable declarations");
 			final StaticObjectsHandler prerunStaticObjectsHandler = new StaticObjectsHandler(mLogger);
@@ -182,10 +180,10 @@ public class MainTranslator {
 			final ExpressionTranslation prerunExpressionTranslation =
 					createExpressionTranslation(translationSettings, flatSymbolTable, typeSizes, prerunTypeHandler);
 
-			final CHandler prerunCHandler = new CHandler(mLogger, backtranslatorMapping, translationSettings,
-					flatSymbolTable, functionTable, prerunExpressionTranslation, locationFactory, typeSizes,
-					reachableDeclarations, prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler,
-					preRunnerResult.getFunctionToIndex(), preRunnerResult.getVariablesOnHeap());
+			final CHandler prerunCHandler =
+					new CHandler(mLogger, backtranslatorMapping, translationSettings, flatSymbolTable, functionTable,
+							prerunExpressionTranslation, locationFactory, typeSizes, reachableDeclarations,
+							prerunTypeHandler, reporter, nameHandler, prerunStaticObjectsHandler, functionPointers);
 
 			final PRDispatcher prerunDispatcher = new PRDispatcher(prerunCHandler, locationFactory, prerunTypeHandler);
 			prerunDispatcher.dispatch(nodes);
@@ -202,7 +200,7 @@ public class MainTranslator {
 			mLogger.info("Completed pre-run");
 
 			final CHandlerTranslationResult result = performMainRun(translationSettings, prerunCHandler, reporter,
-					locationFactory, witnessEntries, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
+					locationFactory, witness, backtranslatorMapping, nodes, prerunTypeHandler, mst, typeSizes);
 			mLogger.info("Completed translation");
 
 			return result.getNode();
@@ -211,7 +209,7 @@ public class MainTranslator {
 
 	private CHandlerTranslationResult performMainRun(final TranslationSettings translationSettings,
 			final CHandler prerunCHandler, final CTranslationResultReporter reporter,
-			final LocationFactory locationFactory, final HashRelation<IASTNode, IExtractedWitnessEntry> witnessEntries,
+			final LocationFactory locationFactory, final IExtractedCorrectnessWitness witness,
 			final CACSL2BoogieBacktranslatorMapping backtranslatorMapping, final List<DecoratedUnit> nodes,
 			final TypeHandler prerunTypeHandler, final MultiparseSymbolTable mst, final TypeSizes typeSizes) {
 		final NameHandler nameHandler = new NameHandler(backtranslatorMapping);
@@ -234,9 +232,9 @@ public class MainTranslator {
 				expressionTranslation, typeSizeAndOffsetComputer, nameHandler, flatSymbolTable, typeSizes);
 
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
-		final ACSLHandler acslHandler = new ACSLHandler(witnessEntries != null, flatSymbolTable, expressionTranslation,
+		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
 				typeHandler, procedureManager, locationFactory, mainCHandler);
-		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witnessEntries, locationFactory, typeHandler,
+		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);
 
 		final CHandlerTranslationResult result = mainDispatcher.dispatch(nodes);
@@ -259,8 +257,7 @@ public class MainTranslator {
 	}
 
 	private Set<IASTDeclaration> initReachableDeclarations(final List<DecoratedUnit> nodes,
-			final Map<String, IASTNode> functionTable, final Map<String, Integer> functionToIndex,
-			final String checkedMethod) {
+			final Map<String, IASTNode> functionTable, final Set<String> functions, final String checkedMethod) {
 		if (!DETERMINIZE_NECESSARY_DECLARATIONS) {
 			return null;
 		}
@@ -288,7 +285,7 @@ public class MainTranslator {
 		}
 		for (final DecoratedUnit du : nodes) {
 			final DetermineNecessaryDeclarations dnd = new DetermineNecessaryDeclarations(checkedMethod,
-					new CTranslationResultReporter(mServices, mLogger), functionTable, functionToIndex);
+					new CTranslationResultReporter(mServices, mLogger), functionTable, functions);
 			du.getRootNode().getCNode().accept(dnd);
 			final Set<IASTDeclaration> decl = dnd.getReachableDeclarationsOrDeclarators();
 			for (final IASTDeclaration d : decl) {

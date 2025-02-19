@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformationBacktranslator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences;
 
@@ -51,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preference
 public class IcfgTransformation implements IGenerator {
 
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private ILogger mLogger;
 	private IcfgTransformationObserver mObserver;
@@ -83,8 +80,7 @@ public class IcfgTransformation implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
-		mObserver = new IcfgTransformationObserver(mLogger, mServices, mBacktranslator, SIMPLIFICATION_TECHNIQUE,
-				XNF_CONVERSION_TECHNIQUE);
+		mObserver = new IcfgTransformationObserver(mLogger, mServices, mBacktranslator, SIMPLIFICATION_TECHNIQUE);
 		observers.add(mObserver);
 		return observers;
 	}

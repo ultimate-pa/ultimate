@@ -105,7 +105,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 			"Prevent the generation of invariants in GraphML which require ACSL syntax";
 
 	public static final String LABEL_YAML_FORMAT_VERSION = "YAML Format version";
-	private static final String VALUE_YAML_FORMAT_VERSION = "3.0";
+	private static final String VALUE_YAML_FORMAT_VERSION = "2.0";
 
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);

@@ -36,7 +36,6 @@ import java.util.Stack;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
@@ -146,15 +145,15 @@ public class NestedSsaBuilder<L extends IAction> {
 	 */
 	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
-	public NestedSsaBuilder(final NestedWord<L> trace, final ManagedScript managedTcScript,
-			final CfgSmtToolkit cfgSmtToolkit,
+	public NestedSsaBuilder(final ManagedScript managedTcScript, final CfgSmtToolkit cfgSmtToolkit,
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
 		mLogger = logger;
 		mTcScript = managedTcScript.getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = cfgSmtToolkit.getModifiableGlobalsTable();
-		mSsa = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Term>());
-		mVariable2Constant = new ModifiableNestedFormulas<>(trace, new TreeMap<Integer, Map<Term, Term>>());
+		mSsa = new ModifiableNestedFormulas<>(nestedTransFormulas.getCounterexample(), new TreeMap<Integer, Term>());
+		mVariable2Constant = new ModifiableNestedFormulas<>(nestedTransFormulas.getCounterexample(),
+				new TreeMap<Integer, Map<Term, Term>>());
 		mTransferToScriptNeeded = managedTcScript != cfgSmtToolkit.getManagedScript();
 		if (mTransferToScriptNeeded) {
 			mTermTransferrer = new TermTransferrer(cfgSmtToolkit.getManagedScript().getScript(), mTcScript);

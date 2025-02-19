@@ -112,7 +112,8 @@ public class RCFGBacktranslator extends
 		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
 		for (final IIcfgTransition<IcfgLocation> elem : cbTrace) {
 			if (!(elem instanceof CodeBlock)) {
-				throw new AssertionError("unknown rcfg element");
+				throw new AssertionError(
+						"Transition is not a CodeBlock: " + elem.getClass().getSimpleName() + " " + elem);
 			}
 			addCodeBlock(elem, null, null, null, null, atomicTeList, null);
 		}
@@ -390,8 +391,9 @@ public class RCFGBacktranslator extends
 	}
 
 	private static Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
-		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
-		final Multigraph<String, BoogieASTNode> rtr = new Multigraph<>(inv == null ? null : inv.getInvariant());
+		final WitnessInvariant<?> inv = WitnessInvariant.getAnnotation(old);
+		final Multigraph<String, BoogieASTNode> rtr =
+				new Multigraph<>(inv == null ? null : inv.getInvariant().toString());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}

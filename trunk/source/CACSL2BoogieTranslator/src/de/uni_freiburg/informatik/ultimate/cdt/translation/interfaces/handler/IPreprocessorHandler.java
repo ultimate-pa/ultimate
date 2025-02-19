@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorElifStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorElseStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorEndifStatement;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @author Markus Lindenmann
  * @date 03.11.2012
  */
-public interface IPreprocessorHandler extends IHandler {
+public interface IPreprocessorHandler {
 
 	/**
 	 * Translates an IASTPreprocessorElifStatement.
@@ -167,4 +168,15 @@ public interface IPreprocessorHandler extends IHandler {
 	 * @return a result object
 	 */
 	public Result visit(IDispatcher main, IASTPreprocessorUndefStatement node);
+
+	/**
+	 * Fallback method for unhandled IASTNodes.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	public Result visit(IDispatcher main, IASTNode node);
 }

@@ -565,7 +565,7 @@ def print_results(
                 )
                 msg_detail += f'\n{" ":<18} {"Call:":<8} {f.call}'
                 if r.category() not in interesting_strings:
-                    print(f"{r.category()} not in interesting_strings")
+                    debug(f"{r.category()} not in interesting_strings")
                     continue
                 mc = interesting_strings[r.category()]
                 if mc.delta_debug:

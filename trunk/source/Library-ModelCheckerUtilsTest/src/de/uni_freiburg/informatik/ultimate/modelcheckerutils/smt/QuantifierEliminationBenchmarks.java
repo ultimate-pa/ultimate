@@ -514,5 +514,15 @@ public class QuantifierEliminationBenchmarks {
 //		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 //	}
 
+	@Test
+	public void unsignedintegeroverflowsas23linearinterpolation() {
+		final FunDecl[] funDecls = new FunDecl[] {
+			new FunDecl(SmtSortUtils::getIntSort, "a", "b", "c"),
+		};
+		final String formulaAsString = "(and (<= 0 (+ a 2147483648)) (exists ((x Int) (y Int) (z Int)) (and (<= x y) (<= y 2147483647) (<= 0 (+ z 2147483648)) (let ((.cse3 (let ((.cse4 (* 4294967295 z))) (div (mod (* (mod (+ x .cse4) 4294967296) (mod (+ (* 4294967295 a) b) 4294967296)) 18446744073709551616) (mod (+ y .cse4) 4294967296))))) (let ((.cse1 (mod .cse3 18446744073709551616)) (.cse0 (let ((.cse2 (mod (+ .cse3 a) 4294967296))) (or (and (= .cse2 (+ c 4294967296)) (<= 2147483648 .cse2)) (and (<= .cse2 2147483647) (= .cse2 c)))))) (or (and .cse0 (<= 9223372036854775808 .cse1)) (and (<= .cse1 9223372036854775807) .cse0)))) (<= z x) (<= (+ z 1) y))) (<= a b) (<= b 2147483647))";
+		final String expectedResult = null;
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResult, false, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	//@formatter:on
 }

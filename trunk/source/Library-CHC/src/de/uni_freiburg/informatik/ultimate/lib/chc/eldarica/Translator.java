@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import ap.SimpleAPI;
+import ap.api.SimpleAPI;
 import ap.basetypes.IdealInt;
 import ap.parser.IAtom;
 import ap.parser.IBoolLit;
@@ -43,7 +43,7 @@ import ap.parser.IFunApp;
 import ap.parser.IIntLit;
 import ap.parser.ITerm;
 import ap.terfor.preds.Predicate;
-import ap.theories.ExtArray;
+import ap.theories.arrays.ExtArray;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcHeadVar;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HcPredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.lib.chc.HornClause;

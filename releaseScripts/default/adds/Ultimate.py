@@ -31,6 +31,7 @@ datadir = os.path.join(ultimatedir, "data")
 witnessdir = ultimatedir
 witnessname = "witness"
 enable_assertions = False
+referee_strict_validation = False
 
 # special strings in ultimate output
 unsupported_syntax_errorstring = "ShortDescription: Unsupported Syntax"
@@ -54,14 +55,16 @@ termination_path_end = "End of lasso representation."
 overflow_false_string = "overflow possible"
 data_race_found_string = "DataRaceFoundResult"
 data_race_error_path_begin_string = "The following path leads to a data race"
+referee_valid_proof_string = "AnnotationCheckResult: Annotation is a valid proof of correctness."
+referee_invalid_proof_string = "AnnotationCheckResult: Annotation is not a valid proof of correctness."
 
 
 class _PropParser:
     prop_regex = re.compile(
-        "^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
+        r"^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
     )
-    funid_regex = re.compile("\s*(\S*)\s*\(.*\)")
-    word_regex = re.compile("\b[^\W\d_]+\b")
+    funid_regex = re.compile(r"\s*(\S*)\s*\(.*\)")
+    word_regex = re.compile(r"\b[^\W\d_]+\b")
     forbidden_words = [
         "valid-free",
         "valid-deref",
@@ -268,9 +271,9 @@ def get_java():
                 java_version = match.groups()[0]
                 java_version = java_version.split(".")[0]
                 java_version = int(java_version)
-                if java_version == 11:
+                if java_version == 21:
                     return candidate
-    print_err("Did not find Java 11 in known paths")
+    print_err("Did not find Java 21 in known paths")
     sys.exit(ExitCode.FAIL_NO_JAVA)
 
 
@@ -289,7 +292,7 @@ def create_ultimate_base_call():
         "-jar",
         os.path.join(
             ultimatedir,
-            "plugins/org.eclipse.equinox.launcher_1.5.800.v20200727-1323.jar",
+            "plugins/org.eclipse.equinox.launcher_1.6.800.v20240513-1750.jar",
         ),
         "-data",
         "@noDefault",
@@ -436,6 +439,10 @@ def run_ultimate(ultimate_call, prop, verbose=False):
             if line.find(overflow_false_string) != -1:
                 result = "FALSE"
                 result_msg = "OVERFLOW"
+            if line.find(referee_valid_proof_string) != -1:
+                result = "TRUE"
+            if line.find(referee_invalid_proof_string) != -1:
+                result = "FALSE" if referee_strict_validation else "UNKNOWN"
             if line.find(error_path_begin_string) != -1:
                 reading_error_path = True
             if reading_error_path and line.strip() == "":
@@ -494,7 +501,7 @@ def write_ltl(ltlformula):
     return ltl_file_path
 
 
-def create_cli_settings(prop, validate_witness, architecture, c_file):
+def create_cli_settings(prop, validate_witness, witness_type, architecture, input_files):
     # append detected init method
     ret = ["--cacsl2boogietranslator.entry.function", prop.get_init_method()]
 
@@ -508,9 +515,23 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         # we need to disable hoare triple generation as workaround for an internal bug
         # but only for reachability witness validation
         ret.append(
-            "--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg"
+            "--traceabstraction.positions.where.we.compute.the.hoare.annotation"
+        )
+        ret.append("None")
+        # For now disable UnstructureCode in witness validation
+        # This is a workaround, in the future we always want to disable this.
+        ret.append(
+            "--preprocessor.replace.while.statements.and.if-then-else.statements"
         )
         ret.append("false")
+        # For YAML violation witnesses:
+        # - disable procedure inlining and
+        # - enforce if statements for conditional expressions
+        if witness_type == "violation_witness" and any(i.endswith(".yml") for i in input_files):
+            ret.append("--procedureinliner.inline.calls.to.implemented.procedures")
+            ret.append("ONLY_FOR_CONCURRENT_PROGRAMS")
+            ret.append("--cacsl2boogietranslator.always.translate.conditional.expressions.to.if-statements")
+            ret.append("true")
     elif not validate_witness:
         # we are not in validation mode, so we should generate a witness and need
         # to pass some things to the witness printer
@@ -529,8 +550,13 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append(architecture)
         ret.append("--witnessprinter.graph.data.programhash")
 
-        sha = call_desperate(["sha256sum", c_file[0]])
-        ret.append(sha.communicate()[0].split()[0].decode("utf-8", "ignore"))
+        if is_windows():
+            sha_call = call_desperate(["certutil", "-hashfile", input_files[0], "SHA256"])
+            sha = sha_call.communicate()[0].split()[3]
+        else:
+            sha_call = call_desperate(["sha256sum", input_files[0]])
+            sha = sha_call.communicate()[0].split()[0]
+        ret.append(sha.decode("utf-8", "ignore"))
 
     return ret
 
@@ -565,17 +591,46 @@ def check_dir(d):
 
 
 def check_witness_type(witness, type):
-    if not witness.endswith(".graphml"):
-        # Only check the format for GraphML witnesses
-        # TODO: Change this in the future
-        return
+    valid = False
+    if witness.endswith(".yml") or witness.endswith(".yaml"):
+        valid = check_witness_type_yaml(witness, type)
+    elif witness.endswith(".graphml"):
+        valid = check_witness_type_graphml(witness, type)
+    else:
+        print(f'Unexpected witness file ending .{witness.rpartition(".")[2]}. '
+              'The witness has to end with .yml, .yaml, or .graphml.')
+    if not valid:
+        sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
+
+
+def check_witness_type_yaml(witness, type):
+    with open(witness) as f:
+        witness_content = f.read()
+    has_violation_sequence = re.search(r'entry_type["\']?\s*:\s*["\']?violation_sequence', witness_content)
+    if type == "correctness_witness":
+        if has_violation_sequence:
+            print("Provided witness has at least one violation sequence, but your specified"
+                "witness has type correctness_witness.")
+            return False
+    elif type == "violation_witness":
+        if "entry_type" in witness_content and not has_violation_sequence:
+            print("Provided witness has other entry types than violation sequence, but your "
+                "specified witness has type violation_witness.")
+            return False
+    else:
+        print("Unknown witness type", type)
+        return False
+    return True
+
+
+def check_witness_type_graphml(witness, type):
     tree = elementtree.parse(witness)
     namespace = "{http://graphml.graphdrawing.org/xmlns}"
     query = ".//{0}graph/{0}data[@key='witness-type']".format(namespace)
     elem = tree.find(query)
     if elem is not None:
         if type == elem.text:
-            return
+            return True
         else:
             print(
                 'Provided witness file has type "{}", but you specified witness type "{}"'.format(
@@ -588,7 +643,7 @@ def check_witness_type(witness, type):
                 query, witness
             )
         )
-    sys.exit(ExitCode.FAIL_WRONG_WITNESS_TYPE)
+    return False
 
 
 def debug_environment():
@@ -635,6 +690,8 @@ def debug_environment():
         ("mathsat", "-version"),
         ("cvc4", "--version"),
         ("cvc4nyu", "--version"),
+        ("cvc5", "--version"),
+        ("bitwuzla", "--version"),
     ]
     for solver, vflag in solver_versions:
         abs_solver = os.path.join(ultimatedir, solver)
@@ -824,6 +881,7 @@ def parse_args():
             [args.file[0], witness],
             args.full_output,
             args.validate,
+            args.witness_type,
             extras,
         )
     else:
@@ -833,6 +891,7 @@ def parse_args():
             [args.file[0]],
             args.full_output,
             args.validate,
+            None,
             extras,
         )
 
@@ -912,6 +971,7 @@ def main():
         input_files,
         verbose,
         validate_witness,
+        witness_type,
         extras,
     ) = parse_args()
     prop = _PropParser(property_file)
@@ -927,7 +987,7 @@ def main():
     # create manual settings that override settings files for witness passthrough (collecting various things)
     # and for witness validation
     cli_arguments = create_cli_settings(
-        prop, validate_witness, architecture, input_files
+        prop, validate_witness, witness_type, architecture, input_files
     )
     if not validate_witness:
         input_files = add_ltl_file_if_necessary(prop, input_files)
@@ -1001,7 +1061,7 @@ def main():
         )
         err_output_file = open(error_path_file_name, "wb")
         err_output_file.write(error_path.encode("utf-8"))
-        if not prop.is_reach() and not prop.is_data_race():
+        if not prop.is_reach():
             result = "FALSE({})".format(result_msg)
 
     print("Result:")

@@ -26,25 +26,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolatingTraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
@@ -58,7 +57,6 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		implements IInterpolatingTraceCheck<L> {
 
 	protected final SimplificationTechnique mSimplificationTechnique;
-	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
@@ -68,7 +66,7 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 
 	protected IPredicate[] mInterpolants;
 
-	protected List<? extends Object> mControlLocationSequence;
+	protected final List<?> mControlConfigurationSequence;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -76,24 +74,22 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 * the context to which the return leads the trace.
 	 */
 	public InterpolatingTraceCheck(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<L> trace,
-			final List<? extends Object> controlLocationSequence, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager, final PredicateFactory predicateFactory,
-			final IPredicateUnifier predicateUnifier, final AssertCodeBlockOrder assertCodeBlockOrder,
-			final boolean computeRcfgProgramExecution, final boolean collectInterpolatSequenceStatistics,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		super(precondition, postcondition, pendingContexts, trace,
+			final SortedMap<Integer, IPredicate> pendingContexts, final Counterexample<L> counterexample,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ManagedScript tcSmtManager,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final AssertCodeBlockOrder assertCodeBlockOrder, final boolean computeRcfgProgramExecution,
+			final boolean collectInterpolatSequenceStatistics, final SimplificationTechnique simplificationTechnique) {
+		super(precondition, postcondition, pendingContexts,
 				TraceCheckUtils.decoupleArrayValues(csToolkit.getManagedScript(),
-						new DefaultTransFormulas<>(trace, precondition, postcondition, pendingContexts,
+						new DefaultTransFormulas<>(counterexample, precondition, postcondition, pendingContexts,
 								csToolkit.getOldVarsAssignmentCache(), false)),
 				services, csToolkit, tcSmtManager, assertCodeBlockOrder, computeRcfgProgramExecution,
 				collectInterpolatSequenceStatistics, false);
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
-		mControlLocationSequence = controlLocationSequence;
+		mControlConfigurationSequence =
+				counterexample.hasControlConfigurations() ? counterexample.getControlConfigurations() : null;
 	}
 
 	/**
@@ -108,20 +104,12 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 	 * object for all interpolants which are similar (represented by the same term).
 	 * <p>
 	 *
-	 * @param interpolatedPositions
-	 *            Positions at which we compute interpolants. If interpolatedPositions==null each interpolant
-	 *            φ_0,...,φ_n is computed. Otherwise for each index i (but zero and n) that does not occur in
-	 *            interpolatedPositions φ_i will be an UnknownPredicate.
-	 *            <p>
-	 *            interpolatedPositions has to be sorted (ascending) and its entries have to be smaller than or equal to
-	 *            mTrace.size()
-	 * @param mPedicateUnifier
-	 *            A IPredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 * @param interpolation
 	 *            Method that is used to compute the interpolants.
+	 * @param mPedicateUnifier
+	 *            A IPredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 */
-	protected abstract void computeInterpolants(Set<Integer> interpolatedPositions,
-			InterpolationTechnique interpolation);
+	protected abstract void computeInterpolants(InterpolationTechnique interpolation);
 
 	private boolean testRelevantVars() {
 		boolean result = true;
@@ -168,76 +156,18 @@ public abstract class InterpolatingTraceCheck<L extends IAction> extends TraceCh
 		return perfectSequences == 1;
 	}
 
-	/**
-	 * Integer set implementation that has only a contains method. The method always returns true.
-	 *
-	 * @author heizmann@informatik.uni-freiburg.de
-	 */
-	public static class AllIntegers implements Set<Integer> {
-
-		@Override
-		public int size() {
-			throw new UnsupportedOperationException();
+	protected boolean checkPerfectSequence(final TracePredicates sequence) {
+		if (mControlConfigurationSequence != null) {
+			final BackwardCoveringInformation bci = TraceCheckUtils.computeCoverageCapability(mServices, sequence,
+					mControlConfigurationSequence, mLogger, mPredicateUnifier);
+			final boolean perfectSequence =
+					bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+			if (perfectSequence) {
+				mTraceCheckBenchmarkGenerator.reportPerfectInterpolantSequences();
+			}
+			mTraceCheckBenchmarkGenerator.addBackwardCoveringInformation(bci);
+			return perfectSequence;
 		}
-
-		@Override
-		public boolean isEmpty() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean contains(final Object obj) {
-			return true;
-		}
-
-		@Override
-		public Iterator<Integer> iterator() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Object[] toArray() {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public <T> T[] toArray(final T[] array) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean add(final Integer elem) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean remove(final Object obj) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean containsAll(final Collection<?> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean addAll(final Collection<? extends Integer> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean retainAll(final Collection<?> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public boolean removeAll(final Collection<?> coll) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException();
-		}
+		return false;
 	}
 }

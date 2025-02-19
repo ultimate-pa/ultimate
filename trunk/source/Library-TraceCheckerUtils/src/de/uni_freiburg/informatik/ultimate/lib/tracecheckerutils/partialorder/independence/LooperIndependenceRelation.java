@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.ISymbolicIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -77,6 +78,12 @@ public class LooperIndependenceRelation<L extends IAction, S> implements IIndepe
 			return Dependence.UNKNOWN;
 		}
 		return Dependence.DEPENDENT;
+	}
+
+	@Override
+	public ISymbolicIndependenceRelation<L, S> getSymbolicRelation() {
+		// Since the relation is unconditional, there is no corresponding symbolic relation.
+		return null;
 	}
 
 	public ILattice<Set<IPredicate>> getHierarchy() {

@@ -1,8 +1,8 @@
-// #TestSpec: rt-inconsistent:; vacuous:R1; inconsistent:; results: 1
+// #TestSpec: rt-inconsistent:; vacuous:; inconsistent:; results: 1
 Input A is int
 Input B is int
 
 R1: Globally, it is always the case that "A>B" holds.
 R2: Globally, it is always the case that "A>B+3" holds.
 
-// vacuity does not work on invariants, needs separate analysis
+// R1 is redundant

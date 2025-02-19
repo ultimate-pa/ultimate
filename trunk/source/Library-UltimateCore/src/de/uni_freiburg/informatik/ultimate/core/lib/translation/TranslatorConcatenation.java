@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.translation;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
@@ -126,6 +127,13 @@ public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL, L
 	}
 
 	@Override
+	public ProcedureContract<TE, ? extends TE>
+			translateProcedureContract(final ProcedureContract<SE, ? extends SE> contract, final LOC context) {
+		return mIntermediate2TargetTranslator.translateProcedureContract(
+				mSource2IntermediateTranslator.translateProcedureContract(contract, context), context);
+	}
+
+	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(getClass().getSimpleName());
@@ -145,5 +153,4 @@ public class TranslatorConcatenation<STE, ITE, TTE, SE, IE, TE, SVL, IVL, TVL, L
 		return mIntermediate2TargetTranslator
 				.translateProgramState(mSource2IntermediateTranslator.translateProgramState(oldProgramState));
 	}
-
 }

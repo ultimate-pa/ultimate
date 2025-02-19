@@ -59,12 +59,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.DeclarationPattern.VariableCategory;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHashRelation;
 
@@ -76,6 +80,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.LinkedHa
 public class ReqSymboltableBuilder {
 
 	private static final BoogieLocation DUMMY_LOC = new BoogieLocation("", -1, -1, -1, -1);
+	private final IUltimateServiceProvider mServices;
+	private final boolean mBuildHistoryVars;
 
 	private final ILogger mLogger;
 	private final LinkedHashRelation<String, ErrorInfo> mId2Errors;
@@ -99,8 +105,11 @@ public class ReqSymboltableBuilder {
 
 	private final UnionFind<String> mEquivalences;
 
-	public ReqSymboltableBuilder(final ILogger logger) {
+	public ReqSymboltableBuilder(final IUltimateServiceProvider services, final ILogger logger) {
 		mLogger = logger;
+		mServices = services;
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		mBuildHistoryVars = prefs.getBoolean(Pea2BoogiePreferences.LABEL_HISTORY_VARS);
 		mId2Errors = new LinkedHashRelation<>();
 		mId2Type = new LinkedHashMap<>();
 		mId2IdExpr = new LinkedHashMap<>();
@@ -186,9 +195,7 @@ public class ReqSymboltableBuilder {
 	}
 
 	private void updateEquivalences(final PhaseEventAutomata pea) {
-		final Set<String> peaVars = new HashSet<>();
-		// add all variable names
-		peaVars.addAll(pea.getVariables().keySet());
+		final Set<String> peaVars = new HashSet<>(pea.getVariables().keySet());
 		// add all clock names
 		peaVars.addAll(pea.getClocks());
 		// add pc name
@@ -231,7 +238,7 @@ public class ReqSymboltableBuilder {
 		final String funName = "abs";
 		final NamedAttribute builtinAbs = new NamedAttribute(DUMMY_LOC, "builtin",
 				new Expression[] { ExpressionFactory.createStringLiteral(DUMMY_LOC, funName) });
-		final VarList[] inParams = new VarList[] { new VarList(DUMMY_LOC, new String[] { "in" }, intAstType) };
+		final VarList[] inParams = { new VarList(DUMMY_LOC, new String[] { "in" }, intAstType) };
 		final VarList outParam = new VarList(DUMMY_LOC, new String[] { "res" }, intAstType);
 		rtr.put(funName, new FunctionDeclaration(DUMMY_LOC, new Attribute[] { builtinAbs }, funName, new String[0],
 				inParams, outParam));
@@ -252,7 +259,9 @@ public class ReqSymboltableBuilder {
 			// consts do not need primed variables
 			return;
 		}
-		addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
+		if (mBuildHistoryVars) {
+			addVarOneKind(getHistoryVarId(name), type, source, mHistoryVars);
+		}
 		addVarOneKind(getPrimedVarId(name), type, source, mPrimedVars);
 	}
 
@@ -342,7 +351,7 @@ public class ReqSymboltableBuilder {
 
 	private static final class ReqSymbolTable implements IReqSymbolTable {
 
-		private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
+		private static final Attribute[] EMPTY_ATTRIBUTES = {};
 		private final Map<String, BoogieType> mId2Type;
 		private final Map<String, IdentifierExpression> mId2IdExpr;
 		private final Map<String, VariableLHS> mId2VarLHS;

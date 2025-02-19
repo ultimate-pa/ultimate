@@ -35,11 +35,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.yaml.snakeyaml.Yaml;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition.NamedServiceCallback;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -114,10 +117,18 @@ public final class UltimateRunDefinitionGenerator {
 	 * relative to the Ultimate trunk directory.
 	 *
 	 * @param timeout
+	 *            Timeout in milliseconds
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
 			final String[] fileEndings, final String settings, final String toolchain, final long timeout) {
-		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, timeout, 0, -1);
+		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, timeout, null);
+	}
+
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
+			final String[] fileEndings, final String settings, final String toolchain, final long timeout,
+			final NamedServiceCallback serviceCallback) {
+		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, timeout, 0, -1,
+				serviceCallback);
 	}
 
 	/**
@@ -134,17 +145,17 @@ public final class UltimateRunDefinitionGenerator {
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
 			final String[] fileEndings, final String settings, final String toolchain, final long timeout,
-			final int offset, final int limit) {
+			final int offset, final int limit, final NamedServiceCallback serviceCallback) {
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
 		return Arrays.stream(directories).map(a -> getFileFromTrunkDir(a))
 				.map(a -> getInputFiles(a, fileEndings, offset, limit)).flatMap(a -> a.stream()).distinct()
-				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile, timeout))
+				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile, timeout, serviceCallback))
 				.collect(Collectors.toList());
 	}
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionsFromTrunkRegex(final String[] directories,
-			final String[] regexes, final String settings[], final String toolchain, final long timeout,
+			final String[] regexes, final String[] settings, final String toolchain, final long timeout,
 			final int offset, final int limit) {
 		final List<UltimateRunDefinition> result = new ArrayList<>();
 		for (final String directory : directories) {
@@ -161,9 +172,16 @@ public final class UltimateRunDefinitionGenerator {
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String toolchain,
 			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs, final long timeout) {
+		return getRunDefinitionFromTrunk(toolchain, settings, directoryFileEndingsPairs, timeout, null);
+	}
+
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String toolchain,
+			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs, final long timeout,
+			final UnaryOperator<IUltimateServiceProvider> serviceCallback) {
+		final var callback = serviceCallback == null ? null : new NamedServiceCallback(null, serviceCallback);
 		return Arrays.stream(directoryFileEndingsPairs)
 				.map(a -> UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { a.getDirectory() },
-						a.getFileEndings(), settings, toolchain, timeout, a.getOffset(), a.getLimit()))
+						a.getFileEndings(), settings, toolchain, timeout, a.getOffset(), a.getLimit(), callback))
 				.flatMap(a -> a.stream()).collect(Collectors.toList());
 	}
 
@@ -313,9 +331,17 @@ public final class UltimateRunDefinitionGenerator {
 		final Map<File, SvcompArchitecture> inputFileToArchitecture =
 				getInputFilesFromYamlFiles(TestUtil.getFiles(dir, ".yml"), sfs.getProperty(), sfs.getExpectedResult());
 		final List<File[]> sourceAndWitnesses = new ArrayList<>();
-		for (final File witness : TestUtil.getFiles(dir, ".graphml", "-witness.yml")) {
+		for (final File witness : TestUtil.getFiles(dir, "-witness.graphml")) {
 			for (final File source : inputFileToArchitecture.keySet()) {
-				if (witness.getPath().startsWith(source.getPath())) {
+				if (source.getPath().concat("-witness.graphml").equals(witness.getPath())) {
+					sourceAndWitnesses.add(new File[] { source, witness });
+					break;
+				}
+			}
+		}
+		for (final File witness : TestUtil.getFiles(dir, "-witness.yml")) {
+			for (final File source : inputFileToArchitecture.keySet()) {
+				if (source.getPath().concat("-witness.yml").equals(witness.getPath())) {
 					sourceAndWitnesses.add(new File[] { source, witness });
 					break;
 				}

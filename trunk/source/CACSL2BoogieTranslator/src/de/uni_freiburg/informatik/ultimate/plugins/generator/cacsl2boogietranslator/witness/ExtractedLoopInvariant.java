@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
@@ -53,16 +53,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *
  */
 public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
-	private static final boolean PRODUCE_LOOP_INVARIANTS = false;
-
-	public ExtractedLoopInvariant(final String invariant, final Collection<String> nodeLabel, final IASTNode match) {
-		super(invariant, nodeLabel, match);
+	public ExtractedLoopInvariant(final String invariant, final IASTNode match) {
+		super(invariant, match);
 	}
 
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
 			final ExpressionResult expressionResult) {
 		final ExpressionResult invariantExprResult = instrument(loc, dispatcher);
+		final Expression loopInvariant = tryToExtractLoopInvariant(invariantExprResult);
 		final List<Statement> statements = new ArrayList<>();
 		boolean hasLoop = false;
 		for (final Statement st : expressionResult.getStatements()) {
@@ -73,9 +72,12 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 				}
 				hasLoop = true;
 				final WhileStatement loop = (WhileStatement) st;
-				if (PRODUCE_LOOP_INVARIANTS) {
-					statements.addAll(transformLoop(invariantExprResult, loop, loc));
+				if (loopInvariant != null) {
+					// If possible (i.e. the witness invariant can be translated by a single Boogie-expression),
+					// annotate the loop with a loop invariant
+					statements.add(addLoopInvariant(loop, loopInvariant, loc));
 				} else {
+					// Otherwise translate it as an assert (before and inside the loop)
 					final List<Statement> witnessStatements = new ArrayList<>(invariantExprResult.getStatements());
 					final Statement[] newBody =
 							DataStructureUtils.concat(loop.getBody(), witnessStatements.toArray(Statement[]::new));
@@ -90,37 +92,33 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult)
 					.resetStatements(statements).build();
 		}
+		// The loop matching for GraphML does not always works correctly.
 		// We might identify sth. that is not a loop (e.g. goto) as a loop.
-		// We cannot annotate it with a a LoopInvariantSpecification, so we just insert an assert in that case.
+		// Since the distinction is not strictly necessary for GraphML, we just insert an assert in this case.
+		// For YAML this should not happen, since we check earlier if the location of a loop invariant is really a loop.
 		return new ExpressionResultBuilder(invariantExprResult).addAllIncludingLrValue(expressionResult).build();
 	}
 
-	private static List<Statement> transformLoop(final ExpressionResult witnessResult, final WhileStatement loop,
-			final ILocation loc) {
-		final List<Statement> result = new ArrayList<>();
-		final List<Statement> afterLoop = new ArrayList<>();
-		final List<LoopInvariantSpecification> newInvariants = new ArrayList<>(Arrays.asList(loop.getInvariants()));
-		boolean loopInvariantAdded = false;
-		for (final Statement st : witnessResult.getStatements()) {
-			if (st instanceof AssertStatement) {
-				final LoopInvariantSpecification spec =
-						new LoopInvariantSpecification(loc, false, ((AssertStatement) st).getFormula());
-				final Check check = new Check(Spec.WITNESS_INVARIANT);
-				check.annotate(spec);
-				newInvariants.add(spec);
-				loopInvariantAdded = true;
-			} else if (loopInvariantAdded) {
-				// TODO: Check if this is only a havoc?
-				afterLoop.add(st);
-			} else {
-				result.add(st);
-			}
+	private static Expression tryToExtractLoopInvariant(final ExpressionResult invariantExprResult) {
+		if (invariantExprResult.getStatements().size() != 1) {
+			return null;
 		}
-		final Statement[] newBody = DataStructureUtils.concat(loop.getBody(), result.toArray(Statement[]::new));
-		result.add(new WhileStatement(loc, loop.getCondition(),
-				newInvariants.toArray(LoopInvariantSpecification[]::new), newBody));
-		result.addAll(afterLoop);
-		return result;
+		final Statement statement = invariantExprResult.getStatements().get(0);
+		if (!(statement instanceof AssertStatement)) {
+			return null;
+		}
+		return ((AssertStatement) statement).getFormula();
+	}
+
+	private static WhileStatement addLoopInvariant(final WhileStatement loop, final Expression loopInvariant,
+			final ILocation loc) {
+		final List<LoopInvariantSpecification> newInvariants = new ArrayList<>(Arrays.asList(loop.getInvariants()));
+		final LoopInvariantSpecification spec = new LoopInvariantSpecification(loc, false, loopInvariant);
+		final Check check = new Check(Spec.WITNESS_INVARIANT);
+		check.annotate(spec);
+		newInvariants.add(spec);
+		return new WhileStatement(loc, loop.getCondition(), newInvariants.toArray(LoopInvariantSpecification[]::new),
+				loop.getBody());
 	}
 
 	@Override

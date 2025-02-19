@@ -1,0 +1,14 @@
+// #TestSpec: rt-inconsistent:; vacuous:req1; inconsistent:; results:-1
+Input var1 is bool
+Input var2 is bool
+Input var3 is bool
+Input var4 is bool
+Input var5 is bool
+Input var6 is bool
+
+Constraint_assumption: Globally it is always the case that "!var3" holds
+Constraint_assumption2: Globally it is always the case that "var1" holds
+
+req1: Between "var1" and "var2" It is always the case that If "var3" holds, then "var4" eventually holds and is succeeded by "var5" where "var6" does not hold between "var4" and "var5"
+
+// Unable to prove that Requirement req1 is non-vacuous (line -1). Cancelled while NwaCegarLoop was analyzing trace of length 12 with TraceHistMax 2,while TraceCheckSpWp was constructing forward predicates,while PolyPacSimplificationTermWalker was simplifying a ∧-2-2-2-20-2-20-2-20-2-20-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-20-2-20-2-20-2-20-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-17-2-17-2-17-2-17-2-11-2-11-2-6-1 term,while PolyPacSimplificationTermWalker was simplifying 2 xjuncts wrt. a ∧-14-2-24-2-20-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-24-2-20-2-20-2-20-2-20-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-25-2-17-2-17-2-17-2-17-2-11-2-11-2-6-1 context.

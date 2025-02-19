@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslato
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
@@ -155,12 +156,36 @@ public class InlinerBacktranslator
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> exec) {
+		assert checkCallStackSourceProgramExecution(mLogger, exec)
+				: "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
 
-		assert checkCallStackSourceProgramExecution(mLogger,
-				exec) : "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
-
-		final int length = exec.getLength();
 		final CallReinserter callReinserter = new CallReinserter();
+		final var translated = translateProgramExecution(callReinserter, exec);
+
+		assert checkCallStackTargetProgramExecution(mLogger, translated)
+				: "callstack broken after backtranslation by " + getClass().getSimpleName();
+		return translated;
+	}
+
+	@Override
+	public Lasso<IProgramExecution<BoogieASTNode, Expression>>
+			translateLassoProgramExecution(final Lasso<IProgramExecution<BoogieASTNode, Expression>> programExecution) {
+		assert checkCallStackSourceLassoProgramExecution(mLogger, programExecution)
+				: "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
+
+		final CallReinserter callReinserter = new CallReinserter();
+		final var stem = translateProgramExecution(callReinserter, programExecution.getStem());
+		final var loop = translateProgramExecution(callReinserter, programExecution.getLoop());
+		final var translated = new Lasso<IProgramExecution<BoogieASTNode, Expression>>(stem, loop);
+
+		assert checkCallStackTargetLassoProgramExecution(mLogger, translated)
+				: "callstack broken after backtranslation by " + getClass().getSimpleName();
+		return translated;
+	}
+
+	private BoogieProgramExecution translateProgramExecution(final CallReinserter callReinserter,
+			final IProgramExecution<BoogieASTNode, Expression> exec) {
+		final int length = exec.getLength();
 		final Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		final List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();
 		/*
@@ -227,8 +252,6 @@ public class InlinerBacktranslator
 						new ProgramState<>(translatedVar2Values, Expression.class));
 			}
 		}
-		assert checkCallStackTarget(mLogger, translatedTrace) : "callstack broken after backtranslation by "
-				+ getClass().getSimpleName();
 		return new BoogieProgramExecution(translatedStates, translatedTrace, exec.isConcurrent());
 	}
 

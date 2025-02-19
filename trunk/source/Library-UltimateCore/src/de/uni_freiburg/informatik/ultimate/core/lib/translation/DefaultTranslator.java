@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ProcedureContract;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService.Lasso;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -68,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Source Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the source
  *            program model.
  * @param <TTE>
- *            Target Trace Elment. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
+ *            Target Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
  *            program model.
  * @param <SE>
  *            Source Expression. Type of expression in the source program model.
@@ -369,6 +371,21 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 		return rtr;
 	}
 
+	@Override
+	public ProcedureContract<TE, ? extends TE>
+			translateProcedureContract(final ProcedureContract<SE, ? extends SE> oldContract, final CTX context) {
+		final var newRequires = oldContract.getRequires() == null ? null
+				: translateExpressionWithContext(oldContract.getRequires(), context);
+		final var newEnsures = oldContract.getEnsures() == null ? null
+				: translateExpressionWithContext(oldContract.getEnsures(), context);
+		final var newModifies =
+				oldContract.hasModifies()
+						? oldContract.getModifies().stream().map(mv -> translateExpressionWithContext(mv, context))
+								.collect(Collectors.toSet())
+						: null;
+		return new ProcedureContract<>(oldContract.getProcedure(), newRequires, newEnsures, newModifies);
+	}
+
 	protected <VL> Multigraph<VL, TTE> createUnlabeledWitnessNode(final IElement old) {
 		final Multigraph<VL, TTE> rtr = new Multigraph<>(null);
 		ModelUtils.copyAnnotations(old, rtr);
@@ -445,6 +462,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 		return checkCallStackSource(logger, rtr);
 	}
 
+	protected boolean checkCallStackSourceLassoProgramExecution(final ILogger logger,
+			final Lasso<IProgramExecution<STE, SE>> sourceProgramExecution) {
+		final List<AtomicTraceElement<STE>> rtr = new ArrayList<>();
+		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
+		return checkCallStackSource(logger, rtr);
+	}
+
 	/**
 	 * Check if the call stack of the source program execution is correct (according to procedure labels and step
 	 * infos).
@@ -453,6 +478,14 @@ public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL, CTX>
 			final IProgramExecution<TTE, TE> sourceProgramExecution) {
 		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
 		sourceProgramExecution.iterator().forEachRemaining(rtr::add);
+		return checkCallStackTarget(logger, rtr);
+	}
+
+	protected boolean checkCallStackTargetLassoProgramExecution(final ILogger logger,
+			final Lasso<IProgramExecution<TTE, TE>> sourceProgramExecution) {
+		final List<AtomicTraceElement<TTE>> rtr = new ArrayList<>();
+		sourceProgramExecution.getStem().iterator().forEachRemaining(rtr::add);
+		sourceProgramExecution.getLoop().iterator().forEachRemaining(rtr::add);
 		return checkCallStackTarget(logger, rtr);
 	}
 

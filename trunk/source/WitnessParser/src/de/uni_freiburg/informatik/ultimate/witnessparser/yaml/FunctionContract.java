@@ -27,10 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessparser.yaml;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
@@ -43,14 +39,14 @@ public class FunctionContract extends WitnessEntry {
 
 	private final Location mLocation;
 	private final String mFormat;
-	// TODO: Add support for other elements of the contracts
-	private final List<String> mEnsures;
+	private final String mRequires;
+	private final String mEnsures;
 
-	public FunctionContract(final Metadata metadata, final Location location, final List<String> ensures,
-			final String format) {
-		super(NAME, metadata);
+	public FunctionContract(final Location location, final String requires, final String ensures, final String format) {
+		super(NAME);
 		mLocation = location;
 		mFormat = format;
+		mRequires = requires;
 		mEnsures = ensures;
 	}
 
@@ -58,28 +54,28 @@ public class FunctionContract extends WitnessEntry {
 		return mLocation;
 	}
 
-	public List<String> getEnsures() {
+	public String getRequires() {
+		return mRequires;
+	}
+
+	public String getEnsures() {
 		return mEnsures;
 	}
 
-	@Override
-	public WitnessSetEntry toSetEntry() {
-		return new WitnessSetEntry(NAME, mLocation, Map.of("ensures", mEnsures, "format", mFormat));
+	public String getFormat() {
+		return mFormat;
 	}
 
 	@Override
 	public String toString() {
-		return getClass().getSimpleName() + " " + mLocation + ": " + mEnsures;
-	}
-
-	@Override
-	public Map<String, Object> toMap() {
-		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-		result.put("entry_type", NAME);
-		result.put("metadata", mMetadata.toMap());
-		result.put("location", mLocation.toMap());
-		result.put("ensures", mEnsures);
-		result.put("format", mFormat);
-		return result;
+		final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
+		sb.append(' ').append(mLocation).append(':');
+		if (mRequires != null) {
+			sb.append(" requires ").append(mRequires);
+		}
+		if (mEnsures != null) {
+			sb.append(" ensures ").append(mEnsures);
+		}
+		return sb.toString();
 	}
 }

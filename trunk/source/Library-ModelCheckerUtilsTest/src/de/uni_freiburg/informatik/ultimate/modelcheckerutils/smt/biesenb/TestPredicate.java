@@ -50,11 +50,6 @@ final class TestPredicate implements IPredicate {
 	}
 
 	@Override
-	public String[] getProcedures() {
-		return new String[0];
-	}
-
-	@Override
 	public Set<IProgramVar> getVars() {
 		return mVars;
 	}

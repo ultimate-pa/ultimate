@@ -36,8 +36,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
@@ -64,18 +62,6 @@ public class AuxVarInfoBuilder {
 		mNameHandler = nameHandler;
 		mTypeHandler = typeHandler;
 		mProcedureManager = procedureManager;
-	}
-
-	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final CType cType) {
-		final AUXVAR auxVarType;
-		if (cType instanceof CArray) {
-			auxVarType = SFO.AUXVAR.ARRAYINIT;
-		} else if (cType instanceof CStructOrUnion) {
-			auxVarType = SFO.AUXVAR.STRUCTINIT;
-		} else {
-			throw new UnsupportedOperationException();
-		}
-		return constructAuxVarInfo(loc, cType, auxVarType);
 	}
 
 	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final CType cType, final AUXVAR auxVarType) {

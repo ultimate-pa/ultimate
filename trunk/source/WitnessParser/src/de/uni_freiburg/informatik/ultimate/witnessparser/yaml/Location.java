@@ -31,23 +31,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.Witness.IMapSerializable;
-
 /**
  * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class Location implements IMapSerializable {
+public class Location {
 
 	private final String mFileName;
-	private final String mFileHash;
-	private final int mLine;
-	private final int mColumn;
+	private final Integer mLine;
+	private final Integer mColumn;
 	private final String mFunction;
 
-	public Location(final String fileName, final String fileHash, final int line, final int column,
-			final String function) {
+	public Location(final String fileName, final Integer line, final Integer column, final String function) {
 		mFileName = fileName;
-		mFileHash = fileHash;
 		mLine = line;
 		mColumn = column;
 		mFunction = function;
@@ -57,15 +52,11 @@ public class Location implements IMapSerializable {
 		return mFileName;
 	}
 
-	public String getFileHash() {
-		return mFileHash;
-	}
-
-	public int getLine() {
+	public Integer getLine() {
 		return mLine;
 	}
 
-	public int getColumn() {
+	public Integer getColumn() {
 		return mColumn;
 	}
 
@@ -80,7 +71,7 @@ public class Location implements IMapSerializable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mColumn, mFileHash, mFileName, mFunction, mLine);
+		return Objects.hash(mColumn, mFileName, mFunction, mLine);
 	}
 
 	@Override
@@ -92,19 +83,20 @@ public class Location implements IMapSerializable {
 			return false;
 		}
 		final Location other = (Location) obj;
-		return mColumn == other.mColumn && Objects.equals(mFileHash, other.mFileHash)
-				&& Objects.equals(mFileName, other.mFileName) && Objects.equals(mFunction, other.mFunction)
-				&& mLine == other.mLine;
+		return Objects.equals(mColumn, other.mColumn) && Objects.equals(mFileName, other.mFileName)
+				&& Objects.equals(mFunction, other.mFunction) && Objects.equals(mLine, other.mLine);
 	}
 
-	@Override
 	public Map<String, Object> toMap() {
 		final LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		result.put("file_name", mFileName);
-		result.put("file_hash", mFileHash);
 		result.put("line", mLine);
-		result.put("column", mColumn);
-		result.put("function", mFunction);
+		if (mColumn != null) {
+			result.put("column", mColumn);
+		}
+		if (mFunction != null) {
+			result.put("function", mFunction);
+		}
 		return result;
 	}
 }
