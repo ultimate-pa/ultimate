@@ -613,7 +613,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	@Override
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
-			if (mCfgManagedScript.equals(mTcSmtManager)) {
+			if (mCfgManagedScript.equals(mTcSmtManager)
+					&& ((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript() != null) {
 				mAnnotateAndAsserterConjuncts = new AnnotateAndAssertToWorker<>(mTcSmtManager, mTraceCheckLock, ssa,
 						mNestedFormulas, mLogger, mCfgManagedScript);
 			} else {
