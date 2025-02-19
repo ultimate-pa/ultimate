@@ -165,8 +165,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		mArtifact = null;
 		final List<ProvenCegarLoopResult<L>> results;
 		if (IcfgUtils.isConcurrent(icfg)) {
-			throw new AssertionError("Petri Net CEGAR loop not relevant for Parallel");
-			//			results = analyseConcurrentProgram(icfg);
+			results = analyseConcurrentProgram(icfg);
 		} else {
 			results = analyseSequentialProgram(icfg);
 		}
@@ -214,7 +213,7 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void logSettings() {
-		StringBuilder settings = new StringBuilder("Automizer settings:");
+		final StringBuilder settings = new StringBuilder("Automizer settings:");
 		settings.append(" Hoare:").append(mPrefs.getHoareSettings().getHoarePositions());
 		settings.append(" ").append(mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings.append(" Interpolation:").append(mPrefs.interpolation());
