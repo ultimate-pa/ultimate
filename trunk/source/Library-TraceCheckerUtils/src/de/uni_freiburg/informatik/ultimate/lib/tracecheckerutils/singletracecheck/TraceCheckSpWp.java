@@ -173,8 +173,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
-
-		mTcSmtManager.getScript().exit();
 	}
 
 	@Override
