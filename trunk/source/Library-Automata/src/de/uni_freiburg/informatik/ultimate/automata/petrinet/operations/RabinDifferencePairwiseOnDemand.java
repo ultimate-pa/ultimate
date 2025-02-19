@@ -4,6 +4,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -26,9 +27,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *            a {@link IPetriNet2FiniteAutomatonStateFactory} & {@link INwaInclusionStateFactory}
  */
 public class RabinDifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
-		extends DifferencePairwiseOnDemand<LETTER, PLACE, CRSF> {
+		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
-	private final IRabinPetriNet<LETTER, PLACE> mWrappedResult;
+	private final IRabinPetriNet<LETTER, PLACE> mResult;
 
 	/**
 	 * Constructs a difference Rabin-Petri-Net - deterministic automaton
@@ -48,19 +49,19 @@ public class RabinDifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriN
 			final IRabinPetriNet<LETTER, PLACE> minuendNet,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, PLACE> subtrahendDfa)
 			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
-		super(services, minuendNet, subtrahendDfa);
-		mWrappedResult = new RabinWrapper<>(super.getResult(), minuendNet);
+		super(services);
+		mResult = new RabinWrapper<>(new DifferencePairwiseOnDemand<>(services, minuendNet, subtrahendDfa).getResult(),
+				minuendNet);
 	}
 
 	@Override
 	public IPetriNet<LETTER, PLACE> getResult() {
-
-		return mWrappedResult;
+		return mResult;
 	}
 
 	@Override
 	public String toString() {
-		return mWrappedResult.toString();
+		return mResult.toString();
 	}
 
 	private static class RabinWrapper<LETTER, PLACE> implements IRabinPetriNet<LETTER, PLACE> {

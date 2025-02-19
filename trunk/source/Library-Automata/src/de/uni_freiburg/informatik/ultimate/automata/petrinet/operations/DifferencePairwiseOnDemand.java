@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  * @param <CRSF>
  *            Type of factory needed to check the result of this operation in {@link #checkResult(CRSF)}
  */
-public class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
+public final class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2FiniteAutomatonStateFactory<PLACE> & INwaInclusionStateFactory<PLACE>>
 		extends GeneralOperation<LETTER, PLACE, CRSF> {
 
 	/**
@@ -194,7 +194,7 @@ public class DifferencePairwiseOnDemand<LETTER, PLACE, CRSF extends IPetriNet2Fi
 	}
 
 	@Override
-	public IPetriNet<LETTER, PLACE> getResult() {
+	public BoundedPetriNet<LETTER, PLACE> getResult() {
 		return mResult;
 	}
 
