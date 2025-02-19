@@ -62,7 +62,8 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q2", "b", "q2");
 		buchiAutomata.addInternalTransition("q2", "a", "q1");
 
-		final RabinDeterministicDifference<String, String> rabinDiff = new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
+		final RabinDeterministicDifference<String, String> rabinDiff =
+				new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
 
 		final var dif = rabinDiff.getResult();
 
@@ -119,7 +120,8 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q2");
 
-		final RabinDeterministicDifference<String, String> rabinDiff = new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
+		final RabinDeterministicDifference<String, String> rabinDiff =
+				new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
 
 		final var dif = rabinDiff.getResult();
 
@@ -176,7 +178,8 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q3");
 
-		final RabinDeterministicDifference<String, String> rabinDiff = new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
+		final RabinDeterministicDifference<String, String> rabinDiff =
+				new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
 
 		final var dif = rabinDiff.getResult();
 
@@ -234,7 +237,8 @@ public class RabinDifferenceTest {
 		buchiAutomata.addInternalTransition("q2", "b", "q2");
 		buchiAutomata.addInternalTransition("q2", "c", "q2");
 
-		final RabinDeterministicDifference<String, String> rabinDiff = new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
+		final RabinDeterministicDifference<String, String> rabinDiff =
+				new RabinDeterministicDifference<>(mServices, petriNet, buchiAutomata);
 
 		final var dif = rabinDiff.getResult();
 

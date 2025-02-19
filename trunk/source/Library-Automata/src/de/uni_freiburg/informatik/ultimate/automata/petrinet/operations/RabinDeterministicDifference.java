@@ -138,7 +138,7 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 		final HashMap<LETTER, Set<Transition<LETTER, PLACE>>> transitionMap = new HashMap<>();
 		for (final Transition<LETTER, PLACE> trans : mPetriNet.getTransitions()) {
 
-			transitionMap.putIfAbsent(trans.getSymbol(), new HashSet<Transition<LETTER, PLACE>>());
+			transitionMap.putIfAbsent(trans.getSymbol(), new HashSet<>());
 
 			transitionMap.get(trans.getSymbol()).add(trans);
 		}

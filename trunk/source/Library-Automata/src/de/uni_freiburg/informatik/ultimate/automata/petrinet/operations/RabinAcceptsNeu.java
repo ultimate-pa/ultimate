@@ -45,7 +45,7 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 	 *
 	 * @param word
 	 *            Input word.
-	 * 
+	 *
 	 * @exception PetriNetNot1SafeException
 	 *                exception for not 1-safe Petri nets
 	 */
@@ -96,11 +96,9 @@ public final class RabinAcceptsNeu<LETTER, PLACE>
 							.entrySet()) {
 						if (markingWithAcceptanceCondition.getValue().equals(AcceptanceCondition.ACCEPTING)
 								&& mAcceptingSituationsWithoutLoop.get(nextLoopIndex)
-										.add(markingWithAcceptanceCondition.getKey())) {
-
-							if (checkForLoop(markingWithAcceptanceCondition.getKey(), nextLoopIndex)) {
-								return true;
-							}
+										.add(markingWithAcceptanceCondition.getKey())
+								&& checkForLoop(markingWithAcceptanceCondition.getKey(), nextLoopIndex)) {
+							return true;
 						}
 						nextMarkings.add(markingWithAcceptanceCondition.getKey());
 					}
