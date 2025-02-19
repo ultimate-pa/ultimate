@@ -115,12 +115,14 @@ public class RabinDeterministicDifference<LETTER, PLACE>
 				if (successorCandidateIterator.hasNext()) {
 					throw new AutomataLibraryException(getClass(),
 							"Nondeterministic buchi automaton can not be used in deterministic difference.\n"
-									+ "There are multiple transitions for one state-letter pair.");
+									+ "There are multiple transitions for the state %s and the letter %s."
+											.formatted(buchiPlace, petriTransition.getSymbol()));
 				}
 			} else {
 				throw new AutomataLibraryException(getClass(),
 						"Incomplete buchi automaton can not be used in deterministic difference.\n"
-								+ "There is no transition for one state-letter pair.");
+								+ "There is no transition for the state %s and the letter %s.".formatted(buchiPlace,
+										petriTransition.getSymbol()));
 			}
 			addNewTransition(petriTransition, buchiTransition, buchiPlace);
 		}
