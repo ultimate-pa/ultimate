@@ -115,8 +115,12 @@ public class RabinDifferenceTest {
 		buchiAutomata.addState(false, true, "q2");
 		buchiAutomata.addState(false, false, "q3");
 		buchiAutomata.addInternalTransition("q1", "a", "q2");
-		buchiAutomata.addInternalTransition("q2", "c", "q2");
+		buchiAutomata.addInternalTransition("q1", "b", "q1");
+		buchiAutomata.addInternalTransition("q1", "c", "q1");
+		buchiAutomata.addInternalTransition("q2", "a", "q2");
 		buchiAutomata.addInternalTransition("q2", "b", "q3");
+		buchiAutomata.addInternalTransition("q2", "c", "q2");
+		buchiAutomata.addInternalTransition("q3", "a", "q3");
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q2");
 
@@ -173,8 +177,12 @@ public class RabinDifferenceTest {
 		buchiAutomata.addState(false, true, "q2");
 		buchiAutomata.addState(false, false, "q3");
 		buchiAutomata.addInternalTransition("q1", "a", "q2");
-		buchiAutomata.addInternalTransition("q2", "c", "q2");
+		buchiAutomata.addInternalTransition("q1", "b", "q1");
+		buchiAutomata.addInternalTransition("q1", "c", "q1");
+		buchiAutomata.addInternalTransition("q2", "a", "q2");
 		buchiAutomata.addInternalTransition("q2", "b", "q3");
+		buchiAutomata.addInternalTransition("q2", "c", "q2");
+		buchiAutomata.addInternalTransition("q3", "a", "q3");
 		buchiAutomata.addInternalTransition("q3", "b", "q3");
 		buchiAutomata.addInternalTransition("q3", "c", "q3");
 
