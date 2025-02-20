@@ -88,7 +88,15 @@ public interface IDeadEndStore<S, R> {
 	 *            The type of states
 	 */
 	final class SimpleDeadEndStore<S> implements IDeadEndStore<S, S> {
-		private final Set<S> mDeadEndSet = new HashSet<>();
+		private final Set<S> mDeadEndSet;
+
+		public SimpleDeadEndStore() {
+			this(new HashSet<>());
+		}
+
+		public SimpleDeadEndStore(final Set<S> knownDeadEnds) {
+			mDeadEndSet = knownDeadEnds;
+		}
 
 		@Override
 		public boolean isDeadEndState(final S state) {

@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -361,7 +362,12 @@ public class PartialOrderCegarLoop<L extends IIcfgTransition<?>>
 	}
 
 	private IDfsVisitor<L, IPredicate> createVisitor() {
-		IDfsVisitor<L, IPredicate> visitor = new AcceptingRunSearchVisitor<>(this::isGoalState);
+		return createVisitor(x -> false);
+	}
+
+	private IDfsVisitor<L, IPredicate> createVisitor(final Predicate<IPredicate> isAdditionalGoalState) {
+		IDfsVisitor<L, IPredicate> visitor =
+				new AcceptingRunSearchVisitor<>(isAdditionalGoalState.or(this::isGoalState));
 		if (mPOR.getDfsOrder() instanceof BetterLockstepOrder<?, ?>) {
 			visitor = ((BetterLockstepOrder<L, IPredicate>) mPOR.getDfsOrder()).wrapVisitor(visitor);
 		}

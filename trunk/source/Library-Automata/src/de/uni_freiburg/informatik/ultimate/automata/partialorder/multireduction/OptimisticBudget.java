@@ -28,17 +28,20 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Supplier;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.FilteredStatesNwa;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.DepthFirstTraversal;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.SleepMapReduction.IBudgetFunction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AcceptingRunSearchVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndCollectingSearchVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore.SimpleDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.ReachabilityCheckVisitor;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -61,7 +64,7 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	private final ILogger mLogger;
 	private final IDfsOrder<L, R> mOrder;
 	private final ISleepMapStateFactory<L, S, R> mStateFactory;
-	private final Supplier<IDfsVisitor<L, R>> mMakeVisitor;
+	private final Function<Predicate<R>, IDfsVisitor<L, R>> mMakeVisitor;
 
 	private final SleepMapReduction<L, ?, R> mReduction;
 
@@ -78,15 +81,16 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	 * @param stateFactory
 	 *            The state factory used to create the reduction automaton
 	 * @param makeVisitor
-	 *            Creates a new visitor to determine reachability of "bad states" (the definition of bad states is up to
-	 *            the caller). The visitor must either be an {@link AcceptingRunSearchVisitor} or a wrapper visitor such
-	 *            that the underlying base visitor is an {@link AcceptingRunSearchVisitor}.
+	 *            Creates a new visitor to determine whether any "bad states" (the definition of bad states is up to the
+	 *            caller) or any state satisfying an additional given predicate is reachable. The visitor must either be
+	 *            an {@link AcceptingRunSearchVisitor} or a wrapper visitor such that the underlying base visitor is an
+	 *            {@link AcceptingRunSearchVisitor}.
 	 * @param reduction
 	 *            The reduction automaton for which budgets shall be computed.
 	 */
 	public OptimisticBudget(final AutomataLibraryServices services, final IDfsOrder<L, R> order,
-			final ISleepMapStateFactory<L, S, R> stateFactory, final Supplier<IDfsVisitor<L, R>> makeVisitor,
-			final SleepMapReduction<L, ?, R> reduction) {
+			final ISleepMapStateFactory<L, S, R> stateFactory,
+			final Function<Predicate<R>, IDfsVisitor<L, R>> makeVisitor, final SleepMapReduction<L, ?, R> reduction) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(OptimisticBudget.class);
 		mOrder = order;
@@ -154,31 +158,34 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 	}
 
 	private boolean checkIsSuccessful(final R state) {
-		// If we can reach a known unsuccessful state, the given state is definitely unsuccessful.
-		// Hence we can abort the search. To this end, we use a ReachabilityCheckVisitor.
-		final var visitor = new ReachabilityCheckVisitor<>(mMakeVisitor.get(), mUnsuccessful, mSuccessful);
+		// Create a visitor for checking reachability of bad or known unsuccessful states.
+		final var underlyingVisitor = mMakeVisitor.apply(mUnsuccessful::contains);
+
+		// Wrap the visitor into a dead-end collecting visitor: Any state that is (completely) backtracked without
+		// having reached a bad or known unsuccessful state can be automatically marked as successful.
+		final var visitor =
+				new DeadEndCollectingSearchVisitor<>(underlyingVisitor, new SimpleDeadEndStore<>(mSuccessful));
+
+		// Prune known successful states from the reduction to avoid searching them again.
+		final var prunedAutomaton = new FilteredStatesNwa<>(mReduction, mSuccessful::contains);
 
 		try {
-			new DepthFirstTraversal<>(mServices, mReduction, mOrder, visitor, state);
+			new DepthFirstTraversal<>(mServices, prunedAutomaton, mOrder, visitor, state);
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass());
 		}
 
 		final IRun<L, R> run = ((AcceptingRunSearchVisitor<L, R>) visitor.getBaseVisitor()).getAcceptingRun();
-		if (run != null) {
-			// We found an entire accepting run. Hence we are not successful, and neither is any state on this run.
-			mUnsuccessful.addAll(run.getStateSequence());
-			return false;
+		if (run == null) {
+			// We did not find a run to an accepting or a known unsuccessful state. Hence we are successful.
+			// The DeadEndCollectingSearchVisitor should have recorded that fact.
+			assert mSuccessful.contains(state);
+			return true;
 		}
 
-		// We did not find an accepting run. Hence we are successful iff we did not reach a known unsuccessful state.
-		final boolean result = !visitor.reachabilityConfirmed();
-		if (result) {
-			mSuccessful.add(state);
-		} else {
-			// The visitor is expected to add all states on the stack to this set.
-			assert mUnsuccessful.contains(state);
-		}
-		return result;
+		// We found a run to an accepting or a known unsuccessful state.
+		// Hence we are not successful, and neither is any state on this run.
+		mUnsuccessful.addAll(run.getStateSequence());
+		return false;
 	}
 }
