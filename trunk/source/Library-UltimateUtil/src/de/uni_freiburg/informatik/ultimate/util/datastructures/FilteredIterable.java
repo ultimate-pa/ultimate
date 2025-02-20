@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2025 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2025 University of Freiburg
  *
  * This file is part of the ULTIMATE Util Library.
  *
@@ -27,12 +28,15 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * Filter a given Iterable. Iterator returns only elements on which a given predicate evaluates to true.
+ * Filter a given {@link Iterable}. Iterator returns only elements on which a given predicate evaluates to true.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * @param <T>
  *            element type
  */
@@ -41,46 +45,51 @@ public class FilteredIterable<T> implements Iterable<T> {
 	final Predicate<T> mPredicate;
 
 	public FilteredIterable(final Iterable<T> iterable, final Predicate<T> remainingElements) {
-		mIterable = iterable;
-		mPredicate = remainingElements;
+		mIterable = Objects.requireNonNull(iterable);
+		mPredicate = Objects.requireNonNull(remainingElements);
 	}
 
 	@Override
 	public Iterator<T> iterator() {
-		return new PredicateIterator(mIterable);
+		return new PredicateIterator<>(mPredicate, mIterable.iterator());
 	}
 
-	private final class PredicateIterator implements Iterator<T> {
-		final Iterator<T> mIterator;
-		T mNext;
+	private static final class PredicateIterator<T> implements Iterator<T> {
+		private final Predicate<T> mPredicate;
+		private final Iterator<T> mIterator;
 
-		public PredicateIterator(final Iterable<T> iterable) {
-			mIterator = iterable.iterator();
+		private T mNext;
+		private boolean mFound;
+
+		public PredicateIterator(final Predicate<T> predicate, final Iterator<T> iterator) {
+			mPredicate = predicate;
+			mIterator = iterator;
 			getNextThatSatisfiesPredicate();
 		}
 
 		private void getNextThatSatisfiesPredicate() {
-			if (mIterator.hasNext()) {
+			while (mIterator.hasNext()) {
 				mNext = mIterator.next();
-				while (mNext != null && !mPredicate.test(mNext)) {
-					if (mIterator.hasNext()) {
-						mNext = mIterator.next();
-					} else {
-						mNext = null;
-					}
+				if (mPredicate.test(mNext)) {
+					mFound = true;
+					return;
 				}
-			} else {
-				mNext = null;
 			}
+
+			mFound = false;
+			mNext = null;
 		}
 
 		@Override
 		public boolean hasNext() {
-			return mNext != null;
+			return mFound;
 		}
 
 		@Override
 		public T next() {
+			if (!mFound) {
+				throw new NoSuchElementException();
+			}
 			final T result = mNext;
 			getNextThatSatisfiesPredicate();
 			return result;
