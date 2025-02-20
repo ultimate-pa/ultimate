@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.FilteredStatesNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -59,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.multireduction.
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.CoveringOptimizationVisitor.CoveringMode;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndOptimizingSearchVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.DeadEndCollectingSearchVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDeadEndStore;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.WrapperVisitor;
@@ -145,7 +146,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		mDfsOrder = getDfsOrder(orderType, randomOrderSeed, icfg, errorLocs);
 
 		// TODO decouple dead end support from this class
-		mDeadEndStore = getDeadEndStore == null ? null : getDeadEndStore.apply(mStateSplitter);
+		mDeadEndStore = getDeadEndStore.apply(mStateSplitter);
 
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
@@ -205,6 +206,10 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	public ISleepMapStateFactory<L, IPredicate, IPredicate> getSleepMapFactory() {
 		return mSleepMapFactory;
+	}
+
+	public IDeadEndStore<?, IPredicate> getDeadEndStore() {
+		return mDeadEndStore;
 	}
 
 	private IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType, final long randomOrderSeed,
@@ -289,14 +294,36 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	 */
 	public void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
 			final IDfsVisitor<L, IPredicate> visitor) throws AutomataOperationCanceledException {
+		apply(input, visitor, true);
+	}
+
+	private void apply(final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> input,
+			final IDfsVisitor<L, IPredicate> visitor, final boolean recordDeadEnds)
+			throws AutomataOperationCanceledException {
+
 		if (mSleepMapFactory instanceof SleepMapStateFactory<?>) {
 			((SleepMapStateFactory<?>) mSleepMapFactory).reset();
 		}
 
-		ITraversal<L, IPredicate> traversal = buildReducedTraversal(mMode, new BasicTraversal<>(mAutomataServices));
+		final ITraversal<L, IPredicate> dfsTraversal;
+		if (mDeadEndStore == null) {
+			// BasicTraversal runs a DFS on a provided automaton.
+			dfsTraversal = new BasicTraversal<>(mAutomataServices);
+		} else {
+			// If dead end support is enabled, wrap the BasicTraversal in a DeadEndPruningTraversal.
+			dfsTraversal = new DeadEndPruningTraversal<>(mDeadEndStore, recordDeadEnds,
+					new BasicTraversal<>(mAutomataServices));
+		}
+
+		// Apply partial order reduction.
+		ITraversal<L, IPredicate> traversal = buildReducedTraversal(mMode, dfsTraversal);
+
+		// At the lowest level (before any of the above operations are applied) handle stateful preference orders.
 		if (mDfsOrder instanceof final LoopLockstepOrder<L> lockstep) {
 			traversal = new StatefulOrderTraversal<>(lockstep, traversal);
 		}
+
+		// Traverse the automaton.
 		traversal.traverse(input, mDfsOrder, visitor);
 	}
 
@@ -390,6 +417,22 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		}
 	}
 
+	private record DeadEndPruningTraversal<L, S>(IDeadEndStore<?, S> deadEndStore, boolean recordDeadEnds,
+			ITraversal<L, S> underlying) implements ITraversal<L, S> {
+		@Override
+		public void traverse(final INwaOutgoingLetterAndTransitionProvider<L, S> automaton, final IDfsOrder<L, S> order,
+				final IDfsVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			// Record dead-end states (if enabled).
+			final var deadEndVisitor =
+					recordDeadEnds ? new DeadEndCollectingSearchVisitor<>(visitor, deadEndStore) : visitor;
+
+			// Filter known dead-end states from the automaton
+			final var prunedAutomaton = new FilteredStatesNwa<>(automaton, deadEndStore::isDeadEndState);
+
+			underlying.traverse(prunedAutomaton, order, deadEndVisitor);
+		}
+	}
+
 	/**
 	 * Constructs the reduced automaton explicitly.
 	 *
@@ -412,7 +455,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		} else {
 			visitor = new AutomatonConstructingVisitor<>(input, mAutomataServices, emptyStackFactory);
 		}
-		apply(input, visitor);
+		apply(input, visitor, false);
 		return visitor.getReductionAutomaton();
 	}
 
@@ -420,7 +463,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> abstraction,
 			final Predicate<IPredicate> isAccepting) throws AutomataOperationCanceledException {
 		final IDfsVisitor<L, IPredicate> buildVisitor = createBuildVisitor(abstraction.getVpAlphabet(), isAccepting);
-		apply(abstraction, buildVisitor);
+		apply(abstraction, buildVisitor, false);
 		AutomatonConstructingVisitor<L, IPredicate> builder;
 		if (buildVisitor instanceof WrapperVisitor<?, ?, ?>) {
 			builder = (AutomatonConstructingVisitor<L, IPredicate>) ((WrapperVisitor<L, IPredicate, ?>) buildVisitor)
@@ -444,7 +487,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 			visitor = new CoveringOptimizationVisitor<>(visitor, new SleepSetCoveringRelation<>(mSleepFactory),
 					CoveringMode.PRUNE);
 		}
-		return new DeadEndOptimizingSearchVisitor<>(visitor, mDeadEndStore, true);
+		return visitor;
 	}
 
 	public IStatisticsDataProvider getStatistics() {

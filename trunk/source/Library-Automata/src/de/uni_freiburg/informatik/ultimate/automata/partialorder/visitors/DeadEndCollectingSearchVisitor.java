@@ -27,10 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
 
 /**
- * A visitor that implements a dead-end removal optimization.
- *
- * The visitor collects backtracked states in a given {@link IDeadEndStore}. When it encounters a state marked as dead
- * end, the successors of this state are not explored.
+ * A visitor that collects dead-ends during a search, i.e., any states that are completely backtracked are entered in a
+ * given {@link IDeadEndStore}.
  *
  * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
@@ -41,43 +39,26 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors;
  * @param <V>
  *            The type of the underlying visitor
  */
-public class DeadEndOptimizingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
+public class DeadEndCollectingSearchVisitor<L, S, V extends IDfsVisitor<L, S>> extends WrapperVisitor<L, S, V> {
 	private final IDeadEndStore<?, S> mDeadEndStore;
-	private final boolean mIsReadOnly;
 
 	/**
-	 * Wraps a given visitor with dead-end detection and pruning.
+	 * Wraps a given visitor with dead-end detection.
 	 *
 	 * @param underlying
 	 *            The underlying visitor
 	 * @param store
-	 *            A dead end store which is used to store and query dead end information
-	 * @param isReadOnly
-	 *            Whether the dead end store should be treated as read-only (backtracked states should not be added)
+	 *            A dead end store which is used to store dead end information
 	 */
-	public DeadEndOptimizingSearchVisitor(final V underlying, final IDeadEndStore<?, S> store,
-			final boolean isReadOnly) {
+	public DeadEndCollectingSearchVisitor(final V underlying, final IDeadEndStore<?, S> store) {
 		super(underlying);
 		mDeadEndStore = store;
-		mIsReadOnly = isReadOnly;
-	}
-
-	@Override
-	public boolean addStartState(final S state) {
-		final boolean result = mUnderlying.addStartState(state);
-		return result || mDeadEndStore.isDeadEndState(state);
-	}
-
-	@Override
-	public boolean discoverState(final S state) {
-		final boolean result = mUnderlying.discoverState(state);
-		return result || mDeadEndStore.isDeadEndState(state);
 	}
 
 	@Override
 	public void backtrackState(final S state, final boolean isComplete) {
 		mUnderlying.backtrackState(state, isComplete);
-		if (!mIsReadOnly && isComplete) {
+		if (isComplete) {
 			mDeadEndStore.addDeadEndState(state);
 		}
 	}
