@@ -37,6 +37,21 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Preference order representing the transitive closure of the Union of two preference Orders, used to define products
+ * of monitors.
+ *
+ * @param <L>
+ *            The type of the transition letters.
+ * @param <S0>
+ *            The state type of the program.
+ * @param <S1>
+ *            The state type of mLeftAutomaton.
+ * @param <S2>
+ *            The state type of mRightAutomaton.
+ * @param <S>
+ *            The state type of the combination.
+ */
 public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrder<L, S0, S> {
 	private final IPreferenceOrder<L, S0, S1> mFirstOrder;
 	private final IPreferenceOrder<L, S0, S2> mSecondOrder;
@@ -77,17 +92,9 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 	}
 
 	private ProductComparator<L> createOrder(final S0 programState, final S monitorState) {
-		// This is the hard part.
-		// Given Objects a and b that we want to compare, we need to:
-		// 1. Check if elements are comparable based on one of the original orders.
-		// If not:
-		// 1. Find intersection of sets talked about by each order
-		// 2. (Ideally) Throw exception if intersection is not a blob
-		// 3. Indirectly compare a and b by comparing them to the intersection.
-
-		// Alternatively, we could construct the full transitive closure of the union
-		// of mFirstOrder and mSecondOrder, but that seems unnecessarily inefficient.
-		return null;
+		return new ProductComparator<>(mFirstOrder.getOrder(programState, mStateFactory.getLeftState(monitorState)),
+				mSecondOrder.getOrder(programState, mStateFactory.getRightState(monitorState)),
+				mAutomaton.getAlphabet()); // this might need to be something more complicated
 	}
 
 	public interface IProductPreferenceOrderStateFactory<S1, S2, S> extends IStateFactory<S> {
@@ -115,11 +122,48 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 		}
 	}
 
+	/** Represents the transitive closure of the union of two given orders lessX and lessY. */
 	private static class ProductComparator<L> implements Comparator<L> {
 		private final Map<Pair<L, L>, Integer> mComparisonResults = new HashMap<>();
 
 		public ProductComparator(final Comparator<L> lessX, final Comparator<L> lessY, final Set<L> alphabet) {
-			// TODO compute transitive closure of union of lessX and lessY, and store it in mComparisonResults
+			// Maybe refactor this to throw exceptions if contradictions arise?
+			// First create the union of the orders
+			for (final L l1 : alphabet) {
+				for (final L l2 : alphabet) {
+					final int resultX = lessX.compare(l1, l2);
+					final int resultY = lessY.compare(l1, l2);
+					if (resultX != 0) {
+						mComparisonResults.put(new Pair<>(l1, l2), resultX);
+					} else {
+						// Either resultY != 0 or resultX = resultY = 0
+						mComparisonResults.put(new Pair<>(l1, l2), resultY);
+					}
+				}
+			}
+
+			// Then apply the Floyd-Warshall algorithm to get the transitive closure
+			for (final L k : alphabet) {
+				for (final L i : alphabet) {
+					for (final L j : alphabet) {
+						final int result_ij = mComparisonResults.get(new Pair<>(i, j));
+						final int result_ik = mComparisonResults.get(new Pair<>(i, k));
+						final int result_kj = mComparisonResults.get(new Pair<>(k, j));
+						// If we i and j are already comparable, then we don't care
+						if (result_ij == 0) {
+							// i < k < j -> i < j
+							if (result_ik == 1 && result_kj == 1) {
+								mComparisonResults.put(new Pair<>(i, j), -1);
+							}
+							// i > k > j -> i > j
+							else if (result_ik == -1 && result_kj == -1) {
+								mComparisonResults.put(new Pair<>(i, j), 1);
+							}
+						}
+
+					}
+				}
+			}
 		}
 
 		@Override

@@ -30,7 +30,8 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorde
 import java.util.Objects;
 
 /**
- * Represents a generalization of {@code Either} that allows an instance to not contain a value at all.
+ * Represents a generalization of {@code Either} that allows a third option where an instance doesn't contain a value at
+ * all.
  */
 public sealed interface IfThenElseState<X, Y> {
 	record Then<X, Y>(X value) implements IfThenElseState<X, Y> {

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrde
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.Dfs2PreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IfElsePreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.ProductPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -99,11 +100,11 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 
 		if ("sequential".equals(spec.get("operator"))) {
 			return buildSequentialComposition(spec, left, right);
-		}
-		if ("ifelse".equals(spec.get("operator"))) {
+		} else if ("ifelse".equals(spec.get("operator"))) {
 			return buildIfElseComposition(spec, left, right);
+		} else if ("product".equals(spec.get("operator"))) {
+			return buildProductComposition(spec, left, right);
 		}
-
 		// TODO add support for other combination operators here
 
 		throw new UnsupportedOperationException("Unknown type of preference order: " + spec);
@@ -137,6 +138,7 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 
 	private IPreferenceOrder<L, IPredicate, ?> buildSequentialCompositionOrder() {
 		// FIXME code duplicated from PartialOrderReductionFacade
+		// Monitor sequential composition is defined below, this is different!
 		final Set<String> errorThreads =
 				mErrorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
 		return new Dfs2PreferenceOrder<>(new ConstantDfsOrder<>(
@@ -160,6 +162,12 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 				((List<String>) spec.get("switch_on")).stream().map(this::findLetter).collect(Collectors.toSet());
 
 		return IfElsePreferenceOrder.create(left, right, ImmutableSet.of(letters));
+	}
+
+	private <S1, S2> IPreferenceOrder<L, IPredicate, ?> buildProductComposition(final Map<String, Object> spec,
+			final IPreferenceOrder<L, IPredicate, S1> left, final IPreferenceOrder<L, IPredicate, S2> right) {
+
+		return ProductPreferenceOrder.create(left, right);
 	}
 
 	private L findLetter(final String description) {
