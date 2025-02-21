@@ -151,13 +151,13 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 						final int result_kj = mComparisonResults.get(new Pair<>(k, j));
 						// If we i and j are already comparable, then we don't care
 						if (result_ij == 0) {
-							// i < k < j -> i < j
-							if (result_ik == 1 && result_kj == 1) {
-								mComparisonResults.put(new Pair<>(i, j), -1);
-							}
 							// i > k > j -> i > j
-							else if (result_ik == -1 && result_kj == -1) {
+							if (result_ik == 1 && result_kj == 1) {
 								mComparisonResults.put(new Pair<>(i, j), 1);
+							}
+							// i < k < j -> i < j
+							else if (result_ik == -1 && result_kj == -1) {
+								mComparisonResults.put(new Pair<>(i, j), -1);
 							}
 						}
 
