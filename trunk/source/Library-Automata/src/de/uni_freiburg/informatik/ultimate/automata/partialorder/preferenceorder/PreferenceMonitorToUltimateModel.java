@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Aut
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 
 /**
  * A custom variant of NwaToUltimateModel for preference monitor automata.
@@ -73,13 +74,20 @@ public class PreferenceMonitorToUltimateModel<L, S> extends NwaToUltimateModel<L
 		// For positional orders, the order also depends on the program state (not given here); so skip them.
 		if (!mOrder.isPositional()) {
 			final var list = mOrder.getMonitor().getAlphabet().stream().sorted(mOrder.getOrder(null, state))
-					.map(Object::toString).toList();
+					.map(this::letterToString).toList();
 			annot.getAnnotationsAsMap().put("Order (linearized)", list);
 		}
 
 		autState.getPayload().getAnnotations().put("Preference order", annot);
 
 		return autState;
+	}
+
+	private String letterToString(final L letter) {
+		if (letter instanceof final IAction action) {
+			return action.getPrecedingProcedure() + "  " + action;
+		}
+		return letter.toString();
 	}
 
 	@Override
