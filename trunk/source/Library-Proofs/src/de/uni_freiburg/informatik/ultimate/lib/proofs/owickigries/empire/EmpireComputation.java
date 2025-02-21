@@ -239,6 +239,7 @@ public class EmpireComputation<L, P> {
 		// This can happen because we look at each automaton individually; another automaton not currently considered
 		// may be responsible for the non-reachability.
 
+		// TODO replace Hoare triple / implication checks with SmtUtils.isFalseLiteral(_);
 		final var htFalse = mHc.checkInternal(lawPredicate, (IInternalAction) transition.getSymbol(), mFactory.or());
 		final var accepting = transition.getSuccessors().stream().anyMatch(p -> mNet.isAccepting(p));
 		final var impliesFalse = mImplicationChecker.checkImplication(lawPredicate, false, mFactory.or(), false);
