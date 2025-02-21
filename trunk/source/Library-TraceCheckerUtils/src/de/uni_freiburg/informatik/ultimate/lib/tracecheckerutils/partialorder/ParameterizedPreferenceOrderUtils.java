@@ -32,13 +32,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
@@ -172,5 +175,17 @@ public class ParameterizedPreferenceOrderUtils<L extends IIcfgTransition<?>> {
 
 	public List<String> getThreadList() {
 		return mThreadList;
+	}
+
+	public static Predicate<IcfgEdge> getLoopClosingEdges(final IIcfg<?> icfg) {
+		final var loopHeads = icfg.getLoopLocations();
+		final var loopClosingEdges = loopHeads.stream().flatMap(ParameterizedPreferenceOrderUtils::getLoopClosingEdges)
+				.collect(Collectors.toSet());
+		return loopClosingEdges::contains;
+	}
+
+	private static Stream<IcfgEdge> getLoopClosingEdges(final IcfgLocation loopHead) {
+		return new IcfgEdgeIterator(loopHead.getOutgoingEdges()).asStream()
+				.filter(loopHead.getIncomingEdges()::contains);
 	}
 }

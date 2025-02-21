@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,8 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.cfg2automaton.Cfg2Automaton;
@@ -124,16 +122,8 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 			steps.add((int) pair.get(1));
 		}
 
-		final var loopHeads = mIcfg.getLoopLocations();
-		final Set<IcfgEdge> loopEdges =
-				loopHeads.stream().flatMap(PreferenceOrderInterpreter::getLoopClosingEdges).collect(Collectors.toSet());
-
-		return new ParameterizedPreferenceOrder<>(steps, threads, mAlphabet, loopEdges::contains);
-	}
-
-	private static Stream<IcfgEdge> getLoopClosingEdges(final IcfgLocation loopHead) {
-		return new IcfgEdgeIterator(loopHead.getOutgoingEdges()).asStream()
-				.filter(loopHead.getIncomingEdges()::contains);
+		final Predicate<L> isLoopEdge = (Predicate) ParameterizedPreferenceOrderUtils.getLoopClosingEdges(mIcfg);
+		return new ParameterizedPreferenceOrder<>(steps, threads, mAlphabet, isLoopEdge);
 	}
 
 	private IPreferenceOrder<L, IPredicate, ?> buildSequentialCompositionOrder() {

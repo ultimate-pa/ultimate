@@ -26,12 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -272,21 +269,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 		case GLOBAL_WRITE:
 			return x -> x.getTransformula().getAssignedVars().stream().anyMatch(v -> effectiveGlobalVars.contains(v));
 		case LOOP:
-			final var loopHeads = mIcfg.getLoopLocations();
-			final Set<IcfgEdge> loopEdges = new HashSet<>();
-			for (final var loopHead : loopHeads) {
-				final Deque<IcfgEdge> worklist = new ArrayDeque<>(loopHead.getOutgoingEdges());
-				while (!worklist.isEmpty()) {
-					final IcfgEdge edge = worklist.removeFirst();
-					if (edge.getTarget().equals(loopHead)) {
-						loopEdges.add(edge);
-						continue;
-					}
-					worklist.addAll(edge.getTarget().getOutgoingEdges());
-				}
-			}
-
-			return x -> loopEdges.contains(x);
+			return (Predicate) ParameterizedPreferenceOrderUtils.getLoopClosingEdges(icfg);
 		}
 		throw new UnsupportedOperationException("Unknown step type: " + steptype);
 	}
