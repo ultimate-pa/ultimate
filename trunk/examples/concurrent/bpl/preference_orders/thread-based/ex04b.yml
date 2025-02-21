@@ -22,8 +22,8 @@ options:
       left:
         builtin: loop_lockstep
         iterations:
-          - [thread1Thread1of1ForFork0, 1]
           - [thread3Thread1of1ForFork1, 2]
+          - [thread1Thread1of1ForFork2, 1]
       # The second preference order (used later)
       right:
         builtin: loop_lockstep
@@ -35,7 +35,7 @@ options:
       switch_on:
         # Closest thing to a sensible switching point is on being done with the first loop
         # Ultimate breakpoints are displaying wrong letter names for me :')
-        - "[99] thread1EXIT-->L21"
+        - "[69] L42-1-->thread1FINAL"
 
     # Interpolation struggles to find the invariants though they are simple.
     # Hence, we provide (most of) them explicity (in ex02.bpl.proof.smt2).
