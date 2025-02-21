@@ -115,15 +115,17 @@ class ParameterizedOrderAutomaton<L extends IAction> implements INwaOutgoingLett
 	public Iterable<OutgoingInternalTransition<L, State>> internalSuccessors(final State state, final L letter) {
 		if (mIsStep.test(letter)) {
 			if (letter.getPrecedingProcedure() != state.thread()) {
-				// return Set.of(new OutgoingInternalTransition<>(letter,
-				// getOrCreateState(mThreads.get(mThreads.size()-1), mThreads.size()-1 , 0)));
-
-				// return Set.of(new OutgoingInternalTransition<>(letter, state));
-
 				final String nextThread = letter.getPrecedingProcedure();
 				int nextIndex = DataStructureUtils.indexOf(mThreads, nextThread, state.index());
-				assert nextIndex != -1 : "Unknown thread " + nextThread + " not in " + mThreads;
 
+				// Transitions of threads that are not in mThreads lead to self-loops.
+				if (nextIndex == -1) {
+					return Set.of(new OutgoingInternalTransition<>(letter, state));
+				}
+
+				// Jump ahead to the next state for the transition's thread.
+				// Motivation: We do not want to remain forever in the same state if (due to non-commutativity) we read
+				// transitions that do not belong to the thread with highest priority.
 				if (mMaxSteps.get(nextIndex) == 1) {
 					nextIndex = (nextIndex + 1) % mThreads.size();
 					return Set.of(new OutgoingInternalTransition<>(letter,

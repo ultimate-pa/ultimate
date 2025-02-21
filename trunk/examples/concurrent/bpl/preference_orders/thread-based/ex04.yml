@@ -23,18 +23,14 @@ options:
         builtin: loop_lockstep
         iterations:
           - [thread1Thread1of1ForFork0, 1]
-          - [thread2Thread1of1ForFork1, 0]
           - [thread3Thread1of1ForFork2, 2]
       # The second preference order (used later)
       right:
         builtin: loop_lockstep
         iterations:
-          - [thread1Thread1of1ForFork0, 0]
           - [thread2Thread1of1ForFork1, 1]
           - [thread3Thread1of1ForFork2, 1]
 
-      # Not sure specifiying "0" for loop_lockstep actually works
-      # but without it the debugger threw assertion errors and with it it didnt
     Read initial proof assertions from file if available: false
 
     Limit iterations: 30

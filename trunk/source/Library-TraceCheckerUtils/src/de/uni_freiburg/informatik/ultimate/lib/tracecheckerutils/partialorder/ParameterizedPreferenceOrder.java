@@ -55,8 +55,6 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 	private final List<Integer> mMaxSteps;
 	private final List<String> mThreads;
 	private final INwaOutgoingLetterAndTransitionProvider<L, State> mMonitor;
-	private final Comparator<L> mDefaultComparator =
-			Comparator.comparing(L::getPrecedingProcedure).thenComparingInt(Object::hashCode);
 
 	// TODO (Dominik 2025-02-13): This cache only makes sense if PreferenceOrderComparator caches information (see
 	// comment there). Also, if we want to cache this, we could just make it a field of the State class and thus avoid
@@ -80,6 +78,10 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 		mMaxSteps = maxSteps;
 		mThreads = threads;
 		mMonitor = new ParameterizedOrderAutomaton<>(mMaxSteps, mThreads, alphabet, isStep);
+
+		// Check if there exists any thread in mThreads for which there is no letter in alphabet.
+		assert mThreads.stream().distinct().allMatch(thread -> alphabet.getInternalAlphabet().stream()
+				.map(IAction::getPrecedingProcedure).anyMatch(thread::equals)) : "Thread not present in alphabet";
 	}
 
 	@Override
@@ -90,7 +92,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 
 		final String lastThread = stateMonitor.thread();
 		final int lastIndex = stateMonitor.index();
-		final var comparator = new PreferenceOrderComparator<>(lastThread, lastIndex, mDefaultComparator, mThreads);
+		final var comparator = new PreferenceOrderComparator<L>(lastThread, lastIndex, mThreads);
 		mComparatorsCache.put(stateMonitor, comparator);
 		return comparator;
 	}
@@ -172,7 +174,6 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 	private static final class PreferenceOrderComparator<L extends IAction> implements Comparator<L> {
 		private final String mLastThread;
 		private final int mLastIndex;
-		private final Comparator<L> mFallback;
 		private final List<String> mThreads;
 
 		// TODO (Dominik 2025-02-13): Does this cache bring performance benefits?
@@ -191,11 +192,9 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 		 * @param threads
 		 *            List representing the sequence of threads
 		 */
-		public PreferenceOrderComparator(final String lastThread, final int lastIndex, final Comparator<L> fallback,
-				final List<String> threads) {
+		public PreferenceOrderComparator(final String lastThread, final int lastIndex, final List<String> threads) {
 			mLastThread = Objects.requireNonNull(lastThread);
 			mLastIndex = lastIndex;
-			mFallback = Objects.requireNonNull(fallback);
 			mThreads = Objects.requireNonNull(threads);
 		}
 
@@ -213,6 +212,12 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 			// start the comparison from the current index
 			final int xThreadIndex = DataStructureUtils.indexOf(mThreads, x.getPrecedingProcedure(), mLastIndex);
 			final int yThreadIndex = DataStructureUtils.indexOf(mThreads, y.getPrecedingProcedure(), mLastIndex);
+
+			// transitions of a thread that is not mentioned must be uncomparable with all other transitions
+			if (xThreadIndex == -1 || yThreadIndex == -1) {
+				return 0;
+			}
+
 			final boolean xBefore = xThreadIndex < mLastIndex;
 			final boolean yBefore = yThreadIndex < mLastIndex;
 			if (xBefore && !yBefore) {
@@ -230,7 +235,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 
 		@Override
 		public int hashCode() {
-			return Objects.hash(mFallback, mLastThread, mThreads, mLastIndex);
+			return Objects.hash(mLastThread, mThreads, mLastIndex);
 		}
 
 		@Override
@@ -239,8 +244,7 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 				return true;
 			}
 			return obj instanceof final PreferenceOrderComparator<?> other && mLastIndex == other.mLastIndex
-					&& mFallback.equals(other.mFallback) && mLastThread.equals(other.mLastThread)
-					&& mThreads.equals(other.mThreads);
+					&& mLastThread.equals(other.mLastThread) && mThreads.equals(other.mThreads);
 		}
 	}
 }
