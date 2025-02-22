@@ -171,12 +171,15 @@ extends NwaCegarLoop<L> {
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
 			final int runningThreads, final IcfgLocation currentErrorLoc, final RefinementStrategy strategyType) {
 		// mCsToolkit needs to give new mgdScript for each thread
+
 		final CfgSmtToolkit freshToolKit =
 				mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices, getSolverSettings(iterationServices,
-						mIteration + runningThreads + mCounterexample.hashCode() + "parallel"));
+						mIteration + runningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"));
 		// Set the Main Script
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 		.setMainScript(mCsToolkit.getManagedScript());
+
+		freshToolKit.getManagedScript().useHashForVarNames(mCounterexample.getWord().asList().hashCode());
 		//		freshToolKit.getManagedScript().setVariableManager(mCsToolkit.getManagedScript().getVariableManager());
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
 		final Map<TermVariable, IProgramVar> varMap =

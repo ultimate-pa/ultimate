@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  *
  */
 public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
-		extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<L>, L> {
+extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<L>, L> {
 
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final Class<L> mTransitionClazz;
@@ -141,7 +141,10 @@ public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
-			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
+			final ManagedScript tcManagedScript = mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices,
+					solverSettings);
+			tcManagedScript.useHashForVarNames(mCounterexample.getWord().asList().hashCode());
+			return tcManagedScript;
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
 	}

@@ -31,6 +31,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -61,12 +63,19 @@ public class ManagedScript {
 	private Object mLockOwner;
 
 	public ManagedScript(final IUltimateServiceProvider services, final Script script) {
-		super();
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
 		mVariableManager = new VariableManager();
 		mSkolemFunctionManager = new SkolemFunctionManager();
+	}
+
+	public void setVariableManager(final VariableManager vm) {
+		mVariableManager = vm;
+	}
+
+	public VariableManager getVariableManager() {
+		return mVariableManager;
 	}
 
 	public void lock(final Object lockOwner) {
@@ -256,6 +265,13 @@ public class ManagedScript {
 		return mVariableManager.variable(varname, sort);
 	}
 
+	/*
+	 * if this is set, the Variable Manager will use trace hashes for naming instead of a counter
+	 */
+	public void useHashForVarNames(final int hashCode) {
+		mVariableManager.setCEXHashForNames(hashCode);
+	}
+
 	/**
 	 * Given a function signature, this gives a fresh (i.e., not yet used in the current scope) name for a skolem
 	 * function.
@@ -297,6 +313,9 @@ public class ManagedScript {
 
 		private final Set<String> mVariableNames = new HashSet<>();
 
+		private	 boolean mUseTraceHash = false;
+		private Integer mTraceHash = null;
+
 		/**
 		 * Construct "fresh" TermVariables. In mathematical logics a variable is called "fresh" if the variable has not
 		 * occurred in the same context. TermVariables constructed by objects that implement this interface are
@@ -314,10 +333,33 @@ public class ManagedScript {
 			if (name.contains("|")) {
 				throw new IllegalArgumentException("Name contains SMT quote characters " + name);
 			}
+			System.out.println(name);
 			final Integer newIndex = mTvForBasenameCounter.increment(name);
+			if (mUseTraceHash && name.startsWith("v_")) {
+				System.out.println("AAAAAAAAAAAAAAAA");
+				final Pattern p = Pattern.compile("v_(.*)_\\d*");
+				final Matcher m = p.matcher(name);
+				String substring;
+				if (m.find()) {
+					substring = m.group(1);
+
+					System.out.println(substring);
+					final TermVariable result = mScript.variable("v_" + name + "_" + mTraceHash + newIndex, sort);
+					mTv2Basename.put(result, name);
+					System.out.println(result);
+					return result;
+				}
+			}
+
 			final TermVariable result = mScript.variable("v_" + name + "_" + newIndex, sort);
 			mTv2Basename.put(result, name);
+			System.out.println(result);
 			return result;
+		}
+
+		public void setCEXHashForNames(final int hashCode) {
+			mUseTraceHash = true;
+			mTraceHash = hashCode;
 		}
 
 		/**
@@ -348,9 +390,10 @@ public class ManagedScript {
 			mTv2Basename.put(result, varname);
 			return result;
 		}
+
 	}
 
-	private class SkolemFunctionManager {
+	private static class SkolemFunctionManager {
 
 		private static final String SKOLEM_PREFIX = "skolem";
 
@@ -361,4 +404,5 @@ public class ManagedScript {
 			return SKOLEM_PREFIX + counter++;
 		}
 	}
+
 }
