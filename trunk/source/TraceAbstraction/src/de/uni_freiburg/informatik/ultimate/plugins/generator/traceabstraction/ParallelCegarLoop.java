@@ -179,8 +179,6 @@ extends NwaCegarLoop<L> {
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 		.setMainScript(mCsToolkit.getManagedScript());
 
-		freshToolKit.getManagedScript().useHashForVarNames(mCounterexample.getWord().asList().hashCode());
-		//		freshToolKit.getManagedScript().setVariableManager(mCsToolkit.getManagedScript().getVariableManager());
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
 		final Map<TermVariable, IProgramVar> varMap =
 				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();

@@ -141,10 +141,7 @@ extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<L>, L> {
 		}
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			final SolverSettings solverSettings = mPrefs.constructSolverSettings(mTaskIdentifier);
-			final ManagedScript tcManagedScript = mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices,
-					solverSettings);
-			tcManagedScript.useHashForVarNames(mCounterexample.getWord().asList().hashCode());
-			return tcManagedScript;
+			return mPrefs.getCfgSmtToolkit().createFreshManagedScript(mServices, solverSettings);
 		}
 		return mPrefs.getCfgSmtToolkit().getManagedScript();
 	}
