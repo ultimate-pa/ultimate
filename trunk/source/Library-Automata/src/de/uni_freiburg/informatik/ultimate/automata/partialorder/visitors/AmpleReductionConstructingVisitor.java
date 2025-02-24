@@ -108,6 +108,8 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 			mPruningCounter++;
 			return true;
 		}
+		// TODO: check action determinism of automaton
+
 		// Get the ample set of the new successor state
 		Set<L> ample;
 		// In case of loop closure, the ample set contains all outgoing edges
