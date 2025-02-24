@@ -94,7 +94,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 
 	@Override
 	protected Iterable<Pair<IInternalAction, LOC>> getInternalSuccessors(final LOC state) {
-		return getSuccessors(state, IInternalAction.class, this::isNoTrivialSummary);
+		return getSuccessors(state, IInternalAction.class, IcfgFloydHoareValidityCheck::isNoTrivialSummary);
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public class IcfgFloydHoareValidityCheck<LOC extends IcfgLocation> extends Floyd
 				.collect(Collectors.toList());
 	}
 
-	private boolean isNoTrivialSummary(final IInternalAction action) {
+	private static boolean isNoTrivialSummary(final IInternalAction action) {
 		return !(action instanceof IIcfgSummaryTransition<?>
 				&& ((IIcfgSummaryTransition<?>) action).calledProcedureHasImplementation());
 	}

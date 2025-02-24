@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -419,25 +419,24 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType cType,
-			final ExpressionResultBuilder expressionResultBuilder) {
+	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final CType cType) {
 		if (!mSettings.assumeNondeterministicValuesInRange() || !cType.getUnderlyingType().isIntegerType()) {
 			// only integer types can be out of range
-			return;
+			return Optional.empty();
 		}
 		final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 		if (mTypeSizes.isUnsigned(cPrimitive)) {
 			// only signed types can be out of range
-			return;
+			return Optional.empty();
 		}
-		expressionResultBuilder.addStatement(constructAssumeInRangeStatement(mTypeSizes, loc, expr, cPrimitive));
+		return Optional.of(constructInRangeExpression(mTypeSizes, loc, expr, cPrimitive));
 	}
 
 	/**
-	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
+	 * Returns "(minValue <= lrValue && lrValue <= maxValue)"
 	 */
-	private AssumeStatement constructAssumeInRangeStatement(final TypeSizes typeSizes, final ILocation loc,
-			final Expression expr, final CPrimitive type) {
+	private Expression constructInRangeExpression(final TypeSizes typeSizes, final ILocation loc, final Expression expr,
+			final CPrimitive type) {
 		final Expression minValue =
 				mTypeSizes.constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type));
 		final Expression maxValue =
@@ -447,8 +446,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
 		final Expression smallerMaxValue =
 				constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type);
-		return new AssumeStatement(loc,
-				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		return ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, biggerMinInt, smallerMaxValue);
 	}
 
 	@Override

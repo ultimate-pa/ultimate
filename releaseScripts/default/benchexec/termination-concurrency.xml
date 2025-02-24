@@ -1,37 +1,58 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="300" hardtimelimit="320" cpuCores="2">
-    
-	<option name="--force-no-wrapper" />
-  <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
-<!--
-  <rundefinition name="Buchi Automaton (no LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
-	</rundefinition>
--->
-  <rundefinition name="Buchi Automaton (semantic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-semanticLbe.epf</option>
-	</rundefinition>
-<!--	
-	<rundefinition name="Buchi Automaton (syntactic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-syntacticLbe.epf</option>
-	</rundefinition>
-  
-  <rundefinition name="Buchi PN (no LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-noLbe.epf</option>
-	</rundefinition>
--->
-  <rundefinition name="Buchi PN (semantic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-semanticLbe.epf</option>
-	</rundefinition>
-<!--	
-	<rundefinition name="Buchi PN (syntactic LBE)">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-syntacticLbe.epf</option>
-	</rundefinition>
--->
-	<tasks name="SVCOMP ConcurrencySafety-Main">
-		<includesfile>../../../trunk/examples/svcomp/ConcurrencySafety-Main.set</includesfile>
-		<propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
-	</tasks>
-  
   <resultfiles></resultfiles>
+
+  <option name="--force-no-wrapper" />
+
+  <rundefinition name="BUCHI_AUTOMATON-NoLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
+  </rundefinition>
+
+  <!-- WARNING Petri-LBE is currently unsound -->
+  <rundefinition name="BUCHI_AUTOMATON-SemanticLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-semanticLbe.epf</option>
+  </rundefinition>
+
+  <!-- WARNING Petri-LBE is currently unsound -->
+  <rundefinition name="BUCHI_AUTOMATON-SyntacticLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-syntacticLbe.epf</option>
+  </rundefinition>
+  
+  <rundefinition name="BUCHI_PETRI_NET-NoLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-noLbe.epf</option>
+  </rundefinition>
+
+  <!-- WARNING Petri-LBE is currently unsound -->
+  <rundefinition name="BUCHI_PETRI_NET-SemanticLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-semanticLbe.epf</option>
+  </rundefinition>
+
+  <!-- WARNING Petri-LBE is currently unsound -->
+  <rundefinition name="BUCHI_PETRI_NET-SyntacticLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-syntacticLbe.epf</option>
+  </rundefinition>
+
+  <rundefinition name="PARTIAL_ORDER_BA">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
+    <option name="--buchiautomizer.automaton.type.for.concurrent.programs">PARTIAL_ORDER_BA</option>
+  </rundefinition>
+
+  <rundefinition name="RABIN_PETRI_NET-NoLBE">
+    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-buchi-pn-noLbe.epf</option>
+    <option name="--buchiautomizer.automaton.type.for.concurrent.programs">RABIN_PETRI_NET</option>
+  </rundefinition>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
+
+    <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerCInline.xml</option>
+  </tasks>
+
+  <tasks name="Ultimate-Repo">
+    <includesfile>../../../trunk/examples/concurrency-termination-bpl.set</includesfile>
+    <propertyfile>../../../trunk/examples/svcomp/properties/termination.prp</propertyfile>
+
+    <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerBplInline.xml</option>
+  </tasks>
 </benchmark>

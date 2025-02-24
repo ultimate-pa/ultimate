@@ -132,7 +132,7 @@ public final class FloydHoareUtils {
 			final var invResult =
 					new InvariantResult<IIcfgElement, Object>(pluginName, locNode, translatedInvariant, checks);
 			reporter.accept(invResult);
-			new WitnessInvariant(invResult.getInvariant()).annotate(locNode);
+			new WitnessInvariant<>(invResult.getInvariant()).annotate(locNode);
 		}
 	}
 
