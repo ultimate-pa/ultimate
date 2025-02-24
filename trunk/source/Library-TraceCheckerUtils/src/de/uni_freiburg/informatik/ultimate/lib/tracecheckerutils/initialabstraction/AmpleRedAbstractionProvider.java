@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 /*
- * Analogon to PartialOrderAbstractionProvider
+ * Analogon to PartialOrderAbstractionProvider, used for ample set reduction
  *
  *
  *
@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
  *
  *
  */
-// first transform the petrinet using the petrinet2finiteautomaton? then reduce?
 public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, NestedWordAutomaton<L, IPredicate>> {
 
@@ -71,7 +70,18 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	private final AutomataLibraryServices mAutomataServices;
 	private final AmpleRedStatistics mStatistics;
 
-	// TODO: Do a check whether the input automaton is deterministic?
+	/**
+	 * Create a new instance of the provider.
+	 *
+	 * @param underlying
+	 *            The provider whose provided initial abstraction is then transformed by this instance
+	 * @param services
+	 *            Ultimate services used by Ample Set Reduction
+	 * @param stateFactory
+	 *            A state factory used by the reduced automaton
+	 * @param seed
+	 *            The seed to use for the random DFS order.
+	 */
 	public AmpleRedAbstractionProvider(
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
 			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
@@ -92,23 +102,28 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		final IIndependenceRelation<IPredicate, L> indep =
 				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
 						.withSyntacticCheck().cached().threadSeparated().build();
-		// get persistent sets - should we give the error locs?
+		// get persistent sets - do the error locations even matter?
 		final IPersistentSetChoice<L, IPredicate> persistent =
 				new ThreadBasedPersistentSets(mServices, icfg, indep, null, errorLocs, true);
-		// get visitor
+		// get the automaton we want to reduce
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> originalAutomaton =
 				mUnderlying.getInitialAbstraction(icfg, errorLocs);
 
+		// We require the input automaton for ample set reduction to be deterministic and only contain final states
+
+		// TODO: Check out how much time determinism check consumes
+		mStatistics.mDetTimer.start();
 		assert new IsDeterministic<>(mAutomataServices, originalAutomaton).getResult()
 				: "input automaton for ample set reduction must be deterministic";
-
+		mStatistics.mDetTimer.stop();
+		// get the visitor
 		final AmpleReductionConstructingVisitor<L, IPredicate> visitor = new AmpleReductionConstructingVisitor<>(
 				originalAutomaton, originalAutomaton::isInitial, originalAutomaton::isFinal,
 				originalAutomaton.getVpAlphabet(), mAutomataServices, mStateFactory, persistent);
-		// get reduction
+		// get the reduction
 		// as we assume a deterministic input automaton, there should only be one initial state here
 		final IPredicate initState = originalAutomaton.getInitialStates().iterator().next();
-		// TODO: Do something about the order (order shouldnt matter) // state here
+		// TODO: Do something about the order - is the order of importance?
 		final AmpleReduction<L, IPredicate> ampleRed = new AmpleReduction<>(mAutomataServices, originalAutomaton,
 				new RandomDfsOrder<>(mDfsOrderSeed, false), visitor, initState);
 		final NestedWordAutomaton<L, IPredicate> redAutomaton = visitor.getReductionAutomaton();
@@ -126,25 +141,25 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		return mStatistics;
 	}
 
+	// Statistics for the whole ample set reduction
 	private class AmpleRedStatistics extends AbstractStatisticsDataProvider {
-		// private static final String UNDERLYING_STATISTICS = "Statistics of underlying abstraction provider";
 		int mLoopCausedTrivial = 0;
 		int mPrunedTS = 0;
 		int mNonTrivialAS = 0;
 		int mReductionTS = 0;
 		int mReductionStates = 0;
 		TimeTracker mReductionTime = new TimeTracker();
+		TimeTracker mDetTimer = new TimeTracker();
 
 		public AmpleRedStatistics() {
-			// forward(UNDERLYING_STATISTICS, mUnderlying::getStatistics);
 			declareTimeTracker("Time to compute Ample Reduction", mReductionTime);
+			declareTimeTracker("Time to compute check determinism", mDetTimer);
 			declareCounter("Trivial Ample Sets caused by loops", () -> mLoopCausedTrivial);
 			declareCounter("Number of non-trivial ample sets", () -> mNonTrivialAS);
 			declareCounter("Number of pruned transitions", () -> mPrunedTS);
 			declareCounter("Number of transitions in reduction automaton", () -> mReductionTS);
 			declareCounter("Number of states in reduction automaton", () -> mReductionStates);
 			forward("Underlying", mUnderlying::getStatistics);
-
 		}
 
 		public void startTimer() {

@@ -55,7 +55,7 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 	private final IPersistentSetChoice<L, S> mPersistent;
 	private final HashMap<S, Set<L>> mAmpleSets;
 
-	public int mPruningCounter; // count the number of pruned ts
+	public int mPruningCounter; // count the number of pruned transitions
 	public int mNonTrivialCounter; // count the number of non-trivial ample sets
 	public int mLoopCausedTrivial; // Originally non-trivial ample sets that became trivial bc of (A4: Cycle condition)
 
@@ -86,11 +86,11 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		mIsFinal = isFinal;
 		mPersistent = persistent;
 		mReductionAutomaton = new NestedWordAutomaton<>(services, alphabet, stateFactory);
-		// !Trivial ample sets (ample set = set of all outgoing edges) are represented by null!
+		// ! Trivial ample sets (ample set = set of all outgoing edges) are represented by null !
 		mAmpleSets = new HashMap<>(); // store the ample sets of reduction states.
 		// Get ample set of initial state. There should only be one initial state
 		final S init = mOriginalAutomaton.getInitialStates().iterator().next();
-		// persistent set is null for the trivial persistent set (which is the set of all outgoing edges?)
+		// persistent set is null for the trivial persistent set (which is the set of all outgoing edges)
 		final Set<L> initAmple = mPersistent.persistentSet(init);
 		if (!Objects.isNull(initAmple)) {
 			mNonTrivialCounter++;
@@ -108,11 +108,10 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 			mPruningCounter++;
 			return true;
 		}
-		// TODO: Nonemptiness check?
 		// Get the ample set of the new successor state
 		Set<L> ample;
+		// In case of loop closure, the ample set contains all outgoing edges
 		if (targetIsLoopNode) {
-			// Ample Set = Set of all outgoing edges in case of loop closure
 			// Only added for curiosity/statistics.
 			if (!Objects.isNull(mPersistent.persistentSet(target))) {
 				mLoopCausedTrivial++;
@@ -128,7 +127,8 @@ public class AmpleReductionConstructingVisitor<L, S> implements IDfsVisitor<L, S
 		mAmpleSets.put(target, ample);
 
 		if (!mReductionAutomaton.contains(target)) {
-			mReductionAutomaton.addState(mIsInitial.test(target), mIsFinal.test(target), target);
+			assert mIsFinal.test(target) : "All states of the automaton should be final!";
+			mReductionAutomaton.addState(mIsInitial.test(target), true, target);
 		}
 		// add transition from currentState to succState to the automaton
 		mReductionAutomaton.addInternalTransition(source, letter, target);

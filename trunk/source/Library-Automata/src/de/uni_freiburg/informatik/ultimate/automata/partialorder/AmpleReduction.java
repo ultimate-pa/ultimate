@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * DFS with ample sets. A copy of DepthFirstTraversal with minimal changes to accommodate the ample sets. Only intended
- * for deterministic automata with every state being accepting.
+ * for deterministic automata in which every state is accepting
  *
  * @param <L>
  *            The type of letters in the traversed automaton
@@ -82,7 +82,6 @@ public class AmpleReduction<L, S> {
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
-	// TODO: Add a check if input automaton meets requirements? Add statistics.
 	public AmpleReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
 			final AmpleReductionConstructingVisitor<L, S> visitor, final S startingState)
@@ -94,16 +93,14 @@ public class AmpleReduction<L, S> {
 		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
-		// TODO: turn warning off
-		mLogger.warn("Starting ample reduction"); // yellow so I can find it in console output
+		mLogger.info("Starting ample reduction");
 		traverse();
 		mLogger.info("Finished ample reduction");
-		mLogger.info("Number of pruned transitions: %s, Number of non-trivial ample sets: %s ",
-				mVisitor.mPruningCounter, mVisitor.mNonTrivialCounter);
-		mLogger.info("Number of trivial ample sets caused by loops: %s", mVisitor.mLoopCausedTrivial);
+		mLogger.info("Size of reduced automaton: %s states, %s transitions.",
+				mVisitor.getReductionAutomaton().getStates().size(),
+				mVisitor.getReductionAutomaton().computeNumberOfInternalTransitions());
 	}
 
-	// TODO: Find out if this is needed for ample reductions
 	/**
 	 * Performs a depth-first traversal starting from the operand's initial state. This method is called purely for its
 	 * side-effects.
@@ -159,10 +156,8 @@ public class AmpleReduction<L, S> {
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
 
-			// ------------------------------------------start changes-------------------------------------------------
-			// check for all outgoing transitions of next state if they'd close a cycle : mDfs.isVisited() and
-			// mDfs.stackIndexOf() != -1
-			// TODO: Think about what should be done by the visitor and what in the reduction
+			// ------------------------------------------start of changes-----------------------------------------------
+			// check for all outgoing transitions of next state if they'd close a cycle
 			boolean loop = false;
 			for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
 				if (!loop && mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
@@ -173,7 +168,7 @@ public class AmpleReduction<L, S> {
 
 			final boolean prune =
 					mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState, loop);
-			// -------------------------------------------- end of changes -------------------------------------------
+			// -------------------------------------------- end of changes ---------------------------------------------
 
 			if (mVisitor.isFinished()) {
 				mLogger.debug(ABORT_MSG);
