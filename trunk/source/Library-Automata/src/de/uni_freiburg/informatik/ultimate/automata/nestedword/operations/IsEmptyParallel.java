@@ -375,10 +375,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private boolean wasVisited(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedPairs.get(state);
 		if (callPreds == null) {
-			// callPreds = mVisitedCallPairs.get(state);
-			// if (callPreds == null) {
 			return false;
-			// }
 		}
 		return callPreds.contains(stateK);
 	}
@@ -1110,10 +1107,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				}
 				for (int i = 0; i < run.getLength(); i++) {
 					if (startStates.contains(run.getStateAtPosition(i))) {
-						return run.getSubRun(i, run.getLength() - 1);
+						//						return run.getSubRun(i, run.getLength() - 1);
 					}
-					System.out.println("Cutting off from suffix " + run.getStateAtPosition(i));
-
 				}
 				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
 						+ " run is " + run.getStateSequence());

@@ -426,7 +426,7 @@ extends NwaCegarLoop<L> {
 				if (runningThreads == 1) {
 					mIterationsWithOneThread += 1;
 				}
-				mLogger.info("Iteration : " + getIteration());
+				mLogger.info("Iteration " + getIteration());
 				mLogger.info("Refinements: " + mRefinementsDone);
 				mLogger.info("Counterexamples: " + mCounterexamplesChecked);
 				mLogger.info("SearchTimeout: " + mCountTimeoutsInSearch);
