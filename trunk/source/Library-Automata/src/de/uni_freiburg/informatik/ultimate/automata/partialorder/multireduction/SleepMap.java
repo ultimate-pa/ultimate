@@ -114,6 +114,11 @@ public final class SleepMap<L, S> {
 		return ((Object) mRelations) == other.mRelations && Objects.equals(mSleepMap, other.mSleepMap);
 	}
 
+	@Override
+	public String toString() {
+		return mSleepMap.toString();
+	}
+
 	/**
 	 * Computes the successor sleep map after a transition.
 	 *

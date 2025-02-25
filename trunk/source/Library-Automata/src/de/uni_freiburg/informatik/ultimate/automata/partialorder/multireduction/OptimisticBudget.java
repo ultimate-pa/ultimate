@@ -122,7 +122,7 @@ public class OptimisticBudget<L, S, R> implements IBudgetFunction<L, R> {
 			mLogger.debug("trying with budget %d", budget);
 			final R successor = mReduction.computeSuccessorWithBudget(state, letter, budget);
 			if (successor == null) {
-				mLogger.debug("No successor for given letter exists");
+				mLogger.debug("No successor for given letter %s exists", letter);
 				break;
 			}
 
