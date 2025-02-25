@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AmpleReductionConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
@@ -135,7 +134,7 @@ public class AmpleReduction<L, S> {
 	 */
 	public static <L, S> void traverse(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
-			final AmpleReductionConstructingVisitor<L, S> visitor, final IPersistentSetChoice<L, S> persistent)
+			final IDfsVisitor<L, S> visitor, final IPersistentSetChoice<L, S> persistent)
 			throws AutomataOperationCanceledException {
 		final var initial =
 				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
@@ -189,6 +188,7 @@ public class AmpleReduction<L, S> {
 				if (!mLoopNodes.contains(nextState)) {
 					// check for all outgoing transitions of next state if they'd close a cycle
 					for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
+						// it seems finding the stack index is rather time consuming
 						if (mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
 							mLoopNodes.add(nextState);
 							mAmpleSets.put(nextState, null);
