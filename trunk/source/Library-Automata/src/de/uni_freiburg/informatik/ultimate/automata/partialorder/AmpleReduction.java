@@ -29,6 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.partialorder;
 import java.util.ArrayDeque;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -37,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AmpleReductionConstructingVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.IDfsVisitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * DFS with ample sets. A copy of DepthFirstTraversal with minimal changes to accommodate the ample sets. Only intended
- * for deterministic automata in which every state is accepting
+ * DFS with ample sets. Only applicable to deterministic input automata in which every state is final.
  *
  * @param <L>
  *            The type of letters in the traversed automaton
@@ -59,15 +64,21 @@ public class AmpleReduction<L, S> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final S mStartState;
 	private final IDfsOrder<L, S> mOrder;
-	private final AmpleReductionConstructingVisitor<L, S> mVisitor; // visitor computes ample sets and prunes
+	private final IDfsVisitor<L, S> mVisitor;
 	private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final DfsBookkeeping<S> mDfs = new DfsBookkeeping<>();
-
+	private final Predicate<S> mIsFinal; // to check if input automaton only has final states
+	private final IPersistentSetChoice<L, S> mPersistent;
+	// Used to store the ample sets of the reduction state. Note that the trivial ample set (set of all outgoing edges)
+	// is represented by null.
+	private final HashMap<S, Set<L>> mAmpleSets;
+	// TODO: think about whether we need this
+	private final HashSet<S> mLoopNodes; // cache nodes from which a cycle was found
 	private int mIndentLevel = -1;
 
 	/**
-	 * Performs a depth-first traversal compatible with an AmpleReductionConstructingVisitor. This constructor is called
-	 * purely for its side-effects.
+	 * Do a DFS-traversal on the ample set reduction of the input automaton. This constructor is called purely for its
+	 * side-effects.
 	 *
 	 * @param services
 	 *            automata services used for logging and timeout management
@@ -79,12 +90,14 @@ public class AmpleReduction<L, S> {
 	 *            A visitor to traverse the automaton
 	 * @param startingState
 	 *            A state from which the traversal starts.
+	 * @param persistent
+	 *            Persistent sets used to compute ample sets
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
 	public AmpleReduction(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
-			final AmpleReductionConstructingVisitor<L, S> visitor, final S startingState)
+			final IDfsVisitor<L, S> visitor, final S startingState, final IPersistentSetChoice<L, S> persistent)
 			throws AutomataOperationCanceledException {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 		mServices = services;
@@ -93,12 +106,14 @@ public class AmpleReduction<L, S> {
 		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
+		mPersistent = persistent;
+		mAmpleSets = new HashMap<>();
+		mLoopNodes = new HashSet<>();
+		mIsFinal = operand::isFinal;
+		mAmpleSets.put(mStartState, mPersistent.persistentSet(startingState));
 		mLogger.info("Starting ample reduction");
 		traverse();
 		mLogger.info("Finished ample reduction");
-		mLogger.info("Size of reduced automaton: %s states, %s transitions.",
-				mVisitor.getReductionAutomaton().getStates().size(),
-				mVisitor.getReductionAutomaton().computeNumberOfInternalTransitions());
 	}
 
 	/**
@@ -113,16 +128,19 @@ public class AmpleReduction<L, S> {
 	 *            The order in which transitions for each state should be explored
 	 * @param visitor
 	 *            A visitor to traverse the automaton
+	 * @param persistent
+	 *            Persistent sets used to compute ample sets
 	 * @throws AutomataOperationCanceledException
 	 *             in case of timeout or cancellation
 	 */
 	public static <L, S> void traverse(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<L, S> operand, final IDfsOrder<L, S> order,
-			final AmpleReductionConstructingVisitor<L, S> visitor) throws AutomataOperationCanceledException {
+			final AmpleReductionConstructingVisitor<L, S> visitor, final IPersistentSetChoice<L, S> persistent)
+			throws AutomataOperationCanceledException {
 		final var initial =
 				DataStructureUtils.getOnly(operand.getInitialStates(), "There must only be one initial state");
 		if (initial.isPresent()) {
-			new AmpleReduction<>(services, operand, order, visitor, initial.get());
+			new AmpleReduction<>(services, operand, order, visitor, initial.get(), persistent);
 		} else {
 			final var logger = services.getLoggingService().getLogger(AmpleReduction.class);
 			logger.warn("Depth first traversal did not find any initial state. Returning directly.");
@@ -156,20 +174,34 @@ public class AmpleReduction<L, S> {
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
 
-			// ------------------------------------------start of changes-----------------------------------------------
-			// check for all outgoing transitions of next state if they'd close a cycle
-			boolean loop = false;
-			for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
-				if (!loop && mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
-					loop = true;
-					break;
+			// ------------------------------------------ample red stuff -----------------------------------------------
+			assert mAmpleSets.containsKey(currentState) : "Ample set for this state should have been already computed.";
+			assert mIsFinal.test(currentState) : "All states of the automaton should be final!";
+
+			final Set<L> currentAmple = mAmpleSets.get(current);
+			final L letter = currentTransition.getLetter();
+			final boolean prune;
+			// Prune outgoing edges not in the state's ample set
+			if (!Objects.isNull(currentAmple) && !currentAmple.contains(letter)) {
+				prune = true;
+			} else {
+				// compute ample set for next state
+				if (!mLoopNodes.contains(nextState)) {
+					// check for all outgoing transitions of next state if they'd close a cycle
+					for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
+						if (mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
+							mLoopNodes.add(nextState);
+							mAmpleSets.put(nextState, null);
+							break;
+						}
+					}
 				}
+				if (!mAmpleSets.containsKey(nextState)) {
+					mAmpleSets.put(nextState, mPersistent.persistentSet(nextState));
+				}
+				prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
 			}
-
-			final boolean prune =
-					mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState, loop);
-			// -------------------------------------------- end of changes ---------------------------------------------
-
+			// ---------------------------------------- end of ample red stuff -----------------------------------------
 			if (mVisitor.isFinished()) {
 				mLogger.debug(ABORT_MSG);
 				return;
@@ -177,7 +209,7 @@ public class AmpleReduction<L, S> {
 
 			final int stackIndex;
 			if (prune) {
-				debugIndent("-> visitor pruned transition");
+				debugIndent("-> transition was pruned");
 			} else if (!mDfs.isVisited(nextState)) {
 				final boolean abortNow = visitState(nextState);
 				if (abortNow) {
@@ -246,6 +278,7 @@ public class AmpleReduction<L, S> {
 		if (pruneSuccessors) {
 			debugIndent("-> visitor pruned all outgoing edges");
 		} else {
+			// TODO: check action determinism here?
 			final Comparator<OutgoingInternalTransition<L, S>> comp =
 					Comparator.<OutgoingInternalTransition<L, S>, L> comparing(OutgoingInternalTransition::getLetter,
 							mOrder.getOrder(state)).reversed();

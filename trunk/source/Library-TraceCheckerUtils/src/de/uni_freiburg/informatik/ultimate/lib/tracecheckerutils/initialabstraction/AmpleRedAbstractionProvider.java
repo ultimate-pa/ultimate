@@ -33,12 +33,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.AmpleReduction;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.IPersistentSetChoice;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
-import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AmpleReductionConstructingVisitor;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.visitors.AutomatonConstructingVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -110,27 +109,16 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 				mUnderlying.getInitialAbstraction(icfg, errorLocs);
 
 		// We require the input automaton for ample set reduction to be deterministic and only contain final states
+		final AutomatonConstructingVisitor<L, IPredicate> visitor =
+				new AutomatonConstructingVisitor<>(originalAutomaton, mAutomataServices, mStateFactory);
 
-		// TODO: Check out how much time determinism check consumes
-		mStatistics.mDetTimer.start();
-		assert new IsDeterministic<>(mAutomataServices, originalAutomaton).getResult()
-				: "input automaton for ample set reduction must be deterministic";
-		mStatistics.mDetTimer.stop();
-		// get the visitor
-		final AmpleReductionConstructingVisitor<L, IPredicate> visitor = new AmpleReductionConstructingVisitor<>(
-				originalAutomaton, originalAutomaton::isInitial, originalAutomaton::isFinal,
-				originalAutomaton.getVpAlphabet(), mAutomataServices, mStateFactory, persistent);
 		// get the reduction
 		// as we assume a deterministic input automaton, there should only be one initial state here
 		final IPredicate initState = originalAutomaton.getInitialStates().iterator().next();
-		// TODO: Do something about the order - is the order of importance?
 		final AmpleReduction<L, IPredicate> ampleRed = new AmpleReduction<>(mAutomataServices, originalAutomaton,
-				ConstantDfsOrder.byHashCode(), visitor, initState);
+				ConstantDfsOrder.byHashCode(), visitor, initState, persistent);
 		final NestedWordAutomaton<L, IPredicate> redAutomaton = visitor.getReductionAutomaton();
 		mStatistics.stopTimer();
-		mStatistics.mLoopCausedTrivial = visitor.mLoopCausedTrivial;
-		mStatistics.mPrunedTS = visitor.mPruningCounter;
-		mStatistics.mNonTrivialAS = visitor.mNonTrivialCounter;
 		mStatistics.mReductionStates = redAutomaton.getStates().size();
 		mStatistics.mReductionTS = redAutomaton.computeNumberOfInternalTransitions();
 		return redAutomaton;
@@ -143,20 +131,13 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 
 	// Statistics for the whole ample set reduction
 	private class AmpleRedStatistics extends AbstractStatisticsDataProvider {
-		int mLoopCausedTrivial = 0;
-		int mPrunedTS = 0;
-		int mNonTrivialAS = 0;
+
 		int mReductionTS = 0;
 		int mReductionStates = 0;
 		TimeTracker mReductionTime = new TimeTracker();
-		TimeTracker mDetTimer = new TimeTracker();
 
 		public AmpleRedStatistics() {
 			declareTimeTracker("Time to compute Ample Reduction", mReductionTime);
-			declareTimeTracker("Time to compute check determinism", mDetTimer);
-			declareCounter("Trivial Ample Sets caused by loops", () -> mLoopCausedTrivial);
-			declareCounter("Number of non-trivial ample sets", () -> mNonTrivialAS);
-			declareCounter("Number of pruned transitions", () -> mPrunedTS);
 			declareCounter("Number of transitions in reduction automaton", () -> mReductionTS);
 			declareCounter("Number of states in reduction automaton", () -> mReductionStates);
 			forward("Underlying", mUnderlying::getStatistics);
