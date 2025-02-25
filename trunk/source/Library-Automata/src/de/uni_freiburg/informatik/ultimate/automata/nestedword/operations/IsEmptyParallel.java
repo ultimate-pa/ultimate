@@ -360,8 +360,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		callPreds.add(stateK);
 	}
 
-	private void unmarkCall(final STATE state, final STATE stateK) {
 
+	private void unmarkCall(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedCallPairs.get(state);
 		if (callPreds == null) {
 			throw new AssertionError();
@@ -375,7 +375,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private boolean wasVisited(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedPairs.get(state);
 		if (callPreds == null) {
+			//			callPreds = mVisitedCallPairs.get(state);
+			//			if (callPreds == null) {
 			return false;
+			//			}
 		}
 		return callPreds.contains(stateK);
 	}
@@ -736,7 +739,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		STATE state = pair.getUp();
 		STATE stateK = pair.getDown();
 		if (!counterexamples.isEmpty()) {
-			// mVisitedPairs.clear();
+			mVisitedPairs.clear();
 			if (isGoalState(state)) {
 				// i think this is ok in most cases since goal is dead end? but then to be save we can go to the end of
 				// this method
@@ -790,20 +793,19 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
-					} else {
-						unmarkCall(state, stateK);
 					}
+					unmarkCall(state, stateK);
+
 				} else if (startpq.isReturn()) {
-					// markCallVisited(stateK, state);
+					markCallVisited(stateK, state);
 					addSummary(stateK, succ, state, symbol);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(stateK, succ), startpq.getCounterexamplesUnderConsideration());
 
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.MINUS_INFINITY, succ);
-					} else {
-						//						unmarkCall(stateK, state);
 					}
+					unmarkCall(stateK, state);
 
 				} else {
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
@@ -970,7 +972,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	@SuppressWarnings("squid:S1698")
 	private void addRunInformationCall(final STATE succ, final STATE succK, final LETTER symbol, final STATE state,
 			final STATE stateK) {
-		// mLogger.debug("Call SubrunInformation: From ("+succ+","+succK+") can go to ("+state+","+stateK+")");
+		mLogger.debug(
+				"Call SubrunInformation: From (" + succ + "," + succK + ") can go to (" + state + "," + stateK + ")");
 		// equality intended here
 		if (state != succK) {
 			throw new AssertionError();
@@ -1107,7 +1110,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 				}
 				for (int i = 0; i < run.getLength(); i++) {
 					if (startStates.contains(run.getStateAtPosition(i))) {
-						//						return run.getSubRun(i, run.getLength() - 1);
+						return run.getSubRun(i, run.getLength() - 1);
 					}
 				}
 				throw new AssertionError("Run starts in: " + run.getStateAtPosition(0) + " start is " + startStates
