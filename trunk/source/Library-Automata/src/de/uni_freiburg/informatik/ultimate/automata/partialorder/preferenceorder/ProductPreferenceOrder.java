@@ -127,17 +127,19 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 		private final Map<Pair<L, L>, Integer> mComparisonResults = new HashMap<>();
 
 		public ProductComparator(final Comparator<L> lessX, final Comparator<L> lessY, final Set<L> alphabet) {
-			// Maybe refactor this to throw exceptions if contradictions arise?
 			// First create the union of the orders
 			for (final L l1 : alphabet) {
 				for (final L l2 : alphabet) {
 					final int resultX = lessX.compare(l1, l2);
 					final int resultY = lessY.compare(l1, l2);
-					if (resultX != 0) {
+					if (resultX != 0 && resultY == 0) {
 						mComparisonResults.put(new Pair<>(l1, l2), resultX);
-					} else {
-						// Either resultY != 0 or resultX = resultY = 0
+					} else if (resultX == 0 && resultY != 0 || resultX == resultY) {
 						mComparisonResults.put(new Pair<>(l1, l2), resultY);
+					} else { // resultX = 1 and resultY = -1 or vice versa
+						throw new ArithmeticException(String.format(
+								"Base orders used in product order are contradictory: l1 = {%s}, l2 = {%s}, resultX: {%s}, resultY: {%s}",
+								l1, l2, resultX, resultY));
 					}
 				}
 			}
@@ -149,18 +151,20 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 						final int result_ij = mComparisonResults.get(new Pair<>(i, j));
 						final int result_ik = mComparisonResults.get(new Pair<>(i, k));
 						final int result_kj = mComparisonResults.get(new Pair<>(k, j));
-						// If we i and j are already comparable, then we don't care
-						if (result_ij == 0) {
-							// i > k > j -> i > j
-							if (result_ik == 1 && result_kj == 1) {
-								mComparisonResults.put(new Pair<>(i, j), 1);
+						// i > k > j -> i > j
+						if (result_ik == 1 && result_kj == 1) {
+							if (result_ij == -1) {
+								throw new ArithmeticException("Product order violates transititivity.");
 							}
-							// i < k < j -> i < j
-							else if (result_ik == -1 && result_kj == -1) {
-								mComparisonResults.put(new Pair<>(i, j), -1);
-							}
+							mComparisonResults.put(new Pair<>(i, j), 1);
 						}
-
+						// i < k < j -> i < j
+						else if (result_ik == -1 && result_kj == -1) {
+							if (result_ij == 1) {
+								throw new ArithmeticException("Product order violates transititivity.");
+							}
+							mComparisonResults.put(new Pair<>(i, j), -1);
+						}
 					}
 				}
 			}
