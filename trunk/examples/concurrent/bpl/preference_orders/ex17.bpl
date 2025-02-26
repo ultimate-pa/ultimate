@@ -10,6 +10,8 @@
 *
 * The optimal schedules would have the form ((t1 + t2) (t3 + t4))*,
 *     as this allows for the simple invariant s1 == s2.
+*
+* May be possible with sequential (similar to ex16): (t1 t3)* (t2 t3)* (t1 t4)* (t2 t)*; perhaps using if-else to distinguish which thread exits one of the sub-expressions
 */
 var x : [int] int;
 var i1 : int;

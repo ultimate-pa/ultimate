@@ -9,6 +9,8 @@
  *
  * The idea is that our operators should be flexible enough to understand that an occurrence of (t1 + t2) must be matched by an occurrence of t3,
  * without needing to distinguish whether it was thread1 or thread2 that performed an iteration.
+ *
+ * Maybe possible with sequential composition: (t3 t1)* until t1 exits its loop, then (t3 t2)*
  */
 var n, x, c, i : int;
 
