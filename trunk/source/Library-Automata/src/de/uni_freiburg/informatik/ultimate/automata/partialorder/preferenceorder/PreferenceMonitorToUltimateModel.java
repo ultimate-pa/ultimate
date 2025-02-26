@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder;
 
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -73,7 +74,12 @@ public class PreferenceMonitorToUltimateModel<L, S> extends NwaToUltimateModel<L
 
 		// For positional orders, the order also depends on the program state (not given here); so skip them.
 		if (!mOrder.isPositional()) {
-			final var list = mOrder.getMonitor().getAlphabet().stream().sorted(mOrder.getOrder(null, state))
+			final var list = mOrder.getMonitor().getAlphabet().stream()
+					// Dominik 2025-02-26: Sorting twice is a workaround for a JDK bug: The second sort seems to behave
+					// incorrectly when using a partial order (i.e., a Comparator that is not "consistent with equals").
+					// For thread-uniform orders, sorting first by the thread (i.e., procedure) name seems to fix this
+					// (at least in some cases).
+					.sorted(Comparator.comparing(this::getLetterThread)).sorted(mOrder.getOrder(null, state))
 					.map(this::letterToString).toList();
 			annot.getAnnotationsAsMap().put("Order (linearized)", list);
 		}
@@ -81,6 +87,13 @@ public class PreferenceMonitorToUltimateModel<L, S> extends NwaToUltimateModel<L
 		autState.getPayload().getAnnotations().put("Preference order", annot);
 
 		return autState;
+	}
+
+	private String getLetterThread(final L letter) {
+		if (letter instanceof final IAction action) {
+			return action.getPrecedingProcedure();
+		}
+		return "";
 	}
 
 	private String letterToString(final L letter) {
