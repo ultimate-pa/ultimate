@@ -134,7 +134,7 @@ public class ProductPreferenceOrder<L, S0, S1, S2, S> implements IPreferenceOrde
 					final int resultY = lessY.compare(l1, l2);
 					if (resultX != 0 && resultY == 0) {
 						mComparisonResults.put(new Pair<>(l1, l2), resultX);
-					} else if (resultX == 0 && resultY != 0 || resultX == resultY) {
+					} else if ((resultX == 0 && resultY != 0) || (resultX == resultY)) {
 						mComparisonResults.put(new Pair<>(l1, l2), resultY);
 					} else { // resultX = 1 and resultY = -1 or vice versa
 						throw new ArithmeticException(String.format(
