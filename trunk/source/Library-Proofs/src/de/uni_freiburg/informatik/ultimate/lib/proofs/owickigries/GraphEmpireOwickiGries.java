@@ -147,7 +147,7 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 		final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 		final var htc = new MonolithicHoareTripleChecker(mMgdScript, mModifiableGlobals);
 
-		final var computation = getEmpireComputation(implicationChecker, htc);
+		final var computation = getEmpireComputation();
 		final var empire = computation.getEmpire();
 		mLogger.debug("Constructed Empire Annotation:\n%s", empire);
 
@@ -161,13 +161,11 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 		return mOwickiGries;
 	}
 
-	private EmpireComputation<L, P> getEmpireComputation(final MonolithicImplicationChecker implicationChecker,
-			final MonolithicHoareTripleChecker mhc) {
+	private EmpireComputation<L, P> getEmpireComputation() {
 		mStatistics.startEmpireComputation();
 		try {
 			final var placesCorelation = new PlacesCoRelation<>(mRefinedUnfolding);
-			final var computation = new EmpireComputation<>(mServices, mFactory, mProgram, placesCorelation,
-					mProofProduct, mhc, implicationChecker);
+			final var computation = new EmpireComputation<>(mServices, mProgram, placesCorelation, mProofProduct);
 			mStatistics.reportEmpire(computation);
 			return computation;
 		} finally {

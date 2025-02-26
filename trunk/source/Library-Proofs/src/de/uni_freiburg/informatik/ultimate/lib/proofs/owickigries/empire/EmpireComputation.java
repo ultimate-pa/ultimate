@@ -32,23 +32,17 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.CrownsEmpire;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown.PlacesCoRelation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -63,10 +57,6 @@ public class EmpireComputation<L, P> {
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
 	private final PlacesCoRelation<P> mCoRelation;
 
-	private final BasicPredicateFactory mFactory;
-	private final MonolithicHoareTripleChecker mHc;
-	private final MonolithicImplicationChecker mImplicationChecker;
-
 	private final EmpireAnnotation<P> mEmpire;
 
 	public enum SuccessorComputationMode {
@@ -75,11 +65,9 @@ public class EmpireComputation<L, P> {
 
 	private final SuccessorComputationMode mMode;
 
-	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
-			final IPetriNet<L, P> net, final PlacesCoRelation<P> coRelation,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
-			final MonolithicHoareTripleChecker hoareTripleChecker,
-			final MonolithicImplicationChecker implicationChecker) {
+	public EmpireComputation(final IUltimateServiceProvider services, final IPetriNet<L, P> net,
+			final PlacesCoRelation<P> coRelation,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mLogger.setLevel(LogLevel.ERROR);
 
@@ -88,20 +76,14 @@ public class EmpireComputation<L, P> {
 		mCoRelation = coRelation;
 		mMode = SuccessorComputationMode.CO_RELATION;
 
-		mFactory = predicateFactory;
-		mHc = hoareTripleChecker;
-		mImplicationChecker = implicationChecker;
-
 		final var mTerrPlacePairs = symbolicExecution();
 		final var territoryLawPairs =
 				mTerrPlacePairs.stream().map(p -> new Pair<>(p.getFirst(), p.getSecond())).collect(Collectors.toSet());
 		mEmpire = new EmpireAnnotation<>(territoryLawPairs);
 	}
 
-	public EmpireComputation(final IUltimateServiceProvider services, final BasicPredicateFactory predicateFactory,
-			final IPetriNet<L, P> net, final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
-			final MonolithicHoareTripleChecker hoareTripleChecker,
-			final MonolithicImplicationChecker implicationChecker) {
+	public EmpireComputation(final IUltimateServiceProvider services, final IPetriNet<L, P> net,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mLogger.setLevel(LogLevel.ERROR);
 
@@ -109,10 +91,6 @@ public class EmpireComputation<L, P> {
 		mProduct = product;
 		mCoRelation = null;
 		mMode = SuccessorComputationMode.NO_CORELATION;
-
-		mFactory = predicateFactory;
-		mHc = hoareTripleChecker;
-		mImplicationChecker = implicationChecker;
 
 		final var mTerrPlacePairs = symbolicExecution();
 		final var territoryLawPairs =
@@ -146,7 +124,7 @@ public class EmpireComputation<L, P> {
 			var territory = pair.getFirst();
 			var lawPlace = pair.getSecond();
 
-			final var enabledTransitions = getEnabledTransitions(territory, lawPlace).collect(Collectors.toSet());
+			final var enabledTransitions = getEnabledTransitions(territory, lawPlace);
 			if (enabledTransitions.isEmpty()) {
 				resultNodes.add(node);
 				continue;
@@ -183,6 +161,10 @@ public class EmpireComputation<L, P> {
 				queue.add(new GraphNode<>(pair, node.getBridgeBystanders()));
 				// First fully extend the territory before any replacement
 				continue;
+			}
+
+			if (!subsumes && necessaryBridgeTransitions.isEmpty() && replacementTransitions.isEmpty()) {
+				resultNodes.add(node);
 			}
 
 			if (!necessaryBridgeTransitions.isEmpty()) {
@@ -232,42 +214,22 @@ public class EmpireComputation<L, P> {
 		return new GraphNode<>(pair);
 	}
 
-	private boolean enables(final Territory<P> territory, final IPredicate lawPredicate,
-			final Transition<L, P> transition) {
-		// TODO how should we handle transitions where some successor places are not reachable in the refined net
-		// (but may well be reachable in the original net?)
-		// This can happen because we look at each automaton individually; another automaton not currently considered
-		// may be responsible for the non-reachability.
-
-		// TODO replace Hoare triple / implication checks with SmtUtils.isFalseLiteral(_);
-		final var htFalse = mHc.checkInternal(lawPredicate, (IInternalAction) transition.getSymbol(), mFactory.or());
-		final var accepting = transition.getSuccessors().stream().anyMatch(p -> mNet.isAccepting(p));
-		final var impliesFalse = mImplicationChecker.checkImplication(lawPredicate, false, mFactory.or(), false);
-		if (!accepting && impliesFalse != Validity.VALID && htFalse == Validity.VALID) {
-			return false;
-		}
-		final var regions = new HashSet<>(territory.getRegions());
-		final var predecessors = transition.getPredecessors();
-		for (final var place : predecessors) {
-			final var it = regions.iterator();
-			boolean found = false;
-			while (!found && it.hasNext()) {
-				final var region = it.next();
-				if (region.contains(place)) {
-					found = true;
-					it.remove();
-				}
+	private Set<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final IPredicate lawPlace) {
+		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
+		final var notBotTransitions = new HashSet<Transition<L, P>>();
+		for (final Transition<L, P> transition : enabledTransitions) {
+			final var succLaw = mProduct.internalSuccessors(lawPlace, transition.getSymbol());
+			IPredicate newLawPlace = lawPlace;
+			if (succLaw.iterator().hasNext()) {
+				newLawPlace = DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
+			} else {
+				mLogger.warn("No successor law for transition: %s and law: %s", transition, lawPlace);
 			}
-			if (!found) {
-				return false;
+			if (!SmtUtils.isFalseLiteral(newLawPlace.getFormula())) {
+				notBotTransitions.add(transition);
 			}
 		}
-		return true;
-	}
-
-	private Stream<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final IPredicate lawPlace) {
-		return mNet.getSuccessorTransitionProviders(territory.getPlaces(), territory.getPlaces()).stream()
-				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(territory, lawPlace, t));
+		return notBotTransitions;
 	}
 
 	private Region<P> findMatchingRegion(final Collection<Region<P>> candidates, final P place,
@@ -340,10 +302,6 @@ public class EmpireComputation<L, P> {
 		final var territory = pair.getFirst();
 		final var lawPlace = pair.getSecond();
 		final var successors = transition.getSuccessors();
-
-		if (mNet.isAccepting(new Marking<>(successors))) {
-			return null;
-		}
 
 		final var succLaw = mProduct.internalSuccessors(lawPlace, transition.getSymbol());
 		IPredicate newLawPlace = lawPlace;
