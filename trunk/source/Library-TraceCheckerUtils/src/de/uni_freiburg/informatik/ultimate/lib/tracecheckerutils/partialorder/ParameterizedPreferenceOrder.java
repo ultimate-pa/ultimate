@@ -200,10 +200,6 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 
 		@Override
 		public int compare(final L x, final L y) {
-			if (x.getPrecedingProcedure() == mLastThread) {
-				return -1;
-			}
-
 			final Pair<L, L> pair = new Pair<>(x, y);
 			if (mComparisonsCache.containsKey(pair)) {
 				return mComparisonsCache.get(pair);
