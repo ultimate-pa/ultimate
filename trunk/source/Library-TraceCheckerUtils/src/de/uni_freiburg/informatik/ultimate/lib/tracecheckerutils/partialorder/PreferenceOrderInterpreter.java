@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.yaml.snakeyaml.Yaml;
 
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IfElsePreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.ProductPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -82,6 +84,8 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 			return buildSequentialCompositionOrder();
 		case "empty":
 			return buildEmptyOrder();
+		case "checkpoint":
+			return buildCheckpointOrder(spec);
 		// TODO add other builtin order types if needed
 		case null:
 			// handled below
@@ -106,6 +110,15 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 		// TODO add support for other combination operators here
 
 		throw new UnsupportedOperationException("Unknown type of preference order: " + spec);
+	}
+
+	private IPreferenceOrder<L, IPredicate, ?> buildCheckpointOrder(final Map<String, Object> spec) {
+		final var checkpoints = ((List<String>) spec.get("checkpoints")).stream().map(this::findLetter).toList();
+
+		final var threads = checkpoints.stream().map(IAction::getPrecedingProcedure).toList();
+		final var maxSteps = IntStream.range(0, threads.size()).mapToObj(i -> 1).toList();
+
+		return new ParameterizedPreferenceOrder<>(maxSteps, threads, mAlphabet, checkpoints::contains);
 	}
 
 	// TODO add empty order
