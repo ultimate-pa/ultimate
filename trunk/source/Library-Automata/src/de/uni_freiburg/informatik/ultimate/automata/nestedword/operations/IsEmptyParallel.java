@@ -348,7 +348,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	}
 
 	/**
-	 * Mark a state pair a visited.
+	 * Mark a call state pair a visited. Only used for tracking the caller of a call not for the bfs search
+	 *
+	 * There is a bug in recursion, not sure what it is but we probably get nested calls that are not possible (not a
+	 * syntactical correct trace)
+	 *
 	 */
 	private void markCallVisited(final STATE state, final STATE stateK) {
 
@@ -367,18 +371,15 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 			throw new AssertionError();
 		}
 		callPreds.remove(stateK);
-
 	}
+
 	/**
 	 * @return true iff the state pair (state,stateK) was already visited.
 	 */
 	private boolean wasVisited(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedPairs.get(state);
 		if (callPreds == null) {
-			//			callPreds = mVisitedCallPairs.get(state);
-			//			if (callPreds == null) {
 			return false;
-			//			}
 		}
 		return callPreds.contains(stateK);
 	}
@@ -794,10 +795,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
 					}
-					unmarkCall(state, stateK);
-
+					// unmarkCall(state, stateK);
 				} else if (startpq.isReturn()) {
-					markCallVisited(stateK, state);
 					addSummary(stateK, succ, state, symbol);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(stateK, succ), startpq.getCounterexamplesUnderConsideration());
@@ -805,8 +804,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.MINUS_INFINITY, succ);
 					}
-					unmarkCall(stateK, state);
-
 				} else {
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(stateK, succ), startpq.getCounterexamplesUnderConsideration());
@@ -972,8 +969,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 	@SuppressWarnings("squid:S1698")
 	private void addRunInformationCall(final STATE succ, final STATE succK, final LETTER symbol, final STATE state,
 			final STATE stateK) {
-		mLogger.debug(
-				"Call SubrunInformation: From (" + succ + "," + succK + ") can go to (" + state + "," + stateK + ")");
+		//		mLogger.debug(
+		//				"Call SubrunInformation: From (" + succ + "," + succK + ") can go to (" + state + "," + stateK + ")");
 		// equality intended here
 		if (state != succK) {
 			throw new AssertionError();
@@ -1219,6 +1216,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends UnaryNwaOperation<LETT
 		return mTimeSpendSearching;
 	}
 
+	/*
+	 * There are still bugs, where we find CEX that are not in the program happens with recursions and only in rare
+	 * cases (6+ threads)
+	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;

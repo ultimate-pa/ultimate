@@ -615,18 +615,17 @@ extends NwaCegarLoop<L> {
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		assert useGoalSetForIsEmpty || possibleEndPoints == null;
 		if (mParallelSearchSrategy) {
-			mLogger.info("start");
 			final IsEmptyParallel<L, IPredicate> search = new IsEmptyParallel<>(new AutomataLibraryServices(mServices),
 					abstraction,
 					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples);
-			NestedRun<L, IPredicate> result = search.getNestedRun();
+			final NestedRun<L, IPredicate> result = search.getNestedRun();
 			if (search.searchTimedOut()) {
 				mCountTimeoutsInSearch += 1;
 			}
 			mSearchTime += search.getTimeSpend();
 			mCountFailedRunConstructions += search.runConstructionFailedXTimes();
-			// TODO deactivate the try for practice
+
 			boolean correct = false;
 			try {
 				correct = search.checkResult(mStateFactoryForRefinement);
@@ -642,10 +641,11 @@ extends NwaCegarLoop<L> {
 				final List<L> trace = dfs.getWord().asList();
 				final int traceHash = trace.hashCode();
 				if (!mAllCounterexamples.containsKey(traceHash)) {
-					result = dfs;
+					mLogger.info("IsEmptyParallelFailed, but DFS found a cex");
+					return dfs;
 				}
+				return null; // if not correct return null
 			}
-			mLogger.info("end");
 			return result;
 
 		} else if(useGoalSetForIsEmpty){
