@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.fairness.ActionFairnessAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.fairness.StrongActionFairnessAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.fairness.FairProgramAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.fairness.GuardedBuchiIntersection;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
@@ -47,7 +47,7 @@ public class FairnessInitialAbstractionProvider<L extends IIcfgTransition<?>>
 			threads2Actions.addPair(letter.getPrecedingProcedure(), letter);
 		}
 		final var fairThreadAutomata = threads2Actions.getDomain().stream()
-				.map(thread -> new ActionFairnessAutomaton<>(alphabet, threads2Actions.getImage(thread))).toList();
+				.map(thread -> new StrongActionFairnessAutomaton<>(alphabet, threads2Actions.getImage(thread))).toList();
 		final var fairAutomaton = new GuardedBuchiIntersection<>(fairThreadAutomata,
 				x -> x.stream().flatMap(y -> y.stream()).collect(Collectors.toSet()));
 		final var result = new FairProgramAutomaton<>(programAutomaton, fairAutomaton,

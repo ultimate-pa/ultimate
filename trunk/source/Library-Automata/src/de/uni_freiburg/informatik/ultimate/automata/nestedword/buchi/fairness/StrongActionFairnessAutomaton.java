@@ -4,11 +4,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
-public class ActionFairnessAutomaton<LETTER> implements IGuardedAutomaton<LETTER, Integer, Set<LETTER>> {
+public class StrongActionFairnessAutomaton<LETTER> implements IGuardedAutomaton<LETTER, Integer, Set<LETTER>> {
 	private final Set<LETTER> mAlphabet;
 	private final Set<LETTER> mFairActions;
 
-	public ActionFairnessAutomaton(final Set<LETTER> alphabet, final Set<LETTER> fairActions) {
+	public StrongActionFairnessAutomaton(final Set<LETTER> alphabet, final Set<LETTER> fairActions) {
 		mAlphabet = alphabet;
 		mFairActions = fairActions;
 	}
