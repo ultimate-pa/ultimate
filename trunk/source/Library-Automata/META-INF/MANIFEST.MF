@@ -47,6 +47,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates,
    de.uni_freiburg.informatik.ultimate.util.datastructures.relation,
    de.uni_freiburg.informatik.ultimate.automata.nestedword",
+ de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.fairness,
  de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
   uses:="de.uni_freiburg.informatik.ultimate.automata.statefactory,
    de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates,

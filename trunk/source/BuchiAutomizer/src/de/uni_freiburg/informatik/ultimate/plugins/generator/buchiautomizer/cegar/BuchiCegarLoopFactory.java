@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.FairnessInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.IInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
@@ -79,6 +80,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
 	private final Class<L> mTransitionClazz;
 	private int mNumberOfConstructions;
+
+	private static final boolean CONSIDER_FAIRNESS = true;
 
 	public BuchiCegarLoopFactory(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final Class<L> transitionClazz, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
@@ -114,6 +117,11 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		case BUCHI_AUTOMATON:
 			final var automatonProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices,
 					petriNetProvider, stateFactoryForRefinement);
+			if (CONSIDER_FAIRNESS) {
+				return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
+						stateFactoryForRefinement,
+						new FairnessInitialAbstractionProvider<>(automatonProvider, mServices));
+			}
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
 					stateFactoryForRefinement, automatonProvider);
 		case BUCHI_PETRI_NET:
