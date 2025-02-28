@@ -107,8 +107,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	private final INwaOutgoingTransitionProvider<LETTER, STATE> mOperand;
 
-	private final VpAlphabet<LETTER> mVpAlphabet;
-
 	private final Set<STATE> mInitialStates = new HashSet<>();
 	private final Set<STATE> mFinalStates = new HashSet<>();
 
@@ -174,7 +172,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
-		mVpAlphabet = operand.getVpAlphabet();
 		try {
 			new ReachableStatesComputation();
 			// computeDeadEnds();
@@ -330,7 +327,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
-		return mVpAlphabet;
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override
