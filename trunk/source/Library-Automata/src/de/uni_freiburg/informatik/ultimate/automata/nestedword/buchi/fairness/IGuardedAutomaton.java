@@ -12,4 +12,6 @@ public interface IGuardedAutomaton<LETTER, STATE, GUARD> {
 	Set<LETTER> getAlphabet();
 
 	Set<Triple<LETTER, GUARD, STATE>> getSuccessors(STATE state, LETTER letter);
+
+	Set<GUARD> getGuards(LETTER letter);
 }

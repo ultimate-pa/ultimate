@@ -44,4 +44,9 @@ public class ActionFairnessAutomaton<LETTER> implements IGuardedAutomaton<LETTER
 		}
 		return Set.of();
 	}
+
+	@Override
+	public Set<Set<LETTER>> getGuards(final LETTER letter) {
+		return mFairActions.contains(letter) ? Set.of(Set.of()) : Set.of(Set.of(), mFairActions);
+	}
 }

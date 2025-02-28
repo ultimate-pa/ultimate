@@ -11,10 +11,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class GuardedBuchiIntersection<LETTER, STATE, GUARD>
 		implements IGuardedAutomaton<LETTER, ProductState<STATE>, GUARD> {
-	private final List<IGuardedAutomaton<LETTER, STATE, GUARD>> mAutomata;
+	private final List<? extends IGuardedAutomaton<LETTER, STATE, GUARD>> mAutomata;
 	private final Function<List<GUARD>, GUARD> mGuardCombinator;
 
-	public GuardedBuchiIntersection(final List<IGuardedAutomaton<LETTER, STATE, GUARD>> automata,
+	public GuardedBuchiIntersection(final List<? extends IGuardedAutomaton<LETTER, STATE, GUARD>> automata,
 			final Function<List<GUARD>, GUARD> guardCombinator) {
 		mAutomata = automata;
 		mGuardCombinator = guardCombinator;
@@ -77,5 +77,20 @@ public class GuardedBuchiIntersection<LETTER, STATE, GUARD>
 		final ProductState<STATE> newSucc =
 				new ProductState<>(transitions.stream().map(Triple::getThird).toList(), index);
 		return new Triple<>(transitions.getFirst().getFirst(), newGuard, newSucc);
+	}
+
+	@Override
+	public Set<GUARD> getGuards(final LETTER letter) {
+		Set<List<GUARD>> guards = Set.of(List.of());
+		for (final var a : mAutomata) {
+			final Set<List<GUARD>> newGuards = new HashSet<>();
+			for (final var g : guards) {
+				for (final var g2 : a.getGuards(letter)) {
+					newGuards.add(DataStructureUtils.concat(g, List.of(g2)));
+				}
+			}
+			guards = newGuards;
+		}
+		return guards.stream().map(mGuardCombinator).collect(Collectors.toSet());
 	}
 }
