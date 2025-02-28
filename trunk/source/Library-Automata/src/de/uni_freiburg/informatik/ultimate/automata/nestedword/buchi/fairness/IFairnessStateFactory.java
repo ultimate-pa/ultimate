@@ -11,8 +11,6 @@ public interface IFairnessStateFactory<STATE, STATE2, LETTER, GUARD> {
 
 	LETTER combineGuard(LETTER letter, GUARD guard, Set<LETTER> enabledAction);
 
-	boolean isTrivial(GUARD guard);
-
 	boolean isInfeasible(LETTER letter);
 
 	Set<LETTER> getEnabledActions(STATE state);

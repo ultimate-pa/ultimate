@@ -185,8 +185,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
 		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
-		final BuchiCegarLoopResult<IcfgEdge> result = runCegarLoops(icfg,
-				new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class, benchGen));
+		final BuchiCegarLoopResult<IcfgEdge> result = runCegarLoops(icfg, new BuchiCegarLoopFactory<>(mServices,
+				new TAPreferences(mServices), IcfgEdge.class, benchGen, mLogger));
 
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 

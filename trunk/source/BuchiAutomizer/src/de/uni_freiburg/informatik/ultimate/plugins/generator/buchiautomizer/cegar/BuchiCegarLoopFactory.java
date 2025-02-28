@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -80,15 +81,18 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
 	private final Class<L> mTransitionClazz;
 	private int mNumberOfConstructions;
+	private final ILogger mLogger;
 
 	private static final boolean CONSIDER_FAIRNESS = true;
 
 	public BuchiCegarLoopFactory(final IUltimateServiceProvider services, final TAPreferences taPrefs,
-			final Class<L> transitionClazz, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+			final Class<L> transitionClazz, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
+			final ILogger logger) {
 		mServices = services;
 		mPrefs = taPrefs;
 		mTransitionClazz = transitionClazz;
 		mCegarLoopBenchmark = benchmarkGenerator;
+		mLogger = logger;
 		mNumberOfConstructions = 0;
 	}
 
@@ -120,7 +124,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			if (CONSIDER_FAIRNESS) {
 				return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
 						stateFactoryForRefinement,
-						new FairnessInitialAbstractionProvider<>(automatonProvider, mServices));
+						new FairnessInitialAbstractionProvider<>(automatonProvider, mServices, mLogger));
 			}
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
 					stateFactoryForRefinement, automatonProvider);

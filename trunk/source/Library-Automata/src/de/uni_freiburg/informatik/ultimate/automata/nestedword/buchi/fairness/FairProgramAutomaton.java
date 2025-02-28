@@ -80,7 +80,7 @@ public class FairProgramAutomaton<LETTER, STATE, STATE2, GUARD>
 	private List<OutgoingInternalTransition<LETTER, STATE>> getProductEdges(final STATE state,
 			final Set<LETTER> letters) {
 		final var statePair = mStateFactory.getOriginalStates(state);
-		final Set<LETTER> enabledActions = mStateFactory.getEnabledActions(statePair.getFirst());
+		final Set<LETTER> enabledActions = mStateFactory.getEnabledActions(state);
 		// StreamSupport.stream(mProgramAutomaton.internalSuccessors(statePair.getFirst()).spliterator(), false)
 		// .map(x -> x.getLetter()).collect(Collectors.toSet());
 		// TODO: Since we already compute all the outgoing edges in lettersInternal (but keep only the letters), it
@@ -89,16 +89,11 @@ public class FairProgramAutomaton<LETTER, STATE, STATE2, GUARD>
 		for (final LETTER letter : letters) {
 			for (final var edge1 : mProgramAutomaton.internalSuccessors(statePair.getFirst(), letter)) {
 				for (final var edge2 : mFairnessAutomaton.getSuccessors(statePair.getSecond(), letter)) {
-					final LETTER newLetter;
-					if (mStateFactory.isTrivial(edge2.getSecond())) {
-						newLetter = letter;
-					} else {
-						newLetter =
-								mNewLetterCache.computeIfAbsent(new Triple<>(letter, edge2.getSecond(), enabledActions),
-										x -> mStateFactory.combineGuard(x.getFirst(), x.getSecond(), x.getThird()));
-						if (mStateFactory.isInfeasible(newLetter)) {
-							continue;
-						}
+					final LETTER newLetter =
+							mNewLetterCache.computeIfAbsent(new Triple<>(letter, edge2.getSecond(), enabledActions),
+									x -> mStateFactory.combineGuard(x.getFirst(), x.getSecond(), x.getThird()));
+					if (mStateFactory.isInfeasible(newLetter)) {
+						continue;
 					}
 					final STATE newState = mStateFactory.combineStates(edge1.getSucc(), edge2.getThird());
 					result.add(new OutgoingInternalTransition<>(newLetter, newState));
@@ -118,8 +113,9 @@ public class FairProgramAutomaton<LETTER, STATE, STATE2, GUARD>
 	public Set<LETTER> lettersInternal(final STATE state) {
 		// The default implementation calls getVpAlphabet() here. This does not work, since we create the alphabet
 		// on-demand, therefore we already compute all outgoing edges here.
-		return getProductEdges(state, mProgramAutomaton.lettersInternal(state)).stream().map(x -> x.getLetter())
-				.collect(Collectors.toSet());
+		return getProductEdges(state,
+				mProgramAutomaton.lettersInternal(mStateFactory.getOriginalStates(state).getFirst())).stream()
+						.map(x -> x.getLetter()).collect(Collectors.toSet());
 	}
 
 	@Override
