@@ -1061,7 +1061,13 @@ public class CfgBuilder {
 					final StatementSequence stseq = prependStatement(assume, currentElement);
 					endStatementSequence(stseq, newLocation);
 				} else {
-					mergeLocNodes((BoogieIcfgLocation) currentElement, newLocation, true);
+					// We do not want to introduce a new program point for this label and
+					// merge the just constructed BoogieIcfgLocation with currentElement.
+					// A merge in the other direction is not possible, because currentElement
+					// might be a the successor of an if-then-else. If we replace currentElement
+					// here, we also would have to replace it for the other branches.
+					mergeLocNodes(newLocation, (BoogieIcfgLocation) currentElement, true);
+					return (BoogieIcfgLocation) currentElement;
 				}
 			} else {
 				endStatementSequence((StatementSequence) currentElement, newLocation);
