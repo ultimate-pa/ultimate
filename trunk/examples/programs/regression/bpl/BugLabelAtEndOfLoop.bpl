@@ -1,9 +1,9 @@
 //#Unsafe
 /*
- * Reveals but in CFG Builder.
+ * Reveals bug in CFG Builder.
  * 
  * Author: heizmann@informatik.uni-freiburg.de
- * Date: 2024-01-22
+ * Date: 2025-01-22
  * 
  */
 
