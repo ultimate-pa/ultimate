@@ -143,14 +143,14 @@ public class BoogieUtils {
 		case final ReturnStatement reSt:
 			return;
 		case final IfStatement ifSt:
-			countGotoTargets(ifSt.getThenPart());
-			countGotoTargets(ifSt.getElsePart());
+			countGotoTargets(map, ifSt.getThenPart());
+			countGotoTargets(map, ifSt.getElsePart());
 			return;
 		case final WhileStatement whiSt:
-			countGotoTargets(whiSt.getBody());
+			countGotoTargets(map, whiSt.getBody());
 			return;
 		case final AtomicStatement atoSt:
-			countGotoTargets(atoSt.getBody());
+			countGotoTargets(map, atoSt.getBody());
 			return;
 		case final GotoStatement goSt:
 			for (final String label : goSt.getLabels()) {
