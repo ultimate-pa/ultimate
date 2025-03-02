@@ -918,8 +918,16 @@ public class CfgBuilder {
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
 			ModelUtils.copyAnnotations(st, condTrue);
 			ModelUtils.copyAnnotations(st, condFalse);
-			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, elementAfterLoop,
-					afterInvariants);
+			final IIcfgElement condTrueCodeBlock = buildCodeBlock(st.getBody(), loopEntryLoc, false);
+			if ((condTrueCodeBlock instanceof final BoogieIcfgLocation loc1) && (!mLabel2LocNodes.containsValue(loc1))
+					&& (isPlainAssumeTrueStatement(condTrue) && condTrueCodeBlock != loopEntryLoc)) {
+				// If condTrue is a "PlainAssumeTrueStatement" and the codeBlock that enters the loop is non-empty and
+				// starts with a location that is not a label, then we do not introduce a separate edge for the
+				// `assume true` statement.
+				buildBranchingWithoutTrueCond(condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
+			} else {
+				buildBranching(condTrue, condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
+			}
 			if (containOuterBreak) {
 				// We pushed to the stack, we have to pop from the stack.
 				final BoogieIcfgLocation exit = mWhileExits.pop();
@@ -1023,9 +1031,18 @@ public class CfgBuilder {
 		 */
 		private void buildBranching(final AssumeStatement cond1, final IIcfgElement part1, final AssumeStatement cond2,
 				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
-
 			final StatementSequence branch1 = prependStatement(cond1, part1);
 			endStatementSequence(branch1, srcLoc);
+			final StatementSequence branch2 = prependStatement(cond2, part2);
+			endStatementSequence(branch2, srcLoc);
+		}
+
+		/**
+		 * TODO: Documentation
+		 */
+		private void buildBranchingWithoutTrueCond(final IIcfgElement part1, final AssumeStatement cond2,
+				final IIcfgElement part2, final BoogieIcfgLocation srcLoc) {
+			mergeLocNodes((BoogieIcfgLocation) part1, srcLoc, true);
 			final StatementSequence branch2 = prependStatement(cond2, part2);
 			endStatementSequence(branch2, srcLoc);
 		}
