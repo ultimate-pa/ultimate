@@ -31,8 +31,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -72,11 +70,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RelevanceAnalysisMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 extends NwaCegarLoop<L> {
@@ -102,13 +98,13 @@ extends NwaCegarLoop<L> {
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
 	private Integer mRefinementsDone = 0;
-	private Integer mCountTimeoutsInSearch = 0;
-	private Integer mCountFailedRunConstructions = 0;
+	private final Integer mCountTimeoutsInSearch = 0;
+	private final Integer mCountFailedRunConstructions = 0;
 	private Integer mCountFailedToFindCex = 0;
 	private Integer mCountBfsFoundCex = 1;
-	private Integer mCountIsEmptyParallel = 0;
+	private final Integer mCountIsEmptyParallel = 0;
 	private Integer maxActiveThreads = 0;
-	private long mSearchTime = 0;
+	private final long mSearchTime = 0;
 	private int mIterationsWithMaxThreads = 0;
 	private int mIterationsWithOneThread = 0;
 	private int mExceptionInWorker = 0;
@@ -356,33 +352,21 @@ extends NwaCegarLoop<L> {
 				if ((mCounterexample == null && !didntFindCexLastIteration) || abstractionWasRefined) {
 					mLogger.info("Searching for Counterexample");
 
-					final boolean isAbstractionEmpty = super.isAbstractionEmpty();
-					if (isAbstractionEmpty) {
-						mResultBuilder.addResultForAllRemaining(Result.SAFE);
-						mExec.shutdownNow();
-						return;
-					}
-					assert mCounterexample != null;// we terminate if isAbstractionEmpty
-					final List<L> trace = mCounterexample.getWord().asList();
-					final int traceHash = trace.hashCode();
-					if (mAllCounterexamples.containsKey(traceHash)) {
-						mCounterexample = null; // BFS cex is already being checked
-						isAbstractionEmpty(); // isEmptyParallel
-						if (mCounterexample != null) {
-							mLogger.info("Found new Counterexample!");
-							didntFindCexLastIteration = false;
+					mCounterexample = searchForErrorTrace(false);
+					if (mCounterexample == null) {
+						final boolean isAbstractionEmpty = super.isAbstractionEmpty();
+						mCounterexample = null;
+						if (isAbstractionEmpty) {
+							mResultBuilder.addResultForAllRemaining(Result.SAFE);
+							mExec.shutdownNow();
+							return;
 						}
-						if (mCounterexample == null) {
-							mLogger.info("Did not Find a Counterexample!");
-							mCountFailedToFindCex += 1;
-							didntFindCexLastIteration = true;
-							assert runningThreads > 0;
-							// there are probably still threads running
-						}
-					} else {
-						mCountBfsFoundCex += 1;
-						mLogger.info("Found new Counterexample via BFS!");
+						mLogger.info("Did not Find a Counterexample!");
+						mCountFailedToFindCex += 1;
+						didntFindCexLastIteration = true;
+						assert runningThreads > 0;
 					}
+
 				}
 				// Doesnt Need to come before search because of initial counterexample, we skip search
 				// mCounterexample can be null if no counterexample was found, but threads are still running
@@ -403,8 +387,7 @@ extends NwaCegarLoop<L> {
 					// add mCounterexample to list such that we dont get it twice in our search
 					addCounterexampleToSet((NestedRun<L, ?>) mCounterexample);
 					// mCounterexample is being checked, make sure next thread gets a new one
-					mCounterexample = null;
-					isAbstractionEmpty(); // Prevents us from doing BFS on same abstraction in next iteration
+					mCounterexample = searchForErrorTrace(true);
 					if (mCounterexample != null) {
 						mLogger.info("Found new Counterexample!");
 						didntFindCexLastIteration = false;
@@ -499,86 +482,23 @@ extends NwaCegarLoop<L> {
 		mLogger.info("Refinement done.");
 	}
 
-	@Override
-	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
-		try {
-			/*
-			 * mActiveErrorLocs are all error locations that are available to our search
-			 * (Not part of a counterexample that is currently checked by another thread)
-			 * mActiveErrorLocs needs to be calculated in every iteration.
-			 * Since mActiveErrorLocs must be subsetEq to getFinalStates()
-			 * and getFinalStates() can change
-			 */
-			if (useGoalSetForIsEmpty) {
-				mActiveErrorLocs.clear();
-				for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
-					final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-					final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-							.get(TestGoalAnnotation.class.getName());
-					if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-						continue;
-					}
-					if (pLocAnno instanceof TestGoalAnnotation) {
-						mActiveErrorLocs.add(testGoal);
-					}
-				}
-			}
 
-			if (!useGoalSetForIsEmpty || mTestGeneration.equals(TestGenerationMode.None)) {
-				mCounterexample = runWithModifiedGoalSet(mAbstraction, null);
-			} else {
-				if (mActiveErrorLocs.isEmpty()) {
-					mCounterexample = null;
-					return true;
-				}
-				mCounterexample = runWithModifiedGoalSet(mAbstraction, mActiveErrorLocs);
-				if (mCounterexample == null) {
-					return true;
-				}
-				final List<?> sequence = mCounterexample.getStateSequence();
-				final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
-				assert mActiveErrorLocs.contains(currentGoal);
-				// mark test goal as busy/occupied
-				final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
-				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.get(TestGoalAnnotation.class.getName());
-				final List<L> trace = mCounterexample.getWord().asList();
-				final int traceHash = trace.hashCode();
-				// use traceHash as identifier so we can calculate the identifier later
-				mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
-				// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
-			}
 
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.EmptinessCheckTime);
-		}
-		if (mCounterexample == null) {
-			return true;
-		}
-		if (mPref.dumpAutomata()) {
-			mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.DumpTime);
-			mDumper.dumpNestedRun(mCounterexample);
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.DumpTime);
-		}
-		mLogger.info("Found error trace");
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(mCounterexample.getWord());
-		}
-		final HistogramOfIterable<L> traceHistogram = new HistogramOfIterable<>(mCounterexample.getWord());
-		mCegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getMax());
-		if (mLogger.isInfoEnabled()) {
-			mLogger.info("trace histogram " + traceHistogram.toString());
-		}
-
-		if (mPref.hasLimitTraceHistogram() && traceHistogram.getMax() > mPref.getLimitTraceHistogram()) {
-			final String taskDescription =
-					"bailout by trace histogram " + traceHistogram.toString() + " in iteration " + getIteration();
-			throw new TaskCanceledException(UserDefinedLimit.TRACE_HISTOGRAM, getClass(), taskDescription);
-		}
-
-		return false;
+	private void updateActiveTestGoals() {
+		assert useGoalSetForIsEmpty;
+		final List<?> sequence = mCounterexample.getStateSequence();
+		final IPredicate currentGoal = (IPredicate) sequence.get(sequence.size() - 1);
+		assert mActiveErrorLocs.contains(currentGoal);
+		// mark test goal as busy/occupied
+		final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
+		final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+				.get(TestGoalAnnotation.class.getName());
+		final List<L> trace = mCounterexample.getWord().asList();
+		final int traceHash = trace.hashCode();
+		// use traceHash as identifier so we can calculate the identifier later
+		mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
+		// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
 	}
 
 	/*
@@ -610,52 +530,99 @@ extends NwaCegarLoop<L> {
 		return mAbstraction;
 	}
 
-	@Override
-	protected NestedRun<L, IPredicate> runWithModifiedGoalSet(final INestedWordAutomaton<L, IPredicate> abstraction,
-			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
-		assert useGoalSetForIsEmpty || possibleEndPoints == null;
-		if (mParallelSearchSrategy) {
-			final IsEmptyParallel<L, IPredicate> search = new IsEmptyParallel<>(new AutomataLibraryServices(mServices),
-					abstraction,
-					abstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-					IsEmptyParallel.SearchStrategy.BFS, mAllCounterexamples);
-			final NestedRun<L, IPredicate> result = search.getNestedRun();
-			if (search.searchTimedOut()) {
-				mCountTimeoutsInSearch += 1;
-			}
-			mSearchTime += search.getTimeSpend();
-			mCountFailedRunConstructions += search.runConstructionFailedXTimes();
 
-			boolean correct = false;
-			try {
-				correct = search.checkResult(mStateFactoryForRefinement);
-			} catch (final AutomataLibraryException e) {
-				e.printStackTrace();
-				assert false;
-			}
-			if (result != null && correct) {
-				mCountIsEmptyParallel += 1;
-			} else {
-				final NestedRun<L, IPredicate> dfs = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction,
-						IsEmpty.SearchStrategy.DFS).getNestedRun();
-				final List<L> trace = dfs.getWord().asList();
-				final int traceHash = trace.hashCode();
-				if (!mAllCounterexamples.containsKey(traceHash)) {
-					mLogger.info("IsEmptyParallelFailed, but DFS found a cex");
-					return dfs;
-				}
-				return null; // if not correct return null
-			}
-			return result;
 
-		} else if(useGoalSetForIsEmpty){
-			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, abstraction.getInitialStates(),
-					Collections.emptySet(), possibleEndPoints).getNestedRun();
-		} else {
-			return new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, IsEmpty.SearchStrategy.BFS)
-					.getNestedRun();
+	private IsEmpty<L, IPredicate> getSearch(final IsEmpty.SearchStrategy strategy,
+			final Set<IPredicate> possibleEndPoints)
+					throws AutomataOperationCanceledException {
+		switch (strategy) {
+		case IsEmpty.SearchStrategy.PARALLEL:
+			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
+					mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
+					IsEmpty.SearchStrategy.BFS, mAllCounterexamples);
+		default:
+			return new IsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction, mAbstraction.getInitialStates(),
+					Collections.emptySet(), possibleEndPoints, strategy);
+		}
+	}
+
+	private boolean isSearchCorrectAndTraceFresh(final IsEmpty<L, IPredicate> search) {
+		boolean correct = false;
+		boolean fresh = true;
+		try {
+			correct = search.checkResult(mStateFactoryForRefinement);
+		} catch (final AutomataLibraryException e) {
+			e.printStackTrace();
+			assert false;
 		}
 
+		final NestedRun<L, IPredicate> run = search.getNestedRun();
+		if (run != null) {
+			final List<L> trace = run.getWord().asList();
+			final int traceHash = trace.hashCode();
+			if (mAllCounterexamples.containsKey(traceHash)) {
+				fresh = false;
+			}
+			return correct && fresh;
+		}
+		return false;
+	}
+
+	/*
+	 * Search for an error trace in the current mAbstraction. First we try BFS, then IsEmptyParallel and finally DFS
+	 */
+	private NestedRun<L, IPredicate> searchForErrorTrace(final boolean onlyDoIsEmptyParallel)
+			throws AutomataOperationCanceledException {
+		Set<IPredicate> possibleEndPoints = null;
+		/*
+		 * Optimization that ensures we find a trace to a not yet covered test goal / error loc
+		 */
+		if (useGoalSetForIsEmpty) {
+			mActiveErrorLocs.clear();
+			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
+				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+						.get(TestGoalAnnotation.class.getName());
+				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
+					continue;
+				}
+				if (pLocAnno instanceof TestGoalAnnotation) {
+					mActiveErrorLocs.add(testGoal);
+				}
+			}
+			if (mActiveErrorLocs.isEmpty()) {
+				return null;
+			}
+			possibleEndPoints = mActiveErrorLocs;
+
+			updateActiveTestGoals();
+		}
+		if (onlyDoIsEmptyParallel) {
+			final IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
+			if (isSearchCorrectAndTraceFresh(search)) {
+				mLogger.info("Found new Counterexample via IsEmptyParallel!");
+				return search.getNestedRun();
+			}
+			return null;
+		}
+
+		IsEmpty<L, IPredicate> search = getSearch(IsEmpty.SearchStrategy.BFS, possibleEndPoints);
+		if (isSearchCorrectAndTraceFresh(search)) {
+			mCountBfsFoundCex += 1;
+			mLogger.info("Found new Counterexample via BFS!");
+			return search.getNestedRun();
+		}
+		search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
+		if (isSearchCorrectAndTraceFresh(search)) {
+			mLogger.info("Found new Counterexample via IsEmptyParallel!");
+			return search.getNestedRun();
+		}
+		search = getSearch(IsEmpty.SearchStrategy.DFS, possibleEndPoints);
+		if (isSearchCorrectAndTraceFresh(search)) {
+			mLogger.info("Found new Counterexample via DFS!");
+			return search.getNestedRun();
+		}
+		return null;
 	}
 
 	/*
