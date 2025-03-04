@@ -1,28 +1,30 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
-public class RelationalInterferingWideningOperator implements IAbstractStateBinaryOperator<RelationalInterferingState> {
-	private final IDomain mSifaDomain;
+public class RelationalInterferingWideningOperator<STATE extends IAbstractState<STATE>, ACTION>
+		implements IAbstractStateBinaryOperator<RelationalInterferingState<STATE, ACTION>> {
+	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
+	private final AbstractInterferenceState<STATE, ACTION> mInterferences;
 
-	private final RelationalInterferingStateFactoryAndPredicateHelper mStateFactory;
-
-	public RelationalInterferingWideningOperator(final IDomain sifaDomain,
+	public RelationalInterferingWideningOperator(final IAbstractDomain<STATE, ACTION> underlying,
 			final ThreadInstanceCounterFactory threadFactory,
-			final RelationalInterferingStateFactoryAndPredicateHelper stateFactory) {
-		mSifaDomain = sifaDomain;
+			final AbstractInterferenceState<STATE, ACTION> interferences) {
+		mUnderlyingDomain = underlying;
 		mThreadInstanceCounterFactory = threadFactory;
-		mStateFactory = stateFactory;
+		mInterferences = interferences;
 	}
 
 	@Override
-	public RelationalInterferingState apply(final RelationalInterferingState first,
-			final RelationalInterferingState second) {
-		final var widenedPredicate = mSifaDomain.widen(first.getPredicate(), second.getPredicate());
-		final var widenedThreadCounter =
-				mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(), second.getThreadInstanceState());
-		return mStateFactory.getOrConstructState(widenedPredicate, first.getVariables(), widenedThreadCounter);
+	public RelationalInterferingState<STATE, ACTION> apply(final RelationalInterferingState<STATE, ACTION> first,
+			final RelationalInterferingState<STATE, ACTION> second) {
+		final var widenedThreadCounter = mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(),
+				second.getThreadInstanceState());
+		return new RelationalInterferingState<>(mUnderlyingDomain,
+				mUnderlyingDomain.getWideningOperator().apply(first.getSTATE(), second.getSTATE()),
+				widenedThreadCounter, mInterferences);
 	}
 }

@@ -1,14 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class ThreadInstanceCounterFactory {
 	private final CfgSmtToolkit mCfgSmtToolkit;
@@ -33,17 +30,6 @@ public class ThreadInstanceCounterFactory {
 			topStateMap.put(threadName, 2);
 		}
 		return new ThreadInstanceCounter(topStateMap);
-	}
-
-	public Set<String> computeForkingThreads(final String procedure) {
-		final Set<String> forkingSet = new HashSet<>();
-		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : mCfgSmtToolkit.getConcurrencyInformation()
-				.getThreadInstanceMap().keySet()) {
-			if (fork.getNameOfForkedProcedure() == procedure) {
-				forkingSet.add(fork.getSource().getProcedure());
-			}
-		}
-		return forkingSet;
 	}
 
 	public ThreadInstanceCounter widen(final ThreadInstanceCounter first, final ThreadInstanceCounter second) {

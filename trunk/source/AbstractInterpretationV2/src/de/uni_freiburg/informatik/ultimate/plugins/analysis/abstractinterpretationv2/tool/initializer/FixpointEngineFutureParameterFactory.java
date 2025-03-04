@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -17,9 +18,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.SymbolicTools;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IntervalDomain;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.statistics.SifaStats;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
@@ -28,16 +26,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.RelationalInterferingDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgAbstractStateStorageProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.arraytheory.SMTTheoryDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.PoormanAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 public class FixpointEngineFutureParameterFactory {
 
@@ -158,28 +159,25 @@ public class FixpointEngineFutureParameterFactory {
 		} else if (PoormanAbstractDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new PoormanAbstractDomain<>(services, root);
 		} else if (RelationalInterferingDomain.class.getSimpleName().equals(domainName)) {
-			final SymbolicTools symTools = createSymtools(services, root);
-			return (IAbstractDomain<STATE, IcfgEdge>) new RelationalInterferingDomain(root,
-					createIntervalDomain(logger, root, services, symTools), symTools.getFactory(), services); 
+			return (IAbstractDomain<STATE, IcfgEdge>) new RelationalInterferingDomain<>(root,
+					getIntervallDomain(root, services, logger), services);
 		}
 		throw new UnsupportedOperationException(getFailureString(domainName));
 	}
 
-		// TODO: move this and create*Domain function away from this class
-		private static SymbolicTools createSymtools(final IUltimateServiceProvider services, final IIcfg<?> root) {
-			return new SymbolicTools(services, new SifaStats(), (IIcfg<IcfgLocation>) root,
-					SifaPreferences.getPreferenceProvider(services).getEnum(SifaPreferences.LABEL_SIMPLIFICATION,
-							SifaPreferences.CLASS_SIMPLIFICATION));
+	private static IntervalDomain getIntervallDomain(final IIcfg<?> root, final IUltimateServiceProvider services,
+			final ILogger logger) {
+		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
+		if (pa == null || pa.getSymbolTable() == null) {
+			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
 		}
-
-		private static IntervalDomain createIntervalDomain(final ILogger logger, final IIcfg<?> root,
-				final IUltimateServiceProvider services, final SymbolicTools tools) {
-			return new IntervalDomain(logger, tools,
-					SifaPreferences.getPreferenceProvider(services)
-							.getInt(SifaPreferences.LABEL_INTERVALDOM_MAX_PARALLEL_STATES),
-					() -> services.getProgressMonitorService());
-
-		}
+		final var mSymbolTable = pa.getSymbolTable();
+		final LiteralCollectorFactory litCollector = () -> new RCFGLiteralCollector(root);
+		final var mBoogieIcfg = AbsIntUtil.getBoogieIcfgContainer(root);
+		final var mVariableProvider = mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
+		return new IntervalDomain(logger, mSymbolTable, litCollector.create().getLiteralCollection(), services,
+				mBoogieIcfg, mVariableProvider);
+	}
 
 	public <DOM extends IAbstractDomain<STATE, IcfgEdge>, STATE extends IAbstractState<STATE>>
 			IAbstractDomain<STATE, IcfgEdge> selectDomainFutureCfg(final Class<DOM> domain, final ILogger logger) {
