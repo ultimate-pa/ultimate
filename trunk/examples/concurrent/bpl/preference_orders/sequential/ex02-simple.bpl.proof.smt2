@@ -22,12 +22,11 @@
 # While thread1 is in the first loop, the reduction should have i==j as invariant.
 (= i j)
 (= i (+ j 1))
-(= (+ i 1) j)
 
 # While thread1 is in the second loop, the reduction should have n+2i==j as invariant.
 (= (+ n (* 2 i)) j)
-(= (+ n (* 2 i) 1) j)
 (= (+ n (* 2 i)) (+ j 1))
+(= (+ n (* 2 i)) (+ j 2))
 
 # When thread1 exits the first loop, we have i=n and due to i==j also j=n.
 (= i n)

@@ -18,22 +18,33 @@ options:
     # The preference order that GemCutter should use.
     Complex preference order for POR:
       operator: sequential
-      # The first preference order (used initially)
       left:
-        builtin: loop_lockstep
-        iterations:
-          - [thread1Thread1of1ForFork0, 1]
-          - [thread2Thread1of1ForFork1, 1]
-      # The second preference order (used later)
+        builtin: checkpoint
+        checkpoints:
+          - "[82] L20-1-->$Ultimate##0:"
+          - "[62] $Ultimate##0-->L32-1:"
+          - "[73] $Ultimate##0-->L51-1:"
       right:
-        builtin: loop_lockstep
-        iterations:
-          - [thread1Thread1of1ForFork0, 1]
-          - [thread2Thread1of1ForFork1, 2]
-      # The letters at which we switch from one order to the other.
-      # To find out the names, set a breakpoint and run Ultimate in debug mode.
+        operator: sequential
+        # The first preference order (used initially)
+        left:
+          builtin: loop_lockstep
+          iterations:
+            - [thread1Thread1of1ForFork0, 1]
+            - [thread2Thread1of1ForFork1, 1]
+        # The second preference order (used later)
+        right:
+          builtin: loop_lockstep
+          iterations:
+            - [thread1Thread1of1ForFork0, 1]
+            - [thread2Thread1of1ForFork1, 2]
+        # The letters at which we switch from one order to the other.
+        # To find out the names, set a breakpoint and run Ultimate in debug mode.
+        switch_on:
+          # We switch when we enter the second loop.
+          - "[65] L38-->L39-1:"
       switch_on:
-        - "[68] L39-1-->L41:"
+        - "[73] $Ultimate##0-->L51-1:"
 
     # Interpolation struggles to find the invariants though they are simple.
     # Hence, we provide (most of) them explicity (in ex02.bpl.proof.smt2).
@@ -41,4 +52,5 @@ options:
 
     # As we specify the entire proof (see setting above), a single iteration should suffice.
     Limit iterations: 1
+
 

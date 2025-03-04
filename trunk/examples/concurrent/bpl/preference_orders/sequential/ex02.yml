@@ -21,7 +21,7 @@ options:
       left:
         builtin: checkpoint
         checkpoints:
-          - "[82] L20-1-->$Ultimate##0:"
+          - "[61] L21-->$Ultimate##0:"
           - "[62] $Ultimate##0-->L32-1:"
           - "[73] $Ultimate##0-->L51-1:"
       right:
