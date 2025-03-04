@@ -13,13 +13,14 @@
  * Not entirely sure this is actually formally meaningful anymore, since now the combinations (t1 t3 t3)*
  *       and (t2 t3)* on their own are no longer enough to fully "exhaust" the while loop in thread 3.
  *
- * This is likely also solvable via the sequential operator, using a schedule like (t1 t3 t3)* (t2 t3)*,
+ * This is likely also solvable via the sequential operator, using a schedule like (t3 t3 t1)* (t2 t3)*,
  * so presumably a thread-based solution isn't actually necessary.
  */
 var n, x, c: int;
+var i, j, k: int;
 
 procedure ULTIMATE.start()
-modifies x;
+modifies x, i, j, k;
 {
   assume x == 0;
 
@@ -34,9 +35,8 @@ modifies x;
 }
 
 procedure thread1()
-modifies x;
+modifies x, i;
 {
-  var i : int;
   i := 0;
 
   while (i < n)
@@ -47,9 +47,8 @@ modifies x;
 }
 
 procedure thread2()
-modifies x;
+modifies x, j;
 {
-  var j : int;
   j := 0;
 
   while (j < 2 * n)
@@ -60,9 +59,8 @@ modifies x;
 }
 
 procedure thread3()
-modifies x;
+modifies x, k;
 {
-  var k : int;
   k := 0;
 
   while (k < 4 * n)
