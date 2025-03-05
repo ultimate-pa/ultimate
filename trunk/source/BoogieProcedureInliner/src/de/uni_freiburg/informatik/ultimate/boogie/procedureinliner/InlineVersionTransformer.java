@@ -856,7 +856,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	private List<Statement> inlineCall(final CallStatement call, final VariableLHS[] processedCallLHS,
 			final CallGraphNode calleeNode) throws CancelToolchainException {
 
-		mInlinedOldVarStack.push(new HashSet<IdExprWrapper>());
+		mInlinedOldVarStack.push(new HashSet<>());
 
 		final String procId = calleeNode.getId();
 		assert procId.equals(call.getMethodName());
@@ -1124,8 +1124,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (lhs instanceof VariableLHS) {
 			final VariableLHS varLhs = (VariableLHS) lhs;
 			final DeclarationInformation declInfo = varLhs.getDeclarationInformation();
-			final VarMapValue mapping = mVarMap
-					.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
+			final VarMapValue mapping =
+					mVarMap.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
 			final String newId = mapping.getVarId();
 			final DeclarationInformation newDeclInfo = mapping.getDeclInfo();
 			newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
