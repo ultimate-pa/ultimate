@@ -1331,10 +1331,11 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	/**
 	 * Creates the last argument for the constructor of VarMapKey.
 	 *
-	 * @param declInfo {@link DeclarationInformation} of the identifier
+	 * @param declInfo
+	 *            {@link DeclarationInformation} of the identifier
 	 *
-	 * @return Current procedure identifier, if processing takes place inside an
-	 *         inlined old() expression, {@code null} otherwise.
+	 * @return Current procedure identifier, if processing takes place inside an inlined old() expression, {@code null}
+	 *         otherwise.
 	 */
 	private String isGobalInOldExprOfProc(final DeclarationInformation declInfo) {
 		if (declInfo.getStorageClass() == StorageClass.GLOBAL && inInlinedOldExpr()) {
