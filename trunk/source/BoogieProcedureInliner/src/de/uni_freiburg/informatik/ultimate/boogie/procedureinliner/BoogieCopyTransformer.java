@@ -120,7 +120,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 			yield new AtomicStatement(atomicstmt.getLocation(), newBody);
 		}
 		case final BreakStatement bs -> new BreakStatement(bs.getLocation(), bs.getLabel());
-		case final Label label -> new Label(label.getLocation(), label.getName());
+		case final Label label -> new Label(label.getLocation(), label.getName(), label.getAttributes());
 		case final ReturnStatement rs -> new ReturnStatement(rs.getLocation());
 		case final GotoStatement gs -> new GotoStatement(gs.getLocation(), gs.getLabels());
 		case final ForkStatement forkstmt -> {

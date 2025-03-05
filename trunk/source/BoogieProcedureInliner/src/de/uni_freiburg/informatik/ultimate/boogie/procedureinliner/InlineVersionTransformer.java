@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -956,7 +957,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			inlinedBody.addAll(flattenStatements(block));
 
 			// insert end label (ReturnStatements are inlined as jumps to this label)
-			final Label returnLabel = new Label(proc.getLocation(), getCurrentReturnLabelId());
+			final Label returnLabel = BoogieUtils.constuctAuxiliaryLabel(proc.getLocation(), getCurrentReturnLabelId());
 			addBacktranslation(returnLabel, null);
 			inlinedBody.add(returnLabel);
 
@@ -1091,7 +1092,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		Statement newStat = null;
 		if (stat instanceof Label) {
 			final Label label = (Label) stat;
-			newStat = new Label(label.getLocation(), getNewLabelId(label.getName()), label.getAttributes());
+			newStat = BoogieUtils.constuctAuxiliaryLabel(label.getLocation(), getNewLabelId(label.getName()),
+					label.getAttributes());
 		} else if (stat instanceof GotoStatement) {
 			final GotoStatement gotoStat = (GotoStatement) stat;
 			final String[] labelIds = gotoStat.getLabels();
