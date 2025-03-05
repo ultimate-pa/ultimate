@@ -71,9 +71,8 @@ public class BoogieUtils {
 	}
 
 	/**
-	 * Is there a break statement insides this statement that is not part of a
-	 * `while` statement? (Motivation: We want to detect break statement that may
-	 * jump out of this code. If the break statement occurs in an inner while
+	 * Is there a break statement insides this statement that is not part of a `while` statement? (Motivation: We want
+	 * to detect break statement that may jump out of this code. If the break statement occurs in an inner while
 	 * statement, it jumps only after the inner while statement.)
 	 */
 	public static boolean containsOuterBreak(final Statement st) {
