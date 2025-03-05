@@ -213,7 +213,7 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 		final IPreferenceOrder<L, IPredicate, ?> order;
 		if (complexPreferenceOrder != null && !complexPreferenceOrder.isBlank()) {
-			order = new PreferenceOrderInterpreter<L>(mIcfg, mErrorLocs).interpret(complexPreferenceOrder);
+			order = new PreferenceOrderInterpreter<L>(mServices, mIcfg, mErrorLocs).interpret(complexPreferenceOrder);
 		} else {
 			final ParameterizedPreferenceOrderUtils<L> paramPrefUtils =
 					new ParameterizedPreferenceOrderUtils<>(icfg, threads, maxStep, heuristicEnabled);

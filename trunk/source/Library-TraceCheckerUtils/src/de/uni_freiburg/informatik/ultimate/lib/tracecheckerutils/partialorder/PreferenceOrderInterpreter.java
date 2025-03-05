@@ -39,6 +39,9 @@ import java.util.stream.IntStream;
 
 import org.yaml.snakeyaml.Yaml;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.ConstantDfsOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.Dfs2PreferenceOrder;
@@ -46,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.IfElsePreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.ProductPreferenceOrder;
 import de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder.SequentialPreferenceOrder;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -62,11 +66,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  *            The type of letters
  */
 public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
+	private final IUltimateServiceProvider mServices;
 	private final IIcfg<?> mIcfg;
 	private final Collection<? extends IcfgLocation> mErrorLocs;
 	private final VpAlphabet<L> mAlphabet;
 
-	public PreferenceOrderInterpreter(final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs) {
+	public PreferenceOrderInterpreter(final IUltimateServiceProvider services, final IIcfg<?> icfg,
+			final Collection<? extends IcfgLocation> errorLocs) {
+		mServices = services;
 		mIcfg = icfg;
 		mErrorLocs = errorLocs;
 		mAlphabet = Cfg2Automaton.extractVpAlphabet(icfg, true);
@@ -86,6 +93,8 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 			return buildEmptyOrder();
 		case "checkpoint":
 			return buildCheckpointOrder(spec);
+		case "fixed_order":
+			return buildFixedOrder(spec);
 		// TODO add other builtin order types if needed
 		case null:
 			// handled below
@@ -110,6 +119,81 @@ public class PreferenceOrderInterpreter<L extends IIcfgTransition<?>> {
 		// TODO add support for other combination operators here
 
 		throw new UnsupportedOperationException("Unknown type of preference order: " + spec);
+	}
+
+	private IPreferenceOrder<L, IPredicate, ?> buildFixedOrder(final Map<String, Object> spec) {
+
+		final Object state = new Object();
+		final var monitor = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), mAlphabet, () -> null);
+		monitor.addState(true, true, state);
+		for (final var letter : mAlphabet.getInternalAlphabet()) {
+			monitor.addInternalTransition(state, letter, state);
+		}
+
+		final Map<String, Integer> poMap = (Map<String, Integer>) spec.get("partial_order");
+		return new FixedOrder<>(mServices, mAlphabet, new PartialOrderMapComparator<L>(poMap));
+	}
+
+	/**
+	 * A comparator that allows specifying a partial order on actions by mapping their thread (i.e. procedure) names to
+	 * integers. Two threads mapped to the same integer are incomparable or equal, otherwise the class compares the
+	 * corresponding integers.
+	 *
+	 * NOTE: The map data structure is restrictive and does not allow for all partial orders; e.g. it cannot represent
+	 * an order where a is incomparable with b and c, but b is less than c.
+	 *
+	 * TODO Find a better representation.
+	 *
+	 * @param <L>
+	 *            The type of letters being compared.
+	 */
+	// We use a record to save on boilerplate code and hashCode/equals implementations.
+	private record PartialOrderMapComparator<L extends IAction>(Map<String, Integer> poMap) implements Comparator<L> {
+		@Override
+		public int compare(final L a, final L b) {
+			final Integer threadAPos = poMap.get(a.getPrecedingProcedure());
+			final Integer threadBPos = poMap.get(b.getSucceedingProcedure());
+			if (threadAPos == null || threadBPos == null) {
+				// A thread that is not mentioned in the map is incomparable with all other threads.
+				return 0;
+			}
+			return Integer.compare(threadAPos, threadBPos);
+		}
+	}
+
+	// TODO This class overlaps with ConstantDfsOrder.
+	// TODO Once we decide how to proceed with IDfsOrder vs IPreferenceOrder, eliminate one of them.
+	// TODO Also, if we are sure that all users support getMonitor() == null, we can eliminate the dummy automaton.
+	private static final class FixedOrder<L extends IAction> implements IPreferenceOrder<L, IPredicate, Object> {
+		private final Comparator<L> mAlphabetOrder;
+		private final NestedWordAutomaton<L, Object> mMonitor;
+
+		public FixedOrder(final IUltimateServiceProvider services, final VpAlphabet<L> alphabet,
+				final Comparator<L> alphabetOrder) {
+			mAlphabetOrder = alphabetOrder;
+
+			final Object state = new Object();
+			mMonitor = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, () -> null);
+			mMonitor.addState(true, true, state);
+			for (final var letter : alphabet.getInternalAlphabet()) {
+				mMonitor.addInternalTransition(state, letter, state);
+			}
+		}
+
+		@Override
+		public Comparator<L> getOrder(final IPredicate programState, final Object monitorState) {
+			return mAlphabetOrder;
+		}
+
+		@Override
+		public boolean isPositional() {
+			return false;
+		}
+
+		@Override
+		public INwaOutgoingLetterAndTransitionProvider<L, Object> getMonitor() {
+			return mMonitor;
+		}
 	}
 
 	private IPreferenceOrder<L, IPredicate, ?> buildCheckpointOrder(final Map<String, Object> spec) {
