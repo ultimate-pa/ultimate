@@ -27,12 +27,14 @@
 
 # Index invariants of the first lockstep order
 (= k (* 2 i))
-(= k (+ (* 2 i) 1))
-(= k (+ (* 2 i) 2))
+(= k (- (* 2 i) 1))
+(= k (- (* 2 i) 2))
 (= k (* 2 n))
+(= k (* 4 n))
+(= j (* 2 n))
 
 # Index invariants of the second lockstep order
 (= k (+ (* 2 n) j))
 (= k (+ (* 2 n) (+ j 1)))
-(= k (+ (* 2 n) (+ j (- 1))))
+(= k (+ (* 2 n) (- j 1)))
 

@@ -12,6 +12,7 @@ properties:
 options:
   # The language in which the program is written.
   language: BPL
+  timeout: 60
 
   # Ultimate options.
   de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
@@ -21,7 +22,7 @@ options:
       left:
         builtin: checkpoint
         checkpoints:
-          - "[87] L27-1-->$Ultimate##0:"
+          - "[89] L28-->$Ultimate##0:"
           - "[68] $Ultimate##0-->L42-1:"
           - "[74] $Ultimate##0-->L54-1:"
           - "[80] $Ultimate##0-->L66-1:"
@@ -29,10 +30,18 @@ options:
         operator: sequential
         # The first preference order (used initially)
         left:
-          builtin: loop_lockstep
-          iterations:
-            - [thread3Thread1of1ForFork1, 2]
-            - [thread1Thread1of1ForFork2, 1]
+          operator: product
+          left:
+            builtin: loop_lockstep
+            iterations:
+              - [thread1Thread1of1ForFork2, 1]
+              - [thread3Thread1of1ForFork1, 2]
+          right:
+            builtin: fixed_order
+            partial_order:
+              thread3Thread1of1ForFork1: 0
+              thread1Thread1of1ForFork2: 0
+              thread2Thread1of1ForFork0: 1
         # The second preference order (used later)
         right:
           builtin: loop_lockstep
@@ -47,5 +56,5 @@ options:
         - "[80] $Ultimate##0-->L66-1:"
 
     Read initial proof assertions from file if available: true
-    Limit iterations: 20
+    Limit iterations: 1
 
