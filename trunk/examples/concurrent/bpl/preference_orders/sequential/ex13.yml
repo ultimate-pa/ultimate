@@ -17,6 +17,14 @@ options:
   de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
     # The preference order that GemCutter should use.
     Complex preference order for POR:
+    operator: sequential
+    left:
+      builtin: checkpoint
+      checkpoints:
+        - "[71] $Ultimate##0-->L20:"
+        - "[76] $Ultimate##0-->L32-1:"
+        - "[92] $Ultimate##0-->L58-1:"
+    right:
       operator: sequential
       # The first preference order (used initially)
       left:
@@ -41,11 +49,12 @@ options:
         # Switch to third automaton when entering the third loop
         switch_on:
         - "[87] L46-1-->L48:"
-          
-
       # Switch to second automaton when entering the second loop
       switch_on:
         - "[82] L39-1-->L41:"
+    # Switch to first lockstep automaton after the final checkpoint is done
+    switch_on:
+      - "[92] $Ultimate##0-->L58-1:"
 
     # Interpolation struggles to find the invariants though they are simple.
     # Hence, we provide (most of) them explicity (in ex13.bpl.proof.smt2).
