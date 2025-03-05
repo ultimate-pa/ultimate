@@ -108,6 +108,12 @@ public class BoogieUtils {
 		return containsOuterBreak(st.getElsePart());
 	}
 
+	/**
+	 *
+	 * @return A map that counts for string how often they occur as target of a {@link GotoStatement} in the given list
+	 *         of {@link Statement}s. Strings that do not occur as target of a {@link GotoStatement} are not a key in
+	 *         this map.
+	 */
 	public static Map<String, Integer> countGotoTargets(final Statement[] statementList) {
 		final Map<String, Integer> result = new HashMap<>();
 		countGotoTargets(result, statementList);
