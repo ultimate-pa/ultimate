@@ -147,10 +147,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
@@ -2026,10 +2024,6 @@ public class CHandler {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final List<Overapprox> overappr = new ArrayList<>();
-		final String label = node.getName().toString();
-		// Mark the label with the attribute { :auxiliary_label false}
-		stmt.add(new Label(loc, label,
-				new NamedAttribute[] { BoogieUtils.constructAuxiliaryLabelAttribute(loc, false) }));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult res = (ExpressionResult) r;
