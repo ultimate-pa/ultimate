@@ -88,7 +88,12 @@ class ParameterizedOrderAutomaton<L extends IAction> implements INwaOutgoingLett
 
 	private State getOrCreateState(final String thread, final int index, final int counter) {
 		final Map<Integer, State> counterMap = mCreatedStates.get(index);
-		return counterMap.computeIfAbsent(counter, x -> new State(thread, index, counter));
+		return counterMap.computeIfAbsent(counter, x -> createState(thread, index, counter));
+	}
+
+	private State createState(final String thread, final int index, final int counter) {
+		assert counter < mMaxSteps.get(index) : "counter exceeds maximal step number";
+		return new State(thread, index, counter);
 	}
 
 	@Override

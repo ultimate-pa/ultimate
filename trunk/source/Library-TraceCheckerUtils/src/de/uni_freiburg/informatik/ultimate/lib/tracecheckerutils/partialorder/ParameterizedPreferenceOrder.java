@@ -82,6 +82,9 @@ public class ParameterizedPreferenceOrder<L extends IAction, S1>
 		// Check if there exists any thread in mThreads for which there is no letter in alphabet.
 		assert mThreads.stream().distinct().allMatch(thread -> alphabet.getInternalAlphabet().stream()
 				.map(IAction::getPrecedingProcedure).anyMatch(thread::equals)) : "Thread not present in alphabet";
+
+		// Fail early for nonsensical step counts (instead of e.g. generating an infinite automaton).
+		assert mMaxSteps.stream().allMatch(i -> i > 0) : "Maximal step count must be (strictly) positive";
 	}
 
 	@Override
