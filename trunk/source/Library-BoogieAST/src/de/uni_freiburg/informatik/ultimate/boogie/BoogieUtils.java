@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,23 +36,57 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * Provides static auxiliary methods for Boogie.
  */
 public class BoogieUtils {
 
+	private static final String AUXILIARY_LABEL = "auxiliary_label";
+
 	private BoogieUtils() {
 		// Prevent instantiation of this utility class
+	}
+
+	/**
+	 * Construct the attribute that we use to indicate whether a label is an auxiliary label. Auxiliary labels are
+	 * labels that do not represent labels in the original (input) program but were introduced by our translations.
+	 *
+	 * @param loc
+	 *            {@link ILocation} of the {@link Label} to which this attribute will be added.
+	 */
+	public static NamedAttribute constructAuxiliaryLabelAttribute(final ILocation loc, final boolean isAuxiliary) {
+		return new NamedAttribute(loc, AUXILIARY_LABEL,
+				new Expression[] { ExpressionFactory.createBooleanLiteral(loc, isAuxiliary) });
+	}
+
+	/**
+	 * Construct {@link Label} and add attribute that indicates that this label is an auxiliary label.
+	 */
+	public static Label constuctAuxiliaryLabel(final ILocation loc, final String name) {
+		return new Label(loc, name, new NamedAttribute[] { constructAuxiliaryLabelAttribute(loc, true) });
+	}
+
+	/**
+	 * Construct {@link Label} and append an attribute that indicates that this label is an auxiliary label.
+	 */
+	public static Label constuctAuxiliaryLabel(final ILocation loc, final String name,
+			final NamedAttribute[] attributes) {
+		final NamedAttribute[] newAttributes = Arrays.copyOf(attributes, attributes.length + 1);
+		newAttributes[attributes.length] = constructAuxiliaryLabelAttribute(loc, true);
+		return new Label(loc, name, newAttributes);
 	}
 
 	/**

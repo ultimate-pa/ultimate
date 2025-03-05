@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -137,7 +138,7 @@ public class GenerateGotoBoogieAst {
 			// generate the labels
 			// for (final HcPredicateSymbol predSym : mChcInfo.getHornClausesSorted().getDomain()) {
 			for (final HcPredicateSymbol predSym : mChcInfo.getAllReachablePredSymbols()) {
-				final Label label = new Label(loc, mHelper.predSymToMethodName(predSym));
+				final Label label = BoogieUtils.constuctAuxiliaryLabel(loc, mHelper.predSymToMethodName(predSym));
 				final Integer number = predsymCounter;
 				predsymCounter++;
 				predSymbolToLabel.put(predSym, label);

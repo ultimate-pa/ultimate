@@ -122,6 +122,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.ICInternalBinding;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -1521,7 +1522,7 @@ public class CHandler {
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
 		if (hasContinue) {
-			bodyBlock.add(new Label(loc, loopLabel));
+			bodyBlock.add(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
 		}
 		final ExpressionResult cond = dispatchLoopCondition(main, node.getCondition(), loc);
 		resultBuilder.addDeclarations(cond.getDeclarations());
@@ -1609,7 +1610,7 @@ public class CHandler {
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		handleLoopBody(loc, main, node.getBody(), loopLabel, resultBuilder, bodyBlock);
 		if (hasContinue) {
-			bodyBlock.add(new Label(loc, loopLabel));
+			bodyBlock.add(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
 		}
 
 		// Insert the translated iterator at the end of the loop (after the loop label)
@@ -2027,8 +2028,8 @@ public class CHandler {
 		final List<Overapprox> overappr = new ArrayList<>();
 		final String label = node.getName().toString();
 		// Mark the label with the attribute { :auxiliary_label false}
-		stmt.add(new Label(loc, label, new NamedAttribute[] { new NamedAttribute(loc, "auxiliary_label",
-				new Expression[] { ExpressionFactory.createBooleanLiteral(loc, false) }) }));
+		stmt.add(new Label(loc, label,
+				new NamedAttribute[] { BoogieUtils.constructAuxiliaryLabelAttribute(loc, false) }));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult res = (ExpressionResult) r;
@@ -2500,7 +2501,7 @@ public class CHandler {
 		}
 		checkForACSL(main, resultBuilder, null, node, true);
 
-		resultBuilder.addStatement(new Label(loc, breakLabelName));
+		resultBuilder.addStatement(BoogieUtils.constuctAuxiliaryLabel(loc, breakLabelName));
 		resultBuilder.addStatements(CTranslationUtil.createHavocsForAuxVars(resultBuilder.getAuxVars()));
 
 		// Use body as hook: This is the scope holder for switch statements! (as controller expression is child of the
@@ -2675,7 +2676,7 @@ public class CHandler {
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		final List<Statement> bodyBlock = new ArrayList<>();
 		if (hasContinue) {
-			bodyBlock.add(new Label(loc, loopLabel));
+			bodyBlock.add(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
 		}
 		final ExpressionResult cond = dispatchLoopCondition(main, node.getCondition(), loc);
 		final Expression loopCond;
