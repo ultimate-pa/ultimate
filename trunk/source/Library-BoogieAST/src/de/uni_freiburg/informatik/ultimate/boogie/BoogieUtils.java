@@ -67,16 +67,15 @@ public class BoogieUtils {
 	 * @param loc
 	 *            {@link ILocation} of the {@link Label} to which this attribute will be added.
 	 */
-	public static NamedAttribute constructAuxiliaryLabelAttribute(final ILocation loc, final boolean isAuxiliary) {
-		return new NamedAttribute(loc, AUXILIARY_LABEL,
-				new Expression[] { ExpressionFactory.createBooleanLiteral(loc, isAuxiliary) });
+	public static NamedAttribute constructAuxiliaryLabelAttribute(final ILocation loc) {
+		return new NamedAttribute(loc, AUXILIARY_LABEL, new Expression[0]);
 	}
 
 	/**
 	 * Construct {@link Label} and add attribute that indicates that this label is an auxiliary label.
 	 */
 	public static Label constuctAuxiliaryLabel(final ILocation loc, final String name) {
-		return new Label(loc, name, new NamedAttribute[] { constructAuxiliaryLabelAttribute(loc, true) });
+		return new Label(loc, name, new NamedAttribute[] { constructAuxiliaryLabelAttribute(loc) });
 	}
 
 	/**
@@ -85,7 +84,7 @@ public class BoogieUtils {
 	public static Label constuctAuxiliaryLabel(final ILocation loc, final String name,
 			final NamedAttribute[] attributes) {
 		final NamedAttribute[] newAttributes = Arrays.copyOf(attributes, attributes.length + 1);
-		newAttributes[attributes.length] = constructAuxiliaryLabelAttribute(loc, true);
+		newAttributes[attributes.length] = constructAuxiliaryLabelAttribute(loc);
 		return new Label(loc, name, newAttributes);
 	}
 
