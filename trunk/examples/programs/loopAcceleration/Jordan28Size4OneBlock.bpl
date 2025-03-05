@@ -19,7 +19,7 @@ modifies x,y,z;
   {
       z := z + y;
       y := y + x;
-//      x := x + 1;
+      x := x + 1;
   }
   assert z < 1000;
 }

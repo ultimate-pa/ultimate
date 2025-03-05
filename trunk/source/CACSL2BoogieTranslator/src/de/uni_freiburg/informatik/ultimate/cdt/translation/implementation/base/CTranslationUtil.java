@@ -38,7 +38,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTCompoundStatementExpression;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -523,8 +523,8 @@ public class CTranslationUtil {
 	 * @return
 	 */
 	public static IASTNode findExpressionHook(final IASTNode hook) {
-		if (hook instanceof CASTCompoundStatementExpression) {
-			final IASTCompoundStatement cs = ((CASTCompoundStatementExpression) hook).getCompoundStatement();
+		if (hook instanceof IGNUASTCompoundStatementExpression) {
+			final IASTCompoundStatement cs = ((IGNUASTCompoundStatementExpression) hook).getCompoundStatement();
 			final IASTStatement lastStatement = cs.getStatements()[cs.getStatements().length - 1];
 			return findExpressionHook(lastStatement);
 		}
