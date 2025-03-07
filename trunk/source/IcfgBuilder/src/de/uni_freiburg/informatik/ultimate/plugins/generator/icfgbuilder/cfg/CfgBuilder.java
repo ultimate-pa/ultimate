@@ -919,11 +919,10 @@ public class CfgBuilder {
 			ModelUtils.copyAnnotations(st, condTrue);
 			ModelUtils.copyAnnotations(st, condFalse);
 			final IIcfgElement condTrueCodeBlock = buildCodeBlock(st.getBody(), loopEntryLoc, false);
-			if ((condTrueCodeBlock instanceof final BoogieIcfgLocation loc1) && (!mLabel2LocNodes.containsValue(loc1))
+			if ((condTrueCodeBlock instanceof final BoogieIcfgLocation)
 					&& (isPlainAssumeTrueStatement(condTrue) && condTrueCodeBlock != loopEntryLoc)) {
-				// If condTrue is a "PlainAssumeTrueStatement" and the codeBlock that enters the loop is non-empty and
-				// starts with a location that is not a label, then we do not introduce a separate edge for the
-				// `assume true` statement.
+				// If condTrue is a "PlainAssumeTrueStatement" and the codeBlock that enters the loop is non-empty
+				// then we do not introduce a separate edge for the `assume true` statement.
 				buildBranchingWithoutTrueCond(condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
 			} else {
 				buildBranching(condTrue, condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
