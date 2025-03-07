@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.OptionalInt;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,7 +65,7 @@ public class LargeBlockEncoding {
 	private final HashDeque<BoogieIcfgLocation> mSequentialQueue = new HashDeque<>();
 
 	// Y-to-V and upside-down Y-to-V composition points
-	private final HashDeque<BoogieIcfgLocation> mComplexSequentialQueue = new HashDeque<>();
+	private final PriorityQueue<ComplexComposition> mComplexSequentialQueue = new PriorityQueue<>();
 
 	private final LinkedHashMap<BoogieIcfgLocation, List<List<CodeBlock>>> mParallelQueue = new LinkedHashMap<>();
 
@@ -111,7 +112,7 @@ public class LargeBlockEncoding {
 			}
 
 			while (mSequentialQueue.isEmpty() && mParallelQueue.isEmpty() && !mComplexSequentialQueue.isEmpty()) {
-				final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.pollFirst();
+				final BoogieIcfgLocation superfluousPP = mComplexSequentialQueue.poll().programPoint();
 				composeSequential(superfluousPP);
 				mLogger.debug("Complex sequential composition at %s", superfluousPP);
 			}
@@ -183,22 +184,12 @@ public class LargeBlockEncoding {
 			mParallelQueue.put(pp, parallelCompositions);
 			mLogger.debug("decided on parallel composition");
 		} else if (seq == SequentialCompositionType.COMPLEX && allowComplex) {
-			// An upside-down Y-to-V composition is called "unavoidable" if it has multiple distinct successor
-			// nodes, and at least one of them is terminal.
-			// The primary case where this happens are assert statements, as the error location is terminal.
-			// In such cases, other compositions cannot avoid the need for a complex sequential composition
-			// (e.g. parallel composition of the outgoing edges is impossible).
-			final boolean isUnavoidable = pp.getIncomingEdges().size() == 1
-					&& pp.getOutgoingNodes().stream().anyMatch(s -> s.getOutgoingEdges().isEmpty())
-					&& pp.getOutgoingNodes().stream().distinct().count() > 1;
-
-			// We prioritize unavoidable upside-down Y-to-V compositions since they must occur at some point anyway,
-			// and they might in turn enable other, more preferable compositions.
-			if (isUnavoidable) {
-				mComplexSequentialQueue.offerFirst(pp);
+			// Create a ComplexComposition object, which implements prioritization rules between complex compositions.
+			final var composition = ComplexComposition.create(pp);
+			mComplexSequentialQueue.offer(composition);
+			if (composition.isUnavoidable()) {
 				mLogger.debug("decided on (unavoidable) complex sequential composition");
 			} else {
-				mComplexSequentialQueue.offerLast(pp);
 				mLogger.debug("decided on complex sequential composition");
 			}
 		} else {
@@ -439,5 +430,47 @@ public class LargeBlockEncoding {
 			tgtAllowed = mAtomicAnalysis.isInsideAtomicBlock(tgt) || mAtomicAnalysis.isAtomicEnd(tgt);
 			yield srcAllowed && tgtAllowed;
 		};
+	}
+
+	// Used as entries in the mComplexSequentialCompositions priority queue.
+	// Prioritizes compositions depending on whether they are unavoidable and how many edges they produce.
+	private record ComplexComposition(BoogieIcfgLocation programPoint, boolean isUnavoidable, int degreeProduct)
+			implements Comparable<ComplexComposition> {
+		public ComplexComposition {
+			assert degreeProduct > 1;
+		}
+
+		public static ComplexComposition create(final BoogieIcfgLocation programPoint) {
+			// An upside-down Y-to-V composition is called "unavoidable" if it has multiple distinct successor
+			// nodes, and at least one of them is terminal.
+			// The primary case where this happens are assert statements, as the error location is terminal.
+			// In such cases, other compositions cannot avoid the need for a complex sequential composition
+			// (e.g. parallel composition of the outgoing edges is impossible).
+			final boolean isUnavoidable = programPoint.getIncomingEdges().size() == 1
+					&& programPoint.getOutgoingNodes().stream().anyMatch(s -> s.getOutgoingEdges().isEmpty())
+					&& programPoint.getOutgoingNodes().stream().distinct().count() > 1;
+
+			final int degreeProduct = programPoint.getIncomingEdges().size() * programPoint.getOutgoingEdges().size();
+			return new ComplexComposition(programPoint, isUnavoidable, degreeProduct);
+		}
+
+		@Override
+		public int compareTo(final ComplexComposition other) {
+			// If two compositions concern the same program point, they should be equal.
+			// This check is meant to catch accidental comparison of compositions created at different points of time,
+			// with inconsistent information about the CFG structure.
+			assert !programPoint.equals(other.programPoint) || equals(other)
+					: "Comparing compositions with inconsistent information";
+
+			if (isUnavoidable != other.isUnavoidable) {
+				// We prioritize unavoidable upside-down Y-to-V compositions since they must occur at some point anyway,
+				// and they might in turn enable other, more preferable compositions.
+				// (The comparison order below is swapped intentionally, as false < true.)
+				return Boolean.compare(other.isUnavoidable, isUnavoidable);
+			}
+			// Prefer compositions with a smaller degree product, i.e., which will produce fewer edges.
+			// Again, one such composition might in turn enable other, more preferable (e.g. parallel) compositions.
+			return Integer.compare(degreeProduct, other.degreeProduct);
+		}
 	}
 }
