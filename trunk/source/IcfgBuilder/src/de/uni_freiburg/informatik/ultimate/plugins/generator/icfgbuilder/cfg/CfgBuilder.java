@@ -918,8 +918,15 @@ public class CfgBuilder {
 			mIcfgBacktranslator.putAux(condFalse, new BoogieASTNode[] { st });
 			ModelUtils.copyAnnotations(st, condTrue);
 			ModelUtils.copyAnnotations(st, condFalse);
-			buildBranching(condTrue, buildCodeBlock(st.getBody(), loopEntryLoc, false), condFalse, elementAfterLoop,
-					afterInvariants);
+			final IIcfgElement condTrueCodeBlock = buildCodeBlock(st.getBody(), loopEntryLoc, false);
+			if ((condTrueCodeBlock instanceof final BoogieIcfgLocation)
+					&& (isPlainAssumeTrueStatement(condTrue) && condTrueCodeBlock != loopEntryLoc)) {
+				// If condTrue is a "PlainAssumeTrueStatement" and the codeBlock that enters the loop is non-empty
+				// then we do not introduce a separate edge for the `assume true` statement.
+				buildBranchingWithoutTrueCond(condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
+			} else {
+				buildBranching(condTrue, condTrueCodeBlock, condFalse, elementAfterLoop, afterInvariants);
+			}
 			if (containOuterBreak) {
 				// We pushed to the stack, we have to pop from the stack.
 				final BoogieIcfgLocation exit = mWhileExits.pop();
