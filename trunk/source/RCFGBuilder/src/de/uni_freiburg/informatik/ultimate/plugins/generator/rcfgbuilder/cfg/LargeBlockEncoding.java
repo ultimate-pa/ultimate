@@ -3,13 +3,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -26,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashDeque;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class LargeBlockEncoding {
 
@@ -62,7 +64,7 @@ public class LargeBlockEncoding {
 	// Y-to-V and upside-down Y-to-V composition points
 	private final HashDeque<BoogieIcfgLocation> mComplexSequentialQueue = new HashDeque<>();
 
-	private final Map<BoogieIcfgLocation, List<CodeBlock>> mParallelQueue = new HashMap<>();
+	private final LinkedHashMap<BoogieIcfgLocation, List<List<CodeBlock>>> mParallelQueue = new LinkedHashMap<>();
 
 	// some statistics
 	private int mStraightlineSequentialCompositions;
@@ -111,13 +113,13 @@ public class LargeBlockEncoding {
 			}
 
 			while (mSequentialQueue.isEmpty() && !mParallelQueue.isEmpty()) {
-				final Entry<BoogieIcfgLocation, List<CodeBlock>> superfluous =
-						mParallelQueue.entrySet().iterator().next();
+				final Entry<BoogieIcfgLocation, List<List<CodeBlock>>> superfluous = mParallelQueue.firstEntry();
 				final BoogieIcfgLocation pp = superfluous.getKey();
-				final List<CodeBlock> outgoing = superfluous.getValue();
 				mParallelQueue.remove(pp);
-				composeParallel(pp, outgoing);
-				mLogger.debug("parallel composition at %s", pp);
+				for (final List<CodeBlock> outgoing : superfluous.getValue()) {
+					composeParallel(pp, outgoing);
+					mLogger.debug("parallel composition of %d edges at %s", pp, outgoing.size());
+				}
 			}
 
 			while (!mSequentialQueue.isEmpty()) {
@@ -160,9 +162,9 @@ public class LargeBlockEncoding {
 		}
 
 		// As explained above, we prefer parallel over Y-to-V compositions.
-		final List<CodeBlock> list = computeOutgoingCandidatesForParallelComposition(pp);
-		if (list != null) {
-			mParallelQueue.put(pp, list);
+		final List<List<CodeBlock>> parallelCompositions = computeOutgoingCandidatesForParallelComposition(pp);
+		if (!parallelCompositions.isEmpty()) {
+			mParallelQueue.put(pp, parallelCompositions);
 			mLogger.debug("decided on parallel composition");
 		} else if (seq == SequentialCompositionType.COMPLEX && allowComplex) {
 			// An upside-down Y-to-V composition is called "unavoidable" if it has multiple distinct successor
@@ -371,67 +373,55 @@ public class LargeBlockEncoding {
 	 *         ProgramPoint, if there can be such a list with more than one element. Otherwise (each outgoing edge leads
 	 *         to a different ProgramPoint) return null.
 	 */
-	private List<CodeBlock> computeOutgoingCandidatesForParallelComposition(final BoogieIcfgLocation pp) {
-		if (!canBePredecessorOfParallelComposition(pp)) {
-			return null;
-		}
-		List<CodeBlock> result = null;
-		final Map<BoogieIcfgLocation, List<CodeBlock>> succ2edge = new HashMap<>();
-		for (final IcfgEdge edge : pp.getOutgoingEdges()) {
-			if (!(edge instanceof Return) && !(edge instanceof Summary)) {
-				final CodeBlock cb = (CodeBlock) edge;
-				final BoogieIcfgLocation succ = (BoogieIcfgLocation) cb.getTarget();
-				if (canBeSuccessorOfParallelComposition(succ)) {
-					final List<CodeBlock> edges = succ2edge.computeIfAbsent(succ, x -> new ArrayList<>());
-					edges.add(cb);
-					if (result == null && edges.size() > 1) {
-						result = edges;
-					}
-				}
-			}
-		}
-		return result;
+	private List<List<CodeBlock>> computeOutgoingCandidatesForParallelComposition(final BoogieIcfgLocation pp) {
+		return pp.getOutgoingEdges().stream()
+				// cast edges to CodeBlocks
+				.map(CodeBlock.class::cast)
+				// filter edges that can never be composed (in parallel)
+				.filter(this::isParallelComposableEdge)
+				// group by successor location and atomic delta
+				// (cannot compose e.g. edges entering and not entering atomic block)
+				.collect(Collectors.groupingBy(
+						cb -> new Pair<>((BoogieIcfgLocation) cb.getTarget(), AtomicBlockInfo.getAnnotatedDelta(cb))))
+				.entrySet().stream()
+				// skip trivial composition groups
+				.filter(e -> e.getValue().size() > 1)
+				// forget the grouping keys and just return the composable groups of edges.
+				.map(Map.Entry::getValue).toList();
 	}
 
-	private boolean canBePredecessorOfParallelComposition(final BoogieIcfgLocation pp) {
-		switch (mInternalLbeMode) {
+	private boolean isParallelComposableEdge(final CodeBlock cb) {
+		if (cb instanceof Return || cb instanceof Summary) {
+			return false;
+		}
+
+		final var src = (BoogieIcfgLocation) cb.getSource();
+		final var tgt = (BoogieIcfgLocation) cb.getTarget();
+
+		final boolean srcAllowed;
+		final boolean tgtAllowed;
+		return switch (mInternalLbeMode) {
 		case ALL:
-			return true;
+			yield true;
+
+		// TODO What is the reason for these conditions? Shouldn't parallel compositions always be ok?
 		case ALL_EXCEPT_ATOMIC_BOUNDARIES:
-			return (IcfgUtils.isConcurrent(mIcfg) && !mAtomicAnalysis.isAtomicBegin(pp))
-					|| mAtomicAnalysis.isInsideAtomicBlock(pp);
+			srcAllowed = (IcfgUtils.isConcurrent(mIcfg) && !mAtomicAnalysis.isAtomicBegin(src))
+					|| mAtomicAnalysis.isInsideAtomicBlock(src);
+			tgtAllowed = (IcfgUtils.isConcurrent(mIcfg) && !mAtomicAnalysis.isAtomicEnd(tgt))
+					|| mAtomicAnalysis.isInsideAtomicBlock(tgt);
+			yield srcAllowed && tgtAllowed;
+
 		case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 			// TODO #FaultLocalization
 			throw new UnsupportedOperationException();
-		case ONLY_ATOMIC_BLOCK:
-			// In order to only perform compositions within atomic blocks, we have this condition.
-			// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
-			return mAtomicAnalysis.isInsideAtomicBlock(pp);
-		default:
-			throw new AssertionError("unknown value " + mInternalLbeMode);
-		}
-	}
 
-	private boolean canBeSuccessorOfParallelComposition(final BoogieIcfgLocation pp) {
-		switch (mInternalLbeMode) {
-		case ALL:
-			return true;
-		case ALL_EXCEPT_ATOMIC_BOUNDARIES:
-			return (IcfgUtils.isConcurrent(mIcfg) && !mAtomicAnalysis.isAtomicEnd(pp))
-					|| mAtomicAnalysis.isInsideAtomicBlock(pp);
-		case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
-			// TODO #FaultLocalization
-			throw new UnsupportedOperationException();
+		// In order to only perform compositions within atomic blocks, we have these conditions.
+		// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
 		case ONLY_ATOMIC_BLOCK:
-			// In order to only perform compositions within atomic blocks, we have this condition.
-			// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
-			//
-			// In order to catch all possible compositions within atomic blocks,
-			// we would also have to allow error locations and possibly (see atomicModeCorrect) return / exit nodes.
-			// However, this is not strictly necessary, as less parallel compositions are not a threat to soundness.
-			return mAtomicAnalysis.isInsideAtomicBlock(pp);
-		default:
-			throw new AssertionError("unknown value " + mInternalLbeMode);
-		}
+			srcAllowed = mAtomicAnalysis.isInsideAtomicBlock(src) || mAtomicAnalysis.isAtomicBegin(src);
+			tgtAllowed = mAtomicAnalysis.isInsideAtomicBlock(tgt) || mAtomicAnalysis.isAtomicEnd(tgt);
+			yield srcAllowed && tgtAllowed;
+		};
 	}
 }
