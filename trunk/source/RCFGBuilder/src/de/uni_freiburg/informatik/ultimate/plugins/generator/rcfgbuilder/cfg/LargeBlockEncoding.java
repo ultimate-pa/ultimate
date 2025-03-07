@@ -354,7 +354,7 @@ public class LargeBlockEncoding {
 		case ONLY_ATOMIC_BLOCK:
 			// In order to only perform compositions within atomic blocks, we have this condition.
 			// It would also be sound to return true, as more parallel compositions are not a threat to soundness.
-			return mAtomicAnalysis.isInsideAtomicBlock(pp);
+			return mAtomicAnalysis.isInsideAtomicBlock(pp) || mAtomicAnalysis.isAtomicBegin(pp);
 		default:
 			throw new AssertionError("unknown value " + mInternalLbeMode);
 		}
