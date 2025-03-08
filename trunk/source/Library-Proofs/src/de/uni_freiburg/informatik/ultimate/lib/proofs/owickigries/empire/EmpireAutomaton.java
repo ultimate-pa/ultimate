@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * Copyright (C) 2024 Matthias Zumkeller
- * Copyright (C) 2024 University of Freiburg
+ * Copyright (C) 2025 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2025 Matthias Zumkeller
+ * Copyright (C) 2025 University of Freiburg
  *
  * This file is part of the ULTIMATE Proofs Library.
  *
@@ -27,15 +27,41 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutomaton.State<L, P>> {
+	private final IPetriNet<L, P> mNet;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
+
+	private final ILogger mLogger;
+
+	public EmpireAutomaton(final IPetriNet<L, P> net,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
+			final IUltimateServiceProvider services) {
+		mLogger = services.getLoggingService().getLogger(getClass());
+		mLogger.setLevel(LogLevel.ERROR);
+
+		mNet = net;
+		mProduct = product;
+	}
+
 	@Override
 	public IPredicate getLaw(final State<L, P> state) {
 		return state.law();
@@ -54,8 +80,12 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public Iterable<State<L, P>> getInitialStates() {
-		// TODO Auto-generated method stub
-		return null;
+		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
+		final var regions = mNet.getInitialPlaces().stream().map(p -> new Region<>(ImmutableSet.singleton(p)))
+				.collect(ImmutableSet.collector());
+		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw, Collections.emptySet());
+		final var markedSuccessor = getMarkedSuccessor(state);
+		return List.of(markedSuccessor);
 	}
 
 	@Override
@@ -88,24 +118,169 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 		// step 1: see if letter should lead to any successor at all or can be optimized away
 		// (iterate over alphabet and see which other transitions are enabled in the territory)
-		final boolean canBePruned = false;
-		if (canBePruned) {
+		final var territory = state.territory;
+		final var law = state.law;
+		if (!territory.enables(letter)) {
 			return List.of();
+		}
+		if (isExtendingTransition(law, getSuccessorLaw(law, letter), letter) && isCycle(state, letter)) {
+			return List.of(new OutgoingInternalTransition<>(letter, state));
 		}
 
 		// step 2: compute the "direct" successor state for the given transition
+		final var directSucc = getReplacementSuccessor(state, letter);
 
 		// step 3: while the current successor is not marked, pick one (or a set of) transitions and compute the
 		// successor again
 
-		// step 4: from the maximal successor, create a State record
-		final State<L, P> successor = null;
+		final var maxMarkedSuccessor = getMarkedSuccessor(directSucc);
 
 		// return the edge to the maximal successor
-		return List.of(new OutgoingInternalTransition<>(letter, successor));
+		return List.of(new OutgoingInternalTransition<>(letter, maxMarkedSuccessor));
 	}
 
 	public record State<L, P>(Territory<P> territory, IPredicate law, Set<Region<P>> bystanders) {
 		// empty body
+	}
+
+	private State<L, P> extendAll(final State<L, P> state, final Set<Transition<L, P>> transitions) {
+		if (transitions.isEmpty()) {
+			return state;
+		}
+		final var territory = state.territory;
+		final Set<Region<P>> territoryRegions = new HashSet<>(territory.getRegions());
+		final var extendedRegions = new HashSet<Region<P>>();
+		for (final Region<P> region : territory.getRegions()) {
+			final var matchingTransitions = findMatchingTransitions(region, transitions);
+			if (!matchingTransitions.isEmpty()) {
+				transitions.removeAll(matchingTransitions);
+				final var successorPlaces = matchingTransitions.stream().flatMap(t -> t.getSuccessors().stream())
+						.collect(Collectors.toSet());
+				extendedRegions.add(
+						new Region<>(ImmutableSet.of(DataStructureUtils.union(region.getPlaces(), successorPlaces))));
+				territoryRegions.remove(region);
+			}
+		}
+		final var newTerritory =
+				new Territory<>(ImmutableSet.of(DataStructureUtils.union(extendedRegions, territoryRegions)));
+		return new State<>(newTerritory, state.law, state.bystanders);
+	}
+
+	private Set<Transition<L, P>> findMatchingTransitions(final Region<P> region,
+			final Set<Transition<L, P>> transitions) {
+		final var predTransitions = new HashSet<Transition<L, P>>();
+		final var places = region.getPlaces();
+		for (final Transition<L, P> transition : transitions) {
+			if (places.containsAll(transition.getPredecessors())) {
+				predTransitions.add(transition);
+			}
+		}
+		return predTransitions;
+	}
+
+	private Set<Transition<L, P>> getEnabledTransitions(final State<L, P> state) {
+		final var territory = state.territory;
+		final var lawPlace = state.law;
+		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
+		final var notBotTransitions = new HashSet<Transition<L, P>>();
+		for (final Transition<L, P> transition : enabledTransitions) {
+			final var succLaw = getSuccessorLaw(lawPlace, transition);
+			if (!SmtUtils.isFalseLiteral(succLaw.getFormula())) {
+				notBotTransitions.add(transition);
+			}
+		}
+		return notBotTransitions;
+	}
+
+	private IPredicate getSuccessorLaw(final IPredicate law, final Transition<L, P> transition) {
+		final var succLaw = mProduct.internalSuccessors(law, transition.getSymbol());
+		IPredicate newLawPlace = law;
+		if (succLaw.iterator().hasNext()) {
+			newLawPlace = DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
+		} else {
+			mLogger.warn("No successor law for transition: %s and law: %s", transition, law);
+		}
+		return newLawPlace;
+	}
+
+	private boolean isExtendingTransition(final IPredicate lawPlace, final IPredicate newLawPlace,
+			final Transition<L, P> transition) {
+		final var predecessors = transition.getPredecessors();
+		final var successors = transition.getSuccessors();
+		if (lawPlace == newLawPlace && predecessors.size() == 1 && successors.size() == 1) {
+			return true;
+		}
+		return false;
+	}
+
+	private Set<Transition<L, P>> getExtendingTransitions(final State<L, P> state,
+			final Set<Transition<L, P>> transitions) {
+		final var lawPlace = state.law;
+		final var extendingTransitions = new HashSet<Transition<L, P>>();
+		for (final Transition<L, P> transition : transitions) {
+			final var succLaw = getSuccessorLaw(lawPlace, transition);
+			if (isExtendingTransition(lawPlace, succLaw, transition)) {
+				extendingTransitions.add(transition);
+			}
+		}
+		return extendingTransitions;
+	}
+
+	private boolean isNecessaryBridge(final State<L, P> state, final Transition<L, P> transition) {
+		final var territory = state.territory;
+		final var bs = state.bystanders;
+		return !territory.getBystanders(transition).containsAll(bs);
+	}
+
+	private Set<Transition<L, P>> getUnnecessaryTransitions(final State<L, P> state,
+			final Set<Transition<L, P>> transitions) {
+		final var extending = getExtendingTransitions(state, transitions);
+		return extending.stream().filter(t -> !isNecessaryBridge(state, t)).collect(Collectors.toSet());
+	}
+
+	private Boolean isCycle(final State<L, P> state, final Transition<L, P> transition) {
+		final var territory = state.territory;
+		final var law = state.law;
+		final var successors = transition.getSuccessors();
+		if (!territory.enables(transition)
+				|| !isExtendingTransition(law, getSuccessorLaw(law, transition), transition)) {
+			return false;
+		}
+		return territory.getPlaces().containsAll(successors);
+	}
+
+	private State<L, P> getMarkedSuccessor(final State<L, P> state) {
+		final var enabledTransitions = getEnabledTransitions(state);
+		final var unnecessaryTransitions = getUnnecessaryTransitions(state, enabledTransitions);
+		final var nonCyclicTransitions =
+				unnecessaryTransitions.stream().filter(t -> !isCycle(state, t)).collect(Collectors.toSet());
+		if (nonCyclicTransitions.isEmpty()) {
+			return state;
+		}
+		final var extendedState = extendAll(state, nonCyclicTransitions);
+		return getMarkedSuccessor(extendedState);
+	}
+
+	private State<L, P> getReplacementSuccessor(final State<L, P> state, final Transition<L, P> transition) {
+		final var territory = state.territory;
+		final var lawPlace = state.law;
+
+		final IPredicate newLawPlace = getSuccessorLaw(lawPlace, transition);
+
+		var regions = territory.getBystanders(transition);
+
+		regions = replaceRegions(transition, regions);
+		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
+		final var newBystanders = territory.getBystanders(transition);
+		return new State<>(newTerritory, newLawPlace, newBystanders);
+	}
+
+	private Set<Region<P>> replaceRegions(final Transition<L, P> transition, final Set<Region<P>> bystanders) {
+		final var regions = new HashSet<>(bystanders);
+		final var successors = transition.getSuccessors();
+		for (final var succ : successors) {
+			regions.add(new Region<>(ImmutableSet.singleton(succ)));
+		}
+		return regions;
 	}
 }
