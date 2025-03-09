@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
@@ -224,8 +225,8 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	}
 
 	@Override
-	protected boolean applyRepeatedlyUntilNoChange() {
-		return true;
+	protected Repetition applyRepeatedly() {
+		return Repetition.REPEAT_UNTIL_NO_CHANGE;
 	}
 
 	@Override
