@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireA
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 	private final ILogger mLogger;
@@ -51,10 +54,11 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 		if (checkInitialTerritories(initialState) != Validity.VALID) {
 			return Validity.INVALID;
 		}
-		if (checkSuccessorValidity(initialState) != Validity.VALID) {
+		final var successorValidity = checkSuccessorValidity(initialState);
+		if (successorValidity.getFirst() != Validity.VALID) {
 			return Validity.INVALID;
 		}
-		if (checkAcceptingPlaces() != Validity.VALID) {
+		if (checkAcceptingPlaces(successorValidity.getSecond()) != Validity.VALID) {
 			return Validity.INVALID;
 		}
 		return Validity.VALID;
@@ -87,7 +91,8 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.VALID;
 	}
 
-	private Validity checkSuccessorValidity(final Set<State<LETTER, PLACE>> initialState) {
+	private Pair<Validity, Set<State<LETTER, PLACE>>>
+			checkSuccessorValidity(final Set<State<LETTER, PLACE>> initialState) {
 		final Set<State<LETTER, PLACE>> visitedStates = new HashSet<>();
 		final var queue = new ArrayDeque<State<LETTER, PLACE>>();
 		for (final State<LETTER, PLACE> state : initialState) {
@@ -110,25 +115,34 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 				if (contradiction != Validity.VALID && successorState.isEmpty()) {
 					mLogger.warn("The State:\n \t%s \n \thas no valid successor and does not evaluate to false with \n "
 							+ "\ttransition %s", state, transition.getSymbol().getTransformula());
-					return Validity.INVALID;
+					return new Pair<>(Validity.INVALID, Collections.emptySet());
 				}
 				final var hoareValidity = checkHoareValidity(successorState, law, transition);
 				if (!hoareValidity) {
-					return Validity.INVALID;
+					return new Pair<>(Validity.INVALID, Collections.emptySet());
 				}
 				final var isValidSuccessor = checkValidSuccessor(successorState, state, transition);
 				if (!isValidSuccessor) {
-					return Validity.INVALID;
+					return new Pair<>(Validity.INVALID, Collections.emptySet());
 				}
 				for (final var succ : successorState) {
 					queue.offer(succ);
 				}
 			}
 		}
-		return Validity.VALID;
+		return new Pair<>(Validity.INVALID, visitedStates);
 	}
 
-	private Validity checkAcceptingPlaces() {
+	private Validity checkAcceptingPlaces(final Set<State<LETTER, PLACE>> states) {
+		final var accepting = mNet.getAcceptingPlaces();
+		for (final State<LETTER, PLACE> state : states) {
+			final var territory = state.territory();
+			final var law = state.law();
+			if (DataStructureUtils.haveNonEmptyIntersection(territory.getPlaces(), accepting)
+					&& !SmtUtils.isFalseLiteral(law.getFormula())) {
+				return Validity.INVALID;
+			}
+		}
 		return Validity.VALID;
 	}
 
