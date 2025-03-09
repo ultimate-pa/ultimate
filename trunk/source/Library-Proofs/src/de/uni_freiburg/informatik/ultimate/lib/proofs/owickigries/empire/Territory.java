@@ -194,6 +194,39 @@ public final class Territory<PLACE> {
 	}
 
 	/**
+	 * Check if some other territory is a successor if the territory for a given transition
+	 *
+	 * @param <L>
+	 * @param otherTerritory
+	 *            The potential successor territory
+	 * @param transition
+	 *            Transition that is enabled by the territory
+	 * @return True if otherTerritory is a successor of the territory for transition
+	 */
+	public <L> boolean isSuccessor(final Territory<PLACE> otherTerritory, final Transition<L, PLACE> transition) {
+		final var bystanders = getBystanders(transition);
+		final var successorPlaces = transition.getSuccessors();
+		if (!otherTerritory.getRegions().containsAll(bystanders)
+				|| !otherTerritory.getPlaces().containsAll(successorPlaces)) {
+			return false;
+		}
+		final var potentialSuccessors = DataStructureUtils.difference(otherTerritory.getRegions(), bystanders).stream()
+				.collect(Collectors.toSet());
+		if (potentialSuccessors.size() != successorPlaces.size()) {
+			return false;
+		}
+		for (final PLACE succPlace : successorPlaces) {
+			final var succRegions =
+					potentialSuccessors.stream().filter(r -> r.contains(succPlace)).collect(Collectors.toSet());
+			if (succRegions.size() != 1) {
+				return false;
+			}
+			potentialSuccessors.removeAll(succRegions);
+		}
+		return true;
+	}
+
+	/**
 	 * Get all transitions of a PetriNet that are enabled by the territory.
 	 *
 	 * @param <L>
