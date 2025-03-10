@@ -13,7 +13,6 @@ modifies x;
     x := 1;
     fork 1 one();
     fork 2 one();
-    x := x + 1;
 }
 
 procedure one()

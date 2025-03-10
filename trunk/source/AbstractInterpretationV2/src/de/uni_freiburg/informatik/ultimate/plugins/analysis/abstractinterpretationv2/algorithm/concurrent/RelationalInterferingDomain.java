@@ -10,9 +10,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * Wrapper for an {@code IAbstractDomain} with a different post-operator to
- * consider interferences, just like {@code InterferingDomain}. Underlying
- * domain is SIFA domain. Domain also inlcudes Threadinformation.
+ * Wrapper for an {@code IAbstractDomain} with a different post-operator to consider interferences, just like
+ * {@code InterferingDomain}. Underlying domain is SIFA domain. Domain also inlcudes Threadinformation.
  */
 public class RelationalInterferingDomain<STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge>
 		implements IAbstractDomain<RelationalInterferingState<STATE, ACTION>, ACTION> {
@@ -32,8 +31,8 @@ public class RelationalInterferingDomain<STATE extends IAbstractState<STATE>, AC
 		mUnderlyingDomain = underlying;
 		mRelationalInterferingPostOperator = new RelationalInterferingPostOperator<>(mSifaDomain, cfg, serviceProvider,
 				mInterferences, mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this);
-		mWideningOperator = new RelationalInterferingWideningOperator<>(underlying, mThreadInstanceCounterFactory,
-				mInterferences);
+		mWideningOperator =
+				new RelationalInterferingWideningOperator<>(underlying, mThreadInstanceCounterFactory, mInterferences);
 	}
 
 	public IDomain getSifaDomain() {

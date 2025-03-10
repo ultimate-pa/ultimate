@@ -22,8 +22,8 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 	public RelationalInterferingState(final IAbstractDomain<STATE, ACTION> underlying, final STATE state,
 			final ThreadInstanceCounter threadcounter, final AbstractInterferenceState<STATE, ACTION> interferences) {
 		mUnderlying = underlying;
-		mState = state;
-		mThreadInstanceCounter = threadcounter;
+		mState = state.union(underlying.createBottomState().addVariables(state.getVariables()));
+		mThreadInstanceCounter = new ThreadInstanceCounter(threadcounter);
 		mInterferences = interferences;
 	}
 
@@ -37,19 +37,27 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 		}
 
 		for (final STATE state : states) {
-			unionState = FixpointEngineConcurrentUtils.unionOnSharedVariables(unionState, state);
+			// unionState = FixpointEngineConcurrentUtils.unionOnSharedVariables(unionState, state);
+			unionState = unionState.union(state);
 		}
 		mState = unionState;
-		mThreadInstanceCounter = threadcounter;
+		mThreadInstanceCounter = new ThreadInstanceCounter(threadcounter);
 		mInterferences = interferences;
 	}
 
-	public STATE getSTATE() {
-		return mState;
+	// TODO
+	public STATE getStateCopy() {
+		return mState.union(mUnderlying.createBottomState().addVariables(mState.getVariables()));
 	}
 
 	public ThreadInstanceCounter getThreadInstanceState() {
 		return mThreadInstanceCounter;
+	}
+
+	public RelationalInterferingState<STATE, ACTION> incrementThread(final String thread) {
+		final var threadcounter = new ThreadInstanceCounter(mThreadInstanceCounter);
+		threadcounter.incrementThread(thread);
+		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), threadcounter, mInterferences);
 	}
 
 	@Override
@@ -88,20 +96,20 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 
 	@Override
 	public RelationalInterferingState<STATE, ACTION> patch(final RelationalInterferingState<STATE, ACTION> dominator) {
-		return new RelationalInterferingState<>(mUnderlying, mState.patch(dominator.getSTATE()), mThreadInstanceCounter,
-				mInterferences);
+		return new RelationalInterferingState<>(mUnderlying, mState.patch(dominator.getStateCopy()),
+				mThreadInstanceCounter, mInterferences);
 	}
 
 	@Override
 	public RelationalInterferingState<STATE, ACTION> intersect(final RelationalInterferingState<STATE, ACTION> other) {
-		return new RelationalInterferingState<>(mUnderlying, mState.intersect(other.getSTATE()), mThreadInstanceCounter,
-				mInterferences);
+		return new RelationalInterferingState<>(mUnderlying, mState.intersect(other.getStateCopy()),
+				mThreadInstanceCounter.intersect(other.getThreadInstanceState()), mInterferences);
 	}
 
 	@Override
 	public RelationalInterferingState<STATE, ACTION> union(final RelationalInterferingState<STATE, ACTION> other) {
-		return new RelationalInterferingState<>(mUnderlying, mState.union(other.getSTATE()), mThreadInstanceCounter,
-				mInterferences);
+		return new RelationalInterferingState<>(mUnderlying, mState.union(other.getStateCopy()),
+				mThreadInstanceCounter.union(other.getThreadInstanceState()), mInterferences);
 	}
 
 	@Override
@@ -121,7 +129,7 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 
 	@Override
 	public SubsetResult isSubsetOf(final RelationalInterferingState<STATE, ACTION> other) {
-		return mState.isSubsetOf(other.getSTATE());
+		return mState.isSubsetOf(other.getStateCopy());
 	}
 
 	@Override

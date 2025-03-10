@@ -43,17 +43,20 @@ public class ThreadInstanceCounter {
 		mThreadInstances.put(threadName, newCount);
 	}
 
-	public void setThread(final String threadName, final int newNum) {
-		mThreadInstances.put(threadName, newNum);
-	}
-
 	public void setActive(final String threadName) {
 		if (mThreadInstances.get(threadName) == null) {
 			throw new IllegalArgumentException("Trying to increment thread which does not exist: " + threadName);
 		}
-		if (mThreadInstances.get(threadName) <= 1) {
+		if (mThreadInstances.get(threadName) < 1) {
 			mThreadInstances.put(threadName, 1);
 		}
+	}
+
+	public void setInf(final String threadName) {
+		if (mThreadInstances.get(threadName) == null) {
+			throw new IllegalArgumentException("Trying to increment thread which does not exist: " + threadName);
+		}
+		mThreadInstances.put(threadName, 2);
 	}
 
 	public ThreadInstanceCounter union(final ThreadInstanceCounter other) {

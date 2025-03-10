@@ -21,10 +21,10 @@ public class RelationalInterferingWideningOperator<STATE extends IAbstractState<
 	@Override
 	public RelationalInterferingState<STATE, ACTION> apply(final RelationalInterferingState<STATE, ACTION> first,
 			final RelationalInterferingState<STATE, ACTION> second) {
-		final var widenedThreadCounter = mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(),
-				second.getThreadInstanceState());
+		final var widenedThreadCounter =
+				mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(), second.getThreadInstanceState());
 		return new RelationalInterferingState<>(mUnderlyingDomain,
-				mUnderlyingDomain.getWideningOperator().apply(first.getSTATE(), second.getSTATE()),
+				mUnderlyingDomain.getWideningOperator().apply(first.getStateCopy(), second.getStateCopy()),
 				widenedThreadCounter, mInterferences);
 	}
 }

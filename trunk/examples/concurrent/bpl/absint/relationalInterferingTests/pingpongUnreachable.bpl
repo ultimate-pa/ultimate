@@ -1,8 +1,6 @@
 //#Safe
 /*
     Flow-sensitivity needed to correctly handle this. (E.g. Location abstraction-mine2017)
-    May also be handled correctly without, but abstractions like Interval could still create
-    interference: 3>=x>=1, x = 5. Which will lead to 666 being reached.
 */
 
 var x : int; 
@@ -18,6 +16,7 @@ modifies x;
     if (x == 2) {
         x := 3;
     }
+    assert x != 666;
 }
 
 procedure one()

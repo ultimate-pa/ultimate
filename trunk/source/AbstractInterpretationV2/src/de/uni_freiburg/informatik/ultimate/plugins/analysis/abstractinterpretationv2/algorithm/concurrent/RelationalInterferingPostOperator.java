@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -37,6 +39,7 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final RelationalInterferingDomain<STATE, ACTION> mRelationalInterferingDomain;
+	private final Set<IProgramNonOldVar> mGlobalVariables;
 
 	public RelationalInterferingPostOperator(final IDomain sifaDomain, final IIcfg<?> cfg,
 			final IUltimateServiceProvider serviceProvider,
@@ -51,6 +54,7 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 		mUnderlyingDomain = underlying;
 		mUnderlyingPostOp = postOp;
 		mRelationalInterferingDomain = relationalInterferingDomain;
+		mGlobalVariables = mToolkit.getSymbolTable().getGlobals();
 	}
 
 	@Override
@@ -59,8 +63,8 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 		if (oldstate.isBottom()) {
 			return List.of(oldstate);
 		}
-		mLogger.error("START postOperator----------------");
-		mLogger.error("current Thread: " + transition.getPrecedingProcedure());
+		mLogger.warn("START postOperator----------------");
+		mLogger.warn("current Thread: " + transition.getPrecedingProcedure());
 		mCurrentThreadName = transition.getPrecedingProcedure();
 
 		if (transition instanceof ForkThreadCurrent || transition instanceof ForkThreadOther) {
@@ -74,7 +78,7 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 
 		// 1. normal poststate
 		var postRelationalState = new RelationalInterferingState<>(mUnderlyingDomain,
-				mUnderlyingPostOp.apply(oldstate.getSTATE(), transition), oldstate.getThreadInstanceState(),
+				mUnderlyingPostOp.apply(oldstate.getStateCopy(), transition), oldstate.getThreadInstanceState(),
 				mInterferences);
 		mLogger.warn("state after: " + postRelationalState);
 
@@ -83,21 +87,24 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 
 		// 2. Add new interference to global map
 		if (isInterferingTransition(transition)) {
-			mInterferences.addInterference(mCurrentThreadName, transition, oldstate.getSTATE());
-			mLogger.error("Interference created: " + oldstate.getSTATE().toLogString() + " "
+			mInterferences.addInterference(mCurrentThreadName, transition, oldstate.getStateCopy());
+			mLogger.warn("Interference created: " + oldstate.getStateCopy().toLogString() + " "
 					+ transition.getTransformula().toStringDirect());
 		}
 
 		// 3. apply interferences
-		// TODO: check if topstate
+		// TODO: check if topstate/bot
 		postRelationalState = stateAfterInterferences(postRelationalState, mCurrentThreadName);
-		mLogger.warn("state after interferences: " + postRelationalState);
 
-		mLogger.error("----------------END postOperator");
+		mLogger.warn("----------------END postOperator");
 		return List.of(postRelationalState);
 	}
 
 	private boolean isInterferingTransition(final ACTION transition) {
+		if (!transition.getTransformula().getAssignedVars().stream()
+				.anyMatch(assignedVar -> mGlobalVariables.contains(assignedVar))) {
+			return false;
+		}
 		if (!(transition instanceof final StatementSequence statementSequence)) {
 			return true;
 		}
@@ -111,19 +118,22 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 
 	private Collection<RelationalInterferingState<STATE, ACTION>>
 			applyFork(final RelationalInterferingState<STATE, ACTION> oldstate, final ACTION transition) {
-		var newState = oldstate;
+		var newState = new RelationalInterferingState<>(mUnderlyingDomain, oldstate.getStateCopy(),
+				oldstate.getThreadInstanceState(), mInterferences);
 		// increment threadcounter of forked thread and all threads who are forked, etc,
 		// by forked
+		// TODO: we can reduce logic now after changes, just check if more than 2 forks exist, or circular
 		if (transition instanceof final ForkThreadCurrent fork1) {
+			final boolean circular = isCircular(fork1, fork1.getSource().getIncomingEdges(), 0);
 			final var forked = fork1.getNameOfForkedProcedure();
-			if (!mInterferences.getSeenForks().contains(fork1)) {
-				mInterferences.update(transition.getPrecedingProcedure(), forked);
-				mInterferences.getSeenForks().add(fork1);
-			}
+			mInterferences.update(transition.getPrecedingProcedure(), forked);
 			for (final String thread : mInterferences.getActiveIfActive().getImage(forked)) {
 				newState.getThreadInstanceState().setActive(thread);
 			}
-		} else if (transition instanceof ForkThreadOther) {
+			if (circular || oldstate.getThreadInstanceState().getThreadInstances().get(forked) > 0) {
+				newState.getThreadInstanceState().setInf(forked);
+			}
+		} else {
 			throw new IllegalArgumentException("Unsupported fork transition type");
 		}
 		// apply interferences
@@ -131,8 +141,28 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 		return List.of(newState);
 	}
 
+	private boolean isCircular(final IcfgEdge fork1, final List<IcfgEdge> edges, final int depth) {
+		// TODO: replace by caching all statements seen, breaking when any seen again
+		if (depth > 100) {
+			return false;
+		}
+		if (edges.isEmpty()) {
+			return false;
+		}
+		if (edges.contains(fork1)) {
+			return true;
+		}
+		for (final IcfgEdge icfgEdge : edges) {
+			if (isCircular(fork1, icfgEdge.getSource().getIncomingEdges(), depth + 1)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public RelationalInterferingState<STATE, ACTION> stateAfterInterferences(
 			final RelationalInterferingState<STATE, ACTION> oldstate, final String ownerThread) {
+		mLogger.warn("state before interferences: " + oldstate);
 		final Set<String> threadNameSet = oldstate.getThreadInstanceState().getThreadNameSet();
 		final Set<String> possibleInterferenceSet = new HashSet<>();
 		final var procedureMap = oldstate.getThreadInstanceState().getThreadInstances();
@@ -151,38 +181,66 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 		int iterations = 0;
 		var newState = state;
 		boolean changed = true;
+		final Set<ACTION> appliedInterferenceSet = new HashSet<>();
 		while (changed) {
 			iterations++;
-			final var beginLoopState = new RelationalInterferingState<>(mUnderlyingDomain, newState.getSTATE(),
+			// state just to check if fixpoint reached
+			final var beginLoopState = new RelationalInterferingState<>(mUnderlyingDomain, newState.getStateCopy(),
 					newState.getThreadInstanceState(), mInterferences);
-			for (final String interference : interferenceSet) {
-				final var interferenceMap = mInterferences.getInterferenceMapHashRelation().get(interference);
-				if (mInterferences.getInterferencesForThread(interference) == null) {
+
+			for (final String interferenceThreadName : interferenceSet) {
+				final var interferenceMap = mInterferences.getInterferenceMapHashRelation().get(interferenceThreadName);
+				if (mInterferences.getInterferencesForThread(interferenceThreadName) == null) {
 					continue;
 				}
 				for (final ACTION interferenceAction : interferenceMap.keySet()) {
-					if (newState.isBottom()) {
-						mLogger.warn("aborting interferencefixpoint, state is bottom");
-						return newState;
-					}
 					mLogger.warn("Applying interference: " + interferenceAction.getTransformula().getClosedFormula()
 							+ " " + interferenceMap.get(interferenceAction));
-					mLogger.warn("to state: " + newState.getSTATE().toLogString());
-					final var postState = new RelationalInterferingState<>(mUnderlyingDomain,
-							mUnderlyingPostOp.apply(newState.getSTATE(), interferenceAction),
-							newState.getThreadInstanceState(), mInterferences);
+					appliedInterferenceSet.add(interferenceAction);
+					mLogger.warn("to state: " + newState.getStateCopy().toLogString());
+					final STATE interferingState = interferenceMap.get(interferenceAction);
 
-					if (iterations < 3) {
+					// TODO: datastructureutiles difference
+					final var locals =
+							newState.getVariables().stream().filter(v -> !v.isGlobal()).collect(Collectors.toSet());
+					final var otherLocals = interferingState.getVariables();
+					final var missingLocals =
+							locals.stream().filter(v -> !otherLocals.contains(v)).collect(Collectors.toSet());
+
+					final var locals2 = interferingState.getVariables().stream().filter(v -> !v.isGlobal())
+							.collect(Collectors.toSet());
+					final var otherlocals2 = newState.getStateCopy().getVariables();
+					final var missingLocals2 =
+							locals2.stream().filter(v -> !otherlocals2.contains(v)).collect(Collectors.toSet());
+
+					final var globalNewState = newState.getStateCopy().addVariables(missingLocals2);
+					final STATE intersectionState =
+							globalNewState.intersect(interferingState.addVariables(missingLocals));
+					if (intersectionState.isBottom()) {
+						continue;
+					}
+					var postState = new RelationalInterferingState<>(mUnderlyingDomain,
+							mUnderlyingPostOp.apply(intersectionState, interferenceAction),
+							newState.getThreadInstanceState(), mInterferences);
+					postState = postState.removeVariables(missingLocals2);
+
+					if (iterations < 2) {
 						newState = newState.union(postState);
 						mLogger.warn("result: " + newState);
 					} else {
 						newState = mRelationalInterferingDomain.getWideningOperator().apply(newState, postState);
 						mLogger.warn("Widening result: " + newState);
 					}
+					if (newState.isBottom()) {
+						mLogger.warn("aborting interferencefixpoint, state is bottom");
+						return newState;
+					}
 				}
 			}
 			changed = newState.isSubsetOf(beginLoopState) != SubsetResult.NONE ? false : true;
 		}
+		mLogger.warn("used: " + appliedInterferenceSet);
+		mLogger.warn("state after interferences: " + newState);
 		return newState;
 	}
 
