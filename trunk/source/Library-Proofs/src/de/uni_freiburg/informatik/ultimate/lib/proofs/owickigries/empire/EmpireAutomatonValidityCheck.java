@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -62,8 +61,6 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 		if (checkAcceptingPlaces(successorValidity.getSecond()) != Validity.VALID) {
 			return Validity.INVALID;
 		}
-		final var pairs = successorValidity.getSecond().stream().map(s -> new Pair<>(s.territory(), s.law()))
-				.collect(Collectors.toSet());
 		return Validity.VALID;
 	}
 
