@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.ExtendedSimp
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
@@ -56,9 +57,10 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 public class QuantifierPushTermWalker extends TermWalker<Context> {
 
-	private static final boolean OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE = false;
+	private static final Repetition OPTION_APPLY_REPEATEDLY = Repetition.NO_REPETITION;
 	/**
-	 * Note that this is useless if {@link QuantifierPushTermWalker#OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE} is set.
+	 * Note that this is useless if {@link QuantifierPushTermWalker#OPTION_APPLY_REPEATEDLY} is set to
+	 * {@link Repetition.REPEAT_UNTIL_NO_CHANGE}
 	 */
 	private static final boolean OPTION_SIMPLIFY_CONSTRUCTED_APPLICATION_TERMS = true;
 
@@ -260,8 +262,8 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	}
 
 	@Override
-	protected boolean applyRepeatedlyUntilNoChange() {
-		return OPTION_APPLY_REPEATEDLY_UNTIL_NOCHANGE;
+	protected Repetition applyRepeatedly() {
+		return OPTION_APPLY_REPEATEDLY;
 	}
 
 	/**
