@@ -57,10 +57,9 @@ public class TermContextTransformationEngine<C> {
 		 */
 		REPEAT_UNTIL_NO_CHANGE,
 		/**
-		 * Iterate through siblings until no sibling received a major change. We
-		 * consider a change to be a major change if a sibling was a dualJunction (e.g.,
-		 * a disjunction when the parent of the siblings is an "and") before and is not
-		 * a dualJunction afterwards.
+		 * Iterate through siblings until no sibling received a major change. We consider a change to be a major change
+		 * if a sibling was a dualJunction (e.g., a disjunction when the parent of the siblings is an "and") before and
+		 * is not a dualJunction afterwards.
 		 */
 		REPEAT_UNTIL_NO_MAJOR_CHANGE
 	}
