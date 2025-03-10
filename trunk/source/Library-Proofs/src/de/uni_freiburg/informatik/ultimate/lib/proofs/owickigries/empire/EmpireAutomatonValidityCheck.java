@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -61,6 +62,8 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 		if (checkAcceptingPlaces(successorValidity.getSecond()) != Validity.VALID) {
 			return Validity.INVALID;
 		}
+		final var pairs = successorValidity.getSecond().stream().map(s -> new Pair<>(s.territory(), s.law()))
+				.collect(Collectors.toSet());
 		return Validity.VALID;
 	}
 
@@ -80,11 +83,9 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 						territory, law, bystanders);
 				return Validity.INVALID;
 			}
-			if (!SmtUtils.isFalseLiteral(law.getFormula())) {
-				mLogger.warn(
-						"Initial State contains Law that does not evaluate to true:\\n\\tterritory: %s \\n\\tlaw: %s "
-								+ "\\n\\tbystanders: %s",
-						territory, law, bystanders);
+			if (!SmtUtils.isTrueLiteral(law.getFormula())) {
+				mLogger.warn("Initial State contains Law that does not evaluate to true:\n\tterritory: %s \n\tlaw: %s "
+						+ "\n\tbystanders: %s", territory, law, bystanders);
 				return Validity.INVALID;
 			}
 		}
@@ -130,7 +131,7 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 				}
 			}
 		}
-		return new Pair<>(Validity.INVALID, visitedStates);
+		return new Pair<>(Validity.VALID, visitedStates);
 	}
 
 	private Validity checkAcceptingPlaces(final Set<State<LETTER, PLACE>> states) {

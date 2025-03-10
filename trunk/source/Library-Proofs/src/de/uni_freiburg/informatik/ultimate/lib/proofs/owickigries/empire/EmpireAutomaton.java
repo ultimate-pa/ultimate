@@ -129,6 +129,10 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 		// step 2: compute the "direct" successor state for the given transition
 		final var directSucc = getReplacementSuccessor(state, letter);
+		final var succLaw = directSucc.law;
+		if (SmtUtils.isFalseLiteral(succLaw.getFormula())) {
+			return List.of();
+		}
 
 		// step 3: while the current successor is not marked, pick one (or a set of) transitions and compute the
 		// successor again
