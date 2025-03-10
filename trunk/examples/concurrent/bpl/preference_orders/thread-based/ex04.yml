@@ -12,26 +12,36 @@ properties:
 options:
   # The language in which the program is written.
   language: BPL
+  timeout: 90
 
   # Ultimate options.
   de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
     # The preference order that GemCutter should use.
     Complex preference order for POR:
-      operator: product
-      # The first preference order (used initially)
+      operator: sequential
       left:
-        builtin: loop_lockstep
-        iterations:
-          - [thread1Thread1of1ForFork0, 1]
-          - [thread3Thread1of1ForFork2, 2]
-      # The second preference order (used later)
+        builtin: checkpoint
+        checkpoints:
+          - "[90] L21-->$Ultimate##0:"
+          - "[70] $Ultimate##0-->L37-1:"
+          - "[76] $Ultimate##0-->L50-1:"
+          - "[82] $Ultimate##0-->L63-1:"
       right:
-        builtin: loop_lockstep
-        iterations:
-          - [thread2Thread1of1ForFork1, 1]
-          - [thread3Thread1of1ForFork2, 1]
-
-    Read initial proof assertions from file if available: false
-
-    Limit iterations: 30
+        operator: product
+        # Make sure the number of executions of thread 3 is twice the number of executions of thread 1
+        left:
+          builtin: loop_lockstep
+          iterations:
+            - [thread1Thread1of1ForFork0, 1]
+            - [thread3Thread1of1ForFork2, 2]
+        # Make sure the number of executions of thread 2 is equal to the number of executions of thread 1
+        right:
+          builtin: loop_lockstep
+          iterations:
+            - [thread2Thread1of1ForFork1, 1]
+            - [thread3Thread1of1ForFork2, 1]
+      switch_on:
+        - "[82] $Ultimate##0-->L63-1:"
+    Read initial proof assertions from file if available: true
+    Limit iterations: 25
 
