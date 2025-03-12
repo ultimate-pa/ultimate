@@ -35,9 +35,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Represents an additional conjunct (resp. disjunct) of a {@link Case} in a
- * {@link MultiCaseSolvedBinaryRelation}. The term that is represented by this
- * class must not contain the subject for which the binary relation is solved.
+ * Represents an additional conjunct (resp. disjunct) of a {@link Case} in a {@link MultiCaseSolvedBinaryRelation}. The
+ * term that is represented by this class must not contain the subject for which the binary relation is solved.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Leonard Fichtner (leonard.fichtner@web.de)
@@ -50,7 +49,6 @@ public class SupportingTerm implements ITermWrapper {
 
 	public SupportingTerm(final Term term, final IntricateOperation intricateOperation,
 			final Set<TermVariable> newAuxiliaryVariables) {
-		super();
 		Objects.requireNonNull(term);
 		mTerm = term;
 		mIntricateOperation = intricateOperation;
@@ -58,16 +56,15 @@ public class SupportingTerm implements ITermWrapper {
 	}
 
 	/**
-	 * @return The {@link IntricateOperation} that caused the introduction of
-	 *         this {@link SupportingTerm}.
+	 * @return The {@link IntricateOperation} that caused the introduction of this {@link SupportingTerm}.
 	 */
 	public IntricateOperation getIntricateOperation() {
 		return mIntricateOperation;
 	}
 
 	/**
-	 * @return Auxiliary variables that occur in this term and were introduced
-	 *         while solving a binary relation for a subject.
+	 * @return Auxiliary variables that occur in this term and were introduced while solving a binary relation for a
+	 *         subject.
 	 */
 	public Set<TermVariable> getNewAuxiliaryVariables() {
 		return mNewAuxiliaryVariables;
@@ -80,15 +77,15 @@ public class SupportingTerm implements ITermWrapper {
 
 	@Override
 	public String toString() {
-		String info = "[";
-		info = info + mTerm.toString();
-		info = info + ", " + mIntricateOperation.toString();
-		info = info + ", AuxVars: ";
+		final StringBuilder info = new StringBuilder("[");
+		info.append(mTerm.toString());
+		info.append(", ").append(mIntricateOperation.toString());
+		info.append(", AuxVars: ");
 		for (final TermVariable termVar : mNewAuxiliaryVariables) {
-			info = info + termVar.toString() + ", ";
+			info.append(termVar.toString()).append(", ");
 		}
-		info = info + "]";
-		return info;
+		info.append("]");
+		return info.toString();
 	}
 
 }

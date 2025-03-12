@@ -476,12 +476,12 @@ public class TransFormulaBuilder {
 			throw new IllegalArgumentException("different number of argument on LHS and RHS");
 		}
 		final Set<IProgramVar> rhsPvs = new HashSet<>();
-		for (int i = 0; i < rhs.size(); i++) {
-			final Set<ApplicationTerm> consts = SmtUtils.extractConstants(rhs.get(i), false);
+		for (final Term rh : rhs) {
+			final Set<ApplicationTerm> consts = SmtUtils.extractConstants(rh, false);
 			if (!consts.isEmpty()) {
 				throw new UnsupportedOperationException("constants not yet supported");
 			}
-			final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(rhs.get(i), mgdScript, symbolTable);
+			final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(rh, mgdScript, symbolTable);
 			rhsPvs.addAll(tvp.getVars());
 		}
 
@@ -737,7 +737,7 @@ public class TransFormulaBuilder {
 
 			final TermVariable newTv;
 			if (entry.getValue() == tf.getInVars().get(entry.getKey())) {
-				//inVar and outVar are similar
+				// inVar and outVar are similar
 				newTv = newInVars.get(newPv);
 			} else {
 				if (constructFreshVariables) {
@@ -752,8 +752,8 @@ public class TransFormulaBuilder {
 
 		final Set<TermVariable> newAuxVars = new HashSet<>();
 		for (final TermVariable auxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = script.constructFreshTermVariable("auxVar",
-					tt.getTransferrer().transferSort(auxVar.getSort()));
+			final TermVariable newAuxVar =
+					script.constructFreshTermVariable("auxVar", tt.getTransferrer().transferSort(auxVar.getSort()));
 			tt.getTransferrer().getTransferMapping().put(auxVar, newAuxVar);
 			newAuxVars.add(newAuxVar);
 		}

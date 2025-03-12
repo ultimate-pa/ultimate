@@ -148,8 +148,8 @@ public class StructHandler {
 			newValue = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cFieldType, bi);
 
 			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType,
-						fieldOwnerHlv));
+				unionFieldToCType.addAll(
+						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, fieldOwnerHlv));
 			}
 		} else if (fieldOwner.getLrValue() instanceof RValue) {
 			final RValue rVal = (RValue) fieldOwner.getLrValue();
@@ -163,8 +163,8 @@ public class StructHandler {
 			newValue = new LocalLValue(slhs, cFieldType, bi);
 
 			if (cStructType.isStructOrUnion() == StructOrUnion.UNION) {
-				unionFieldToCType.addAll(
-						computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, lVal));
+				unionFieldToCType
+						.addAll(computeNeighbourFieldsOfUnionField(loc, field, unionFieldToCType, cStructType, lVal));
 			}
 		}
 

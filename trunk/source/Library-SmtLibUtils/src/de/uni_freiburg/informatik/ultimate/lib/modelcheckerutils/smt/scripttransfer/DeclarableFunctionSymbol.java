@@ -137,8 +137,8 @@ public final class DeclarableFunctionSymbol implements ISmtDeclarable {
 
 			final QuantifiedFormula term = (QuantifiedFormula) TermParseUtils.parseTerm(script, sb.toString());
 			bodyTerm = term.getSubformula();
-			assert UltimateNormalFormUtils
-					.respectsUltimateNormalForm(bodyTerm) : "SMT function body not in Ultimate normal form";
+			assert UltimateNormalFormUtils.respectsUltimateNormalForm(bodyTerm)
+					: "SMT function body not in Ultimate normal form";
 		}
 		return new DeclarableFunctionSymbol(smtFunName, paramIds, paramSorts, resultSort, bodyTerm);
 	}
@@ -218,7 +218,7 @@ public final class DeclarableFunctionSymbol implements ISmtDeclarable {
 
 	@Override
 	public String toString() {
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder sb = new StringBuilder();
 		final String name = PrintTerm.quoteIdentifier(mId);
 		sb.append('(').append(name);
 		for (final Sort s : mParamSorts) {

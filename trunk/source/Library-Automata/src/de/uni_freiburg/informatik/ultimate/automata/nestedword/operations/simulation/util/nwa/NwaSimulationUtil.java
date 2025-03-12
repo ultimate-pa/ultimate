@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Provides utility methods for simulation with NWA automata.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -73,7 +73,7 @@ public final class NwaSimulationUtil {
 	 * Checks if the simulation results saved in the given game graph are correct.<br>
 	 * This is only a semi-check, i.e., if it returns {@code false}, there is a violation. For instance, we ignore
 	 * return transitions.
-	 * 
+	 *
 	 * @param gameGraph
 	 *            Game graph where the simulation results are saved in
 	 * @param nwa
@@ -91,8 +91,9 @@ public final class NwaSimulationUtil {
 	 * @return {@code false} only if the simulation results are not correct (however, {@code true} has no meaning)
 	 */
 	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final SimulationOrMinimizationType simulationType,
-			final BiPredicate<STATE, STATE> isInitialPairPredicate, final ILogger logger) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa,
+			final SimulationOrMinimizationType simulationType, final BiPredicate<STATE, STATE> isInitialPairPredicate,
+			final ILogger logger) {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");
 		}
@@ -211,7 +212,7 @@ public final class NwaSimulationUtil {
 	 * non-simulating vertices also to non-simulating vertices. In the case of Duplicator vertices this only happens if
 	 * they have no other simulating successors. The simulation allows propagation over return, summarize and internal
 	 * edges, but disallows it over call edges.
-	 * 
+	 *
 	 * @param <LETTER>
 	 *            Letter class of nwa automaton
 	 * @param <STATE>
@@ -327,7 +328,7 @@ public final class NwaSimulationUtil {
 	 * Retrieves general performance data of the input and output nwa automaton. Saves the data in the given internal
 	 * performance object. Only nwa specific information are saved, thus it can be used together with the more general
 	 * version of {@link ASimulation}.
-	 * 
+	 *
 	 * @param simulationPerformance
 	 *            Performance object to save the data in
 	 * @param input
@@ -393,7 +394,7 @@ public final class NwaSimulationUtil {
 
 	/**
 	 * Predicate representing a binary relation that is backed by a partition.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <STATE>
 	 *            state type

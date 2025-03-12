@@ -73,7 +73,7 @@ public class OctagonTransformer extends NonRecursive {
 	private final HashSet<Term> mAdditionalTerms;
 	private final FastUPRUtils mUtils;
 
-	public OctagonTransformer(FastUPRUtils utils, Script script, OctagonDetector detector) {
+	public OctagonTransformer(final FastUPRUtils utils, final Script script, final OctagonDetector detector) {
 		mOctagonDetector = detector;
 		mUtils = utils;
 		mCheckedTerms = new HashSet<>();
@@ -88,22 +88,22 @@ public class OctagonTransformer extends NonRecursive {
 		private final InequalitySide mSide;
 		private final boolean mNegate;
 
-		OctagonTermWalker(Term t, InequalitySide side) {
+		OctagonTermWalker(final Term t, final InequalitySide side) {
 			this(t, side, false);
 		}
 
-		OctagonTermWalker(Term t, InequalitySide side, boolean negate) {
+		OctagonTermWalker(final Term t, final InequalitySide side, final boolean negate) {
 			mTerm = t;
 			mSide = side;
 			mNegate = negate;
 		}
 
-		OctagonTermWalker(Term t, boolean b) {
+		OctagonTermWalker(final Term t, final boolean b) {
 			this(t, InequalitySide.NONE, b);
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			if (mSide == InequalitySide.NONE) {
 				((OctagonTransformer) engine).transformTerm(mTerm, mNegate);
 			} else {
@@ -113,11 +113,11 @@ public class OctagonTransformer extends NonRecursive {
 
 	}
 
-	public OctConjunction transform(Term term) {
+	public OctConjunction transform(final Term term) {
 		return transform(mOctagonDetector.getConjunctSubTerms(term));
 	}
 
-	public OctConjunction transform(Set<Term> terms) {
+	public OctConjunction transform(final Set<Term> terms) {
 		mCheckedTerms.clear();
 		mAdditionalTerms.clear();
 		mUtils.debug("Starting Term to OctagonTransformation");
@@ -129,8 +129,9 @@ public class OctagonTransformer extends NonRecursive {
 			resetTerm();
 			run(new OctagonTermWalker(t, InequalitySide.NONE));
 
-			if (mType == InequalityType.LESSER)
+			if (mType == InequalityType.LESSER) {
 				mValue = mValue.subtract(new BigDecimal(1));
+			}
 			mUtils.debug("Value is:" + mValue.toString());
 
 			if (mFirstVar == null) {
@@ -171,7 +172,7 @@ public class OctagonTransformer extends NonRecursive {
 		return octagon;
 	}
 
-	public ParametricOctMatrix getMatrix(OctConjunction conjunc, List<TermVariable> variables) {
+	public ParametricOctMatrix getMatrix(final OctConjunction conjunc, final List<TermVariable> variables) {
 		mUtils.debug(">> Converting OctagonConjunction to Matrix");
 		mUtils.debug("> Conjunction: " + conjunc.toString());
 		final List<OctTerm> terms = conjunc.getTerms();
@@ -201,7 +202,7 @@ public class OctagonTransformer extends NonRecursive {
 		return result;
 	}
 
-	private void addValue(ConstantTerm t, boolean negate) {
+	private void addValue(final ConstantTerm t, final boolean negate) {
 		BigDecimal value = BigDecimal.ZERO;
 		if (t.getValue() instanceof Rational) {
 			if (((Rational) t.getValue()).denominator().equals(BigInteger.ONE)) {
@@ -218,7 +219,7 @@ public class OctagonTransformer extends NonRecursive {
 		mValue = mValue.add(value);
 	}
 
-	private void addVariable(TermVariable var, boolean negative) {
+	private void addVariable(final TermVariable var, final boolean negative) {
 		if (mFirstVar == null) {
 			mFirstVar = var;
 			mFirstNegative = negative;
@@ -238,7 +239,7 @@ public class OctagonTransformer extends NonRecursive {
 		mValue = new BigDecimal(0);
 	}
 
-	private void transformTerm(Term t, boolean negate) {
+	private void transformTerm(final Term t, final boolean negate) {
 
 		mUtils.debug("> Walking over neutral Term: " + (negate ? "not: " : (" " + t.toString())));
 
@@ -287,8 +288,8 @@ public class OctagonTransformer extends NonRecursive {
 							appTerm.getParameters()[0]);
 					mType = InequalityType.LESSER_EQUAL;
 				} else {
-					appTerm = (ApplicationTerm) mScript.term("<", appTerm.getParameters()[1],
-							appTerm.getParameters()[0]);
+					appTerm =
+							(ApplicationTerm) mScript.term("<", appTerm.getParameters()[1], appTerm.getParameters()[0]);
 					mType = InequalityType.LESSER;
 				}
 			}
@@ -299,17 +300,13 @@ public class OctagonTransformer extends NonRecursive {
 			enqueueWalker(new OctagonTermWalker(leftSide, InequalitySide.LEFT));
 			enqueueWalker(new OctagonTermWalker(rightSide, InequalitySide.RIGHT));
 
-			return;
-
 		} else if (t instanceof AnnotatedTerm) {
 			enqueueWalker(new OctagonTermWalker(((AnnotatedTerm) t).getSubterm(), InequalitySide.NONE));
-
-			return;
 
 		}
 	}
 
-	private void transformTermSide(Term t, InequalitySide side, boolean negate) {
+	private void transformTermSide(final Term t, final InequalitySide side, final boolean negate) {
 
 		mUtils.debug("> Walking over " + side + " Term: " + t.toString());
 		mUtils.debug("Type: " + t.getClass().toString());
@@ -338,8 +335,6 @@ public class OctagonTransformer extends NonRecursive {
 				// WHAT NOW - SHOULD NOT HAPPEN M8
 			}
 
-			return;
-
 		} else if (t instanceof TermVariable) {
 
 			mUtils.debug(">> Variable");
@@ -349,8 +344,6 @@ public class OctagonTransformer extends NonRecursive {
 			} else {
 				addVariable((TermVariable) t, !negate);
 			}
-
-			return;
 
 		} else if (t instanceof ConstantTerm) {
 
@@ -362,11 +355,8 @@ public class OctagonTransformer extends NonRecursive {
 				addValue((ConstantTerm) t, !negate);
 			}
 
-			return;
-
 		} else if (t instanceof AnnotatedTerm) {
 			enqueueWalker(new OctagonTermWalker(((AnnotatedTerm) t).getSubterm(), side));
-			return;
 		}
 	}
 

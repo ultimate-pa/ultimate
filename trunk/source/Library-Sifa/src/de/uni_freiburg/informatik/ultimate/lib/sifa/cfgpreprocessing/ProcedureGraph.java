@@ -37,11 +37,10 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.GenericLabeledGra
 /**
  * Graph representing a procedure with exactly one exit location and arbitrary many locations of interest.
  * <p>
- * The nodes of this graph are just labels which happen to be nodes from another graph structure (ICFG).
- * That other graph structure is unrelated to this graph.
- * This graph can only be modified via this class. Do <b>not</b> try to modify this graph by calling
- * methods of the nodes; those have no knowledge of this graph structure.
- * Likewise the edge labels happen to be edges them self but are not related to this graph structure.
+ * The nodes of this graph are just labels which happen to be nodes from another graph structure (ICFG). That other
+ * graph structure is unrelated to this graph. This graph can only be modified via this class. Do <b>not</b> try to
+ * modify this graph by calling methods of the nodes; those have no knowledge of this graph structure. Likewise the edge
+ * labels happen to be edges them self but are not related to this graph structure.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -51,10 +50,13 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 	private final Optional<IcfgLocation> mExitNode;
 
 	/**
-	 * Constructs the base for a new procedure graph. This graph starts only with some disconnected nodes.
-	 * use {@link #addEdge(IcfgLocation, IIcfgTransition, IcfgLocation)} to add edges and more nodes.
-	 * @param entryNode Entry node of the procedure from inside the icfg
-	 * @param exitNode Exit node of the procedure from inside the icfg
+	 * Constructs the base for a new procedure graph. This graph starts only with some disconnected nodes. use
+	 * {@link #addEdge(IcfgLocation, IIcfgTransition, IcfgLocation)} to add edges and more nodes.
+	 *
+	 * @param entryNode
+	 *            Entry node of the procedure from inside the icfg
+	 * @param exitNode
+	 *            Exit node of the procedure from inside the icfg
 	 */
 	public ProcedureGraph(final IcfgLocation entryNode, final IcfgLocation exitNode) {
 		mEntryNode = Objects.requireNonNull(entryNode);
@@ -64,10 +66,13 @@ public class ProcedureGraph extends GenericLabeledGraph<IcfgLocation, IIcfgTrans
 	}
 
 	/**
-	 * Constructs the base for a new procedure graph. This is <b>not</b> the final procedure graph
-	 * for the given function. Use {@link ProcedureGraphBuilder} to construct a full graph.
-	 * @param icfg An interprocedural control flow graph
-	 * @param procedureName An implemented procedure from the ICFG for which a procedure graph will be constructed
+	 * Constructs the base for a new procedure graph. This is <b>not</b> the final procedure graph for the given
+	 * function. Use {@link ProcedureGraphBuilder} to construct a full graph.
+	 *
+	 * @param icfg
+	 *            An interprocedural control flow graph
+	 * @param procedureName
+	 *            An implemented procedure from the ICFG for which a procedure graph will be constructed
 	 */
 	public ProcedureGraph(final IIcfg<IcfgLocation> icfg, final String procedureName) {
 		this(icfg.getProcedureEntryNodes().get(procedureName), icfg.getProcedureExitNodes().get(procedureName));

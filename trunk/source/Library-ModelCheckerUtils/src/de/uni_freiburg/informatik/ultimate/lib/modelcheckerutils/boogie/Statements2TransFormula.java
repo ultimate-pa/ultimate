@@ -433,7 +433,7 @@ public class Statements2TransFormula {
 
 		final String calledProcedure = call.getMethodName();
 
-		final IIdentifierTranslator[] ensIts = new IIdentifierTranslator[] { new SubstitutionTranslatorId(substitution),
+		final IIdentifierTranslator[] ensIts = { new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(ensuresSubstitution),
 				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false), mConstOnlyIdentifierTranslator };
 
@@ -455,7 +455,7 @@ public class Statements2TransFormula {
 			}
 		}
 
-		final IIdentifierTranslator[] reqIts = new IIdentifierTranslator[] { new SubstitutionTranslatorId(substitution),
+		final IIdentifierTranslator[] reqIts = { new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(requiresSubstitution),
 				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false), mConstOnlyIdentifierTranslator };
 
@@ -624,7 +624,7 @@ public class Statements2TransFormula {
 
 	}
 
-	private class SubstitutionTranslatorId implements IIdentifierTranslator {
+	private static class SubstitutionTranslatorId implements IIdentifierTranslator {
 		private final Map<String, Term> mSubstitution;
 
 		public SubstitutionTranslatorId(final Map<String, Term> substitution) {

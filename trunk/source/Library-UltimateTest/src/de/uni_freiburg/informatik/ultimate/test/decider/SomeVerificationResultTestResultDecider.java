@@ -48,9 +48,8 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * The {@link SomeVerificationResultTestResultDecider} considers a run a
- * Success if some verification result was provided.
- * Expected results of files are not considered.
+ * The {@link SomeVerificationResultTestResultDecider} considers a run a Success if some verification result was
+ * provided. Expected results of files are not considered.
  *
  * If the test is a success, the message will contain all result short descriptions except the ones of
  * {@link StatisticsResult}s.
@@ -113,7 +112,8 @@ public class SomeVerificationResultTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		setResultCategory("Unexpected exception");
 		setResultMessage("Unexpected exception: " + e.getMessage());
-		TestUtil.logResults(SomeVerificationResultTestResultDecider.class, mInputFileNames, true, new ArrayList<String>(), services);
+		TestUtil.logResults(SomeVerificationResultTestResultDecider.class, mInputFileNames, true, new ArrayList<>(),
+				services);
 		return TestResult.FAIL;
 	}
 

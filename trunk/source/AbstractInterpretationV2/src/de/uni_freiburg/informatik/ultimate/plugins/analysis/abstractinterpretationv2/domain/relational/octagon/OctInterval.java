@@ -33,34 +33,33 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 
 /**
- * Interval representation used inside the octagon abstract domain.
- * The intervals have nothing to do with octagons.
+ * Interval representation used inside the octagon abstract domain. The intervals have nothing to do with octagons.
  * <p>
- * All interval bounds are inclusive.
- * Unbounded intervals can be represented using the special value {@link OctValue#INFINITY} ({@code \inf}).
- * There is no constant for {@code -\inf}, therefore a lower bound of {@code \inf} represents {@code -\inf}.
- * Empty intervals have have a lower bound that is strictly greater than the upper bound.
- * There is no unique representation for the empty interval.
- * 
+ * All interval bounds are inclusive. Unbounded intervals can be represented using the special value
+ * {@link OctValue#INFINITY} ({@code \inf}). There is no constant for {@code -\inf}, therefore a lower bound of
+ * {@code \inf} represents {@code -\inf}. Empty intervals have have a lower bound that is strictly greater than the
+ * upper bound. There is no unique representation for the empty interval.
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctInterval {
 
 	/**
-	 * Lower bound (inclusive) of this interval.
-	 * A lower bound of {@link OctValue#INFINITY} represents the lower bound {@code -\inf}.
+	 * Lower bound (inclusive) of this interval. A lower bound of {@link OctValue#INFINITY} represents the lower bound
+	 * {@code -\inf}.
 	 */
 	private final OctValue mMin;
-	
+
 	/**
-	 * Upper bound (inclusive) of this interval. 
+	 * Upper bound (inclusive) of this interval.
 	 */
 	private final OctValue mMax;
 
 	/**
 	 * Creates a new interval from the given {@link IntervalDomainValue}.
-	 * 
-	 * @param ivlInterval Interval to be represented.
+	 *
+	 * @param ivlInterval
+	 *            Interval to be represented.
 	 */
 	public OctInterval(final IntervalDomainValue ivlInterval) {
 		if (ivlInterval.isBottom()) {
@@ -74,9 +73,11 @@ public class OctInterval {
 
 	/**
 	 * Creates a new interval from the given bounds.
-	 * 
-	 * @param min Lower bound (inclusive). {@link OctValue#INFINITY} represents {@code -\inf}.
-	 * @param max Upper bound (inclusive).
+	 *
+	 * @param min
+	 *            Lower bound (inclusive). {@link OctValue#INFINITY} represents {@code -\inf}.
+	 * @param max
+	 *            Upper bound (inclusive).
 	 */
 	public OctInterval(final OctValue min, final OctValue max) {
 		mMin = min;
@@ -85,11 +86,11 @@ public class OctInterval {
 
 	/**
 	 * Creates the interval of allowed values for one variable from an octagon matrix.
-	 * 
-	 * @param octMat Octagon matrix
+	 *
+	 * @param octMat
+	 *            Octagon matrix
 	 * @param varIdx
-	 *            Index of the variable in the octagon matrix.
-	 *            Index i corresponds to columns/rows 2i and 2i+1.
+	 *            Index of the variable in the octagon matrix. Index i corresponds to columns/rows 2i and 2i+1.
 	 * @return Interval constraint for the given variable from the octagon
 	 */
 	public static OctInterval fromMatrix(final OctMatrix octMat, final int varIdx) {
@@ -99,15 +100,15 @@ public class OctInterval {
 	}
 
 	/**
-	 * Creates the interval of allowed results an expression of the form (±var1) - (±var2)
-	 * can assume in an octagon matrix. The actual interval of results can be smaller than
-	 * the interval returned by this method. Compute the closure of the octagon to get a
-	 * minimal interval.
-	 * 
-	 * @param octMat Octagon matrix
+	 * Creates the interval of allowed results an expression of the form (±var1) - (±var2) can assume in an octagon
+	 * matrix. The actual interval of results can be smaller than the interval returned by this method. Compute the
+	 * closure of the octagon to get a minimal interval.
+	 *
+	 * @param octMat
+	 *            Octagon matrix
 	 * @param varIdx
-	 *            Index of the variable in the octagon matrix.
-	 *            Index i corresponds to a positive variable i/2 when even and to a negative variable floor(i/2) when odd.
+	 *            Index of the variable in the octagon matrix. Index i corresponds to a positive variable i/2 when even
+	 *            and to a negative variable floor(i/2) when odd.
 	 * @return Interval constraint for the expression
 	 */
 	public static OctInterval fromMatrix(final OctMatrix octMat, final int var1Idx, final int var2Idx) {
@@ -121,7 +122,7 @@ public class OctInterval {
 
 	/**
 	 * Convert this interval to an {@link IntervalDomainValue}.
-	 * 
+	 *
 	 * @return Converted interval
 	 */
 	public IntervalDomainValue toIvlInterval() {
@@ -140,7 +141,7 @@ public class OctInterval {
 	public OctValue getMax() {
 		return mMax;
 	}
-	
+
 	/** @return This interval contains no values. */
 	public boolean isBottom() {
 		if (mMin.isInfinity()) { // [-inf, inf] is represeted as [inf, inf]
@@ -148,7 +149,7 @@ public class OctInterval {
 		}
 		return mMin.compareTo(mMax) > 0;
 	}
-	
+
 	/** @return This interval contains all values (that is, the interval has no bounds). */
 	public boolean isTop() {
 		return mMin.isInfinity() && mMax.isInfinity();
@@ -157,17 +158,18 @@ public class OctInterval {
 	/**
 	 * Evaluates an expression of the form <i>x R c</i> with
 	 * <ul>
-	 *   <li>variable x ∈ this interval
-	 *   <li>relation R from {@link RelationSymbol} (for instance =, ≤; ...)
-	 *   <li>constant c
+	 * <li>variable x ∈ this interval
+	 * <li>relation R from {@link RelationSymbol} (for instance =, ≤; ...)
+	 * <li>constant c
 	 * </ul>
-	 * 
-	 * @param rel relation
-	 * @param rightHandSide constant on the right hand side of the relation symbol
-
-	 * @return {@link EvalResult#TRUE} iff interval empty or ∀ x ∈ this interval : x R c,
-	 *         {@link EvalResult#FALSE} iff interval not empty and ∀ x ∈ this interval : ¬(x R c),
-	 *         {@link EvalResult#UNKNOWN} otherwise.
+	 *
+	 * @param rel
+	 *            relation
+	 * @param rightHandSide
+	 *            constant on the right hand side of the relation symbol
+	 *
+	 * @return {@link EvalResult#TRUE} iff interval empty or ∀ x ∈ this interval : x R c, {@link EvalResult#FALSE} iff
+	 *         interval not empty and ∀ x ∈ this interval : ¬(x R c), {@link EvalResult#UNKNOWN} otherwise.
 	 */
 	public EvalResult evaluate(final RelationSymbol rel, final Rational c) {
 		if (isBottom()) {
@@ -175,7 +177,7 @@ public class OctInterval {
 		}
 		final Rational lower = mMin.isInfinity() ? Rational.NEGATIVE_INFINITY : mMin.toRational();
 		final Rational upper = mMax.toRational();
-		switch(rel) {
+		switch (rel) {
 		case DISTINCT:
 			return EvalResult.selectTF(lower.compareTo(c) > 0 || upper.compareTo(c) < 0,
 					lower.compareTo(c) == 0 && upper.compareTo(c) == 0);
@@ -194,7 +196,7 @@ public class OctInterval {
 			return EvalResult.UNKNOWN;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder strBuilder = new StringBuilder();

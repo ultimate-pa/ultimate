@@ -32,9 +32,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
- * Terms with greater treesize are considered smaller according to this
- * {@link Comparator}. Uses another comparator if both terms have the
- * same treesize (order has to be total).
+ * Terms with greater treesize are considered smaller according to this {@link Comparator}. Uses another comparator if
+ * both terms have the same treesize (order has to be total).
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -44,11 +43,10 @@ public class TreeSizeComperator implements Comparator<Term> {
 	final Comparator<Term> mTieBreaker;
 
 	/**
-	 * @param tieBreaker Additonal comparator that we use if both terms have the
-	 *                   same treesize.
+	 * @param tieBreaker
+	 *            Additonal comparator that we use if both terms have the same treesize.
 	 */
-	public TreeSizeComperator(Comparator<Term> tieBreaker) {
-		super();
+	public TreeSizeComperator(final Comparator<Term> tieBreaker) {
 		mTieBreaker = tieBreaker;
 	}
 

@@ -30,21 +30,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Classes that implement this interface represent an {@link IAction} that
- * defines the effect that a procedure call has to the (non-control-flow)
- * variables of the system. In our terminology, a procedure call is the
- * transition that brings the system from the calling procedure to the called
- * procedure. This means that the effect of the of a procedure call is that all
- * input variables of the calling procedure are assigned and all local variables
- * of the calling procedure are havoced.
+ * Classes that implement this interface represent an {@link IAction} that defines the effect that a procedure call has
+ * to the (non-control-flow) variables of the system. In our terminology, a procedure call is the transition that brings
+ * the system from the calling procedure to the called procedure. This means that the effect of the of a procedure call
+ * is that all input variables of the calling procedure are assigned and all local variables of the calling procedure
+ * are havoced.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public interface ICallAction extends IAction {
 	/**
-	 * @return {@link TransFormula} which defines how the local variables of the
-	 *         called procedure are modified while executing this action.
+	 * @return {@link TransFormula} which defines how the local variables of the called procedure are modified while
+	 *         executing this action.
 	 */
 	UnmodifiableTransFormula getLocalVarsAssignment();
 

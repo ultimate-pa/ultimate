@@ -409,8 +409,8 @@ public class IcfgUtils {
 				} else if ((stackIndex = dfs.stackIndexOf(succ)) != -1) {
 					// If the edge leads back to the stack, reachability is unknown until succ (or an even earlier loop
 					// head) is backtracked. To avoid infinite looping, we do not explore succ.
-					assert getCachedResult
-							.apply(succ) == LBool.UNKNOWN : "Loop heads on stack must have UNKNOWN status";
+					assert getCachedResult.apply(succ) == LBool.UNKNOWN
+							: "Loop heads on stack must have UNKNOWN status";
 					canReach = LBool.UNKNOWN;
 					dfs.updateLoopHead(currentLoc, new Pair<>(stackIndex, succ));
 				} else {

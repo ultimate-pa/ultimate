@@ -33,12 +33,13 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
  */
 public class NonMemoryArrayStore extends PointerBase {
 
-	public enum ArrayOrStruct { ARRAY, STRUCT };
+	public enum ArrayOrStruct {
+		ARRAY, STRUCT
+	}
 
 	private final ArrayOrStruct mArrayOrStruct;
 
 	public NonMemoryArrayStore(final ArrayOrStruct arrayOrStruct) {
-		super();
 		mArrayOrStruct = arrayOrStruct;
 	}
 
@@ -46,7 +47,5 @@ public class NonMemoryArrayStore extends PointerBase {
 	public String toString() {
 		return String.valueOf(mArrayOrStruct);
 	}
-
-
 
 }

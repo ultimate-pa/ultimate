@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -885,18 +884,14 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		final Set<IProgramVarOrConst> toRemove = new HashSet<>();
-		final Iterator<Entry<IProgramVarOrConst, V>> valueIter = getVar2ValueNonrelational().entrySet().iterator();
-		while (valueIter.hasNext()) {
-			final Entry<IProgramVarOrConst, V> current = valueIter.next();
+		for (final Entry<IProgramVarOrConst, V> current : getVar2ValueNonrelational().entrySet()) {
 			if (!current.getValue().isTop()) {
 				continue;
 			}
 			toRemove.add(current.getKey());
 		}
 
-		final Iterator<Entry<IProgramVarOrConst, BooleanValue>> boolIter = getVar2ValueBoolean().entrySet().iterator();
-		while (boolIter.hasNext()) {
-			final Entry<IProgramVarOrConst, BooleanValue> current = boolIter.next();
+		for (final Entry<IProgramVarOrConst, BooleanValue> current : getVar2ValueBoolean().entrySet()) {
 			if (current.getValue() != BooleanValue.TOP) {
 				continue;
 			}

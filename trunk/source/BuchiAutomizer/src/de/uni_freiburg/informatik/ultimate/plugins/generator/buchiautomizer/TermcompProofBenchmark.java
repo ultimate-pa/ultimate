@@ -108,7 +108,7 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 
 	@Override
 	public ICsvProvider<Double> createCsvProvider() {
-		final ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<String>());
+		final ICsvProvider<Double> rtr = new SimpleCsvProvider<>(new ArrayList<>());
 
 		return rtr;
 	}

@@ -42,50 +42,51 @@ public class Guard {
 	private Integer mConstant;
 	private RelationSymbol mRelationSymbol;
 	private TermType mTermType;
-	
-	public Guard()
-	{}
-	
-	public Guard(Counter c1, Counter c2, Integer constant, RelationSymbol relation, TermType term) {
+
+	public Guard() {
+	}
+
+	public Guard(final Counter c1, final Counter c2, final Integer constant, final RelationSymbol relation,
+			final TermType term) {
 		mCounterLeft = c1;
 		mCounterRight = c2;
 		mConstant = constant;
 		mRelationSymbol = relation;
 		mTermType = term;
 	}
-	
+
 	public Counter getCounterLeft() {
 		return mCounterLeft;
 	}
-	
+
 	public Counter getCounterRight() {
 		return mCounterRight;
 	}
-	
+
 	public Integer getConstant() {
 		return mConstant;
 	}
-	
+
 	public RelationSymbol getRelationSymbol() {
 		return mRelationSymbol;
 	}
-	
+
 	public TermType getTermType() {
 		return mTermType;
 	}
-	
-	public void changeConstant(Integer newConstant) {
+
+	public void changeConstant(final Integer newConstant) {
 		mConstant = newConstant;
 	}
-	
-	public void changeRelationType(RelationSymbol newRelationSymbol) {
+
+	public void changeRelationType(final RelationSymbol newRelationSymbol) {
 		mRelationSymbol = newRelationSymbol;
 	}
-	
-	public void changeTermType(TermType newTermType) {
+
+	public void changeTermType(final TermType newTermType) {
 		mTermType = newTermType;
 	}
-	
+
 	public Guard copyGuard() {
 		Counter copyC1 = null;
 		Counter copyC2 = null;
@@ -95,7 +96,7 @@ public class Guard {
 		if (mCounterRight != null) {
 			copyC2 = mCounterLeft.copyCounter();
 		}
-		Guard copy = new Guard(copyC1, copyC2, mConstant, mRelationSymbol, mTermType);
+		final Guard copy = new Guard(copyC1, copyC2, mConstant, mRelationSymbol, mTermType);
 		return copy;
 	}
 }

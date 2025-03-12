@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 
 /**
  * Determinizes a nested word automaton.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -58,7 +58,7 @@ public final class Determinize<LETTER, STATE>
 
 	/**
 	 * Default constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -69,13 +69,14 @@ public final class Determinize<LETTER, STATE>
 	 *             if timeout exceeds
 	 */
 	public Determinize(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null);
 	}
 
 	/**
 	 * Constructor with predefined initial states.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -97,10 +98,10 @@ public final class Determinize<LETTER, STATE>
 			mLogger.info(startMessage());
 		}
 
-		final DeterminizeNwa<LETTER, STATE> determinized = predefinedInitials == null
-				? new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory)
-				: new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory, predefinedInitials,
-						false);
+		final DeterminizeNwa<LETTER, STATE> determinized =
+				predefinedInitials == null ? new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory)
+						: new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory,
+								predefinedInitials, false);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, determinized);
 
 		if (mLogger.isInfoEnabled()) {
@@ -128,7 +129,7 @@ public final class Determinize<LETTER, STATE>
 		boolean correct = true;
 		/*
 		 * TODO Christian 2016-09-18: mStateDeterminizer is always a PowersetDeterminizer. Was it intended to let the
-		 *                            user decide?
+		 * user decide?
 		 */
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			if (mLogger.isInfoEnabled()) {

@@ -28,16 +28,14 @@ package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.Collection;
 
-
 /**
- * Classes that implement this interface define a type of benchmark that is a
- * key-value store. These classes define the following.
+ * Classes that implement this interface define a type of benchmark that is a key-value store. These classes define the
+ * following.
  * <ul>
- * <li> the allowed keys
- * <li> how several benchmark objects can be aggregated into one. Therefore
- * classes that implement this interface define how values of several objects
- * have to be aggregated (e.g. taking the sum, or taking the maximum)
- * <li> how benchmark data can be prettyprinted
+ * <li>the allowed keys
+ * <li>how several benchmark objects can be aggregated into one. Therefore classes that implement this interface define
+ * how values of several objects have to be aggregated (e.g. taking the sum, or taking the maximum)
+ * <li>how benchmark data can be prettyprinted
  * </ul>
  *
  * @author Matthias Heizmann

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * mergeable.
  * <p>
  * TODO: Extend this to returns by providing a partition of DoubleDeckers.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -83,16 +83,15 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	private final List<Pair<STATE, STATE>> mPairs;
 
 	/*
-	 * used to split states in a block if they have different successors even if they are nondeterministic
-	 * <p>
-	 * TODO This should be replaced by providing a set of pairs instead of a partition; this would fix problems for
-	 * simulation that require this hack.
+	 * used to split states in a block if they have different successors even if they are nondeterministic <p> TODO This
+	 * should be replaced by providing a set of pairs instead of a partition; this would fix problems for simulation
+	 * that require this hack.
 	 */
 	private final boolean mUseSimulationHack;
 
 	/**
 	 * Constructor with more options.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -108,7 +107,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 
 	/**
 	 * Full constructor with initial partition.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -243,7 +242,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 * <p>
 	 * The method loops as long as a change has been detected. This roughly corresponds to lookahead of arbitrary depth.
 	 * This can be controlled with a static flag.
-	 * 
+	 *
 	 * @param inputPartition
 	 *            old partition
 	 * @return new partition
@@ -263,11 +262,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		while (hasChanged) {
 			hasChanged = false;
 
-			final Set<Set<STATE>> newPartition = new LinkedHashSet<>(partition.size());
-			for (final Set<STATE> block : partition) {
-				newPartition.add(block);
-			}
-
+			final Set<Set<STATE>> newPartition = new LinkedHashSet<>(partition);
 			for (final Set<STATE> block : partition) {
 				assert !block.isEmpty() : "Blocks should be non-empty.";
 				final STATE firstState = block.iterator().next();
@@ -361,9 +356,9 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	}
 
 	private Collection<STATE> getSuccessors(final LETTER letter, final STATE state, final boolean isInternal) {
-		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> it = isInternal
-				? mOperand.internalSuccessors(state, letter).iterator()
-				: mOperand.callSuccessors(state, letter).iterator();
+		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> it =
+				isInternal ? mOperand.internalSuccessors(state, letter).iterator()
+						: mOperand.callSuccessors(state, letter).iterator();
 		assert it.hasNext() : "There should be at least one outgoing transition.";
 		final IOutgoingTransitionlet<LETTER, STATE> trans = it.next();
 		if (it.hasNext()) {
@@ -408,8 +403,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 				final boolean wasPresent = states.remove(state);
 				if (!wasPresent) {
 					/*
-					 * duplicate state in partition 2 or different states in
-					 * two partitions
+					 * duplicate state in partition 2 or different states in two partitions
 					 */
 					return false;
 				}
@@ -439,7 +433,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 
 	/**
 	 * Outgoing internal and call symbols container.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <LETTER>
 	 *            letter type
@@ -495,7 +489,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 
 	/**
 	 * Wraps the two possible results, namely a partition and a list of pairs.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 * @param <STATE>
 	 *            state type
@@ -507,7 +501,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param partition
 		 *            partition
 		 * @param pairs

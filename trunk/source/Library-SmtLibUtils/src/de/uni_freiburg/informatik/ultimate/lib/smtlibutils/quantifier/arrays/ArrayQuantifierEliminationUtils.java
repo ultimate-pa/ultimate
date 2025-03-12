@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Provides auxiliary methods for our partitial quantifier elimination for arrays.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -56,6 +57,5 @@ public class ArrayQuantifierEliminationUtils {
 		}
 		return ite;
 	}
-
 
 }

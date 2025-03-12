@@ -134,7 +134,6 @@ public abstract class TransFormula implements ITransitionRelation {
 
 	public TransFormula(final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
 			final Set<TermVariable> auxVars, final Set<IProgramConst> nonTheoryConsts) {
-		super();
 		mInVars = inVars;
 		mOutVars = outVars;
 		mAuxVars = auxVars;
@@ -184,8 +183,7 @@ public abstract class TransFormula implements ITransitionRelation {
 	}
 
 	public static Set<IProgramVar> collectAllProgramVars(final TransFormula tf) {
-		final Set<IProgramVar> allProgramVars = new HashSet<>();
-		allProgramVars.addAll(tf.getInVars().keySet());
+		final Set<IProgramVar> allProgramVars = new HashSet<>(tf.getInVars().keySet());
 		allProgramVars.addAll(tf.getOutVars().keySet());
 		return allProgramVars;
 	}

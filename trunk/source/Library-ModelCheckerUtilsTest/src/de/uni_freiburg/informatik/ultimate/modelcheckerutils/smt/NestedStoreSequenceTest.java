@@ -85,7 +85,8 @@ public class NestedStoreSequenceTest {
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;
-		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 		mLogger.info(result);
 
 		final String expectedResultAsString = "(= (_ bv5 8) val)";
@@ -111,7 +112,8 @@ public class NestedStoreSequenceTest {
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;
-		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 
 		final String expectedResultAsString =
 				"(and (=> (= idx1 idx2) (= (_ bv0 8) val)) (=> (distinct idx1 idx2) (= (_ bv5 8) val)))";
@@ -143,7 +145,8 @@ public class NestedStoreSequenceTest {
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;
-		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 
 		final String expectedResultAsString =
 				"(and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val)))";
@@ -175,7 +178,8 @@ public class NestedStoreSequenceTest {
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;
-		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 
 		final String expectedResultAsString =
 				"(not (and (=> (and (= idx1 idx2) (distinct idx1 idx3)) (= (_ bv0 8) val)) (=> (and (distinct idx1 idx2) (distinct idx1 idx3)) (= (_ bv5 8) val)) (=> (= idx1 idx3) (= (_ bv23 8) val))))";

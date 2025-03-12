@@ -66,20 +66,15 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	/**
 	 * Creates a new interpreter for manually specified locations of interest.
 	 *
-	 * @param locationsOfInterest Locations for which predicates shall be computed.
-	 *                            You probably want to use {@link #allErrorLocations(IIcfg)}}.
+	 * @param locationsOfInterest
+	 *            Locations for which predicates shall be computed. You probably want to use
+	 *            {@link #allErrorLocations(IIcfg)}}.
 	 *
 	 * @see #interpret()
 	 */
-	public IcfgInterpreter(
-			final ILogger logger,
-			final IProgressAwareTimer timer,
-			final SifaStats stats,
-			final SymbolicTools tools,
-			final IIcfg<IcfgLocation> icfg,
-			final Collection<IcfgLocation> locationsOfInterest,
-			final IDomain domain,
-			final IFluid fluid,
+	public IcfgInterpreter(final ILogger logger, final IProgressAwareTimer timer, final SifaStats stats,
+			final SymbolicTools tools, final IIcfg<IcfgLocation> icfg,
+			final Collection<IcfgLocation> locationsOfInterest, final IDomain domain, final IFluid fluid,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ILoopSummarizer>> loopSumFactory,
 			final Function<IcfgInterpreter, Function<DagInterpreter, ICallSummarizer>> callSumFactory) {
 		mStats = stats;
@@ -95,8 +90,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 		mEnterCallWorklist = new PriorityWorklist<>(mCallGraph.relevantProceduresTopsorted(), domain::join);
 		mProcResCache = new ProcedureResourceCache(stats, mCallGraph, icfg);
 		enqueInitial();
-		mDagInterpreter = new DagInterpreter(logger, stats, timer, tools, domain, fluid,
-				loopSumFactory.apply(this), callSumFactory.apply(this));
+		mDagInterpreter = new DagInterpreter(logger, stats, timer, tools, domain, fluid, loopSumFactory.apply(this),
+				callSumFactory.apply(this));
 		mStats.stop(SifaStats.Key.OVERALL_TIME);
 	}
 
@@ -106,15 +101,14 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 
 	private void enqueInitial() {
 		final IPredicate top = mTools.top();
-		mCallGraph.initialProceduresOfInterest().stream()
-				.forEach(proc -> mEnterCallWorklist.add(proc, top));
+		mCallGraph.initialProceduresOfInterest().stream().forEach(proc -> mEnterCallWorklist.add(proc, top));
 	}
 
 	/**
 	 * Interprets the ICFG starting at the initial nodes.
 	 *
-	 * @return Map from all locations of interest (specified in the constructor of this class)
-	 *         to invariants (predicates over-approximating the program states at these locations)
+	 * @return Map from all locations of interest (specified in the constructor of this class) to invariants (predicates
+	 *         over-approximating the program states at these locations)
 	 */
 	public Map<IcfgLocation, IPredicate> interpret() {
 		mStats.start(SifaStats.Key.OVERALL_TIME);
@@ -133,9 +127,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 
 	private void interpretLoisInProcedure(final String procedure, final IPredicate initialInput) {
 		final ProcedureResources resources = mProcResCache.resourcesOf(procedure);
-		mDagInterpreter.interpret(
-				resources.getRegexDag(), resources.getDagOverlayPathToLoisAndEnterCalls(), initialInput,
-				mLoiPredStorage, this);
+		mDagInterpreter.interpret(resources.getRegexDag(), resources.getDagOverlayPathToLoisAndEnterCalls(),
+				initialInput, mLoiPredStorage, this);
 	}
 
 	@Override
@@ -178,8 +171,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 
 	private void logFinalResults() {
 		mLogger.info("Interpretation finished");
-		final Map<IcfgLocation, IPredicate> loiToPred = mLoiPredStorage
-				.addDefaultsAndGetMap(mLocsOfInterest, mTools.bottom());
+		final Map<IcfgLocation, IPredicate> loiToPred =
+				mLoiPredStorage.addDefaultsAndGetMap(mLocsOfInterest, mTools.bottom());
 		if (loiToPred.isEmpty()) {
 			mLogger.warn("No locations of interest were given");
 			return;
@@ -194,8 +187,8 @@ public class IcfgInterpreter implements IEnterCallRegistrar {
 	}
 
 	private void logEnterProcedure(final String procedure, final IPredicate input) {
-		mLogger.info("Interpreting procedure %s with input of size %s for LOIs",
-				procedure, new DagSizePrinter(input.getFormula()));
+		mLogger.info("Interpreting procedure %s with input of size %s for LOIs", procedure,
+				new DagSizePrinter(input.getFormula()));
 		mLogger.debug("Procedure's input is %s", input);
 	}
 

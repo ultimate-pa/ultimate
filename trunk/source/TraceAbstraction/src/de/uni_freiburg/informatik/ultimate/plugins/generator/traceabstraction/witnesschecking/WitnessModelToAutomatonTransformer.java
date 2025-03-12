@@ -46,17 +46,11 @@ public class WitnessModelToAutomatonTransformer {
 	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<>();
 
 	public WitnessModelToAutomatonTransformer(final WitnessNode witnessRoot, final IUltimateServiceProvider services) {
-		super();
 		mWitnessRoot = witnessRoot;
 		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<>();
-		final IEmptyStackStateFactory<WitnessNode> stateFactory = new IEmptyStackStateFactory<WitnessNode>() {
-
-			@Override
-			public WitnessNode createEmptyStackState() {
-				return new WitnessNode("EmptyStack");
-			}
-		};
-		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), new VpAlphabet<>(internalAlphabet), stateFactory);
+		final IEmptyStackStateFactory<WitnessNode> stateFactory = () -> new WitnessNode("EmptyStack");
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), new VpAlphabet<>(internalAlphabet),
+				stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 

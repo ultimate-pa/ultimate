@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Implementation of the Floyd-Warshall algorithm. Takes an undirected weighted graph as input, together with an
  * ordering of the edge weights and a "plus" operation for the edge weights.
  *
- * Returns (via getResult) a version of the graph where the triangle inequality holds (edge weights have been lowered
- * if necessary).
+ * Returns (via getResult) a version of the graph where the triangle inequality holds (edge weights have been lowered if
+ * necessary).
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -59,10 +59,9 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	private final BiPredicate<EDGELABEL, EDGELABEL> mSmallerThan;
 
 	private BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> mPlus;
-//	private TriFunction<EDGELABEL, EDGELABEL, VERTEX, EDGELABEL> mOtherPlus;
+	// private TriFunction<EDGELABEL, EDGELABEL, VERTEX, EDGELABEL> mOtherPlus;
 
 	private BiFunction<Pair<EDGELABEL, EDGELABEL>, Triple<VERTEX, VERTEX, VERTEX>, EDGELABEL> mOtherPlus;
-
 
 	private final EDGELABEL mNullLabel;
 
@@ -73,10 +72,8 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 
 	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
 			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
-			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
-			final EDGELABEL nullLabel,
-			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
-			final Function<EDGELABEL, EDGELABEL> labelCloner) {
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet, final EDGELABEL nullLabel,
+			final Map<Doubleton<VERTEX>, EDGELABEL> graph, final Function<EDGELABEL, EDGELABEL> labelCloner) {
 		this(smallerThan, meet, nullLabel, graph, labelCloner);
 		mPlus = Objects.requireNonNull(plus);
 		run();
@@ -90,42 +87,36 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 	 * @param nullLabel
 	 * @param graph
 	 * @param labelCloner
-	 * @param useOtherPlus just so the erasures are not equal
+	 * @param useOtherPlus
+	 *            just so the erasures are not equal
 	 */
 	public FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
-//			final TriFunction<EDGELABEL, EDGELABEL, VERTEX, EDGELABEL> plus,
-			final BiFunction<
-				Pair<EDGELABEL, EDGELABEL>,
-				Triple<VERTEX, VERTEX, VERTEX>,
-				EDGELABEL> plus,
-			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
-			final EDGELABEL nullLabel,
-			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
-			final Function<EDGELABEL, EDGELABEL> labelCloner,
+			// final TriFunction<EDGELABEL, EDGELABEL, VERTEX, EDGELABEL> plus,
+			final BiFunction<Pair<EDGELABEL, EDGELABEL>, Triple<VERTEX, VERTEX, VERTEX>, EDGELABEL> plus,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet, final EDGELABEL nullLabel,
+			final Map<Doubleton<VERTEX>, EDGELABEL> graph, final Function<EDGELABEL, EDGELABEL> labelCloner,
 			final boolean useOtherPlus) {
 		this(smallerThan, meet, nullLabel, graph, labelCloner);
 		mOtherPlus = Objects.requireNonNull(plus);
 		run();
 	}
 
-
 	/**
 	 *
 	 *
-	 * @param smallerThan partial order operator (non-strict)
+	 * @param smallerThan
+	 *            partial order operator (non-strict)
 	 * @param plus
 	 * @param nullLabel
 	 * @param graph
 	 * @param labelCloner
 	 */
 	private FloydWarshall(final BiPredicate<EDGELABEL, EDGELABEL> smallerThan,
-//			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
-			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet,
-			final EDGELABEL nullLabel,
-			final Map<Doubleton<VERTEX>, EDGELABEL> graph,
-			final Function<EDGELABEL, EDGELABEL> labelCloner) {
+			// final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> plus,
+			final BiFunction<EDGELABEL, EDGELABEL, EDGELABEL> meet, final EDGELABEL nullLabel,
+			final Map<Doubleton<VERTEX>, EDGELABEL> graph, final Function<EDGELABEL, EDGELABEL> labelCloner) {
 		mSmallerThan = smallerThan;
-//		mPlus = plus;
+		// mPlus = plus;
 		mMeet = meet;
 		mNullLabel = nullLabel;
 		mPerformedChanges = false;
@@ -166,10 +157,9 @@ class FloydWarshall<VERTEX, EDGELABEL> {
 					final EDGELABEL distIk = getDist(i, k);
 					final EDGELABEL distKj = getDist(k, j);
 					assert (mPlus == null) != (mOtherPlus == null);
-					final EDGELABEL ikPlusKj = mPlus != null ?
-							mPlus.apply(distIk, distKj) :
-								mOtherPlus.apply(new Pair<>(distIk, distKj),
-										new Triple<>(mVertices.get(i), mVertices.get(k), mVertices.get(j)));
+					final EDGELABEL ikPlusKj = mPlus != null ? mPlus.apply(distIk, distKj)
+							: mOtherPlus.apply(new Pair<>(distIk, distKj),
+									new Triple<>(mVertices.get(i), mVertices.get(k), mVertices.get(j)));
 
 					if (!mSmallerThan.test(distIj, ikPlusKj)) {
 						final EDGELABEL ikPlusKjMeetIj = mMeet.apply(ikPlusKj, distIj);

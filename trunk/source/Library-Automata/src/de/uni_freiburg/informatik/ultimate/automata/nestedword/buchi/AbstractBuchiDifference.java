@@ -2,22 +2,22 @@
  * Copyright (C) 2015-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Abstract superclass of Buchi difference operations.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -62,7 +62,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param fstOperand
@@ -80,7 +80,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 
 	/**
 	 * Constructs the difference using the complement of the second operand.
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
@@ -92,9 +92,9 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + ". Second operand "
-				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
-				+ getSndComplemented().size() + " states.";
+		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation()
+				+ ". Second operand " + mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+				+ " Complement of second has " + getSndComplemented().size() + " states.";
 	}
 
 	@Override
@@ -106,11 +106,11 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
@@ -165,8 +165,8 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand1,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand2, final boolean underApproximationOfComplement)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand2,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
 		final boolean op1 = (new BuchiAccepts<>(mServices, operand1, nlw)).getResult();
 		final boolean op2 = (new BuchiAccepts<>(mServices, operand2, nlw)).getResult();

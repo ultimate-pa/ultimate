@@ -58,8 +58,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.sifa.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.SifaBuilder;
 
 /**
- * Description, values, and default values for sifa settings.
- * Use {@link SifaBuilder} to create a sifa interpreter using these settings.
+ * Description, values, and default values for sifa settings. Use {@link SifaBuilder} to create a sifa interpreter using
+ * these settings.
  * <p>
  * When adding settings to this class you also have to adapt the methods in {@link SifaBuilder}.
  *
@@ -76,27 +76,19 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_LOOP_SUMMARIZER = "Loop Summarizer";
 	private static final String DEFAULT_LOOP_SUMMARIZER = FixpointLoopSummarizer.class.getSimpleName();
-	private static final String[] VALUES_LOOP_SUMMARIZER = {
-		FixpointLoopSummarizer.class.getSimpleName(),
-	};
+	private static final String[] VALUES_LOOP_SUMMARIZER = { FixpointLoopSummarizer.class.getSimpleName(), };
 
 	public static final String LABEL_CALL_SUMMARIZER = "Call Summarizer";
 	private static final String DEFAULT_CALL_SUMMARIZER = ReUseSupersetCallSummarizer.class.getSimpleName();
-	private static final String[] VALUES_CALL_SUMMARIZER = {
-		TopInputCallSummarizer.class.getSimpleName(),
-		InterpretCallSummarizer.class.getSimpleName(),
-		ReUseSupersetCallSummarizer.class.getSimpleName(),
-	};
+	private static final String[] VALUES_CALL_SUMMARIZER = { TopInputCallSummarizer.class.getSimpleName(),
+			InterpretCallSummarizer.class.getSimpleName(), ReUseSupersetCallSummarizer.class.getSimpleName(), };
 
 	public static final String LABEL_FLUID = "Fluid";
 	private static final String TOOLTIP_FLUID = "Decides when to apply abstraction";
 	private static final String DEFAULT_FLUID = SizeLimitFluid.class.getSimpleName();
-	private static final String[] VALUES_FLUID = {
-		NeverFluid.class.getSimpleName(),
-		SizeLimitFluid.class.getSimpleName(),
-		AlwaysFluid.class.getSimpleName(),
-		LogSizeWrapperFluid.class.getSimpleName(),
-	};
+	private static final String[] VALUES_FLUID =
+			{ NeverFluid.class.getSimpleName(), SizeLimitFluid.class.getSimpleName(), AlwaysFluid.class.getSimpleName(),
+					LogSizeWrapperFluid.class.getSimpleName(), };
 
 	public static final String LABEL_SIMPLIFICATION = "Simplification Technique";
 	private static final SimplificationTechnique DEFAULT_SIMPLIFICATION = SimplificationTechnique.NONE;
@@ -125,25 +117,28 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_COMPOUNDDOM_SUBDOM = "CompoundDomain Intern Domains";
 	private static final String DEFAULT_COMPOUNDDOM_SUBDOM =
 			ExplicitValueDomain.class.getSimpleName() + ";" + IntervalDomain.class.getSimpleName();
-	private static final String[] CHOICES_COMPOUNDDOM_SUBDOM = filter(VALUES_ABSTRACT_DOMAIN,
-			value -> !CompoundDomain.class.getSimpleName().equals(value));
-	private static final String TOOLTIP_COMPOUNDDOM_SUBDOM = "List subdomains separated by `;`. Valid subdomains are\n"
-			+ String.join("\n", CHOICES_COMPOUNDDOM_SUBDOM);
+	private static final String[] CHOICES_COMPOUNDDOM_SUBDOM =
+			filter(VALUES_ABSTRACT_DOMAIN, value -> !CompoundDomain.class.getSimpleName().equals(value));
+	private static final String TOOLTIP_COMPOUNDDOM_SUBDOM =
+			"List subdomains separated by `;`. Valid subdomains are\n" + String.join("\n", CHOICES_COMPOUNDDOM_SUBDOM);
+
 	public static class SubdomainValidator implements IUltimatePreferenceItemValidator<String> {
 		public static Stream<String> subdomains(final String setting) {
 			return Arrays.stream(setting.split(";"));
 		}
+
 		@Override
 		public boolean isValid(final String setting) {
 			return subdomains(setting).allMatch(SubdomainValidator::isValidSubDom);
 		}
+
 		private static boolean isValidSubDom(final String token) {
 			return Arrays.stream(CHOICES_COMPOUNDDOM_SUBDOM).anyMatch(validChoice -> validChoice.equals(token));
 		}
+
 		@Override
 		public String getInvalidValueErrorMessage(final String setting) {
-			return subdomains(setting)
-					.filter(subdom -> !isValidSubDom(subdom))
+			return subdomains(setting).filter(subdom -> !isValidSubDom(subdom))
 					.map(subdom -> String.format("Not a valid subdomain: %s", subdom))
 					.collect(Collectors.joining("\n"));
 		}
@@ -152,26 +147,21 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 	// settings specific to LogSizeWrapperFluid
 	public static final String LABEL_LOGFLUID_INTERN_FLUID = "LogSizeWrapperFluid Intern Fluid";
 	private static final String DEFAULT_LOGFLUID_INTERN_FLUID = DEFAULT_FLUID;
-	private static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES = filter(VALUES_FLUID,
-			value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
+	private static final String[] VALUES_LOGFLUID_INTERN_FLUID_VALUES =
+			filter(VALUES_FLUID, value -> !LogSizeWrapperFluid.class.getSimpleName().equals(value));
 
 	// settings specific to SizeLimitFluid
-	public static final String LABEL_SIZELIMITFLUID_MAX_DAGSIZE= "SizeLimitFluid Max. DAG Size";
-	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE = "Abstract when formula's dag size exceeds\n"
-			+ "(negative numbers disable this limit)";
+	public static final String LABEL_SIZELIMITFLUID_MAX_DAGSIZE = "SizeLimitFluid Max. DAG Size";
+	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE =
+			"Abstract when formula's dag size exceeds\n" + "(negative numbers disable this limit)";
 	private static final int DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE = -1;
 
-	public static final String LABEL_SIZELIMITFLUID_MAX_DISJUNCTS= "SizeLimitFluid Max. Disjunctions";
-	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS = "Abstract when formula has more disjuncts than\n"
-			+ "(negative numbers disable this limit)";
+	public static final String LABEL_SIZELIMITFLUID_MAX_DISJUNCTS = "SizeLimitFluid Max. Disjunctions";
+	public static final String TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS =
+			"Abstract when formula has more disjuncts than\n" + "(negative numbers disable this limit)";
 	private static final int DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS = 8;
 
-
-
-
 	// ↑ Members ----- ↓ Methods ---------------------------------------------
-
-
 
 	public SifaPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -207,13 +197,13 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 
 		final UltimatePreferenceItemContainer containerLogFluid =
 				new UltimatePreferenceItemContainer(LogSizeWrapperFluid.class.getSimpleName());
-		containerLogFluid.addItem(combo(LABEL_LOGFLUID_INTERN_FLUID,
-				DEFAULT_LOGFLUID_INTERN_FLUID, VALUES_LOGFLUID_INTERN_FLUID_VALUES));
+		containerLogFluid.addItem(
+				combo(LABEL_LOGFLUID_INTERN_FLUID, DEFAULT_LOGFLUID_INTERN_FLUID, VALUES_LOGFLUID_INTERN_FLUID_VALUES));
 
 		final UltimatePreferenceItemContainer containerSizeLimitFluid =
 				new UltimatePreferenceItemContainer(SizeLimitFluid.class.getSimpleName());
-		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DAGSIZE,
-				TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE, DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE));
+		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DAGSIZE, TOOLTIP_SIZELIMITFLUID_MAX_DAGSIZE,
+				DEFAULT_SIZELIMITFLUID_MAX_DAGSIZE));
 		containerSizeLimitFluid.addItem(integer(LABEL_SIZELIMITFLUID_MAX_DISJUNCTS,
 				TOOLTIP_SIZELIMITFLUID_MAX_DISJUNCTS, DEFAULT_SIZELIMITFLUID_MAX_DISJUNCTS));
 
@@ -237,8 +227,8 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<>(label, defaultValue, PreferenceType.Combo, values);
 	}
 
-	private static <T> UltimatePreferenceItem<T> combo(final String label, final String description, final T defaultValue,
-			final T[] values) {
+	private static <T> UltimatePreferenceItem<T> combo(final String label, final String description,
+			final T defaultValue, final T[] values) {
 		return new UltimatePreferenceItem<>(label, defaultValue, description, PreferenceType.Combo, values);
 	}
 
@@ -246,25 +236,24 @@ public class SifaPreferences extends UltimatePreferenceInitializer {
 		return integer(label, defaultValue, Integer.MIN_VALUE, Integer.MAX_VALUE);
 	}
 
-	private static UltimatePreferenceItem<Integer> integer(final String label, final int defaultValue,
-			final int min, final int max) {
-		return new UltimatePreferenceItem<>(label, defaultValue,
-				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(min, max));
+	private static UltimatePreferenceItem<Integer> integer(final String label, final int defaultValue, final int min,
+			final int max) {
+		return new UltimatePreferenceItem<>(label, defaultValue, PreferenceType.Integer,
+				new IUltimatePreferenceItemValidator.IntegerValidator(min, max));
 	}
 
-	private static UltimatePreferenceItem<Integer> integer(
-			final String label, final String tooltip, final int defaultValue) {
+	private static UltimatePreferenceItem<Integer> integer(final String label, final String tooltip,
+			final int defaultValue) {
 		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.Integer);
 	}
 
-	private static UltimatePreferenceItem<String> string(
-			final String label, final String tooltip, final String defaultValue,
-			final IUltimatePreferenceItemValidator<String> validator) {
+	private static UltimatePreferenceItem<String> string(final String label, final String tooltip,
+			final String defaultValue, final IUltimatePreferenceItemValidator<String> validator) {
 		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.String, validator);
 	}
 
-	private static UltimatePreferenceItem<Boolean> bool(
-			final String label, final String tooltip, final boolean defaultValue) {
+	private static UltimatePreferenceItem<Boolean> bool(final String label, final String tooltip,
+			final boolean defaultValue) {
 		return new UltimatePreferenceItem<>(label, defaultValue, tooltip, PreferenceType.Boolean);
 	}
 

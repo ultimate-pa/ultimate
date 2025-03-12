@@ -40,7 +40,6 @@ public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithSt
 	private final CegarLoopStatisticsGenerator mCegarLoopStatisticsGenerator;
 
 	public PetriCegarLoopStatisticsGenerator(final CegarLoopStatisticsGenerator cegarLoopStatisticsGenerator) {
-		super();
 		mCegarLoopStatisticsGenerator = cegarLoopStatisticsGenerator;
 	}
 
@@ -55,8 +54,8 @@ public class PetriCegarLoopStatisticsGenerator extends StatisticsGeneratorWithSt
 
 	@Override
 	public Object getValue(final String key) {
-		final PetriCegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(PetriCegarLoopStatisticsDefinitions.class,
-				key);
+		final PetriCegarLoopStatisticsDefinitions keyEnum =
+				Enum.valueOf(PetriCegarLoopStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 		case BackfoldingTime:
 		case BackfoldingUnfoldingTime:

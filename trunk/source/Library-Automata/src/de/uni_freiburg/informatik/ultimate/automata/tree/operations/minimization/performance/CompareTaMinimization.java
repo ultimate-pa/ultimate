@@ -52,9 +52,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.minimization.hopcroft.MinimizeNftaHopcroft;
 
 /**
- * Operation that compares the different types of methods for tree automata
- * reduction. The operation has no result, it automatically logs performance
- * measurements to a log file.
+ * Operation that compares the different types of methods for tree automata reduction. The operation has no result, it
+ * automatically logs performance measurements to a log file.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -80,7 +79,7 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * Reads the log file and creates readable performance tables as HTML files.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws IOException
@@ -99,7 +98,7 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 
 	/**
 	 * Logs the head message to the log file.
-	 * 
+	 *
 	 * @param dataFile
 	 *            The file to log to
 	 */
@@ -136,8 +135,7 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 	private final String mAutomatonName;
 
 	/**
-	 * Internal buffer for logged lines, can be flushed by using
-	 * {@link #flushLogToFile()}.
+	 * Internal buffer for logged lines, can be flushed by using {@link #flushLogToFile()}.
 	 */
 	private final List<String> mLoggedLines;
 
@@ -152,19 +150,16 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 	private final SinkMergeIntersectStateFactory<STATE> mSinkAndMergeFactory;
 
 	/**
-	 * Compares the different types of methods for tree automata reduction. The
-	 * operation has no result, it automatically logs performance measurements to a
-	 * log file.
-	 * 
+	 * Compares the different types of methods for tree automata reduction. The operation has no result, it
+	 * automatically logs performance measurements to a log file.
+	 *
 	 * @param <SF>
-	 *            A state factory that is able to merge and intersect states and
-	 *            also to create sink states
+	 *            A state factory that is able to merge and intersect states and also to create sink states
 	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param sinkMergeIntersectFactory
-	 *            The factory to use for merging and intersecting states and also
-	 *            for creating sink states
+	 *            The factory to use for merging and intersecting states and also for creating sink states
 	 * @param operand
 	 *            The tree automaton to compare with
 	 */
@@ -172,34 +167,34 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 			final AutomataLibraryServices services, final SF sinkMergeIntersectFactory,
 			final ITreeAutomatonBU<LETTER, STATE> operand) {
 		super(services);
-		this.mSinkAndMergeFactory = new SinkMergeIntersectStateFactory<>(sinkMergeIntersectFactory,
+		mSinkAndMergeFactory = new SinkMergeIntersectStateFactory<>(sinkMergeIntersectFactory,
 				sinkMergeIntersectFactory, sinkMergeIntersectFactory);
-		this.mOperand = operand;
-		this.mLoggedLines = new LinkedList<>();
+		mOperand = operand;
+		mLoggedLines = new LinkedList<>();
 
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(startMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
 		}
 
-		String automatonName = "";
-//		try {
-//			automatonName = Files.lines(LOG_PATH.resolve("currentAutomatonName.txt")).findFirst().get();
-//		} catch (final IOException e) {
-//			e.printStackTrace();
-//		}
-		this.mAutomatonName = automatonName;
+		final String automatonName = "";
+		// try {
+		// automatonName = Files.lines(LOG_PATH.resolve("currentAutomatonName.txt")).findFirst().get();
+		// } catch (final IOException e) {
+		// e.printStackTrace();
+		// }
+		mAutomatonName = automatonName;
 
 		measurePerformances();
 		flushLogToFile();
 
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(exitMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
 		}
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
 	 */
 	@Override
@@ -228,45 +223,43 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 		}
 
 		try {
-			Files.write(dataFile, this.mLoggedLines, StandardOpenOption.APPEND, StandardOpenOption.CREATE,
+			Files.write(dataFile, mLoggedLines, StandardOpenOption.APPEND, StandardOpenOption.CREATE,
 					StandardOpenOption.WRITE);
 		} catch (final IOException e) {
 			e.printStackTrace();
 		}
-		this.mLoggedLines.clear();
+		mLoggedLines.clear();
 
-		this.mLogger.info("Logged data to file (" + dataFile.toAbsolutePath() + ").");
+		mLogger.info("Logged data to file (" + dataFile.toAbsolutePath() + ").");
 	}
 
 	/**
-	 * Logs a given message as single line. Uses a internal buffer that needs to be
-	 * flushed in order to actually print the logs. Flushing is done by using
-	 * {@link #flushLogToFile()}.
+	 * Logs a given message as single line. Uses a internal buffer that needs to be flushed in order to actually print
+	 * the logs. Flushing is done by using {@link #flushLogToFile()}.
 	 *
 	 * @param message
 	 *            Message to log
 	 */
 	private void logLine(final String message) {
-		this.mLoggedLines.add(message);
+		mLoggedLines.add(message);
 	}
 
 	/**
-	 * Logs the given results, also appends miscellaneous information and
-	 * information about the operand before minimization.
-	 * 
+	 * Logs the given results, also appends miscellaneous information and information about the operand before
+	 * minimization.
+	 *
 	 * @param allResults
 	 *            All results to log
 	 */
 	private void logResults(final String[]... allResults) {
 		// AutomatonName
-		final String[] misc = new String[] { this.mAutomatonName };
+		final String[] misc = { mAutomatonName };
 		// Size, amountOfRules
-		final String[] beforeResults = new String[] { Integer.toString(this.mOperand.size()),
-				Integer.toString(this.mOperand.getAmountOfRules()) };
+		final String[] beforeResults =
+				{ Integer.toString(mOperand.size()), Integer.toString(mOperand.getAmountOfRules()) };
 
 		// Collect all results
-		final ArrayList<String> completeResults = new ArrayList<>();
-		completeResults.addAll(Arrays.asList(misc));
+		final ArrayList<String> completeResults = new ArrayList<>(Arrays.asList(misc));
 		completeResults.addAll(Arrays.asList(beforeResults));
 		Arrays.asList(allResults).forEach(results -> completeResults.addAll(Arrays.asList(results)));
 
@@ -276,8 +269,8 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 	}
 
 	/**
-	 * Measures the performance of a minimization methods, represented by a given
-	 * type, on a given automaton and returns the results.
+	 * Measures the performance of a minimization methods, represented by a given type, on a given automaton and returns
+	 * the results.
 	 *
 	 * @param type
 	 *            Type of the minimization method to measure performance for
@@ -293,20 +286,20 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 		try {
 			if (type.equalsIgnoreCase("ordinary")) {
 				final long startTime = System.currentTimeMillis();
-				method = new Minimize<>(this.mServices, this.mSinkAndMergeFactory, this.mOperand);
+				method = new Minimize<>(mServices, mSinkAndMergeFactory, mOperand);
 				overallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equalsIgnoreCase("hopcroft")) {
 				final long startTime = System.currentTimeMillis();
-				method = new MinimizeNftaHopcroft<>(this.mServices, this.mSinkAndMergeFactory, this.mOperand);
+				method = new MinimizeNftaHopcroft<>(mServices, mSinkAndMergeFactory, mOperand);
 				overallTime = System.currentTimeMillis() - startTime;
 			} else {
 				throw new IllegalArgumentException("Unsupported type of minimization");
 			}
 		} catch (final AutomataOperationCanceledException e) {
-			this.mLogger.info("Method timed out.");
+			mLogger.info("Method timed out.");
 			timedOut = true;
 		} catch (final OutOfMemoryError e) {
-			this.mLogger.info("Method has thrown an out of memory error.");
+			mLogger.info("Method has thrown an out of memory error.");
 			outOfMemory = true;
 		}
 
@@ -322,9 +315,9 @@ public final class CompareTaMinimization<LETTER extends IRankedLetter, STATE>
 		}
 
 		// Type, time, timedOut, outOfMemory, resultSize, resultAmountOfRules
-		final String[] results = new String[] { type, Long.toString(overallTime), Boolean.toString(timedOut),
-				Boolean.toString(outOfMemory), Integer.toString(resultingTa.size()),
-				Integer.toString(resultingTa.getAmountOfRules()) };
+		final String[] results =
+				{ type, Long.toString(overallTime), Boolean.toString(timedOut), Boolean.toString(outOfMemory),
+						Integer.toString(resultingTa.size()), Integer.toString(resultingTa.getAmountOfRules()) };
 		return results;
 	}
 

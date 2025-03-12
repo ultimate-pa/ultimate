@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
  */
 public class DeleteConditionalExpressionChange extends HddChange {
 	private static final int NUM_OPERANDS = 3;
-	
+
 	private final IPSTRegularNode mConditionalExpressionNode;
 	private final int mPosition;
 	private final Token mTokQuestion;
 	private final Token mTokColon;
-	
+
 	private final String mReplacement;
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -76,43 +76,43 @@ public class DeleteConditionalExpressionChange extends HddChange {
 			throw new IllegalArgumentException();
 		}
 	}
-	
+
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		// no immediate modification possible
 	}
-	
+
 	@Override
 	public boolean hasDeferredChange() {
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Delete/Replace conditional expression part " + getNode() + " by \"" + mReplacement + "\"" + "(from "
 				+ mConditionalExpressionNode + ")";
 	}
-	
+
 	@Override
 	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		((CombinedChange) deferredChangeMap.computeIfAbsent(mConditionalExpressionNode, CombinedChange::new))
 				.addChange(this);
 	}
-	
+
 	/**
 	 * Combined change.
 	 */
 	class CombinedChange extends HddChange {
 		private final DeleteConditionalExpressionChange[] mParts = new DeleteConditionalExpressionChange[NUM_OPERANDS];
-		
+
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
-		
+
 		void addChange(final DeleteConditionalExpressionChange change) {
 			mParts[change.mPosition] = change;
 		}
-		
+
 		@Override
 		public void apply(final SourceRewriter rewriter) {
 			final long count = Arrays.stream(mParts).filter(Objects::nonNull).count();

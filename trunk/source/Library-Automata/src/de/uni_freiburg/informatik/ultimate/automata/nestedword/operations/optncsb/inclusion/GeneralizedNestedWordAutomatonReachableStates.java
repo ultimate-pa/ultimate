@@ -170,11 +170,11 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE>
 
 			public Tarjan() throws AutomataOperationCanceledException {
 
-				this.mStack = new Stack<>();
-				this.mIndexMap = new TObjectIntHashMap<>();
-				this.mLowlinkMap = new TObjectIntHashMap<>();
-				this.mSCC = new ArrayList<>();
-				this.mIndex = 0;
+				mStack = new Stack<>();
+				mIndexMap = new TObjectIntHashMap<>();
+				mLowlinkMap = new TObjectIntHashMap<>();
+				mSCC = new ArrayList<>();
+				mIndex = 0;
 				for (final STATE state : mOperand.getInitialStates()) {
 					mInitialStates.add(state);
 					if (!mIndexMap.containsKey(state)) {
@@ -231,13 +231,11 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE>
 					}
 
 					boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();
-					if (sccList.size() == 1 // only has a single state
+					// if there is no self loop
+					if ((sccList.size() == 1 // only has a single state
 							&& hasAcc // it is an accepting states
-					) {
-						// if there is no self loop
-						if (!cont.hashSelfloop()) {
-							hasAcc = false;
-						}
+					) && !cont.hashSelfloop()) {
+						hasAcc = false;
 					}
 
 					if (hasAcc) {
@@ -284,13 +282,13 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE>
 
 			public Ascc() throws AutomataOperationCanceledException {
 
-				this.mSCCs = new Stack<>();
-				this.mAct = new Stack<>();
-				this.mDfsNum = new TObjectIntHashMap<>();
-				this.mSccList = new ArrayList<>();
-				this.mQPrime = new HashSet<>();
-				this.mEmp = new HashSet<>();
-				this.mCnt = 0;
+				mSCCs = new Stack<>();
+				mAct = new Stack<>();
+				mDfsNum = new TObjectIntHashMap<>();
+				mSccList = new ArrayList<>();
+				mQPrime = new HashSet<>();
+				mEmp = new HashSet<>();
+				mCnt = 0;
 
 				boolean is_nemp = false;
 				for (final STATE state : mOperand.getInitialStates()) {
@@ -302,8 +300,7 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE>
 				}
 
 				mIsEmpty = !is_nemp;
-				final Set<STATE> states = new HashSet<>();
-				states.addAll(mStates.keySet());
+				final Set<STATE> states = new HashSet<>(mStates.keySet());
 				// remove states
 				for (final STATE st : states) {
 					if (mQPrime.contains(st)) {
@@ -396,10 +393,8 @@ public class GeneralizedNestedWordAutomatonReachableStates<LETTER, STATE>
 						sccList.add(u);
 					} while (!u.equals(state));
 
-					if (labels.size() == getAcceptanceSize()) {
-						if (sccList.size() > 1 || cont.hashSelfloop()) {
-							mSccList.add(sccList);
-						}
+					if ((labels.size() == getAcceptanceSize()) && (sccList.size() > 1 || cont.hashSelfloop())) {
+						mSccList.add(sccList);
 					}
 				}
 				return is_nemp;

@@ -209,8 +209,7 @@ public class TypeSizeAndOffsetComputer {
 		final SizeTValue valueSize = computeSize(loc, cArray.getValueType());
 		final SizeTValue factor = extractSizeTValue(cArray.getBound());
 
-		final SizeTValue size = (new SizeTValueAggregatorMultiply()).aggregate(loc,
-				Arrays.asList(new SizeTValue[] { valueSize, factor }));
+		final SizeTValue size = (new SizeTValueAggregatorMultiply()).aggregate(loc, Arrays.asList(valueSize, factor));
 		if (!mPreferConstantsOverValues) {
 			return size;
 		}
@@ -470,7 +469,7 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private class SizeTValueExpression implements SizeTValue {
+	private static class SizeTValueExpression implements SizeTValue {
 		private final Expression mValue;
 
 		public SizeTValueExpression(final Expression value) {

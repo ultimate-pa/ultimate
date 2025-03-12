@@ -78,11 +78,11 @@ public final class QvasrVectorSpaceBasisConstructor {
 		 */
 		final Term[] lastRow = basisVectors[basisVectors.length - 1];
 		boolean aIsZero = true;
-		for (int i = 0; i < basisVectors.length; i++) {
-			if (!QvasrUtils.checkTermEquiv(script, basisVectors[i][basisVectors[0].length - 1],
+		for (final Term[] basisVector : basisVectors) {
+			if (!QvasrUtils.checkTermEquiv(script, basisVector[basisVectors[0].length - 1],
 					script.getScript().decimal("0"))) {
-				for (int j = 0; j < basisVectors[i].length - 1; j++) {
-					if (!QvasrUtils.checkTermEquiv(script, basisVectors[i][j], script.getScript().decimal("0"))) {
+				for (int j = 0; j < basisVector.length - 1; j++) {
+					if (!QvasrUtils.checkTermEquiv(script, basisVector[j], script.getScript().decimal("0"))) {
 						aIsZero = false;
 						break;
 					}
@@ -104,8 +104,7 @@ public final class QvasrVectorSpaceBasisConstructor {
 		/*
 		 * Construct equations for each column.
 		 */
-		for (int j = 0; j < basisVectors.length; j++) {
-			final Term[] row = basisVectors[j];
+		for (final Term[] row : basisVectors) {
 			for (int k = 0; k < row.length - 1; k++) {
 				if (!QvasrUtils.checkTermEquiv(script, row[k], script.getScript().decimal("0"))) {
 					final Term toBeSolvedFor = tvsForColumns.get(k);
@@ -232,8 +231,7 @@ public final class QvasrVectorSpaceBasisConstructor {
 	 * @return
 	 */
 	private static boolean isConsistent(final ManagedScript script, final Term[][] basisVectors) {
-		for (int i = 0; i < basisVectors.length; i++) {
-			final Term[] row = basisVectors[i];
+		for (final Term[] row : basisVectors) {
 			if (!QvasrUtils.checkTermEquiv(script, row[row.length - 1], script.getScript().decimal("0"))) {
 				for (int j = 0; j < row.length; j++) {
 					if (j == row.length - 1 && row[j] instanceof ConstantTerm) {

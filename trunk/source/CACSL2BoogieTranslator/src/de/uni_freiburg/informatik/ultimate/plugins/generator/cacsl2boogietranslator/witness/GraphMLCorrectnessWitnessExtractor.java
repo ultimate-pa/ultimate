@@ -79,10 +79,10 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 
 	public GraphMLCorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		super(service);
-		mLoopTypes = Arrays.asList(new Class[] { IASTGotoStatement.class, IASTDoStatement.class,
-				IASTWhileStatement.class, IASTForStatement.class });
-		mConditionalTypes = Arrays.asList(new Class[] { IASTDoStatement.class, IASTWhileStatement.class,
-				IASTForStatement.class, IASTIfStatement.class });
+		mLoopTypes = Arrays.asList(IASTGotoStatement.class, IASTDoStatement.class, IASTWhileStatement.class,
+				IASTForStatement.class);
+		mConditionalTypes = Arrays.asList(IASTDoStatement.class, IASTWhileStatement.class, IASTForStatement.class,
+				IASTIfStatement.class);
 		mCheckOnlyLoopInvariants = mPrefs.getBoolean(WitnessParserPreferences.LABEL_CW_USE_ONLY_LOOPINVARIANTS);
 	}
 
@@ -217,8 +217,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 	}
 
 	private Map<IASTNode, LabeledInvariant> matchWitnessToAstNode(final WitnessNode wnode) {
-		final Set<DecoratedWitnessEdge> edges = new HashSet<>();
-		edges.addAll(convertAndFilterEdges(wnode.getIncomingEdges(), true));
+		final Set<DecoratedWitnessEdge> edges = new HashSet<>(convertAndFilterEdges(wnode.getIncomingEdges(), true));
 		edges.addAll(convertAndFilterEdges(wnode.getOutgoingEdges(), false));
 
 		if (edges.isEmpty()) {
@@ -349,7 +348,7 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		// check if the common parent or a parent of the common parent is a loop
 		IASTNode currentParent = commonParent;
 		Set<IASTStatement> loopStatements = Collections.emptySet();
-		while (currentParent != null && currentParent instanceof IASTStatement) {
+		while (currentParent instanceof IASTStatement) {
 			loopStatements = CdtASTUtils.findDesiredType(currentParent, mLoopTypes);
 			if (!loopStatements.isEmpty()) {
 				break;
@@ -733,7 +732,6 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		private final ImmutableSet<String> mLabels;
 
 		public LabeledInvariant(final ExtractedWitnessInvariant invariant, final ImmutableSet<String> labels) {
-			super();
 			mInvariant = invariant;
 			mLabels = labels;
 		}

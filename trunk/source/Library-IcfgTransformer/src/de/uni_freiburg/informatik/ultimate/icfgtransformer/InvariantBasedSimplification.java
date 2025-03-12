@@ -148,8 +148,8 @@ public class InvariantBasedSimplification extends CopyingTransformulaTransformer
 			programConsts = tf.getNonTheoryConsts();
 		} else {
 			programConsts = new HashSet<>(tf.getNonTheoryConsts());
-			final Predicate<Term> p = (x -> (x instanceof ApplicationTerm)
-					&& (!((ApplicationTerm) x).getFunction().isIntern()));
+			final Predicate<Term> p =
+					(x -> (x instanceof ApplicationTerm) && (!((ApplicationTerm) x).getFunction().isIntern()));
 			final Set<Term> applicationTerms = SubTermFinder.find(newTerm, p, false);
 			final Iterator<IProgramConst> it = programConsts.iterator();
 			while (it.hasNext()) {

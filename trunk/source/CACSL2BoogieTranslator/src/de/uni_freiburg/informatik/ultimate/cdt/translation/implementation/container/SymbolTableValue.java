@@ -112,8 +112,8 @@ public class SymbolTableValue {
 	 *            that expression here. Example: enum entries are translated to Boogie variables, and they have a
 	 *            constant integer value (which is stored in an axiom elsewhere)
 	 */
-	public SymbolTableValue(final String bId, final Declaration boogieDecl, final ASTType astType, final CDeclaration cdecl,
-			final DeclarationInformation declarationInformation, final IASTNode declNode,
+	public SymbolTableValue(final String bId, final Declaration boogieDecl, final ASTType astType,
+			final CDeclaration cdecl, final DeclarationInformation declarationInformation, final IASTNode declNode,
 			final boolean isIntFromPointer, final Expression constantValue) {
 		assert bId != null && !bId.equals(SFO.EMPTY);
 		assert cdecl != null;

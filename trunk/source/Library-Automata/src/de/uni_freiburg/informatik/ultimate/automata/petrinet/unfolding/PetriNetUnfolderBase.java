@@ -297,8 +297,8 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
 							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
 					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent()
-							|| event2.isCutoffEvent() : "if there is "
-									+ "already an event that has the same marking and a different size of "
+							|| event2.isCutoffEvent()
+							: "if there is " + "already an event that has the same marking and a different size of "
 									+ "local configuration then the new event must be cut-off event";
 				}
 			}

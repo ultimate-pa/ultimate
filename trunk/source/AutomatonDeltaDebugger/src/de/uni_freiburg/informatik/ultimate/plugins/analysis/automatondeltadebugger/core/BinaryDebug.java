@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * Note that the local minimum is only according to the current shrinker, i.e., the respective shrinker cannot be
  * applied to a subinterval of objects anymore while still producing the error. However, removing, say, objects 1 and 3
  * might still work.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <T>
  *            shrinker data structure
@@ -67,7 +67,7 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 
 	/**
 	 * Splits a list into two sublists of equal size.
-	 * 
+	 *
 	 * @param bounds
 	 *            bounds
 	 */
@@ -121,11 +121,9 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	@Override
 	protected void errorAction() {
 		/*
-		 * When the success happened on the first half part, we can remove the
-		 * corresponding second half part and directly work on its children.
-		 * This is because by removing the second half part we would have
-		 * removed the whole sublist, and this was, by construction, already
-		 * unsuccessful in a previous test.
+		 * When the success happened on the first half part, we can remove the corresponding second half part and
+		 * directly work on its children. This is because by removing the second half part we would have removed the
+		 * whole sublist, and this was, by construction, already unsuccessful in a previous test.
 		 */
 		if (mSublistBounds.mIsLhs) {
 			split(mStack.poll());

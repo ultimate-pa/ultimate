@@ -100,9 +100,7 @@ public class DangerInvariantPatternStrategy extends LocationIndependentLinearIne
 			final Term primedCoefficient = pattern1.getCoefficientForOutVar(havocedVar);
 			solver.assertTerm(SmtUtils.binaryEquality(solver, primedCoefficient,
 					Rational.ONE.toTerm(solver.sort(SmtSortUtils.REAL_SORT))));
-			for (final Term coefficient : pattern1.getCoefficients()) {
-				mIntegerCoefficients.get(transition).add(coefficient);
-			}
+			mIntegerCoefficients.get(transition).addAll(pattern1.getCoefficients());
 		}
 
 		return new Dnf<>(conjuncts);

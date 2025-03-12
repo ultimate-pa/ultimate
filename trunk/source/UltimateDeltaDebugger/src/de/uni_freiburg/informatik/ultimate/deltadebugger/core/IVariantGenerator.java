@@ -53,12 +53,12 @@ public interface IVariantGenerator {
 	 * @return rewritten source code text with the selected changes applied
 	 */
 	String apply(List<IChangeHandle> activeChanges);
-	
+
 	/**
 	 * @return A list of available changes, never empty.
 	 */
 	List<IChangeHandle> getChanges();
-	
+
 	/**
 	 * Optionally returns a new generator for another set of potential changes that can be applied in addition to the
 	 * given set of active changes.

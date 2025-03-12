@@ -50,7 +50,7 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		implements IStatisticsDataProvider {
 
 	private static final String[] STOPWATCHES =
-			new String[] { AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE.toString(),
+			{ AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_CORE.toString(),
 					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_OVERALL.toString(),
 					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPDETECTOR.toString(),
 					AcceleratedInterpolationStatisticsDefinitions.ACCELINTERPOL_LOOPACCELERATOR.toString() };

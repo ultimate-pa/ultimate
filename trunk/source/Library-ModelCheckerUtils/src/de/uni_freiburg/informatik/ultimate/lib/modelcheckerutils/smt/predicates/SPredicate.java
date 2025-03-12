@@ -75,11 +75,11 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 
 	@Override
 	public String toString() {
-		String result = super.mSerialNumber + "#";
+		final StringBuilder result = new StringBuilder().append(super.mSerialNumber).append("#");
 		if (mProgramPoint != null) {
-			result += mProgramPoint.getDebugIdentifier();
+			result.append(mProgramPoint.getDebugIdentifier());
 		}
-		result += mFormula.toString();
-		return result;
+		result.append(mFormula.toString());
+		return result.toString();
 	}
 }

@@ -31,14 +31,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * Replace recursively all {@link AnnotatedTerm}s by their
- * {@link AnnotatedTerm#getSubterm()}
+ * Replace recursively all {@link AnnotatedTerm}s by their {@link AnnotatedTerm#getSubterm()}
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class AnnotationRemover extends TermTransformer {
-
 
 	@Override
 	protected void convert(final Term term) {

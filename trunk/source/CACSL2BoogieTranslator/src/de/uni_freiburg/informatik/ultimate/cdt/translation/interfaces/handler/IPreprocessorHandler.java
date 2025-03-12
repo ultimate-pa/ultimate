@@ -50,124 +50,124 @@ public interface IPreprocessorHandler {
 
 	/**
 	 * Translates an IASTPreprocessorElifStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorElifStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorElifStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorElseStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorElseStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorElseStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorEndifStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorEndifStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorEndifStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorErrorStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorErrorStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorErrorStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorIfdefStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorIfdefStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorIfdefStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorIfndefStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorIfndefStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorIfndefStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorIfStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorIfStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorIfStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorIncludeStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorIncludeStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorIncludeStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorMacroDefinition.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorMacroDefinition node);
+	Result visit(IDispatcher main, IASTPreprocessorMacroDefinition node);
 
 	/**
 	 * Translates an IASTPreprocessorPragmaStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorPragmaStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorPragmaStatement node);
 
 	/**
 	 * Translates an IASTPreprocessorUndefStatement.
-	 * 
+	 *
 	 * @param main
 	 *            a reference to the main IDispatcher
 	 * @param node
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTPreprocessorUndefStatement node);
+	Result visit(IDispatcher main, IASTPreprocessorUndefStatement node);
 
 	/**
 	 * Fallback method for unhandled IASTNodes.
@@ -178,5 +178,5 @@ public interface IPreprocessorHandler {
 	 *            the node to visit
 	 * @return a result object
 	 */
-	public Result visit(IDispatcher main, IASTNode node);
+	Result visit(IDispatcher main, IASTNode node);
 }

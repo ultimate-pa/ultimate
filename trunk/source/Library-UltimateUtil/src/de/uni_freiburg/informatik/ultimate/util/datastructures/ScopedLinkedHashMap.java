@@ -28,23 +28,22 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.util.ScopeUtils;
 
-
 /**
- * A scoped hash map is useful for symbol tables. With beginScope() a new
- * scope is started.  All modifications to the table are reversed when
- * the scope is ended with endScope().
+ * A scoped hash map is useful for symbol tables. With beginScope() a new scope is started. All modifications to the
+ * table are reversed when the scope is ended with endScope().
  *
- * You can also get a key, entry, or value collection of the currently
- * active scope.  This will only iterate the keys/values set since the last
- * beginScope() call.  Removing an entry will restore the value that was
- * previously set on the outer scope.
+ * You can also get a key, entry, or value collection of the currently active scope. This will only iterate the
+ * keys/values set since the last beginScope() call. Removing an entry will restore the value that was previously set on
+ * the outer scope.
  *
  * Note that it is forbidden to store null values into a scoped hash map.
  *
  * @author Jochen Hoenicke
  *
- * @param <K> Key type
- * @param <V> Value type
+ * @param <K>
+ *            Key type
+ * @param <V>
+ *            Value type
  */
 public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 
@@ -58,8 +57,8 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ScopedLinkedHashMap(boolean shrink) {
-		mMap = new LinkedHashMap<K, V>();
+	public ScopedLinkedHashMap(final boolean shrink) {
+		mMap = new LinkedHashMap<>();
 		mHistory = new HashMap[ScopeUtils.NUM_INITIAL_SCOPES];
 		mShrink = shrink;
 	}
@@ -68,7 +67,7 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 		return mHistory[mCurScope];
 	}
 
-	private void recordUndo(K key, V value) {
+	private void recordUndo(final K key, final V value) {
 		if (mCurScope != -1) {
 			final Map<K, V> old = undoMap();
 			if (!old.containsKey(key)) {
@@ -77,7 +76,7 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 		}
 	}
 
-	private void undoEntry(Entry<K,V> old) {
+	private void undoEntry(final Entry<K, V> old) {
 		if (old.getValue() == null) {
 			mMap.remove(old.getKey());
 		} else {
@@ -89,7 +88,7 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 		if (mCurScope == mHistory.length - 1) {
 			mHistory = ScopeUtils.grow(mHistory);
 		}
-		mHistory[++mCurScope] = new HashMap<K, V>();
+		mHistory[++mCurScope] = new HashMap<>();
 	}
 
 	public void endScope() {
@@ -110,17 +109,17 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
-	public boolean containsKey(Object key) {
+	public boolean containsKey(final Object key) {
 		return mMap.containsKey(key);
 	}
 
 	@Override
-	public boolean containsValue(Object value) {
+	public boolean containsValue(final Object value) {
 		return mMap.containsValue(value);
 	}
 
 	@Override
-	public V get(Object key) {
+	public V get(final Object key) {
 		return mMap.get(key);
 	}
 
@@ -134,15 +133,15 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
-	public Set<Entry<K,V>> entrySet() {
-		return new AbstractSet<Entry<K,V>>() {
+	public Set<Entry<K, V>> entrySet() {
+		return new AbstractSet<>() {
 
 			@Override
-			public Iterator<Entry<K,V>> iterator() {
-				return new Iterator<Entry<K,V>>() {
+			public Iterator<Entry<K, V>> iterator() {
+				return new Iterator<>() {
 
-					Iterator<Entry<K,V>> mBacking = mMap.entrySet().iterator();
-					Entry<K,V> mLast;
+					Iterator<Entry<K, V>> mBacking = mMap.entrySet().iterator();
+					Entry<K, V> mLast;
 
 					@Override
 					public boolean hasNext() {
@@ -150,7 +149,7 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 					}
 
 					@Override
-					public Entry<K,V> next() {
+					public Entry<K, V> next() {
 						return mLast = mBacking.next();
 					}
 
@@ -170,7 +169,7 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
-	public V put(K key, V value) {
+	public V put(final K key, final V value) {
 		if (value == null) {
 			throw new NullPointerException();
 		}
@@ -180,7 +179,7 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 	}
 
 	@Override
-	public V remove(Object key) {
+	public V remove(final Object key) {
 		throw new UnsupportedOperationException("ScopedLinkedHashMap doesn't allow remove");
 	}
 
@@ -195,12 +194,15 @@ public class ScopedLinkedHashMap<K, V> extends AbstractMap<K, V> {
 
 	/**
 	 * Checks if the key was overwritten in the given scope.
-	 * @param key   the key to check for.
-	 * @param scope the scope number; must not be 0 for the outer most scope.
+	 *
+	 * @param key
+	 *            the key to check for.
+	 * @param scope
+	 *            the scope number; must not be 0 for the outer most scope.
 	 * @return true if the key was overwritten in the given scope.
 	 */
-	public boolean overwritesKeyInScope(Object key, int scope) {
-		assert(scope != 0);
+	public boolean overwritesKeyInScope(final Object key, final int scope) {
+		assert (scope != 0);
 		return mHistory[scope - 1].containsKey(key);
 	}
 

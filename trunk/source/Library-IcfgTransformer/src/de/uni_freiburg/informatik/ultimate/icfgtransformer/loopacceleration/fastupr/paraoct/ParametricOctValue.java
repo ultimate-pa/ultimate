@@ -52,11 +52,12 @@ public class ParametricOctValue {
 		mIncrement = null;
 	}
 
-	ParametricOctValue(BigDecimal coefficient, BigDecimal summand, TermVariable parametricVar) {
+	ParametricOctValue(final BigDecimal coefficient, final BigDecimal summand, final TermVariable parametricVar) {
 		this(coefficient, summand, parametricVar, BigDecimal.ZERO);
 	}
 
-	ParametricOctValue(BigDecimal coefficient, BigDecimal summand, TermVariable parametricVar, BigDecimal increment) {
+	ParametricOctValue(final BigDecimal coefficient, final BigDecimal summand, final TermVariable parametricVar,
+			final BigDecimal increment) {
 		mCoefficient = coefficient;
 		mSummand = summand;
 		mVar = parametricVar;
@@ -91,20 +92,20 @@ public class ParametricOctValue {
 		return sb.toString();
 	}
 
-	public ParametricOctValue add(ParametricOctValue value) {
+	public ParametricOctValue add(final ParametricOctValue value) {
 		return new ParametricOctValue(mCoefficient.add(value.getCoefficient()), mSummand.add(value.getSummand()), mVar,
 				mIncrement);
 	}
 
-	public ParametricOctValue add(BigDecimal value) {
+	public ParametricOctValue add(final BigDecimal value) {
 		return new ParametricOctValue(mCoefficient, mSummand.add(value), mVar, mIncrement);
 	}
 
-	public ParametricOctValue multipy(BigDecimal value) {
+	public ParametricOctValue multipy(final BigDecimal value) {
 		return new ParametricOctValue(mCoefficient.multiply(value), mSummand.multiply(value), mVar, mIncrement);
 	}
 
-	public Object add(Object value) {
+	public Object add(final Object value) {
 		if (value instanceof ParametricOctValue) {
 			return add((ParametricOctValue) value);
 		} else {
@@ -112,9 +113,9 @@ public class ParametricOctValue {
 		}
 	}
 
-	public Term getTerm(Script script) {
-		final Term inner = mIncrement.equals(BigDecimal.ZERO) ? mVar
-				: script.term("+", mVar, script.decimal(mIncrement));
+	public Term getTerm(final Script script) {
+		final Term inner =
+				mIncrement.equals(BigDecimal.ZERO) ? mVar : script.term("+", mVar, script.decimal(mIncrement));
 		final Term coeff = mCoefficient.equals(BigDecimal.ZERO) ? script.decimal(BigDecimal.ZERO)
 				: script.term("*", script.decimal(mCoefficient), inner);
 		return mSummand.equals(BigDecimal.ZERO) ? coeff : script.term("+", coeff, script.decimal(mSummand));

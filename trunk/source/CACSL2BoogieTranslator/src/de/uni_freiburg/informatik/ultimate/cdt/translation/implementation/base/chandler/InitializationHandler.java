@@ -200,7 +200,7 @@ public class InitializationHandler {
 	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final CType targetCTypeRaw,
 			final InitializerResult initializerRaw, final IASTNode hook) {
 		final boolean onHeap;
-		if (lhsRaw != null && lhsRaw instanceof VariableLHS) {
+		if (lhsRaw instanceof VariableLHS) {
 			onHeap = mCHandler.isHeapVar(((VariableLHS) lhsRaw).getIdentifier());
 		} else {
 			onHeap = false;
@@ -427,7 +427,7 @@ public class InitializationHandler {
 
 			final LRValue currentFieldLhs;
 			if (onHeap) {
-				assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
+				assert lhsIfAny instanceof HeapLValue;
 				currentFieldLhs = constructAddressForStructField(loc, (HeapLValue) structBaseLhsToInitialize, i);
 			} else if (lhsIfAny != null) {
 				currentFieldLhs = CTranslationUtil.constructOffHeapStructAccessLhs(loc,
@@ -886,7 +886,7 @@ public class InitializationHandler {
 			final boolean onHeap, final ExpressionResultBuilder initialization) {
 		final LRValue arrayLhsToInitialize;
 		if (onHeap) {
-			assert lhsIfAny != null && lhsIfAny instanceof HeapLValue;
+			assert lhsIfAny instanceof HeapLValue;
 			arrayLhsToInitialize = lhsIfAny;
 		} else {
 			arrayLhsToInitialize = obtainLocalLValueToInitialize(loc, (LocalLValue) lhsIfAny, cType, initialization);
@@ -1498,8 +1498,8 @@ public class InitializationHandler {
 		private final List<InitializerResult> mUnusedListEntries;
 
 		private InitializerInfo(final ExpressionResult expressionResult, final List<InitializerResult> rest) {
-			assert expressionResult.getLrValue() == null
-					|| expressionResult.getLrValue() instanceof RValue : "switch to RValue first!";
+			assert expressionResult.getLrValue() == null || expressionResult.getLrValue() instanceof RValue
+					: "switch to RValue first!";
 			mExpressionResult = expressionResult;
 			mOverApprs = expressionResult.getOverapprs();
 			mElementInitInfos = Collections.emptyMap();

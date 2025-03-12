@@ -48,23 +48,25 @@ public class SummaryCache {
 	/**
 	 * Re-uses cached summaries if possible or else computes an caches a new summary from a given supplier.
 	 *
-	 * @param input Input of the loop or procedure which we want to summarize. The procedure or loop are
-	 *              not visible to this object since they are hidden in the supplier {@code computeSummary}.
-	 * @param isSubsetEq Test to check whether we can re-use another summary.
-	 * @param computeSummary If no summaries can be re-used, this supplier is used to compute a new summary.
+	 * @param input
+	 *            Input of the loop or procedure which we want to summarize. The procedure or loop are not visible to
+	 *            this object since they are hidden in the supplier {@code computeSummary}.
+	 * @param isSubsetEq
+	 *            Test to check whether we can re-use another summary.
+	 * @param computeSummary
+	 *            If no summaries can be re-used, this supplier is used to compute a new summary.
 	 * @return A summary for a procedure or loop and the given input.
 	 */
 	public IPredicate reUseOrCompute(final IPredicate input, final BiPredicate<IPredicate, IPredicate> isSubsetEq,
 			final Supplier<IPredicate> computeSummary, final SymbolicTools tools) {
 
 		final List<IPredicate> supersets = mKnownSummaries.entrySet().stream()
-				.filter(knownSummary -> isSubsetEq.test(input, knownSummary.getKey()))
-				.map(Map.Entry::getValue)
+				.filter(knownSummary -> isSubsetEq.test(input, knownSummary.getKey())).map(Map.Entry::getValue)
 				.collect(Collectors.toList());
 
 		if (!supersets.isEmpty()) {
 			// intersection is a summary because
-			//     ∀ x : (x ∊ in1 → f(x) ∊ sum1) ∧ (x ∊ in2 → f(x) ∊ sum2)
+			// ∀ x : (x ∊ in1 → f(x) ∊ sum1) ∧ (x ∊ in2 → f(x) ∊ sum2)
 			// ==> ∀ x : (x ∊ in1 ∩ in2 → f(x) ∊ sum1 ∩ sum2)
 			return tools.and(supersets);
 		}

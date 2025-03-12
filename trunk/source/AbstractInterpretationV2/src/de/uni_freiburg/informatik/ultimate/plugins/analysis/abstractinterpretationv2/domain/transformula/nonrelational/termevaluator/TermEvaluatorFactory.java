@@ -72,7 +72,7 @@ public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STAT
 
 	@FunctionalInterface
 	public interface Function<NAMETYPE, VALUETYPE> {
-		public VALUETYPE apply(final NAMETYPE name);
+		VALUETYPE apply(final NAMETYPE name);
 	}
 
 	@Override

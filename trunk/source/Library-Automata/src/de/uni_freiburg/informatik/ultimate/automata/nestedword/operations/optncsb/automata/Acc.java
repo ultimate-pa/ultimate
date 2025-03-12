@@ -30,18 +30,16 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 
-
-
 public interface Acc {
-	
+
 	boolean isAccepted(IntSet states);
-		
+
 	IntSet getLabels(int state);
-	
+
 	int getAccSize();
-	
+
 	void setLabel(int state, int label);
-	
+
 	void setLabel(int state, IntSet labels);
-	
+
 }

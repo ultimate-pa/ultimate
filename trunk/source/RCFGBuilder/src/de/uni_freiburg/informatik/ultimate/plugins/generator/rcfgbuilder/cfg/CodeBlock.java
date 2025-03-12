@@ -136,7 +136,7 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 
 	private void setPreceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
-			final String name = ((BoogieIcfgLocation) source).getProcedure();
+			final String name = source.getProcedure();
 			if (mPrecedingProcedure == null) {
 				mPrecedingProcedure = name;
 			} else {
@@ -151,7 +151,7 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 
 	private void setSucceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
-			final String name = ((BoogieIcfgLocation) source).getProcedure();
+			final String name = source.getProcedure();
 			if (mSucceedingProcedure == null) {
 				mSucceedingProcedure = name;
 			} else {

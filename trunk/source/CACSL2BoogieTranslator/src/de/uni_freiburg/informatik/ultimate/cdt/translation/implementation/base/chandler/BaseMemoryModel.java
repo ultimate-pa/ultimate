@@ -115,7 +115,6 @@ public abstract class BaseMemoryModel {
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + hda.getName();
 	}
 
-
 	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
 
 	public final HeapDataArray getPointerHeapArray() {
@@ -138,13 +137,11 @@ public abstract class BaseMemoryModel {
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		if (hda == mPointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
-				return Collections.singletonList(
-						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
-								getPointerHeapArray().getASTType(), Collections.emptySet(),
-								requiredMemoryModelFeatures.isPointerUncheckedWriteRequired(),
-								requiredMemoryModelFeatures.isPointerInitRequired(),
-								requiredMemoryModelFeatures.isPointerUncheckedReadRequired()
-								));
+				return Collections.singletonList(new ReadWriteDefinition(getPointerHeapArray().getName(),
+						bytesizeOfStoredPointerComponents(), getPointerHeapArray().getASTType(), Collections.emptySet(),
+						requiredMemoryModelFeatures.isPointerUncheckedWriteRequired(),
+						requiredMemoryModelFeatures.isPointerInitRequired(),
+						requiredMemoryModelFeatures.isPointerUncheckedReadRequired()));
 			}
 			return Collections.emptyList();
 		}
@@ -189,7 +186,6 @@ public abstract class BaseMemoryModel {
 		public String getUncheckedReadProcedureName() {
 			return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + mProcedureSuffix;
 		}
-
 
 		public String getWriteProcedureName() {
 			return WRITE_PROCEDURE_PREFIX + mProcedureSuffix;

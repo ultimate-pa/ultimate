@@ -86,22 +86,17 @@ public class QuantifierPushUtils {
 	}
 
 	/**
-	 * If we have a dualFiniteJunction (i.e., existentially quantified conjunction
-	 * or universally quantified disjunction) we can in general not push the
-	 * quantifier and have to apply elimination techniques, like e.g., DER, TIR. In
-	 * order to maximize the applicability of these elimination techniques we
-	 * exhaustively apply a number of preprocessing steps.
+	 * If we have a dualFiniteJunction (i.e., existentially quantified conjunction or universally quantified
+	 * disjunction) we can in general not push the quantifier and have to apply elimination techniques, like e.g., DER,
+	 * TIR. In order to maximize the applicability of these elimination techniques we exhaustively apply a number of
+	 * preprocessing steps.
 	 *
-	 * @param pushDualQuantifiersInParams Apply also a preprocessing step in which
-	 *                                    we apply the elimination to
-	 *                                    dualFiniteJuncts that are quantified by
-	 *                                    the dual quantifier. Unlike the other
-	 *                                    preprocessing steps this can be costly
-	 *                                    even if this preprocessing step is unable
-	 *                                    to change the formula.
+	 * @param pushDualQuantifiersInParams
+	 *            Apply also a preprocessing step in which we apply the elimination to dualFiniteJuncts that are
+	 *            quantified by the dual quantifier. Unlike the other preprocessing steps this can be costly even if
+	 *            this preprocessing step is unable to change the formula.
 	 *
-	 * @return A pair (b, 𝜑) such that b==true iff 𝜑 is a quantified
-	 *         dualFiniteJunction.
+	 * @return A pair (b, 𝜑) such that b==true iff 𝜑 is a quantified dualFiniteJunction.
 	 */
 	public static Pair<Boolean, Term> preprocessDualFiniteJunction(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
@@ -129,8 +124,8 @@ public class QuantifierPushUtils {
 			}
 
 			// Step 1: Check if subformula is a dual finite junction and return if not
-			final List<Term> currentDualFiniteJuncts = Arrays
-					.asList(QuantifierUtils.getDualFiniteJuncts(currentEt.getQuantifier(), currentEt.getTerm()));
+			final List<Term> currentDualFiniteJuncts =
+					Arrays.asList(QuantifierUtils.getDualFiniteJuncts(currentEt.getQuantifier(), currentEt.getTerm()));
 			if (currentDualFiniteJuncts.size() <= 1) {
 				return new Pair<>(false, SmtUtils.quantifier(mgdScript.getScript(), currentEt.getQuantifier(),
 						currentEt.getEliminatees(), currentDualFiniteJuncts.get(0)));
@@ -239,24 +234,20 @@ public class QuantifierPushUtils {
 	}
 
 	/**
-	 * We call a dualFiniteJunction flattened if no dualJunct has the same
-	 * quantifier as the overall formula. E.g. `∃x. (∀y. 𝜑1[y]) ∧ 𝜑2[x] ∧
-	 * (∃z.𝜑3[z])` is not flattened since the third conjunct is also existentially
-	 * quantified but `∃x,y. (∀y. 𝜑1[y]) ∧ 𝜑2[x] ∧ 𝜑3[z]` is flattened.
+	 * We call a dualFiniteJunction flattened if no dualJunct has the same quantifier as the overall formula. E.g. `∃x.
+	 * (∀y. 𝜑1[y]) ∧ 𝜑2[x] ∧ (∃z.𝜑3[z])` is not flattened since the third conjunct is also existentially quantified
+	 * but `∃x,y. (∀y. 𝜑1[y]) ∧ 𝜑2[x] ∧ 𝜑3[z]` is flattened.
 	 */
 	static boolean isFlattened(final int quantifier, final List<Term> dualFiniteJuncts) {
-		final Predicate<? super Term> notSameQuantifier = (x -> (QuantifierPusher.classify(quantifier,
-				x) != FormulaClassification.SAME_QUANTIFIER));
+		final Predicate<? super Term> notSameQuantifier =
+				(x -> (QuantifierPusher.classify(quantifier, x) != FormulaClassification.SAME_QUANTIFIER));
 		return dualFiniteJuncts.stream().allMatch(notSameQuantifier);
 	}
 
-
 	/**
-	 * TODO: Review and possibly revise.
-	 * TODO: return null if not changed, update callers of method
+	 * TODO: Review and possibly revise. TODO: return null if not changed, update callers of method
 	 */
-	public static Term flattenQuantifiedFormulas(final ManagedScript mgdScript, final int quantifier,
-			final Term term) {
+	public static Term flattenQuantifiedFormulas(final ManagedScript mgdScript, final int quantifier, final Term term) {
 		final Set<String> freeVarNames =
 				Arrays.stream(term.getFreeVars()).map(x -> x.getName()).collect(Collectors.toSet());
 		final Term inputDualJunction;
@@ -313,7 +304,6 @@ public class QuantifierPushUtils {
 		return result;
 	}
 
-
 	public static Term pushDualQuantifiersInParams(final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean applyDistributivity, final PqeTechniques pqeTechniques,
 			final SimplificationTechnique simplificationTechnique, final EliminationTask et,
@@ -349,6 +339,5 @@ public class QuantifierPushUtils {
 		}
 		return result;
 	}
-
 
 }

@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -65,7 +66,7 @@ public class NestedMap2<K1, K2, V> {
 	 * @return A backed stream to all values of the nested map
 	 */
 	public Stream<V> values() {
-		return this.mK1ToK2ToV.values().stream().map(Map::values).flatMap(Collection::stream);
+		return mK1ToK2ToV.values().stream().map(Map::values).flatMap(Collection::stream);
 	}
 
 	/**
@@ -253,10 +254,7 @@ public class NestedMap2<K1, K2, V> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mK1ToK2ToV == null ? 0 : mK1ToK2ToV.hashCode());
-		return result;
+		return Objects.hash(mK1ToK2ToV);
 	}
 
 	@Override
@@ -284,6 +282,5 @@ public class NestedMap2<K1, K2, V> {
 	public boolean isEmpty() {
 		return mK1ToK2ToV.isEmpty();
 	}
-
 
 }

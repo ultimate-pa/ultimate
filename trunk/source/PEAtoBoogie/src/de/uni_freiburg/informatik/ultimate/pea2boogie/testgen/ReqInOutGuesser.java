@@ -87,12 +87,10 @@ public class ReqInOutGuesser {
 		// generate new pattern
 		final List<DeclarationPattern> newInitPattern = new ArrayList<>();
 		for (final String var : inputVars) {
-			newInitPattern
-					.add(new DeclarationPattern(var, mVar2InitPattern.get(var).getType(), VariableCategory.IN));
+			newInitPattern.add(new DeclarationPattern(var, mVar2InitPattern.get(var).getType(), VariableCategory.IN));
 		}
 		for (final String var : outputVars) {
-			newInitPattern
-					.add(new DeclarationPattern(var, mVar2InitPattern.get(var).getType(), VariableCategory.OUT));
+			newInitPattern.add(new DeclarationPattern(var, mVar2InitPattern.get(var).getType(), VariableCategory.OUT));
 		}
 		for (final String var : remainingVars) {
 			newInitPattern

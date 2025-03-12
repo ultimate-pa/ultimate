@@ -100,9 +100,8 @@ final class WorklistItem<STATE extends IAbstractState<STATE>, ACTION, VARDECL, L
 	 * @param action
 	 * @param oldItem
 	 */
-	private WorklistItem(final DisjunctiveAbstractState<STATE> pre,
-			final DisjunctiveAbstractState<STATE> hierpre, final ACTION action,
-			final WorklistItem<STATE, ACTION, VARDECL, LOC> oldItem) {
+	private WorklistItem(final DisjunctiveAbstractState<STATE> pre, final DisjunctiveAbstractState<STATE> hierpre,
+			final ACTION action, final WorklistItem<STATE, ACTION, VARDECL, LOC> oldItem) {
 		mState = pre;
 		mAction = action;
 		mPredecessor = oldItem;

@@ -265,8 +265,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			ModelUtils.copyAnnotations(originalIcfg, pp);
 
 			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc, mOldTransition2NewTransition);
-			assert !mResult.getPathProgram().getInitialNodes()
-					.isEmpty() : "You cannot have a path program that does not start at an initial location";
+			assert !mResult.getPathProgram().getInitialNodes().isEmpty()
+					: "You cannot have a path program that does not start at an initial location";
 		}
 
 		private PathProgramConstructionResult getResult() {

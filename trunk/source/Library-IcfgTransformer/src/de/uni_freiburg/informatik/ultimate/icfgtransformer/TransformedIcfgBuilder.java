@@ -521,8 +521,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			return new SmtFunctionsAndAxioms(translationResult.getAxiom(), script);
 		}
 
-		final List<Term> newAxiomsClosed = mAdditionalAxioms.stream().map(IPredicate::getClosedFormula)
-				.collect(Collectors.toList());
+		final List<Term> newAxiomsClosed =
+				mAdditionalAxioms.stream().map(IPredicate::getClosedFormula).collect(Collectors.toList());
 		newAxiomsClosed.add(translationResult.getAxiom().getClosedFormula());
 
 		final Term newAxioms = SmtUtils.and(script.getScript(), newAxiomsClosed);

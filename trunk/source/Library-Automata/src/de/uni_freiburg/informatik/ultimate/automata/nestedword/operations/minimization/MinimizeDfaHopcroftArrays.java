@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Björn Hagemeister
  * Copyright (C) 2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Hopcroft minimization using arrays as data structure.
- * 
+ *
  * @author Björn Hagemeister
  * @param <LETTER>
  *            letter type
@@ -220,7 +219,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		final Iterator<STATE> it = mOperand.getFinalStates().iterator();
 		int index = -1;
 		while (it.hasNext()) {
-			mFinalStates[++index] = mState2int.get(it.next());
+			index++;
+			mFinalStates[index] = mState2int.get(it.next());
 		}
 
 	}
@@ -238,12 +238,14 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
-			mState2int.put(state, ++index);
+			index++;
+			mState2int.put(state, index);
 		}
 		index = -1;
 		for (final LETTER letter : mOperand.getVpAlphabet().getInternalAlphabet()) {
 			mInt2letter.add(letter);
-			mLetter2int.put(letter, ++index);
+			index++;
+			mLetter2int.put(letter, index);
 		}
 	}
 
@@ -261,11 +263,9 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		int index = 0;
 		for (int i = 0; i < mInt2state.size(); ++i) {
 			final STATE st = mInt2state.get(i);
-			// Get outgoing transition.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = mOperand.internalSuccessors(st).iterator();
+
 			// hasNext? --> add to labels.
-			while (it.hasNext()) {
-				final OutgoingInternalTransition<LETTER, STATE> oit = it.next();
+			for (final OutgoingInternalTransition<LETTER, STATE> oit : mOperand.internalSuccessors(st)) {
 				labels.add(mLetter2int.get(oit.getLetter()));
 				tails.add(mState2int.get(st));
 				heads.add(mState2int.get(oit.getSucc()));
@@ -300,8 +300,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			if (mNumberOfFinalStates > 0) {
 				// Before splitting mark final state for splitting final states
 				// and non - final states.
-				for (int i = 0; i < mFinalStates.length; ++i) {
-					mBlocks.mark(mFinalStates[i]);
+				for (final int mFinalState : mFinalStates) {
+					mBlocks.mark(mFinalState);
 				}
 				mBlocks.split();
 			}
@@ -324,12 +324,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		if (mNumberOfTransitions > 0) {
 			final Integer[] test = new Integer[mCords.mElements.length];
 			System.arraycopy(mCords.mElements, 0, test, 0, test.length);
-			Arrays.sort(test, new Comparator<Integer>() {
-				@Override
-				public int compare(final Integer x, final Integer y) {
-					return Integer.compare(mLabels[x], mLabels[y]);
-				}
-			});
+			Arrays.sort(test, (x, y) -> Integer.compare(mLabels[x], mLabels[y]));
 
 			System.arraycopy(test, 0, mCords.mElements, 0, test.length);
 
@@ -418,9 +413,10 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			newStates.add(newState);
 			// Add the new state to the new result automaton.
 			boolean isFinalState = false;
-			for (int k = 0; k < blockOfFinalStates.length; ++k) {
-				if (i == blockOfFinalStates[k]) {
+			for (final int blockOfFinalState : blockOfFinalStates) {
+				if (i == blockOfFinalState) {
 					isFinalState = true;
+					break;
 				}
 			}
 			final boolean isInitialState = i == blockOfInitState;
@@ -437,13 +433,10 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			// Take the before created new State as predecessor
 			// for the new transition.
 			final STATE newPred = newStates.get(i);
-			// Get the outgoing transitions of the STATE st.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = mOperand.internalSuccessors(st).iterator();
+
 			// Iterate over outgoing transitions of each block and add the
 			// transition to the new automaton.
-			while (it.hasNext()) {
-				// Get the next outgoing transition.
-				final OutgoingInternalTransition<LETTER, STATE> next = it.next();
+			for (final OutgoingInternalTransition<LETTER, STATE> next : mOperand.internalSuccessors(st)) {
 				// Get the successor of the transition.
 				final int succ = mState2int.get(next.getSucc());
 				// For finding the equivalent state in the new states,
@@ -476,51 +469,51 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 
 		/**
 		 * Method for initializing partition.
-		 * 
+		 *
 		 * @param numberOfStates
 		 *            number of states
 		 */
 		public void init(final int numberOfStates) {
 			// After initialization, partition contains either one
 			// or none block of states.
-			this.mNumberOfSets = numberOfStates > 0 ? 1 : 0;
+			mNumberOfSets = numberOfStates > 0 ? 1 : 0;
 			// all states of the automaton.
-			this.mElements = new int[numberOfStates];
+			mElements = new int[numberOfStates];
 			// location in mElements of a state
-			this.mLocationOfElem = new int[numberOfStates];
+			mLocationOfElem = new int[numberOfStates];
 			// # of block an element e belongs to
-			this.mSetElemBelongsTo = new int[numberOfStates];
+			mSetElemBelongsTo = new int[numberOfStates];
 
 			// Elements e of block b are stored in an unspecified order in
 			// E[f], E[f + 1], ... , E[p - 1] where f = F[b], p = P[b]
 
 			// first element e of block.
-			this.mFirst = new int[numberOfStates];
+			mFirst = new int[numberOfStates];
 			// first element e of next block
-			this.mPast = new int[numberOfStates];
+			mPast = new int[numberOfStates];
 
 			for (int i = 0; i < numberOfStates; ++i) {
 				// After initialization elements are sorted.
-				this.mElements[i] = this.mLocationOfElem[i] = i;
+				mElements[i] = mLocationOfElem[i] = i;
 				// Each element belongs to block number 0.
-				this.mSetElemBelongsTo[i] = 0;
+				mSetElemBelongsTo[i] = 0;
 			}
 
-			if (this.mNumberOfSets == 1) {
+			if (mNumberOfSets == 1) {
 				// first element of block 0 = 0.
-				this.mFirst[0] = 0;
+				mFirst[0] = 0;
 				// first element of not existing block 1 = nOfStates.
-				this.mPast[0] = numberOfStates;
+				mPast[0] = numberOfStates;
 			}
 
 			// Now we got an array mElements = [0, 1, 2, ... , #states - 1]
-			// consisting of one block          |<-------- block 0 ------->|
+			// consisting of one block |<-------- block 0 ------->|
 			// every element e in mElements belongs to block 0.
 		}
 
 		/**
 		 * Method for marking an element e.
-		 * 
+		 *
 		 * @param element
 		 *            element
 		 */
@@ -533,10 +526,10 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			final int firstUnmarked = mFirst[set] + mNumberOfMarkedElemInSet[set];
 
 			// Switching element e with first unmarked element in melements.
-			this.mElements[location] = this.mElements[firstUnmarked];
-			this.mLocationOfElem[this.mElements[location]] = location;
-			this.mElements[firstUnmarked] = element;
-			this.mLocationOfElem[element] = firstUnmarked;
+			mElements[location] = mElements[firstUnmarked];
+			mLocationOfElem[mElements[location]] = location;
+			mElements[firstUnmarked] = element;
+			mLocationOfElem[element] = firstUnmarked;
 
 			// If no element was marked in this block before, add this block
 			// to list of blocks with marked elements.
@@ -556,9 +549,9 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 				// set with marked elements.
 				final int set = mSetsWithMarkedElements[--mW];
 				// first unmarked element of set.
-				final int firstUnmarked = this.mFirst[set] + mNumberOfMarkedElemInSet[set];
+				final int firstUnmarked = mFirst[set] + mNumberOfMarkedElemInSet[set];
 
-				if (firstUnmarked == this.mPast[set]) {
+				if (firstUnmarked == mPast[set]) {
 					mNumberOfMarkedElemInSet[set] = 0;
 					continue;
 				}
@@ -568,23 +561,23 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 				// the bigger one as the old block.
 				if (mNumberOfMarkedElemInSet[set] <= (mPast[set] - firstUnmarked)) {
 					// block with marked elements is smaller --> new block
-					this.mFirst[this.mNumberOfSets] = this.mFirst[set];
-					this.mPast[this.mNumberOfSets] = this.mFirst[set] = firstUnmarked;
+					mFirst[mNumberOfSets] = mFirst[set];
+					mPast[mNumberOfSets] = mFirst[set] = firstUnmarked;
 				} else {
 					// block with marked elements is bigger --> remain as old block.
 					// --> new one consists of non-marked elements.
 
 					// TODO: Index out of bounds, why?
-					this.mPast[this.mNumberOfSets] = this.mPast[set];
-					this.mFirst[this.mNumberOfSets] = this.mPast[set] = firstUnmarked;
+					mPast[mNumberOfSets] = mPast[set];
+					mFirst[mNumberOfSets] = mPast[set] = firstUnmarked;
 				}
 
 				// Adapt the number of new block, the elements belong to.
-				for (int i = this.mFirst[this.mNumberOfSets]; i < this.mPast[this.mNumberOfSets]; ++i) {
-					this.mSetElemBelongsTo[this.mElements[i]] = this.mNumberOfSets;
+				for (int i = mFirst[mNumberOfSets]; i < mPast[mNumberOfSets]; ++i) {
+					mSetElemBelongsTo[mElements[i]] = mNumberOfSets;
 				}
 				// Set changed block and new block as blocks with non-marked elements.
-				mNumberOfMarkedElemInSet[set] = mNumberOfMarkedElemInSet[this.mNumberOfSets++] = 0;
+				mNumberOfMarkedElemInSet[set] = mNumberOfMarkedElemInSet[mNumberOfSets++] = 0;
 			}
 
 		}

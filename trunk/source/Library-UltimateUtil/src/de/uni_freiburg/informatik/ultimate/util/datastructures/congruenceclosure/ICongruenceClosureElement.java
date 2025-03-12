@@ -29,21 +29,23 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 	boolean isLiteral();
 
 	/**
-	 * (isFunctionApplication must  return false if this is true)
+	 * (isFunctionApplication must return false if this is true)
 	 *
 	 * @return true iff this element depends on some other element (i.e., changes to another element may affect this
-	 *  element), <b>and</b> this dependency is not modeled as a function application by us 	 */
+	 *         element), <b>and</b> this dependency is not modeled as a function application by us
+	 */
 	boolean isDependentNonFunctionApplication();
 
 	/**
-	 * Should only be called if this id is a dependent id. Returns all supporters of this id.
-	 * A supporter is an id that a dependent id depends on.
+	 * Should only be called if this id is a dependent id. Returns all supporters of this id. A supporter is an id that
+	 * a dependent id depends on.
+	 *
 	 * @return
 	 */
 	Set<ELEM> getSupportingNodes();
 
 	/**
-	 * (isFunctionApplication must  return false if this is true)
+	 * (isFunctionApplication must return false if this is true)
 	 *
 	 * @return true if this is a constant function
 	 */
@@ -58,10 +60,10 @@ public interface ICongruenceClosureElement<ELEM extends ICongruenceClosureElemen
 	}
 
 	/**
-	 * (isFunctionApplication must  return false if this is true)
+	 * (isFunctionApplication must return false if this is true)
 	 *
-	 * @return true if this is a mix function (i.e. a function that nondeterministically has the value of one or
-	 *  another function).
+	 * @return true if this is a mix function (i.e. a function that nondeterministically has the value of one or another
+	 *         function).
 	 */
 	default boolean isMixFunction() {
 		// default case, override this in the classes that are a constant function

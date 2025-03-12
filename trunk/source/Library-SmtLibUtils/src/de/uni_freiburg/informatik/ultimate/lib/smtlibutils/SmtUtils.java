@@ -108,8 +108,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SmtUtils {
 
-	private static final String[] EMPTY_INDICES = new String[0];
-	private static final BigInteger[] EMPTY_INDICES_BI = new BigInteger[0];
+	private static final String[] EMPTY_INDICES = {};
+	private static final BigInteger[] EMPTY_INDICES_BI = {};
 
 	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
 	private static final String ERROR_MSG_UNKNOWN_SORT = "unknown sort ";
@@ -469,8 +469,8 @@ public final class SmtUtils {
 	public static Term multiDimensionalSelect(final Script script, final Term a, final ArrayIndex index) {
 		assert a.getSort().isArraySort();
 		Term result = a;
-		for (int i = 0; i < index.size(); i++) {
-			result = SmtUtils.select(script, result, index.get(i));
+		for (final Term element : index) {
+			result = SmtUtils.select(script, result, element);
 		}
 		return result;
 	}
@@ -882,7 +882,7 @@ public final class SmtUtils {
 	 * bars must not be nested.
 	 */
 	public static String removeSmtQuoteCharacters(final String string) {
-		return string.replaceAll("\\|", "");
+		return string.replace("|", "");
 	}
 
 	public static Map<TermVariable, Term> termVariables2Constants(final Script script,
@@ -1578,8 +1578,8 @@ public final class SmtUtils {
 			result = script.term(funcname, indices, resultSort, params);
 			break;
 		}
-		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM
-				|| UltimateNormalFormUtils.respectsUltimateNormalForm(result) : "Term not in UltimateNormalForm";
+		assert !DEBUG_ASSERT_ULTIMATE_NORMAL_FORM || UltimateNormalFormUtils.respectsUltimateNormalForm(result)
+				: "Term not in UltimateNormalForm";
 
 		assert !DEBUG_CHECK_EVERY_SIMPLIFICATION || Util.checkSat(script,
 				script.term("distinct", result, script.term(funcname, indices, resultSort, params))) != LBool.SAT;
@@ -1734,7 +1734,7 @@ public final class SmtUtils {
 	}
 
 	public static String sanitizeStringAsSmtIdentifier(final String name) {
-		return name.replaceAll("\\|", "BAR").replaceAll(" ", "_");
+		return name.replace("|", "BAR").replace(' ', '_');
 	}
 
 	public static Term abs(final Script script, final Term operand) {

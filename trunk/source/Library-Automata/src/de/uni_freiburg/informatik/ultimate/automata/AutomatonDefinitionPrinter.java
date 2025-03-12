@@ -380,7 +380,6 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		private final IAutomaton<LETTER, STATE> mAutomaton;
 
 		public NamedAutomaton(final String name, final IAutomaton<LETTER, STATE> automaton) {
-			super();
 			Objects.requireNonNull(name);
 			Objects.requireNonNull(automaton);
 			mName = name;

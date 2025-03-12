@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
  * Partial visitor implementation that remembers leading comments and macros of a node.
  */
 abstract class LeadingNodeCollector implements IPSTVisitor {
-	private List<IPSTMacroExpansion> mLeadingMacroExpansions = new ArrayList<>();
+	private final List<IPSTMacroExpansion> mLeadingMacroExpansions = new ArrayList<>();
 	private IPSTACSLComment mLeadingACSLComment;
 
 	protected abstract int visitRegular(final IPSTRegularNode node);
@@ -27,8 +27,8 @@ abstract class LeadingNodeCollector implements IPSTVisitor {
 		return new ArrayList<>(mLeadingMacroExpansions);
 	}
 
-	protected List<IPSTMacroExpansion> getFilteredLeadingMacroExpansions(boolean includeEmpty,
-			boolean includeExtension) {
+	protected List<IPSTMacroExpansion> getFilteredLeadingMacroExpansions(final boolean includeEmpty,
+			final boolean includeExtension) {
 		return mLeadingMacroExpansions.stream().filter(expansion -> {
 			if (includeExtension && "__extension__".equals(expansion.getAstNode().getMacroReference().toString())) {
 				return true;
@@ -38,13 +38,13 @@ abstract class LeadingNodeCollector implements IPSTVisitor {
 	}
 
 	@Override
-	public int visit(IPSTMacroExpansion expansion) {
+	public int visit(final IPSTMacroExpansion expansion) {
 		mLeadingMacroExpansions.add(expansion);
 		return PROCESS_SKIP;
 	}
 
 	@Override
-	public int visit(IPSTACSLComment acslComment) {
+	public int visit(final IPSTACSLComment acslComment) {
 		mLeadingACSLComment = acslComment;
 		return PROCESS_SKIP;
 	}

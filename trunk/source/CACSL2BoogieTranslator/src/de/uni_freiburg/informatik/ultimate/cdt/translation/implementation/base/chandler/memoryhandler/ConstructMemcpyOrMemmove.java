@@ -97,8 +97,8 @@ public final class ConstructMemcpyOrMemmove {
 				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList outP =
 				new VarList(ignoreLoc, new String[] { SFO.RES }, mTypeHandler.constructPointerType(ignoreLoc));
-		final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
-		final VarList[] outParams = new VarList[] { outP };
+		final VarList[] inParams = { inPDest, inPSrc, inPSize };
+		final VarList[] outParams = { outP };
 
 		{
 			final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], memCopyOrMemMove.getName(),

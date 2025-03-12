@@ -35,34 +35,32 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Provides operations for {@link PredicateTransformer}
- * TODO: extend to WP operations
+ * Provides operations for {@link PredicateTransformer} TODO: extend to WP operations
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate, R extends ITransitionRelation> {
+public interface IDomainSpecificOperationProvider<C, P extends IAbstractPredicate, R extends ITransitionRelation> {
 
 	C getConstraint(P p);
 
 	/**
 	 * This operation is needed for post but not for wp.
-	 * 
-	 * @return true if provider can guarantee that constraint is unsatisfiable
-	 *         (i.e., equivalent to false, resp. the empty set of program
-	 *         states) It is always safe to return false here, the true return
-	 *         value can only bring some speedup.
-	 * 
+	 *
+	 * @return true if provider can guarantee that constraint is unsatisfiable (i.e., equivalent to false, resp. the
+	 *         empty set of program states) It is always safe to return false here, the true return value can only bring
+	 *         some speedup.
+	 *
 	 */
 	boolean isConstraintUnsatisfiable(C constraint);
 
 	/**
 	 * This operation is needed for wp but not for post.
-	 * 
-	 * @return true if provider can guarantee that constraint is valid (i.e.,
-	 *         equivalent to true, resp. the set of all program states) It is
-	 *         always safe to return false here, the true return value can only
-	 *         bring some speedup.
-	 * 
+	 *
+	 * @return true if provider can guarantee that constraint is valid (i.e., equivalent to true, resp. the set of all
+	 *         program states) It is always safe to return false here, the true return value can only bring some
+	 *         speedup.
+	 *
 	 */
 	boolean isConstraintValid(C constraint);
 
@@ -90,16 +88,14 @@ public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate
 	C constructNegation(C operand);
 
 	/**
-	 * Project constraint to all program vars that are not in the set
-	 * varsToProjectAway. The projection is an existential projection. This
-	 * operation is needed for post but not for wp.
+	 * Project constraint to all program vars that are not in the set varsToProjectAway. The projection is an
+	 * existential projection. This operation is needed for post but not for wp.
 	 */
 	C projectExistentially(Set<TermVariable> varsToProjectAway, C constraint);
 
 	/**
-	 * Project constraint to all program vars that are not in the set
-	 * varsToProjectAway. The projection is a universal projection. This
-	 * operation is needed for wp but not for post.
+	 * Project constraint to all program vars that are not in the set varsToProjectAway. The projection is a universal
+	 * projection. This operation is needed for wp but not for post.
 	 */
 	C projectUniversally(Set<TermVariable> varsToProjectAway, C constraint);
 

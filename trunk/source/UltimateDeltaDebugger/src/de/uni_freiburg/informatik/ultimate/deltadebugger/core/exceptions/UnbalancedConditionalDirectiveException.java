@@ -30,14 +30,13 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
  */
 public class UnbalancedConditionalDirectiveException extends ParserException {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
 	 * Default constructor.
 	 */
 	public UnbalancedConditionalDirectiveException() {
-		super();
 	}
-	
+
 	/**
 	 * @param message
 	 *            Message.

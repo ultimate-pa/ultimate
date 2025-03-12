@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IRSDependencies plug-in.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IRSDependencies plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -110,8 +110,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		boolean isStable = true;
 
 		for (final IcfgEdge currentEdge : trace) {
-			final UseDefSequence ud = UseDefSequence.getAnnotation(currentEdge,
-					UseDefSequence.class);
+			final UseDefSequence ud = IRSDependenciesAnnotation.getAnnotation(currentEdge, UseDefSequence.class);
 			if (ud != null) {
 
 				final List<Statement> stmts = extractStatements(currentEdge);
@@ -137,20 +136,16 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 					final boolean removedInput = remainingInputs.removeAll(uds.Use);
 					final boolean removedOutput = remainingOutputs.removeAll(uds.Def);
 
-					if (removedInput || removedOutput) {
-						if (isStable) {
-							isStable = false;
-							zoneShift = true;
-						}
+					if ((removedInput || removedOutput) && isStable) {
+						isStable = false;
+						zoneShift = true;
 					}
 
 					if (endFound) {
-						final HashSet<String> readInputs = Utils.intersect(uds.Use,
-								mInputs);
+						final HashSet<String> readInputs = Utils.intersect(uds.Use, mInputs);
 					}
 
-					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty()
-							&& !endFound) {
+					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty() && !endFound) {
 						endFound = true;
 						zoneShift = true;
 					}
@@ -178,9 +173,9 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 
 		final List<Tuple<Tuple<Integer>>> zones = new ArrayList<>();
 
-		Tuple<Integer> start = new Tuple<Integer>(0, 0);
-		Tuple<Integer> end = new Tuple<Integer>(0, 0);
-		final Tuple<Integer> last = new Tuple<Integer>(0, 0);
+		Tuple<Integer> start = new Tuple<>(0, 0);
+		Tuple<Integer> end = new Tuple<>(0, 0);
+		final Tuple<Integer> last = new Tuple<>(0, 0);
 
 		HashSet<String> remainingInputs = new HashSet<>(mInputs);
 		HashSet<String> remainingOutputs = new HashSet<>(mOutputs);
@@ -189,23 +184,20 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		boolean startFound = false;
 
 		for (int i = 0; i < trace.size(); ++i) {
-			final UseDefSequence ud = UseDefSequence.getAnnotation(trace.get(i),
-					UseDefSequence.class);
+			final UseDefSequence ud = IRSDependenciesAnnotation.getAnnotation(trace.get(i), UseDefSequence.class);
 			if (ud != null) {
 				for (int j = 0; j < ud.Sequence.size(); j++) {
 					final UseDefSet uds = ud.Sequence.get(j);
 
 					if (searchForRealEnd) {
-						final HashSet<String> readInputs = Utils.intersect(uds.Use,
-								mInputs);
+						final HashSet<String> readInputs = Utils.intersect(uds.Use, mInputs);
 
 						if (!readInputs.isEmpty()) {
 							remainingInputs = new HashSet<>(mInputs);
 							remainingOutputs = new HashSet<>(mOutputs);
 							end = new Tuple<>(last);
-							zones.add(new Tuple<SequencingVisitor.Tuple<Integer>>(
-									start, end));
-							start = new Tuple<Integer>(end);
+							zones.add(new Tuple<>(start, end));
+							start = new Tuple<>(end);
 							end = new Tuple<>(end);
 							searchForRealEnd = false;
 							startFound = false;
@@ -223,8 +215,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 
 					remainingOutputs.removeAll(uds.Def);
 
-					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty()
-							&& !searchForRealEnd) {
+					if (remainingInputs.isEmpty() && remainingOutputs.isEmpty() && !searchForRealEnd) {
 						end.set(i, j);
 						searchForRealEnd = true;
 					}
@@ -234,7 +225,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 			}
 		}
 		if (start.compareTo(end) == -1) {
-			zones.add(new Tuple<SequencingVisitor.Tuple<Integer>>(start, end));
+			zones.add(new Tuple<>(start, end));
 		}
 		// sLogger.debug(insertLineBreaks(200, traceToString(trace)));
 		mDebugZoneMap.put(new ArrayList<>(trace), zones);
@@ -244,13 +235,11 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		final StringBuilder outer = new StringBuilder();
 
 		outer.append("List of zones:\n");
-		for (final Entry<List<IcfgEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
-				.entrySet()) {
+		for (final Entry<List<IcfgEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap.entrySet()) {
 			int i = 0;
 			final StringBuilder inner = new StringBuilder();
 			for (final IcfgEdge edge : e.getKey()) {
-				final ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(
-						edge, ZoneAnnotation.class);
+				final ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(edge, ZoneAnnotation.class);
 				if (za != null) {
 					outer.append(za).append(";");
 				}
@@ -264,11 +253,9 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 			outer.append("\n");
 
 			for (final Tuple<Tuple<Integer>> zone : e.getValue()) {
-				outer.append(zone.First.First).append(",")
-						.append(zone.First.Last);
+				outer.append(zone.First.First).append(",").append(zone.First.Last);
 				outer.append(" - ");
-				outer.append(zone.Last.First).append(",")
-						.append(zone.Last.Last);
+				outer.append(zone.Last.First).append(",").append(zone.Last.Last);
 				outer.append("   ");
 			}
 			outer.append("\n----------------------------------------\n");
@@ -321,19 +308,16 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 			}
 
 			if (IsStable) {
-				return "Stable: Start " + StartStatement.toString() + " End "
-						+ EndStatement.toString();
+				return "Stable: Start " + StartStatement.toString() + " End " + EndStatement.toString();
 			} else {
-				return "Unstable: Start " + StartStatement.toString() + " End "
-						+ EndStatement.toString();
+				return "Unstable: Start " + StartStatement.toString() + " End " + EndStatement.toString();
 			}
 
 		}
 
 	}
 
-	private final class Tuple<T extends Comparable<T>> implements
-			Comparable<Tuple<T>> {
+	private final class Tuple<T extends Comparable<T>> implements Comparable<Tuple<T>> {
 		T First;
 		T Last;
 
@@ -353,8 +337,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		@Override
 		public boolean equals(final Object arg0) {
 			if (arg0 instanceof Tuple<?>) {
-				return First.equals(((Tuple<?>) arg0).First)
-						&& Last.equals(((Tuple<?>) arg0).Last);
+				return First.equals(((Tuple<?>) arg0).First) && Last.equals(((Tuple<?>) arg0).Last);
 			}
 			return super.equals(arg0);
 		}

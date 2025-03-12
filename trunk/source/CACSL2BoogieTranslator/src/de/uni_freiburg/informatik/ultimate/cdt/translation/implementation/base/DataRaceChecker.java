@@ -338,9 +338,8 @@ public final class DataRaceChecker {
 			final String name = "#race" + ((VariableLHS) lhs).getIdentifier();
 			final VariableLHS raceLhs = new VariableLHS(loc, getRaceIndicatorType(lhs.getType()), name,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType())
-					.equals(raceLhs.getType()) : "Ambiguous types for " + name + ": " + mRaceIndicators.get(name)
-							+ " vs. " + raceLhs.getType();
+			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType()).equals(raceLhs.getType())
+					: "Ambiguous types for " + name + ": " + mRaceIndicators.get(name) + " vs. " + raceLhs.getType();
 			mRaceIndicators.put(name, (BoogieType) raceLhs.getType());
 			return raceLhs;
 		}

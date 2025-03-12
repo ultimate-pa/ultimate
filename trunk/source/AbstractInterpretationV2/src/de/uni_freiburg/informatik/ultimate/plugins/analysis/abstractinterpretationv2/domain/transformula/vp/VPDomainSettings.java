@@ -8,14 +8,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public class VPDomainSettings {
 
-//	/**
-//	 * settings that are ultimate preferences
-//	 */
-//	public final boolean mUseWeqInProject;
-//	public final boolean mFlattenBeforeFatten;
-//	public final boolean mDeactivateWeakEquivalences;
-//	public final boolean mPreciseComparisonOperator;
-
+	// /**
+	// * settings that are ultimate preferences
+	// */
+	// public final boolean mUseWeqInProject;
+	// public final boolean mFlattenBeforeFatten;
+	// public final boolean mDeactivateWeakEquivalences;
+	// public final boolean mPreciseComparisonOperator;
 
 	/*
 	 * switch some smt solver soundness checks on or off
@@ -31,15 +30,16 @@ public class VPDomainSettings {
 	 * @param ups
 	 */
 	public VPDomainSettings() {
-//		mUseWeqInProject = ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT);
-//		mFlattenBeforeFatten = ups.getBoolean(VPDomainPreferences.LABEL_FLATTEN_BEFORE_FATTEN);
-//		mDeactivateWeakEquivalences = ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES);
-//		mPreciseComparisonOperator = ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR);
+		// mUseWeqInProject = ups.getBoolean(VPDomainPreferences.LABEL_USE_WEQ_IN_PROJECT);
+		// mFlattenBeforeFatten = ups.getBoolean(VPDomainPreferences.LABEL_FLATTEN_BEFORE_FATTEN);
+		// mDeactivateWeakEquivalences = ups.getBoolean(VPDomainPreferences.LABEL_DEACTIVATE_WEAK_EQUIVALENCES);
+		// mPreciseComparisonOperator = ups.getBoolean(VPDomainPreferences.LABEL_PRECISE_COMPARISON_OPERATOR);
 	}
 
 	public boolean isCheckPostCorrectness() {
 		return mCheckPostCorrectness;
 	}
+
 	public boolean isCheckTransitionAbstractionCorrectness() {
 		return mCheckTransitionAbstractCorrectness;
 	}
@@ -53,6 +53,5 @@ public class VPDomainSettings {
 	public boolean isAddNodesBeforeAnsweringQuery() {
 		return mAddNodesBeforeAnsweringQuery;
 	}
-
 
 }

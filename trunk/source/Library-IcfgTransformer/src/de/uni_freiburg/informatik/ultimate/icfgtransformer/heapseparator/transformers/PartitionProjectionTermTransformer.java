@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Note: This TermTransformer is built with respect to a specific TransFormula whose term it should transform. (which is
- *  somewhat against the architecture of TermTransformers)
+ * somewhat against the architecture of TermTransformers)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -106,11 +106,11 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 	private final HashMap<IProgramVar, TermVariable> mNewInVars;
 	private final HashMap<IProgramVar, TermVariable> mNewOutVars;
 
-//	private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
+	// private final Map<IProgramVarOrConst, ArrayGroup> mArrayToArrayGroup;
 
 	private final EdgeInfo mEdgeInfo;
 
-//	private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
+	// private final NestedMap2<EdgeInfo, Term, StoreInfo> mEdgeToIndexToStoreIndexInfo;
 	private final NestedMap2<Term, IProgramVarOrConst, Term> mOriginalTermToSubArrayToReplacementTerm;
 
 	private final List<IProgramVarOrConst> mHeapArrays;
@@ -122,13 +122,12 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 	private final ILogger mLogger;
 
-
 	/**
 	 * For an array update "a' = (store a i v)", the projection operator that this transformer implements may create
-	 *  many equations of the form "a_part_x' = a_part_x". We cannot just drop all equations of this sort, because
-	 *  they might be in a disjunction with a real update.
-	 * Thus, we globally track which subarrays (a_part_..) are actually updated anywhere in the formula.
-	 * Afterwards we eliminate them from the formula (and invars/outvars) through a postprocessing.
+	 * many equations of the form "a_part_x' = a_part_x". We cannot just drop all equations of this sort, because they
+	 * might be in a disjunction with a real update. Thus, we globally track which subarrays (a_part_..) are actually
+	 * updated anywhere in the formula. Afterwards we eliminate them from the formula (and invars/outvars) through a
+	 * postprocessing.
 	 */
 	private final Set<IProgramVarOrConst> mUpdatedSubarrays;
 
@@ -139,24 +138,23 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 	 * @param mgdScript
 	 * @param subArrayManager
 	 * @param arrayCellAccessToDimensionToLocationBlock
-	 * 			maps an ArrayCellAccess (essentially a MultiDimensionalSelect(over store) in the edge this ttf belongs
-	 *          to (via edgeInfo parameter), and an access dimension, to a LocationBlocck... TODO
+	 *            maps an ArrayCellAccess (essentially a MultiDimensionalSelect(over store) in the edge this ttf belongs
+	 *            to (via edgeInfo parameter), and an access dimension, to a LocationBlocck... TODO
 	 * @param edgeInfo
 	 * @param arrayGroupToDimensionToLocationBlocks
 	 * @param arrayToArrayGroup
 	 * @param edgeToIndexToStoreIndexInfo
-	 * 			enables us to find all StoreIndexInfos by their key members
+	 *            enables us to find all StoreIndexInfos by their key members
 	 * @param selectIndexTermToLocationBlock
 	 *
-//	 * 			The map StoreIndexInfo -> LocationBlock, projected down to mEdgeInfo
+	 *            // * The map StoreIndexInfo -> LocationBlock, projected down to mEdgeInfo
 	 */
 	public PartitionProjectionTermTransformer(final ILogger logger, final ManagedScript mgdScript,
 			final SubArrayManager subArrayManager,
 			final NestedMap2<ArrayCellAccess, Integer, StoreLocationBlock> arrayCellAccessToDimensionToLocationBlock,
 			final EdgeInfo edgeInfo,
 			final HashRelation3<ArrayGroup, Integer, StoreLocationBlock> arrayGroupToDimensionToLocationBlocks,
-			final ComputeStoreInfosAndArrayGroups<?> csiag,
-			final List<IProgramVarOrConst> heapArrays) {
+			final ComputeStoreInfosAndArrayGroups<?> csiag, final List<IProgramVarOrConst> heapArrays) {
 		mLogger = Objects.requireNonNull(logger);
 		mMgdScript = Objects.requireNonNull(mgdScript);
 
@@ -165,8 +163,8 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 		mCsiag = csiag;
 
-		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock)
-			|| !ArrayCellAccess.extractArrayCellAccesses(edgeInfo.getEdge().getTransformula().getFormula()).stream()
+		assert Objects.nonNull(arrayCellAccessToDimensionToLocationBlock) || !ArrayCellAccess
+				.extractArrayCellAccesses(edgeInfo.getEdge().getTransformula().getFormula()).stream()
 				.anyMatch(aca -> mHeapArrays.contains(edgeInfo.getProgramVarOrConstForTerm(aca.getSimpleArray())))
 				: "this input map must be non-null if we have a select on a heap array inside the edge";
 		mArrayCellAccessToIntegerToLocationBlock = arrayCellAccessToDimensionToLocationBlock;
@@ -193,8 +191,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 	protected void convert(final Term term, final SubtreePosition pos) {
 		assert mProjectLists.stream().allMatch(l -> l.stream().allMatch(Objects::nonNull));
 		final List<StoreLocationBlock> projectList = mProjectLists.peek();
-		if (term instanceof ConstantTerm
-				|| term instanceof TermVariable) {
+		if (term instanceof ConstantTerm || term instanceof TermVariable) {
 			final IProgramVar invar = mEdgeInfo.getInVar(term);
 			if (invar != null) {
 				mInVarsWithATermVar.add(invar);
@@ -214,8 +211,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm at = (ApplicationTerm) term;
 			final String functionName = at.getFunction().getName();
-			if (functionName.equals("=")
-					&& at.getFunction().getParameterSorts().length == 2
+			if (functionName.equals("=") && at.getFunction().getParameterSorts().length == 2
 					&& at.getParameters()[0].getSort().isArraySort()) {
 				// equation of two array terms
 
@@ -263,9 +259,8 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 					return;
 				}
 
-
 				/*
-				 *  as soon as we see a select, we consume it fully as a ArrayCellAccess (MultiDimensionalSelect)
+				 * as soon as we see a select, we consume it fully as a ArrayCellAccess (MultiDimensionalSelect)
 				 */
 				final ArrayCellAccess aca = new ArrayCellAccess(MultiDimensionalSelect.of(term));
 
@@ -281,7 +276,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 				for (int dim = 1; dim <= aca.getIndex().size(); dim++) {
 					/*
 					 * TODO: indeed for this field it might be nicer to use Map<ArrayCellAccess, List<LocationBlock>>
-					 *   instead of a NestedMap2...
+					 * instead of a NestedMap2...
 					 */
 					final StoreLocationBlock locationBlock = mArrayCellAccessToIntegerToLocationBlock.get(aca, dim);
 					assert locationBlock != null;
@@ -335,7 +330,6 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 					pushTerm(indexSubterm, pos.append(1));
 					enqueueWalker(new BeginScope(Collections.emptyList()));
 
-
 					/*
 					 * deal with array
 					 */
@@ -367,9 +361,9 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 		}
 	}
 
-	private List<StoreLocationBlock> append(final List<StoreLocationBlock> locationBlockList, final List<StoreLocationBlock> projectList) {
-		final List<StoreLocationBlock> result = new ArrayList<>();
-		result.addAll(locationBlockList);
+	private List<StoreLocationBlock> append(final List<StoreLocationBlock> locationBlockList,
+			final List<StoreLocationBlock> projectList) {
+		final List<StoreLocationBlock> result = new ArrayList<>(locationBlockList);
 		result.addAll(projectList);
 		assert assertIsSortedByDimensions(result);
 		return result;
@@ -409,8 +403,8 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 		if (result == null) {
 			if (!(originalTerm instanceof TermVariable)) {
-				throw new UnsupportedOperationException("TODO: if this occurs, extend below code to replace a "
-						+ "constant term by a constant term");
+				throw new UnsupportedOperationException(
+						"TODO: if this occurs, extend below code to replace a " + "constant term by a constant term");
 			}
 
 			result = mMgdScript.constructFreshTermVariable(subArrayPvoc.getGloballyUniqueId(), subArrayPvoc.getSort());
@@ -473,15 +467,14 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 	}
 
 	private static <E> List<E> dropFirst(final List<E> projectList) {
-		final List<E> newList = new ArrayList<>();
-		newList.addAll(projectList.subList(1, projectList.size()));
+		final List<E> newList = new ArrayList<>(projectList.subList(1, projectList.size()));
 		return Collections.unmodifiableList(newList);
 	}
 
 	/**
 	 *
 	 * @param indexSubterm
-	 * 			index in a store term
+	 *            index in a store term
 	 * @param locationBlock
 	 * @return
 	 */
@@ -519,7 +512,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 			final Term[] indexEntries = new Term[mArrayCellAccess.getIndex().size()];
 
-			for (int i = mArrayCellAccess.getIndex().size() - 1; i >= 0 ; i--) {
+			for (int i = mArrayCellAccess.getIndex().size() - 1; i >= 0; i--) {
 				indexEntries[i] = transformer.getConverted();
 			}
 			final ArrayIndex index = new ArrayIndex(Arrays.asList(indexEntries));
@@ -568,9 +561,7 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 		return isSorted(list.stream().map(lb -> lb.getDimension()).collect(Collectors.toList()));
 	}
 
-
 	protected static class BeginScope implements Walker {
-
 
 		private final List<StoreLocationBlock> mLocBlockList;
 
@@ -580,7 +571,6 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 			assert assertIsSortedByDimensions(locBlockList);
 			mLocBlockList = locBlockList;
 		}
-
 
 		@Override
 		public void walk(final NonRecursive engine) {
@@ -615,14 +605,11 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 
 	public void finish() {
 		/*
-		 * Compute invars and outvars for the new transformula
-		 *  criteria:
-		 *  <li> invars and outvars that do not have a term in the formula mean a havoc on that variable
-		 *    --> replace them by all subarrays
-		 *  <li> invars/outvars that do have a termVariable in the formula are added on demand:
-		 *    --> an single array read only introduces one subarray
-		 *    --> an array equation (which includes updates) in principle introduces all subarrays, however
-		 *      a subarray that is not updated (stored on) in any location (optimization)
+		 * Compute invars and outvars for the new transformula criteria: <li> invars and outvars that do not have a term
+		 * in the formula mean a havoc on that variable --> replace them by all subarrays <li> invars/outvars that do
+		 * have a termVariable in the formula are added on demand: --> an single array read only introduces one subarray
+		 * --> an array equation (which includes updates) in principle introduces all subarrays, however a subarray that
+		 * is not updated (stored on) in any location (optimization)
 		 */
 
 		/*
@@ -651,11 +638,12 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 				if (!mHeapArrays.contains(en.getKey())) {
 					continue;
 				}
-				/* heap array invar whose termvariable does not occur in the formula
-				 * --> add invar entries for all subarrays (with fresh Termvars)
+				/*
+				 * heap array invar whose termvariable does not occur in the formula --> add invar entries for all
+				 * subarrays (with fresh Termvars)
 				 */
 				final List<List<StoreLocationBlock>> locationBlockTuples =
-//						getAllLocationBlockTuplesForHeapArray(en.getKey());
+						// getAllLocationBlockTuplesForHeapArray(en.getKey());
 						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayGroupForArrayPvoc(en.getKey()));
 				for (final List<StoreLocationBlock> lbt : locationBlockTuples) {
 					final IProgramVar subarray = (IProgramVar) mSubArrayManager.getSubArray(en.getKey(), lbt);
@@ -670,8 +658,9 @@ public class PartitionProjectionTermTransformer extends PositionAwareTermTransfo
 				if (!mHeapArrays.contains(en.getKey())) {
 					continue;
 				}
-				/* heap array outvar whose termvariable does not occur in the formula
-				 * --> add invar entries for all subarrays (with fresh Termvars)
+				/*
+				 * heap array outvar whose termvariable does not occur in the formula --> add invar entries for all
+				 * subarrays (with fresh Termvars)
 				 */
 				final List<List<StoreLocationBlock>> locationBlockTuples =
 						getAllLocationBlockTuplesForHeapArray(mCsiag.getArrayGroupForArrayPvoc(en.getKey()));

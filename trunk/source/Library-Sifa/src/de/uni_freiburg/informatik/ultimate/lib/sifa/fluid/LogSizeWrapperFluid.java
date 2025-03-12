@@ -51,8 +51,7 @@ public class LogSizeWrapperFluid implements IFluid {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Predicate has dag size %s and %d disjunct(s). Abstraction %s be applied.",
 					new DagSizePrinter(predicate.getFormula()),
-					SizeLimitFluid.numberOfDisjuncts(predicate.getFormula()),
-					applyAlpha ? "will" : "won't");
+					SizeLimitFluid.numberOfDisjuncts(predicate.getFormula()), applyAlpha ? "will" : "won't");
 		}
 		return applyAlpha;
 	}

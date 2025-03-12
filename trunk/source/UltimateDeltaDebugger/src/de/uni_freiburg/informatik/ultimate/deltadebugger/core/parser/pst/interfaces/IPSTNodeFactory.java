@@ -49,7 +49,7 @@ public interface IPSTNodeFactory {
 	 * @return PST comment
 	 */
 	IPSTComment createComment(ISourceRange location, IASTComment comment);
-	
+
 	/* IPSTNodeBlock */
 	/**
 	 * @param location
@@ -62,7 +62,7 @@ public interface IPSTNodeFactory {
 	 */
 	IPSTConditionalBlock createConditionalBlock(ISourceRange location, List<IPSTDirective> conditionalDirectives,
 			ISourceRange activeBranchLocation);
-	
+
 	/**
 	 * @param location
 	 *            Source range.
@@ -71,7 +71,7 @@ public interface IPSTNodeFactory {
 	 * @return PST directive
 	 */
 	IPSTDirective createDirective(ISourceRange location, IASTPreprocessorStatement statement);
-	
+
 	/**
 	 * @param location
 	 *            Source range.
@@ -80,7 +80,7 @@ public interface IPSTNodeFactory {
 	 * @return PST include directive
 	 */
 	IPSTIncludeDirective createIncludeDirective(ISourceRange location, IASTPreprocessorIncludeStatement include);
-	
+
 	/* IPSTPreprocessorNode */
 	/**
 	 * @param location
@@ -90,14 +90,14 @@ public interface IPSTNodeFactory {
 	 * @return PST macro expansion
 	 */
 	IPSTMacroExpansion createMacroExpansion(ISourceRange location, IASTPreprocessorMacroExpansion expansion);
-	
+
 	/**
 	 * @param location
 	 *            Source range.
 	 * @return PST overlapping region
 	 */
 	IPSTOverlappingRegion createOverlappingRegion(ISourceRange location);
-	
+
 	/* IPSTRegularNode */
 	/**
 	 * @param location
@@ -107,7 +107,7 @@ public interface IPSTNodeFactory {
 	 * @return PST regular node
 	 */
 	IPSTRegularNode createRegularNode(ISourceRange location, IASTNode astNode);
-	
+
 	/**
 	 * @param location
 	 *            Source range.
@@ -116,7 +116,7 @@ public interface IPSTNodeFactory {
 	 * @return PST translation unit
 	 */
 	IPSTTranslationUnit createTranslationUnit(ISourceRange location, IASTTranslationUnit translationUnit);
-	
+
 	/**
 	 * @param sourceDocument
 	 *            Source document.

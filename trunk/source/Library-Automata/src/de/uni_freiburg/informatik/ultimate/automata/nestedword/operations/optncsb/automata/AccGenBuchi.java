@@ -33,86 +33,90 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
-
-
 public class AccGenBuchi implements Acc {
 
-    protected final TIntObjectMap<IntSet> mAccStateMap;
-    protected final int mAccSize;
-    
-    public AccGenBuchi(int size) {
-    	mAccStateMap = new TIntObjectHashMap<>();
-    	mAccSize = size;
-    }
-    
-    public AccGenBuchi(IntSet finalStates) {
-    	mAccStateMap = new TIntObjectHashMap<>();
-    	mAccSize = AccBuchi.ACC_SIZE_ONE;
-    	mAccStateMap.put(AccBuchi.ACC_LABEL_ZERO, finalStates.clone());
-    }
-    
-    @Override
-    public boolean isAccepted(IntSet set) {
-    	IntSet labels = UtilIntSet.newIntSet();
-        for(int state : set.iterable()) {
-        	IntSet lab = mAccStateMap.get(state);
-            if(lab == null) continue;
-            labels.or(lab);
-            if(labels.cardinality() == mAccSize)
-            	return true;
-        }
-        return false;
-    }
+	protected final TIntObjectMap<IntSet> mAccStateMap;
+	protected final int mAccSize;
 
-    @Override
-    public IntSet getLabels(int state) {
-        IntSet labels = mAccStateMap.get(state);
-        if(labels == null) {
-        	labels = UtilIntSet.newIntSet();
-        }else {
-        	labels = labels.clone();
-        }
-        return labels;
-    }
-    
-    @Override
-    public void setLabel(int state, int label) {
-    	assert checkLabelConsistency(label);
-    	IntSet labels = mAccStateMap.get(state);
-    	if(labels == null) {
-    		labels = UtilIntSet.newIntSet();
-    	}
-    	labels.set(label);
-    	mAccStateMap.put(state, labels);
-    }
-    
-    @Override
-    public void setLabel(int state, IntSet labels) {
-    	if(labels == null) return ;
-    	IntSet result = mAccStateMap.get(state);
-    	if(result == null) {
-    		result = UtilIntSet.newIntSet();
-    	}
-    	assert checkLabelConsistency(labels);
-    	result.or(labels);
-    	mAccStateMap.put(state, result);
-    }
-    
-    @Override
-    public int getAccSize() {
-    	return mAccSize;
-    }
-    
-    private boolean checkLabelConsistency(IntSet labels) {
-    	for(int label : labels.iterable()) {
-    		if(! checkLabelConsistency(label))
-    			return false;
-    	}
-    	return true;
-    }
-    
-    private boolean checkLabelConsistency(int label) {
-    	return label >= 0 && label < mAccSize;
-    }
-    
+	public AccGenBuchi(final int size) {
+		mAccStateMap = new TIntObjectHashMap<>();
+		mAccSize = size;
+	}
+
+	public AccGenBuchi(final IntSet finalStates) {
+		mAccStateMap = new TIntObjectHashMap<>();
+		mAccSize = AccBuchi.ACC_SIZE_ONE;
+		mAccStateMap.put(AccBuchi.ACC_LABEL_ZERO, finalStates.clone());
+	}
+
+	@Override
+	public boolean isAccepted(final IntSet set) {
+		final IntSet labels = UtilIntSet.newIntSet();
+		for (final int state : set.iterable()) {
+			final IntSet lab = mAccStateMap.get(state);
+			if (lab == null) {
+				continue;
+			}
+			labels.or(lab);
+			if (labels.cardinality() == mAccSize) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public IntSet getLabels(final int state) {
+		IntSet labels = mAccStateMap.get(state);
+		if (labels == null) {
+			labels = UtilIntSet.newIntSet();
+		} else {
+			labels = labels.clone();
+		}
+		return labels;
+	}
+
+	@Override
+	public void setLabel(final int state, final int label) {
+		assert checkLabelConsistency(label);
+		IntSet labels = mAccStateMap.get(state);
+		if (labels == null) {
+			labels = UtilIntSet.newIntSet();
+		}
+		labels.set(label);
+		mAccStateMap.put(state, labels);
+	}
+
+	@Override
+	public void setLabel(final int state, final IntSet labels) {
+		if (labels == null) {
+			return;
+		}
+		IntSet result = mAccStateMap.get(state);
+		if (result == null) {
+			result = UtilIntSet.newIntSet();
+		}
+		assert checkLabelConsistency(labels);
+		result.or(labels);
+		mAccStateMap.put(state, result);
+	}
+
+	@Override
+	public int getAccSize() {
+		return mAccSize;
+	}
+
+	private boolean checkLabelConsistency(final IntSet labels) {
+		for (final int label : labels.iterable()) {
+			if (!checkLabelConsistency(label)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean checkLabelConsistency(final int label) {
+		return label >= 0 && label < mAccSize;
+	}
+
 }

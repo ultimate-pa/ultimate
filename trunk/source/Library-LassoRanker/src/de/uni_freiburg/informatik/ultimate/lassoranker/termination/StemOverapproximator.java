@@ -85,7 +85,8 @@ class StemOverapproximator {
 	 *            LassoRanker preferences regarding new SMT scripts
 	 * @throws IOException
 	 */
-	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services) throws IOException {
+	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services)
+			throws IOException {
 		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 

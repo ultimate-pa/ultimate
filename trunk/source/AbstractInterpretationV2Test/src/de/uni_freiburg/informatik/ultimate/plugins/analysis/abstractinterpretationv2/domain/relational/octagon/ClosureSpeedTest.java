@@ -13,7 +13,7 @@ public class ClosureSpeedTest {
 
 	// -XX:+PrintCompilation -verbose:gc
 	// -XX:-BackgroundCompilation
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		final ClosureSpeedTest st = new ClosureSpeedTest();
 		st.addWarmUp(20, 3000);
 		st.addTest(20, 8000);
@@ -33,7 +33,7 @@ public class ClosureSpeedTest {
 		int cycles;
 		boolean warmup;
 	}
-	
+
 	private static class Function {
 		String name;
 		Consumer<OctMatrix> function;
@@ -43,8 +43,8 @@ public class ClosureSpeedTest {
 
 	private final List<Scenario> mScenarios = new ArrayList<>();
 	private final List<Function> mFunctions = new ArrayList<>();
-	
-	public void addWarmUp(int variables, int cycles) {
+
+	public void addWarmUp(final int variables, final int cycles) {
 		final Scenario s = new Scenario();
 		s.vars = variables;
 		s.cycles = cycles;
@@ -52,7 +52,7 @@ public class ClosureSpeedTest {
 		mScenarios.add(s);
 	}
 
-	public void addTest(int variables, int cycles) {
+	public void addTest(final int variables, final int cycles) {
 		final Scenario s = new Scenario();
 		s.vars = variables;
 		s.cycles = cycles;
@@ -60,25 +60,24 @@ public class ClosureSpeedTest {
 		mScenarios.add(s);
 	}
 
-	
-	public void addFunction(String name, Consumer<OctMatrix> function) {
+	public void addFunction(final String name, final Consumer<OctMatrix> function) {
 		final Function f = new Function();
 		f.name = name;
 		f.function = function;
 		mFunctions.add(f);
 	}
-	
+
 	public void run() {
 		printTableHeader();
 		printTableRule();
 		for (final Scenario s : mScenarios) {
-			printCurrentTableRowLeft(s);		
+			printCurrentTableRowLeft(s);
 			runScenario(s);
 			printCurrentTableRowRight(s);
 		}
 	}
 
-	private void runScenario(Scenario scenario) {
+	private void runScenario(final Scenario scenario) {
 		resetMeassuredNanoSeconds();
 		for (int mi = 0; mi < scenario.cycles; ++mi) {
 			final OctMatrix mOrig = OctMatrix.random(scenario.vars);
@@ -86,19 +85,19 @@ public class ClosureSpeedTest {
 				final OctMatrix m = mOrig.copy();
 				final long tStart = System.nanoTime();
 				f.function.accept(m);
-				f.measuredNanoSeconds += System.nanoTime() - tStart;		
+				f.measuredNanoSeconds += System.nanoTime() - tStart;
 			}
 		}
 	}
-	
+
 	private void resetMeassuredNanoSeconds() {
 		for (final Function f : mFunctions) {
 			f.measuredNanoSeconds = 0;
 		}
 	}
-	
+
 	private void printTableHeader() {
-		System.out.print("vars | cycles |" );
+		System.out.print("vars | cycles |");
 		for (final Function f : mFunctions) {
 			System.out.format(" | %8s", f.name);
 		}
@@ -112,17 +111,17 @@ public class ClosureSpeedTest {
 		}
 		System.out.println();
 	}
-	
-	private void printCurrentTableRowLeft(Scenario s) {
+
+	private void printCurrentTableRowLeft(final Scenario s) {
 		System.out.format("% 4d | %6d |", s.vars, s.cycles);
 	}
 
-	private void printCurrentTableRowRight(Scenario s) {
+	private void printCurrentTableRowRight(final Scenario s) {
 		for (final Function f : mFunctions) {
 			if (s.warmup) {
-				System.out.format(" |  warm-up");				
+				System.out.format(" |  warm-up");
 			} else {
-				System.out.format(" | %6.1f s", f.measuredNanoSeconds * 1e-9);				
+				System.out.format(" | %6.1f s", f.measuredNanoSeconds * 1e-9);
 			}
 		}
 		System.out.println();

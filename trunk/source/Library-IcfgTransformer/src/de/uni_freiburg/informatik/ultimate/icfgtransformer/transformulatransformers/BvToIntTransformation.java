@@ -64,7 +64,6 @@ public class BvToIntTransformation extends TransitionPreprocessor {
 	 */
 	public BvToIntTransformation(final IUltimateServiceProvider services, final ReplacementVarFactory fac,
 			final ManagedScript mgdScript, final boolean useNutzTransformation) {
-		super();
 		mFac = fac;
 		mServices = services;
 		mUseNutzTransformation = useNutzTransformation;

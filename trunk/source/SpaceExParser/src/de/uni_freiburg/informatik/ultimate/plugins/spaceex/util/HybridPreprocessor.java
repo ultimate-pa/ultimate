@@ -79,10 +79,10 @@ public class HybridPreprocessor {
 		if (statement == null) {
 			return "";
 		}
-		String st = statement.replaceAll(":=", "==");
-		st = st.replaceAll("&&", "&");
-		st = st.replaceAll("\\|\\|", "|");
-		st = st.replaceAll("'", "");
+		String st = statement.replace(":=", "==");
+		st = st.replace("&&", "&");
+		st = st.replace("||", "|");
+		st = st.replace("'", "");
 		return st;
 	}
 }

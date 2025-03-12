@@ -32,40 +32,46 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Powerset of boolean values true and false.
- * This enum can be used to build a non-relational powerset abstract domain for booleans.
- * 
+ * Powerset of boolean values true and false. This enum can be used to build a non-relational powerset abstract domain
+ * for booleans.
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public enum BoolValue {
 
 	// Ordinal numbers of constants are a bit fields, describing a subset of {true, false}.
-	BOT,   // 00 = {    ,      }
-	FALSE, // 01 = {    , false}
-	TRUE,  // 10 = {true,      }
-	TOP;   // 11 = {true, false}
-	
+	BOT, // 00 = { , }
+	FALSE, // 01 = { , false}
+	TRUE, // 10 = {true, }
+	TOP; // 11 = {true, false}
+
 	/**
 	 * Constructs the set that contains exactly the given value.
-	 * @param value Only element of the set.
+	 *
+	 * @param value
+	 *            Only element of the set.
 	 * @return Unit set {value}
 	 */
 	public static BoolValue get(final boolean value) {
 		return value ? TRUE : FALSE;
 	}
-	
+
 	/**
 	 * Creates the union of this and another set of booleans.
-	 * @param other Set of booleans.
+	 *
+	 * @param other
+	 *            Set of booleans.
 	 * @return Union
 	 */
 	public BoolValue union(final BoolValue other) {
 		return values()[ordinal() | other.ordinal()];
 	}
-	
+
 	/**
 	 * Creates the intersection of this and another set of booleans.
-	 * @param other Set of booleans.
+	 *
+	 * @param other
+	 *            Set of booleans.
 	 * @return Intersection
 	 */
 	public BoolValue intersect(final BoolValue other) {
@@ -73,9 +79,10 @@ public enum BoolValue {
 	}
 
 	/**
-	 * Indicates whether some other set of booleans is equal to this one.
-	 * Equal sets contain exactly the same elements.
-	 * @param other Set of booleans.
+	 * Indicates whether some other set of booleans is equal to this one. Equal sets contain exactly the same elements.
+	 *
+	 * @param other
+	 *            Set of booleans.
 	 * @return Both sets are equal
 	 */
 	public boolean isSubsetEqual(final BoolValue other) {
@@ -83,9 +90,11 @@ public enum BoolValue {
 	}
 
 	/**
-	 * Computes the logical conjunction {@code and}.
-	 * {@code and} is applied to each pair of values from the cartesian product of both sets.
-	 * @param other Set of booleans.
+	 * Computes the logical conjunction {@code and}. {@code and} is applied to each pair of values from the cartesian
+	 * product of both sets.
+	 *
+	 * @param other
+	 *            Set of booleans.
 	 * @return Logical conjunction
 	 */
 	public BoolValue and(final BoolValue other) {
@@ -97,11 +106,13 @@ public enum BoolValue {
 		final int xAndY = (thisBitField & otherBitField) | ((thisBitField | otherBitField) & 0b01);
 		return values()[xAndY];
 	}
-	
+
 	/**
-	 * Computes the logical disjunction {@code or}.
-	 * {@code or} is applied to each pair of values from the cartesian product of both sets.
-	 * @param other Set of booleans.
+	 * Computes the logical disjunction {@code or}. {@code or} is applied to each pair of values from the cartesian
+	 * product of both sets.
+	 *
+	 * @param other
+	 *            Set of booleans.
 	 * @return Logical disjunction
 	 */
 	public BoolValue or(final BoolValue other) {
@@ -115,8 +126,8 @@ public enum BoolValue {
 	}
 
 	/**
-	 * Computes the logical negation {@code not}.
-	 * {@code not} is applied to each value of this set.
+	 * Computes the logical negation {@code not}. {@code not} is applied to each value of this set.
+	 *
 	 * @return Logical negation
 	 */
 	public BoolValue not() {
@@ -131,16 +142,20 @@ public enum BoolValue {
 			return TOP;
 		}
 		// alternative:
-//		final int x = ordinal();
-//		final int notX = ((x << 1) & 0b11) | (x >> 1); // swap the two lowest bits
-//		return values()[notX];
+		// final int x = ordinal();
+		// final int notX = ((x << 1) & 0b11) | (x >> 1); // swap the two lowest bits
+		// return values()[notX];
 	}
-	
+
 	/**
 	 * Constructs an SMT Term which restricts a variable to have values from this set.
-	 * @param script Script to use.
-	 * @param sort Sort to use.
-	 * @param var Variable to be restricted.
+	 *
+	 * @param script
+	 *            Script to use.
+	 * @param sort
+	 *            Sort to use.
+	 * @param var
+	 *            Variable to be restricted.
 	 * @return SMT term
 	 */
 	public Term getTerm(final Script script, final Sort sort, final Term var) {
@@ -148,10 +163,10 @@ public enum BoolValue {
 		case BOT:
 			return script.term("false");
 		case FALSE:
-//			return script.term("=", var, script.term("false"));
+			// return script.term("=", var, script.term("false"));
 			return script.term("not", var);
 		case TRUE:
-//			return script.term("=", var, script.term("true"));
+			// return script.term("=", var, script.term("true"));
 			return var;
 		default: // TOP
 			return script.term("true");

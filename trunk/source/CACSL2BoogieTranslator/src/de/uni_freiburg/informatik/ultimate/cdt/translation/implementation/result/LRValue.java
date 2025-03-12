@@ -120,10 +120,10 @@ public abstract class LRValue {
 
 		if (value instanceof StructConstructor) {
 			final StructConstructor sc = (StructConstructor) value;
-			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE) &&
-					sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET) &&
-					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0])) &&
-					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
+			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
+					&& sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET)
+					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))
+					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
 				return true;
 			}
 		}

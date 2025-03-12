@@ -123,34 +123,34 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		}
 		// children(q)[f] = <q1, ..., qn>
 		if (!mChildrenMap.containsKey(dest)) {
-			mChildrenMap.put(dest, new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>());
+			mChildrenMap.put(dest, new HashMap<>());
 		}
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> childLetter = mChildrenMap.get(dest);
 		if (!childLetter.containsKey(letter)) {
-			childLetter.put(letter, new HashSet<TreeAutomatonRule<LETTER, STATE>>());
+			childLetter.put(letter, new HashSet<>());
 		}
-		final HashSet<TreeAutomatonRule<LETTER, STATE>> children = (HashSet<TreeAutomatonRule<LETTER, STATE>>) childLetter
-				.get(letter);
+		final HashSet<TreeAutomatonRule<LETTER, STATE>> children =
+				(HashSet<TreeAutomatonRule<LETTER, STATE>>) childLetter.get(letter);
 		children.add(rule);
 
 		// parents(q1, ..., qn)[f] = q
 		if (!mParentsMap.containsKey(src)) {
-			mParentsMap.put(src, new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>());
+			mParentsMap.put(src, new HashMap<>());
 		}
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> parentLetter = mParentsMap.get(src);
 		if (!parentLetter.containsKey(letter)) {
-			parentLetter.put(letter, new HashSet<TreeAutomatonRule<LETTER, STATE>>());
+			parentLetter.put(letter, new HashSet<>());
 		}
-		final Set<TreeAutomatonRule<LETTER, STATE>> parents = (Set<TreeAutomatonRule<LETTER, STATE>>) parentLetter
-				.get(letter);
+		final Set<TreeAutomatonRule<LETTER, STATE>> parents =
+				(Set<TreeAutomatonRule<LETTER, STATE>>) parentLetter.get(letter);
 		parents.add(rule);
 
 		// lettersMap[f] = [f(p) -> q]
 		if (!mLettersMap.containsKey(letter)) {
 			mLettersMap.put(letter, new HashSet<>());
 		}
-		final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesByLetter = (HashSet<TreeAutomatonRule<LETTER, STATE>>) mLettersMap
-				.get(letter);
+		final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesByLetter =
+				(HashSet<TreeAutomatonRule<LETTER, STATE>>) mLettersMap.get(letter);
 		rulesByLetter.add(rule);
 
 		// sourceRules[q] = < f(p1, ..., q, ... pn) -> p0 >
@@ -158,8 +158,8 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 			if (!mSourceMap.containsKey(st)) {
 				mSourceMap.put(st, new HashSet<>());
 			}
-			final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesBySource = (HashSet<TreeAutomatonRule<LETTER, STATE>>) mSourceMap
-					.get(st);
+			final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesBySource =
+					(HashSet<TreeAutomatonRule<LETTER, STATE>>) mSourceMap.get(st);
 			rulesBySource.add(rule);
 		}
 	}
@@ -224,19 +224,18 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU#
-	 * getAmountOfRules()
+	 * @see de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU# getAmountOfRules()
 	 */
 	@Override
 	public int getAmountOfRules() {
-		return this.mRules.size();
+		return mRules.size();
 	}
 
 	public Set<STATE> getFinalStates() {
 		return mFinalStates;
 	}
 
-	//@Override
+	// @Override
 	public Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state) {
 		if (!mChildrenMap.containsKey(state)) {
 			return new HashMap<>();
@@ -252,7 +251,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		return result;
 	}
 
-	//@Override
+	// @Override
 	public Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter) {
 		if (!mChildrenMap.containsKey(state) || !mChildrenMap.get(state).containsKey(letter)) {
 			return new ArrayList<>();
@@ -280,13 +279,12 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		final Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<>();
 		for (final List<STATE> src : getSourceCombinations()) {
 			for (final STATE dest : getSuccessors(src, letter)) {
-				res.add(new TreeAutomatonRule<LETTER, STATE>(letter, src, dest));
+				res.add(new TreeAutomatonRule<>(letter, src, dest));
 			}
 		}
 		return res;
-		//return mLettersMap.get(letter);
+		// return mLettersMap.get(letter);
 	}
-
 
 	/***
 	 * Get rules by source.
@@ -307,9 +305,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final List<STATE> states) {
 		final Set<TreeAutomatonRule<LETTER, STATE>> successors = new HashSet<>();
 		for (final LETTER letter : mParentsMap.get(states).keySet()) {
-			for (final TreeAutomatonRule<LETTER, STATE> rule : mParentsMap.get(states).get(letter)) {
-				successors.add(rule);
-			}
+			successors.addAll(mParentsMap.get(states).get(letter));
 		}
 		return successors;
 	}
@@ -346,7 +342,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 				src.add(mp.get(s));
 			}
 			final ST dest = mp.get(rule.getDest());
-			res.addRule(new TreeAutomatonRule<LETTER, ST>(rule.getLetter(), src, dest));
+			res.addRule(new TreeAutomatonRule<>(rule.getLetter(), src, dest));
 		}
 		return res;
 	}
@@ -400,7 +396,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 	public String toString() {
 
 		final StringBuilder alphabet = new StringBuilder();
-		for (final LETTER letter : this.mAlphabet) {
+		for (final LETTER letter : mAlphabet) {
 			if (alphabet.length() > 0) {
 				alphabet.append(" ");
 			}
@@ -410,7 +406,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		}
 
 		final StringBuilder states = new StringBuilder();
-		for (final STATE state : this.mStates) {
+		for (final STATE state : mStates) {
 			if (states.length() > 0) {
 				states.append(" ");
 			}
@@ -420,7 +416,7 @@ public class TreeAutomatonBU<LETTER extends IRankedLetter, STATE> implements ITr
 		}
 
 		final StringBuilder finalStates = new StringBuilder();
-		for (final STATE state : this.mFinalStates) {
+		for (final STATE state : mFinalStates) {
 			if (finalStates.length() > 0) {
 				finalStates.append(" ");
 			}

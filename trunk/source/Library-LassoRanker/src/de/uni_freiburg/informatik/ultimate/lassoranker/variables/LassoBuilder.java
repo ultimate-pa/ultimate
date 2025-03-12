@@ -98,8 +98,8 @@ public class LassoBuilder {
 	 * @param loop
 	 *            the loop transition
 	 */
-	public LassoBuilder(final ILogger logger, final CfgSmtToolkit csToolkit,
-			final UnmodifiableTransFormula stem, final UnmodifiableTransFormula loop, final NlaHandling nlaHandling) {
+	public LassoBuilder(final ILogger logger, final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stem,
+			final UnmodifiableTransFormula loop, final NlaHandling nlaHandling) {
 		mLogger = logger;
 		mMgdScript = csToolkit.getManagedScript();
 		mNlaHandling = nlaHandling;
@@ -108,9 +108,9 @@ public class LassoBuilder {
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, true);
 
 		mLassosUC = new ArrayList<>();
-		mLassosUC.add(
-				new LassoUnderConstruction(ModifiableTransFormulaUtils.buildTransFormula(stem, mReplacementVarFactory, mMgdScript),
-						ModifiableTransFormulaUtils.buildTransFormula(loop, mReplacementVarFactory, mMgdScript)));
+		mLassosUC.add(new LassoUnderConstruction(
+				ModifiableTransFormulaUtils.buildTransFormula(stem, mReplacementVarFactory, mMgdScript),
+				ModifiableTransFormulaUtils.buildTransFormula(loop, mReplacementVarFactory, mMgdScript)));
 	}
 
 	public ReplacementVarFactory getReplacementVarFactory() {

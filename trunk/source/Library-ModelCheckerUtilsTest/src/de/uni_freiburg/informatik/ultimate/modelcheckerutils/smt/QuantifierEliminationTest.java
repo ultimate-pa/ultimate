@@ -89,9 +89,8 @@ public class QuantifierEliminationTest {
 	private static final String SOLVER_COMMAND =
 			String.format("z3 SMTLIB2_COMPLIANT=true -t:%s -memory:2024 -smt2 -in", TEST_TIMEOUT_MILLISECONDS);
 	/**
-	 * If set to true we run the test not only for the given formula but also for
-	 * its negation. This allows us to test existential quantification and universal
-	 * quantification within a single test.
+	 * If set to true we run the test not only for the given formula but also for its negation. This allows us to test
+	 * existential quantification and universal quantification within a single test.
 	 */
 	private static final boolean CHECK_ALSO_NEGATED_INPUTS = false;
 
@@ -242,7 +241,7 @@ public class QuantifierEliminationTest {
 						mScript, SmtSortUtils.getIntSort(mMgdScript), SmtSortUtils.getIntSort(mMgdScript)));
 
 		final String[] paramIds = { "a", "i" };
-		final Sort[] paramSorts = new Sort[] { arrayFromIntToIntToInt, SmtSortUtils.getIntSort(mMgdScript) };
+		final Sort[] paramSorts = { arrayFromIntToIntToInt, SmtSortUtils.getIntSort(mMgdScript) };
 		final Sort resultSort = arrayFromIntToIntToInt;
 		final String functionDefinitionAsString = "(store a i ((as const (Array Int Int)) 0))";
 		final DeclarableFunctionSymbol additionalFunction = DeclarableFunctionSymbol.createFromString(mScript,
@@ -311,10 +310,9 @@ public class QuantifierEliminationTest {
 		return preprocessedInput;
 	}
 
-	private static void runQuantifierEliminationTest(final Term preprocessedInput,
-			final Term expectedResult, final boolean expectQuantifierFreeResult, final String testId,
-			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
-			final QuantifierEliminationTestCsvWriter csvWriter) {
+	private static void runQuantifierEliminationTest(final Term preprocessedInput, final Term expectedResult,
+			final boolean expectQuantifierFreeResult, final String testId, final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript mgdScript, final QuantifierEliminationTestCsvWriter csvWriter) {
 
 		csvWriter.reportEliminationBegin(preprocessedInput, testId);
 		final Term result = PartialQuantifierElimination.eliminate(services, mgdScript, preprocessedInput,
@@ -393,17 +391,14 @@ public class QuantifierEliminationTest {
 	}
 
 	/**
-	 * Revealed bug that lead to unsound loop acceleration results. The
-	 * variable `i` occurs quantified and free. The `i` in the critical
-	 * constraint was not quantified while descending into the subformula
-	 * with the quantified `i`.
+	 * Revealed bug that lead to unsound loop acceleration results. The variable `i` occurs quantified and free. The `i`
+	 * in the critical constraint was not quantified while descending into the subformula with the quantified `i`.
 	 */
 	@Test
 	public void avdiivkaOriginal() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"),
-		};
-		final String formulaAsString = "(exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i)))";
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString =
+				"(exists ((i Int)) (and (exists ((v_i_16 Int)) (and (<= v_i_16 0) (forall ((v_idx_1 Int)) (or (< i (+ v_idx_1 1)) (< v_idx_1 v_i_16) (= (select a v_idx_1) 42))))) (<= 1000000 i)))";
 		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
 		final Script script = mMgdScript.getScript();
 		// (= i 1048)
@@ -413,15 +408,15 @@ public class QuantifierEliminationTest {
 		// No elimination possible
 		final Term expectedResult = eliminationInput;
 		final String testId = ReflectionUtil.getCallerMethodName(2);
-		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId ,mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId,
+				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 	@Test
 	public void avdiivkaSimplified() {
-		final FunDecl[] funDecls = new FunDecl[] {
-			new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"),
-		};
-		final String formulaAsString = "(exists ((i Int)) (and (<= i 2023) (forall ((k Int)) (or (<= i k) (= (select a k) 42)))))";
+		final FunDecl[] funDecls = { new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a", "b"), };
+		final String formulaAsString =
+				"(exists ((i Int)) (and (<= i 2023) (forall ((k Int)) (or (<= i k) (= (select a k) 42)))))";
 		final Term formulaAsTerm = prepareTestInput(funDecls, formulaAsString, mServices, mMgdScript);
 		final Script script = mMgdScript.getScript();
 		// (= i 1048)
@@ -431,7 +426,8 @@ public class QuantifierEliminationTest {
 		// No elimination possible
 		final Term expectedResult = eliminationInput;
 		final String testId = ReflectionUtil.getCallerMethodName(2);
-		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId ,mServices, mLogger, mMgdScript, mCsvWriter);
+		QuantifierEliminationTest.runQuantifierEliminationTest(eliminationInput, expectedResult, false, testId,
+				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
 }

@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Wrapper for IHoareTripleCheckers that provides checking of Hoare triples we use in TreeAutomizer.
- * Hoare triples in TreeAutomizer have the form {/\ I_i(x)} F {I}, i.e., we have a set of preconditions,
- * a transition, and one postcondition. The predicates for the pre- and postconditions are HCPredicates,
- * the transition is given as a HornClause (which contains a HCTransformula).
+ * Wrapper for IHoareTripleCheckers that provides checking of Hoare triples we use in TreeAutomizer. Hoare triples in
+ * TreeAutomizer have the form {/\ I_i(x)} F {I}, i.e., we have a set of preconditions, a transition, and one
+ * postcondition. The predicates for the pre- and postconditions are HCPredicates, the transition is given as a
+ * HornClause (which contains a HCTransformula).
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -66,23 +66,25 @@ public class HCHoareTripleChecker {
 
 	/**
 	 * Constructor of HCHoareTripleChecker
-	 * @param predicateUnifier Unifier for the predicates.
+	 *
+	 * @param predicateUnifier
+	 *            Unifier for the predicates.
 	 * @param cfgSmtToolkit
-	 * */
-	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, //final CfgSmtToolkit cfgSmtToolkit,
+	 */
+	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, // final CfgSmtToolkit cfgSmtToolkit,
 			final ManagedScript mgdScript, final HcSymbolTable symbolTable) {
 		mPredicateUnifier = predicateUnifier;
 		mManagedScript = mgdScript;
 		mSymbolTable = symbolTable;
 	}
 
-
 	/**
 	 *
 	 * Substitute HcHeadVars according to bodyPredArgs of hornclause (in particular their default constants), in pre
 	 * predicates, assert them.
 	 *
-	 * @param pre preState predicates, still in terms of HcHeadVars
+	 * @param pre
+	 *            preState predicates, still in terms of HcHeadVars
 	 * @param hornClause
 	 * @return
 	 */
@@ -107,8 +109,8 @@ public class HCHoareTripleChecker {
 	}
 
 	/**
-	 * Checks the validity of a Hoare triple that is given by a set of HCPredicates (precondition),
-	 * a HornClause (action), and a single HCPredicate (postcondition).
+	 * Checks the validity of a Hoare triple that is given by a set of HCPredicates (precondition), a HornClause
+	 * (action), and a single HCPredicate (postcondition).
 	 *
 	 * @param preOld
 	 * @param hornClause
@@ -119,14 +121,13 @@ public class HCHoareTripleChecker {
 
 		/* precondition */
 		/*
-		 * sanitize pre
-		 * -> for example if the HornClause not have any body predicates, just take "true" as precondition
+		 * sanitize pre -> for example if the HornClause not have any body predicates, just take "true" as precondition
 		 */
 		final List<IPredicate> pre;
 		if (hornClause.getBodyPredicates().size() == 0) {
-			assert preOld.isEmpty() ||
-					(preOld.size() == 1 && preOld.get(0).getClosedFormula().toStringDirect().equals("true"));
-			 pre = Collections.emptyList();
+			assert preOld.isEmpty()
+					|| (preOld.size() == 1 && preOld.get(0).getClosedFormula().toStringDirect().equals("true"));
+			pre = Collections.emptyList();
 		} else {
 			pre = preOld;
 		}
@@ -144,8 +145,8 @@ public class HCHoareTripleChecker {
 		/* postcondition */
 		// the postcondition can keeps its head vars, as the Hornclause did
 		mManagedScript.echo(this, new QuotedObject("asserting negated post condition: "));
-		final Term closedNegatedPostConditionFormula = SmtUtils.not(mManagedScript.getScript(),
-				succ.getClosedFormula());
+		final Term closedNegatedPostConditionFormula =
+				SmtUtils.not(mManagedScript.getScript(), succ.getClosedFormula());
 		mManagedScript.assertTerm(this, closedNegatedPostConditionFormula);
 
 		final LBool satResult = mManagedScript.checkSat(this);
@@ -155,7 +156,6 @@ public class HCHoareTripleChecker {
 		mManagedScript.unlock(this);
 		return IncrementalPlicationChecker.convertLBool2Validity(satResult);
 	}
-
 
 	private Term close(final Term term) {
 		final Map<Term, Term> substitution = new HashMap<>();

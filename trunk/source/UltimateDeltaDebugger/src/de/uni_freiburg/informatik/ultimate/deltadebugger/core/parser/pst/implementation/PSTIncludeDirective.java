@@ -48,17 +48,17 @@ public class PSTIncludeDirective extends PSTDirective implements IPSTIncludeDire
 			final IASTPreprocessorIncludeStatement include) {
 		super(source, location, include);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@Override
 	public IASTPreprocessorIncludeStatement getAstNode() {
 		return (IASTPreprocessorIncludeStatement) mAstNode;

@@ -236,8 +236,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private ChainingHoareTripleChecker replaceLast(final IWrappedHoareTripleChecker replacement) {
-		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs.size());
-		list.addAll(mHtcs);
+		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs);
 		list.set(list.size() - 1, replacement);
 		return new ChainingHoareTripleChecker(mLogger, list);
 	}

@@ -26,6 +26,7 @@
  */
 /**
  * This package contains data structures for counting automata.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

@@ -44,7 +44,6 @@ public class BuchiInterpolantAutomatonConstructionStyle {
 	public BuchiInterpolantAutomatonConstructionStyle(final BuchiInterpolantAutomaton interpolantAutomaton,
 			final boolean bouncerStem, final boolean bouncerLoop, final boolean scroogeNondeterminismStem,
 			final boolean scroogeNondeterminismLoop, final boolean cannibalizeLoop) {
-		super();
 		mInterpolantAutomaton = interpolantAutomaton;
 		mBouncerStem = bouncerStem;
 		mBouncerLoop = bouncerLoop;

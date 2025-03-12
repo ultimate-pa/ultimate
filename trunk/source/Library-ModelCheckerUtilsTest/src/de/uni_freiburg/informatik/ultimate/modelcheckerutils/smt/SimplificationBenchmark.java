@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-//These tests are are used for benchmarking and should not run as regression tests.
+// These tests are are used for benchmarking and should not run as regression tests.
 @Category(NoRegression.class)
 public class SimplificationBenchmark {
 

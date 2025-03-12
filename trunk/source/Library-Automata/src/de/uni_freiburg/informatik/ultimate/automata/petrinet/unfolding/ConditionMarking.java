@@ -62,9 +62,11 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 	public ConditionMarking(final Set<Condition<LETTER, PLACE>> conditions) {
 		mConditions = conditions;
 	}
-	public Set<Condition<LETTER, PLACE>> getConditions(){
+
+	public Set<Condition<LETTER, PLACE>> getConditions() {
 		return mConditions;
 	}
+
 	/**
 	 * @param condition
 	 *            A condition.
@@ -167,7 +169,7 @@ public class ConditionMarking<LETTER, PLACE> implements Iterable<Condition<LETTE
 
 	@Override
 	public String toString() {
-		return this.mConditions.toString();
+		return mConditions.toString();
 	}
 
 	/**

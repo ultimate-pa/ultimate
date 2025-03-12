@@ -49,7 +49,6 @@ public class TreeHeightComperator implements Comparator<Term> {
 	 *            Additonal comparator that we use if both terms have the same treesize.
 	 */
 	public TreeHeightComperator(final Comparator<Term> tieBreaker) {
-		super();
 		mTieBreaker = tieBreaker;
 	}
 

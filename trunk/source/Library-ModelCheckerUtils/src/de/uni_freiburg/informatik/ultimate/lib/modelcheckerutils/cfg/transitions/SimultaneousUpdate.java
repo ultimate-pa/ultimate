@@ -63,16 +63,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Represents a simultaneous variable update that consists of two parts 1.
- * variables that get the value of an term (deterministically assigned) 2.
- * variables that are nondeterministically assigned (havoced)
+ * Represents a simultaneous variable update that consists of two parts 1. variables that get the value of an term
+ * (deterministically assigned) 2. variables that are nondeterministically assigned (havoced)
  *
- * We can often transform {@link TransFormula}s into this form. We note that a
- * {@link TransFormula} is usually not equivalent to this form, because a
- * {@link TransFormula} consists of a guard and an update. The guard can be
- * obtained by {@link TransFormulaUtils#computeGuard}. The conjunction of the
- * guard and the {@link SimultaneousUpdate} (lhs variables considered as outVars
- * all other variables considered as inVars) is equivalent to the original
+ * We can often transform {@link TransFormula}s into this form. We note that a {@link TransFormula} is usually not
+ * equivalent to this form, because a {@link TransFormula} consists of a guard and an update. The guard can be obtained
+ * by {@link TransFormulaUtils#computeGuard}. The conjunction of the guard and the {@link SimultaneousUpdate} (lhs
+ * variables considered as outVars all other variables considered as inVars) is equivalent to the original
  * {@link TransFormula}.
  *
  * @author heizmann@informatik.uni-freiburg.de
@@ -108,7 +105,7 @@ public class SimultaneousUpdate {
 		 * The conjunct is an array equality but we cannot find a suitable RHS.
 		 */
 		NORHSARRAY,
-	};
+	}
 
 	private final Map<IProgramVar, Term> mDeterministicAssignment;
 	private final Map<IProgramVar, MultiDimensionalNestedStore> mDeterministicArrayWrites;
@@ -120,7 +117,6 @@ public class SimultaneousUpdate {
 			final Map<IProgramVar, MultiDimensionalNestedStore> deterministicArrayWrites,
 			final Map<IProgramVar, NondetArrayWriteConstraints> nondetArrayWriteConstraints,
 			final Set<IProgramVar> havocedVars, final Set<IProgramVar> readonlyVars) {
-		super();
 		mDeterministicAssignment = deterministicAssignment;
 		mDeterministicArrayWrites = deterministicArrayWrites;
 		mNondetArrayWriteConstraints = nondetArrayWriteConstraints;
@@ -144,10 +140,10 @@ public class SimultaneousUpdate {
 			}
 		}
 
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping = TransFormulaUtils
-				.constructReverseMapping(tf.getInVars());
-		final Map<TermVariable, IProgramVar> outVarsReverseMapping = TransFormulaUtils
-				.constructReverseMapping(tf.getOutVars());
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping =
+				TransFormulaUtils.constructReverseMapping(tf.getInVars());
+		final Map<TermVariable, IProgramVar> outVarsReverseMapping =
+				TransFormulaUtils.constructReverseMapping(tf.getOutVars());
 		final Term[] conjuncts = SmtUtils.getConjuncts(tf.getFormula());
 		final HashRelation<IProgramVar, Term> pv2conjuncts = new HashRelation<>();
 		for (final Term conjunct : conjuncts) {
@@ -175,8 +171,8 @@ public class SimultaneousUpdate {
 				} else {
 					// extract
 					final TermVariable outVar = tf.getOutVars().get(pv);
-					final Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> rhs = extractUpdateRhs(
-							services, outVar, tf, inVarsReverseMapping.keySet(), mgdScript);
+					final Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> rhs =
+							extractUpdateRhs(services, outVar, tf, inVarsReverseMapping.keySet(), mgdScript);
 					assert rhs.getFirst() == null ^ rhs.getThird() == null;
 					if (rhs.getThird() != null) {
 						throw new SimultaneousUpdateException(String.format(
@@ -269,13 +265,12 @@ public class SimultaneousUpdate {
 	}
 
 	/**
-	 * Given an outVar (which will be the left-hand side of an update in this
-	 * application), try to find a term (which will be the right-hand side of an
-	 * update in this application) that is equivalent to outVar and whose variables
-	 * are inVars. If such a term can be found, rename its inVars to the
-	 * corresponding defaultVars and return the renamed term. <br />
-	 * TODO: If we see ExtractionImpediments.QUANTIFIER often, we need a different
-	 * solution. Otherwise: Refactor and extract methods.
+	 * Given an outVar (which will be the left-hand side of an update in this application), try to find a term (which
+	 * will be the right-hand side of an update in this application) that is equivalent to outVar and whose variables
+	 * are inVars. If such a term can be found, rename its inVars to the corresponding defaultVars and return the
+	 * renamed term. <br />
+	 * TODO: If we see ExtractionImpediments.QUANTIFIER often, we need a different solution. Otherwise: Refactor and
+	 * extract methods.
 	 */
 	private static Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> extractUpdateRhs(
 			final IUltimateServiceProvider services, final TermVariable outVar, final TransFormula tf,
@@ -284,8 +279,8 @@ public class SimultaneousUpdate {
 		// suitable equality may be hidden behind a long chain of equalities.
 		final Set<TermVariable> nonInvars = Arrays.asList(tf.getFormula().getFreeVars()).stream()
 				.filter(x -> x != outVar && !inVarSet.contains(x)).collect(Collectors.toSet());
-		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, nonInvars,
-				tf.getFormula());
+		final Term quantified =
+				SmtUtils.quantifier(mgdScript.getScript(), QuantifiedFormula.EXISTS, nonInvars, tf.getFormula());
 		// Note: A more expensive quantifier elimination would increase the chance to
 		// find a result slightly(?) but may be costly.
 		final Term eliminated = PartialQuantifierElimination.eliminateLight(services, mgdScript, quantified);
@@ -317,8 +312,8 @@ public class SimultaneousUpdate {
 					SolvedBinaryRelation sbr = ber.solveForSubject(mgdScript.getScript(), outVar);
 					if (sbr == null) {
 						if (SmtSortUtils.isArraySort(outVar.getSort())) {
-							final Pair<MultiDimensionalNestedStore, NondetArrayWriteConstraints> nondetUpdate = checkForNondeterministicArrayUpdate(
-									outVar, mgdScript, conjunctsWithOutVar, i);
+							final Pair<MultiDimensionalNestedStore, NondetArrayWriteConstraints> nondetUpdate =
+									checkForNondeterministicArrayUpdate(outVar, mgdScript, conjunctsWithOutVar, i);
 							if (nondetUpdate == null) {
 								updateImpediments.add(ExtractionImpediments.NORHSARRAY);
 								continue;
@@ -327,8 +322,8 @@ public class SimultaneousUpdate {
 									nondetUpdate.getFirst().toTerm(mgdScript.getScript()));
 							// Additionally, we have to rename the outVar which occurs in the value of the
 							// nondeterministic updates.
-							final TermVariable defaultVar = TransFormulaUtils.constructOutvarsToDefaultvarsMap(tf)
-									.get(outVar);
+							final TermVariable defaultVar =
+									TransFormulaUtils.constructOutvarsToDefaultvarsMap(tf).get(outVar);
 							final Term renamed = Substitution.apply(mgdScript,
 									Collections.singletonMap(outVar, defaultVar), withoutInvars);
 							return new Triple<>(renamed, nondetUpdate.getSecond(), null);
@@ -342,8 +337,8 @@ public class SimultaneousUpdate {
 							continue;
 						}
 					}
-					final Term renamed = TransFormulaUtils.renameInvarsToDefaultVars(tf, mgdScript,
-							sbr.getRightHandSide());
+					final Term renamed =
+							TransFormulaUtils.renameInvarsToDefaultVars(tf, mgdScript, sbr.getRightHandSide());
 					return new Triple<>(renamed, new NondetArrayWriteConstraints(Collections.emptyMap()), null);
 				case "<=":
 				case "<":
@@ -407,15 +402,18 @@ public class SimultaneousUpdate {
 				nondetUpdateConstraints.get(constraint.getKey()).add(constraint.getValue());
 			}
 		}
-//		final int detUpdates = miau.getMultiDimensionalNestedStore().getIndices().size() - nondetUpdates.size();
-//		if (!nondetUpdates.isEmpty()) {
-//			final MultiDimensionalNestedStore mdns = miau.getMultiDimensionalNestedStore();
-//			throw new AssertionError(String.format(
-//					"Partially nondeterministic update: %s deterministic updates %s nondeterministic updates. Array: %s, Constraints of nondet updates: %s",
-//					detUpdates, nondetUpdates.size(), mdns.getArray(), nondetUpdateConstraints.entrySet().stream().map(x -> x.getKey() + "[" +
-//							(x.getValue().stream().map(y -> (" " + y.getRelationSymbol() + y.getRightHandSide())).collect(Collectors.joining( "," )) + "]")).collect(Collectors.joining( "," ))));
-//		}
-		return new Pair<MultiDimensionalNestedStore, NondetArrayWriteConstraints>(miau.getMultiDimensionalNestedStore(),
+		// final int detUpdates = miau.getMultiDimensionalNestedStore().getIndices().size() - nondetUpdates.size();
+		// if (!nondetUpdates.isEmpty()) {
+		// final MultiDimensionalNestedStore mdns = miau.getMultiDimensionalNestedStore();
+		// throw new AssertionError(String.format(
+		// "Partially nondeterministic update: %s deterministic updates %s nondeterministic updates. Array: %s,
+		// Constraints of nondet updates: %s",
+		// detUpdates, nondetUpdates.size(), mdns.getArray(), nondetUpdateConstraints.entrySet().stream().map(x ->
+		// x.getKey() + "[" +
+		// (x.getValue().stream().map(y -> (" " + y.getRelationSymbol() +
+		// y.getRightHandSide())).collect(Collectors.joining( "," )) + "]")).collect(Collectors.joining( "," ))));
+		// }
+		return new Pair<>(miau.getMultiDimensionalNestedStore(),
 				new NondetArrayWriteConstraints(nondetUpdateConstraints));
 	}
 
@@ -434,7 +432,7 @@ public class SimultaneousUpdate {
 								"Nondet update at position %s. Constraint %s %s contains variable. Variables are not yet supported",
 								entry.getKey(), sbr.getRelationSymbol(), sbr.getRightHandSide()));
 					}
-					return new Pair<Integer, SolvedBinaryRelation>(entry.getKey(), sbr);
+					return new Pair<>(entry.getKey(), sbr);
 				}
 			}
 		}
@@ -442,8 +440,7 @@ public class SimultaneousUpdate {
 	}
 
 	/**
-	 * Returns the variables that occur on the right-hand side of updates. Except
-	 * for the variables that occur in
+	 * Returns the variables that occur on the right-hand side of updates. Except for the variables that occur in
 	 * {@link SimultaneousUpdate#getDeterministicArrayWrites()}.
 	 */
 	public Map<IProgramVar, Term> getDeterministicAssignment() {
@@ -451,8 +448,8 @@ public class SimultaneousUpdate {
 	}
 
 	/**
-	 * Returns variables that occur on the right-hand side of an update, where the
-	 * update could be identified as a, potentially multi-dimensional, array write.
+	 * Returns variables that occur on the right-hand side of an update, where the update could be identified as a,
+	 * potentially multi-dimensional, array write.
 	 */
 	public Map<IProgramVar, MultiDimensionalNestedStore> getDeterministicArrayWrites() {
 		return mDeterministicArrayWrites;
@@ -470,8 +467,7 @@ public class SimultaneousUpdate {
 	}
 
 	/**
-	 * Returns the variables that occur on the left-hand side of updates but never
-	 * on the right-hand side.
+	 * Returns the variables that occur on the left-hand side of updates but never on the right-hand side.
 	 */
 	public Set<IProgramVar> getReadonlyVars() {
 		return mReadonlyVars;
@@ -481,7 +477,6 @@ public class SimultaneousUpdate {
 		final Map<Integer, List<SolvedBinaryRelation>> mConstraints;
 
 		public NondetArrayWriteConstraints(final Map<Integer, List<SolvedBinaryRelation>> constraints) {
-			super();
 			mConstraints = constraints;
 		}
 
@@ -504,9 +499,8 @@ public class SimultaneousUpdate {
 	}
 
 	/**
-	 * Exception that is thrown if we failed to extract a {@link SimultaneousUpdate}
-	 * from a {@link TransFormula}. TODO 20210411 This class is work in progress.
-	 * Currently we don't know what are the preconditions for a successful
+	 * Exception that is thrown if we failed to extract a {@link SimultaneousUpdate} from a {@link TransFormula}. TODO
+	 * 20210411 This class is work in progress. Currently we don't know what are the preconditions for a successful
 	 * extraction.
 	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

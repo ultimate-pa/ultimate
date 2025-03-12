@@ -33,10 +33,9 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE>, ACTIO
 	 * settings.
 	 */
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOC> transitionProvider,
-			final IAbstractStateStorage<STATE, ACTION, LOC> storage,
-			final IVariableProvider<STATE, ACTION> varProvider, final ILoopDetector<ACTION> loopDetector,
-			final IAbstractDomain<STATE, ACTION> domain, final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper,
-			final IUltimateServiceProvider services) {
+			final IAbstractStateStorage<STATE, ACTION, LOC> storage, final IVariableProvider<STATE, ACTION> varProvider,
+			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION> domain,
+			final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper, final IUltimateServiceProvider services) {
 		if (services == null) {
 			throw new IllegalArgumentException("services may not be null");
 		}
@@ -57,11 +56,10 @@ public class FixpointEngineParameters<STATE extends IAbstractState<STATE>, ACTIO
 	 * Create {@link FixpointEngineParameters} by specifying all fields.
 	 */
 	private FixpointEngineParameters(final ITransitionProvider<ACTION, LOC> transitionProvider,
-			final IAbstractStateStorage<STATE, ACTION, LOC> storage,
-			final IVariableProvider<STATE, ACTION> varProvider, final ILoopDetector<ACTION> loopDetector,
-			final IAbstractDomain<STATE, ACTION> domain, final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper,
-			final IProgressAwareTimer timer, final ILogger logger, final int maxUnwindings,
-			final int maxParallelStates) {
+			final IAbstractStateStorage<STATE, ACTION, LOC> storage, final IVariableProvider<STATE, ACTION> varProvider,
+			final ILoopDetector<ACTION> loopDetector, final IAbstractDomain<STATE, ACTION> domain,
+			final IDebugHelper<STATE, ACTION, VARDECL, LOC> debugHelper, final IProgressAwareTimer timer,
+			final ILogger logger, final int maxUnwindings, final int maxParallelStates) {
 		mTransitionProvider = transitionProvider;
 		mStorage = storage;
 		mVarProvider = varProvider;

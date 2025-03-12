@@ -196,9 +196,8 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		final CategorizedProgramPoint mCppAfter;
 
 		public LoopFreeSegment(final CategorizedProgramPoint cppBefore, final CategorizedProgramPoint cppAfter) {
-			super();
-			this.mCppBefore = cppBefore;
-			this.mCppAfter = cppAfter;
+			mCppBefore = cppBefore;
+			mCppAfter = cppAfter;
 		}
 
 		@Override
@@ -232,7 +231,6 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		private final ILocation mLocation;
 
 		public CategorizedProgramPoint(final ILocation location) {
-			super();
 			mLocation = location;
 		}
 

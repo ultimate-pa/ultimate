@@ -36,8 +36,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class ExplicitValuePostOperator extends NonrelationalPostOperator<ExplicitValueState, BaseExplicitValueValue> {
 	protected ExplicitValuePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int parallelStates, final Boogie2SMT boogie2Smt,
-			final CfgSmtToolkit cfgSmtToolkit, final NonrelationalEvaluator<ExplicitValueState, BaseExplicitValueValue> evaluator) {
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int parallelStates,
+			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit,
+			final NonrelationalEvaluator<ExplicitValueState, BaseExplicitValueValue> evaluator) {
 		super(logger, symbolTable, bpl2SmtSymbolTable, parallelStates, boogie2Smt, cfgSmtToolkit, evaluator);
 	}
 }

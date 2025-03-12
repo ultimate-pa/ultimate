@@ -329,7 +329,7 @@ public final class TraceCheckUtils {
 		cs.checkTerm(smtSymbols.getAxioms().getFormula());
 		for (final IAction action : word) {
 			if (action instanceof IInternalAction) {
-				cs.checkTerm(((IInternalAction) action).getTransformula().getFormula());
+				cs.checkTerm(action.getTransformula().getFormula());
 			} else if (action instanceof ICallAction) {
 				cs.checkTerm(((ICallAction) action).getLocalVarsAssignment().getFormula());
 			} else if (action instanceof IReturnAction) {

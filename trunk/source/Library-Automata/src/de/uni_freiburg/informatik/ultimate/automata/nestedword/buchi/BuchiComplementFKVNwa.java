@@ -138,7 +138,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mSetOfStates = new SetOfStates<STATE>(mStateFactory.createEmptyStackState());
+		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
 		mStateDeterminizer = stateDeterminizer;
 		mUserDefinedMaxRank = userDefinedMaxRank;
 		mLevelRankingGenerator =
@@ -174,8 +174,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			mSetOfStates.addState(false, lrkState.isOempty(), resSucc);
 			mLrk2res.put(lrkState, resSucc);
 			mRes2lrk.put(resSucc, lrkState);
-			if (this.mHighestRank < lrkState.mHighestRank) {
-				this.mHighestRank = lrkState.mHighestRank;
+			if (mHighestRank < lrkState.mHighestRank) {
+				mHighestRank = lrkState.mHighestRank;
 			}
 		}
 		return resSucc;
@@ -265,8 +265,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 	private void internalSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
 			final IFkvState<LETTER, STATE> detUp, final boolean isEmpty, final boolean predecessorIsSubsetComponent,
 			final LevelRankingState<LETTER, STATE> predUp, final int warnSize) {
-		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty,
-				predecessorIsSubsetComponent, predUp);
+		final LevelRankingConstraint<LETTER, STATE> constraints =
+				getLevelRankingConstraintDrdCheck(isEmpty, predecessorIsSubsetComponent, predUp);
 		constraints.internalSuccessorConstraints(detUp, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
@@ -282,7 +282,6 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			resSuccs.add(resSucc);
 		}
 	}
-
 
 	@Override
 	public Collection<STATE> callSuccessors(final STATE state, final LETTER letter) {
@@ -304,11 +303,10 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 	}
 
 	private void callSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
-			final IFkvState<LETTER, STATE> fkvState, final boolean isEmpty,
-			final boolean predecessorIsSubsetComponent,
+			final IFkvState<LETTER, STATE> fkvState, final boolean isEmpty, final boolean predecessorIsSubsetComponent,
 			final LevelRankingState<LETTER, STATE> predUp) {
-		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty,
-				predecessorIsSubsetComponent, predUp);
+		final LevelRankingConstraint<LETTER, STATE> constraints =
+				getLevelRankingConstraintDrdCheck(isEmpty, predecessorIsSubsetComponent, predUp);
 		constraints.callSuccessorConstraints(fkvState, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
@@ -317,7 +315,6 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			resSuccs.add(resSucc);
 		}
 	}
-
 
 	@Override
 	public Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter) {
@@ -341,17 +338,18 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			complDown = mRes2lrk.get(hier);
 		}
 		if (complUp != null) {
-			returnSuccessorsHelper(state, hier, letter, resSuccs, complUp, complDown, complUp.isOempty(), false, complUp);
+			returnSuccessorsHelper(state, hier, letter, resSuccs, complUp, complDown, complUp.isOempty(), false,
+					complUp);
 		}
 		return resSuccs;
 	}
-
 
 	private void returnSuccessorsHelper(final STATE state, final STATE hier, final LETTER letter,
 			final Collection<STATE> resSuccs, final IFkvState<LETTER, STATE> fkvUp,
 			final IFkvState<LETTER, STATE> fkvDown, final boolean isEmpty, final boolean predecessorIsSubsetComponent,
 			final LevelRankingState<LETTER, STATE> predUp) {
-		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty, predecessorIsSubsetComponent, predUp);
+		final LevelRankingConstraint<LETTER, STATE> constraints =
+				getLevelRankingConstraintDrdCheck(isEmpty, predecessorIsSubsetComponent, predUp);
 		constraints.returnSuccessorConstraints(fkvUp, fkvDown, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
@@ -387,10 +385,5 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateP
 			throws AutomataOperationCanceledException {
 		throw new UnsupportedOperationException();
 	}
-
-
-
-
-
 
 }

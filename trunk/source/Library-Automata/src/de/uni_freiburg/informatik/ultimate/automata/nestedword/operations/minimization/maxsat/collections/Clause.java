@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Clause used by the MAX-SAT solver. Although there is only one positive atom in Horn clauses, this class allows one to
  * use several positive atoms.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V>
  *            Kind of objects that are used as variables.
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 class Clause<V> {
 	/*
 	 * counters for true/false/neither clauses
-	 * 
+	 *
 	 * TODO remove after debugging
 	 */
 	public static int trues = 0, falses = 0, neithers = 0;
@@ -80,7 +80,7 @@ class Clause<V> {
 	 * TODO: do update only for newly changed variable
 	 * <p>
 	 * TODO: update arrays to move finished variables to the end?
-	 * 
+	 *
 	 * @param solver
 	 *            solver
 	 * @return clause condition
@@ -94,19 +94,19 @@ class Clause<V> {
 			final V var = mPositiveAtoms[i];
 			final VariableStatus status = solver.getCurrentVariableStatus(var);
 			switch (status) {
-				case FALSE:
-					// do nothing
-					break;
-				case TRUE:
-					clauseStatus = ClauseStatus.TRUE;
-					break;
-				case UNSET:
-					unsetAtoms++;
-					unitIndex = i;
-					unitIsPositive = true;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case FALSE:
+				// do nothing
+				break;
+			case TRUE:
+				clauseStatus = ClauseStatus.TRUE;
+				break;
+			case UNSET:
+				unsetAtoms++;
+				unitIndex = i;
+				unitIsPositive = true;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 
@@ -118,19 +118,19 @@ class Clause<V> {
 				final V var = mNegativeAtoms[i];
 				final VariableStatus status = solver.getCurrentVariableStatus(var);
 				switch (status) {
-					case FALSE:
-						clauseStatus = ClauseStatus.TRUE;
-						break;
-					case TRUE:
-						// do nothing
-						break;
-					case UNSET:
-						unsetAtoms++;
-						unitIndex = i;
-						unitIsPositive = false;
-						break;
-					default:
-						throw new IllegalArgumentException();
+				case FALSE:
+					clauseStatus = ClauseStatus.TRUE;
+					break;
+				case TRUE:
+					// do nothing
+					break;
+				case UNSET:
+					unsetAtoms++;
+					unitIndex = i;
+					unitIsPositive = false;
+					break;
+				default:
+					throw new IllegalArgumentException();
 				}
 			}
 		}
@@ -170,7 +170,7 @@ class Clause<V> {
 		} else {
 			var = mNegativeAtoms[-(propagateeIndex + 1)];
 		}
-		return new Pair<V, Boolean>(var, propagateeIsPositive);
+		return new Pair<>(var, propagateeIsPositive);
 	}
 
 	public boolean isEquivalentToFalse() {
@@ -205,7 +205,7 @@ class Clause<V> {
 
 	/**
 	 * Yet unset literal.
-	 * 
+	 *
 	 * @param solver
 	 *            solver
 	 * @return an atom that was not yet set
@@ -217,27 +217,27 @@ class Clause<V> {
 			for (final V var : mPositiveAtoms) {
 				final VariableStatus status = solver.getCurrentVariableStatus(var);
 				switch (status) {
-					case TRUE:
-					case FALSE:
-						// do nothing
-						break;
-					case UNSET:
-						return new Pair<V, Boolean>(var, true);
-					default:
-						throw new IllegalArgumentException();
+				case TRUE:
+				case FALSE:
+					// do nothing
+					break;
+				case UNSET:
+					return new Pair<>(var, true);
+				default:
+					throw new IllegalArgumentException();
 				}
 			}
 			for (final V var : mNegativeAtoms) {
 				final VariableStatus status = solver.getCurrentVariableStatus(var);
 				switch (status) {
-					case TRUE:
-					case FALSE:
-						// do nothing
-						break;
-					case UNSET:
-						return new Pair<V, Boolean>(var, false);
-					default:
-						throw new IllegalArgumentException();
+				case TRUE:
+				case FALSE:
+					// do nothing
+					break;
+				case UNSET:
+					return new Pair<>(var, false);
+				default:
+					throw new IllegalArgumentException();
 				}
 			}
 			throw new AssertionError("did not find unset atom");
@@ -274,7 +274,7 @@ class Clause<V> {
 	/**
 	 * Returns the Horn status of the last evaluation of the clause. It is intended that this does not necessarily
 	 * correspond to the current assignment.
-	 * 
+	 *
 	 * @return true iff the clause is a Horn clause under the current assignment
 	 */
 	public boolean isHorn() {
@@ -283,7 +283,7 @@ class Clause<V> {
 
 	/**
 	 * Checks whether the clause is a Horn clause under the current assignment.
-	 * 
+	 *
 	 * @deprecated The method is currently not used as we report the Horn status of the last evaluation time.
 	 * @param solver
 	 *            solver
@@ -295,19 +295,19 @@ class Clause<V> {
 		for (final V var : mPositiveAtoms) {
 			final VariableStatus status = solver.getCurrentVariableStatus(var);
 			switch (status) {
-				case UNSET:
-					if (foundFirst) {
-						return false;
-					}
-					foundFirst = true;
-					break;
-				case FALSE:
-					break;
-				case TRUE:
-					throw new IllegalArgumentException(
-							"Do not call this method for clauses which are equivalent to 'true'.");
-				default:
-					throw new IllegalArgumentException();
+			case UNSET:
+				if (foundFirst) {
+					return false;
+				}
+				foundFirst = true;
+				break;
+			case FALSE:
+				break;
+			case TRUE:
+				throw new IllegalArgumentException(
+						"Do not call this method for clauses which are equivalent to 'true'.");
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 		return true;

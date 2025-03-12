@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  * determinized NWA corresponds to a set of ordered pairs of A's states. In such a pair, the first state (present)
  * represents a state "in which A can be at the moment", the second state (caller) represents the state "before the last
  * call statement", i.e. the second state represents "the top of the stack".
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Symbol
@@ -64,7 +64,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	 * Constructor.
 	 * <p>
 	 * TODO Christian 2016-09-10: The parameter is not used - a bug?
-	 * 
+	 *
 	 * @param nwa
 	 *            nested word automaton
 	 */
@@ -122,7 +122,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 
 	/**
 	 * Adds the pair (caller,present) to the nested word automaton.
-	 * 
+	 *
 	 * @param caller
 	 *            caller state
 	 * @param present
@@ -130,7 +130,8 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public void addPair(final STATE caller, final STATE present, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
+	public void addPair(final STATE caller, final STATE present,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (mConstructionFinished) {
 			throw new IllegalArgumentException("Construction finished must not add pairs.");
 		}

@@ -39,7 +39,6 @@ public class CBacktranslationRegressionTestSuite extends AbstractRegressionTestS
 	private static final String FILE_ENDING = ".c";
 
 	public CBacktranslationRegressionTestSuite() {
-		super();
 		mTimeout = TIMEOUT;
 		mRootFolder = ROOT_DIR;
 		mFiletypesToConsider = new String[] { FILE_ENDING };

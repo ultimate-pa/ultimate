@@ -153,9 +153,9 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<L, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(getServices()), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
-				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final IPredicateUnifier predicateUnifier =
+				new PredicateUnifier(mLogger, getServices(), mCsToolkit.getManagedScript(), mPredicateFactory,
+						mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA);
 
 		final boolean implicationInformationProvided = rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton;
 		final Pair<HashRelation<String, String>, HashRelation<String, String>> impliesExpliesStringRelations;
@@ -325,8 +325,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 			final Map<String, Set<L>> map) {
 		int removedLetters = 0;
 		int reusedLetters = 0;
-		final Set<String> letters = new HashSet<>();
-		letters.addAll(orgAlphabet.getInternalAlphabet());
+		final Set<String> letters = new HashSet<>(orgAlphabet.getInternalAlphabet());
 		letters.addAll(orgAlphabet.getReturnAlphabet());
 		letters.addAll(orgAlphabet.getCallAlphabet());
 		for (final String strLetter : letters) {

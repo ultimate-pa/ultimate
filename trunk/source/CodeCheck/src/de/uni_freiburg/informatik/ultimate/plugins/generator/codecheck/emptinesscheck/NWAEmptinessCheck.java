@@ -148,17 +148,15 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						mCallAlphabet.add(statement);
 
 						if (mStateToLettersCall.get(currentNode) == null) {
-							mStateToLettersCall.put(currentNode, new HashSet<IIcfgTransition<IcfgLocation>>());
+							mStateToLettersCall.put(currentNode, new HashSet<>());
 						}
 						mStateToLettersCall.get(currentNode).add(statement);
 
 						if (mStateToLetterToOutgoingCallTransitions.get(currentNode) == null) {
-							mStateToLetterToOutgoingCallTransitions.put(currentNode,
-									new HashMap<IIcfgTransition<IcfgLocation>, List<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>());
+							mStateToLetterToOutgoingCallTransitions.put(currentNode, new HashMap<>());
 						}
 						if (mStateToLetterToOutgoingCallTransitions.get(currentNode).get(statement) == null) {
-							mStateToLetterToOutgoingCallTransitions.get(currentNode).put(statement,
-									new ArrayList<OutgoingCallTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>());
+							mStateToLetterToOutgoingCallTransitions.get(currentNode).put(statement, new ArrayList<>());
 						}
 						mStateToLetterToOutgoingCallTransitions.get(currentNode).get(statement)
 								.add(new OutgoingCallTransition<>(statement, targetNode));
@@ -167,7 +165,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						mReturnAlphabet.add(statement);
 
 						if (mStateToLettersReturn.get(currentNode) == null) {
-							mStateToLettersReturn.put(currentNode, new HashSet<IIcfgTransition<IcfgLocation>>());
+							mStateToLettersReturn.put(currentNode, new HashSet<>());
 						}
 						mStateToLettersReturn.get(currentNode).add(statement);
 
@@ -177,17 +175,15 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						assert hier != null;
 
 						if (mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode) == null) {
-							mStateToHierToLetterToOutgoingReturnTransitions.put(currentNode,
-									new HashMap<AnnotatedProgramPoint, Map<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>>());
+							mStateToHierToLetterToOutgoingReturnTransitions.put(currentNode, new HashMap<>());
 						}
 						if (mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier) == null) {
-							mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).put(hier,
-									new HashMap<IIcfgTransition<IcfgLocation>, List<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>());
+							mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).put(hier, new HashMap<>());
 						}
 						if (mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier)
 								.get(statement) == null) {
 							mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).put(statement,
-									new ArrayList<OutgoingReturnTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>());
+									new ArrayList<>());
 						}
 						assert isOutReturnTransitionNotContained(currentNode, hier, statement, targetNode);
 						mStateToHierToLetterToOutgoingReturnTransitions.get(currentNode).get(hier).get(statement)
@@ -196,17 +192,16 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 						mInternalAlphabet.add(statement);
 
 						if (mStateToLettersInternal.get(currentNode) == null) {
-							mStateToLettersInternal.put(currentNode, new HashSet<IIcfgTransition<IcfgLocation>>());
+							mStateToLettersInternal.put(currentNode, new HashSet<>());
 						}
 						mStateToLettersInternal.get(currentNode).add(statement);
 
 						if (mStateToLetterToOutgoingInternalTransitions.get(currentNode) == null) {
-							mStateToLetterToOutgoingInternalTransitions.put(currentNode,
-									new HashMap<IIcfgTransition<IcfgLocation>, List<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>>());
+							mStateToLetterToOutgoingInternalTransitions.put(currentNode, new HashMap<>());
 						}
 						if (mStateToLetterToOutgoingInternalTransitions.get(currentNode).get(statement) == null) {
 							mStateToLetterToOutgoingInternalTransitions.get(currentNode).put(statement,
-									new ArrayList<OutgoingInternalTransition<IIcfgTransition<IcfgLocation>, AnnotatedProgramPoint>>());
+									new ArrayList<>());
 						}
 						mStateToLetterToOutgoingInternalTransitions.get(currentNode).get(statement)
 								.add(new OutgoingInternalTransition<>(statement, targetNode));

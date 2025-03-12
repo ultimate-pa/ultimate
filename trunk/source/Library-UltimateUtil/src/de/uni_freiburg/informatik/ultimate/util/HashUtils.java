@@ -37,7 +37,7 @@ public final class HashUtils {
 		if (vals == null || vals.length == 0) {
 			return init;
 		}
-		int a,b,c;
+		int a, b, c;
 		a = b = c = BASE + (vals.length << 2) + init;
 		int pos = 0;
 		while (vals.length - pos > 12) {
@@ -134,7 +134,7 @@ public final class HashUtils {
 		if (vals == null || vals.length == 0) {
 			return init;
 		}
-		int a,b,c;
+		int a, b, c;
 		a = b = c = BASE + (vals.length << 2) + init;
 		int pos = 0;
 		while (vals.length - pos > 3) {
@@ -166,10 +166,12 @@ public final class HashUtils {
 		}
 		switch (vals.length - pos) {
 		case 3:
-			c += vals[pos++].hashCode();
+			c += vals[pos].hashCode();
+			pos++;
 			// fallthrough
 		case 2:
-			b += vals[pos++].hashCode();
+			b += vals[pos].hashCode();
+			pos++;
 			// fallthrough
 		case 1:
 			a += vals[pos].hashCode();
@@ -198,7 +200,7 @@ public final class HashUtils {
 	}
 
 	public static int hashJenkins(final int init, final Object val) {
-		int a,b,c;
+		int a, b, c;
 		a = b = BASE + 4 + init;
 		// slightly optimized version of hashJenkins(init, new Object[] {val})
 		a += val.hashCode();

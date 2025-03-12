@@ -14,9 +14,9 @@ import edu.uci.ics.jung.io.GraphMLWriter;
 
 /**
  * Extended Jung GraphMLWriter s.t. attr.name is also written (for yED) and XML boilerplate is changeable.
- * 
+ *
  * The code is copied from JUNG 2.0 via grepcode and modified at the appropriate places.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

@@ -56,8 +56,8 @@ public final class ConstantArrayUtil {
 
 	public static Expression getConstantArray(final FunctionDeclarations decls, final ILocation loc,
 			final BoogieArrayType arrayType, final Expression constant) {
-		assert arrayType.getValueType().equals(constant.getType()) : "constant array of type " + arrayType
-				+ " cannot have constant value " + constant;
+		assert arrayType.getValueType().equals(constant.getType())
+				: "constant array of type " + arrayType + " cannot have constant value " + constant;
 		final FunctionDeclaration function = getOrDeclareConstantArrayFunction(decls, arrayType);
 		return new FunctionApplication(loc, arrayType, function.getIdentifier(), new Expression[] { constant });
 	}
@@ -72,8 +72,8 @@ public final class ConstantArrayUtil {
 			final BoogieArrayType type) {
 		return getOrDeclareConstantArrayFunction(decls, type, "~param", new BoogieType[] { type.getValueType() },
 				valType -> {
-					assert valType.equals(type.getValueType()) : "constant value of type " + type.getValueType()
-							+ " cannot be used for " + valType;
+					assert valType.equals(type.getValueType())
+							: "constant value of type " + type.getValueType() + " cannot be used for " + valType;
 					return FunctionDeclarations.constructNameForFunctionInParam(0);
 				});
 	}

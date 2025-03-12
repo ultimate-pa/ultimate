@@ -74,8 +74,7 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	 * @param simplificationTechnique
 	 */
 	public HCPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final HcSymbolTable symbolTable,
-			final SimplificationTechnique simplificationTechnique) {
+			final HcSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique) {
 		super(services, mgdScript, symbolTable);
 		mMgdScript = mgdScript;
 		mHCSymbolTable = symbolTable;
@@ -119,8 +118,8 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 		return mDontCareLocationPredicate;
 	}
 
-	public HCPredicate newPredicate(final HcPredicateSymbol loc, final Term term,
-			final List<TermVariable> vars, final List<FunctionSymbol> funs) {
+	public HCPredicate newPredicate(final HcPredicateSymbol loc, final Term term, final List<TermVariable> vars,
+			final List<FunctionSymbol> funs) {
 		return newPredicate(Collections.singleton(loc), term, vars, funs);
 	}
 
@@ -143,15 +142,14 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	 * @param vars
 	 * @return
 	 *//*
-	public HCPredicate newHCPredicate(final Set<HornClausePredicateSymbol> sym, final Term term,
-			final List<TermVariable> vars) {
-		return newPredicate(sym, term, vars);
-	}*/
+		 * public HCPredicate newHCPredicate(final Set<HornClausePredicateSymbol> sym, final Term term, final
+		 * List<TermVariable> vars) { return newPredicate(sym, term, vars); }
+		 */
 
-//	@Override
-//	protected TermVarsProc constructTermVarsProc(final Term term) {
-//		throw new UnsupportedOperationException("concept of TermVarsProc does not apply for Chc problem");
-//	}
+	// @Override
+	// protected TermVarsProc constructTermVarsProc(final Term term) {
+	// throw new UnsupportedOperationException("concept of TermVarsProc does not apply for Chc problem");
+	// }
 
 	private Term computeClosedFormula(final Term formula) {
 		if (isDontCare(formula)) {
@@ -167,8 +165,8 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 	}
 
 	/**
-	 * When we construct a HCPredicate from a formula, then there are two cases:
-	 * - the formula is already normalized, i.e., each of its free .. TODO..
+	 * When we construct a HCPredicate from a formula, then there are two cases: - the formula is already normalized,
+	 * i.e., each of its free .. TODO..
 	 *
 	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
 	 *
@@ -185,24 +183,24 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 				mProgramVars = Collections.emptySet();
 				mProgramFuns = Collections.emptySet();
 			} else {
-//				final Map<Term, Term> normalizingSubstitution = new HashMap<>();
-//				final Set<IProgramVar> hcOutVars = new HashSet<>();
+				// final Map<Term, Term> normalizingSubstitution = new HashMap<>();
+				// final Set<IProgramVar> hcOutVars = new HashSet<>();
 
-//				for (int i = 0; i < variables.size(); i++) {
-//					final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
-//					hcOutVars.add(hcOutVar);
-//					normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
-//				}
+				// for (int i = 0; i < variables.size(); i++) {
+				// final HcBodyVar hcOutVar = mHCSymbolTable.getOrConstructHCOutVar(i, variables.get(i).getSort());
+				// hcOutVars.add(hcOutVar);
+				// normalizingSubstitution.put(variables.get(i), hcOutVar.getTermVariable());
+				// }
 
-//				mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);
-//				mProgramVars = hcOutVars;
+				// mNormalizedTerm = new Substitution(mScript, normalizingSubstitution).transform(formula);
+				// mProgramVars = hcOutVars;
 
 				// TODO: make nicer, this may not need an extra class..
 				mNormalizedTerm = formula;
-				mProgramVars = variables.stream().map(tv -> mHCSymbolTable.getProgramVar(tv))
-						.collect(Collectors.toSet());
-				mProgramFuns = functions.stream().map(tv -> mHCSymbolTable.getProgramFun(tv))
-						.collect(Collectors.toSet());
+				mProgramVars =
+						variables.stream().map(tv -> mHCSymbolTable.getProgramVar(tv)).collect(Collectors.toSet());
+				mProgramFuns =
+						functions.stream().map(tv -> mHCSymbolTable.getProgramFun(tv)).collect(Collectors.toSet());
 			}
 		}
 
@@ -217,7 +215,6 @@ public class HCPredicateFactory extends BasicPredicateFactory {
 		public Set<IProgramFunction> getProgramFuns() {
 			return mProgramFuns;
 		}
-
 
 	}
 }

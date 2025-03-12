@@ -42,7 +42,6 @@ public class ProgramFunction implements IProgramFunction {
 	private final FunctionSymbol mFunSym;
 
 	public ProgramFunction(final FunctionSymbol funSym) {
-		super();
 		Objects.nonNull(funSym);
 		mFunSym = funSym;
 	}
@@ -54,26 +53,28 @@ public class ProgramFunction implements IProgramFunction {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mFunSym == null) ? 0 : mFunSym.hashCode());
-		return result;
+		return Objects.hash(mFunSym);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final ProgramFunction other = (ProgramFunction) obj;
 		if (mFunSym == null) {
-			if (other.mFunSym != null)
+			if (other.mFunSym != null) {
 				return false;
-		} else if (!mFunSym.equals(other.mFunSym))
+			}
+		} else if (!mFunSym.equals(other.mFunSym)) {
 			return false;
+		}
 		return true;
 	}
 

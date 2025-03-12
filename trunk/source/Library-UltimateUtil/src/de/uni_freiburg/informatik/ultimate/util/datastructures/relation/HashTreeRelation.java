@@ -33,8 +33,8 @@ import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
- * Implementation of an {@link AbstractRelation} that uses a {@link HashMap} for
- * the mapping and a {@link TreeSet} for the elements of the image.
+ * Implementation of an {@link AbstractRelation} that uses a {@link HashMap} for the mapping and a {@link TreeSet} for
+ * the elements of the image.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author musab@informatik.uni-freiburg.de

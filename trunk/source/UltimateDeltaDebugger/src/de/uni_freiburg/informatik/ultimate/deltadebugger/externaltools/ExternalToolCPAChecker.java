@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.preferences.DeltaDebugg
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

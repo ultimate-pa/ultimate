@@ -53,9 +53,8 @@ public class ProcedureSignature {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
-		for (int i = 0; i < mInParams.size(); i++) {
+		for (final ASTType inParam : mInParams) {
 			sb.append(times);
-			final ASTType inParam = mInParams.get(i);
 			flattenASTTypeName(inParam, sb);
 			times = "~X~";
 		}

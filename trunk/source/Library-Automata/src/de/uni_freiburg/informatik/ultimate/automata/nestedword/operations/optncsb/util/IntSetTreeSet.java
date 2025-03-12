@@ -31,11 +31,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import java.util.Iterator;
 import java.util.TreeSet;
 
-
 public class IntSetTreeSet implements IntSet {
-	
+
 	private final TreeSet<Integer> mSet;
-	
+
 	public IntSetTreeSet() {
 		mSet = new TreeSet<>();
 	}
@@ -47,63 +46,63 @@ public class IntSetTreeSet implements IntSet {
 
 	@Override
 	public IntSet clone() {
-		IntSetTreeSet copy = new IntSetTreeSet();
+		final IntSetTreeSet copy = new IntSetTreeSet();
 		copy.mSet.addAll(mSet);
 		return copy;
 	}
 
 	@Override
-	public void andNot(IntSet set) {
-		if(! (set instanceof IntSetTreeSet)) {
+	public void andNot(final IntSet set) {
+		if (!(set instanceof IntSetTreeSet)) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}
-		IntSetTreeSet temp = (IntSetTreeSet)set;
-		this.mSet.removeAll(temp.mSet);
+		final IntSetTreeSet temp = (IntSetTreeSet) set;
+		mSet.removeAll(temp.mSet);
 	}
 
 	@Override
-	public void and(IntSet set) {
-		if(! (set instanceof IntSetTreeSet)) {
+	public void and(final IntSet set) {
+		if (!(set instanceof IntSetTreeSet)) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}
-		IntSetTreeSet temp = (IntSetTreeSet)set;
-		this.mSet.retainAll(temp.mSet);
+		final IntSetTreeSet temp = (IntSetTreeSet) set;
+		mSet.retainAll(temp.mSet);
 	}
 
 	@Override
-	public void or(IntSet set) {
-		if(! (set instanceof IntSetTreeSet)) {
+	public void or(final IntSet set) {
+		if (!(set instanceof IntSetTreeSet)) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}
-		IntSetTreeSet temp = (IntSetTreeSet)set;
-		this.mSet.addAll(temp.mSet);
+		final IntSetTreeSet temp = (IntSetTreeSet) set;
+		mSet.addAll(temp.mSet);
 	}
 
 	@Override
-	public boolean get(int value) {
+	public boolean get(final int value) {
 		return mSet.contains(value);
 	}
 
 	@Override
-	public void clear(int value) {
+	public void clear(final int value) {
 		mSet.remove(value);
 	}
-	
+
 	@Override
 	public String toString() {
 		return mSet.toString();
 	}
-	
+
 	@Override
 	public void clear() {
 		mSet.clear();
 	}
-	
+
 	@Override
-	public void set(int value) {
+	public void set(final int value) {
 		mSet.add(value);
 	}
 
@@ -118,61 +117,63 @@ public class IntSetTreeSet implements IntSet {
 	}
 
 	@Override
-	public boolean subsetOf(IntSet set) {
-		if(! (set instanceof IntSetTreeSet)) {
+	public boolean subsetOf(final IntSet set) {
+		if (!(set instanceof IntSetTreeSet)) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}
-		IntSetTreeSet temp = (IntSetTreeSet)set;
-		return temp.mSet.containsAll(this.mSet);
+		final IntSetTreeSet temp = (IntSetTreeSet) set;
+		return temp.mSet.containsAll(mSet);
 	}
 
 	@Override
-	public boolean contentEq(IntSet set) {
-		if(! (set instanceof IntSetTreeSet)) {
+	public boolean contentEq(final IntSet set) {
+		if (!(set instanceof IntSetTreeSet)) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}
-		IntSetTreeSet temp = (IntSetTreeSet)set;
-		return this.mSet.equals(temp.mSet);
+		final IntSetTreeSet temp = (IntSetTreeSet) set;
+		return mSet.equals(temp.mSet);
 	}
 
 	@Override
 	public Object get() {
 		return mSet;
 	}
-	
-	public boolean equals(Object obj) {
-		if(! (obj instanceof IntSetTreeSet)) {
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (!(obj instanceof IntSetTreeSet)) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}
-		IntSetTreeSet temp = (IntSetTreeSet)obj;
-		return this.contentEq(temp);
+		final IntSetTreeSet temp = (IntSetTreeSet) obj;
+		return contentEq(temp);
 	}
-	
+
 	public static class TreeSetIterator implements IntIterator {
 
-		private Iterator<Integer> mSetIter;
-		
-		public TreeSetIterator(IntSetTreeSet set) {
-			this.mSetIter = set.mSet.iterator();
+		private final Iterator<Integer> mSetIter;
+
+		public TreeSetIterator(final IntSetTreeSet set) {
+			mSetIter = set.mSet.iterator();
 		}
-		
+
+		@Override
 		public boolean hasNext() {
 			return mSetIter.hasNext();
 		}
-		
+
+		@Override
 		public int next() {
 			return mSetIter.next();
 		}
-		
+
 	}
-	
+
 	@Override
 	public Iterable<Integer> iterable() {
 		return mSet;
 	}
-	
 
 }

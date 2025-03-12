@@ -32,38 +32,46 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISemanticReduce
  *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <LETTER> symbol
- * @param <STATE> state
+ * @param <LETTER>
+ *            symbol
+ * @param <STATE>
+ *            state
  */
 public interface ITreeRun<LETTER extends IRankedLetter, STATE> {
 
 	/***
 	 * Get an automaton representation of the tree run.
+	 *
 	 * @return
 	 */
 	ITreeAutomatonBU<LETTER, STATE> getAutomaton();
 
 	/***
 	 * Get an interpolant automaton representation of the tree run.
+	 *
 	 * @param factory
 	 * @return
 	 */
-	<SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU<LETTER, STATE> getInterpolantAutomaton(final SF factory);
+	<SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU<LETTER, STATE>
+			getInterpolantAutomaton(final SF factory);
 
 	/***
 	 * Get the tree representation of the tree run
+	 *
 	 * @return
 	 */
 	Tree<LETTER> getTree();
 
 	/***
 	 * Get the root state
+	 *
 	 * @return
 	 */
 	STATE getRoot();
 
 	/***
 	 * Get the root symbol
+	 *
 	 * @return
 	 */
 	LETTER getRootSymbol();

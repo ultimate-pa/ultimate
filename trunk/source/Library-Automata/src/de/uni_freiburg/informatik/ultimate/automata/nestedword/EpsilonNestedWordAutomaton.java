@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2018 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2018 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Default implementation for NWAs with epsilon transitions.
- * 
- * 20180122 Matthias: Warning! This is a higly provisional solution. It is yet
- * unclear how we are going to implement epsilon transitions in the long run.
- * 
+ *
+ * 20180122 Matthias: Warning! This is a higly provisional solution. It is yet unclear how we are going to implement
+ * epsilon transitions in the long run.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAutomaton<LETTER, STATE>>
@@ -55,7 +55,6 @@ public class EpsilonNestedWordAutomaton<LETTER, STATE, A extends INestedWordAuto
 
 	public EpsilonNestedWordAutomaton(final A backingNestedWordAutomaton,
 			final HashRelation<STATE, STATE> outgoingEpsilonTransitions) {
-		super();
 		mBackingNestedWordAutomaton = backingNestedWordAutomaton;
 		mOutgoingEpsilonTransitions = outgoingEpsilonTransitions;
 	}

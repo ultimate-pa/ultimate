@@ -462,8 +462,7 @@ public class ProcedureManager {
 		final BoogieProcedureInfo procInfo = mCurrentProcedureInfo;
 		final Procedure oldDecl = procInfo.getDeclaration();
 
-		final List<Specification> newSpecs = new ArrayList<>();
-		newSpecs.addAll(Arrays.asList(oldDecl.getSpecification()));
+		final List<Specification> newSpecs = new ArrayList<>(Arrays.asList(oldDecl.getSpecification()));
 		newSpecs.addAll(specs);
 
 		final Procedure newDecl = new Procedure(oldDecl.getLoc(), oldDecl.getAttributes(), oldDecl.getIdentifier(),

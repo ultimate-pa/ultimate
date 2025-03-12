@@ -142,7 +142,7 @@ public class ModelType implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder sb = new StringBuilder();
 		for (final String fileName : mFileNames) {
 			sb.append(new File(fileName).getName());
 		}

@@ -69,8 +69,8 @@ public class MapBasedStorage implements ILoiPredicateStorage {
 		return mPredsForLocs;
 	}
 
-	public Map<IcfgLocation, IPredicate> addDefaultsAndGetMap(
-			final Collection<IcfgLocation> locations, final IPredicate defaultPred) {
+	public Map<IcfgLocation, IPredicate> addDefaultsAndGetMap(final Collection<IcfgLocation> locations,
+			final IPredicate defaultPred) {
 		locations.forEach(loc -> mPredsForLocs.putIfAbsent(loc, defaultPred));
 		return mPredsForLocs;
 	}

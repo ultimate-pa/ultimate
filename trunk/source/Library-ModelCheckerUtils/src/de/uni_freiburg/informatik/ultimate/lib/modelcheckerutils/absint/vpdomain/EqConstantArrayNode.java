@@ -36,8 +36,8 @@ public class EqConstantArrayNode extends EqNode {
 
 	private final EqNode mValue;
 
-	public EqConstantArrayNode(final Term term,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqNode value) {
+	public EqConstantArrayNode(final Term term, final EqNodeAndFunctionFactory eqNodeAndFunctionFactory,
+			final EqNode value) {
 		super(term, eqNodeAndFunctionFactory, false);
 		mValue = value;
 	}
@@ -85,6 +85,5 @@ public class EqConstantArrayNode extends EqNode {
 	public Set<EqNode> getSupportingNodes() {
 		return Collections.singleton(getConstantFunctionValue());
 	}
-
 
 }

@@ -130,7 +130,7 @@ public class BitvectorFactory {
 		}
 		Expression result = exprs[0];
 		for (int i = 1; i < exprs.length; i++) {
-			result = constructBinaryBitvectorOperation(loc, bvop, new Expression[] { result, exprs[i] });
+			result = constructBinaryBitvectorOperation(loc, bvop, result, exprs[i]);
 		}
 		return result;
 	}
@@ -249,8 +249,7 @@ public class BitvectorFactory {
 				if (innerLeft instanceof BitvecLiteral) {
 					final Expression newConst =
 							computeBinaryBitvectorExpression(loc, bvop, left, toConstant((BitvecLiteral) innerLeft));
-					return constructBitvectorFunctionApplication(loc, bvop,
-							new Expression[] { newConst, rightFunApp.getArguments()[1] });
+					return constructBitvectorFunctionApplication(loc, bvop, newConst, rightFunApp.getArguments()[1]);
 				}
 
 			}

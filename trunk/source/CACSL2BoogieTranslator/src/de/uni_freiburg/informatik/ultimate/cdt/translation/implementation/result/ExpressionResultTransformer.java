@@ -117,7 +117,7 @@ public class ExpressionResultTransformer {
 		CONVERT_NULL_POINTER_TO_CONSTANT(
 				(ert, expr, ttype, loc, hook) -> ert.convertNullPointerConstantToPointer(expr, ttype, loc));
 
-		private ITransformationFunction mFun;
+		private final ITransformationFunction mFun;
 
 		Transformation(final ITransformationFunction fun) {
 			mFun = Objects.requireNonNull(fun);

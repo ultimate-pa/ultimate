@@ -118,7 +118,7 @@ public final class TestUtil {
 		}
 
 		name = name + originalFileName + "_" + dateFormat.format(Calendar.getInstance().getTime()) + ".log";
-		name = name.replaceAll(" ", "_");
+		name = name.replace(' ', '_');
 		return dir + name;
 	}
 
@@ -176,7 +176,7 @@ public final class TestUtil {
 		final String examples = trunk + File.separator + "examples" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length());
 			return trunkated;
 		}
 		return path;
@@ -187,7 +187,7 @@ public final class TestUtil {
 		final String examples = trunk + File.separator + "examples" + File.separator + "settings" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length());
 			return trunkated;
 		}
 		return path;
@@ -198,7 +198,7 @@ public final class TestUtil {
 		final String examples = trunk + File.separator + "examples" + File.separator + "toolchains" + File.separator;
 		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length());
 			return trunkated;
 		}
 		return path;
@@ -758,12 +758,8 @@ public final class TestUtil {
 
 	public static void writeNonIncrementalLog(final INonIncrementalLog nonIncrementalLog, final ILogger logger) {
 		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(nonIncrementalLog));
-		if (!logFile.isDirectory()) {
-			if (!logFile.getParentFile().mkdirs()) {
-				if (!logFile.getParentFile().isDirectory()) {
-					logger.warn("Did not create parent directory: " + logFile.getParentFile());
-				}
-			}
+		if ((!logFile.isDirectory() && !logFile.getParentFile().mkdirs()) && !logFile.getParentFile().isDirectory()) {
+			logger.warn("Did not create parent directory: " + logFile.getParentFile());
 		}
 
 		final String summaryLog = nonIncrementalLog.getLog().trim();
@@ -816,11 +812,11 @@ public final class TestUtil {
 		final String replacement = "_";
 
 		String rtr = testCaseName;
-		rtr = rtr.replaceAll("Input:", "I:");
-		rtr = rtr.replaceAll("Settings:", "S:");
-		rtr = rtr.replaceAll("Toolchain:", "T:");
-		rtr = rtr.replaceAll(":", replacement);
-		rtr = rtr.replaceAll("/", replacement);
+		rtr = rtr.replace("Input:", "I:");
+		rtr = rtr.replace("Settings:", "S:");
+		rtr = rtr.replace("Toolchain:", "T:");
+		rtr = rtr.replace(":", replacement);
+		rtr = rtr.replace("/", replacement);
 
 		if (rtr.length() > maxLength) {
 			final String currentSuffix = String.valueOf(rtr.hashCode());
@@ -832,6 +828,6 @@ public final class TestUtil {
 	}
 
 	private interface ILogWriter {
-		public void write(String message);
+		void write(String message);
 	}
 }

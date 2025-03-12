@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 /**
  * This is a node in our model to store all steps of the minimization. Basically we store here all steps, hence all
  * created edges, of the minimization algorithm. <br>
- * 
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class MinimizedNode implements
 		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge, VisualizationNode> {
@@ -78,7 +78,7 @@ public class MinimizedNode implements
 
 	/**
 	 * Constructor for the MinimizedNode, it takes as input an INode, which should always be an ProgramPoint
-	 * 
+	 *
 	 * @param originalNode
 	 *            the underlying original node (should be a ProgramPoint, since we rely on the RCFG model)
 	 */
@@ -89,7 +89,7 @@ public class MinimizedNode implements
 
 	/**
 	 * Getter for the underlying original node (which is a ProgramPoint)
-	 * 
+	 *
 	 * @return the original node (ProgramPoint)
 	 */
 	public BoogieIcfgLocation getOriginalNode() {
@@ -116,9 +116,9 @@ public class MinimizedNode implements
 			}
 		}
 		if (outgoingEdges == null) {
-			outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+			outgoingEdges = new ArrayList<>();
 		}
-		outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
+		outgoingEdges.add(new SimpleEntry<>(maxRating, edges));
 	}
 
 	/**
@@ -131,7 +131,7 @@ public class MinimizedNode implements
 		if (!outgoingEdges.isEmpty()) {
 			return outgoingEdges.get(outgoingEdges.size() - 1).getValue();
 		}
-		return new ArrayList<IMinimizedEdge>();
+		return new ArrayList<>();
 	}
 
 	/**
@@ -151,9 +151,9 @@ public class MinimizedNode implements
 			}
 		}
 		if (incomingEdges == null) {
-			incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
+			incomingEdges = new ArrayList<>();
 		}
-		incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
+		incomingEdges.add(new SimpleEntry<>(maxRating, edges));
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class MinimizedNode implements
 		if (!incomingEdges.isEmpty()) {
 			return incomingEdges.get(incomingEdges.size() - 1).getValue();
 		}
-		return new ArrayList<IMinimizedEdge>();
+		return new ArrayList<>();
 	}
 
 	/**
@@ -188,7 +188,7 @@ public class MinimizedNode implements
 		if (incomingEdges == null) {
 			return null;
 		}
-		return new ArrayList<IMinimizedEdge>(getMinimalIncomingEdgeLevel());
+		return new ArrayList<>(getMinimalIncomingEdgeLevel());
 	}
 
 	@Override
@@ -196,12 +196,12 @@ public class MinimizedNode implements
 		if (outgoingEdges == null) {
 			return null;
 		}
-		return new ArrayList<IMinimizedEdge>(getMinimalOutgoingEdgeLevel());
+		return new ArrayList<>(getMinimalOutgoingEdgeLevel());
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override

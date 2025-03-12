@@ -31,6 +31,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
@@ -186,14 +188,7 @@ public abstract class CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mIsConst ? 1231 : 1237);
-		result = prime * result + (mIsExtern ? 1231 : 1237);
-		result = prime * result + (mIsInline ? 1231 : 1237);
-		result = prime * result + (mIsRestrict ? 1231 : 1237);
-		result = prime * result + (mIsVolatile ? 1231 : 1237);
-		return result;
+		return Objects.hash(mIsConst, mIsExtern, mIsInline, mIsRestrict, mIsVolatile);
 	}
 
 	@Override

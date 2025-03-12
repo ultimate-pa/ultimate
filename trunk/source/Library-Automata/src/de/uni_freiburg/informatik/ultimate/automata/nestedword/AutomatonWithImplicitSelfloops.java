@@ -46,15 +46,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IteratorConcatenation;
 
 /**
- * This {@link INwaOutgoingLetterAndTransitionProvider} represents the
- * modification of another {@link INwaOutgoingLetterAndTransitionProvider}. The
- * input {@link INwaOutgoingLetterAndTransitionProvider} is however not modified
- * at all. An {@link AutomatonWithImplicitSelfloops} is just a layer that acts
- * as a modification and uses the input automaton as back-end. For all STATE-LETTER
- * pairs that in the set product of mLooperStates and mLooperLetters the
- * {@link AutomatonWithImplicitSelfloops} has a self-loop (and no other outgoing
- * transitions), for other LETTERs the {@link AutomatonWithImplicitSelfloops}
- * has the transitions of the input
+ * This {@link INwaOutgoingLetterAndTransitionProvider} represents the modification of another
+ * {@link INwaOutgoingLetterAndTransitionProvider}. The input {@link INwaOutgoingLetterAndTransitionProvider} is however
+ * not modified at all. An {@link AutomatonWithImplicitSelfloops} is just a layer that acts as a modification and uses
+ * the input automaton as back-end. For all STATE-LETTER pairs that in the set product of mLooperStates and
+ * mLooperLetters the {@link AutomatonWithImplicitSelfloops} has a self-loop (and no other outgoing transitions), for
+ * other LETTERs the {@link AutomatonWithImplicitSelfloops} has the transitions of the input
  * {@link INwaOutgoingLetterAndTransitionProvider}.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -70,7 +67,6 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 	public AutomatonWithImplicitSelfloops(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> inputAutomaton,
 			final Set<LETTER> loopersLetters, final Predicate<STATE> looperStates) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(inputAutomaton)) {
@@ -177,14 +173,7 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 			for (final LETTER letter : mInputAutomaton.getAlphabet()) {
 				iterators.add(internalSuccessors(state, letter).iterator());
 			}
-			return new Iterable<OutgoingInternalTransition<LETTER, STATE>>() {
-
-				@Override
-				public Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator() {
-					return new IteratorConcatenation<OutgoingInternalTransition<LETTER, STATE>>(iterators);
-				}
-
-			};
+			return () -> new IteratorConcatenation<>(iterators);
 		} else {
 			return mInputAutomaton.internalSuccessors(state);
 		}
@@ -216,7 +205,6 @@ public class AutomatonWithImplicitSelfloops<LETTER, STATE>
 	public String toString() {
 		return (AutomatonDefinitionPrinter.toString(mServices, "nwa", this));
 	}
-
 
 	private static class ContainsAny<E> implements Set<E> {
 

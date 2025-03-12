@@ -74,7 +74,6 @@ public class ReplacementVarFactory {
 	 *            {@link ReplacementOldVar}, {@link ReplacementNonOldVar}, and {@link ReplacementConst}.
 	 */
 	public ReplacementVarFactory(final CfgSmtToolkit csToolkit, final boolean useIntraproceduralReplacementVars) {
-		super();
 		mMgdScript = csToolkit.getManagedScript();
 		mCsToolkit = csToolkit;
 		mUseIntraproceduralReplacementVar = useIntraproceduralReplacementVars;
@@ -161,10 +160,9 @@ public class ReplacementVarFactory {
 		return true;
 	}
 
-
 	/**
-	 * Construct both, the oldVar and the non-oldVar for a definition that
-	 * represents the oldVar
+	 * Construct both, the oldVar and the non-oldVar for a definition that represents the oldVar
+	 *
 	 * @return the oldVar
 	 */
 	private ReplacementOldVar constructOldNonOldPairForOldVarDefinition(final Term oldVarDefinition,
@@ -173,22 +171,22 @@ public class ReplacementVarFactory {
 		final Term definition = oldVar.getDefinition();
 		final Term nonOldVarDefinition =
 				ProgramVarUtils.renameOldGlobalsToNonOldGlobals(definition, mCsToolkit.getSymbolTable(), mMgdScript);
-		final TermVariable nonoldVarTv =
-				mMgdScript.constructFreshTermVariable("nonold(" + oldVar.getIdentifierOfNonOldVar() + ")", definition.getSort());
+		final TermVariable nonoldVarTv = mMgdScript
+				.constructFreshTermVariable("nonold(" + oldVar.getIdentifierOfNonOldVar() + ")", definition.getSort());
 		constructReplacementNonOldVar(nonOldVarDefinition, nonoldVarTv, oldVar);
 		return oldVar;
 
 	}
 
 	/**
-	 * Construct both, the oldVar and the non-oldVar for a definition that
-	 * represents the non-oldVar
+	 * Construct both, the oldVar and the non-oldVar for a definition that represents the non-oldVar
+	 *
 	 * @return the oldVar
 	 */
 	private ReplacementOldVar constructOldNonOldPairForNonOldDefinition(final Term nonOldDefinition,
 			final TermVariable nonOldTv) {
-		final Term oldVarDefinition =
-				ProgramVarUtils.renameNonOldGlobalsToOldGlobals(nonOldDefinition, mCsToolkit.getSymbolTable(), mMgdScript);
+		final Term oldVarDefinition = ProgramVarUtils.renameNonOldGlobalsToOldGlobals(nonOldDefinition,
+				mCsToolkit.getSymbolTable(), mMgdScript);
 		final TermVariable oldVarTv =
 				mMgdScript.constructFreshTermVariable("old(" + nonOldTv.getName() + ")", nonOldDefinition.getSort());
 		final ReplacementOldVar oldVar = constructReplacementOldVar(oldVarDefinition, oldVarTv);

@@ -36,13 +36,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Check validity of an implication between two formulas
- * antecedent ==> succedent
- * The check is done incrementally in the sense that we can do it for
- * several succedents.
- * We presume that the succedent may have only variables that occurred in the
- * antecedent (because we have to replace variables by fresh constants and
- * these constants and determined when asserting the antecedent.
+ * Check validity of an implication between two formulas antecedent ==> succedent The check is done incrementally in the
+ * sense that we can do it for several succedents. We presume that the succedent may have only variables that occurred
+ * in the antecedent (because we have to replace variables by fresh constants and these constants and determined when
+ * asserting the antecedent.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -95,7 +92,9 @@ public class IncrementalPlicationChecker {
 		}
 	}
 
-	public enum Plication { IMPLICATION, EXPLICATION };
+	public enum Plication {
+		IMPLICATION, EXPLICATION
+	}
 
 	private final ManagedScript mMgdScript;
 	private final Term mLhs;
@@ -103,10 +102,7 @@ public class IncrementalPlicationChecker {
 	private Map<TermVariable, Term> mVar2ConstSubstitution;
 	private final Plication mPlication;
 
-
-
 	public IncrementalPlicationChecker(final Plication plication, final ManagedScript mgdScript, final Term lhs) {
-		super();
 		mPlication = plication;
 		mMgdScript = mgdScript;
 		mLhs = lhs;
@@ -134,13 +130,12 @@ public class IncrementalPlicationChecker {
 	}
 
 	/**
-	 * Construct a substitution that replaces all free TermVariables of lhs
-	 * by constants and declares these constants.
+	 * Construct a substitution that replaces all free TermVariables of lhs by constants and declares these constants.
 	 */
 	private Map<TermVariable, Term> constructVar2ConstSubstitution(final Term term) {
 		final Set<TermVariable> allTvs = new HashSet<>(Arrays.asList(term.getFreeVars()));
-		final Map<TermVariable, Term> substitutionMapping = SmtUtils.termVariables2Constants(mMgdScript.getScript(),
-				allTvs, true);
+		final Map<TermVariable, Term> substitutionMapping =
+				SmtUtils.termVariables2Constants(mMgdScript.getScript(), allTvs, true);
 		return substitutionMapping;
 	}
 
@@ -178,7 +173,7 @@ public class IncrementalPlicationChecker {
 			break;
 		case IMPLICATION:
 			assertTerm = additionalTerm;
-//			assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
+			// assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
 			break;
 		default:
 			throw new AssertionError("unknown case");
@@ -189,7 +184,6 @@ public class IncrementalPlicationChecker {
 		return isSat;
 	}
 
-
 	public void unlockSolver() {
 		if (mLhsIsAsserted) {
 			mMgdScript.pop(this, 1);
@@ -199,4 +193,3 @@ public class IncrementalPlicationChecker {
 		}
 	}
 }
-

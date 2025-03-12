@@ -367,7 +367,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 
 		Term cbFormula;
 		if (act instanceof IInternalAction) {
-			cbFormula = ((IInternalAction) act).getTransformula().getClosedFormula();
+			cbFormula = act.getTransformula().getClosedFormula();
 		} else if (act instanceof ICallAction) {
 			cbFormula = ((ICallAction) act).getLocalVarsAssignment().getClosedFormula();
 		} else if (act instanceof IReturnAction) {

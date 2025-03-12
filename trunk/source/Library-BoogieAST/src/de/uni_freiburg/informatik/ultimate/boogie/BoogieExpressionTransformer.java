@@ -264,10 +264,8 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 			return false;
 		}
 
-		if (one.getClass().equals(other.getClass())) {
-			if (one instanceof BooleanLiteral) {
-				return ((BooleanLiteral) one).getValue() == ((BooleanLiteral) other).getValue();
-			}
+		if (one.getClass().equals(other.getClass()) && (one instanceof BooleanLiteral)) {
+			return ((BooleanLiteral) one).getValue() == ((BooleanLiteral) other).getValue();
 		}
 
 		return one.equals(other);

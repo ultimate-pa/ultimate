@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Given a nested word automaton, this class analyzes the automaton to obtain various information.
  * <p>
  * A user should use the respective getters to obtain individual data.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -105,7 +105,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 
 	/**
 	 * Base constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -117,7 +117,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 
 	/**
 	 * Extended constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -171,24 +171,24 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		final int result;
 		switch (type) {
-			case INTERNAL:
-				result = mNumberOfInternalSymbols;
-				break;
+		case INTERNAL:
+			result = mNumberOfInternalSymbols;
+			break;
 
-			case CALL:
-				result = mNumberOfCallSymbols;
-				break;
+		case CALL:
+			result = mNumberOfCallSymbols;
+			break;
 
-			case RETURN:
-				result = mNumberOfReturnSymbols;
-				break;
+		case RETURN:
+			result = mNumberOfReturnSymbols;
+			break;
 
-			case TOTAL:
-				result = mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
-				break;
+		case TOTAL:
+			result = mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
+			break;
 
-			default:
-				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
+		default:
+			throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
@@ -204,24 +204,24 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		final int result;
 		switch (type) {
-			case INTERNAL:
-				result = mNumberOfInternalTransitions;
-				break;
+		case INTERNAL:
+			result = mNumberOfInternalTransitions;
+			break;
 
-			case CALL:
-				result = mNumberOfCallTransitions;
-				break;
+		case CALL:
+			result = mNumberOfCallTransitions;
+			break;
 
-			case RETURN:
-				result = mNumberOfReturnTransitions;
-				break;
+		case RETURN:
+			result = mNumberOfReturnTransitions;
+			break;
 
-			case TOTAL:
-				result = mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
-				break;
+		case TOTAL:
+			result = mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
+			break;
 
-			default:
-				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
+		default:
+			throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
@@ -233,7 +233,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 * <p>
 	 * In particular, for return transitions the number of symbols <code>L</code> is the number of return symbol
 	 * multiplied by the number of states.
-	 * 
+	 *
 	 * @param type
 	 *            symbol type
 	 * @return transition density
@@ -244,24 +244,24 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 		final double result;
 		switch (type) {
-			case INTERNAL:
-				result = mInternalTransitionDensity;
-				break;
+		case INTERNAL:
+			result = mInternalTransitionDensity;
+			break;
 
-			case CALL:
-				result = mCallTransitionDensity;
-				break;
+		case CALL:
+			result = mCallTransitionDensity;
+			break;
 
-			case RETURN:
-				result = mReturnTransitionDensity;
-				break;
+		case RETURN:
+			result = mReturnTransitionDensity;
+			break;
 
-			case TOTAL:
-				result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / THREE;
-				break;
+		case TOTAL:
+			result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / THREE;
+			break;
 
-			default:
-				throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
+		default:
+			throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
 		}
 		return result;
 	}
@@ -270,7 +270,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 * A state is nondeterministic if it contains at least two outgoing transitions with the same symbol. <br>
 	 * <p>
 	 * In particular, for return transitions the same return symbol and hierarchical predecessor state must occur twice.
-	 * 
+	 *
 	 * @return number of nondeterministic states
 	 */
 	public final int getNumberOfNondeterministicStates() {
@@ -405,8 +405,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 
 	private void computeDegreeOfNondeterminismReturn(final STATE state) {
 		/*
-		 * for return transitions check for same symbol AND hierarchical
-		 * predecessor
+		 * for return transitions check for same symbol AND hierarchical predecessor
 		 */
 		final Map<LETTER, Set<STATE>> symbolsVisited = new HashMap<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(state)) {

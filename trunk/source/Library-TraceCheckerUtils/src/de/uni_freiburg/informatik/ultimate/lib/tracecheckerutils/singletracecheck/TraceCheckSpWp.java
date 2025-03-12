@@ -239,7 +239,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		cleanupAndUnlockSolver();
 
 		{
-			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
+			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().size();
 			final int numberOfConjunctsInUnsatCore;
 			if (mUnsatCores == UnsatCores.IGNORE) {
 				numberOfConjunctsInUnsatCore = 0;
@@ -282,8 +282,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorForward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
-						mPredicateFactory, mSimplificationTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices,
+						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -315,8 +315,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessorBackward(liveVariables));
 				}
-				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices, mCfgManagedScript,
-						mPredicateFactory, mSimplificationTechnique));
+				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(mServices,
+						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique));
 				postprocs.add(new UnifyPostprocessor(mPredicateUnifier));
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
@@ -326,8 +326,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 								.getPredicates();
 
 				assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
-						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
-						mCfgManagedScript) : "invalid Hoare triple in BP";
+						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger, mCfgManagedScript)
+						: "invalid Hoare triple in BP";
 
 				mTraceCheckBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
 				mTraceCheckBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp,
@@ -523,7 +523,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		private final Set<IProgramVar>[] mRelevantVars;
 
 		public LiveVariablesPostprocessorBackward(final Set<IProgramVar>[] relevantVars) {
-			super();
 			mRelevantVars = relevantVars;
 		}
 

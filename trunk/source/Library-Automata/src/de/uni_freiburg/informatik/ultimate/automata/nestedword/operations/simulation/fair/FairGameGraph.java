@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * <br/>
  * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
  * <b>q1 fair simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of buechi automaton
@@ -117,7 +117,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * <p>
 	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
 	 * return alphabet.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -152,7 +152,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Returns whether there are merge-able states in the game graph.
-	 * 
+	 *
 	 * @return <tt>True</tt> if there are merge-able states in the graph, <tt>false</tt> if not.
 	 */
 	public boolean areThereMergeableStates() {
@@ -161,7 +161,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
@@ -282,7 +282,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
@@ -362,7 +362,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the internal field of all transitions the used buechi has.
-	 * 
+	 *
 	 * @return The internal field of all transitions the used buechi has
 	 */
 	public Set<Triple<STATE, LETTER, STATE>> getBuechiTransitions() {
@@ -371,7 +371,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the equivalence classes.
-	 * 
+	 *
 	 * @return The equivalence classes
 	 */
 	public UnionFind<STATE> getEquivalenceClasses() {
@@ -380,7 +380,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the list of transitions that should be removed from the input automaton.
-	 * 
+	 *
 	 * @return List of transitions that should be removed from the input automaton.
 	 */
 	public List<Triple<STATE, LETTER, STATE>> getTransitionsToRemove() {
@@ -389,7 +389,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#undoChanges(de.uni_freiburg.informatik.ultimate
 	 * .automata.nwalibrary.operations.buchiReduction.GameGraphChanges)
@@ -426,7 +426,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * Equalizes a given state to another by adding transitions so that the state to align has the same out- and
 	 * in-going transitions that the state to align to has.
-	 * 
+	 *
 	 * @param stateToAlign
 	 *            The state to align
 	 * @param stateToAlignTo
@@ -486,7 +486,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Simulates the addition of a transition to the buechi automaton. More precisely to the buechi automaton
 	 * <i>Spoiler</i> plays on.<br/>
 	 * It will add the corresponding edges and vertices to the game graph and remember the changes made.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the transition to add
 	 * @param a
@@ -548,8 +548,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Generate new edges and some missing vertices
 		for (final STATE fixState : states) {
 			/*
-			 * If letter is new it now generates some new Duplicator vertices If
-			 * 'a' was new for q2: (q2, x, a) gets generated
+			 * If letter is new it now generates some new Duplicator vertices If 'a' was new for q2: (q2, x, a) gets
+			 * generated
 			 */
 			if (isLetterNew) {
 				final STATE rightState = fixState;
@@ -565,21 +565,18 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 				/*
 				 * Generate left edges for newly generated vertices.
-				 * 
-				 * Newly generated vertices need their left edges that would be
-				 * there if they were not be obsolete in the previous graph. Now
-				 * they are not obsolete anymore and need to be generated.
-				 * 
-				 * It is very important that the right state does not give a
-				 * successor transition that was added in previous usages of the
-				 * add-function or language may change.
+				 *
+				 * Newly generated vertices need their left edges that would be there if they were not be obsolete in
+				 * the previous graph. Now they are not obsolete anymore and need to be generated.
+				 *
+				 * It is very important that the right state does not give a successor transition that was added in
+				 * previous usages of the add-function or language may change.
 				 */
 				for (final OutgoingInternalTransition<LETTER, STATE> succTrans : mBuechi
 						.internalSuccessors(generatedVertex.getQ1(), generatedVertex.getLetter())) {
 					/*
-					 * Duplicator edges. If 'a' was new for q2: (q2, x, a) gets
-					 * generated and (q2, x, a) -> (q2, succ(x, a)) needs also
-					 * to be generated.
+					 * Duplicator edges. If 'a' was new for q2: (q2, x, a) gets generated and (q2, x, a) -> (q2, succ(x,
+					 * a)) needs also to be generated.
 					 */
 					final Vertex<LETTER, STATE> edgeDest =
 							getSpoilerVertex(generatedVertex.getQ0(), succTrans.getSucc(), false);
@@ -589,9 +586,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 						changes.addedEdge(generatedVertex, edgeDest);
 					}
 					/*
-					 * Spoiler edges. Also (pre(q2, a), x) -> (q2, x, a) needs
-					 * to be generated but it gets already covered by the next
-					 * statement.
+					 * Spoiler edges. Also (pre(q2, a), x) -> (q2, x, a) needs to be generated but it gets already
+					 * covered by the next statement.
 					 */
 				}
 			}
@@ -622,7 +618,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * This is especially useful if for example <i>firstState</i> and <i>secondState</i> came into the class with
 	 * <i>thirdState</i> respectively. In this case <i>firstState</i> and <i>secondState</i> are also in the same
 	 * equivalence class and so merge-able.
-	 * 
+	 *
 	 * @param firstState
 	 *            First state
 	 * @param secondState
@@ -648,7 +644,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Calculates the priority of a given {@link SpoilerVertex} by its representation <i>(state spoiler is at, state
 	 * duplicator is at)</i>.<br/>
 	 * Note that {@link DuplicatorVertex} objects always should have priority 2.
-	 * 
+	 *
 	 * @param leftState
 	 *            The state spoiler is at
 	 * @param rightState
@@ -669,7 +665,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * Equalizes two given states to each other by adding transitions so that both have the same out- and in-going
 	 * transitions.
-	 * 
+	 *
 	 * @param firstState
 	 *            First state to equalize
 	 * @param secondState
@@ -712,7 +708,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Returns if the underlying buechi automaton has a given transition.
-	 * 
+	 *
 	 * @param transition
 	 *            The transition of interest
 	 * @return True if the underlying buechi automaton has a given transition, false if not.
@@ -725,7 +721,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Marks two given states merge-able.<br/>
 	 * This unions the internal equivalence classes of the two given states. The equivalence classes indicate which
 	 * states are merge-able. All states in a class get merged to one state.
-	 * 
+	 *
 	 * @param firstState
 	 *            First state
 	 * @param secondState
@@ -749,7 +745,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * Marks a given transition remove-able.<br/>
 	 * When generating the resulting automaton the marked transitions will be left.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the transition
 	 * @param a
@@ -776,7 +772,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Simulates the removal of a transition from the buechi automaton. More precisely to the buechi automaton
 	 * <i>Duplicator</i> plays on.<br/>
 	 * It will remove the corresponding edges from the game graph and remember the changes made.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the transition to remove
 	 * @param a
@@ -827,7 +823,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Sets the internal field of the graphBuildTime.
-	 * 
+	 *
 	 * @param graphBuildTime
 	 *            The graphBuildTime to set
 	 */

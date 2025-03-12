@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class AutomataScriptParser implements ISource {
 
-	protected String[] mFileTypes = new String[] { "ats" };
+	protected String[] mFileTypes = { "ats" };
 
 	protected List<String> mFileNames = new ArrayList<>();
 

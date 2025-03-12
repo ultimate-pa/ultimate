@@ -145,7 +145,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			@Override
 			public boolean hasNext() {
 				return false;
@@ -171,7 +171,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			@Override
 			public boolean hasNext() {
 				return false;
@@ -197,7 +197,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			@Override
 			public boolean hasNext() {
 				return false;
@@ -212,7 +212,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			@Override
 			public boolean hasNext() {
 				return false;
@@ -232,7 +232,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
-		return () -> new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			@Override
 			public boolean hasNext() {
 				return false;

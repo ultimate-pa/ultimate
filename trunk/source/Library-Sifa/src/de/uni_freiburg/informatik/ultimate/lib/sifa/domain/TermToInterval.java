@@ -43,13 +43,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Converts a term into one (!) interval. Before evaluation intervals can be assigned to variables.
- * Examples:
+ * Converts a term into one (!) interval. Before evaluation intervals can be assigned to variables. Examples:
  * <ul>
- * <li> 1 evaluates to [1, 1].
- * <li> 1 + 2 evaluates to [3, 3].
- * <li> x evaluates to the given interval for x or [-inf, inf] if no interval was given for this variable.
- * <li> evaluating 1 == 2 throws an exception
+ * <li>1 evaluates to [1, 1].
+ * <li>1 + 2 evaluates to [3, 3].
+ * <li>x evaluates to the given interval for x or [-inf, inf] if no interval was given for this variable.
+ * <li>evaluating 1 == 2 throws an exception
  * </ul>
  *
  * @author schaetzc@tf.uni-freiburg.de
@@ -66,8 +65,11 @@ public final class TermToInterval {
 
 	/**
 	 * Evaluates a term using interval arithmetic.
-	 * @param term The term to be evaluated
-	 * @param scope Already known values for some variables
+	 *
+	 * @param term
+	 *            The term to be evaluated
+	 * @param scope
+	 *            Already known values for some variables
 	 * @return Result of the given term according to interval arithmetic
 	 */
 	public static Interval evaluate(final Term term, final Map<Term, Interval> scope) {
@@ -157,8 +159,7 @@ public final class TermToInterval {
 		}
 	}
 
-	private static Interval handleIfThenElseFunction(final ApplicationTerm term,
-			final Map<Term, Interval> scope) {
+	private static Interval handleIfThenElseFunction(final ApplicationTerm term, final Map<Term, Interval> scope) {
 		final Term[] iteParams = term.getParameters();
 		assert isFunction("ite", term) : "Expected ite term but found " + term;
 		assert iteParams.length == 3 : "Expected 3 parameters for ite term but found " + term;
@@ -173,10 +174,8 @@ public final class TermToInterval {
 		return functionName.equals(term.getFunction().getName());
 	}
 
-	private static Interval handleLeftAssociativeFunction(final ApplicationTerm term,
-			final Map<Term, Interval> scope) {
-		final BinaryOperator<Interval> leftAssociativeOp =
-				intervalOpForSmtFunc(term.getFunction().getName());
+	private static Interval handleLeftAssociativeFunction(final ApplicationTerm term, final Map<Term, Interval> scope) {
+		final BinaryOperator<Interval> leftAssociativeOp = intervalOpForSmtFunc(term.getFunction().getName());
 		if (leftAssociativeOp == null) {
 			return Interval.TOP;
 		}

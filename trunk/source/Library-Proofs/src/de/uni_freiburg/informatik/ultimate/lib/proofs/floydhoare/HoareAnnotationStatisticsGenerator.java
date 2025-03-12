@@ -49,7 +49,6 @@ class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
 	private int mNumberOfFragments;
 
 	public HoareAnnotationStatisticsGenerator() {
-		super();
 	}
 
 	@Override

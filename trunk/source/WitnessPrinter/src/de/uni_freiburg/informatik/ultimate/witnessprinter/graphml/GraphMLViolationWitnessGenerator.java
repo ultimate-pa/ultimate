@@ -77,8 +77,8 @@ public class GraphMLViolationWitnessGenerator<TE, E> extends GraphMLBaseWitnessG
 			final ILogger logger, final IUltimateServiceProvider services) {
 		super(services);
 		assert stem != null;
-		assert (loop == null && stem.getLength() > 0)
-				|| (loop != null && loop.getLength() > 0) : "Stem or loop is empty";
+		assert (loop == null && stem.getLength() > 0) || (loop != null && loop.getLength() > 0)
+				: "Stem or loop is empty";
 		mLogger = logger;
 		mStem = stem;
 		mLoop = loop;

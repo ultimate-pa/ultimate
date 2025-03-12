@@ -99,7 +99,6 @@ public class Expression2Term {
 	public Expression2Term(final IUltimateServiceProvider services, final Script script,
 			final TypeSortTranslator typeSortTranslator, final Boogie2SmtSymbolTable boogie2SmtSymbolTable,
 			final IOperationTranslator operationTranslator, final ManagedScript variableManager) {
-		super();
 		mServices = services;
 		mScript = script;
 		mTypeSortTranslator = typeSortTranslator;
@@ -173,8 +172,8 @@ public class Expression2Term {
 			final ArrayAccessExpression arrexp = (ArrayAccessExpression) exp;
 			final Expression[] indices = arrexp.getIndices();
 			Term result = translate(arrexp.getArray());
-			for (int i = 0; i < indices.length; i++) {
-				final Term indexiTerm = translate(indices[i]);
+			for (final Expression index : indices) {
+				final Term indexiTerm = translate(index);
 				result = SmtUtils.select(mScript, result, indexiTerm);
 			}
 			return result;
@@ -210,9 +209,8 @@ public class Expression2Term {
 						binexp.getLeft().getType(), binexp.getRight().getType());
 				final String negationFuncname =
 						mOperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, BoogieType.TYPE_BOOL);
-				return SmtUtils.unfTerm(mScript, negationFuncname, null, null,
-						SmtUtils.unfTerm(mScript, equalityFuncname, null, null,
-								translate(binexp.getLeft()), translate(binexp.getRight())));
+				return SmtUtils.unfTerm(mScript, negationFuncname, null, null, SmtUtils.unfTerm(mScript,
+						equalityFuncname, null, null, translate(binexp.getLeft()), translate(binexp.getRight())));
 			}
 			final String funcname =
 					mOperationTranslator.opTranslation(op, binexp.getLeft().getType(), binexp.getRight().getType());
@@ -285,8 +283,8 @@ public class Expression2Term {
 			final String[] typeParams = quant.getTypeParams();
 			final VarList[] variables = quant.getParameters();
 			int numvars = typeParams.length;
-			for (int i = 0; i < variables.length; i++) {
-				numvars += variables[i].getIdentifiers().length;
+			for (final VarList variable : variables) {
+				numvars += variable.getIdentifiers().length;
 			}
 			final TermVariable[] vars = new TermVariable[numvars];
 			// TODO is this really unused code
@@ -299,12 +297,12 @@ public class Expression2Term {
 			// offset++;
 			// }
 			mQuantifiedVariables.beginScope();
-			for (int i = 0; i < variables.length; i++) {
-				final IBoogieType type = variables[i].getType().getBoogieType();
+			for (final VarList variable : variables) {
+				final IBoogieType type = variable.getType().getBoogieType();
 				final Sort sort = mTypeSortTranslator.getSort(type, exp);
-				for (int j = 0; j < variables[i].getIdentifiers().length; j++) {
-					final String identifier = variables[i].getIdentifiers()[j];
-					final String smtVarName = "q" + Boogie2SMT.quoteId(variables[i].getIdentifiers()[j]);
+				for (int j = 0; j < variable.getIdentifiers().length; j++) {
+					final String identifier = variable.getIdentifiers()[j];
+					final String smtVarName = "q" + Boogie2SMT.quoteId(variable.getIdentifiers()[j]);
 					vars[offset] = mScript.variable(smtVarName, sort);
 					mQuantifiedVariables.put(identifier, vars[offset]);
 					offset++;
@@ -334,7 +332,8 @@ public class Expression2Term {
 						// else
 						smttrigs[i] = trig;
 					}
-					triggers[offset++] = smttrigs;
+					triggers[offset] = smttrigs;
+					offset++;
 				}
 			}
 			// throw new
@@ -419,7 +418,6 @@ public class Expression2Term {
 
 		public TranslationResult(final Map<String, ILocation> overapproximations,
 				final Collection<TermVariable> auxiliaryVars) {
-			super();
 			assert auxiliaryVars != null;
 			mOverappoximations = overapproximations;
 			mAuxiliaryVars = auxiliaryVars;

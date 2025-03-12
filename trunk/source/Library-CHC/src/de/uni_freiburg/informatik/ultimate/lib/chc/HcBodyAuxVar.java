@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.P
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-
 /**
  *
  *
@@ -42,8 +41,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class HcBodyAuxVar extends HcVar implements ILocalProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
-
-
 
 	/**
 	 * Identified by the first three parameters (headPredSymProcName, index, sort)
@@ -56,16 +53,12 @@ public class HcBodyAuxVar extends HcVar implements ILocalProgramVar {
 	 * @param primedConstant
 	 */
 	public HcBodyAuxVar(final TermVariable tv, final ManagedScript mgdScript, final Object lockOwner) {
-		super(tv.toString(),
-				tv,
+		super(tv.toString(), tv,
 				ProgramVarUtils.constructDefaultConstant(mgdScript, lockOwner, tv.getSort(), tv.getName()),
-				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, tv.getSort(), tv.getName()),
-				false,
-				"noproc-hcbodyauxvar"
-				);
+				ProgramVarUtils.constructPrimedConstant(mgdScript, lockOwner, tv.getSort(), tv.getName()), false,
+				"noproc-hcbodyauxvar");
 
 	}
-
 
 	@Override
 	public String getIdentifier() {

@@ -73,8 +73,7 @@ public class StateBasedDomain<STATE extends IAbstractState<STATE>> implements ID
 	public IPredicate join(final IPredicate lhs, final IPredicate rhs) {
 		// TODO using return mTools.or(lhs, rhs) is still an option.
 		// Should we use it sometimes (for instance when inputs are not already cached)?
-		List<STATE> joined = new ArrayList<>();
-		joined.addAll(toStates(lhs));
+		List<STATE> joined = new ArrayList<>(toStates(lhs));
 		joined.addAll(toStates(rhs));
 		if (joined.size() > mMaxDisjuncts) {
 			joined = List.of(joinToSingleState(joined));

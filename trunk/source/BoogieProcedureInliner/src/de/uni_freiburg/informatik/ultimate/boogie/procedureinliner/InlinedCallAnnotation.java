@@ -94,8 +94,7 @@ public class InlinedCallAnnotation extends ModernAnnotations {
 	public IAnnotations merge(final IAnnotations other) {
 		if (other instanceof InlinedCallAnnotation) {
 			final InlinedCallAnnotation otherAnnot = ((InlinedCallAnnotation) other);
-			final List<CallStatement> callStmts = new ArrayList<>();
-			callStmts.addAll(mCallStatements);
+			final List<CallStatement> callStmts = new ArrayList<>(mCallStatements);
 			callStmts.addAll(otherAnnot.mCallStatements);
 			return new InlinedCallAnnotation(callStmts, otherAnnot.mIsReturn && mIsReturn,
 					mIsCallAndReturn || otherAnnot.mIsCallAndReturn || (mIsReturn != otherAnnot.mIsReturn));

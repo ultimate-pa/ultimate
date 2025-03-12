@@ -38,7 +38,8 @@ import java.util.Iterator;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  *
- * @param <E> type of the atoms
+ * @param <E>
+ *            type of the atoms
  */
 public abstract class Xnf<E> implements Collection<Collection<E>> {
 
@@ -135,6 +136,5 @@ public abstract class Xnf<E> implements Collection<Collection<E>> {
 	public String toString() {
 		return mOuterJuncts.toString();
 	}
-
 
 }

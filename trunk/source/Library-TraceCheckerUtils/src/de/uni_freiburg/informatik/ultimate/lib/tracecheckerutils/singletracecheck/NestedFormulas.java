@@ -120,10 +120,10 @@ public abstract class NestedFormulas<L extends IAction, TF, SF> {
 
 	public TF getLocalVarAssignment(final int i) {
 		assert i >= 0 && i < getTrace().length() : "out of range";
-		assert callPositions().contains(i)
-				|| getTrace().isPendingReturn(i) : "neither call nor pending return position";
-		assert getTrace().isCallPosition(i)
-				|| getTrace().isPendingReturn(i) : "neither call nor pending return position";
+		assert callPositions().contains(i) || getTrace().isPendingReturn(i)
+				: "neither call nor pending return position";
+		assert getTrace().isCallPosition(i) || getTrace().isPendingReturn(i)
+				: "neither call nor pending return position";
 		return getLocalVarAssignmentFromValidPos(i);
 	}
 
@@ -140,10 +140,10 @@ public abstract class NestedFormulas<L extends IAction, TF, SF> {
 
 	public TF getOldVarAssignment(final int i) {
 		assert i >= 0 && i < getTrace().length() : "out of range";
-		assert callPositions().contains(i)
-				|| getTrace().isPendingReturn(i) : "neither call nor pending return position";
-		assert getTrace().isCallPosition(i)
-				|| getTrace().isPendingReturn(i) : "neither call nor pending return position";
+		assert callPositions().contains(i) || getTrace().isPendingReturn(i)
+				: "neither call nor pending return position";
+		assert getTrace().isCallPosition(i) || getTrace().isPendingReturn(i)
+				: "neither call nor pending return position";
 		return getOldVarAssignmentFromValidPos(i);
 	}
 

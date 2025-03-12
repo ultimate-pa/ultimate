@@ -207,11 +207,11 @@ public class GetLassoRunFromLassoWord<LETTER, STATE>
 
 			public Tarjan() throws AutomataOperationCanceledException {
 
-				this.mStack = new Stack<>();
-				this.mIndexMap = new TObjectIntHashMap<>();
-				this.mLowlinkMap = new TObjectIntHashMap<>();
-				this.mSCC = new ArrayList<>();
-				this.mIndex = 0;
+				mStack = new Stack<>();
+				mIndexMap = new TObjectIntHashMap<>();
+				mLowlinkMap = new TObjectIntHashMap<>();
+				mSCC = new ArrayList<>();
+				mIndex = 0;
 				for (final STATE state : mOperand.getInitialStates()) {
 					mInitialStates.add(state);
 					if (!mIndexMap.containsKey(state)) {
@@ -279,13 +279,11 @@ public class GetLassoRunFromLassoWord<LETTER, STATE>
 					}
 
 					boolean hasAcc = mOperand.getAcceptanceSize() == labels.size();
-					if (sccList.size() == 1 // only has a single state
+					// if there is no self loop
+					if ((sccList.size() == 1 // only has a single state
 							&& hasAcc // it is an accepting states
-					) {
-						// if there is no self loop
-						if (!cont.hashSelfloop()) {
-							hasAcc = false;
-						}
+					) && !cont.hashSelfloop()) {
+						hasAcc = false;
 					}
 
 					if (hasAcc) {

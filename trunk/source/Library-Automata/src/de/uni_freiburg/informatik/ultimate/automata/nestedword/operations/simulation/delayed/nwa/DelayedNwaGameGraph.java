@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * <br/>
  * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
  * <b>q1 delayed simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of nwa
@@ -77,7 +77,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 
 	/**
 	 * Creates a new delayed nwa game graph by using the given nwa.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -113,7 +113,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.delayed.DelayedGameGraph#generateAutomatonFromGraph()
 	 */
@@ -137,7 +137,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.delayed.DelayedGameGraph#generateGameGraphFromAutomaton()
 	 */
@@ -171,7 +171,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.util.nwa.INwaGameGraph#undoRemovedReturnBridgesChanges()
 	 */
@@ -182,7 +182,7 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * simulation.AGameGraph#verifyAutomatonValidity(de.uni_freiburg.informatik.
 	 * ultimate.automata.nwalibrary.INestedWordAutomaton)

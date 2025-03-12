@@ -287,14 +287,14 @@ public class DebugFileWriterDietsch {
 	}
 
 	private String getLetter(int i) {
-		String rtr = "";
+		final StringBuilder rtr = new StringBuilder();
 
 		while (i > 26) {
-			rtr = rtr + "A";
+			rtr.append("A");
 			i = i - 26;
 		}
 
-		return rtr + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(i);
+		return rtr.append("ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(i)).toString();
 	}
 
 	private void writeLargerTextFile(final String aFileName, final StringBuilder sb) throws IOException {

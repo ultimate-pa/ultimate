@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
 
 /**
- * Copy of {@link SMTLIB2Parser} that uses
- * {@link ExceptionThrowingParseEnvironment} instead of {@link ParseEnvironment}
+ * Copy of {@link SMTLIB2Parser} that uses {@link ExceptionThrowingParseEnvironment} instead of {@link ParseEnvironment}
  * in order to make sure that exceptions are not silently dropped.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -50,8 +49,7 @@ public class ExceptionThrowingSMTLIB2Parser implements IParser {
 			filename = "<stdin>";
 		}
 
-		final ParseEnvironment parseEnv = new ExceptionThrowingParseEnvironment(script,
-				options);
+		final ParseEnvironment parseEnv = new ExceptionThrowingParseEnvironment(script, options);
 		try {
 			parseEnv.parseScript(filename);
 		} catch (final SMTLIBException se) {
