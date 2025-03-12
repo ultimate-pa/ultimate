@@ -368,6 +368,7 @@
 		<module>../PEAtoBoogie</module>
 		<module>../RCFGBuilder</module>
 		<module>../IcfgBuilder</module>
+		<module>../IcfgInterpreter</module>
 		<module>../ReachingDefinitions</module>
 		<module>../Referee</module>
 		<module>../ReqParser</module>

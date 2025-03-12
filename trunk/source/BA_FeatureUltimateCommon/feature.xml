@@ -19,6 +19,10 @@
          unpack="false"/>
 
    <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter"
+         version="0.0.0"/>
+
+   <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"
          version="0.0.0"/>
 
