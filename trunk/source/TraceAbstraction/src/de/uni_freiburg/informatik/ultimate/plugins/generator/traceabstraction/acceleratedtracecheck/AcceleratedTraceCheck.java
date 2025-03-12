@@ -402,7 +402,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		final List<UnmodifiableTransFormula> transformulas =
 				subWord.asList().stream().map(L::getTransformula).collect(Collectors.toList());
 		final UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger, services,
-				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA, transformulas);
+				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA2, transformulas);
 		final JordanLoopAccelerationResult jla =
 				JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript, sequentialComposition, true);
 		final JordanLoopAccelerationStatisticsGenerator stat = jla.getJordanLoopAccelerationStatistics();
