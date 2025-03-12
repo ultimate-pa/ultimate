@@ -61,6 +61,11 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	 * complicated to debug
 	 */
 	private static final boolean OMIT_NON_ACCEPTING_SINK = true;
+
+	/**
+	 * Possible optimization that has not yet been investigated very well.
+	 */
+	private static final boolean DEBUG_ENABLE_SUCCESS_GUIDE_OPTIMIZATION = false;
 	private final boolean mAllowEmptyLevelRanking;
 	private final boolean mAllowRankZero;
 	private final boolean mRestrictToElasticLevelRankings;
@@ -128,12 +133,31 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 				new PowersetIterator<>(doubleDeckersEligibleForVoluntaryDecrease);
 		while (it.hasNext()) {
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
+			if (DEBUG_ENABLE_SUCCESS_GUIDE_OPTIMIZATION && !isSuccessGuided(constraint, subset)) {
+				continue;
+			}
 			final LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
 			if ((succCandidate != null) && (!mRestrictToElasticLevelRankings || succCandidate.isElastic())) {
 				succLvls.add(succCandidate);
 			}
 		}
 		return succLvls;
+	}
+
+	private boolean isSuccessGuided(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
+			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset) {
+		if (subset.isEmpty()) {
+			return true;
+		}
+		for (final StateWithRankInfo<STATE> downState : constraint.getDownStates()) {
+			for (final StateWithRankInfo<STATE> upState : constraint.getUpStates(downState)) {
+				if (upState.isInO() && !mOperand.isFinal(upState.getState())
+						&& !subset.contains(new DoubleDecker<>(downState, upState))) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	private boolean evenRankAndNotFinal(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
