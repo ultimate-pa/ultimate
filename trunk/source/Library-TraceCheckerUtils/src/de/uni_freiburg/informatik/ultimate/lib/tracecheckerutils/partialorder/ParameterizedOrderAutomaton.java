@@ -68,7 +68,7 @@ class ParameterizedOrderAutomaton<L extends IAction> implements INwaOutgoingLett
 
 	@Override
 	public IStateFactory<State> getStateFactory() {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException(getClass().getSimpleName() + " does not offer a state factory");
 	}
 
 	@Override
