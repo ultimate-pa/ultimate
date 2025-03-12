@@ -12,7 +12,7 @@ properties:
 options:
   # The language in which the program is written.
   language: BPL
-  timeout: 90
+  timeout: 180
 
   # Ultimate options.
   de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction:
@@ -22,7 +22,7 @@ options:
       left:
         builtin: checkpoint
         checkpoints:
-          - "[90] L21-->$Ultimate##0:"
+          - "[94] L22-->$Ultimate##0:"
           - "[70] $Ultimate##0-->L37-1:"
           - "[76] $Ultimate##0-->L50-1:"
           - "[82] $Ultimate##0-->L63-1:"
@@ -34,7 +34,7 @@ options:
           iterations:
             - [thread1Thread1of1ForFork0, 1]
             - [thread3Thread1of1ForFork2, 2]
-        # Make sure the number of executions of thread 2 is equal to the number of executions of thread 1
+        # Make sure the number of executions of thread 2 is equal to the number of executions of thread 3
         right:
           builtin: loop_lockstep
           iterations:

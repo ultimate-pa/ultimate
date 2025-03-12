@@ -31,7 +31,7 @@ modifies x, y, i, j, k;
 procedure thread1()
 modifies y, i;
 {
-  var i : int;
+
   i := 0;
 
   while (i < n)
@@ -44,7 +44,7 @@ modifies y, i;
 procedure thread2()
 modifies x, j;
 {
-  var j : int;
+
   j := 0;
 
   while (j < 2 * n)
@@ -57,7 +57,7 @@ modifies x, j;
 procedure thread3()
 modifies x, y, k;
 {
-  var k : int;
+
   k := 0;
 
   while (k < 2 * n)
