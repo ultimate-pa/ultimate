@@ -337,8 +337,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				final NestedWord<L> subWord = nestedWord.getSubWord(i, nextPosition);
 				mLogger.info(
 						String.format("Found repeated program point %s. Trying to accelerate segment from %s to %s",
-								((ISLPredicate) counterexample.getControlConfigurations().get(i)).getProgramPoint(), i,
-								nextPosition));
+								counterexample.getControlConfigurations().get(i), i, nextPosition));
 				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
@@ -346,8 +345,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 					result.put(i, new AcceleratedSegment(i, nextPosition - 1, transitiveClosure));
 					mLogger.info(String.format(
 							"Found repeated program point %s. Successfully accelerated segment from %s to %s",
-							((ISLPredicate) counterexample.getControlConfigurations().get(i)).getProgramPoint(), i,
-							nextPosition));
+							counterexample.getControlConfigurations().get(i), i, nextPosition));
 					i = nextPosition - 1;
 				} else {
 					mLogger.info(
