@@ -484,6 +484,17 @@ public class QuantifierEliminationBenchmarks {
 		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+
+	@Test
+	public void someSvcompConcurrency() {
+		final FunDecl[] funDecls = {
+			new FunDecl(SmtSortUtils::getIntSort, "~A~0.offset", "~bsum~0", "~asum~0", "thread2Thread1of1ForFork2_~i~1", "~B~0.offset", "~csum~0", "~B~0.base", "~C~0.base", "thread1Thread1of1ForFork1_~i~0"),
+		};
+		final String formulaAsString = "(forall ((~C~0.offset Int) (|#memory_int| (Array Int (Array Int Int))) (~A~0.base Int)) (= (mod (+ ~csum~0 (select (store (select |#memory_int| ~C~0.base) (+ ~C~0.offset (* thread2Thread1of1ForFork2_~i~1 4)) (+ (select (select |#memory_int| ~A~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~A~0.offset)) (select (select |#memory_int| ~B~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~B~0.offset)))) ~C~0.offset)) 4294967296) (mod (+ ~asum~0 ~bsum~0 (select (select |#memory_int| ~A~0.base) (+ ~A~0.offset (* thread1Thread1of1ForFork1_~i~0 4))) (select (select (store |#memory_int| ~C~0.base (store (select |#memory_int| ~C~0.base) (+ ~C~0.offset (* thread2Thread1of1ForFork2_~i~1 4)) (+ (select (select |#memory_int| ~A~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~A~0.offset)) (select (select |#memory_int| ~B~0.base) (+ (* thread2Thread1of1ForFork2_~i~1 4) ~B~0.offset))))) ~B~0.base) (+ ~B~0.offset (* thread1Thread1of1ForFork1_~i~0 4)))) 4294967296)))";
+		final String expectedResultAsString = "(let ((.cse7 (+ ~bsum~0 ~asum~0)) (.cse5 (* ~bsum~0 4294967295)) (.cse6 (* 4294967295 ~asum~0))) (let ((.cse2 (= ~B~0.base ~C~0.base)) (.cse0 (mod (+ .cse5 ~csum~0 .cse6) 4294967296)) (.cse1 (mod ~csum~0 4294967296)) (.cse3 (mod .cse7 4294967296)) (.cse4 (= thread2Thread1of1ForFork2_~i~1 0))) (and (= thread2Thread1of1ForFork2_~i~1 thread1Thread1of1ForFork1_~i~0) (<= .cse0 .cse1) (not .cse2) (<= .cse1 .cse3) .cse4 (or .cse2 (and (<= .cse1 (+ (mod (+ 4294967295 .cse5 ~csum~0 .cse6) 4294967296) 2)) (<= 4294967295 (+ (mod (+ 4294967295 (* 4294967295 .cse7)) 4294967296) .cse1)) (= thread1Thread1of1ForFork1_~i~0 0) (or (< .cse1 1) (< .cse0 1)) (or (< .cse3 (+ .cse1 1)) (< .cse3 2)) .cse4)))))";
+		QuantifierEliminationTest.runQuantifierEliminationTest(funDecls, formulaAsString, expectedResultAsString, true, mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	@Test
 	public void tirBvToIntBadgerForall01() {
 		final FunDecl[] funDecls = {
