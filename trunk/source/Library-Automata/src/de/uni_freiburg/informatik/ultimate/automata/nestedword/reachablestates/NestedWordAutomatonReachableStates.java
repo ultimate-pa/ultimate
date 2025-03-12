@@ -102,8 +102,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 */
 	private static final boolean EXT_LASSO_CONSTRUCTION_TESTING = false;
 
-	protected final IStateFactory<STATE> mStateFactory;
-
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
@@ -177,7 +175,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mVpAlphabet = operand.getVpAlphabet();
-		mStateFactory = operand.getStateFactory();
 		try {
 			new ReachableStatesComputation();
 			// computeDeadEnds();
@@ -337,7 +334,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
-		return mStateFactory;
+		return mOperand.getStateFactory();
 	}
 
 	@Override
