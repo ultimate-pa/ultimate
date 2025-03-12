@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.StatisticsScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.MultiCaseSolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.LoggingScriptForMainTrackBenchmarks;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -61,19 +62,23 @@ public class QuantifierEliminationRegressionTest {
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
+	private static final boolean WRITE_SMT_BENCHMARK = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final LogLevel LOG_LEVEL_SOLVER = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
-	// private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt";
+	// private static final String SOLVER_COMMAND = "cvc4 --incremental --lang smt --tlimit-per=1000";
+	// private static final String SOLVER_COMMAND = "cvc5 --incremental --lang smt --tlimit-per=1000";
 	// private static final String SOLVER_COMMAND = "smtinterpol -q";
+	// private static final String SOLVER_COMMAND = "INTERNAL_SMTINTERPOL:10000";
 
 	private IUltimateServiceProvider mServices;
 	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
 	private static QuantifierEliminationTestCsvWriter mCsvWriter;
+	private static int CTR = 0;
 
 	@BeforeClass
 	public static void beforeAllTests() {
@@ -97,14 +102,14 @@ public class QuantifierEliminationRegressionTest {
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance =
-				new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
-		if (WRITE_SMT_SCRIPTS_TO_FILE) {
-			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
-		} else {
-			mScript = solverInstance;
+		Script script = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL_SOLVER));
+		if (WRITE_SMT_BENCHMARK) {
+			script = new LoggingScriptForMainTrackBenchmarks(script, "QuantifierEliminationTest" + CTR++, ".");
 		}
-		mScript = new StatisticsScript(mScript);
+		if (WRITE_SMT_SCRIPTS_TO_FILE) {
+			script = new LoggingScript(script, "QuantifierEliminationTest" + CTR++ + ".smt2", true);
+		}
+		mScript = new StatisticsScript(script);
 
 		mMgdScript = new ManagedScript(mServices, mScript);
 		mScript.setLogic(Logics.ALL);
