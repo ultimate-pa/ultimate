@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransforma
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TreeSizeComperator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.FormulaClassification;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
@@ -67,6 +68,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
 	private static final boolean DEBUG_ERROR_ON_FALSE_CC = false;
+	private static final boolean DEBUG_TREE_SIZE_ORDER = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -293,7 +295,12 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 			final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm) {
 		checkSimplificationPotential(services, script, "Quantifier elimination called on non-simplified input",
 				inputTerm);
-		final Comparator<Term> siblingOrder = null;
+		final Comparator<Term> siblingOrder;
+		if (DEBUG_TREE_SIZE_ORDER) {
+			siblingOrder = new TreeSizeComperator(CommuhashUtils.HASH_BASED_COMPERATOR);
+		} else {
+			siblingOrder = null;
+		}
 		final Term result = TermContextTransformationEngine.transform(new QuantifierPushTermWalker(services,
 				applyDistributivity, quantifierEliminationTechniques, simplificationTechnique, script), siblingOrder,
 				context, inputTerm);
