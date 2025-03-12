@@ -66,6 +66,7 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 	private static final boolean DEBUG_CHECK_SIMPLIFICATION_POTENTIAL_OF_INPUT_AND_OUTPUT = false;
+	private static final boolean DEBUG_ERROR_ON_FALSE_CC = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
@@ -107,6 +108,9 @@ public class QuantifierPushTermWalker extends TermWalker<Context> {
 
 	@Override
 	protected DescendResult convert(final Context context, final Term term) {
+		if (DEBUG_ERROR_ON_FALSE_CC && SmtUtils.isFalseLiteral(context.getCriticalConstraint())) {
+			throw new AssertionError("Critical constraint is false");
+		}
 		FormulaClassification classification = null;
 		// 20220502 Matthias: If you remove the PolyPac simplification here, it should
 		// be at least done for atoms (which are handled in one of the cases below)
