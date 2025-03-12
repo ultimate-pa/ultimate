@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class HoareAnnotationFragments<LETTER extends IAction> {
+class HoareAnnotationFragments<LETTER extends IAction> {
 	private final Map<IPredicate, IPredicate> mPred2ProgPoint = new HashMap<>();
 
 	/**

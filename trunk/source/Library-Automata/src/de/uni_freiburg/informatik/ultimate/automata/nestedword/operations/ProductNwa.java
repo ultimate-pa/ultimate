@@ -44,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * On-the-fly intersection of two nested word automata.
+ * On-the-fly product automaton of two nested word automata. This can be used for intersection, union, and other
+ * operations.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -123,8 +124,8 @@ public abstract class ProductNwa<LETTER, S1, S2, STATE>
 		if (prod == null) {
 			prod = createProductState(fst, snd);
 			snd2res.put(snd, prod);
-			assert !mRes2prod
-					.containsKey(prod.getRes()) : "A product state must not represent multiple pairs of states";
+			assert !mRes2prod.containsKey(prod.getRes())
+					: "A product state must not represent multiple pairs of states";
 			mRes2prod.put(prod.getRes(), prod);
 		}
 		return prod.getRes();

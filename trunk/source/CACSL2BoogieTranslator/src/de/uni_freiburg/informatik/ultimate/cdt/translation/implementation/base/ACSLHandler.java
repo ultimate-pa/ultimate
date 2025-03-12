@@ -39,7 +39,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
@@ -120,6 +120,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.NullPointer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
@@ -191,15 +192,6 @@ public class ACSLHandler implements IACSLHandler {
 		// Use a copy of CExpressionTranslator, where all checks for UB are disabled.
 		mCExpressionTranslator = chandler.getCExpressionTranslator().disableChecksForUndefinedBehavior();
 		mCHandler = chandler;
-	}
-
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final IDispatcher main, final IASTNode node) {
-		throw new UnsupportedOperationException("Implementation Error: Use CHandler for: " + node.getClass());
 	}
 
 	@Override
@@ -1010,6 +1002,14 @@ public class ACSLHandler implements IACSLHandler {
 		final ExpressionResult opNegative = dispatchSwitch(main, node.getElsePart(), loc);
 		return mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative,
 				main.getAcslHook());
+	}
+
+	@Override
+	public Result visit(final IDispatcher main, final NullPointer node) {
+		// \null is an extra notation for the null pointer (i.e. a shortcut for (void*)0).
+		return new ExpressionResult(
+				new RValue(mExpressionTranslation.constructNullPointer(mLocationFactory.createACSLLocation(node)),
+						new CPointer(new CPrimitive(CPrimitives.VOID))));
 	}
 
 }

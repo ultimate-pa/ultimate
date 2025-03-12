@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @author Stefan Wissert
  * @date 07.02.2012
  */
-public interface ITypeHandler extends IHandler {
+public interface ITypeHandler {
 
 	/**
 	 * Translates an IASTSimpleDeclSpecifier. Basically treats all the build in types of C

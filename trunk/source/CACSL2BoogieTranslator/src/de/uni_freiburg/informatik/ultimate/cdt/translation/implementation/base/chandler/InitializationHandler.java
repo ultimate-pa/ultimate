@@ -44,9 +44,9 @@ import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTArrayDesignator;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
+import org.eclipse.cdt.core.dom.ast.c.ICASTArrayDesignator;
+import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
+import org.eclipse.cdt.core.dom.ast.c.ICASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -1620,11 +1620,11 @@ public class InitializationHandler {
 	 * @return the translation result.
 	 */
 	public Result handleDesignatedInitializer(final IDispatcher main, final LocationFactory locationFactory,
-			final CASTDesignatedInitializer node) {
+			final ICASTDesignatedInitializer node) {
 		final ILocation loc = locationFactory.createCLocation(node);
-		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof CASTFieldDesignator)) {
+		if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof ICASTFieldDesignator)) {
 			// a field designator, as in "struct field"
-			final CASTFieldDesignator fieldDesignator = (CASTFieldDesignator) node.getDesignators()[0];
+			final ICASTFieldDesignator fieldDesignator = (ICASTFieldDesignator) node.getDesignators()[0];
 			final String fieldDesignatorName = fieldDesignator.getName().toString();
 			final Result innerInitializerResult = main.dispatch(node.getOperand());
 			if (innerInitializerResult instanceof InitializerResult) {
@@ -1642,10 +1642,10 @@ public class InitializationHandler {
 			} else {
 				throw new UnsupportedSyntaxException(loc, "Unexpected result");
 			}
-		} else if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof CASTArrayDesignator)) {
+		} else if (node.getDesignators().length == 1 && (node.getDesignators()[0] instanceof ICASTArrayDesignator)) {
 			// designator denotes some field in an array;
 			// one designator means a one-dimensional array "access" (I think)
-			final CASTArrayDesignator arrayDesignator = (CASTArrayDesignator) node.getDesignators()[0];
+			final ICASTArrayDesignator arrayDesignator = (ICASTArrayDesignator) node.getDesignators()[0];
 			final int arrayCellNr = getArrayCellNrFromArrayDesignator(main, loc, arrayDesignator, node);
 
 			final Result innerInitializerResult = main.dispatch(node.getOperand());
@@ -1671,7 +1671,7 @@ public class InitializationHandler {
 	}
 
 	private int getArrayCellNrFromArrayDesignator(final IDispatcher main, final ILocation loc,
-			final CASTArrayDesignator arrayDesignator, final CASTDesignatedInitializer hook) {
+			final ICASTArrayDesignator arrayDesignator, final ICASTDesignatedInitializer hook) {
 		final Result subscriptExpressionResult = main.dispatch(arrayDesignator.getSubscriptExpression());
 		if (!(subscriptExpressionResult instanceof ExpressionResult)) {
 			throw new UnsupportedSyntaxException(loc, "Designators in initializers beyond simple "

@@ -148,6 +148,11 @@ public class IcfgUtils {
 		return getAllLocations(icfg).mapToInt(l -> l.getOutgoingEdges().size()).sum();
 	}
 
+	public static <LOC extends IcfgLocation> int countNumberOfEdges(final IIcfg<LOC> icfg) {
+		return getAllLocations(icfg).map(x -> x.getOutgoingEdges().size())
+				.collect(Collectors.summingInt(Integer::intValue));
+	}
+
 	/**
 	 * Collects all program variables, both globals and local variables of all procedures. For global variables, both
 	 * oldvar and non-oldvar are included.

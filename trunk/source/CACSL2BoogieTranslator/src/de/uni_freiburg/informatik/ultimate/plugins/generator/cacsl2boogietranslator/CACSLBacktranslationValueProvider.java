@@ -30,12 +30,12 @@ import java.util.EnumSet;
 
 import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -120,8 +120,8 @@ public class CACSLBacktranslationValueProvider
 
 	private String getStringFromIASTNode(final IASTNode currentStepNode) {
 		String str = currentStepNode.getRawSignature();
-		if (currentStepNode instanceof CASTIdExpression) {
-			final CASTIdExpression id = (CASTIdExpression) currentStepNode;
+		if (currentStepNode instanceof IASTIdExpression) {
+			final IASTIdExpression id = (IASTIdExpression) currentStepNode;
 			if (id.getExpressionType() instanceof IPointerType) {
 				str = "\\read(" + getPointerStars((IPointerType) id.getExpressionType()) + str + ")";
 			} else {

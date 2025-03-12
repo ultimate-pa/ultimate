@@ -105,7 +105,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -203,22 +202,6 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public void requestFloatingTypes() {
 		mFloatingTypesNeeded = true;
-	}
-
-	@Override
-	public Result visit(final IDispatcher main, final IASTNode node) {
-		final String msg = "TypeHandler: Not yet implemented: " + node.toString();
-		final ILocation loc = mLocationFactory.createCLocation(node);
-		throw new UnsupportedSyntaxException(loc, msg);
-	}
-
-	/**
-	 * @deprecated is not supported in this handler! Do not use!
-	 */
-	@Deprecated
-	@Override
-	public Result visit(final IDispatcher main, final ACSLNode node) {
-		throw new UnsupportedOperationException("Implementation Error: use ACSL handler for " + node.getClass());
 	}
 
 	@Override

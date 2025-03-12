@@ -49,10 +49,10 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -150,8 +150,8 @@ public class FunctionPointerVisitor extends ASTVisitor {
 
 	@Override
 	public int visit(final IASTDeclaration declaration) {
-		if (declaration instanceof CASTSimpleDeclaration) {
-			final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
+		if (declaration instanceof IASTSimpleDeclaration) {
+			final IASTSimpleDeclaration cd = (IASTSimpleDeclaration) declaration;
 			for (final IASTDeclarator d : cd.getDeclarators()) {
 				for (IASTDeclarator nd = d; nd != null; nd = nd.getNestedDeclarator()) {
 					addNameOfNonFunctionDeclarator(nd);

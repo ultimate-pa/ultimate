@@ -465,7 +465,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.break_loop=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.collection_cloning=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.comparing_on_criteria=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.comparison_statement=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.comparison_statement=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.controlflow_merge=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_functional_interfaces=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop=true

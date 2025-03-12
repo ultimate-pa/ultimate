@@ -134,6 +134,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.NullPointer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
@@ -326,6 +327,7 @@ public class MainDispatcher implements IDispatcher {
 		case final LoopVariant looopVar -> mAcslHandler.visit(this, looopVar);
 		case final LoopAssigns loopAss -> mAcslHandler.visit(this, loopAss);
 		case final LoopAnnot loopAnnot -> mAcslHandler.visit(this, loopAnnot);
+		case final NullPointer np -> mAcslHandler.visit(this, np);
 		default -> mAcslHandler.visit(this, n);
 		};
 	}

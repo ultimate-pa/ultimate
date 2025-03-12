@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.NullPointer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
@@ -67,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
  * @author Stefan Wissert
  * @date 28.02.2012
  */
-public interface IACSLHandler extends IHandler {
+public interface IACSLHandler {
 	/**
 	 * Translates an CodeAnnot.
 	 *
@@ -336,4 +338,16 @@ public interface IACSLHandler extends IHandler {
 
 	Result visit(IDispatcher main, IfThenElseExpression node);
 
+	Result visit(IDispatcher main, NullPointer node);
+
+	/**
+	 * Fallback method for unhandled ACSLNodes.
+	 *
+	 * @param main
+	 *            a reference to the main IDispatcher
+	 * @param node
+	 *            the node to visit
+	 * @return a result object
+	 */
+	Result visit(IDispatcher main, ACSLNode node);
 }

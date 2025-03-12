@@ -33,11 +33,6 @@
 		<version>0.3.0</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
-
-	<properties>
-		<sonar.sources></sonar.sources>
-		<sonar.tests>src/</sonar.tests>
-	</properties>
   
   <artifactId>de.uni_freiburg.informatik.ultimate.lib.automata.test</artifactId>
   <version>0.3.0</version>

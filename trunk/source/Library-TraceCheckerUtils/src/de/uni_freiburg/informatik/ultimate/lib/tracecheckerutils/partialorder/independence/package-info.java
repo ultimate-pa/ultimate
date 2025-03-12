@@ -25,11 +25,13 @@
  * to convey the resulting work.
  */
 /**
- * Provides classes for computing and providing a relation that states which transitions of a concurrent system are
+ * Provides classes for computing and providing a relation that states which transitions of a concurrent program are
  * independent in the sense that the execution order does not affect the result.
  *
- * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * While the package {@link de.uni_freiburg.informatik.ultimate.automata.partialorder} defines an abstract,
+ * language-theoretic view of independence relations, this package specializes this notion to provide independence
+ * relations tailored to the control structure and semantics of concurrent programs.
  *
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence;

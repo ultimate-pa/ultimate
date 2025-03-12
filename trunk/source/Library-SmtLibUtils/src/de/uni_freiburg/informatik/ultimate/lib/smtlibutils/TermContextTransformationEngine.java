@@ -33,6 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -45,6 +46,24 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  *
  */
 public class TermContextTransformationEngine<C> {
+
+	/**
+	 *
+	 */
+	public enum Repetition {
+		NO_REPETITION,
+		/**
+		 * Iterate through siblings until no sibling was changed.
+		 */
+		REPEAT_UNTIL_NO_CHANGE,
+		/**
+		 * Iterate through siblings until no sibling received a major change. We
+		 * consider a change to be a major change if a sibling was a dualJunction (e.g.,
+		 * a disjunction when the parent of the siblings is an "and") before and is not
+		 * a dualJunction afterwards.
+		 */
+		REPEAT_UNTIL_NO_MAJOR_CHANGE
+	}
 
 	private static final boolean DEBUG_CHECK_INTERMEDIATE_RESULT = false;
 	private static final boolean DEBUG_NONTERMINATION = false;
@@ -172,7 +191,7 @@ public class TermContextTransformationEngine<C> {
 		@Override
 		Task doStep() {
 			if (mNext == mOriginal.getParameters().length && mPositionOfLastChange != -1
-					&& mTermWalker.applyRepeatedlyUntilNoChange()) {
+					&& mTermWalker.applyRepeatedly() != Repetition.NO_REPETITION) {
 				mNext = 0;
 				mRepetitions++;
 			} else {
@@ -217,13 +236,62 @@ public class TermContextTransformationEngine<C> {
 
 		@Override
 		void integrateResult(final Term result) {
-			assert (mNext < mOriginal.getParameters().length);
-			if (!mResult[mNext].equals(result)
-					&& (!SMART_REPETITIONS || !isNeutralElementConDis(mOriginal.getFunction(), result))) {
+			assert mNext < mOriginal.getParameters().length;
+			if (updatePositionOfLastChange(result)) {
 				mPositionOfLastChange = mNext;
 			}
 			mResult[mNext] = result;
 			mNext++;
+		}
+
+		private boolean updatePositionOfLastChange(final Term result) {
+			if (mTermWalker.applyRepeatedly() == Repetition.NO_REPETITION) {
+				// we do not repeat anyway, we do not update the position
+				return false;
+			}
+			assert mTermWalker.applyRepeatedly() == Repetition.REPEAT_UNTIL_NO_CHANGE
+					|| mTermWalker.applyRepeatedly() == Repetition.REPEAT_UNTIL_NO_MAJOR_CHANGE;
+			if (mResult[mNext].equals(result)) {
+				// the results did not change
+				return false;
+			}
+			if (SMART_REPETITIONS && isNeutralElementConDis(mOriginal.getFunction(), result)) {
+				// optimization, see SMART_REPETITIONS
+				return false;
+			}
+			if (mTermWalker.applyRepeatedly() == Repetition.REPEAT_UNTIL_NO_CHANGE) {
+				// we have see a change that is not useless
+				return true;
+			}
+			assert mTermWalker.applyRepeatedly() == Repetition.REPEAT_UNTIL_NO_MAJOR_CHANGE;
+			if (result instanceof TermVariable) {
+				// TermVariables are small, this change is probably helpful
+				return true;
+			}
+			if (!(result instanceof ApplicationTerm)) {
+				// If the result is not an ApplicationTerm is probably complex and will be no
+				// major improvement of the critical constraint
+				return false;
+			}
+			final String connective = mOriginal.getFunction().getApplicationString();
+			if (!connective.equals("or") && !connective.equals("and")) {
+				throw new AssertionError(connective);
+			}
+			if (isTermDualBooleanConnective(connective, mResult[mNext])
+					&& !isTermDualBooleanConnective(connective, result)) {
+				// If we had a dualJunction before and no dualJunction afterwards, the this
+				// change is probably a major improvement for the critical constraint
+				return true;
+			}
+			return false;
+		}
+
+		private static boolean isTermDualBooleanConnective(final String connective, final Term term) {
+			if (term instanceof final ApplicationTerm appTerm) {
+				return QuantifierUtils.getDualBooleanConnective(connective)
+						.equals(appTerm.getFunction().getApplicationString());
+			}
+			return false;
 		}
 
 		@Override
@@ -325,14 +393,12 @@ public class TermContextTransformationEngine<C> {
 				&& SmtUtils.isNeutralElement(fun.getName(), term);
 	}
 
-
-
 	public abstract static class TermWalker<C> {
 
 		protected abstract C constructContextForApplicationTerm(C context, FunctionSymbol symb, List<Term> allParams,
 				int selectedParam);
 
-		protected abstract boolean applyRepeatedlyUntilNoChange();
+		protected abstract Repetition applyRepeatedly();
 
 		protected abstract C constructContextForQuantifiedFormula(C context, int quant, List<TermVariable> vars);
 
