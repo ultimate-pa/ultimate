@@ -100,7 +100,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> mBclrg;
 	private final boolean mLazySOptimization;
-	final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
+	private final EnumSet<VoluntaryRankDecrease> mVoluntaryRankDecrease;
 
 	/**
 	 * Constructor.
