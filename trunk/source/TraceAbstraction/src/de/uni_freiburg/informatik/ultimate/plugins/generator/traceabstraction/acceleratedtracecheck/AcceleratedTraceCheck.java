@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -332,13 +333,28 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			final TreeSet<Integer> positionsWithSimilarProgramPoint = loopPositions.getImage(i);
 			final Integer nextPosition = positionsWithSimilarProgramPoint.higher(i);
 			if (nextPosition != null) {
-				final NestedWord<L> subWord = counterexample.getWord().getSubWord(i, nextPosition);
+				final NestedWord<L> nestedWord = counterexample.getWord();
+				final NestedWord<L> subWord = nestedWord.getSubWord(i, nextPosition);
+				mLogger.info(
+						String.format("Found repeated program point %s. Trying to accelerate segment from %s to %s",
+								((ISLPredicate) counterexample.getControlConfigurations().get(i)).getProgramPoint(), i,
+								nextPosition));
 				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
 					mStatisticsGenerator.reportSuccessfullAcceleration();
 					result.put(i, new AcceleratedSegment(i, nextPosition - 1, transitiveClosure));
+					mLogger.info(String.format(
+							"Found repeated program point %s. Successfully accelerated segment from %s to %s",
+							((ISLPredicate) counterexample.getControlConfigurations().get(i)).getProgramPoint(), i,
+							nextPosition));
 					i = nextPosition - 1;
+				} else {
+					mLogger.info(
+							String.format("Found repeated program point %s. Failed to accelerate segment from %s to %s",
+									((ISLPredicate) counterexample.getControlConfigurations().get(i)).getProgramPoint(),
+									i, nextPosition));
+
 				}
 			}
 		}
