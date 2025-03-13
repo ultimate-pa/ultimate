@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -350,8 +349,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				} else {
 					mLogger.info(
 							String.format("Found repeated program point %s. Failed to accelerate segment from %s to %s",
-									((ISLPredicate) counterexample.getControlConfigurations().get(i)).getProgramPoint(),
-									i, nextPosition));
+									counterexample.getControlConfigurations().get(i), i, nextPosition));
 
 				}
 			}
