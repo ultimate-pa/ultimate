@@ -280,6 +280,17 @@ public class CfgBuilder {
 			}
 		}
 
+		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
+				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
+		if (initialNodes.isEmpty()) {
+			mLogger.info("Using library mode");
+			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
+		} else {
+			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
+					+ ULTIMATE_START + ")");
+			icfg.getInitialNodes().addAll(initialNodes);
+		}
+
 		mLogger.info("Performing block encoding");
 		switch (mCodeBlockSize) {
 		case LoopFreeBlock:
@@ -298,16 +309,6 @@ public class CfgBuilder {
 		}
 		AtomicBlockAnalyzer.ensureAtomicCompositionIsComplete(mIcfg, mLogger);
 
-		final Set<BoogieIcfgLocation> initialNodes = icfg.getProcedureEntryNodes().entrySet().stream()
-				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(Entry::getValue).collect(Collectors.toSet());
-		if (initialNodes.isEmpty()) {
-			mLogger.info("Using library mode");
-			icfg.getInitialNodes().addAll(icfg.getProcedureEntryNodes().values());
-		} else {
-			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
-					+ ULTIMATE_START + ")");
-			icfg.getInitialNodes().addAll(initialNodes);
-		}
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 

@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -22,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgJoinTransitionThreadOther;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -93,8 +95,10 @@ public class LargeBlockEncoding {
 				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
 				IcfgUtils.getErrorLocations(icfg).size());
 
+		final var initialNodes = getInitialThreadLocations();
+
 		// initialize queues of locations that are candidates for different kind of compositions
-		IcfgUtils.getAllLocations(mIcfg).forEach(pp -> considerCompositionCandidate(pp, true));
+		new IcfgLocationIterator<>(initialNodes).asStream().forEach(pp -> considerCompositionCandidate(pp, true));
 
 		// We distinguish 3 types of compositions: straight-line sequential compositions, parallel compositions, and
 		// complex sequential compositions.
@@ -132,7 +136,7 @@ public class LargeBlockEncoding {
 			mParallelQueue.clear();
 			mSequentialQueue.clear();
 
-			IcfgUtils.getAllLocations(mIcfg).forEach(pp -> considerCompositionCandidate(pp, true));
+			new IcfgLocationIterator<>(initialNodes).asStream().forEach(pp -> considerCompositionCandidate(pp, true));
 		}
 
 		final long elapsedTime = System.nanoTime() - startTime;
@@ -142,6 +146,18 @@ public class LargeBlockEncoding {
 						+ "and %d complex sequential compositions.",
 				elapsedTime / 1000 / 1000, mStraightlineSequentialCompositions, mParallelCompositions,
 				mOneToNSequentialCompositions, mComplexSequentialCompositions);
+	}
+
+	private List<BoogieIcfgLocation> getInitialThreadLocations() {
+		Stream<BoogieIcfgLocation> initialNodes = mIcfg.getInitialNodes().stream();
+		if (IcfgUtils.isConcurrent(mIcfg)) {
+			// As the CFG does not yet contain ForkOther edges at this point, the initial locations of thread templates
+			// cannot be reached from the initial location. Hence we collect them separately.
+			final var threadInits = mIcfg.getCfgSmtToolkit().getConcurrencyInformation().getThreadInstanceMap().keySet()
+					.stream().map(fork -> mIcfg.getProcedureEntryNodes().get(fork.getNameOfForkedProcedure()));
+			initialNodes = Stream.concat(initialNodes, threadInits);
+		}
+		return initialNodes.toList();
 	}
 
 	/**
