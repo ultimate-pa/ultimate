@@ -98,21 +98,7 @@ public class MultiDimensionalSort {
 			return false;
 		}
 		final MultiDimensionalSort other = (MultiDimensionalSort) obj;
-		if (mArrayValueSort == null) {
-			if (other.mArrayValueSort != null) {
-				return false;
-			}
-		} else if (!mArrayValueSort.equals(other.mArrayValueSort)) {
-			return false;
-		}
-		if (mIndexSorts == null) {
-			if (other.mIndexSorts != null) {
-				return false;
-			}
-		} else if (!mIndexSorts.equals(other.mIndexSorts)) {
-			return false;
-		}
-		return true;
+		return Objects.equals(mArrayValueSort, other.mArrayValueSort) && Objects.equals(mIndexSorts, other.mIndexSorts);
 	}
 
 }
