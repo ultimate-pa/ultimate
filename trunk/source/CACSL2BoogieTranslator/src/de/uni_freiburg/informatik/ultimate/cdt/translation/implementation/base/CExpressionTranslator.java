@@ -857,7 +857,7 @@ public class CExpressionTranslator {
 				auxvar = null;
 			} else {
 				auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultCType, SFO.AUXVAR.ITE);
-				resultBuilder.addAuxVarWithDeclaration(auxvar);
+				resultBuilder.addAuxVarWithDeclaration(auxvar).setLrValue(new RValue(auxvar.getExp(), resultCType));
 			}
 
 			final List<Statement> ifStatements = new ArrayList<>();
@@ -871,11 +871,6 @@ public class CExpressionTranslator {
 				overapprItem.annotate(rtrStatement);
 			}
 			resultBuilder.addStatement(rtrStatement);
-			if (resultCType.isVoidType()) {
-				// result type is void the value is not assigned
-			} else {
-				resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultCType));
-			}
 		}
 
 		return resultBuilder.build();
@@ -1152,9 +1147,7 @@ public class CExpressionTranslator {
 	private static void assignAuxVar(final ILocation loc, final ExpressionResult branchResult,
 			final ExpressionResultBuilder resultBuilder, final AuxVarInfo auxvar,
 			final List<Statement> resultStatements, final boolean relevantArgIsVoid) {
-		if (resultStatements != null) {
-			resultStatements.addAll(branchResult.getStatements());
-		}
+		resultStatements.addAll(branchResult.getStatements());
 		if (auxvar != null && !relevantArgIsVoid) {
 			final LeftHandSide[] lhs = { auxvar.getLhs() };
 			final Expression assignedVal = branchResult.getLrValue().getValue();

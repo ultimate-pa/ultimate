@@ -781,7 +781,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 		} else if (var instanceof ProgramConst) {
 			return ((ProgramConst) var).getDefaultConstant();
 		}
-		return null;
+		throw new AssertionError("Unexpected type " + var.getClass().getSimpleName());
 	}
 
 	/**

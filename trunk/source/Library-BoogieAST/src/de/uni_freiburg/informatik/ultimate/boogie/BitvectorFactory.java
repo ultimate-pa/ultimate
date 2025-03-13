@@ -236,6 +236,7 @@ public class BitvectorFactory {
 
 	private static FunctionApplication simplifyBinaryAssociativeExpression(final ILocation loc, final BvOp bvop,
 			final Expression[] args, final BitvectorConstant left, final BitvectorConstant right) {
+		assert bvop != null;
 		// if this operator is associative, we move literals to the left and check if
 		// the right operand has the same
 		// operator s.t. we can combine the literals to one.

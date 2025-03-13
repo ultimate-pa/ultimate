@@ -159,7 +159,7 @@ public class ClosureBenchmark {
 		} catch (final IOException e) {
 			logWarning("Error while reading benchmark directory: " + mBenchmarkDirectory);
 			logWarning(e.toString());
-			return null;
+			return List.of();
 		}
 	}
 

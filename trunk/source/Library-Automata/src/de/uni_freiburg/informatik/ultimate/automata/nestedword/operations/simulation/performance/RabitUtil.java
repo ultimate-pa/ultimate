@@ -297,10 +297,6 @@ public final class RabitUtil {
 	 *         or <tt>null</tt> if the given file name is <tt>null</tt>
 	 */
 	private static String[] stripExtension(final String fileName) {
-		if (fileName == null) {
-			return null;
-		}
-
 		final String[] result = new String[2];
 
 		final int pos = fileName.lastIndexOf('.');
