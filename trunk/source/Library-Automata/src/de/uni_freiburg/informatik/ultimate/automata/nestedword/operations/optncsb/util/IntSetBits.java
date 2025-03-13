@@ -155,7 +155,7 @@ public class IntSetBits implements IntSet {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof IntSetBits)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			System.err.println("OPERAND should be BitSet");
 			System.exit(-1);
 		}

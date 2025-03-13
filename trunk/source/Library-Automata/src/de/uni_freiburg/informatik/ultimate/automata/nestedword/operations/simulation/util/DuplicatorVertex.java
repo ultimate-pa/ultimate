@@ -86,7 +86,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 		if (!super.equals(obj)) {
 			return false;
 		}
-		if (!(obj instanceof DuplicatorVertex)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		@SuppressWarnings("rawtypes")

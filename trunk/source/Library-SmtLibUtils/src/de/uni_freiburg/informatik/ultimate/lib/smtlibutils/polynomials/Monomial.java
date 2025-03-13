@@ -249,7 +249,7 @@ public class Monomial {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof Monomial)) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final Monomial other = (Monomial) obj;

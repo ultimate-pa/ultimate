@@ -82,7 +82,7 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 
 	@Override
 	public boolean equals(final Object x) {
-		if (!(x instanceof TreeAutomatonRule)) {
+		if (x == null || getClass() != x.getClass()) {
 			return false;
 		}
 		@SuppressWarnings("unchecked")

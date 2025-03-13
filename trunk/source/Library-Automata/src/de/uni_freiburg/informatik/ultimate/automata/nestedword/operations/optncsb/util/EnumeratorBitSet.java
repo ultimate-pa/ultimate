@@ -60,7 +60,7 @@ class EnumeratorBitSet extends BitSet implements Comparable<EnumeratorBitSet> {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof EnumeratorBitSet)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final EnumeratorBitSet other = (EnumeratorBitSet) obj;

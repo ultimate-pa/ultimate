@@ -128,7 +128,7 @@ public class MapToCollectionIterator<D, R, C extends Collection<R>> implements I
 			if (other == this) {
 				return true;
 			}
-			if (!(other instanceof Map.Entry<?, ?>)) {
+			if (other == null || getClass() != other.getClass()) {
 				return false;
 			}
 			final Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;

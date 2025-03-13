@@ -72,7 +72,7 @@ public class StateNwaNCSB extends StateNwa implements IStateNwaComplement {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof StateNwaNCSB)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final StateNwaNCSB state = (StateNwaNCSB) obj;

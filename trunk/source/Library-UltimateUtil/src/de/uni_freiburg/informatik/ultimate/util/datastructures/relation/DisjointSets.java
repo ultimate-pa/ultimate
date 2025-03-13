@@ -136,7 +136,7 @@ public class DisjointSets<T> {
 	public boolean equals(final Object set) {
 		// TODO: Did you possibly want to override equals here? You did not, and I made that explicit by renaming
 		// this method to equalsTo
-		if (!(set instanceof DisjointSets)) {
+		if (set == null || getClass() != set.getClass()) {
 			return false;
 		} else {
 			@SuppressWarnings("unchecked")

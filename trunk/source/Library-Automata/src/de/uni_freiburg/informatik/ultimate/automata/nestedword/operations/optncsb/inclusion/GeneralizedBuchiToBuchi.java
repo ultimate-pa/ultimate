@@ -123,7 +123,7 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof TrackState)) {
+			if (getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")

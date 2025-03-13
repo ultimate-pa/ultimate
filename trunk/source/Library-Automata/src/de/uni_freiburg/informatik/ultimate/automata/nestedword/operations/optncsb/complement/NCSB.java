@@ -96,7 +96,7 @@ public class NCSB {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof NCSB)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final NCSB ncsb = (NCSB) obj;

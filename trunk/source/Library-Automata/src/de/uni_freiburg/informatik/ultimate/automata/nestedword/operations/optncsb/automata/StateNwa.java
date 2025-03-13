@@ -160,7 +160,7 @@ public class StateNwa implements IStateNwa, Comparable<StateNwa> {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof StateNwa)) {
+		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
 

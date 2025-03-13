@@ -352,7 +352,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof AsccPair)) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")

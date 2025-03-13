@@ -97,7 +97,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 			return false;
 		}
 
-		if (!(arg instanceof ReachDefBaseAnnotation)) {
+		if (getClass() != arg.getClass()) {
 			return false;
 		}
 

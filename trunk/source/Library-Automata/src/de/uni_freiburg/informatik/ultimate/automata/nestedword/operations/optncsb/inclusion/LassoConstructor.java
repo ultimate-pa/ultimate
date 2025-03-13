@@ -169,7 +169,7 @@ class LassoConstructor<LETTER, STATE> {
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof LassoConstructor.SuccessorInfo)) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")

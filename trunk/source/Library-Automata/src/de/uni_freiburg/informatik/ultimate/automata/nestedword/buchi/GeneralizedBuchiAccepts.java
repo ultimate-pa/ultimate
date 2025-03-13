@@ -169,7 +169,7 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE>
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof StackElement)) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")

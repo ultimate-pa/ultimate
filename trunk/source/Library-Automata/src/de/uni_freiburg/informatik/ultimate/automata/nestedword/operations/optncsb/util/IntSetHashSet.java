@@ -143,7 +143,7 @@ public class IntSetHashSet implements IntSet {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof IntSetHashSet)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			System.err.println("OPERAND should be HashSet");
 			System.exit(-1);
 		}

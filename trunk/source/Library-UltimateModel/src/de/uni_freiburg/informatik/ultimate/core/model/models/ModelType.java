@@ -118,7 +118,7 @@ public class ModelType implements Serializable {
 	 */
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj instanceof ModelType) {
+		if (obj != null && getClass() == obj.getClass()) {
 			final ModelType t = (ModelType) obj;
 			return t.mLastModified == mLastModified && t.mCreator.equals(mCreator);
 		}

@@ -143,7 +143,7 @@ public class IntSetTreeSet implements IntSet {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof IntSetTreeSet)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			System.err.println("OPERAND should be TreeSet");
 			System.exit(-1);
 		}

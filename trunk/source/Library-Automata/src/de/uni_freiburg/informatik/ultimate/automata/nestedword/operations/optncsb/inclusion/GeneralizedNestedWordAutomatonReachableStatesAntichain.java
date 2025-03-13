@@ -500,7 +500,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof AsccPair)) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")

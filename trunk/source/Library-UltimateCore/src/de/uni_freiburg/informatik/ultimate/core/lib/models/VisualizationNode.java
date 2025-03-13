@@ -316,7 +316,7 @@ public final class VisualizationNode implements
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj instanceof VisualizationNode) {
+		if (obj != null && getClass() == obj.getClass()) {
 			return mBacking.equals(((VisualizationNode) obj).mBacking);
 		}
 		return super.equals(obj);

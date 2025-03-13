@@ -59,7 +59,7 @@ public abstract class BaseTuple<E1, E2> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof BaseTuple)) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final BaseTuple<?, ?> other = (BaseTuple<?, ?>) obj;

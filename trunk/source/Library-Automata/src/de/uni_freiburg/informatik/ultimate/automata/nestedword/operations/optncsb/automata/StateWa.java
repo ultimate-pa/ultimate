@@ -86,7 +86,7 @@ public class StateWa implements IStateWa, Comparable<StateWa> {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof StateWa)) {
+		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
 		final StateWa otherState = (StateWa) other;

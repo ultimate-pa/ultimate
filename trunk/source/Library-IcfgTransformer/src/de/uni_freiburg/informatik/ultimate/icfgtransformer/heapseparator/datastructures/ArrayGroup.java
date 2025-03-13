@@ -140,10 +140,7 @@ public class ArrayGroup {
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (!(obj instanceof NoArrayGroup)) {
-				return false;
-			}
-			return true;
+			return obj != null && getClass() == obj.getClass();
 		}
 	}
 }

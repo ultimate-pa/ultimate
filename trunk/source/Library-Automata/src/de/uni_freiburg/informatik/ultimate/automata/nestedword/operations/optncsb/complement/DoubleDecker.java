@@ -53,7 +53,7 @@ public class DoubleDecker {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof DoubleDecker)) {
+		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
 		final DoubleDecker otherDecker = (DoubleDecker) other;

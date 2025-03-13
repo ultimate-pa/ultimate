@@ -150,7 +150,7 @@ public class IntSetTIntSet implements IntSet {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (!(obj instanceof IntSetTIntSet)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			System.err.println("OPERAND should be TIntSet");
 			System.exit(-1);
 		}

@@ -753,7 +753,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof NonrelationalState)) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		return ((NonrelationalState<?, ?>) obj).mId == mId;
