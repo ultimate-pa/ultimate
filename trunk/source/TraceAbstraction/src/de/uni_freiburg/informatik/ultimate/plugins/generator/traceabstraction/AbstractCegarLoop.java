@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -99,6 +100,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
  */
 public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
+
+	/**
+	 * Do not force a destruction of the service's storage. This is needed to show {@link StatisticsResult} that were
+	 * collected during the verification process.
+	 */
+	private static final boolean DEBUG_KEEP_STORAGE = false;
 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
@@ -448,10 +455,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				if (updateBudget) {
 					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
 				}
-				final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
-				if (!destroyedStorables.isEmpty()) {
-					mLogger.warn("Destroyed unattended storables created during the last iteration: "
-							+ destroyedStorables.stream().collect(Collectors.joining(",")));
+				if (!DEBUG_KEEP_STORAGE) {
+					final Set<String> destroyedStorables = getServices().getStorage().destroyMarker(msg);
+					if (!destroyedStorables.isEmpty()) {
+						mLogger.warn("Destroyed unattended storables created during the last iteration: "
+								+ destroyedStorables.stream().collect(Collectors.joining(",")));
+					}
 				}
 			}
 		}
