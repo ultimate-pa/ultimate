@@ -163,6 +163,11 @@ public class IntSetBits implements IntSet {
 		return contentEq(bits);
 	}
 
+	@Override
+	public int hashCode() {
+		return mSet.hashCode();
+	}
+
 	public static class SparseBitsIterator implements IntIterator {
 
 		private final BitSet mBits;

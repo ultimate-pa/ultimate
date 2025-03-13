@@ -151,6 +151,11 @@ public class IntSetHashSet implements IntSet {
 		return contentEq(temp);
 	}
 
+	@Override
+	public int hashCode() {
+		return mSet.hashCode();
+	}
+
 	public static class HashSetIterator implements IntIterator {
 
 		private final Iterator<Integer> mSetIter;

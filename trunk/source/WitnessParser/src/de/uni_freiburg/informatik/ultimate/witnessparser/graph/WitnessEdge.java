@@ -82,6 +82,22 @@ public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEd
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final WitnessEdge other = (WitnessEdge) obj;
+		return Objects.equals(mLocation, other.mLocation) && Objects.equals(mName, other.mName)
+				&& Objects.equals(mSourceCode, other.mSourceCode);
+	}
+
+	@Override
 	public WitnessEdge getLabel() {
 		return this;
 	}

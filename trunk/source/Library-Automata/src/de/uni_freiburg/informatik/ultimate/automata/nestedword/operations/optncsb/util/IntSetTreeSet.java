@@ -151,6 +151,11 @@ public class IntSetTreeSet implements IntSet {
 		return contentEq(temp);
 	}
 
+	@Override
+	public int hashCode() {
+		return mSet.hashCode();
+	}
+
 	public static class TreeSetIterator implements IntIterator {
 
 		private final Iterator<Integer> mSetIter;

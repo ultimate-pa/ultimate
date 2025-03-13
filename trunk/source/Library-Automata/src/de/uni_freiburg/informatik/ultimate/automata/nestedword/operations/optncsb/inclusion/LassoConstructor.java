@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -174,6 +175,11 @@ class LassoConstructor<LETTER, STATE> {
 			@SuppressWarnings("unchecked")
 			final SuccessorInfo otherInfo = (SuccessorInfo) obj;
 			return mState.equals(otherInfo.mState);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(mState);
 		}
 
 		@Override

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates.ReachProp;
@@ -156,6 +157,24 @@ public abstract class StateContainer<LETTER, STATE> {
 
 	protected Map<STATE, Integer> getDownStates() {
 		return mDownStates;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final var other = (StateContainer<?, ?>) obj;
+		return mCanHaveOutgoingReturn == other.mCanHaveOutgoingReturn && Objects.equals(mDownStates, other.mDownStates)
+				&& mReachProp == other.mReachProp && mSerialNumber == other.mSerialNumber
+				&& Objects.equals(mState, other.mState)
+				&& Objects.equals(mUnpropagatedDownStates, other.mUnpropagatedDownStates);
 	}
 
 	@Override
