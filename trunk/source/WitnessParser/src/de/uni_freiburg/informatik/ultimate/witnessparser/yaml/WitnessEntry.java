@@ -50,9 +50,4 @@ public abstract class WitnessEntry {
 	public String toString() {
 		return getName();
 	}
-
-	@Override
-	public int hashCode() {
-		return getName().hashCode();
-	}
 }
