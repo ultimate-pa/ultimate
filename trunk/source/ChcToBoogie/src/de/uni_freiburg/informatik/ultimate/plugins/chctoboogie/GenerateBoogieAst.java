@@ -76,11 +76,7 @@ public class GenerateBoogieAst {
 			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
 			mHelper.updateLocalVarDecs(localVarDecs, allBodyPredVariables, loc);
 
-			final VariableDeclaration[] localVars;
-			{
-				localVars = localVarDecs == null ? new VariableDeclaration[0]
-						: localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
-			}
+			final VariableDeclaration[] localVars = localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
 
 			/*
 			 * Note: in the headPredUnconstrained case, the procedure body must consist of one "assume false;"
