@@ -14,3 +14,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter
 Automatic-Module-Name: de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter
+Import-Package: de.uni_freiburg.informatik.ultimate.logic

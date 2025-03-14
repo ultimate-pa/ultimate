@@ -35,4 +35,14 @@ public class Activator extends Plugin {
 
 	// The plug-in name
 	public static final String PLUGIN_NAME = "IcfgInterpreter";
+
+	private static Activator instance;
+
+	public static Activator getInstance() {
+		return instance;
+	}
+
+	public Activator() {
+		instance = this;
+	}
 }
