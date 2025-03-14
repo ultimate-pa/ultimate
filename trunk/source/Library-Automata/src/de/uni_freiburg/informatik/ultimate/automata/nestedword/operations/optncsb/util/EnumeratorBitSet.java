@@ -43,10 +43,7 @@ class EnumeratorBitSet extends BitSet implements Comparable<EnumeratorBitSet> {
 
 	public EnumeratorBitSet(final int size) {
 		super(size);
-		if (size <= 0) {
-			System.err.println("valuation size should be positive number");
-			System.exit(-1);
-		}
+		assert size > 0 : "valuation size should be positive number";
 		this.size = size; // very important to know the size
 	}
 

@@ -53,30 +53,21 @@ public class IntSetTreeSet implements IntSet {
 
 	@Override
 	public void andNot(final IntSet set) {
-		if (!(set instanceof IntSetTreeSet)) {
-			System.err.println("OPERAND should be TreeSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetTreeSet : "OPERAND should be TreeSet";
 		final IntSetTreeSet temp = (IntSetTreeSet) set;
 		mSet.removeAll(temp.mSet);
 	}
 
 	@Override
 	public void and(final IntSet set) {
-		if (!(set instanceof IntSetTreeSet)) {
-			System.err.println("OPERAND should be TreeSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetTreeSet : "OPERAND should be TreeSet";
 		final IntSetTreeSet temp = (IntSetTreeSet) set;
 		mSet.retainAll(temp.mSet);
 	}
 
 	@Override
 	public void or(final IntSet set) {
-		if (!(set instanceof IntSetTreeSet)) {
-			System.err.println("OPERAND should be TreeSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetTreeSet : "OPERAND should be TreeSet";
 		final IntSetTreeSet temp = (IntSetTreeSet) set;
 		mSet.addAll(temp.mSet);
 	}
@@ -118,20 +109,14 @@ public class IntSetTreeSet implements IntSet {
 
 	@Override
 	public boolean subsetOf(final IntSet set) {
-		if (!(set instanceof IntSetTreeSet)) {
-			System.err.println("OPERAND should be TreeSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetTreeSet : "OPERAND should be TreeSet";
 		final IntSetTreeSet temp = (IntSetTreeSet) set;
 		return temp.mSet.containsAll(mSet);
 	}
 
 	@Override
 	public boolean contentEq(final IntSet set) {
-		if (!(set instanceof IntSetTreeSet)) {
-			System.err.println("OPERAND should be TreeSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetTreeSet : "OPERAND should be TreeSet";
 		final IntSetTreeSet temp = (IntSetTreeSet) set;
 		return mSet.equals(temp.mSet);
 	}
@@ -144,8 +129,7 @@ public class IntSetTreeSet implements IntSet {
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null || getClass() != obj.getClass()) {
-			System.err.println("OPERAND should be TreeSet");
-			System.exit(-1);
+			return false;
 		}
 		final IntSetTreeSet temp = (IntSetTreeSet) obj;
 		return contentEq(temp);

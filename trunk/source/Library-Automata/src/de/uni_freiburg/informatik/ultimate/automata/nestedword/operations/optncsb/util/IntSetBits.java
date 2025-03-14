@@ -53,30 +53,21 @@ public class IntSetBits implements IntSet {
 
 	@Override
 	public void andNot(final IntSet set) {
-		if (!(set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
 		final BitSet bits = (BitSet) set.get();
 		mSet.andNot(bits);
 	}
 
 	@Override
 	public void and(final IntSet set) {
-		if (!(set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
 		final BitSet bits = (BitSet) set.get();
 		mSet.and(bits);
 	}
 
 	@Override
 	public void or(final IntSet set) {
-		if (!(set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
 		final BitSet bits = (BitSet) set.get();
 		mSet.or(bits);
 	}
@@ -113,20 +104,14 @@ public class IntSetBits implements IntSet {
 
 	@Override
 	public boolean overlap(final IntSet set) {
-		if (!(set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
 		final IntSetBits temp = (IntSetBits) set;
 		return temp.mSet.intersects(mSet);
 	}
 
 	@Override
 	public boolean subsetOf(final IntSet set) {
-		if (!(set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
 		final BitSet temp = (BitSet) mSet.clone();
 		final BitSet bits = (BitSet) set.get();
 		temp.andNot(bits);
@@ -135,10 +120,7 @@ public class IntSetBits implements IntSet {
 
 	@Override
 	public boolean contentEq(final IntSet set) {
-		if (!(set instanceof IntSetBits)) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
-		}
+		assert set instanceof IntSetBits : "OPERAND should be BitSet";
 		final BitSet bits = (BitSet) set.get();
 		return mSet.equals(bits);
 	}
@@ -156,8 +138,7 @@ public class IntSetBits implements IntSet {
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null || getClass() != obj.getClass()) {
-			System.err.println("OPERAND should be BitSet");
-			System.exit(-1);
+			return false;
 		}
 		final IntSetBits bits = (IntSetBits) obj;
 		return contentEq(bits);

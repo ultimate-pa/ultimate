@@ -101,39 +101,19 @@ public final class GeneralizedBuchiIsIncludedNCSBSimple<LETTER, STATE>
 		if (mCounterexample != null) {
 			GeneralizedBuchiAccepts<LETTER, STATE> accepts =
 					new GeneralizedBuchiAccepts<>(mServices, difference, mCounterexample.getNestedLassoWord());
-			if (!accepts.getResult()) {
-				System.out.println("Not OK for difference accepts");
-			} else {
-				System.out.println("OK for difference accepts");
-			}
+			assert accepts.getResult() : "Not OK for difference accepts";
 			accepts = new GeneralizedBuchiAccepts<>(mServices, mFstOperand, mCounterexample.getNestedLassoWord());
 			BuchiAccepts<LETTER, STATE> acc =
 					new BuchiAccepts<>(mServices, fstOperand, mCounterexample.getNestedLassoWord());
 			assert accepts.getResult().booleanValue() == acc.getResult().booleanValue();
-			if (!accepts.getResult()) {
-				System.out.println("Not OK for mFstOperand accepts");
-			} else {
-				System.out.println("OK for mFstOperand accepts");
-			}
+			assert accepts.getResult() : "Not OK for mFstOperand accepts";
+
 			accepts = new GeneralizedBuchiAccepts<>(mServices, new BuchiToGeneralizedBuchi<>(sndComplement),
 					mCounterexample.getNestedLassoWord());
 			acc = new BuchiAccepts<>(mServices, sndComplement, mCounterexample.getNestedLassoWord());
 			assert accepts.getResult().booleanValue() == acc.getResult().booleanValue();
 
-			if (!accepts.getResult()) {
-				System.out.println("Not OK for sndComplement accepts");
-				System.out.println(sndComplement);
-				System.out.println(mCounterexample);
-				System.out.println(mCounterexample.getNestedLassoWord());
-				System.exit(1);
-			} else {
-				System.out.println("OK for sndComplement accepts");
-			}
-
-		}
-
-		if (mCounterexample != null) {
-			System.out.println(mCounterexample.getStem().getLength() + "," + mCounterexample.getLoop().getLength());
+			assert accepts.getResult() : "Not OK for sndComplement accepts " + mCounterexample;
 		}
 
 		if (mLogger.isInfoEnabled()) {
