@@ -197,7 +197,7 @@ public class PostProcessor {
 	 *
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final ILocation loc, final IASTNode hook,
+	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 

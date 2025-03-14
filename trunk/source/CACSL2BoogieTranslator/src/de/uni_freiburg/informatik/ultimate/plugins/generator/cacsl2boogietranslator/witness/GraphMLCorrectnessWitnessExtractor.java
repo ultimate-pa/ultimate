@@ -594,8 +594,8 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 				return false;
 			}
 
-			return mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming()
-					|| mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming();
+			return (mEdge.getLineNumber() == loc.getEndingLineNumber() && mEdge.isIncoming())
+					|| (mEdge.getLineNumber() == loc.getStartingLineNumber() && !mEdge.isIncoming());
 		}
 	}
 

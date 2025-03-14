@@ -558,7 +558,7 @@ public final class Boogie2ACSL {
 				lhs.cType(), resultRange);
 	}
 
-	private BacktranslatedExpression translateModulo(final BacktranslatedExpression lhs,
+	private static BacktranslatedExpression translateModulo(final BacktranslatedExpression lhs,
 			final BacktranslatedExpression rhs) {
 		if (lhs == null || rhs == null) {
 			return null;

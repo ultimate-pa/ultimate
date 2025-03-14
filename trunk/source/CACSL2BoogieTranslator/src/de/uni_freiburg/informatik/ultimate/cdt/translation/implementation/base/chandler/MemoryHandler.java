@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -1861,14 +1861,14 @@ public class MemoryHandler {
 			indices.add(inPtrExp);
 			values.add(returnValue);
 		} else if (rda.getBytesize() < heapDataArray.getSize()) {
-			final Function<Expression, Expression> valueExtension =
+			final UnaryOperator<Expression> valueExtension =
 					x -> mExpressionTranslation.signExtend(loc, x, rda.getBytesize() * 8, heapDataArray.getSize() * 8);
 			indices.add(inPtrExp);
 			values.add(valueExtension.apply(returnValue));
 		} else {
 			assert rda.getBytesize() % heapDataArray.getSize() == 0 : "incompatible sizes";
 			for (int i = 0; i < rda.getBytesize() / heapDataArray.getSize(); i++) {
-				final Function<Expression, Expression> extractBits;
+				final UnaryOperator<Expression> extractBits;
 				final int currentI = i;
 				extractBits = x -> mExpressionTranslation.extractBits(loc, x,
 						heapDataArray.getSize() * (currentI + 1) * 8, heapDataArray.getSize() * currentI * 8);
@@ -1878,7 +1878,7 @@ public class MemoryHandler {
 
 				} else {
 					final BigInteger additionalOffset = BigInteger.valueOf(i * heapDataArray.getSize());
-					final Function<Expression, Expression> pointerAddition =
+					final UnaryOperator<Expression> pointerAddition =
 							x -> addIntegerConstantToPointer(loc, x, additionalOffset);
 					indices.add(pointerAddition.apply(inPtrExp));
 					values.add(extractBits.apply(returnValue));

@@ -921,8 +921,6 @@ public class CHandler {
 			final ExpressionResult rl = mExprResultTransformer.switchToRValue(leftOperand, loc, node);
 			final ExpressionResult rr = mExprResultTransformer.switchToRValue(rightOperand, loc, node);
 			builder.addAllExceptLrValue(rl, rr);
-			final Expression leftValue = rl.getLrValue().getValue();
-			final Expression rightValue = rr.getLrValue().getValue();
 			Operator operator;
 			switch (node.getOperator()) {
 			case IASTBinaryExpression.op_binaryAnd:
@@ -937,6 +935,8 @@ public class CHandler {
 			default:
 				throw new AssertionError("Unexpected operator " + node.getOperator());
 			}
+			final Expression leftValue = rl.getLrValue().getValue();
+			final Expression rightValue = rr.getLrValue().getValue();
 			final Expression resultExpr = ExpressionFactory.newBinaryExpression(loc, operator, leftValue, rightValue);
 			return builder.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitive.CPrimitives.INT), true)).build();
 		}
@@ -2192,7 +2192,7 @@ public class CHandler {
 
 	public Result visit(final IDispatcher main, final IASTProblemDeclaration node) {
 		final String signature = node.getRawSignature();
-		if (signature.equals("_Noreturn") || signature.equals("noreturn")) {
+		if ("_Noreturn".equals(signature) || "noreturn".equals(signature)) {
 			// Matthias 20230309: It seems like the parser does not support die _Noreturn
 			// function specifier. It considers this as a IASTProblemDeclaration that is a
 			// direct child of the translation unit. As a workaround, we skip this node.

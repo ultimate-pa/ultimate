@@ -708,13 +708,13 @@ public class ACSLHandler implements IACSLHandler {
 		for (final var decl : node.getVariables()) {
 			// For each quantified variable in the ACSL expression, create a corresponding Boogie variable and store it
 			// in the mBoundVariables to be used when handling IdentifierExpressions.
-			final String name = decl.getName();
 			final CType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 			if (!(cType instanceof CPrimitive)) {
 				throw new UnsupportedSyntaxException(loc, "Only quantified variables of primitive type are supported.");
 			}
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.QUANTIFIED, null);
 			final BoogieType boogieType = mTypeHandler.getBoogieTypeForCType(cType);
+			final String name = decl.getName();
 			mBoundVariables.put(name, new LocalLValue(new VariableLHS(loc, boogieType, name, declInfo), cType, false));
 			quantifiedVars.add(new VarList(loc, new String[] { name }, mTypeHandler.cType2AstType(loc, cType)));
 			// Collect the type constraints for the given CType (if any)
