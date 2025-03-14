@@ -155,6 +155,14 @@ final public class AtomicBlockInfo extends ModernAnnotations {
 		edge.getPayload().getAnnotations().remove(AtomicBlockInfo.class.getName());
 	}
 
+	static int getAnnotatedDelta(final IIcfgTransition<?> edge) {
+		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
+		if (annotation != null) {
+			return annotation.mDelta;
+		}
+		return 0;
+	}
+
 	private static boolean hasAnnotatedDelta(final IIcfgTransition<?> edge, final IntPredicate condition) {
 		final AtomicBlockInfo annotation = ModelUtils.getAnnotation(edge, AtomicBlockInfo.class);
 		if (annotation != null) {
