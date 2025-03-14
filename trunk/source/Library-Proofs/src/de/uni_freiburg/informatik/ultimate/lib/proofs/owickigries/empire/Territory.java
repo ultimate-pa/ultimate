@@ -142,7 +142,7 @@ public final class Territory<PLACE> {
 				final var region = it.next();
 				if (region.contains(place)) {
 					found = true;
-					regions.remove(region);
+					it.remove();
 				}
 			}
 			if (!found) {
