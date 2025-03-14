@@ -328,35 +328,20 @@ public class LargeBlockEncoding {
 		final boolean isBetweenSequencePoints = false; // TODO #FaultLocalization
 		final boolean isInAtomicBlock = mAtomicAnalysis.isInsideAtomicBlock(pp);
 
-		switch (mInternalLbeMode) {
-		case ALL_EXCEPT_ATOMIC_BOUNDARIES:
-			// atomic boundaries already handled above, so fall-through to the case for ALL
-		case ALL:
-			if (isStraightline) {
-				return SequentialCompositionType.STRAIGHTLINE;
-			}
-			if (isInAtomicBlock || isBetweenSequencePoints) {
-				// Y-V currently unsupported outside atomic blocks (implementation cannot handle loops properly)
-				// TODO (Dominik 2020-09-16) Check if above comment still holds after Y-to-V fix, may work now (as
-				// loop entry is reverse Y-to-V).
-				return SequentialCompositionType.COMPLEX;
-			}
-			return SequentialCompositionType.NONE;
+		return switch (mInternalLbeMode) {
+		// atomic boundaries already handled above, so ALL_EXCEPT_ATOMIC_BOUNDARIES and ALL are treated the same way.
+		case ALL_EXCEPT_ATOMIC_BOUNDARIES, ALL:
+			yield isStraightline ? SequentialCompositionType.STRAIGHTLINE : SequentialCompositionType.COMPLEX;
 		case ATOMIC_BLOCK_AND_INBETWEEN_SEQUENCE_POINTS:
 			// TODO #FaultLocalization
 			// return isInAtomicBlock || isBetweenSequencePoints;
 			throw new UnsupportedOperationException();
 		case ONLY_ATOMIC_BLOCK:
 			if (!isInAtomicBlock) {
-				return SequentialCompositionType.NONE;
+				yield SequentialCompositionType.NONE;
 			}
-			if (isStraightline) {
-				return SequentialCompositionType.STRAIGHTLINE;
-			}
-			return SequentialCompositionType.COMPLEX;
-		default:
-			throw new AssertionError("unknown value " + mInternalLbeMode);
-		}
+			yield isStraightline ? SequentialCompositionType.STRAIGHTLINE : SequentialCompositionType.COMPLEX;
+		};
 	}
 
 	private boolean isComposableEdge(final IcfgEdge edge) {
