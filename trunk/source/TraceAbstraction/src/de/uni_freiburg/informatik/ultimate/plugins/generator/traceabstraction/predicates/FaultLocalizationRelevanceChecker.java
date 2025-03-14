@@ -77,7 +77,7 @@ public class FaultLocalizationRelevanceChecker {
 	 *
 	 * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
 	 */
-	private class FaultLocalizationHoareTripleChecker extends IncrementalHoareTripleChecker {
+	private static class FaultLocalizationHoareTripleChecker extends IncrementalHoareTripleChecker {
 
 		public FaultLocalizationHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 			super(csToolkit, false);

@@ -64,7 +64,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	private final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> local_mB2;
 	private final AutomataLibraryServices localServiceProvider;
 
-	class NodeData<A, B> {
+	static class NodeData<A, B> {
 		public int hash;
 		public boolean covered = false;
 		public HashMap<INwaOutgoingLetterAndTransitionProvider<A, B>, HashSet<B>> bStates;

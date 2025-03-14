@@ -104,7 +104,7 @@ public class LTLExpressionExtractor {
 		return rtr.toString();
 	}
 
-	private class LTLReplaceWeakUntil extends ACSLTransformer {
+	private static final class LTLReplaceWeakUntil extends ACSLTransformer {
 
 		@Override
 		public Expression transform(final BinaryExpression node) {
@@ -136,7 +136,7 @@ public class LTLExpressionExtractor {
 
 	}
 
-	private class LTLFormatStringPrinter extends LTLPrettyPrinter {
+	private static final class LTLFormatStringPrinter extends LTLPrettyPrinter {
 
 		private final Map<String, Expression> mApString2Expr;
 		private final Set<Expression> mSubExpressions;

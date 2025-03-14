@@ -3475,7 +3475,7 @@ public class MemoryHandler {
 		}
 	}
 
-	class MemoryModelDeclarationInfo {
+	static class MemoryModelDeclarationInfo {
 
 		private final MemoryModelDeclarations mMmd;
 		private final BoogieType mBoogieType;

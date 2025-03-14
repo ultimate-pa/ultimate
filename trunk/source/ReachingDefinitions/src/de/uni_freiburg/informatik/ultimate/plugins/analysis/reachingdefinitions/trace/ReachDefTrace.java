@@ -277,7 +277,7 @@ public class ReachDefTrace {
 
 	}
 
-	private class StatementFinder extends RCFGEdgeVisitor {
+	private static class StatementFinder extends RCFGEdgeVisitor {
 		private List<Statement> mStatements;
 		private ISearchPredicate<Statement> mPredicate;
 

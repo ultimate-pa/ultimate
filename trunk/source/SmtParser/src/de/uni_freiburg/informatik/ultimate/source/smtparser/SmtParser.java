@@ -381,7 +381,7 @@ public class SmtParser implements ISource {
 		}
 	}
 
-	private class CollectNamesScript extends NoopScript {
+	private static class CollectNamesScript extends NoopScript {
 
 		Set<String> mNames = new HashSet<>();
 
@@ -397,7 +397,7 @@ public class SmtParser implements ISource {
 		}
 	}
 
-	private class FilteredLoggingScript extends LoggingScript {
+	private static class FilteredLoggingScript extends LoggingScript {
 
 		private final Set<String> mAllowedNames;
 

@@ -74,7 +74,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		SAFE, UNSAFE, UNKNOWN, SYNTAX_ERROR, TIMEOUT, UNSUPPORTED_SYNTAX, EXCEPTION_OR_ERROR, NO_RESULT;
 	}
 
-	protected class ActualResult {
+	protected static class ActualResult {
 		private final IResult mIResult;
 		private final ActualResultType mactualResultType;
 

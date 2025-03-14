@@ -1064,7 +1064,7 @@ public class Elim1Store {
 
 	}
 
-	public class ValueEqualityChecker {
+	public static class ValueEqualityChecker {
 		final TermVariable mEliminatee;
 		final Term mStoreIndex;
 		final Term mStoreValue;

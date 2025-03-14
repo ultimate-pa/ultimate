@@ -30,7 +30,7 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 import com.github.jhoenicke.javacup.runtime.SymbolFactory;
 
 public class BoogieSymbolFactory implements SymbolFactory {
-	class BoogieSymbol extends Symbol {
+	static class BoogieSymbol extends Symbol {
 		private final String mName;
 		private final int mLcolumn;
 		private final int mRcolumn;
