@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,34 +30,27 @@ public class ThreadInstanceCounter {
 		return new HashMap<>(mThreadInstances);
 	}
 
-	public void reset() {
-		for (final String string : mThreadNameSet) {
-			mThreadInstances.put(string, 0);
-		}
-	}
-
-	public void incrementThread(final String threadName) {
+	public ThreadInstanceCounter incrementThread(final String threadName) {
 		if (mThreadInstances.get(threadName) == null) {
 			throw new IllegalArgumentException("Trying to increment thread which does not exist: " + threadName);
 		}
+		final var newInstances = new HashMap<>(mThreadInstances);
 		final int newCount = Math.min(2, mThreadInstances.get(threadName) + 1);
-		mThreadInstances.put(threadName, newCount);
+		newInstances.put(threadName, newCount);
+		return new ThreadInstanceCounter(newInstances);
 	}
 
-	public void setActive(final String threadName) {
-		if (mThreadInstances.get(threadName) == null) {
-			throw new IllegalArgumentException("Trying to increment thread which does not exist: " + threadName);
-		}
-		if (mThreadInstances.get(threadName) < 1) {
-			mThreadInstances.put(threadName, 1);
-		}
+	public ThreadInstanceCounter setActive(final Collection<String> threadName) {
+		final var newInstanceMap = new HashMap<>(mThreadInstances);
+		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) < 1)
+				.forEach(p -> newInstanceMap.put(p, 1));
+		return new ThreadInstanceCounter(newInstanceMap);
 	}
 
-	public void setInf(final String threadName) {
-		if (mThreadInstances.get(threadName) == null) {
-			throw new IllegalArgumentException("Trying to increment thread which does not exist: " + threadName);
-		}
-		mThreadInstances.put(threadName, 2);
+	public ThreadInstanceCounter setInf(final Collection<String> threadName) {
+		final var newInstanceMap = new HashMap<>(mThreadInstances);
+		threadName.stream().filter(p -> newInstanceMap.get(p) != null).forEach(p -> newInstanceMap.put(p, 2));
+		return new ThreadInstanceCounter(newInstanceMap);
 	}
 
 	public ThreadInstanceCounter union(final ThreadInstanceCounter other) {

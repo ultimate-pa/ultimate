@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACTION>
+public final class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACTION>
 		implements IAbstractState<RelationalInterferingState<STATE, ACTION>> {
 
 	private final IAbstractDomain<STATE, ACTION> mUnderlying;
@@ -37,17 +37,31 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 		}
 
 		for (final STATE state : states) {
-			// unionState = FixpointEngineConcurrentUtils.unionOnSharedVariables(unionState, state);
+			// unionState = FixpointEngineConcurrentUtils.unionOnSharedVariables(unionState,
+			// state);
 			unionState = unionState.union(state);
 		}
-		mState = unionState;
+		if (unionState == null) {
+			mState = underlying.createBottomState();
+		} else {
+			mState = unionState;
+		}
 		mThreadInstanceCounter = new ThreadInstanceCounter(threadcounter);
 		mInterferences = interferences;
 	}
 
-	// TODO
 	public STATE getStateCopy() {
-		return mState.union(mUnderlying.createBottomState().addVariables(mState.getVariables()));
+		return mState;
+	}
+
+	public RelationalInterferingState<STATE, ACTION> setThreadsActive(final Collection<String> forkingStrings) {
+		final var newThreadcounter = new ThreadInstanceCounter(mThreadInstanceCounter.setActive(forkingStrings));
+		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), newThreadcounter, mInterferences);
+	}
+
+	public RelationalInterferingState<STATE, ACTION> setThreadsInf(final Collection<String> forkingStrings) {
+		final var newThreadcounter = new ThreadInstanceCounter(mThreadInstanceCounter.setInf(forkingStrings));
+		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), newThreadcounter, mInterferences);
 	}
 
 	public ThreadInstanceCounter getThreadInstanceState() {
@@ -55,9 +69,8 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 	}
 
 	public RelationalInterferingState<STATE, ACTION> incrementThread(final String thread) {
-		final var threadcounter = new ThreadInstanceCounter(mThreadInstanceCounter);
-		threadcounter.incrementThread(thread);
-		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), threadcounter, mInterferences);
+		final var newThreadcounter = mThreadInstanceCounter.incrementThread(thread);
+		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), newThreadcounter, mInterferences);
 	}
 
 	@Override
@@ -138,8 +151,8 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION>
-			renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+	public RelationalInterferingState<STATE, ACTION> renameVariables(
+			final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
 		return new RelationalInterferingState<>(mUnderlying, mState.renameVariables(old2newVars),
 				mThreadInstanceCounter, mInterferences);
 	}
@@ -157,6 +170,9 @@ public class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACT
 
 	@Override
 	public String toString() {
+		if (mState == null) {
+			return "null";
+		}
 		return mState.toString() + mThreadInstanceCounter.getThreadInstances().toString()
 				+ mInterferences.interferenceStrings();
 	}

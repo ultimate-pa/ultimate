@@ -9,47 +9,42 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
-public class RelationalInterferingPostOperator<STATE extends IAbstractState<STATE>, ACTION extends IcfgEdge>
+public class RelationalInterferingPostOperator<STATE extends IAbstractState<STATE>, ACTION>
 		implements IAbstractPostOperator<RelationalInterferingState<STATE, ACTION>, ACTION> {
 	private String mCurrentThreadName;
-	private final IDomain mSifaDomain;
-	private final IUltimateServiceProvider mServiceProvider;
 
 	private final ILogger mLogger;
 
 	private final AbstractInterferenceState<STATE, ACTION> mInterferences;
+	private final ThreadInstanceState mThreadInstanceState;
 	private final CfgSmtToolkit mToolkit;
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final RelationalInterferingDomain<STATE, ACTION> mRelationalInterferingDomain;
 	private final Set<IProgramNonOldVar> mGlobalVariables;
 
-	public RelationalInterferingPostOperator(final IDomain sifaDomain, final IIcfg<?> cfg,
-			final IUltimateServiceProvider serviceProvider,
-			final AbstractInterferenceState<STATE, ACTION> interferences,
+	public RelationalInterferingPostOperator(final IIcfg<?> cfg, final ILogger logger,
+			final AbstractInterferenceState<STATE, ACTION> interferences, final ThreadInstanceState threadInstanceState,
 			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
 			final RelationalInterferingDomain<STATE, ACTION> relationalInterferingDomain) {
-		mLogger = serviceProvider.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSifaDomain = sifaDomain;
-		mServiceProvider = serviceProvider;
+		mLogger = logger;
 		mInterferences = interferences;
+		mThreadInstanceState = threadInstanceState;
 		mToolkit = cfg.getCfgSmtToolkit();
 		mUnderlyingDomain = underlying;
 		mUnderlyingPostOp = postOp;
@@ -58,14 +53,14 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 	}
 
 	@Override
-	public Collection<RelationalInterferingState<STATE, ACTION>>
-			apply(final RelationalInterferingState<STATE, ACTION> oldstate, final ACTION transition) {
+	public Collection<RelationalInterferingState<STATE, ACTION>> apply(
+			final RelationalInterferingState<STATE, ACTION> oldstate, final ACTION transition) {
 		if (oldstate.isBottom()) {
 			return List.of(oldstate);
 		}
 		mLogger.warn("START postOperator----------------");
-		mLogger.warn("current Thread: " + transition.getPrecedingProcedure());
-		mCurrentThreadName = transition.getPrecedingProcedure();
+		mLogger.warn("current Thread: " + ((IcfgEdge) transition).getPrecedingProcedure());
+		mCurrentThreadName = ((IcfgEdge) transition).getPrecedingProcedure();
 
 		if (transition instanceof ForkThreadCurrent || transition instanceof ForkThreadOther) {
 			mLogger.warn("Fork transition, no postOp, no interference created");
@@ -89,7 +84,7 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 		if (isInterferingTransition(transition)) {
 			mInterferences.addInterference(mCurrentThreadName, transition, oldstate.getStateCopy());
 			mLogger.warn("Interference created: " + oldstate.getStateCopy().toLogString() + " "
-					+ transition.getTransformula().toStringDirect());
+					+ ((IAction) transition).getTransformula().toStringDirect());
 		}
 
 		// 3. apply interferences
@@ -101,7 +96,7 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 	}
 
 	private boolean isInterferingTransition(final ACTION transition) {
-		if (!transition.getTransformula().getAssignedVars().stream()
+		if (!((IAction) transition).getTransformula().getAssignedVars().stream()
 				.anyMatch(assignedVar -> mGlobalVariables.contains(assignedVar))) {
 			return false;
 		}
@@ -116,22 +111,22 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 		return false;
 	}
 
-	private Collection<RelationalInterferingState<STATE, ACTION>>
-			applyFork(final RelationalInterferingState<STATE, ACTION> oldstate, final ACTION transition) {
+	private Collection<RelationalInterferingState<STATE, ACTION>> applyFork(
+			final RelationalInterferingState<STATE, ACTION> oldstate, final ACTION transition) {
 		var newState = new RelationalInterferingState<>(mUnderlyingDomain, oldstate.getStateCopy(),
 				oldstate.getThreadInstanceState(), mInterferences);
 		// increment threadcounter of forked thread and all threads who are forked, etc,
 		// by forked
-		// TODO: we can reduce logic now after changes, just check if more than 2 forks exist, or circular
+		// TODO: we can reduce logic now after changes, just check if more than 2 forks
+		// exist, or circular
 		if (transition instanceof final ForkThreadCurrent fork1) {
 			final boolean circular = isCircular(fork1, fork1.getSource().getIncomingEdges(), 0);
 			final var forked = fork1.getNameOfForkedProcedure();
-			mInterferences.update(transition.getPrecedingProcedure(), forked);
-			for (final String thread : mInterferences.getActiveIfActive().getImage(forked)) {
-				newState.getThreadInstanceState().setActive(thread);
-			}
+//			mInterferences.update(((IAction) transition).getPrecedingProcedure(), forked);
+			mThreadInstanceState.update(((IAction) transition).getPrecedingProcedure(), forked);
+			newState = newState.setThreadsActive(mThreadInstanceState.getActiveIfActive().getImage(forked));
 			if (circular || oldstate.getThreadInstanceState().getThreadInstances().get(forked) > 0) {
-				newState.getThreadInstanceState().setInf(forked);
+				newState = newState.setThreadsInf(List.of(forked));
 			}
 		} else {
 			throw new IllegalArgumentException("Unsupported fork transition type");
@@ -194,28 +189,33 @@ public class RelationalInterferingPostOperator<STATE extends IAbstractState<STAT
 					continue;
 				}
 				for (final ACTION interferenceAction : interferenceMap.keySet()) {
-					mLogger.warn("Applying interference: " + interferenceAction.getTransformula().getClosedFormula()
-							+ " " + interferenceMap.get(interferenceAction));
+					mLogger.warn("Applying interference: "
+							+ ((IAction) interferenceAction).getTransformula().getClosedFormula() + " "
+							+ interferenceMap.get(interferenceAction));
 					appliedInterferenceSet.add(interferenceAction);
 					mLogger.warn("to state: " + newState.getStateCopy().toLogString());
 					final STATE interferingState = interferenceMap.get(interferenceAction);
 
 					// TODO: datastructureutiles difference
-					final var locals =
-							newState.getVariables().stream().filter(v -> !v.isGlobal()).collect(Collectors.toSet());
+//					DataStructureUtils.difference(null, null);
+					final var locals = newState.getVariables().stream().filter(v -> !v.isGlobal())
+							.collect(Collectors.toSet());
 					final var otherLocals = interferingState.getVariables();
-					final var missingLocals =
-							locals.stream().filter(v -> !otherLocals.contains(v)).collect(Collectors.toSet());
+					final var missingLocals = locals.stream().filter(v -> !otherLocals.contains(v))
+							.collect(Collectors.toSet());
 
 					final var locals2 = interferingState.getVariables().stream().filter(v -> !v.isGlobal())
 							.collect(Collectors.toSet());
 					final var otherlocals2 = newState.getStateCopy().getVariables();
-					final var missingLocals2 =
-							locals2.stream().filter(v -> !otherlocals2.contains(v)).collect(Collectors.toSet());
+					final var missingLocals2 = locals2.stream().filter(v -> !otherlocals2.contains(v))
+							.collect(Collectors.toSet());
 
 					final var globalNewState = newState.getStateCopy().addVariables(missingLocals2);
-					final STATE intersectionState =
-							globalNewState.intersect(interferingState.addVariables(missingLocals));
+					if (globalNewState.isBottom() || interferingState.isBottom()) {
+						continue;
+					}
+					final STATE intersectionState = globalNewState
+							.intersect(interferingState.addVariables(missingLocals));
 					if (intersectionState.isBottom()) {
 						continue;
 					}

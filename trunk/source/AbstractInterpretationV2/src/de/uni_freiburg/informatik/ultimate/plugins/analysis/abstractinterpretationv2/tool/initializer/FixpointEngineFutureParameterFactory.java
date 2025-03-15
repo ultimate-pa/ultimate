@@ -158,25 +158,8 @@ public class FixpointEngineFutureParameterFactory {
 			return (IAbstractDomain<STATE, IcfgEdge>) new LiveVariableDomain<IcfgEdge>(logger);
 		} else if (PoormanAbstractDomain.class.getSimpleName().equals(domainName)) {
 			return (IAbstractDomain<STATE, IcfgEdge>) new PoormanAbstractDomain<>(services, root);
-		} else if (RelationalInterferingDomain.class.getSimpleName().equals(domainName)) {
-			return (IAbstractDomain<STATE, IcfgEdge>) new RelationalInterferingDomain<>(root,
-					getIntervallDomain(root, services, logger), services);
 		}
 		throw new UnsupportedOperationException(getFailureString(domainName));
-	}
-
-	private static IntervalDomain getIntervallDomain(final IIcfg<?> root, final IUltimateServiceProvider services,
-			final ILogger logger) {
-		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
-		if (pa == null || pa.getSymbolTable() == null) {
-			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
-		}
-		final var mSymbolTable = pa.getSymbolTable();
-		final LiteralCollectorFactory litCollector = () -> new RCFGLiteralCollector(root);
-		final var mBoogieIcfg = AbsIntUtil.getBoogieIcfgContainer(root);
-		final var mVariableProvider = mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
-		return new IntervalDomain(logger, mSymbolTable, litCollector.create().getLiteralCollection(), services,
-				mBoogieIcfg, mVariableProvider);
 	}
 
 	public <DOM extends IAbstractDomain<STATE, IcfgEdge>, STATE extends IAbstractState<STATE>>

@@ -79,8 +79,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE =
 			new String[] { EmptyDomain.class.getSimpleName(), VPDomain.class.getSimpleName(),
 					DataflowDomain.class.getSimpleName(), LiveVariableDomain.class.getSimpleName(),
-					SMTTheoryDomain.class.getSimpleName(), PoormanAbstractDomain.class.getSimpleName(),
-					RelationalInterferingDomain.class.getSimpleName()};
+					SMTTheoryDomain.class.getSimpleName(), PoormanAbstractDomain.class.getSimpleName()};
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
