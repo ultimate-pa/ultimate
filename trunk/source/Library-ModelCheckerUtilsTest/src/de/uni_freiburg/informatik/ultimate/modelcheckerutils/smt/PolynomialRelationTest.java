@@ -773,7 +773,7 @@ public class PolynomialRelationTest {
 	public void relationIntModEqUselessSummands() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y") };
 		final String inputSTR = "(= (+ (mod x 3) (* y y) y 1) (* y (+ y 1)) )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	/**
@@ -824,14 +824,14 @@ public class PolynomialRelationTest {
 	public void relationIntDivEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
 	public void relationIntMultiParamDivEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div x 2 2 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
@@ -922,14 +922,14 @@ public class PolynomialRelationTest {
 	public void relationIntRecDivEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "eq") };
 		final String inputSTR = "(= (div (div x 7) 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
 	public void relationIntRecDivSimplifyEq() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "eq") };
 		final String inputSTR = "(= (div (div x 3) 3) eq )";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	// @Test Insufficient resources to check soundness
@@ -971,14 +971,14 @@ public class PolynomialRelationTest {
 	public void relationIntDivModStickyPaint() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(<= (div (+ z (* y (- 1)) x) (- 8)) 9)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC4, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	@Test
 	public void relationIntDivModStickyPaintSimplified() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z") };
 		final String inputSTR = "(= (div x (- 8)) y)";
-		testSolveForXMultiCaseOnly(SOLVER_COMMAND_Z3, inputSTR, funDecls);
+		testSolveForXMultiCaseOnly(SOLVER_COMMAND_CVC5, inputSTR, funDecls);
 	}
 
 	/**
