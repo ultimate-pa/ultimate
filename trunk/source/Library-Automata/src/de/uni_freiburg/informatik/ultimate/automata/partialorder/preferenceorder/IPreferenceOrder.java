@@ -72,6 +72,10 @@ public interface IPreferenceOrder<L, S1, S2> {
 	 * The returned order may be a partial order. In Java terminology, it does not have to be <em>consistent with
 	 * {@code equals()}</em>.
 	 *
+	 * TODO Use IPartialComparator here. Comparators that are not <em>consistent with equals</em> but follow the
+	 * contract of the Comparator interface precisely represent only a subclass of partial orders, as two incomparable
+	 * elements a and b must have the same order wrt. any element c with c &lt; a or a &lt; c.
+	 *
 	 * Multiple invocations with the same arguments must return comparators that are equal (according to their
 	 * {@code equals()} method) to each other, though they do not have to be the same instance. Moreover, to achieve
 	 * good performance, the same should hold for equally-behaving comparators returned for different arguments.
