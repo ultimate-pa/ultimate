@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.partialorder.preferenceorder;
 
-import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -39,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Aut
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 
 /**
  * A custom variant of NwaToUltimateModel for preference monitor automata.
@@ -70,30 +71,19 @@ public class PreferenceMonitorToUltimateModel<L, S> extends NwaToUltimateModel<L
 		final var autState = new AutomatonState(name, mOrder.getMonitor().isFinal(state));
 
 		final var annot = new DefaultAnnotations();
+		autState.getPayload().getAnnotations().put("Preference order", annot);
+
 		annot.getAnnotationsAsMap().put("Name", state.toString());
 
-		// For positional orders, the order also depends on the program state (not given here); so skip them.
+		// For positional orders, the order also depends on the program state (not available here); so we skip them.
 		if (!mOrder.isPositional()) {
-			final var list = mOrder.getMonitor().getAlphabet().stream()
-					// Dominik 2025-02-26: Sorting twice is a workaround for a JDK bug: The second sort seems to behave
-					// incorrectly when using a partial order (i.e., a Comparator that is not "consistent with equals").
-					// For thread-uniform orders, sorting first by the thread (i.e., procedure) name seems to fix this
-					// (at least in some cases).
-					.sorted(Comparator.comparing(this::getLetterThread)).sorted(mOrder.getOrder(null, state))
+			final var comparator = mOrder.getOrder(null, state);
+			final var partialComparator = IPartialComparator.fromNonPartialComparator(comparator, false);
+			final var list = PosetUtils.sortTopologically(mOrder.getMonitor().getAlphabet(), partialComparator).stream()
 					.map(this::letterToString).toList();
 			annot.getAnnotationsAsMap().put("Order (linearized)", list);
 		}
-
-		autState.getPayload().getAnnotations().put("Preference order", annot);
-
 		return autState;
-	}
-
-	private String getLetterThread(final L letter) {
-		if (letter instanceof final IAction action) {
-			return action.getPrecedingProcedure();
-		}
-		return "";
 	}
 
 	private String letterToString(final L letter) {

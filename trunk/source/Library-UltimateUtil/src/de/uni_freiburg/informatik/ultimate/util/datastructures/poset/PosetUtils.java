@@ -26,7 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -72,6 +75,18 @@ public class PosetUtils {
 		return allElems.stream().filter(x -> isMinimalElement(x, allElems.stream(), comp));
 	}
 
+	public static <T> List<T> sortTopologically(final Collection<T> elems, final IPartialComparator<T> comp) {
+		final var elemList = new LinkedHashSet<>(elems);
+		final var result = new ArrayList<T>(elemList.size());
 
-	
+		while (!elemList.isEmpty()) {
+			final var minimal = filterMinimalElements(elemList, comp).toList();
+			for (final var min : minimal) {
+				result.add(min);
+				elemList.remove(min);
+			}
+		}
+
+		return result;
+	}
 }
