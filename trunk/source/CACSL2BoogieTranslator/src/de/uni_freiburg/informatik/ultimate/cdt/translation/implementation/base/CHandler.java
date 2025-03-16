@@ -147,6 +147,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
@@ -2024,6 +2025,8 @@ public class CHandler {
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final List<Overapprox> overappr = new ArrayList<>();
+		final String label = node.getName().toString();
+		stmt.add(new Label(loc, label));
 		final Result r = main.dispatch(node.getNestedStatement());
 		if (r instanceof ExpressionResult) {
 			final ExpressionResult res = (ExpressionResult) r;
