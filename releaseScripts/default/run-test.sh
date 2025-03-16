@@ -35,6 +35,6 @@ METHOD=$(echo "$FILE" | tr . _)
 PROJECT_CLASS_PATHS=($(for dir in "$SCRIPT_DIR/../../trunk/source/"*"/target/classes"; do echo "-cp"; echo "$dir"; done))
 
 PATH="$PATH:$SCRIPT_DIR/adds" java $ASSERTIONS -jar "$SCRIPT_DIR/$JUNIT_JAR" ${PROJECT_CLASS_PATHS[@]} \
-  -cp "$SCRIPT_DIR/../../trunk/source/BA_SiteRepository/target/repository/plugins/org.apache.commons.io_2.6.0.v20190123-2029.jar" \
+  -cp "$SCRIPT_DIR/../../trunk/source/BA_SiteRepository/target/repository/plugins/org.apache.commons.commons-io_2.16.1.jar" \
   --select-method "$CLASS#$METHOD" --details=verbose
 
