@@ -105,7 +105,7 @@ public class SubtractionTerm extends IntegerTerm {
 		for (int i = 0; i < subTerms.length; i++) {
 			parameters[i] = subTerms[i].toSMTTerm();
 		}
-		return Util.getTheory().term(mSymbol, parameters);
+		return Util.makeTerm(mSymbol, parameters);
 	}
 
 	/*
@@ -113,7 +113,7 @@ public class SubtractionTerm extends IntegerTerm {
 	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final IntegerTerm[] mSubTerms = new
 	 * IntegerTerm[subTerms.length]; for (int i = 0; i < subTerms.length; i++) { mSubTerms[i] =
 	 * subTerms[i].equals(current) ? (IntegerTerm) replacement : subTerms[i]; }
-	 * 
+	 *
 	 * return new SubtractionTerm(mSubTerms); }
 	 */
 

@@ -112,7 +112,7 @@ public class DistinctTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, mA.toSMTTerm(), mB.toSMTTerm());
+		return Util.makeTerm(mSymbol, mA.toSMTTerm(), mB.toSMTTerm());
 	}
 
 	/*

@@ -7,6 +7,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 public class BooleanDomain implements Domain<BooleanDomain> {
 	public final boolean canBeTrue, canBeFalse;
 
+	public BooleanDomain() {
+		this(false, false);
+	}
+
 	public BooleanDomain(final boolean mCanBeTrue, final boolean mCanBeFalse) {
 		canBeTrue = mCanBeTrue;
 		canBeFalse = mCanBeFalse;
@@ -35,23 +39,36 @@ public class BooleanDomain implements Domain<BooleanDomain> {
 	}
 
 	@Override
-	public BooleanDomain union(final BooleanDomain domain) {
-		final boolean mCanBeTrue = canBeTrue || domain.canBeTrue;
-		final boolean mCanBeFalse = canBeFalse || domain.canBeFalse;
+	public BooleanDomain union(final Domain<?> domain) {
+		if (!(domain instanceof BooleanDomain)) {
+			return null;
+		}
+		final BooleanDomain castDomain = (BooleanDomain) domain;
+
+		final boolean mCanBeTrue = canBeTrue || castDomain.canBeTrue;
+		final boolean mCanBeFalse = canBeFalse || castDomain.canBeFalse;
 		return new BooleanDomain(mCanBeTrue, mCanBeFalse);
 	}
 
 	@Override
-	public BooleanDomain intersection(final BooleanDomain domain) {
-		final boolean mCanBeTrue = canBeTrue && domain.canBeTrue;
-		final boolean mCanBeFalse = canBeFalse && domain.canBeFalse;
+	public BooleanDomain intersection(final Domain<?> domain) {
+		if (!(domain instanceof BooleanDomain)) {
+			return null;
+		}
+		final BooleanDomain castDomain = (BooleanDomain) domain;
+		final boolean mCanBeTrue = canBeTrue && castDomain.canBeTrue;
+		final boolean mCanBeFalse = canBeFalse && castDomain.canBeFalse;
 		return new BooleanDomain(mCanBeTrue, mCanBeFalse);
 	}
 
 	@Override
-	public BooleanDomain difference(final BooleanDomain domain) {
-		final boolean mCanBeTrue = canBeTrue ^ domain.canBeTrue;
-		final boolean mCanBeFalse = canBeFalse ^ domain.canBeFalse;
+	public BooleanDomain difference(final Domain<?> domain) {
+		if (!(domain instanceof BooleanDomain)) {
+			return null;
+		}
+		final BooleanDomain castDomain = (BooleanDomain) domain;
+		final boolean mCanBeTrue = canBeTrue ^ castDomain.canBeTrue;
+		final boolean mCanBeFalse = canBeFalse ^ castDomain.canBeFalse;
 		return new BooleanDomain(mCanBeTrue, mCanBeFalse);
 	}
 
@@ -60,9 +77,13 @@ public class BooleanDomain implements Domain<BooleanDomain> {
 	 * vice versa for being false
 	 */
 	@Override
-	public BooleanDomain complement(final BooleanDomain domain) {
-		final boolean mCanBeTrue = canBeTrue && domain.canBeFalse;
-		final boolean mCanBeFalse = canBeFalse && domain.canBeTrue;
+	public BooleanDomain complement(final Domain<?> domain) {
+		if (!(domain instanceof BooleanDomain)) {
+			return null;
+		}
+		final BooleanDomain castDomain = (BooleanDomain) domain;
+		final boolean mCanBeTrue = canBeTrue && castDomain.canBeFalse;
+		final boolean mCanBeFalse = canBeFalse && castDomain.canBeTrue;
 		return new BooleanDomain(mCanBeTrue, mCanBeFalse);
 	}
 
@@ -123,9 +144,17 @@ public class BooleanDomain implements Domain<BooleanDomain> {
 
 	@Override
 	public BooleanDomain domainFrom(final Object singleValue) {
-		if (((boolean) singleValue)) {
+		if (!(singleValue instanceof Boolean)) {
+			return new BooleanDomain();
+		}
+		if (((Boolean) singleValue)) {
 			return new BooleanDomain(true, false);
 		}
 		return new BooleanDomain(false, true);
+	}
+
+	@Override
+	public long getValueCount() {
+		return (canBeTrue ? 1 : 0) + (canBeFalse ? 1 : 0);
 	}
 }

@@ -14,10 +14,16 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 	// maps the domain containing some set keys to the
 	// domain containing the values that this set of keys lead to
 	private final HashMap<keyType, valueType> entries;
-	private final ReturnType key;
-	private final ReturnType value;
+	private final keyType key;
+	private final valueType value;
 
-	public ArrayDomain(final HashMap<keyType, valueType> mEntries, final ReturnType mKey, final ReturnType mValue) {
+	/**
+	 *
+	 * @param mEntries
+	 * @param mKey     Should be a {@link Domain#getFullDomain()}
+	 * @param mValue   Should be a {@link Domain#getFullDomain()}
+	 */
+	public ArrayDomain(final HashMap<keyType, valueType> mEntries, final keyType mKey, final valueType mValue) {
 		entries = mEntries;
 		key = mKey;
 		value = mValue;
@@ -27,10 +33,6 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 		key = null;
 		value = null;
 		entries = null;
-	}
-
-	public static ArrayDomain<?, ?> getEmptyDomain() {
-		return new ArrayDomain<>();
 	}
 
 	public ArrayDomain<keyType, valueType> store(final keyType keys, final valueType values) {
@@ -82,15 +84,25 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 	}
 
 	@Override
-	public ArrayDomain<keyType, valueType> union(final ArrayDomain<keyType, valueType> domain) {
+	public ArrayDomain<keyType, valueType> union(final Domain<?> domain) {
+		if (!(domain instanceof ArrayDomain)) {
+			return null;
+		}
+		final ArrayDomain<?, ?> arrayDomain = (ArrayDomain<?, ?>) domain;
+		if (key != arrayDomain.key || value != arrayDomain.value) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		final ArrayDomain<keyType, valueType> castDomain = (ArrayDomain<keyType, valueType>) arrayDomain;
+
 		HashMap<keyType, valueType> result = Util.copyMap(entries);
 
 		// shared keys unionize their values.
 		// invariant: all entries of either set are disjoint from all other entries in their own set
-		for (final Entry<keyType, valueType> entry : domain.entries.entrySet()) {
+		for (final Entry<keyType, valueType> entry : castDomain.entries.entrySet()) {
 			final HashMap<keyType, valueType> temp = new HashMap<>();
 			for (final Entry<keyType, valueType> other : result.entrySet()) {
-				final keyType intersect = entry.getKey().intersection(other.getKey());
+				final keyType intersect = other.getKey().intersection(entry.getKey());
 				if (intersect.isEmpty()) {
 					// no keys are shared.
 					temp.put(other.getKey(), other.getValue());
@@ -114,7 +126,7 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 		}
 		// all keys that are shared now have unionized values in temp.
 		// all that remains is adding the keys that are exclusively in entry with their value.
-		for (final Entry<keyType, valueType> entry : domain.entries.entrySet()) {
+		for (final Entry<keyType, valueType> entry : castDomain.entries.entrySet()) {
 			keyType onlyEntryKeys = entry.getKey();
 
 			for (final Entry<keyType, valueType> other : result.entrySet()) {
@@ -132,12 +144,22 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 
 	// gets the ArrayDomain that contains each (key, value) pair that appears in both sets
 	@Override
-	public ArrayDomain<keyType, valueType> intersection(final ArrayDomain<keyType, valueType> domain) {
+	public ArrayDomain<keyType, valueType> intersection(final Domain<?> domain) {
+		if (!(domain instanceof ArrayDomain)) {
+			return null;
+		}
+		final ArrayDomain<?, ?> arrayDomain = (ArrayDomain<?, ?>) domain;
+		if (key != arrayDomain.key || value != arrayDomain.value) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		final ArrayDomain<keyType, valueType> castDomain = (ArrayDomain<keyType, valueType>) arrayDomain;
+
 		final HashMap<keyType, valueType> result = new HashMap<>();
 
 		// invariant: all entries of either set are disjoint from all other entries in their own set
 		for (final Entry<keyType, valueType> entry : entries.entrySet()) {
-			for (final Entry<keyType, valueType> other : domain.entries.entrySet()) {
+			for (final Entry<keyType, valueType> other : castDomain.entries.entrySet()) {
 				final keyType intersectKeys = entry.getKey().intersection(other.getKey());
 
 				if (intersectKeys.isEmpty()) {
@@ -164,10 +186,19 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 	 * @return
 	 */
 	@Override
-	public ArrayDomain<keyType, valueType> complement(final ArrayDomain<keyType, valueType> domain) {
+	public ArrayDomain<keyType, valueType> complement(final Domain<?> domain) {
+		if (!(domain instanceof ArrayDomain)) {
+			return null;
+		}
+		final ArrayDomain<?, ?> arrayDomain = (ArrayDomain<?, ?>) domain;
+		if (key != arrayDomain.key || value != arrayDomain.value) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		final ArrayDomain<keyType, valueType> castDomain = (ArrayDomain<keyType, valueType>) arrayDomain;
 		HashMap<keyType, valueType> result = Util.copyMap(entries);
 
-		for (final Entry<keyType, valueType> entry : domain.entries.entrySet()) {
+		for (final Entry<keyType, valueType> entry : castDomain.entries.entrySet()) {
 			// Keeps all (key, value) pairs that appear in this domain but not the current subset of the other domain
 			final HashMap<keyType, valueType> temp = new HashMap<>();
 			for (final Entry<keyType, valueType> other : result.entrySet()) {
@@ -211,9 +242,19 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 
 	// gets the ArrayDomain that, for each unique key set of either domain, contains the unique values
 	@Override
-	public ArrayDomain<keyType, valueType> difference(final ArrayDomain<keyType, valueType> domain) {
-		final ArrayDomain<keyType, valueType> ANotInB = this.complement(domain);
-		final ArrayDomain<keyType, valueType> BNotInA = domain.complement(this);
+	public ArrayDomain<keyType, valueType> difference(final Domain<?> domain) {
+		if (!(domain instanceof ArrayDomain)) {
+			return null;
+		}
+		final ArrayDomain<?, ?> arrayDomain = (ArrayDomain<?, ?>) domain;
+		if (key != arrayDomain.key || value != arrayDomain.value) {
+			return null;
+		}
+		@SuppressWarnings("unchecked")
+		final ArrayDomain<keyType, valueType> castDomain = (ArrayDomain<keyType, valueType>) arrayDomain;
+
+		final ArrayDomain<keyType, valueType> ANotInB = this.complement(castDomain);
+		final ArrayDomain<keyType, valueType> BNotInA = castDomain.complement(this);
 		return ANotInB.union(BNotInA);
 	}
 
@@ -250,7 +291,7 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 	@Override
 	public ArrayDomain<keyType, valueType> getFullDomain() {
 		final HashMap<keyType, valueType> domain = new HashMap<>();
-		// domain.put(key, value);
+		domain.put(key.getFullDomain(), value.getFullDomain());
 		return new ArrayDomain<>(domain, key, value);
 	}
 
@@ -268,8 +309,18 @@ public class ArrayDomain<keyType extends Domain<keyType>, valueType extends Doma
 		if (!(singleValue instanceof SMTArray)) {
 			return new ArrayDomain<>();
 		}
+		final ArrayDomain<?, ?> arrayDomain = ((SMTArray) singleValue).variable.getDomain();
+		if (key != arrayDomain.key || value != arrayDomain.value) {
+			return new ArrayDomain<>();
+		}
 		@SuppressWarnings("unchecked")
-		final HashMap<keyType, valueType> values = (HashMap<keyType, valueType>) ((SMTArray) singleValue).getEntries();
+		final HashMap<keyType, valueType> values = (HashMap<keyType, valueType>) arrayDomain.entries;
 		return new ArrayDomain<>(values, key, value);
+	}
+
+	@Override
+	public long getValueCount() {
+		// TODO
+		return 0;
 	}
 }

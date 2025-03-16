@@ -10,7 +10,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArcSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.TermNormalizer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.AndTerm;
@@ -30,9 +32,10 @@ public class ICFGExecutionEdge {
 	private final HashSet<ICFGExecutionEdge> reachable = new HashSet<>();
 	private final HashSet<ICFGExecutionEdge> ancestors = new HashSet<>();
 	private final HashMap<TermVariable, Variable> variables;
-	// private final ArrayList<ArcSolver> arcSolvers = new ArrayList<>();
-	private final HashSet<TermVariable> outVars;
-	private final HashSet<TermVariable> inVars;
+	private final ArrayList<ArcSolver> arcSolvers;
+	private final HashSet<Variable> outVars;
+	private final HashSet<Variable> inVars;
+	private final OrTerm guardTerm;
 
 	public ICFGExecutionEdge(final UnmodifiableTransFormula mTransFormula, final IcfgLocation mSource,
 			final IcfgLocation mTarget, final ManagedScript managedScript, final IUltimateServiceProvider service) {
@@ -42,92 +45,51 @@ public class ICFGExecutionEdge {
 		target = mTarget;
 		variables = TermNormalizer.getVariables(transFormula);
 
+		outVars = new HashSet<>();
+		inVars = new HashSet<>();
+		for (final Variable var : variables.values()) {
+			final VariableTerm termVar = var.getVariableTerm();
+			if (termVar.isOutVar) {
+				outVars.add(var);
+			}
+			if (termVar.isInVar) {
+				inVars.add(var);
+			}
+		}
+
 		final ExecutionTerm fullTerm = TermNormalizer.parseTerm(transFormula.getFormula(), variables);
+		// final Term convertedTerm = fullTerm.toSMTTerm();
+		// final Term originalTerm = transFormula.getFormula();
+		// assert SmtUtils.areFormulasEquivalent(originalTerm, convertedTerm, managedScript.getScript());
 		final OrTerm outerTerm = TermNormalizer.normalize((BooleanTerm) fullTerm);
 		// System.out.println(outerTerm + "\n");
+		// assert SmtUtils.areFormulasEquivalent(originalTerm, outerTerm.toSMTTerm(), managedScript.getScript());
 
 		final UnmodifiableTransFormula guardFormula = TransFormulaUtils.computeGuard(mTransFormula, managedScript,
 				service);
-		final ExecutionTerm guardTerm = TermNormalizer.parseTerm(guardFormula.getFormula(), variables);
-		final OrTerm outerGuardTerm = TermNormalizer.normalize((BooleanTerm) guardTerm);
+		guardTerm = TermNormalizer
+				.normalize((BooleanTerm) TermNormalizer.parseTerm(guardFormula.getFormula(), variables));
 
-		final ArrayList<Variable> vars = new ArrayList<>(variables.values());
 		final ArrayList<BooleanTerm> andTerms = outerTerm.getSubTerms();
+
+		arcSolvers = new ArrayList<>();
+
 		// constraintLists = new AndTerm[andTerms.size()];
 		for (final BooleanTerm child : andTerms) {
-			assert child instanceof AndTerm;
 			final AndTerm andChild = (AndTerm) child;
 
-			// arcSolvers.add(new ArcSolver(andChild.getSubTerms(), vars));
-			// System.out.println(arcSolver);
-
+			arcSolvers.add(new ArcSolver(andChild, managedScript, variables, inVars, outVars, service));
 		}
 
-		outVars = new HashSet<>();
-		inVars = new HashSet<>();
-		for (final Variable var : vars) {
-			final VariableTerm termVar = var.getVariableTerm();
-			final TermVariable programVar = termVar.termvar;
-			if (termVar.isOutVar) {
-				outVars.add(programVar);
-			}
-			if (termVar.isInVar) {
-				inVars.add(programVar);
-			}
-		}
+		System.out.println("Full term:");
+		System.out.println(outerTerm);
+		System.out.println(this + "\n\n\n");
 	}
 
-	/**
-	 * Get a list of all (program variable, domain) pair sets that can be achieved given a list that contains the
-	 * domains of the parent ICFGVertexes. If no entry exists for a parent, nothing is calculated.
-	 *
-	 * @param programDomains
-	 * @return / public ArrayList<HashMap<IProgramVar, Domain<?>>> calculateAllDomains(HashMap<IcfgLocation,
-	 *         ArrayList<HashMap<IProgramVar, Domain<?>>>> programDomains) { ArrayList<HashMap<IProgramVar, Domain<?>>>
-	 *         out = new ArrayList<>();
-	 *
-	 *         for(ICFGExecutionEdge parent : parents) { ArrayList<HashMap<IProgramVar, Domain<?>>> parentDomains =
-	 *         programDomains.getOrDefault(parent.target, null); if(parentDomains == null) { continue; }
-	 *         for(HashMap<IProgramVar, Domain<?>> domain : parentDomains) { out.addAll(calculateDomains(domain)); } }
-	 *
-	 *         return out; }
-	 *
-	 *         /** Get a list of all sets of (program variable, domain) assignments that each represent a next state,
-	 *         such that each can be achieved by applying the transition formula to the given previous state
-	 * @param programDomains
-	 * @return / public HashSet<HashMap<IProgramVar, Domain<?>>> calculateDomains( final HashMap<IProgramVar, Domain<?>>
-	 *         parentDomains) { final HashSet<HashMap<IProgramVar, Domain<?>>> out = new HashSet<>(); for (final
-	 *         ArcSolver arcSolver : arcSolvers) { // AndTerm constraint = (AndTerm) child; //
-	 *         System.out.println("\nArcs unparsed:\n" + arcy);
-	 *
-	 *         // HashMap<IProgramVar, Domain<?>> domainsAtSource = definedDomainAt.getOrDefault(sourceVertex, new //
-	 *         HashMap<>());
-	 *
-	 *         /* System.out.println("\nPossible previous values:"); for(Entry<IProgramVar, Domain<?>> entry :
-	 *         parentDomains.entrySet()) { if(!inVars.contains(entry.getKey())) { continue; }
-	 *         System.out.println(entry.getKey().getGloballyUniqueId() + " in " + entry.getValue()); }
-	 */
+	public void execute(final ProgramState state) {
+		// TODO Create and check each arcs guard
 
-	// HashMap<IProgramVar, Domain<?>> newDomainsAtTarget = arcy.calculateValidDomains(parentDomains);
-	// HashMap<IProgramVar, Domain<?>> oldDomainsAtTarget = definedDomainAt.getOrDefault(target, new
-	// HashMap<>());
-
-	/*
-	 * System.out.println("\nNew values:"); for(Entry<IProgramVar, Domain<?>> entry : newDomainsAtTarget.entrySet()) {
-	 * if(!outVars.contains(entry.getKey()) || !assignableVars.contains(entry.getKey())) { continue; }
-	 * System.out.println(entry.getKey().getGloballyUniqueId() + " in " + entry.getValue()); }
-	 */
-
-	// combine the possible values of all ways to reach the vertex
-	/*
-	 * for(Entry<IProgramVar, Domain<?>> current : oldDomainsAtTarget.entrySet()) { Domain<?> newDomain =
-	 * newDomainsAtTarget.getOrDefault(current.getKey(), current.getValue()); Domain<?> union =
-	 * combineDomains(newDomain, current.getValue()); newDomainsAtTarget.put(current.getKey(), union); } /
-	 *
-	 * // definedDomainAt.put(target, newDomainsAtTarget);
-	 *
-	 * // System.out.println(""); out.add(arcSolver.calculateValidDomains(parentDomains)); continue; } return out; }
-	 */
+	}
 
 	@Override
 	public String toString() {
@@ -138,16 +100,28 @@ public class ICFGExecutionEdge {
 		for (final Variable var : variables.values()) {
 			out.append("\n").append(var.getVariableTerm());
 		}
-		/*
-		 * out.append("\nReachable:"); for(ICFGExecutionEdge edge : reachable) {
-		 * out.append("\n  Edge from ").append(edge.source).append(" to ").append(edge.target); }
-		 */
-		/*
-		 * int i = 0; for (final ArcSolver child : arcSolvers) { i++; out.append("\nArc ").append(i).append(":\n");
-		 * out.append("  ").append(child.toString().replace("\n", "\n  "));// .append("\n\n"); }
-		 */
+		out.append("\nGuard:\n").append(guardTerm);
+
+		int i = 0;
+		for (final ArcSolver child : arcSolvers) {
+			out.append("\nArc ").append(i + 1).append(":\n");
+			out.append("  ").append(child.toString().replace("\n", "\n  "));
+
+			final Update[] updates = arcSolvers.get(i).makeUpdates();
+			if (updates.length > 0) {
+				out.append("\nArc Updates");
+			}
+			for (final Update update : updates) {
+				out.append("\n  ").append(update);
+			}
+			i++;
+		}
 
 		return out.toString();
+	}
+
+	public boolean canBeTaken(final ProgramState state) {
+		return guardTerm.evaluate(state);
 	}
 
 	public void addChildren(final ArrayList<ICFGExecutionEdge> mChildren) {

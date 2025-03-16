@@ -75,7 +75,7 @@ public class StoreTerm extends ArrayTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, array.toSMTTerm(), index.toSMTTerm(), value.toSMTTerm());
+		return Util.makeTerm(mSymbol, array.toSMTTerm(), index.toSMTTerm(), value.toSMTTerm());
 	}
 
 	/*

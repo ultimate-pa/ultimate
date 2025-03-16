@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 
 public interface Variable/* <T extends Domain<T>> */ {
@@ -9,7 +10,7 @@ public interface Variable/* <T extends Domain<T>> */ {
 
 	String getName();
 
-//	T getDomain();
+	Domain<?> getDomain();
 
 	@Override
 	boolean equals(Object b);

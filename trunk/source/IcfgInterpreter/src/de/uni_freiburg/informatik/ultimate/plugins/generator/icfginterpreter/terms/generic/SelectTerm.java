@@ -80,7 +80,7 @@ public class SelectTerm {
 	}
 
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, array.toSMTTerm(), index.toSMTTerm());
+		return Util.makeTerm(mSymbol, array.toSMTTerm(), index.toSMTTerm());
 	}
 
 	/*

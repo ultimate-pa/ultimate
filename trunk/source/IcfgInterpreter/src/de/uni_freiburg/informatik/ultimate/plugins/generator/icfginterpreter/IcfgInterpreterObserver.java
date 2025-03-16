@@ -37,6 +37,9 @@ public class IcfgInterpreterObserver extends BaseObserver {
 
 	@Override
 	public void finish() {
+		if (mIcfg == null) {
+			return;
+		}
 		// TODO: Extract executions from mIcfg (mServices will be also needed for some operations)
 		// This should be probably moved to a separate class
 
@@ -46,6 +49,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		// * mIcfg.getInitialNodes()
 		// * TransFormulaUtils.computeGuard
 		// * SmtUtils.getConjuncts
+		// * SmtUtils.toDnf
 		// * mLogger can be used for output (e.g., for debugging)
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
 		final ManagedScript script = mIcfg.getCfgSmtToolkit().getManagedScript();

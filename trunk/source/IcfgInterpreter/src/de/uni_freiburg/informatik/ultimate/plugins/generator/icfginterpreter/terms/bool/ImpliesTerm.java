@@ -79,7 +79,7 @@ public class ImpliesTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, A.toSMTTerm(), B.toSMTTerm());
+		return Util.makeTerm(mSymbol, A.toSMTTerm(), B.toSMTTerm());
 	}
 
 	/*

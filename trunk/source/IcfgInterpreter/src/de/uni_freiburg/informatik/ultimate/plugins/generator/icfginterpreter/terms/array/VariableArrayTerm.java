@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -88,11 +89,16 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 
 	@Override
 	public Term toSMTTerm() {
-		return variableTerm.termvar;
+		return Util.makeVariable(variableTerm.termvar);
 	}
 
 	@Override
 	public SMTArray evaluate(final ProgramState state) {
 		return state.getArrayOf(variableTerm.programVar);
+	}
+
+	@Override
+	public ArrayDomain<?, ?> getDomain() {
+		return Util.constructFullDomain(variableTerm.termvar.getSort());
 	}
 }

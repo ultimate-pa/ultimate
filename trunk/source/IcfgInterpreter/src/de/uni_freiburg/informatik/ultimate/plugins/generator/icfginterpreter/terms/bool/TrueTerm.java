@@ -64,6 +64,6 @@ public class TrueTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().constant(true, Util.getTheory().getBooleanSort());
+		return Util.makeConstant(true, returnType);
 	}
 }

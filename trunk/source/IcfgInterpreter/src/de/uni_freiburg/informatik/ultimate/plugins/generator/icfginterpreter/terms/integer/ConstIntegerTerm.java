@@ -67,7 +67,7 @@ public class ConstIntegerTerm extends IntegerTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().constant(value, Util.getTheory().getNumericSort());
+		return Util.makeConstant(value, returnType);
 	}
 
 	@Override

@@ -85,6 +85,6 @@ public class NotTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, A.toSMTTerm());
+		return Util.makeTerm(mSymbol, A.toSMTTerm());
 	}
 }

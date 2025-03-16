@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -84,11 +85,16 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 
 	@Override
 	public Term toSMTTerm() {
-		return variableTerm.termvar;
+		return Util.makeVariable(variableTerm.termvar);
 	}
 
 	@Override
 	public Boolean evaluate(final ProgramState state) {
 		return state.getBoolOf(variableTerm.programVar);
+	}
+
+	@Override
+	public BooleanDomain getDomain() {
+		return Util.constructFullDomain(variableTerm.termvar.getSort());
 	}
 }

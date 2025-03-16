@@ -68,7 +68,7 @@ public class AbsoluteTerm extends IntegerTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, X.toSMTTerm());
+		return Util.makeTerm(mSymbol, X.toSMTTerm());
 	}
 
 	/*

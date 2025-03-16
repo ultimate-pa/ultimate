@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -84,11 +85,16 @@ public class VariableIntegerTerm extends IntegerTerm implements Variable {
 
 	@Override
 	public Term toSMTTerm() {
-		return variableTerm.termvar;
+		return Util.makeVariable(variableTerm.termvar);
 	}
 
 	@Override
 	public Integer evaluate(final ProgramState state) {
 		return state.getIntOf(variableTerm.programVar);
+	}
+
+	@Override
+	public IntegerDomain getDomain() {
+		return Util.constructFullDomain(variableTerm.termvar.getSort());
 	}
 }

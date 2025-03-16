@@ -71,7 +71,7 @@ public class ITETerm<T extends ExecutionTerm> {
 	}
 
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, A.toSMTTerm(), B.toSMTTerm(), C.toSMTTerm());
+		return Util.makeTerm(mSymbol, A.toSMTTerm(), B.toSMTTerm(), C.toSMTTerm());
 	}
 
 	/*

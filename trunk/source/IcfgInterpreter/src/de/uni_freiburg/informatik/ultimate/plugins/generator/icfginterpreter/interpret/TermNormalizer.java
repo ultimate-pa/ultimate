@@ -419,11 +419,9 @@ public class TermNormalizer {
 			final ConstantTerm termConst = (ConstantTerm) term;
 			final Object valueUnparsed = termConst.getValue();
 			final Sort sort = termConst.getSort();
-			// Arrays do not have constants, boolean constants are the application terms true and false.
-			final boolean isInt = sort.isNumericSort();
-			final boolean isBitVector = sort.isBitVecSort();
 
-			if (isInt) {
+			switch (sort.getName()) {
+			case SMTLIBConstants.INT:
 				int value;
 				if (valueUnparsed instanceof Rational) {
 					final Rational valueParsed = (Rational) valueUnparsed;
@@ -435,11 +433,17 @@ public class TermNormalizer {
 					value = (int) valueUnparsed;
 				}
 				return new ConstIntegerTerm(value);
-			} else if (isBitVector) {
-				/*
-				 * TODO int length = Integer.parseInt(termConst.getSort().getIndices()[0]); value =
-				 * BitVector.fromBigInt((BigInteger) valueUnparsed, length);
-				 */
+			case SMTLIBConstants.BOOL:
+				if ((boolean) valueUnparsed) {
+					return new TrueTerm();
+				}
+				return new FalseTerm();
+			case SMTLIBConstants.BITVEC:
+				return null;
+			/*
+			 * TODO int length = Integer.parseInt(termConst.getSort().getIndices()[0]); value =
+			 * BitVector.fromBigInt((BigInteger) valueUnparsed, length);
+			 */
 			}
 		} else if (term instanceof TermVariable) {
 			return vars.get(term).getTerm();

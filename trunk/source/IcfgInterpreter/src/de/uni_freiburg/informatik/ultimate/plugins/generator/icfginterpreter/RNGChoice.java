@@ -2,42 +2,65 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain.Interval;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
 public class RNGChoice implements NonDeterministicChoice {
-	private int seed;
+	private int mSeed;
 
-	public RNGChoice(final int mSeed) {
-		seed = mSeed;
+	public RNGChoice(final int seed) {
+		mSeed = seed;
 	}
 
 	@Override
-	public RNGChoice newInstance(final long mSeed) {
-		return new RNGChoice((int) mSeed);
+	public RNGChoice newInstance(final long seed) {
+		return new RNGChoice((int) seed);
 	}
 
 	@Override
 	public <T> T chooseEdge(final ArrayList<T> edges) {
-		final int index = Math.abs(havocInt(null, null)) % edges.size();
-		return edges.get(index);
+		return edges.get((int) chooseElement(edges.size()));
 	}
 
 	@Override
 	public int havocInt(final VariableIntegerTerm variable, final IntegerDomain values) {
-		return xorShift();
+		long index = chooseElement(values.getValueCount());
+
+		final ArrayList<Interval> intervals = values.getValues();
+
+		for (final Interval interval : intervals) {
+			final float containedValues = interval.getValueCount();
+
+			if (containedValues >= index) {
+				return interval.getMin() + (int) index;
+			}
+
+			index -= containedValues;
+		}
+
+		assert false;
+		return 0;
 	}
 
 	@Override
 	public boolean havocBool(final VariableBooleanTerm variable, final BooleanDomain values) {
+		if (values.isEmpty()) {
+			assert false;
+			return false;
+		}
+		if (values.getValueCount() == 1) {
+			// can either only be true or only be false
+			return values.canBeTrue;
+		}
+		// can be false or true
 		return xorShift() < 0; // == is first bit 0 or 1
 	}
 
@@ -56,7 +79,7 @@ public class RNGChoice implements NonDeterministicChoice {
 		final long hashKey = array.variable.getVariableTerm().programVar.hashCode() + index.hashCode();
 		switch (array.valueType) {
 		case Array:
-			return newArray(array.variable, new ArrayDomain<>(new HashMap<>(), array.keyType, array.valueType));
+			return newArray(array.variable, (ArrayDomain<?, ?>) array.variable.getDomain());
 		case BitVector:
 			return havocBitVector(null, null);
 
@@ -105,8 +128,12 @@ public class RNGChoice implements NonDeterministicChoice {
 		return seed;
 	}
 
+	private long chooseElement(final long size) {
+		return Math.abs(xorShift()) % size;
+	}
+
 	private int xorShift() {
-		seed = xorShift(seed);
-		return seed;
+		mSeed = xorShift(mSeed);
+		return mSeed;
 	}
 }

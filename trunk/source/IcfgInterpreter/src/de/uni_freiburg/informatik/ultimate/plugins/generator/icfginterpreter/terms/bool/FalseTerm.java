@@ -65,6 +65,6 @@ public class FalseTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().constant(false, Util.getTheory().getBooleanSort());
+		return Util.makeConstant(false, returnType);
 	}
 }

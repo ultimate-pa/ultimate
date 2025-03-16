@@ -102,7 +102,10 @@ public class EqualsTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, mA.toSMTTerm(), mB.toSMTTerm());
+		// FunctionSymbol function = Util.makeFunction(mSymbol, Util.getSort(returnType), mA.toSMTTerm(),
+		// mB.toSMTTerm());
+		return Util.makeTerm(mSymbol, mA.toSMTTerm(), mB.toSMTTerm());
+		// return Util.getTheory().term(mSymbol, null, returnSort, mA.toSMTTerm(), mB.toSMTTerm());
 	}
 
 	/*

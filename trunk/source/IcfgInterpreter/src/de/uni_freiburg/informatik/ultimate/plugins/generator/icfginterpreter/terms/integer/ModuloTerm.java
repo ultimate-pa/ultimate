@@ -75,7 +75,7 @@ public class ModuloTerm extends IntegerTerm {
 
 	@Override
 	public Term toSMTTerm() {
-		return Util.getTheory().term(mSymbol, X.toSMTTerm(), Y.toSMTTerm());
+		return Util.makeTerm(mSymbol, X.toSMTTerm(), Y.toSMTTerm());
 	}
 
 	/*

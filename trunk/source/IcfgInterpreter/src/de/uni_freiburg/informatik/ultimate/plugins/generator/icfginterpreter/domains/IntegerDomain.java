@@ -35,11 +35,16 @@ public class IntegerDomain implements Domain<IntegerDomain> {
 	}
 
 	@Override
-	public IntegerDomain intersection(final IntegerDomain domain) {
+	public IntegerDomain intersection(final Domain<?> domain) {
+		if (!(domain instanceof IntegerDomain)) {
+			return null;
+		}
+		final IntegerDomain castDomain = (IntegerDomain) domain;
+
 		final ArrayList<Interval> newValues = new ArrayList<>();
 
 		for (final Interval intervalA : possibleValues) {
-			for (final Interval intervalB : domain.possibleValues) {
+			for (final Interval intervalB : castDomain.possibleValues) {
 				final Interval intervalC = Interval.intersection(intervalA, intervalB);
 				if (intervalC == null) {
 					continue;
@@ -52,27 +57,42 @@ public class IntegerDomain implements Domain<IntegerDomain> {
 	}
 
 	@Override
-	public IntegerDomain difference(final IntegerDomain domain) {
-		final IntegerDomain notInA = domain.complement(this);
-		final IntegerDomain notInB = complement(domain);
+	public IntegerDomain difference(final Domain<?> domain) {
+		if (!(domain instanceof IntegerDomain)) {
+			return null;
+		}
+		final IntegerDomain castDomain = (IntegerDomain) domain;
+
+		final IntegerDomain notInA = castDomain.complement(this);
+		final IntegerDomain notInB = complement(castDomain);
 
 		return notInA.union(notInB);
 	}
 
 	@Override
-	public IntegerDomain union(final IntegerDomain domain) {
+	public IntegerDomain union(final Domain<?> domain) {
+		if (!(domain instanceof IntegerDomain)) {
+			return null;
+		}
+		final IntegerDomain castDomain = (IntegerDomain) domain;
+
 		final ArrayList<Interval> result = new ArrayList<>(possibleValues);
 
-		result.addAll(domain.possibleValues);
+		result.addAll(castDomain.possibleValues);
 
 		return new IntegerDomain(result);
 	}
 
 	@Override
-	public IntegerDomain complement(final IntegerDomain domain) {
+	public IntegerDomain complement(final Domain<?> domain) {
+		if (!(domain instanceof IntegerDomain)) {
+			return null;
+		}
+		final IntegerDomain castDomain = (IntegerDomain) domain;
+
 		ArrayList<Interval> newValues = Util.copyList(possibleValues);
 
-		for (final Interval intervalExcluded : domain.possibleValues) {
+		for (final Interval intervalExcluded : castDomain.possibleValues) {
 			final ArrayList<Interval> tempValues = new ArrayList<>();
 			for (final Interval interval : newValues) {
 				final Interval[] reducedIntervals = Interval.complement(interval, intervalExcluded);
@@ -403,8 +423,17 @@ public class IntegerDomain implements Domain<IntegerDomain> {
 		if (!(singleValue instanceof Integer)) {
 			return new IntegerDomain();
 		}
-		final int value = (int) singleValue;
+		final Integer value = (Integer) singleValue;
 		return new IntegerDomain(new Interval(value, value));
+	}
+
+	@Override
+	public long getValueCount() {
+		long valueCount = 0L;
+		for (final Interval interval : possibleValues) {
+			valueCount += interval.getValueCount();
+		}
+		return valueCount;
 	}
 
 	public static class Interval {
@@ -715,6 +744,10 @@ public class IntegerDomain implements Domain<IntegerDomain> {
 
 		public final int getMin() {
 			return min;
+		}
+
+		public final long getValueCount() {
+			return ((long) max) - ((long) min) + 1L;
 		}
 	}
 }

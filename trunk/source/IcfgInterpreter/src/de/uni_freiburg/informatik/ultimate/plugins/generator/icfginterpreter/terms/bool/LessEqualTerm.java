@@ -110,7 +110,7 @@ public class LessEqualTerm extends BooleanTerm {
 		for (int i = 0; i < subTerms.length; i++) {
 			parameters[i] = subTerms[i].toSMTTerm();
 		}
-		return Util.getTheory().term(mSymbol, parameters);
+		return Util.makeTerm(mSymbol, parameters);
 	}
 
 	/*
