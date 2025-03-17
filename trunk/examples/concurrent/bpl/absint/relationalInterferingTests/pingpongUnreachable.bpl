@@ -1,6 +1,7 @@
 //#Safe
 /*
-    Flow-sensitivity needed to correctly handle this. (E.g. Location abstraction-mine2017)
+    State-sensitivity/what mine(2017) calls relational interferences
+    needed to correctly handle this.
 */
 
 var x : int; 

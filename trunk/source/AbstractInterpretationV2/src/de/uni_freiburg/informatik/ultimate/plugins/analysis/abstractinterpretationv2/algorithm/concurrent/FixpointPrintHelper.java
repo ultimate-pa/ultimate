@@ -17,7 +17,7 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 	public void printCfgResults(final ILogger logger,
 			final AbstractInterferenceState<STATE, ACTION> newInterferenceState,
 			final AbstractInterferenceState<STATE, ACTION> interferenceState, final int iteration,
-			final Map<String, AbsIntResult<STATE, ACTION, LOC>> resultSet) {
+			final Map<String, AbsIntResult<STATE, ACTION, LOC>> resultSet, final Map<String, ? extends LOC> entryLocs) {
 		logger.error("\n");
 		logger.error("Fixpoint after " + iteration + " iterations found.");
 		logger.error(newInterferenceState.interferenceStrings());
@@ -25,19 +25,18 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		logger.error(interferenceState.interferenceStrings());
 		logger.error("\n");
 		logger.error("\n");
-		printResultCfgAnnotations(resultSet, logger);
+		printResultCfgAnnotations(resultSet, logger, entryLocs);
 	}
 
 	public void printResultCfgAnnotations(final Map<String, AbsIntResult<STATE, ACTION, LOC>> resultSet,
-			final ILogger logger) {
+			final ILogger logger, final Map<String, ? extends LOC> entryLocs) {
 		final Set<IcfgLocation> seenLocs = new HashSet<>();
 		for (final String thread : resultSet.keySet()) {
 			logger.error("\n");
 			logger.error("Annotated CFG for " + thread);
 			final AbsIntResult<STATE, ACTION, LOC> result = resultSet.get(thread);
 			for (final LOC location : result.getLoc2Term().keySet()) {
-				final var incoming = location.getIncomingNodes();
-				if (incoming.size() == 0) {
+				if (entryLocs.containsValue(location)) {
 					printCfgTree(location, result, seenLocs, logger);
 				}
 			}

@@ -8,14 +8,11 @@ public class RelationalInterferingWideningOperator<STATE extends IAbstractState<
 		implements IAbstractStateBinaryOperator<RelationalInterferingState<STATE, ACTION>> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
-	private final AbstractInterferenceState<STATE, ACTION> mInterferences;
 
 	public RelationalInterferingWideningOperator(final IAbstractDomain<STATE, ACTION> underlying,
-			final ThreadInstanceCounterFactory threadFactory,
-			final AbstractInterferenceState<STATE, ACTION> interferences) {
+			final ThreadInstanceCounterFactory threadFactory) {
 		mUnderlyingDomain = underlying;
 		mThreadInstanceCounterFactory = threadFactory;
-		mInterferences = interferences;
 	}
 
 	@Override
@@ -25,6 +22,6 @@ public class RelationalInterferingWideningOperator<STATE extends IAbstractState<
 				mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(), second.getThreadInstanceState());
 		return new RelationalInterferingState<>(mUnderlyingDomain,
 				mUnderlyingDomain.getWideningOperator().apply(first.getStateCopy(), second.getStateCopy()),
-				widenedThreadCounter, mInterferences);
+				widenedThreadCounter);
 	}
 }

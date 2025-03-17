@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,14 +90,14 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 	// interferences,
 	// as this should fail when we get more precise
 	private boolean areStatesInterferenceFree() {
-		final Map<LOC, DisjunctiveAbstractState<STATE>> loc2States = mResult.getLoc2States().entrySet().stream()
-				.collect(
+		final Map<LOC, DisjunctiveAbstractState<STATE>> loc2States =
+				mResult.getLoc2States().entrySet().stream().collect(
 						Collectors.toMap(Entry::getKey, x -> DisjunctiveAbstractState.createDisjunction(x.getValue())));
 		for (final Entry<LOC, DisjunctiveAbstractState<STATE>> entry : loc2States.entrySet()) {
 			final DisjunctiveAbstractState<STATE> state = removeLocalVars(entry.getValue());
 			for (final ACTION interfering : mAnalyzer.getInterferingWrites(entry.getKey())) {
-				final DisjunctiveAbstractState<STATE> preInterfering = loc2States
-						.get(mTransitionProvider.getSource(interfering));
+				final DisjunctiveAbstractState<STATE> preInterfering =
+						loc2States.get(mTransitionProvider.getSource(interfering));
 				if (preInterfering == null) {
 					continue;
 				}
@@ -116,9 +115,11 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 		while (true) {
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + iteration);
-			final var interferenceState = new AbstractInterferenceState<>(mDomain.interferenceState());
+			final AbstractInterferenceState<STATE, ACTION> oldInterferenceState =
+					((RelationalInterferingPostOperator) mDomain.getPostOperator()).getInterferences();
+
 			mLogger.error("Interference Set:");
-			for (final String termString : interferenceState.interferenceStrings()) {
+			for (final String termString : oldInterferenceState.interferenceStrings()) {
 				mLogger.error(termString);
 			}
 			final Map<String, AbsIntResult<STATE, ACTION, LOC>> resultSet = new HashMap<>();
@@ -126,13 +127,13 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 				mLogger.warn("\n");
 				mLogger.warn("Analysing thread " + procedure);
 				final DisjunctiveAbstractState<STATE> initialState = getInitialState(procedure);
-				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences = mParams
-						.setStorage(mStateStorage.copy())
-						.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState));
-				final IFixpointEngine<STATE, ACTION, VARDECL, LOC> fixpointEngine = mFixpointEngineFactory
-						.constructFixpointEngine(paramsWithInterferences);
-				final AbsIntResult<STATE, ACTION, LOC> threadResult = fixpointEngine
-						.run(Set.of(mEntryLocs.get(procedure)), script);
+				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences =
+						mParams.setStorage(mStateStorage.copy())
+								.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState));
+				final IFixpointEngine<STATE, ACTION, VARDECL, LOC> fixpointEngine =
+						mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
+				final AbsIntResult<STATE, ACTION, LOC> threadResult =
+						fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
 
 				// TODO: for debugging, remove later
 				resultSet.put(procedure, threadResult);
@@ -150,55 +151,55 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 				}
 			}
 
-			final AbstractInterferenceState<STATE, ACTION> newInterferenceState = mDomain.interferenceState();
+			((RelationalInterferingPostOperator) mDomain.getPostOperator()).updateInterferences();
+			final AbstractInterferenceState<STATE, ACTION> newInterferenceState =
+					((RelationalInterferingPostOperator) mDomain.getPostOperator()).getInterferences();
 
 			// interference fixpoint reached
-			if (newInterferenceState.isSubsetOf(interferenceState)) {
-				mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, iteration, resultSet);
+			if (newInterferenceState.isSubsetOf(oldInterferenceState)) {
+				mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, iteration, resultSet,
+						mEntryLocs);
 				break;
 			}
 			mLogger.warn(newInterferenceState.interferenceStrings());
 			mLogger.warn("doesnt imply");
-			mLogger.warn(interferenceState.interferenceStrings());
+			mLogger.warn(oldInterferenceState.interferenceStrings());
 			if (iteration >= mMaxUnwindings) {
-				newInterferenceState
-						.changeInterferences(calcWidenedInterferences(interferenceState, newInterferenceState));
-//				newInterferenceState = new AbstractInterferenceState(
-//						calcWidenedInterferences(interferenceState, newInterferenceState));
-				mLogger.error("DID WIDENING ON INTERFERENCES.");
+				// newInterferenceState
+				// .changeInterferences(calcWidenedInterferences(interferenceState, newInterferenceState));
+				// newInterferenceState = new AbstractInterferenceState<>(
+				// // calcWidenedInterferences(oldInterferenceState, newInterferenceState));
+				// mLogger.error("DID WIDENING ON INTERFERENCES.");
 			}
 			iteration++;
 		}
-
 	}
 
-	private Map<String, Map<ACTION, STATE>> calcWidenedInterferences(
+	private AbstractInterferenceState<STATE, ACTION> calcWidenedInterferences(
 			final AbstractInterferenceState<STATE, ACTION> oldInterference,
 			final AbstractInterferenceState<STATE, ACTION> newInterference) {
-		final Map<String, Map<ACTION, STATE>> widenedInterferenceMap = new HashMap<>();
+		// final Map<String, > widenedInterferenceMap = new HashMap<>();
+		final Set<String> threadNames = new HashSet<>(oldInterference.getInterferenceMapHashRelation().keySet());
+		threadNames.addAll(newInterference.getInterferenceMapHashRelation().keySet());
+		final AbstractInterferenceState<STATE, ACTION> resultInterferenceState =
+				new AbstractInterferenceState<>(threadNames);
 
-		final Map<String, Map<ACTION, STATE>> oldMap = oldInterference.getInterferenceMapHashRelation();
-		final Map<String, Map<ACTION, STATE>> newMap = newInterference.getInterferenceMapHashRelation();
-		final Set<String> threadNames = new HashSet<>(oldMap.keySet());
-		threadNames.addAll(newMap.keySet());
+		final Map<ACTION, Interference<STATE, ACTION>> oldMap = oldInterference.getIdentifyMap();
+		final Map<ACTION, Interference<STATE, ACTION>> newMap = newInterference.getIdentifyMap();
 
 		for (final String threadName : threadNames) {
-			final Map<ACTION, STATE> oldTransitionMap = oldMap.getOrDefault(threadName, Collections.emptyMap());
-			final Map<ACTION, STATE> newTransitionMap = newMap.getOrDefault(threadName, Collections.emptyMap());
+			final Set<ACTION> actions = new HashSet<>(oldInterference.getIdentifyMap().keySet());
+			actions.addAll(newInterference.getIdentifyMap().keySet());
 
-			final Set<ACTION> actions = new HashSet<>(oldTransitionMap.keySet());
-			actions.addAll(newTransitionMap.keySet());
-
-			final Map<ACTION, STATE> resultMap = new HashMap<>();
 			for (final ACTION action : actions) {
-				final STATE widenedState = combineStates(oldTransitionMap.get(action), newTransitionMap.get(action));
+				final STATE widenedState = combineStates(oldMap.get(action).state(), newMap.get(action).state());
 				if (widenedState != null) {
-					resultMap.put(action, widenedState);
+					resultInterferenceState.addInterference(threadName, action, widenedState,
+							newMap.get(action).threadcounter().union(oldMap.get(action).threadcounter()));
 				}
 			}
-			widenedInterferenceMap.put(threadName, resultMap);
 		}
-		return widenedInterferenceMap;
+		return resultInterferenceState;
 	}
 
 	private STATE combineStates(final STATE state1, final STATE state2) {
@@ -215,8 +216,6 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 	}
 
 	private DisjunctiveAbstractState<STATE> getInitialState(final String procedure) {
-		int forks = 0;
-		final Set<String> forkingThreads = mDomain.getThreadInstanceState().getActiveIfActive().getImage(procedure);
 		DisjunctiveAbstractState<STATE> result = null;
 		// collect states which fork this thread
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
@@ -225,14 +224,15 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 				result = null;
 				break;
 			}
-			forks++;
 			final DisjunctiveAbstractState<STATE> clearedState = removeLocalVars(state);
 			result = result == null ? clearedState : result.union(clearedState);
 		}
 		// combine forking states
 		if (result != null) {
-			final STATE forkedInitialState = constructForkedInitialState(result, forkingThreads, procedure, forks);
-			return new DisjunctiveAbstractState<>(mMaxParallelStates, forkedInitialState);
+			final STATE forkedInitialState = constructForkedInitialState(result, procedure);
+			final STATE initialState =
+					(STATE) ((RelationalInterferingState) forkedInitialState).incrementThread(procedure);
+			return new DisjunctiveAbstractState<>(mMaxParallelStates, initialState);
 		}
 
 		// no forking threads, construct fresh state (must be main-thread)
@@ -241,8 +241,7 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 		return new DisjunctiveAbstractState<>(mMaxParallelStates, (STATE) bottomState);
 	}
 
-	private STATE constructForkedInitialState(final DisjunctiveAbstractState<STATE> result,
-			final Set<String> forkingThreads, final String procedure, final int forks) {
+	private STATE constructForkedInitialState(final DisjunctiveAbstractState<STATE> result, final String procedure) {
 		final Set<STATE> forkStates = result.getStates();
 		STATE unionState = forkStates.iterator().next();
 		for (final STATE forkState : forkStates) {
@@ -250,19 +249,14 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 				unionState = FixpointEngineConcurrentUtils.unionOnSharedVariables(unionState, forkState);
 			}
 		}
-		unionState = (STATE) ((RelationalInterferingState) unionState).setThreadsActive(forkingThreads);
-		if (forks > 1) {
-			unionState = (STATE) ((RelationalInterferingState) unionState).setThreadsInf(List.of(procedure));
-		}
 		final STATE afterInterferences = (STATE) ((RelationalInterferingPostOperator) mDomain.getPostOperator())
 				.stateAfterInterferences((RelationalInterferingState) unionState, procedure);
 		return afterInterferences;
 	}
 
 	private DisjunctiveAbstractState<STATE> removeLocalVars(final DisjunctiveAbstractState<STATE> state) {
-		final List<IProgramVarOrConst> varsToRemove = state.getVariables().stream()
-				.filter(ILocalProgramVar.class::isInstance).collect(Collectors.toList());
+		final List<IProgramVarOrConst> varsToRemove =
+				state.getVariables().stream().filter(ILocalProgramVar.class::isInstance).collect(Collectors.toList());
 		return state.removeVariables(varsToRemove);
 	}
-
 }

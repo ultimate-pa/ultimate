@@ -1,92 +1,81 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 
+record Interference<STATE extends IAbstractState<STATE>, ACTION>(ACTION action, STATE state,
+		ThreadInstanceCounter threadcounter) {
+}
+
+// TODO: we assume that an action is unique, throughout all threads.
+// if this is untrue, this is unsound. Then somehow get unique location from ACTION if possible when
+// adding interferences
 public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION> {
-	private Map<String, Map<ACTION, STATE>> mThreadInterferenceMap;
-	private final ManagedScript mManagedScript;
+	private Map<String, Set<Interference<STATE, ACTION>>> mThreadInterferenceMap;
+	private final Map<ACTION, Interference<STATE, ACTION>> mIdentifyMap;
 
-	private CfgSmtToolkit mToolkit;
-
-	public AbstractInterferenceState(final ManagedScript script, final IIcfg<?> cfg) {
+	public AbstractInterferenceState(final Set<String> threadNames) {
+		mIdentifyMap = new HashMap<>();
 		mThreadInterferenceMap = new HashMap<>();
-		mManagedScript = script;
-		mToolkit = cfg.getCfgSmtToolkit();
-		for (final String thread : mToolkit.getProcedures()) {
-			mThreadInterferenceMap.put(thread, new HashMap<>());
-		}
+		threadNames.stream().forEach(t -> mThreadInterferenceMap.put(t, new HashSet<>()));
 	}
 
 	public AbstractInterferenceState(final AbstractInterferenceState<STATE, ACTION> other) {
+		mIdentifyMap = new HashMap<>(other.getIdentifyMap());
 		mThreadInterferenceMap = new HashMap<>();
-		for (final String threadName : other.getInterferenceMapHashRelation().keySet()) {
-			mThreadInterferenceMap.put(threadName, new HashMap<>());
-			for (final ACTION action : other.getInterferenceMapHashRelation().get(threadName).keySet()) {
-				final var otherState = other.getInterferenceMapHashRelation().get(threadName).get(action);
-				mThreadInterferenceMap.get(threadName).put(action, otherState);
-			}
-		}
-		mManagedScript = other.getManagedScript();
+		other.getInterferenceMapHashRelation().keySet().stream().forEach(
+				t -> mThreadInterferenceMap.put(t, new HashSet<>(other.getInterferenceMapHashRelation().get(t))));
 	}
 
-	public void changeInterferences(final Map<String, Map<ACTION, STATE>> newMap) {
+	public Map<ACTION, Interference<STATE, ACTION>> getIdentifyMap() {
+		return mIdentifyMap;
+	}
+
+	public void changeInterferences(final Map<String, Set<Interference<STATE, ACTION>>> newMap) {
 		mThreadInterferenceMap = newMap;
 	}
 
-	public Map<ACTION, STATE> getInterferencesForThread(final String threadName) {
+	public Set<Interference<STATE, ACTION>> getInterferencesForThread(final String threadName) {
 		return mThreadInterferenceMap.get(threadName);
 	}
 
-	public void addInterference(final String threadName, final ACTION transFormula, final STATE state) {
-		if (mThreadInterferenceMap.get(threadName) == null) {
-			mThreadInterferenceMap.put(threadName, new HashMap<>());
-		}
-		if (mThreadInterferenceMap.get(threadName).get(transFormula) == null) {
-			mThreadInterferenceMap.get(threadName).put(transFormula, state);
-		} else {
-			mThreadInterferenceMap.get(threadName).put(transFormula, FixpointEngineConcurrentUtils
-					.unionOnSharedVariables(state, mThreadInterferenceMap.get(threadName).get(transFormula)));
-		}
+	public void addInterference(final String threadName, final ACTION transition, final STATE state,
+			final ThreadInstanceCounter threadcounter) {
+		final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
+		mThreadInterferenceMap.get(threadName).add(interference);
+		mIdentifyMap.put(interference.action(), interference);
 	}
 
-	public Map<String, Map<ACTION, STATE>> getInterferenceMapHashRelation() {
+	public void addForkInterference(final String threadName, final ACTION transition, final STATE state,
+			final ThreadInstanceCounter threadcounter) {
+		final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
+		mThreadInterferenceMap.get(threadName).add(interference);
+		mIdentifyMap.put(interference.action(), interference);
+	}
+
+	public Map<String, Set<Interference<STATE, ACTION>>> getInterferenceMapHashRelation() {
 		return mThreadInterferenceMap;
 	}
 
-	public ManagedScript getManagedScript() {
-		return mManagedScript;
-	}
-
 	public boolean isSubsetOf(final AbstractInterferenceState<STATE, ACTION> other) {
-		for (final String threadName : mThreadInterferenceMap.keySet()) {
-			final Map<ACTION, STATE> thisInterferenceMap = mThreadInterferenceMap.getOrDefault(threadName,
-					Collections.emptyMap());
-			final Map<ACTION, STATE> otherInterferenceMap = other.getInterferenceMapHashRelation()
-					.getOrDefault(threadName, Collections.emptyMap());
+		for (final ACTION action : mIdentifyMap.keySet()) {
+			final var thisInterference = mIdentifyMap.get(action);
+			final var otherInterference = other.getIdentifyMap().get(action);
 
-			for (final ACTION action : thisInterferenceMap.keySet()) {
-				final STATE thisState = thisInterferenceMap.get(action);
-				final STATE otherState = otherInterferenceMap.get(action);
-
-				if (thisState == null && otherState == null) {
-					continue;
-				}
-				if (thisState == null || otherState == null) {
-					return false;
-				}
-				if (thisState.isSubsetOf(otherState) == SubsetResult.NONE) {
-					return false;
-				}
+			if (thisInterference == null && otherInterference == null) {
+				continue;
+			}
+			if (thisInterference == null || otherInterference == null) {
+				return false;
+			}
+			if (thisInterference.state().isSubsetOf(otherInterference.state()) == SubsetResult.NONE) {
+				return false;
 			}
 		}
 		return true;
@@ -94,9 +83,7 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 
 	public Set<String> interferenceStrings() {
 		return getInterferenceMapHashRelation().keySet().stream()
-				.flatMap(thread -> getInterferencesForThread(thread).keySet().stream().map(action -> "Thread " + thread
-						+ ": " + action + ": " + mThreadInterferenceMap.get(thread).get(action)))
+				.flatMap(thread -> getInterferencesForThread(thread).stream().map(i -> "Thread " + thread + ": " + i))
 				.collect(Collectors.toSet());
 	}
-
 }

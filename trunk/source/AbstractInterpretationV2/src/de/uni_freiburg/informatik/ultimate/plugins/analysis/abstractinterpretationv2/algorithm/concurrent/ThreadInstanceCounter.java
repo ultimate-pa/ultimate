@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 // TODO: Replace Integer usage with value-abstraction, so we can call abstractions on this
+// TODO: make immutable
 public class ThreadInstanceCounter {
 	private final Map<String, Integer> mThreadInstances;
 	private final Set<String> mThreadNameSet;
@@ -69,6 +70,17 @@ public class ThreadInstanceCounter {
 					Math.min(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
 		}
 		return new ThreadInstanceCounter(newThreadMap);
+	}
+
+	public boolean isEqual(final ThreadInstanceCounter other) {
+		for (final String thread : other.getThreadInstances().keySet()) {
+			final Integer count = mThreadInstances.get(thread);
+			final Integer otherCount = other.getThreadInstances().get(thread);
+			if (count != otherCount && !(count > 0 && otherCount > 0)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override

@@ -11,5 +11,13 @@ procedure thread1() returns()
 modifies x;
 {
   x := 1;
-  assert x == 1;
+  fork 2 thread2();
 }
+
+procedure thread2() returns()
+modifies x;
+{
+  x := 2;
+  assert x == 2;
+}
+
