@@ -52,7 +52,7 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		final var terms = result.getLoc2Term().get(loc);
 		if (terms != null) {
 			logger.error("[STATE: " + terms + "]");
-			logger.error("[THREADS: " + ((RelationalInterferingState<?, ?>) result.getLoc2SingleStates().get(loc))
+			logger.error("[THREADS: " + ((GuardedInterferenceDomainState<?, ?>) result.getLoc2SingleStates().get(loc))
 					.getThreadInstanceState().toString() + "]");
 			if (loc.getOutgoingEdges().size() != 0) {
 				logger.error("|");

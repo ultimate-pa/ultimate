@@ -26,7 +26,7 @@ modifies x, y;
     while (true) {
         if (y < 2) {
             y := y + 1;
-            x := (x + y) / 2;
+            x := x - 1;
         }
     }
 }

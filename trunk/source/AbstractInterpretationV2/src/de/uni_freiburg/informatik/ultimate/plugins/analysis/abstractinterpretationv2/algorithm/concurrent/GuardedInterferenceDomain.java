@@ -11,24 +11,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * Wrapper for an {@code IAbstractDomain} with a different post-operator to consider interferences, just like
  * {@code InterferingDomain}. Underlying domain is SIFA domain. Domain also inlcudes Threadinformation.
  */
-public class RelationalInterferingDomain<STATE extends IAbstractState<STATE>, ACTION>
-		implements IAbstractDomain<RelationalInterferingState<STATE, ACTION>, ACTION> {
+public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTION>
+		implements IAbstractDomain<GuardedInterferenceDomainState<STATE, ACTION>, ACTION> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
-	private final IAbstractPostOperator<RelationalInterferingState<STATE, ACTION>, ACTION> mRelationalInterferingPostOperator;
-	private final IAbstractStateBinaryOperator<RelationalInterferingState<STATE, ACTION>> mWideningOperator;
+	private final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION>, ACTION> mGuardedInterferenceDomainPostOperator;
+	private final IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION>> mWideningOperator;
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
 	private final AbstractInterferenceState<STATE, ACTION> mInterferences;
 
-	public RelationalInterferingDomain(final IIcfg<?> cfg, final IAbstractDomain<STATE, ACTION> underlying,
+	public GuardedInterferenceDomain(final IIcfg<?> cfg, final IAbstractDomain<STATE, ACTION> underlying,
 			final ILogger logger) {
 		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
 		mInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
 
 		mUnderlyingDomain = underlying;
-		mRelationalInterferingPostOperator = new RelationalInterferingPostOperator<>(cfg, logger, mUnderlyingDomain,
-				mUnderlyingDomain.getPostOperator(), this, mInterferences);
-		mWideningOperator = new RelationalInterferingWideningOperator<>(underlying, mThreadInstanceCounterFactory);
+		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
+				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences);
+		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying, mThreadInstanceCounterFactory);
 	}
 
 	public IAbstractDomain<STATE, ACTION> getUnderlyingDomain() {
@@ -44,34 +44,40 @@ public class RelationalInterferingDomain<STATE extends IAbstractState<STATE>, AC
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> createTopState() {
-		return new RelationalInterferingState<>(mUnderlyingDomain, mUnderlyingDomain.createTopState(),
+	public GuardedInterferenceDomainState<STATE, ACTION> createTopState() {
+		return new GuardedInterferenceDomainState<>(mUnderlyingDomain, mUnderlyingDomain.createTopState(),
 				mThreadInstanceCounterFactory.createTopState());
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> createBottomState() {
-		return new RelationalInterferingState<>(mUnderlyingDomain, mUnderlyingDomain.createBottomState(),
+	public GuardedInterferenceDomainState<STATE, ACTION> createBottomState() {
+		return new GuardedInterferenceDomainState<>(mUnderlyingDomain, mUnderlyingDomain.createBottomState(),
 				mThreadInstanceCounterFactory.createBottomState());
 	}
 
-	public RelationalInterferingState<STATE, ACTION> createBottomPreconditionState() {
-		return new RelationalInterferingState<>(mUnderlyingDomain, mUnderlyingDomain.createTopState(),
+	public GuardedInterferenceDomainState<STATE, ACTION> createBottomPreconditionState() {
+		return new GuardedInterferenceDomainState<>(mUnderlyingDomain, mUnderlyingDomain.createTopState(),
 				mThreadInstanceCounterFactory.createBottomState());
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<RelationalInterferingState<STATE, ACTION>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION>> getWideningOperator() {
 		return mWideningOperator;
 	}
 
 	@Override
-	public IAbstractPostOperator<RelationalInterferingState<STATE, ACTION>, ACTION> getPostOperator() {
-		return mRelationalInterferingPostOperator;
+	public IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION>, ACTION> getPostOperator() {
+		return mGuardedInterferenceDomainPostOperator;
 	}
 
 	@Override
 	public String domainDescription() {
 		return "SIFA - " + mUnderlyingDomain.toString() + " with interferences";
 	}
+
+	@Override
+	public void beforeFixpointComputation(final Object... objects) {
+		mUnderlyingDomain.beforeFixpointComputation(objects);
+	}
+
 }

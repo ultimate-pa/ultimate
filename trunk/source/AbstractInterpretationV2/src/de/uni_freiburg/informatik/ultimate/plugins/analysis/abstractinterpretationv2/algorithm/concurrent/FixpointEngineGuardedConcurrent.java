@@ -29,14 +29,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.SummaryMap;
 
-public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
+public class FixpointEngineGuardedConcurrent<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
 		implements IFixpointEngine<STATE, ACTION, VARDECL, LOC> {
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, LOC> mStateStorage;
-	private final RelationalInterferingDomain<STATE, ACTION> mDomain;
+	private final GuardedInterferenceDomain<STATE, ACTION> mDomain;
+	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final IVariableProvider<STATE, ACTION> mVarProvider;
 	private final ILogger mLogger;
 
@@ -49,17 +50,17 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final FixpointPrintHelper<STATE, ACTION, LOC> mPrinter;
 
-	public FixpointEngineRelationalConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
+	public FixpointEngineGuardedConcurrent(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<STATE, ACTION, VARDECL, LOC> factory, final IIcfg<? extends LOC> icfg) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
-		mDomain = new RelationalInterferingDomain<>(icfg, params.getAbstractDomain(), params.getLogger());
+		mDomain = new GuardedInterferenceDomain<>(icfg, params.getAbstractDomain(), params.getLogger());
+		mUnderlyingDomain = params.getAbstractDomain();
 		mParams = params.setDomain((IAbstractDomain<STATE, ACTION>) mDomain);
 		mLogger = mParams.getLogger();
 		mTransitionProvider = mParams.getTransitionProvider();
 		mStateStorage = mParams.getStorage();
-		// mDomain = params.getAbstractDomain();
 		mVarProvider = mParams.getVariableProvider();
 		mMaxUnwindings = mParams.getMaxUnwindings();
 		mMaxParallelStates = mParams.getMaxParallelStates();
@@ -81,7 +82,7 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 		mResult.saveSummaryStorage(mSummaryMap);
 		mLogger.debug("Fixpoint computation completed");
 		mDomain.afterFixpointComputation(
-				(IAbstractInterpretationResult<RelationalInterferingState<STATE, ACTION>, ACTION, LOC>) mResult);
+				(IAbstractInterpretationResult<GuardedInterferenceDomainState<STATE, ACTION>, ACTION, LOC>) mResult);
 		assert areStatesInterferenceFree();
 		return mResult;
 	}
@@ -116,7 +117,7 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + iteration);
 			final AbstractInterferenceState<STATE, ACTION> oldInterferenceState =
-					((RelationalInterferingPostOperator) mDomain.getPostOperator()).getInterferences();
+					((GuardedInterferenceDomainPostOperator) mDomain.getPostOperator()).getInterferences();
 
 			mLogger.error("Interference Set:");
 			for (final String termString : oldInterferenceState.interferenceStrings()) {
@@ -151,9 +152,9 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 				}
 			}
 
-			((RelationalInterferingPostOperator) mDomain.getPostOperator()).updateInterferences();
+			((GuardedInterferenceDomainPostOperator) mDomain.getPostOperator()).updateInterferences();
 			final AbstractInterferenceState<STATE, ACTION> newInterferenceState =
-					((RelationalInterferingPostOperator) mDomain.getPostOperator()).getInterferences();
+					((GuardedInterferenceDomainPostOperator) mDomain.getPostOperator()).getInterferences();
 
 			// interference fixpoint reached
 			if (newInterferenceState.isSubsetOf(oldInterferenceState)) {
@@ -165,11 +166,9 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 			mLogger.warn("doesnt imply");
 			mLogger.warn(oldInterferenceState.interferenceStrings());
 			if (iteration >= mMaxUnwindings) {
-				// newInterferenceState
-				// .changeInterferences(calcWidenedInterferences(interferenceState, newInterferenceState));
-				// newInterferenceState = new AbstractInterferenceState<>(
-				// // calcWidenedInterferences(oldInterferenceState, newInterferenceState));
-				// mLogger.error("DID WIDENING ON INTERFERENCES.");
+				((GuardedInterferenceDomainPostOperator) mDomain.getPostOperator())
+						.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
+				mLogger.error("DID WIDENING ON INTERFERENCES.");
 			}
 			iteration++;
 		}
@@ -231,7 +230,7 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 		if (result != null) {
 			final STATE forkedInitialState = constructForkedInitialState(result, procedure);
 			final STATE initialState =
-					(STATE) ((RelationalInterferingState) forkedInitialState).incrementThread(procedure);
+					(STATE) ((GuardedInterferenceDomainState) forkedInitialState).incrementThread(procedure);
 			return new DisjunctiveAbstractState<>(mMaxParallelStates, initialState);
 		}
 
@@ -249,8 +248,8 @@ public class FixpointEngineRelationalConcurrent<STATE extends IAbstractState<STA
 				unionState = FixpointEngineConcurrentUtils.unionOnSharedVariables(unionState, forkState);
 			}
 		}
-		final STATE afterInterferences = (STATE) ((RelationalInterferingPostOperator) mDomain.getPostOperator())
-				.stateAfterInterferences((RelationalInterferingState) unionState, procedure);
+		final STATE afterInterferences = (STATE) ((GuardedInterferenceDomainPostOperator) mDomain.getPostOperator())
+				.stateAfterInterferences((GuardedInterferenceDomainState) unionState, procedure);
 		return afterInterferences;
 	}
 

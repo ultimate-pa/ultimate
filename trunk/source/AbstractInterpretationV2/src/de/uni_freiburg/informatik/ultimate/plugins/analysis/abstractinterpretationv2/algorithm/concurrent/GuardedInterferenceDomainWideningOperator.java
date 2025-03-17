@@ -4,23 +4,23 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 
-public class RelationalInterferingWideningOperator<STATE extends IAbstractState<STATE>, ACTION>
-		implements IAbstractStateBinaryOperator<RelationalInterferingState<STATE, ACTION>> {
+public class GuardedInterferenceDomainWideningOperator<STATE extends IAbstractState<STATE>, ACTION>
+		implements IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION>> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
-	public RelationalInterferingWideningOperator(final IAbstractDomain<STATE, ACTION> underlying,
+	public GuardedInterferenceDomainWideningOperator(final IAbstractDomain<STATE, ACTION> underlying,
 			final ThreadInstanceCounterFactory threadFactory) {
 		mUnderlyingDomain = underlying;
 		mThreadInstanceCounterFactory = threadFactory;
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> apply(final RelationalInterferingState<STATE, ACTION> first,
-			final RelationalInterferingState<STATE, ACTION> second) {
+	public GuardedInterferenceDomainState<STATE, ACTION> apply(final GuardedInterferenceDomainState<STATE, ACTION> first,
+			final GuardedInterferenceDomainState<STATE, ACTION> second) {
 		final var widenedThreadCounter =
 				mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(), second.getThreadInstanceState());
-		return new RelationalInterferingState<>(mUnderlyingDomain,
+		return new GuardedInterferenceDomainState<>(mUnderlyingDomain,
 				mUnderlyingDomain.getWideningOperator().apply(first.getStateCopy(), second.getStateCopy()),
 				widenedThreadCounter);
 	}

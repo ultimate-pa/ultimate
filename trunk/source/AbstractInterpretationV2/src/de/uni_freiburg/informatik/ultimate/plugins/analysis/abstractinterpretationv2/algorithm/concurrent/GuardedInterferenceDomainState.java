@@ -10,22 +10,22 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public final class RelationalInterferingState<STATE extends IAbstractState<STATE>, ACTION>
-		implements IAbstractState<RelationalInterferingState<STATE, ACTION>> {
+public final class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION>
+		implements IAbstractState<GuardedInterferenceDomainState<STATE, ACTION>> {
 
 	private final IAbstractDomain<STATE, ACTION> mUnderlying;
 
 	private final STATE mState;
 	private final ThreadInstanceCounter mThreadInstanceCounter;
 
-	public RelationalInterferingState(final IAbstractDomain<STATE, ACTION> underlying, final STATE state,
+	public GuardedInterferenceDomainState(final IAbstractDomain<STATE, ACTION> underlying, final STATE state,
 			final ThreadInstanceCounter threadcounter) {
 		mUnderlying = underlying;
 		mState = state.union(underlying.createBottomState().addVariables(state.getVariables()));
 		mThreadInstanceCounter = new ThreadInstanceCounter(threadcounter);
 	}
 
-	public RelationalInterferingState(final IAbstractDomain<STATE, ACTION> underlying, final Collection<STATE> states,
+	public GuardedInterferenceDomainState(final IAbstractDomain<STATE, ACTION> underlying, final Collection<STATE> states,
 			final ThreadInstanceCounter threadcounter) {
 		mUnderlying = underlying;
 		STATE unionState = null;
@@ -51,43 +51,43 @@ public final class RelationalInterferingState<STATE extends IAbstractState<STATE
 		return mState;
 	}
 
-	public RelationalInterferingState<STATE, ACTION> setThreadsActive(final Collection<String> forkingStrings) {
+	public GuardedInterferenceDomainState<STATE, ACTION> setThreadsActive(final Collection<String> forkingStrings) {
 		final var newThreadcounter = new ThreadInstanceCounter(mThreadInstanceCounter.setActive(forkingStrings));
-		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), newThreadcounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, getStateCopy(), newThreadcounter);
 	}
 
-	public RelationalInterferingState<STATE, ACTION> setThreadsInf(final Collection<String> forkingStrings) {
+	public GuardedInterferenceDomainState<STATE, ACTION> setThreadsInf(final Collection<String> forkingStrings) {
 		final var newThreadcounter = new ThreadInstanceCounter(mThreadInstanceCounter.setInf(forkingStrings));
-		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), newThreadcounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, getStateCopy(), newThreadcounter);
 	}
 
 	public ThreadInstanceCounter getThreadInstanceState() {
 		return mThreadInstanceCounter;
 	}
 
-	public RelationalInterferingState<STATE, ACTION> incrementThread(final String thread) {
+	public GuardedInterferenceDomainState<STATE, ACTION> incrementThread(final String thread) {
 		final var newThreadcounter = mThreadInstanceCounter.incrementThread(thread);
-		return new RelationalInterferingState<>(mUnderlying, getStateCopy(), newThreadcounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, getStateCopy(), newThreadcounter);
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> addVariable(final IProgramVarOrConst variable) {
-		return new RelationalInterferingState<>(mUnderlying, mState.addVariable(variable), mThreadInstanceCounter);
+	public GuardedInterferenceDomainState<STATE, ACTION> addVariable(final IProgramVarOrConst variable) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.addVariable(variable), mThreadInstanceCounter);
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> removeVariable(final IProgramVarOrConst variable) {
-		return new RelationalInterferingState<>(mUnderlying, mState.removeVariable(variable), mThreadInstanceCounter);
+	public GuardedInterferenceDomainState<STATE, ACTION> removeVariable(final IProgramVarOrConst variable) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.removeVariable(variable), mThreadInstanceCounter);
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
-		return new RelationalInterferingState<>(mUnderlying, mState.addVariables(variables), mThreadInstanceCounter);
+	public GuardedInterferenceDomainState<STATE, ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.addVariables(variables), mThreadInstanceCounter);
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
-		return new RelationalInterferingState<>(mUnderlying, mState.removeVariables(variables), mThreadInstanceCounter);
+	public GuardedInterferenceDomainState<STATE, ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.removeVariables(variables), mThreadInstanceCounter);
 	}
 
 	@Override
@@ -101,20 +101,20 @@ public final class RelationalInterferingState<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> patch(final RelationalInterferingState<STATE, ACTION> dominator) {
-		return new RelationalInterferingState<>(mUnderlying, mState.patch(dominator.getStateCopy()),
+	public GuardedInterferenceDomainState<STATE, ACTION> patch(final GuardedInterferenceDomainState<STATE, ACTION> dominator) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.patch(dominator.getStateCopy()),
 				mThreadInstanceCounter);
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> intersect(final RelationalInterferingState<STATE, ACTION> other) {
-		return new RelationalInterferingState<>(mUnderlying, mState.intersect(other.getStateCopy()),
+	public GuardedInterferenceDomainState<STATE, ACTION> intersect(final GuardedInterferenceDomainState<STATE, ACTION> other) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.intersect(other.getStateCopy()),
 				mThreadInstanceCounter.intersect(other.getThreadInstanceState()));
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> union(final RelationalInterferingState<STATE, ACTION> other) {
-		return new RelationalInterferingState<>(mUnderlying, mState.union(other.getStateCopy()),
+	public GuardedInterferenceDomainState<STATE, ACTION> union(final GuardedInterferenceDomainState<STATE, ACTION> other) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.union(other.getStateCopy()),
 				mThreadInstanceCounter.union(other.getThreadInstanceState()));
 	}
 
@@ -129,24 +129,24 @@ public final class RelationalInterferingState<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public boolean isEqualTo(final RelationalInterferingState<STATE, ACTION> other) {
+	public boolean isEqualTo(final GuardedInterferenceDomainState<STATE, ACTION> other) {
 		return isSubsetOf(other) == SubsetResult.NON_STRICT && other.isSubsetOf(this) == SubsetResult.NON_STRICT;
 	}
 
 	@Override
-	public SubsetResult isSubsetOf(final RelationalInterferingState<STATE, ACTION> other) {
+	public SubsetResult isSubsetOf(final GuardedInterferenceDomainState<STATE, ACTION> other) {
 		return mState.isSubsetOf(other.getStateCopy());
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION> compact() {
-		return new RelationalInterferingState<>(mUnderlying, mState.compact(), mThreadInstanceCounter);
+	public GuardedInterferenceDomainState<STATE, ACTION> compact() {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.compact(), mThreadInstanceCounter);
 	}
 
 	@Override
-	public RelationalInterferingState<STATE, ACTION>
+	public GuardedInterferenceDomainState<STATE, ACTION>
 			renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
-		return new RelationalInterferingState<>(mUnderlying, mState.renameVariables(old2newVars),
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.renameVariables(old2newVars),
 				mThreadInstanceCounter);
 	}
 
