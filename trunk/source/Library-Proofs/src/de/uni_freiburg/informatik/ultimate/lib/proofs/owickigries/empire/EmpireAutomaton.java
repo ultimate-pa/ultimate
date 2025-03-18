@@ -69,7 +69,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public boolean containsPlace(final State<L, P> state, final P place) {
-		return state.territory().getPlaces().contains(place);
+		return state.territory().containsPlace(place);
 	}
 
 	@Override

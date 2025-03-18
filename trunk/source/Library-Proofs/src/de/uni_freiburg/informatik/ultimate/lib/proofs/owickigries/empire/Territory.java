@@ -259,6 +259,10 @@ public final class Territory<PLACE> {
 				.collect(Collectors.toSet());
 	}
 
+	public boolean containsPlace(final PLACE p) {
+		return getPlaces().contains(p);
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
