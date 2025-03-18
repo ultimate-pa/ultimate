@@ -4,6 +4,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
@@ -28,6 +29,9 @@ public class Update {
 	private final ReturnType mReturnType;
 	private final RelationSymbol mRelation;
 
+	static BooleanDomain fullBooleanDomain = null;
+	static IntegerDomain fullIntegerDomain = null;
+
 	public static Update getAssignmentUpdate(final Variable variable, final ExecutionTerm equalTerm) {
 		return new Update(variable, equalTerm, false, RelationSymbol.EQ);
 	}
@@ -51,7 +55,8 @@ public class Update {
 		final Variable replacementVar;
 
 		final Sort mainSort = programVar.getSort();
-		final TermVariable termVar = Util.makeVariable(programVar.getGloballyUniqueId() + "_Havoc", mainSort);
+		final Theory theory = programVar.getSort().getTheory();
+		final TermVariable termVar = Util.makeVariable(programVar.getGloballyUniqueId() + "_Havoc", mainSort, theory);
 
 		switch (type) {
 		case Array:
@@ -100,10 +105,13 @@ public class Update {
 		mReturnType = variable.getTerm().returnType;
 		mIsUndefined = isUndefined;
 		mRelation = relation;
-	}
 
-	static BooleanDomain fullBooleanDomain = Util.constructFullDomain(Util.getSort(ReturnType.Boolean));
-	static IntegerDomain fullIntegerDomain = Util.constructFullDomain(Util.getSort(ReturnType.Int));
+		if (fullBooleanDomain == null) {
+			final Theory theory = variable.getVariableTerm().termvar.getSort().getTheory();
+			fullBooleanDomain = Util.constructFullDomain(Util.getSort(ReturnType.Boolean, theory));
+			fullIntegerDomain = Util.constructFullDomain(Util.getSort(ReturnType.Int, theory));
+		}
+	}
 
 	public void apply(final ProgramState state, final NonDeterministicChoice havoc) {
 		if (mIsUndefined) {

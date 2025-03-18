@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
@@ -60,8 +61,8 @@ public class ArrayITETerm extends ArrayTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return ite.toSMTTerm();
+	public Term toSMTTerm(final Theory theory) {
+		return ite.toSMTTerm(theory);
 	}
 
 	/*

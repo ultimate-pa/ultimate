@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -189,11 +190,17 @@ public class AndTerm extends BooleanTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		final Term[] parameters = new Term[subTerms.length];
-		for (int i = 0; i < subTerms.length; i++) {
-			parameters[i] = subTerms[i].toSMTTerm();
+	public Term toSMTTerm(final Theory theory) {
+		if (subTerms.length == 1) {
+			return subTerms[0].toSMTTerm(theory);
 		}
-		return Util.makeTerm(mSymbol, parameters);
+
+		Term A = subTerms[0].toSMTTerm(theory);
+		for (int i = 1; i < subTerms.length; i++) {
+			final Term B = subTerms[i].toSMTTerm(theory);
+			A = Util.makeTerm(mSymbol, theory, A, B);
+		}
+
+		return A;
 	}
 }

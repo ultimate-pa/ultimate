@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
@@ -100,12 +101,12 @@ public class SubtractionTerm extends IntegerTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
+	public Term toSMTTerm(final Theory theory) {
 		final Term[] parameters = new Term[subTerms.length];
 		for (int i = 0; i < subTerms.length; i++) {
-			parameters[i] = subTerms[i].toSMTTerm();
+			parameters[i] = subTerms[i].toSMTTerm(theory);
 		}
-		return Util.makeTerm(mSymbol, parameters);
+		return Util.makeTerm(mSymbol, theory, parameters);
 	}
 
 	/*

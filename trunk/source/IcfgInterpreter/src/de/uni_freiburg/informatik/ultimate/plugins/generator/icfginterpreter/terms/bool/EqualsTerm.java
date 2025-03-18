@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -101,10 +102,10 @@ public class EqualsTerm extends BooleanTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
+	public Term toSMTTerm(final Theory theory) {
 		// FunctionSymbol function = Util.makeFunction(mSymbol, Util.getSort(returnType), mA.toSMTTerm(),
 		// mB.toSMTTerm());
-		return Util.makeTerm(mSymbol, mA.toSMTTerm(), mB.toSMTTerm());
+		return Util.makeTerm(mSymbol, theory, mA.toSMTTerm(theory), mB.toSMTTerm(theory));
 		// return Util.getTheory().term(mSymbol, null, returnSort, mA.toSMTTerm(), mB.toSMTTerm());
 	}
 

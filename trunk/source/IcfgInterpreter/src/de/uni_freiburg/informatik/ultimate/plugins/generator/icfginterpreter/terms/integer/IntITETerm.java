@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
@@ -69,8 +70,8 @@ public class IntITETerm extends IntegerTerm implements ITE {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return ite.toSMTTerm();
+	public Term toSMTTerm(final Theory theory) {
+		return ite.toSMTTerm(theory);
 	}
 
 	@Override

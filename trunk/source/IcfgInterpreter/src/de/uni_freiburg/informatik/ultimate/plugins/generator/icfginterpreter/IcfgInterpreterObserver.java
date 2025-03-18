@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -10,14 +10,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgTranslation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.Settings;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
+	private HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> sourceToEdge;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -51,32 +53,47 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		// * SmtUtils.getConjuncts
 		// * SmtUtils.toDnf
 		// * mLogger can be used for output (e.g., for debugging)
+		final int testExecutionCount = 5;
+		sourceToEdge = IcfgTranslation.edgeBFS(mIcfg, mServices);
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
-		final ManagedScript script = mIcfg.getCfgSmtToolkit().getManagedScript();
+		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
+		final Random random = new Random();
+		for (final IcfgLocation node : initialNodes) {
+			for (final ICFGExecutionEdge outEdge : sourceToEdge.get(node)) {
+				for (int i = 0; i < testExecutionCount; i++) {
+					final long seed = random.nextLong();
 
-		final HashSet<IcfgLocation> visited = new HashSet<>();
-		final ArrayList<IcfgLocation> next = new ArrayList<>(initialNodes);
+					final NonDeterministicChoice ndcInstance = ndc.newInstance(seed);
+					final ProgramState state = new ProgramState(outEdge.getVariables(), ndcInstance);
+					final IcfgExecution execution = new IcfgExecution(state, node);
 
-		final HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> sourceEdges = new HashMap<>();
+					final ArrayList<ICFGExecutionEdge> nextEdges = new ArrayList<>();
+					nextEdges.add(outEdge);
 
-		while (next.size() > 0) {
-			final IcfgLocation source = next.remove(0);
+					while (!nextEdges.isEmpty()) {
+						final ArrayList<ICFGExecutionEdge> availableEdges = Util.filter(nextEdges, (edge) -> {
+							return edge.canBeTaken(state);
+						});
 
-			if (visited.contains(source)) {
-				continue;
-			}
-			visited.add(source);
+						ICFGExecutionEdge nextEdge;
+						if (availableEdges.size() > 1) {
+							nextEdge = ndcInstance.chooseEdge(availableEdges);
+						} else if (availableEdges.size() == 0) {
+							// No guard was true, or no edges exist from the current vertex
+							break;
+						} else {
+							nextEdge = availableEdges.get(0);
+						}
 
-			for (final IcfgEdge edge : source.getOutgoingEdges()) {
-				final IcfgLocation target = edge.getTarget();
-				next.add(target);
+						nextEdge.execute(state, ndcInstance);
+						execution.addStep(state, nextEdge.mTarget);
+						nextEdges.clear();
+						nextEdges.addAll(sourceToEdge.getOrDefault(nextEdge.mTarget, new ArrayList<>()));
+					}
+					System.out.println("Execution " + (i + 1) + "\n" + execution + "\n");
+					nextEdges.clear();
+				}
 
-				final ICFGExecutionEdge execEdge = new ICFGExecutionEdge(edge.getTransformula(), source, target, script,
-						mServices);
-
-				final ArrayList<ICFGExecutionEdge> sourceEdgeList = sourceEdges.getOrDefault(source, new ArrayList<>());
-				sourceEdgeList.add(execEdge);
-				sourceEdges.put(source, sourceEdgeList);
 			}
 		}
 	}

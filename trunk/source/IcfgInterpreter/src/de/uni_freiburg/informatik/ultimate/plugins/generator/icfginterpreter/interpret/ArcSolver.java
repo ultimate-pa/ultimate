@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -10,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
@@ -19,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
@@ -41,26 +44,24 @@ public class ArcSolver {
 	 * @param inVars
 	 * @param variables
 	 * @param service
+	 * @param theory
+	 * @param theory
 	 * @param constraintList should be an {@link AndTerm} from {@link OrTerm#getSubTerms()} of an OrTerm created by
-	 *                       {@link TermNormalizer#normalize(BooleanTerm)}
+	 *                       {@link TermNormalizer#simplifyToDNF(BooleanTerm)}
 	 * @param mAllVariables
 	 */
 	public ArcSolver(final AndTerm constraintTerm, final ManagedScript managedScript,
 			final HashMap<TermVariable, Variable> variables, final HashSet<Variable> inVars,
-			final HashSet<Variable> outVars, final IUltimateServiceProvider service) {
+			final HashSet<Variable> outVars, final IUltimateServiceProvider service, final Theory theory) {
 		mVariables = variables;
 		mOutVars = outVars;
 		mInVars = inVars;
-
-		// final UnmodifiableTransFormula guardFormula = makeGuardFormula(managedScript, service,
-		// constraintTerm.toSMTTerm());
-		// guardTerm = (BooleanTerm) TermNormalizer.parseTerm(guardFormula.getFormula(), variables);
 
 		final ArrayList<BooleanTerm> constraints = constraintTerm.getSubTerms();
 
 		final HashMap<TermVariable, Variable> smtConvertedVariables = new HashMap<>();
 		for (final Variable var : variables.values()) {
-			smtConvertedVariables.put((TermVariable) var.getTerm().toSMTTerm(), var);
+			smtConvertedVariables.put((TermVariable) var.getTerm().toSMTTerm(theory), var);
 		}
 
 		for (final BooleanTerm constraint : constraints) {
@@ -75,13 +76,13 @@ public class ArcSolver {
 
 			BinaryRelation binRel;
 			if (constraint.getSubTerms().get(0).returnType == ReturnType.Int) {
-				binRel = BinaryNumericRelation.convert(constraint.toSMTTerm());
+				binRel = BinaryNumericRelation.convert(constraint.toSMTTerm(theory));
 			} else {
-				binRel = BinaryEqualityRelation.convert(constraint.toSMTTerm());
+				binRel = BinaryEqualityRelation.convert(constraint.toSMTTerm(theory));
 			}
 
 			for (final Variable var : mOutVars) {
-				final Term termVar = var.getTerm().toSMTTerm();
+				final Term termVar = var.getTerm().toSMTTerm(theory);
 				final SolvedBinaryRelation solvedBinEQ = binRel.solveForSubject(managedScript.getScript(), termVar);
 				if (solvedBinEQ == null) {
 					continue;
@@ -111,24 +112,44 @@ public class ArcSolver {
 		constraintCount = mConstraints.size() + mArcs.size();
 	}
 
+	public boolean hasConstraints() {
+		return constraintCount > 0;
+	}
+
 	public UnmodifiableTransFormula makeGuardFormula(final ManagedScript script, final IUltimateServiceProvider service,
-			final Term term) {
+			final Term term, final Infeasibility infeasibility, final Collection<TermVariable> branchEncoders) {
 		final HashMap<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (final Variable inVar : mInVars) {
-			inVars.put(inVar.getVariableTerm().programVar, inVar.getVariableTerm().termvar);
+			inVars.put(inVar.getVariableTerm().programVar, inVar/* .toSMTTerm() */.getVariableTerm().termvar);
 		}
 		final HashMap<IProgramVar, TermVariable> outVars = new HashMap<>();
 		for (final Variable outVar : mOutVars) {
-			outVars.put(outVar.getVariableTerm().programVar, outVar.getVariableTerm().termvar);
+			outVars.put(outVar.getVariableTerm().programVar, outVar/* .toSMTTerm() */.getVariableTerm().termvar);
 		}
-		final TransFormulaBuilder formulaBuilder = new TransFormulaBuilder(inVars, outVars, false, null, false, null,
-				false);
+		final HashSet<TermVariable> auxVars = new HashSet<>();
+		for (final Variable var : mVariables.values()) {
+			if (var.getVariableTerm().isAuxVar) {
+				auxVars.add(var.getVariableTerm().termvar/* .toSMTTerm() */);
+			}
+		}
+
+		final TransFormulaBuilder formulaBuilder = new TransFormulaBuilder(inVars, outVars, false, null,
+				branchEncoders.isEmpty(), branchEncoders, false);
+		// final Term closedTerm = UnmodifiableTransFormula.computeClosedFormula(term, inVars, outVars, auxVars,
+		// script);
 		formulaBuilder.setFormula(term);
+		formulaBuilder.setInfeasibility(infeasibility);
 		final UnmodifiableTransFormula subTermFormula = formulaBuilder.finishConstruction(script);
 		return TransFormulaUtils.computeGuard(subTermFormula, script, service);
 	}
 
+	private Update[] updateCache = null;
+
 	public Update[] makeUpdates() {
+		if (updateCache != null) {
+			return updateCache.clone();
+		}
+
 		final ArrayList<Update> updates = new ArrayList<>();
 
 		final HashSet<Variable> wellDefined = Util.copySet(mInVars);
@@ -180,13 +201,12 @@ public class ArcSolver {
 		// Make updates for variables that are not defined in the next state (havoc any value), this happens when:
 		// A. The OutVars do not contain a variable that is in the InVars. TODO is this actually correct?
 		// B. A variable of the OutVars does not appear in the InVars or the term.
-		for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) {
-			if (outProgVars.containsKey(inVar.getKey())) {
-				// The program variable has a defining term variable in the next state
-				continue;
-			}
-			updates.add(Update.getHavocUpdateAny(inVar.getKey(), inVar.getValue().getTerm().returnType));
-		}
+		/*
+		 * for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) { if
+		 * (outProgVars.containsKey(inVar.getKey())) { // The program variable has a defining term variable in the next
+		 * state continue; } updates.add(Update.getHavocUpdateAny(inVar.getKey(),
+		 * inVar.getValue().getTerm().returnType)); }
+		 */
 
 		for (final Entry<IProgramVar, Variable> outVar : outProgVars.entrySet()) {
 			if (mentionedVars.contains(outVar.getValue()) || inProgVars.containsKey(outVar.getKey())) {
@@ -217,7 +237,9 @@ public class ArcSolver {
 
 		// TODO Take care of outVars that depend on other outVars
 
-		return Util.fillArray(updates, new Update[updates.size()]);
+		updateCache = new Update[updates.size()];
+
+		return Util.fillArray(updates, updateCache);
 	}
 
 	@Override

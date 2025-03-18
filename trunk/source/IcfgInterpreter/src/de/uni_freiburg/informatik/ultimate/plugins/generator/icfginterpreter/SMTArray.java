@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.Settings;
@@ -43,5 +44,17 @@ public class SMTArray {
 
 	public HashMap<Object, Object> getEntries() {
 		return Util.copyMap(entries);
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder out = new StringBuilder();
+		out.append("[").append(keyType).append("]").append(valueType).append(" {");
+
+		final ArrayList<String> lines = Util.map(entries.entrySet(), (entry) -> {
+			return entry.getKey() + " -> " + entry.getValue();
+		}, new ArrayList<String>());
+
+		return out.append(String.join(", ", lines)).append("}").toString();
 	}
 }

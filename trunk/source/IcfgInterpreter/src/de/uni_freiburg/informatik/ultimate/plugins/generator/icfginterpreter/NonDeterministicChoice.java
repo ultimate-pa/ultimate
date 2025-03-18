@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
@@ -54,9 +55,10 @@ public interface NonDeterministicChoice {
 	SMTArray newArray(VariableArrayTerm variable, ArrayDomain<?, ?> values);
 
 	/**
-	 * Called when an array entry is read where no value has been {@link SMTArray#store(Object, Object)}d.<br>
+	 * Called when an array entry is read where no value has been stored with
+	 * {@link SMTArray#store(Object, Object)}.<br>
 	 * Return a value as indicated by {@link SMTArray#valueType}.<br>
-	 * One instance of this class should always return the same value for the same (array, index) pair.
+	 * One instance (same seed) of this class should always return the same value for the same (array, index) pair.
 	 *
 	 * @param type
 	 * @return
@@ -64,4 +66,6 @@ public interface NonDeterministicChoice {
 	Object havocArrayEntry(SMTArray array, Object index);
 
 	boolean areArraysEqual(SMTArray a, SMTArray b);
+
+	UltimatePreferenceItemGroup getImplementationSettings();
 }

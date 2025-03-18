@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -69,8 +70,8 @@ public class BoolITETerm extends BooleanTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return ite.toSMTTerm();
+	public Term toSMTTerm(final Theory theory) {
+		return ite.toSMTTerm(theory);
 	}
 	/*
 	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(ExecutionTerm<subT>

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
@@ -55,58 +56,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 
 public class TermNormalizer {
 	/**
-	 * For a term that contains an ite term: This method swaps the condition of the term with an auxiliary variable, and
-	 * wraps the first parent boolean term with (and parentOfITE, (aux_bool_var = condition))
-	 *
-	 * @param term
-	 * @param conditions
-	 * @return / private static ExecutionTerm replaceITEwithAux(ExecutionTerm term) { for (final ExecutionTerm subTerm :
-	 *         term.getSubTerms()) { term = replaceSubTerm(term, subTerm); }
-	 *
-	 *         if (term instanceof ITE) { ITE iteTerm = (ITE) term; final ArrayList<ExecutionTerm> auxEquality = new
-	 *         ArrayList<>(); final VariableBooleanTerm auxReplacement = makeNextAux(); iteTerm =
-	 *         iteTerm.replaceCondition(auxReplacement);
-	 *
-	 *         final EqualsTerm auxEQ = new EqualsTerm(auxReplacement, iteTerm.getCondition()); if
-	 *         (!aux_equivalences.contains(auxEQ)) { aux_equivalences.add(auxEQ); } }
-	 *
-	 *         if (term instanceof BooleanTerm && aux_equivalences.size() > 1) { // we can wrap the built up
-	 *         equivalences around this term final BooleanTerm[] outArray = new BooleanTerm[aux_equivalences.size() +
-	 *         1]; outArray[0] = (BooleanTerm) term; for (int i = 0; i < aux_equivalences.size(); i++) { outArray[i + 1]
-	 *         = aux_equivalences.get(i); } return new AndTerm(outArray); }
-	 *
-	 *         return term; }
-	 *
-	 *         private static ArrayList<EqualsTerm> aux_equivalences; private static int auxNameCounter;
-	 *
-	 *         private static VariableBooleanTerm makeNextAux() { final String name = "INTERNAL_BOOL_AUX_" +
-	 *         auxNameCounter; auxNameCounter++; final Sort boolSort = Util.getTheory().getBooleanSort(); final
-	 *         TermVariable auxTerm = Util.getTheory().createTermVariable(name, boolSort); return new
-	 *         VariableBooleanTerm(false, true, true, true, null, auxTerm); }
-	 *
-	 *         private static ExecutionTerm replaceSubTerm(final ExecutionTerm term, final ExecutionTerm subTerm) {
-	 *         final ExecutionTerm newSubTerm = replaceITEwithAux(subTerm); if (newSubTerm.equals(subTerm)) { return
-	 *         term; } return term.replaceSubTerm(subTerm, newSubTerm); }
-	 */
-
-	/**
-	 *
 	 * @param term A {@link BooleanTerm} representing the transformula of an ICFG edge.<br>
 	 *             Should be obtained by {@link #parseTerm(Term, HashMap)}
-	 * @return An {@link OrTerm} whose subTerms are all {@link AndTerm}s, each representing a different path that can be
-	 *         taken in this edge. All xor and implies terms are broken up into their logical components. There are no
-	 *         other {@link AndTerm} or {@link OrTerm}s. {@link ITETerm}s have their condition replaced by an internal
-	 *         Variable Term. The first ancestor that is a BooleanTerm is then wrapped by
+	 * @return An {@link OrTerm} whose subTerms are all {@link AndTerm}s (DNF), each representing a different path that
+	 *         can be taken in this edge. All xor and implies terms are broken up into their logical components. There
+	 *         are no other {@link AndTerm} or {@link OrTerm}s. {@link ITETerm}s have their condition replaced by an
+	 *         internal Variable Term. The first ancestor that is a BooleanTerm is then wrapped by
 	 *         {@code (and ancestor (var = condition))}. Similar things are done for array select indexes and array
 	 *         store indexes and values. This means that for example an IntegerTerm can only have children that are also
 	 *         IntegerTerms or Variables, they do not contain internal BitVector, Array or Boolean terms.
 	 */
-	public static OrTerm normalize(BooleanTerm term) {
-		// auxNameCounter = 0;
-		// aux_equivalences = new ArrayList<>();
-		// final BooleanTerm itelessTerm = (BooleanTerm) replaceITEwithAux(term);
-
-		BooleanTerm simpleTerm = /* itelessTerm */term.simplify();
+	public static OrTerm simplifyToDNF(BooleanTerm term) {
+		BooleanTerm simpleTerm = term.simplify();
 		while (!simpleTerm.equals(term)) {
 			term = simpleTerm;
 			simpleTerm = term.simplify();
@@ -129,20 +90,17 @@ public class TermNormalizer {
 			for (int j = 0; j < restrictions.size(); j++) {
 				BooleanTerm restriction = restrictions.get(j);
 
-				// and(..., bool_var, ...) = and(..., (bool_var = true), ...)
-				if (restriction instanceof VariableBooleanTerm) {
+				switch (restriction) {
+				case final VariableBooleanTerm varBoolTerm:
+					// and(..., bool_var, ...) = and(..., (bool_var = true), ...)
 					restrictions.set(j, new EqualsTerm(restriction, new TrueTerm()).simplify());
-					continue;
-				}
-
-				// and(..., (select array_bool_var _), ...) = and(..., ((select array_bool_var _) = true), ...)
-				if (restriction instanceof BooleanSelectTerm) {
+					break;
+				case final BooleanSelectTerm boolSelectTerm:
+					// and(..., (select array_bool_var _), ...) = and(..., ((select array_bool_var _) = true), ...)
 					restrictions.set(j, new EqualsTerm(restriction, new TrueTerm()).simplify());
-					continue;
-				}
-
-				if (restriction instanceof NotTerm) {
-					restriction = ((NotTerm) restriction).getSubTerms().get(0);
+					break;
+				case final NotTerm notTerm:
+					restriction = notTerm.getSubTerms().get(0);
 
 					// and(..., (not bool_var), ...) = and(..., (bool_var = false), ...)
 					if (restriction instanceof VariableBooleanTerm) {
@@ -156,6 +114,19 @@ public class TermNormalizer {
 						restrictions.set(j, new EqualsTerm(restriction, new FalseTerm()).simplify());
 						continue;
 					}
+					break;
+				// The comparison terms may have constructs like (1 + var_a) <= var_b that can be simplified to
+				// var_a < var_b
+				case final LessEqualTerm leqTerm:
+					break;
+				case final LessTerm lsTerm:
+					break;
+				case final GreaterEqualTerm geqTerm:
+					break;
+				case final GreaterTerm gtTerm:
+					break;
+				default:
+					break;
 				}
 			}
 
@@ -299,7 +270,10 @@ public class TermNormalizer {
 				}
 				return xorBracketed;
 			case SMTLIBConstants.EQUALS:
-				return getEqualsTerm(parameters);
+				return splitChained(parameters, (paramA, paramB) -> {
+					assert paramA.returnType == paramB.returnType;
+					return new EqualsTerm(paramA, paramB);
+				});
 			case SMTLIBConstants.DISTINCT:
 				return getDistinctTerm(parameters);
 			case SMTLIBConstants.ITE:
@@ -393,25 +367,33 @@ public class TermNormalizer {
 					assert parameter instanceof IntegerTerm;
 				}
 
-				return new LessTerm(castToIntTerm(parameters));
+				return splitChained(castToIntTerm(parameters), (paramA, paramB) -> {
+					return new LessTerm(paramA, paramB);
+				});
 			case SMTLIBConstants.LEQ: // chained
 				for (final ExecutionTerm parameter : parameters) {
 					assert parameter instanceof IntegerTerm;
 				}
 
-				return new LessEqualTerm(castToIntTerm(parameters));
+				return splitChained(castToIntTerm(parameters), (paramA, paramB) -> {
+					return new LessEqualTerm(paramA, paramB);
+				});
 			case SMTLIBConstants.GT: // chained
 				for (final ExecutionTerm parameter : parameters) {
 					assert parameter instanceof IntegerTerm;
 				}
 
-				return new GreaterTerm(castToIntTerm(parameters));
+				return splitChained(castToIntTerm(parameters), (paramA, paramB) -> {
+					return new GreaterTerm(paramA, paramB);
+				});
 			case SMTLIBConstants.GEQ: // chained
 				for (final ExecutionTerm parameter : parameters) {
 					assert parameter instanceof IntegerTerm;
 				}
 
-				return new GreaterEqualTerm(castToIntTerm(parameters));
+				return splitChained(castToIntTerm(parameters), (paramA, paramB) -> {
+					return new GreaterEqualTerm(paramA, paramB);
+				});
 
 			// TODO Bit Vecs
 			}
@@ -473,19 +455,19 @@ public class TermNormalizer {
 		return new AndTerm(inequals);
 	}
 
-	private static BooleanTerm getEqualsTerm(final ExecutionTerm[] parameters) {
-		final EqualsTerm[] equals = new EqualsTerm[parameters.length - 1];
+	public static <T> BooleanTerm splitChained(final T[] parameters, final BiFunction<T, T, BooleanTerm> convert) {
+		assert parameters.length > 1;
+		if (parameters.length == 2) {
+			return convert.apply(parameters[0], parameters[1]);
+		}
+
+		final BooleanTerm[] chainedPairs = new BooleanTerm[parameters.length - 1];
 
 		for (int i = 0; i < parameters.length - 1; i++) {
-			assert parameters[i].returnType == parameters[i + 1].returnType;
-			equals[i] = new EqualsTerm(parameters[i], parameters[i + 1]);
+			chainedPairs[i] = convert.apply(parameters[i], parameters[i + 1]);
 		}
 
-		if (parameters.length == 2) {
-			return equals[0];
-		}
-
-		return new AndTerm(equals);
+		return new AndTerm(chainedPairs);
 	}
 
 	/*

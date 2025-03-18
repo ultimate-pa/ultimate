@@ -5,8 +5,8 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
@@ -84,8 +84,8 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return Util.makeVariable(variableTerm.termvar);
+	public TermVariable toSMTTerm(final Theory theory) {
+		return Util.makeVariable(variableTerm.termvar, theory);
 	}
 
 	@Override

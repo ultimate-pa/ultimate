@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
@@ -15,9 +19,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 
 public class RNGChoice implements NonDeterministicChoice {
 	private int mSeed;
+	private final int mMinHavocInt;
+	private final int mMaxHavocInt;
+	private final IntegerDomain capDomain;
 
 	public RNGChoice(final int seed) {
 		mSeed = seed;
+
+		mMaxHavocInt = new RcpPreferenceProvider(Activator.PLUGIN_ID).getInt(MAX_INT_HAVOC_LABEL);
+		mMinHavocInt = new RcpPreferenceProvider(Activator.PLUGIN_ID).getInt(MIN_INT_HAVOC_LABEL);
+		capDomain = new IntegerDomain(new Interval(mMinHavocInt, mMaxHavocInt));
 	}
 
 	@Override
@@ -30,8 +41,17 @@ public class RNGChoice implements NonDeterministicChoice {
 		return edges.get((int) chooseElement(edges.size()));
 	}
 
+	private int capValue(final int value) {
+		return (Math.abs(xorShift()) % (mMaxHavocInt - mMinHavocInt + 1)) + mMinHavocInt;
+	}
+
 	@Override
-	public int havocInt(final VariableIntegerTerm variable, final IntegerDomain values) {
+	public int havocInt(final VariableIntegerTerm variable, IntegerDomain values) {
+		if (values == null || values.isEmpty()) {
+			return capValue(xorShift());
+		}
+
+		values = values.intersection(capDomain);
 		long index = chooseElement(values.getValueCount());
 
 		final ArrayList<Interval> intervals = values.getValues();
@@ -40,7 +60,7 @@ public class RNGChoice implements NonDeterministicChoice {
 			final float containedValues = interval.getValueCount();
 
 			if (containedValues >= index) {
-				return interval.getMin() + (int) index;
+				return (int) (interval.getMin() + index);
 			}
 
 			index -= containedValues;
@@ -52,11 +72,7 @@ public class RNGChoice implements NonDeterministicChoice {
 
 	@Override
 	public boolean havocBool(final VariableBooleanTerm variable, final BooleanDomain values) {
-		if (values.isEmpty()) {
-			assert false;
-			return false;
-		}
-		if (values.getValueCount() == 1) {
+		if (values != null && values.getValueCount() == 1) {
 			// can either only be true or only be false
 			return values.canBeTrue;
 		}
@@ -79,14 +95,14 @@ public class RNGChoice implements NonDeterministicChoice {
 		final long hashKey = array.variable.getVariableTerm().programVar.hashCode() + index.hashCode();
 		switch (array.valueType) {
 		case Array:
-			return newArray(array.variable, (ArrayDomain<?, ?>) array.variable.getDomain());
+			return newArray(array.variable, array.variable.getDomain());
 		case BitVector:
 			return havocBitVector(null, null);
 
 		case Boolean:
 			return 0 < hash(hashKey);
 		case Int:
-			return hash(hashKey);
+			return capValue((int) hash(hashKey));
 		}
 		return null;
 	}
@@ -136,4 +152,21 @@ public class RNGChoice implements NonDeterministicChoice {
 		mSeed = xorShift(mSeed);
 		return mSeed;
 	}
+
+	@Override
+	public UltimatePreferenceItemGroup getImplementationSettings() {
+		// TODO Auto-generated method stub
+		return new UltimatePreferenceItemGroup(getClass().getSimpleName(),
+				new UltimatePreferenceItem<>(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE, MAX_INT_HAVOC_HINT,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE, MIN_INT_HAVOC_HINT,
+						PreferenceType.Integer));
+	}
+
+	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";
+	public static String MAX_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
+			+ "\nHas to be more than the minimum option.";
+	public static String MIN_INT_HAVOC_LABEL = "Minimum havoc integer value";
+	public static String MIN_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
+			+ "\nHas to be less than the maximum option.";
 }

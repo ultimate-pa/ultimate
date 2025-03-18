@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -64,7 +65,7 @@ public class FalseTerm extends BooleanTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return Util.makeConstant(false, returnType);
+	public Term toSMTTerm(final Theory theory) {
+		return Util.makeTerm(mSymbol, theory);// return Util.makeConstant(false, returnType, theory);
 	}
 }

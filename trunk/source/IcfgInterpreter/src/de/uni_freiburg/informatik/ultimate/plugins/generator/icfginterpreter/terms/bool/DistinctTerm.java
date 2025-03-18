@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -111,8 +112,10 @@ public class DistinctTerm extends BooleanTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return Util.makeTerm(mSymbol, mA.toSMTTerm(), mB.toSMTTerm());
+	public Term toSMTTerm(final Theory theory) {
+		return new NotTerm(new EqualsTerm(mA, mB)).toSMTTerm(theory);
+
+		// return Util.makeTerm(mSymbol, theory, mA.toSMTTerm(theory), mB.toSMTTerm(theory));
 	}
 
 	/*
@@ -129,6 +132,6 @@ public class DistinctTerm extends BooleanTerm {
 		final Object aValue = mA.evaluate(state);
 		final Object bValue = mB.evaluate(state);
 
-		return aValue == bValue;
+		return aValue != bValue;
 	}
 }

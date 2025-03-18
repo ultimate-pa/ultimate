@@ -4,16 +4,20 @@ import java.math.BigInteger;
 
 public class BitVector {
 	/** The number of bits of the BitVector. */
-	protected final int m;
-	protected final BigInteger value;
-	protected final BigInteger bitMask; // has 1 at every bit for the length first bits
+	protected final int mLength;
+	protected final BigInteger mValue;
+	protected final BigInteger mBitMask; // has 1 at every bit for the length first bits
 
-	public BitVector(final int mLength, final BigInteger mValue) {
-		assert mLength > 0;
-		m = mLength;
-		bitMask = BigInteger.ONE.shiftLeft(m).subtract(BigInteger.ONE);
-		value = mValue.and(bitMask);
-		assert value.compareTo(BigInteger.ZERO) >= 0;
+	public BitVector(final int length, final BigInteger value) {
+		this(length, value, BigInteger.ONE.shiftLeft(length).subtract(BigInteger.ONE));
+	}
+
+	private BitVector(final int length, final BigInteger value, final BigInteger bitMask) {
+		assert length > 0;
+		mLength = length;
+		mBitMask = bitMask;
+		mValue = value.and(mBitMask);
+		assert mValue.compareTo(BigInteger.ZERO) >= 0;
 	}
 
 	protected static String pad(final String str, final int spaces, final char symbol) {
@@ -24,22 +28,27 @@ public class BitVector {
 		return str;
 	}
 
+	@Override
+	public String toString() {
+		return "BitVector[" + mLength + "] " + valueString();
+	}
+
 	public String valueString() {
-		final String fullString = value.toString(2);
+		final String fullString = mValue.toString(2);
 		final int stringLength = fullString.length();
-		if (m < stringLength) {
-			return fullString.substring(stringLength - m);
+		if (mLength < stringLength) {
+			return fullString.substring(stringLength - mLength);
 		}
-		return pad(fullString, m, '0');
+		return pad(fullString, mLength, '0');
 	}
 
 	public BitVector concat(final BitVector b) {
-		return new BitVector(m + b.m, value.shiftLeft(m).add(b.value));
+		return new BitVector(mLength + b.mLength, mValue.shiftLeft(mLength).add(b.mValue));
 	}
 
 	public BitVector extract(final int i, final int j) {
-		assert m > i && i >= j && j >= 0;
-		return new BitVector(i - j + 1, value.shiftRight(j));
+		assert mLength > i && i >= j && j >= 0;
+		return new BitVector(i - j + 1, mValue.shiftRight(j));
 	}
 
 	/**
@@ -47,8 +56,8 @@ public class BitVector {
 	 */
 	public BigInteger bv2nat() {
 		final BigInteger out = BigInteger.ZERO;
-		for (int i = 0; i < m; i++) {
-			if (value.testBit(i)) {
+		for (int i = 0; i < mLength; i++) {
+			if (mValue.testBit(i)) {
 				out.add(BigInteger.ONE.shiftLeft(i));
 			}
 		}
@@ -59,8 +68,8 @@ public class BitVector {
 	 * bv2int(b) := if (b[m-1] = 1) then (bv2nat(b) - 2^m) else (bv2nat(b))
 	 */
 	public BigInteger bv2int() {
-		if (value.testBit(m - 1)) {
-			return bv2nat().subtract(BigInteger.ONE.shiftLeft(m));
+		if (mValue.testBit(mLength - 1)) {
+			return bv2nat().subtract(BigInteger.ONE.shiftLeft(mLength));
 		}
 		return bv2nat();
 	}
@@ -93,38 +102,38 @@ public class BitVector {
 	}
 
 	public BitVector bvnot() {
-		return new BitVector(m, value.not());
+		return new BitVector(mLength, mValue.not(), mBitMask);
 	}
 
 	public BitVector bvand(final BitVector b) {
-		assert m == b.m;
-		return new BitVector(m, value.and(b.value));
+		assert mLength == b.mLength;
+		return new BitVector(mLength, mValue.and(b.mValue), mBitMask);
 	}
 
 	public BitVector bvor(final BitVector b) {
-		assert m == b.m;
-		return new BitVector(m, value.or(b.value));
+		assert mLength == b.mLength;
+		return new BitVector(mLength, mValue.or(b.mValue), mBitMask);
 	}
 
 	/**
 	 * [[(bvneg s)]] := nat2bv[m](2^m - bv2nat([[s]]))
 	 */
 	public BitVector bvneg() {
-		return nat2bv(m, BigInteger.ONE.shiftLeft(m).subtract(bv2nat()));
+		return nat2bv(mLength, BigInteger.ONE.shiftLeft(mLength).subtract(bv2nat()));
 	}
 
 	/**
 	 * [[(bvadd s t)]] := nat2bv[m](bv2nat([[s]]) + bv2nat([[t]]))
 	 */
 	public BitVector bvadd(final BitVector t) {
-		return nat2bv(m, bv2nat().add(t.bv2nat()));
+		return nat2bv(mLength, bv2nat().add(t.bv2nat()));
 	}
 
 	/**
 	 * [[(bvmul s t)]] := nat2bv[m](bv2nat([[s]]) * bv2nat([[t]]))
 	 */
 	public BitVector bvmul(final BitVector t) {
-		return nat2bv(m, bv2nat().multiply(t.bv2nat()));
+		return nat2bv(mLength, bv2nat().multiply(t.bv2nat()));
 	}
 
 	/**
@@ -138,9 +147,9 @@ public class BitVector {
 	public BitVector bvudiv(final BitVector t) {
 		if (t.bv2nat().equals(BigInteger.ZERO)) {
 			// returns BitVector of value 2^m-1, or 1 at all positions (max value)
-			return new BitVector(m, BigInteger.ONE.shiftLeft(m).subtract(BigInteger.ONE));
+			return new BitVector(mLength, BigInteger.ONE.shiftLeft(mLength).subtract(BigInteger.ONE));
 		}
-		return nat2bv(m, bv2nat().divide(t.bv2nat()));
+		return nat2bv(mLength, bv2nat().divide(t.bv2nat()));
 	}
 
 	/**
@@ -156,7 +165,7 @@ public class BitVector {
 			// returns self
 			return this;
 		}
-		return nat2bv(m, bv2nat().remainder(t.bv2nat()));
+		return nat2bv(mLength, bv2nat().remainder(t.bv2nat()));
 	}
 
 	protected static final BigInteger maxBigInt = BigInteger.valueOf(Integer.MAX_VALUE);
@@ -168,9 +177,9 @@ public class BitVector {
 		final BigInteger shiftBy = t.bv2nat();
 		if (maxBigInt.compareTo(shiftBy) < 0) {
 			// shift by more than max length => all zero
-			return new BitVector(m, BigInteger.ZERO);
+			return new BitVector(mLength, BigInteger.ZERO);
 		}
-		return nat2bv(m, bv2nat().shiftLeft(shiftBy.intValue()));
+		return nat2bv(mLength, bv2nat().shiftLeft(shiftBy.intValue()));
 	}
 
 	/**
@@ -180,9 +189,9 @@ public class BitVector {
 		final BigInteger shiftBy = t.bv2nat();
 		if (maxBigInt.compareTo(shiftBy) < 0) {
 			// shift by more than max length => all zero
-			return new BitVector(m, BigInteger.ZERO);
+			return new BitVector(mLength, BigInteger.ZERO);
 		}
-		return nat2bv(m, bv2nat().shiftRight(shiftBy.intValue()));
+		return nat2bv(mLength, bv2nat().shiftRight(shiftBy.intValue()));
 	}
 
 	/**
@@ -193,89 +202,88 @@ public class BitVector {
 	}
 
 	@Override
-	public String toString() {
-		return "BitVector[" + m + "] " + valueString();
-	}
-
-	@Override
 	public boolean equals(final Object b) {
 		if (!(b instanceof BitVector)) {
 			return false;
 		}
 		final BitVector mBV = (BitVector) b;
-		return m == mBV.m && value == mBV.value;
+		return mLength == mBV.mLength && mValue == mBV.mValue;
 	}
 
 	@SuppressWarnings("static-method")
-	public BitVector newInstance(final int mLength, final BigInteger mValue) {
-		return new BitVector(mLength, mValue);
+	public BitVector newInstance(final int length, final BigInteger value) {
+		return new BitVector(length, value);
 	}
 
 	/**
 	 * Implementation that is less faithful to the SMT-LIB definitions.
 	 */
 	static class FastBitVector extends BitVector {
-		public FastBitVector(final int mLength, final BigInteger mValue) {
-			super(mLength, mValue);
+		public FastBitVector(final int length, final BigInteger value) {
+			super(length, value);
+		}
+
+		private FastBitVector(final int length, final BigInteger value, final BigInteger bitMask) {
+			super(length, value, bitMask);
 		}
 
 		@Override
 		public BitVector concat(final BitVector b) {
-			return new FastBitVector(m + b.m, value.shiftLeft(m).add(b.value));
+			return new FastBitVector(mLength + b.mLength, mValue.shiftLeft(mLength).add(b.mValue));
 		}
 
 		@Override
 		public BitVector extract(final int i, final int j) {
-			assert m > i && i >= j && j >= 0;
-			return new FastBitVector(i - j + 1, value.shiftRight(j));
+			assert mLength > i && i >= j && j >= 0;
+			return new FastBitVector(i - j + 1, mValue.shiftRight(j));
 		}
 
 		@Override
 		public FastBitVector bvnot() {
-			return new FastBitVector(m, value.not());
+			return new FastBitVector(mLength, mValue.not(), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvand(final BitVector b) {
-			assert m == b.m;
-			return new FastBitVector(m, value.and(b.value));
+			assert mLength == b.mLength;
+			return new FastBitVector(mLength, mValue.and(b.mValue), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvor(final BitVector b) {
-			assert m == b.m;
-			return new FastBitVector(m, value.or(b.value));
+			assert mLength == b.mLength;
+			return new FastBitVector(mLength, mValue.or(b.mValue), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvneg() {
-			return new FastBitVector(m, value.not().add(BigInteger.ONE));
+			return new FastBitVector(mLength, mValue.not().add(BigInteger.ONE), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvadd(final BitVector t) {
-			return new FastBitVector(m, value.add(t.value));
+			return new FastBitVector(mLength, mValue.add(t.mValue), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvmul(final BitVector t) {
-			return new FastBitVector(m, value.multiply(t.value));
+			return new FastBitVector(mLength, mValue.multiply(t.mValue), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvudiv(final BitVector t) {
-			if (t.value.equals(BigInteger.ZERO)) {
-				return new FastBitVector(m, BigInteger.ONE.shiftLeft(m).subtract(BigInteger.ONE));
+			if (t.mValue.equals(BigInteger.ZERO)) {
+				return new FastBitVector(mLength, BigInteger.ONE.shiftLeft(mLength).subtract(BigInteger.ONE), mBitMask);
 			}
-			return new FastBitVector(m, value.divide(t.value));
+			return new FastBitVector(mLength, mValue.divide(t.mValue), mBitMask);
 		}
 
 		@Override
 		public FastBitVector bvurem(final BitVector t) {
-			if (t.value.equals(BigInteger.ZERO)) {
+			if (t.mValue.equals(BigInteger.ZERO)) {
 				return this;
 			}
-			return new FastBitVector(m, value.remainder(t.value));
+			return new FastBitVector(mLength, mValue.remainder(t.mValue), mBitMask);
 		}
 
 		@Override
@@ -283,9 +291,9 @@ public class BitVector {
 			final BigInteger shiftBy = t.bv2nat();
 			if (maxBigInt.compareTo(shiftBy) < 0) {
 				// shift by more than max length => all zero
-				return new FastBitVector(m, BigInteger.ZERO);
+				return new FastBitVector(mLength, BigInteger.ZERO);
 			}
-			return new FastBitVector(m, value.shiftLeft(t.value.intValue()));
+			return new FastBitVector(mLength, mValue.shiftLeft(t.mValue.intValue()), mBitMask);
 		}
 
 		@Override
@@ -293,19 +301,19 @@ public class BitVector {
 			final BigInteger shiftBy = t.bv2nat();
 			if (maxBigInt.compareTo(shiftBy) < 0) {
 				// shift by more than max length => all zero
-				return new FastBitVector(m, BigInteger.ZERO);
+				return new FastBitVector(mLength, BigInteger.ZERO);
 			}
-			return new FastBitVector(m, value.shiftRight(t.value.intValue()));
+			return new FastBitVector(mLength, mValue.shiftRight(t.mValue.intValue()), mBitMask);
 		}
 
 		@Override
 		public boolean bvult(final BitVector t) {
-			return value.compareTo(t.value) < 0;
+			return mValue.compareTo(t.mValue) < 0;
 		}
 
 		@Override
-		public BitVector newInstance(final int mLength, final BigInteger mValue) {
-			return new FastBitVector(mLength, mValue);
+		public BitVector newInstance(final int length, final BigInteger value) {
+			return new FastBitVector(length, value);
 		}
 
 		@Override

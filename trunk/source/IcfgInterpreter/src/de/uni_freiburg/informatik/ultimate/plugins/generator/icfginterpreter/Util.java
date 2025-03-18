@@ -14,7 +14,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -107,6 +106,32 @@ public class Util {
 		return out;
 	}
 
+	/**
+	 * Maps each object from some array to a pair of objects and stores them in the provided map.
+	 *
+	 * @param <T>      The type of object that is stored in the given input array
+	 * @param <R>      The type of object that is used as a key in the output map
+	 * @param <S>      The type of object that is used as a value in the output map
+	 * @param <U>      The type of map that will be returned
+	 * @param elements A {@link Collection} of elements of type <strong>&lt;T&gt;</strong>
+	 * @param mapping  A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an
+	 *                 {@link Entry}<strong>&lt;R,S&gt;</strong>
+	 * @param out      A {@link Map}<strong>&lt;R,S&gt;</strong> that the mappings are stored in. Previous contents are
+	 *                 removed.
+	 * @return The same {@link Map}<strong>&lt;R,S&gt;</strong> that was given as the <strong>out</strong> parameter
+	 */
+	public static <T, R, S, U extends Map<R, S>> U map(final T[] elements, final Function<T, Entry<R, S>> mapping,
+			final U out) {
+		out.clear();
+
+		for (final T element : elements) {
+			final Entry<R, S> entry = mapping.apply(element);
+			out.put(entry.getKey(), entry.getValue());
+		}
+
+		return out;
+	}
+
 	public static <T> ArrayList<T> filter(final List<T> elements, final Predicate<T> isIncluded) {
 		final ArrayList<T> out = new ArrayList<>();
 
@@ -133,10 +158,19 @@ public class Util {
 		return out;
 	}
 
+	public static <T> boolean any(final Collection<T> elements, final Predicate<T> condition) {
+		for (final T element : elements) {
+			if (condition.test(element)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/* Quantifier-free Arrays, Bit-Vectors, and integer maths */
-	private final static Theory theory = new Theory(Logics.QF_AUFBVLIA);
-	private final static Sort booleanSort = theory.getBooleanSort();
-	private final static Sort integerSort = theory.getNumericSort();
+	// private static Theory mTheory;// = new Theory(Logics.AUFBVDTNIA);// QF_AUFBVLIA);
+	// private final static Sort booleanSort = theory.getBooleanSort();
+	// private final static Sort integerSort = theory.getNumericSort();
 	/**
 	 * The generic array sorts by
 	 */
@@ -146,52 +180,52 @@ public class Util {
 	 * public static Theory getTheory() { return theory; }
 	 */
 
-	public static FunctionSymbol makeFunction(final String symbol, final Term... params) {
+	public static FunctionSymbol makeFunction(final String symbol, final Theory theory, final Term... params) {
 		final Sort[] sorts = new Sort[params.length];
 		for (int i = 0; i < params.length; i++) {
 			final Sort specificSort = params[i].getSort().getRealSort();
 			// sorts must be same instance for functionSymbol
-			sorts[i] = getGenericSort(specificSort);
+			sorts[i] = getGenericSort(specificSort, theory);
 		}
 		// sorts[params.length] = resultSort;
 
 		return theory.getFunctionWithResult(symbol, null, null, sorts);
 	}
 
-	public static Term makeConstant(final Object value, final ReturnType type) {
-		return makeConstant(value, getSort(type));
+	public static Term makeConstant(final Object value, final ReturnType type, final Theory theory) {
+		return makeConstant(value, getSort(type, theory), theory);
 	}
 
-	public static Term makeConstant(final Object value, final Sort type) {
-		return theory.constant(value, getGenericSort(type));
+	public static Term makeConstant(final Object value, final Sort type, final Theory theory) {
+		return theory.constant(value, getGenericSort(type, theory));
 	}
 
-	public static TermVariable makeVariable(final TermVariable term) {
-		return makeVariable(term.getName(), term.getSort());
+	public static TermVariable makeVariable(final TermVariable term, final Theory theory) {
+		return makeVariable(term.getName(), term.getSort(), theory);
 	}
 
-	public static TermVariable makeVariable(final String name, final Sort sort) {
-		return theory.createTermVariable(name, getGenericSort(sort));
+	public static TermVariable makeVariable(final String name, final Sort sort, final Theory theory) {
+		return theory.createTermVariable(name, getGenericSort(sort, theory));
 	}
 
-	public static Term makeTerm(final String symbol, final Term... params) {
-		final FunctionSymbol function = makeFunction(symbol, params);
+	public static Term makeTerm(final String symbol, final Theory theory, final Term... params) {
+		final FunctionSymbol function = makeFunction(symbol, theory, params);
 		return theory.term(function, params);
 	}
 
-	public static Sort getSort(final ReturnType type) {
-		return getSort(type, new Sort[0]);
+	public static Sort getSort(final ReturnType type, final Theory theory) {
+		return getSort(type, theory, new Sort[0]);
 	}
 
-	public static Sort getSort(final ReturnType type, final Sort... args) {
+	public static Sort getSort(final ReturnType type, final Theory theory, final Sort... args) {
 		switch (type) {
 		case Boolean:
-			return booleanSort;
+			return theory.getBooleanSort();// booleanSort;
 		case Int:
-			return integerSort;
+			return theory.getNumericSort();// integerSort;
 		case Array:
 			assert args.length == 2;
-			final Sort[] argsGeneric = { getGenericSort(args[0]), getGenericSort(args[1]) };
+			final Sort[] argsGeneric = { getGenericSort(args[0], theory), getGenericSort(args[1], theory) };
 
 			Sort arraySort = arraySorts.getOrDefault(argsGeneric, null);
 			if (arraySort == null) {
@@ -206,18 +240,18 @@ public class Util {
 		return null;
 	}
 
-	private static Sort getGenericSort(final Sort sort) {
+	private static Sort getGenericSort(final Sort sort, final Theory theory) {
 		switch (sort.getName()) {
 		case SMTLIBConstants.INT:
-			return integerSort;
+			return theory.getNumericSort();// integerSort;
 		case SMTLIBConstants.BOOL:
-			return booleanSort;
+			return theory.getBooleanSort();// booleanSort;
 		case SMTLIBConstants.BITVEC:
 			break; // TODO
 		case SMTLIBConstants.ARRAY:
 			final Sort[] args = new Sort[2];
-			args[0] = getGenericSort(sort.getArguments()[0]);
-			args[1] = getGenericSort(sort.getArguments()[1]);
+			args[0] = getGenericSort(sort.getArguments()[0], theory);
+			args[1] = getGenericSort(sort.getArguments()[1], theory);
 			Sort arraySort = arraySorts.getOrDefault(args, null);
 			if (arraySort == null) {
 				arraySort = theory.getSort(SMTLIBConstants.ARRAY, args);

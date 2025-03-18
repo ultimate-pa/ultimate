@@ -6,6 +6,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -85,8 +86,8 @@ public class XorTerm extends BooleanTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return Util.makeTerm(mSymbol, A.toSMTTerm(), B.toSMTTerm());
+	public Term toSMTTerm(final Theory theory) {
+		return Util.makeTerm(mSymbol, theory, A.toSMTTerm(theory), B.toSMTTerm(theory));
 	}
 
 	/*

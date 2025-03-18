@@ -5,8 +5,8 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
@@ -88,8 +88,8 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return Util.makeVariable(variableTerm.termvar);
+	public TermVariable toSMTTerm(final Theory theory) {
+		return Util.makeVariable(variableTerm.termvar, theory);
 	}
 
 	@Override

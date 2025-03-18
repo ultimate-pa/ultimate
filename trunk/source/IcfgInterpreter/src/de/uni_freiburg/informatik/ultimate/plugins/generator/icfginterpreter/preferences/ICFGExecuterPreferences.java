@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
@@ -20,18 +21,35 @@ public class ICFGExecuterPreferences extends UltimatePreferenceInitializer {
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		final NonDeterministicChoice[] interfaces = Settings.getSettings().getInterfaces();
+		final UltimatePreferenceItemGroup[] subPrefs = new UltimatePreferenceItemGroup[interfaces.length];
 		final String[] names = new String[interfaces.length];
+
 		for (int i = 0; i < interfaces.length; i++) {
 			names[i] = interfaces[i].getClass().getSimpleName();
+			subPrefs[i] = interfaces[i].getImplementationSettings();
 		}
 
-		final BaseUltimatePreferenceItem[] prefs = {
+		final BaseUltimatePreferenceItem[] mainPrefs = {
 				new UltimatePreferenceItem<>(PROJECT_DIRECTORY_LABEL, projectDirectory.getAbsolutePath(),
 						PROJECT_DIRECTORY_HINT, PreferenceType.Directory),
 				new UltimatePreferenceItem<>(NDC_IMLPEMENTATIONS_LABEL, interfaces[0], NDC_IMLPEMENTATIONS_HINT,
-						PreferenceType.Radio, names) };
+						PreferenceType.Radio, names),
+				// ADD NEW SETTINGS HERE
+				new UltimatePreferenceItem<>("Non-Deterministic Interface specific settings:", null,
+						PreferenceType.Label) };
 
-		return prefs;
+		final BaseUltimatePreferenceItem[] allPrefs = new BaseUltimatePreferenceItem[mainPrefs.length
+				+ subPrefs.length];
+
+		for (int i = 0; i < mainPrefs.length; i++) {
+			allPrefs[i] = mainPrefs[i];
+		}
+
+		for (int i = 0; i < subPrefs.length; i++) {
+			allPrefs[i + mainPrefs.length] = subPrefs[i];
+		}
+
+		return allPrefs;
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
@@ -43,7 +61,7 @@ public class ICFGExecuterPreferences extends UltimatePreferenceInitializer {
 
 	/**
 	 * @return The file pointing to the base directory of this plug-in: <br>
-	 *         Like .../ultimate/trunk/source/CFGExecuter/
+	 *         Like .../ultimate/trunk/source/IcfgInterpreter/
 	 */
 	public static File getProjectSourceDirectory() {
 		return projectDirectory;
@@ -52,6 +70,6 @@ public class ICFGExecuterPreferences extends UltimatePreferenceInitializer {
 	public static String PROJECT_DIRECTORY_LABEL = "Ultimate directory";
 	public static String PROJECT_DIRECTORY_HINT = "Path of directory which contains the /ultimate/ directory";
 
-	public static String NDC_IMLPEMENTATIONS_LABEL = "Non-Deterministic implementations";
+	public static String NDC_IMLPEMENTATIONS_LABEL = "Non-Deterministic Interface implementations:";
 	public static String NDC_IMLPEMENTATIONS_HINT = "Class to use for methods like havoc.";
 }

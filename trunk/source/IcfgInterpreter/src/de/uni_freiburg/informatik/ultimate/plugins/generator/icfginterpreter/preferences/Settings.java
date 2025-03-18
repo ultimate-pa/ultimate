@@ -20,7 +20,8 @@ public class Settings {
 	}
 
 	private Settings() {
-		final String[] datas = {}; // TODO load stored implementations
+		// TODO load stored implementations
+		final String[] datas = {};
 		interfaceSet = new NonDeterministicChoice[datas.length + 1];
 		interfaceSet[0] = new RNGChoice(0);
 
@@ -35,22 +36,15 @@ public class Settings {
 				e.printStackTrace();
 			}
 		}
+		// TODO query settings for selected interface
+		ndc = interfaceSet[0];
 	}
 
 	public void storeNDCInterface(final LoadedClass implementation) {
-		// interfaceSet.add(implementation.getClassObject());
-		// String data = implementation.encodeClassData();
-		// TODO store
-		// add name to file that keeps track of all external implementations
-		// add file with data needed to recreate the class later, by either re-compiling or using existing .class file
-		// do not overwrite external file, instead:
-		// 1. Make temp file to write to
-		// 2. Copy contents to original File
-		// 3. Delete temp
-		// Should something go wrong, either the temp or original should be valid
+		// TODO store implementation
 	}
 
-	private NonDeterministicChoice ndc;
+	private final NonDeterministicChoice ndc;
 
 	public NonDeterministicChoice getNDC() {
 		// final IPreferenceProvider preferences =

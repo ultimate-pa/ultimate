@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
@@ -79,8 +80,8 @@ public class SelectTerm {
 		return null;
 	}
 
-	public Term toSMTTerm() {
-		return Util.makeTerm(mSymbol, array.toSMTTerm(), index.toSMTTerm());
+	public Term toSMTTerm(final Theory theory) {
+		return Util.makeTerm(mSymbol, theory, array.toSMTTerm(theory), index.toSMTTerm(theory));
 	}
 
 	/*

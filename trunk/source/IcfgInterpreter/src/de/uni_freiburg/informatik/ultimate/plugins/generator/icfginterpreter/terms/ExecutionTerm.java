@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -37,7 +38,7 @@ public abstract class ExecutionTerm {
 		mSymbol = symbol;
 	}
 
-	public abstract Term toSMTTerm();
+	public abstract Term toSMTTerm(Theory theory);
 
 	public abstract ExecutionTerm simplify();
 

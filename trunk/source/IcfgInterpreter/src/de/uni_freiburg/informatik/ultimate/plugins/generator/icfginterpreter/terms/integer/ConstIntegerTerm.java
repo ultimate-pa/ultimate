@@ -3,8 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
@@ -28,7 +30,7 @@ public class ConstIntegerTerm extends IntegerTerm {
 
 	@Override
 	public IntegerTerm negate() {
-		return new NegationTerm(this);
+		return new ConstIntegerTerm(-value);
 	}
 
 	@Override
@@ -55,6 +57,10 @@ public class ConstIntegerTerm extends IntegerTerm {
 		return 19 * 31 + value;
 	}
 
+	public int getValue() {
+		return value;
+	}
+
 	/*
 	 * @Override public IntegerDomain evaluate(final HashMap<Variable<?>, Domain<?>> variableDomains) { return new
 	 * IntegerDomain(new Interval(value, value)); }
@@ -66,8 +72,8 @@ public class ConstIntegerTerm extends IntegerTerm {
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		return Util.makeConstant(value, returnType);
+	public Term toSMTTerm(final Theory theory) {
+		return Util.makeConstant(Rational.valueOf(value, 1L), returnType, theory);
 	}
 
 	@Override

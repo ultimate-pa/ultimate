@@ -5,6 +5,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -12,63 +13,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 /**
- * Represents the binary function "X < Y < Z ..."
+ * Represents the binary function "X < Y"
  */
 public class LessTerm extends BooleanTerm {
-	private final IntegerTerm[] subTerms;
+	private final IntegerTerm mX, mY;
 
-	public LessTerm(final IntegerTerm... mSubTerms) {
+	public LessTerm(final IntegerTerm X, final IntegerTerm Y) {
 		super(SMTLIBConstants.LT);
-		subTerms = mSubTerms;
+		mX = X;
+		mY = Y;
 	}
 
 	/**
-	 * Returns "X < Y < Z ..." with arguments simplified
+	 * Returns "X < Y" with arguments simplified
 	 */
 	@Override
 	public LessTerm simplify() {
-		final IntegerTerm[] mSubTerms = subTerms.clone();
-
-		for (int i = 0; i < subTerms.length; i++) {
-			mSubTerms[i] = subTerms[i].simplify();
-		}
-
-		return new LessTerm(mSubTerms);
+		return new LessTerm(mX.simplify(), mY.simplify());
 	}
 
 	/**
-	 * Returns "Z <= Y or Y <= X ..."
+	 * Returns "Y <= X"
 	 */
 	@Override
-	public BooleanTerm negate() {
-		if (subTerms.length == 2) {
-			return new LessEqualTerm(subTerms[1], subTerms[0]);
-		}
-
-		final LessEqualTerm[] pairs = new LessEqualTerm[subTerms.length - 1];
-
-		final int reverseIndex = pairs.length - 1;
-		for (int i = subTerms.length - 1; i > 0; i--) {
-			pairs[reverseIndex - i] = new LessEqualTerm(subTerms[i], subTerms[i - 1]);
-		}
-
-		return new OrTerm(pairs);
+	public LessEqualTerm negate() {
+		return new LessEqualTerm(mY, mX);
 	}
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return Util.toList(subTerms);
+		return Util.toList(mX, mY);
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(");
 
-		subTerms[0].toString(out, 0);
-		for (int i = 1; i < subTerms.length; i++) {
-			out.append(" < ");
-			subTerms[i].toString(out, 0);
-		}
+		mX.toString(out, 0);
+		out.append(" < ");
+		mY.toString(out, 0);
 
 		return out.append(")");
 	}
@@ -78,39 +61,28 @@ public class LessTerm extends BooleanTerm {
 		if (!(b instanceof LessTerm)) {
 			return false;
 		}
-		final LessTerm castB = ((LessTerm) b).simplify();
+		final LessTerm castB = (LessTerm) b;
 
-		final ArrayList<IntegerTerm> subTermsA = simplify().getSubTerms();
-		final ArrayList<IntegerTerm> subTermsB = castB.getSubTerms();
-
-		return subTermsA.equals(subTermsB);
+		return mX.equals(castB.mX) && mY.equals(castB.mY);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = 53;
-		for (final IntegerTerm subTerm : subTerms) {
-			result = result * 31 + subTerm.hashCode();
-		}
-		return result;
+		final int result = 53 * 31 + mX.hashCode();
+		return result * 31 + mY.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = subTerms[0].getVariables();
-		for (int i = 1; i < subTerms.length; i++) {
-			out.addAll(subTerms[i].getVariables());
-		}
+		final HashSet<Variable> out = mX.getVariables();
+		out.addAll(mY.getVariables());
+
 		return out;
 	}
 
 	@Override
-	public Term toSMTTerm() {
-		final Term[] parameters = new Term[subTerms.length];
-		for (int i = 0; i < subTerms.length; i++) {
-			parameters[i] = subTerms[i].toSMTTerm();
-		}
-		return Util.makeTerm(mSymbol, parameters);
+	public Term toSMTTerm(final Theory theory) {
+		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory), mY.toSMTTerm(theory));
 	}
 
 	/*
@@ -124,17 +96,6 @@ public class LessTerm extends BooleanTerm {
 
 	@Override
 	public Boolean evaluate(final ProgramState state) {
-		Integer evaluatedA = subTerms[0].evaluate(state);
-		Integer evaluatedB;
-
-		for (int i = 1; i < subTerms.length; i++) {
-			evaluatedB = subTerms[i].evaluate(state);
-			if (evaluatedA >= evaluatedB) {
-				return false;
-			}
-			evaluatedA = evaluatedB;
-		}
-
-		return true;
+		return mX.evaluate(state) < mY.evaluate(state);
 	}
 }
