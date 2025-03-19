@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 /**
@@ -69,8 +70,9 @@ public interface IProofProducer<PROGRAM, PROOF extends IProof> {
 	 *             If not all the necessary information to compute the proof is available.
 	 *
 	 * @return the computed proof artifact, if successful. If unsuccessful, an exception is thrown.
+	 * @throws AutomataOperationCanceledException
 	 */
-	PROOF getOrComputeProof();
+	PROOF getOrComputeProof() throws AutomataOperationCanceledException;
 
 	IStatisticsDataProvider getStatistics();
 }

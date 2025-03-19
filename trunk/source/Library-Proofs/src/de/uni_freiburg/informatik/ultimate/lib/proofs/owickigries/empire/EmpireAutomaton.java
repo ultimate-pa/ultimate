@@ -74,8 +74,8 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public VpAlphabet<Transition<L, P>> getVpAlphabet() {
-		// TODO Auto-generated method stub
-		return null;
+		final var transitions = mNet.getTransitions();
+		return new VpAlphabet<>(transitions);
 	}
 
 	@Override
@@ -90,8 +90,10 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public boolean isInitial(final State<L, P> state) {
-		// TODO Auto-generated method stub
-		return false;
+		final var initialStates = getInitialStates();
+		final Set<State<L, P>> initialState = new HashSet<>();
+		initialStates.forEach(initialState::add);
+		return initialState.contains(state);
 	}
 
 	@Override

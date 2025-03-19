@@ -17,7 +17,7 @@ public interface IEmpireAutomaton<L, P, S> extends INwaOutgoingLetterAndTransiti
 
 	@Override
 	default IStateFactory<S> getStateFactory() {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 	@Override

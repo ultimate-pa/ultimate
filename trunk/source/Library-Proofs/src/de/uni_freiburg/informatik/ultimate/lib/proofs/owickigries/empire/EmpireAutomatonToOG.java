@@ -112,9 +112,9 @@ public class EmpireAutomatonToOG<L, P> {
 		mManagedScript.lock(this);
 		try {
 			final TermVariable tVar =
-					mManagedScript.constructFreshTermVariable(GHOST, SmtSortUtils.getBoolSort(mManagedScript));
+					mManagedScript.constructFreshTermVariable(GHOST, SmtSortUtils.getIntSort(mManagedScript));
 			final IProgramVar pVar = ProgramVarUtils.constructGlobalProgramVarPair(tVar.getName(),
-					SmtSortUtils.getBoolSort(mManagedScript), mManagedScript, this);
+					SmtSortUtils.getIntSort(mManagedScript), mManagedScript, this);
 			mSymbolTable.add(pVar);
 			ghostVars.put(GHOST, pVar);
 			return ghostVars;
@@ -132,7 +132,8 @@ public class EmpireAutomatonToOG<L, P> {
 			final var states = mEmpireAutomaton.getStates().stream().filter(s -> s.territory().containsPlace(P))
 					.collect(Collectors.toList());
 			final var formula = mFactory.or(states.stream()
-					.map(s -> mFactory.and(mFactory.newPredicate(mGhostVariables.get(s).getTerm()), s.law()))
+					.map(s -> mFactory.and(mFactory.newPredicate(mScript.term(SMTLIBConstants.EQUALS,
+							mGhostVariables.get(GHOST).getTerm(), mStateTerms.get(s))), s.law()))
 					.collect(Collectors.toSet()));
 			formulaMap.put(P, formula);
 		}
@@ -173,11 +174,15 @@ public class EmpireAutomatonToOG<L, P> {
 		if (enablingStates.isEmpty()) {
 			return null;
 		}
-		final var pairs = enablingStates.stream()
-				.map(s -> new Pair<>(s, DataStructureUtils
-						.getOneAndOnly(mEmpireAutomaton.internalSuccessors(s, transition), "transition successor")
-						.getSucc()))
-				.collect(Collectors.toSet());
+		final var pairs = new HashSet<Pair<State<L, P>, State<L, P>>>();
+		for (final State<L, P> state : enablingStates) {
+			final var successors = mEmpireAutomaton.internalSuccessors(state, transition).iterator();
+			if (successors.hasNext()) {
+				final var succ = successors.next();
+				pairs.add(new Pair<>(state, succ.getSucc()));
+			}
+			assert !successors.hasNext() : "More than one successors in automaton for a transition";
+		}
 		final var noUpdates = pairs.stream().allMatch(s -> s.getFirst().equals(s.getSecond()));
 		if (noUpdates) {
 			return null;
