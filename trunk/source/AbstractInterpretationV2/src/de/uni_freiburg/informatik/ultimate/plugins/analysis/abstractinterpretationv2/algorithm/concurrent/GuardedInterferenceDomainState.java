@@ -25,8 +25,8 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 		mThreadInstanceCounter = new ThreadInstanceCounter(threadcounter);
 	}
 
-	public GuardedInterferenceDomainState(final IAbstractDomain<STATE, ACTION> underlying, final Collection<STATE> states,
-			final ThreadInstanceCounter threadcounter) {
+	public GuardedInterferenceDomainState(final IAbstractDomain<STATE, ACTION> underlying,
+			final Collection<STATE> states, final ThreadInstanceCounter threadcounter) {
 		mUnderlying = underlying;
 		STATE unionState = null;
 		// TODO:Maybe use disjunctiveabstractstate instead?
@@ -47,18 +47,18 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 		mThreadInstanceCounter = new ThreadInstanceCounter(threadcounter);
 	}
 
-	public STATE getStateCopy() {
+	public STATE getUnderlyingState() {
 		return mState;
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION> setThreadsActive(final Collection<String> forkingStrings) {
 		final var newThreadcounter = new ThreadInstanceCounter(mThreadInstanceCounter.setActive(forkingStrings));
-		return new GuardedInterferenceDomainState<>(mUnderlying, getStateCopy(), newThreadcounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, getUnderlyingState(), newThreadcounter);
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION> setThreadsInf(final Collection<String> forkingStrings) {
 		final var newThreadcounter = new ThreadInstanceCounter(mThreadInstanceCounter.setInf(forkingStrings));
-		return new GuardedInterferenceDomainState<>(mUnderlying, getStateCopy(), newThreadcounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, getUnderlyingState(), newThreadcounter);
 	}
 
 	public ThreadInstanceCounter getThreadInstanceState() {
@@ -67,7 +67,7 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 
 	public GuardedInterferenceDomainState<STATE, ACTION> incrementThread(final String thread) {
 		final var newThreadcounter = mThreadInstanceCounter.incrementThread(thread);
-		return new GuardedInterferenceDomainState<>(mUnderlying, getStateCopy(), newThreadcounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, getUnderlyingState(), newThreadcounter);
 	}
 
 	@Override
@@ -77,17 +77,21 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 
 	@Override
 	public GuardedInterferenceDomainState<STATE, ACTION> removeVariable(final IProgramVarOrConst variable) {
-		return new GuardedInterferenceDomainState<>(mUnderlying, mState.removeVariable(variable), mThreadInstanceCounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.removeVariable(variable),
+				mThreadInstanceCounter);
 	}
 
 	@Override
 	public GuardedInterferenceDomainState<STATE, ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
-		return new GuardedInterferenceDomainState<>(mUnderlying, mState.addVariables(variables), mThreadInstanceCounter);
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.addVariables(variables),
+				mThreadInstanceCounter);
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
-		return new GuardedInterferenceDomainState<>(mUnderlying, mState.removeVariables(variables), mThreadInstanceCounter);
+	public GuardedInterferenceDomainState<STATE, ACTION> removeVariables(
+			final Collection<IProgramVarOrConst> variables) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.removeVariables(variables),
+				mThreadInstanceCounter);
 	}
 
 	@Override
@@ -101,20 +105,23 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION> patch(final GuardedInterferenceDomainState<STATE, ACTION> dominator) {
-		return new GuardedInterferenceDomainState<>(mUnderlying, mState.patch(dominator.getStateCopy()),
+	public GuardedInterferenceDomainState<STATE, ACTION> patch(
+			final GuardedInterferenceDomainState<STATE, ACTION> dominator) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.patch(dominator.getUnderlyingState()),
 				mThreadInstanceCounter);
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION> intersect(final GuardedInterferenceDomainState<STATE, ACTION> other) {
-		return new GuardedInterferenceDomainState<>(mUnderlying, mState.intersect(other.getStateCopy()),
+	public GuardedInterferenceDomainState<STATE, ACTION> intersect(
+			final GuardedInterferenceDomainState<STATE, ACTION> other) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.intersect(other.getUnderlyingState()),
 				mThreadInstanceCounter.intersect(other.getThreadInstanceState()));
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION> union(final GuardedInterferenceDomainState<STATE, ACTION> other) {
-		return new GuardedInterferenceDomainState<>(mUnderlying, mState.union(other.getStateCopy()),
+	public GuardedInterferenceDomainState<STATE, ACTION> union(
+			final GuardedInterferenceDomainState<STATE, ACTION> other) {
+		return new GuardedInterferenceDomainState<>(mUnderlying, mState.union(other.getUnderlyingState()),
 				mThreadInstanceCounter.union(other.getThreadInstanceState()));
 	}
 
@@ -135,7 +142,7 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 
 	@Override
 	public SubsetResult isSubsetOf(final GuardedInterferenceDomainState<STATE, ACTION> other) {
-		return mState.isSubsetOf(other.getStateCopy());
+		return mState.isSubsetOf(other.getUnderlyingState());
 	}
 
 	@Override
@@ -144,8 +151,8 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION>
-			renameVariables(final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+	public GuardedInterferenceDomainState<STATE, ACTION> renameVariables(
+			final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
 		return new GuardedInterferenceDomainState<>(mUnderlying, mState.renameVariables(old2newVars),
 				mThreadInstanceCounter);
 	}
@@ -165,6 +172,6 @@ public final class GuardedInterferenceDomainState<STATE extends IAbstractState<S
 		if (mState == null) {
 			return "null";
 		}
-		return mState.toString() + mThreadInstanceCounter.getThreadInstances().toString();
+		return mState.toString();
 	}
 }

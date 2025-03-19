@@ -16,12 +16,13 @@ public class GuardedInterferenceDomainWideningOperator<STATE extends IAbstractSt
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION> apply(final GuardedInterferenceDomainState<STATE, ACTION> first,
+	public GuardedInterferenceDomainState<STATE, ACTION> apply(
+			final GuardedInterferenceDomainState<STATE, ACTION> first,
 			final GuardedInterferenceDomainState<STATE, ACTION> second) {
-		final var widenedThreadCounter =
-				mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(), second.getThreadInstanceState());
+		final var widenedThreadCounter = mThreadInstanceCounterFactory.widen(first.getThreadInstanceState(),
+				second.getThreadInstanceState());
 		return new GuardedInterferenceDomainState<>(mUnderlyingDomain,
-				mUnderlyingDomain.getWideningOperator().apply(first.getStateCopy(), second.getStateCopy()),
+				mUnderlyingDomain.getWideningOperator().apply(first.getUnderlyingState(), second.getUnderlyingState()),
 				widenedThreadCounter);
 	}
 }

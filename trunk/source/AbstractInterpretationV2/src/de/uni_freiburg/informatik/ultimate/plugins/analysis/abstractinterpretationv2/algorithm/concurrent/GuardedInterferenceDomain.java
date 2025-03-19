@@ -6,12 +6,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * Wrapper for an {@code IAbstractDomain} with a different post-operator to consider interferences, just like
- * {@code InterferingDomain}. Underlying domain is SIFA domain. Domain also inlcudes Threadinformation.
+ * Wrapper for an {@code IAbstractDomain} with a different post-operator to
+ * consider interferences, just like {@code InterferingDomain}. Underlying
+ * domain is SIFA domain. Domain also inlcudes Threadinformation.
  */
-public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTION>
+public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
 		implements IAbstractDomain<GuardedInterferenceDomainState<STATE, ACTION>, ACTION> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION>, ACTION> mGuardedInterferenceDomainPostOperator;

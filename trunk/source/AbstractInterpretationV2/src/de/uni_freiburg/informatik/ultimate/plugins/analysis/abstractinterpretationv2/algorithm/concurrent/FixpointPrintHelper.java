@@ -18,13 +18,13 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 			final AbstractInterferenceState<STATE, ACTION> newInterferenceState,
 			final AbstractInterferenceState<STATE, ACTION> interferenceState, final int iteration,
 			final Map<String, AbsIntResult<STATE, ACTION, LOC>> resultSet, final Map<String, ? extends LOC> entryLocs) {
-		logger.error("\n");
-		logger.error("Fixpoint after " + iteration + " iterations found.");
-		logger.error(newInterferenceState.interferenceStrings());
-		logger.error("implies");
-		logger.error(interferenceState.interferenceStrings());
-		logger.error("\n");
-		logger.error("\n");
+		// logger.error("\n");
+		// logger.error("Fixpoint after " + iteration + " iterations found.");
+		// logger.error(newInterferenceState.interferenceStrings());
+		// logger.error("implies");
+		// logger.error(interferenceState.interferenceStrings());
+		// logger.error("\n");
+		// logger.error("\n");
 		printResultCfgAnnotations(resultSet, logger, entryLocs);
 	}
 
@@ -51,7 +51,7 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		seenLocs.add(loc);
 		final var terms = result.getLoc2Term().get(loc);
 		if (terms != null) {
-			logger.error("[STATE: " + terms + "]");
+			logger.error("[STATE: " + result.getLoc2SingleStates().get(loc) + "]");
 			logger.error("[THREADS: " + ((GuardedInterferenceDomainState<?, ?>) result.getLoc2SingleStates().get(loc))
 					.getThreadInstanceState().toString() + "]");
 			if (loc.getOutgoingEdges().size() != 0) {
