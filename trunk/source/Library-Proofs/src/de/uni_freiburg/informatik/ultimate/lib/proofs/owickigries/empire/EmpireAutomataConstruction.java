@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
@@ -102,8 +101,7 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 	}
 
 	@Override
-	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof()
-			throws AutomataOperationCanceledException {
+	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
 		final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
 		final var htc = new MonolithicHoareTripleChecker(mMgdScript, mModifiableGlobals);
 
@@ -159,8 +157,8 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 		return mProgram;
 	}
 
-	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOwickiGriesAnnotation(
-			final EmpireAutomaton<L, P> empireAutomaton) throws AutomataOperationCanceledException {
+	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>
+			getOwickiGriesAnnotation(final EmpireAutomaton<L, P> empireAutomaton) {
 		try {
 			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
 					mProgram.getPlaces(), mDiff2OriginalTransition);

@@ -41,6 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -81,16 +83,20 @@ public class EmpireAutomatonToOG<L, P> {
 	public EmpireAutomatonToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final INwaOutgoingTransitionProvider<Transition<L, P>, State<L, P>> empireAutomaton,
-			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences)
-			throws AutomataOperationCanceledException {
+			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
 
 		mNet = net;
-		mEmpireAutomaton =
-				new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empireAutomaton);
+		try {
+			mEmpireAutomaton =
+					new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empireAutomaton);
+		} catch (final AutomataOperationCanceledException aoce) {
+			throw new ToolchainCanceledException(aoce,
+					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
+		}
 
 		mGhostVariables = getGhostVariables();
 		mStateTerms = getStateTerms();
