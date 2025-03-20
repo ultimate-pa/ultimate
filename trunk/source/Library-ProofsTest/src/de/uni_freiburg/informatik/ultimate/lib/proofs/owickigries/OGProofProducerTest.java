@@ -128,7 +128,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		}
 	}
 
-	public static final class EmpireAutomatonOg extends OGProofProducerTest {
+	public static final class EmpireAutomatonOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
