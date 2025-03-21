@@ -19,6 +19,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.sc
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.smtsolver.external,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.smtinterpol
+ wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.smtlibutils

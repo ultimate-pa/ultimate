@@ -205,6 +205,7 @@
 		<plugin id="wrapped.io.github.uuverifiers.eldarica_2.12"/>
 		<plugin id="wrapped.io.github.uuverifiers.princess_2.12"/>
 		<plugin id="org.scala-lang.scala-library"/>
+		<plugin id="wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol"/>
 		<!-- Architecture-specific bundles -->
 		<plugin id="org.eclipse.cdt.core.linux"/>
 		<plugin id="org.eclipse.cdt.core.linux.x86_64"/>

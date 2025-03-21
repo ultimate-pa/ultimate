@@ -118,6 +118,12 @@
 					<version>2.12.2</version>
 					<type>jar</type>
 				</dependency>
+				<dependency>
+					<groupId>de.uni-freiburg.informatik.ultimate</groupId>
+					<artifactId>smtinterpol</artifactId>
+					<version>2.5-1388-ga5a4ab0c</version>
+					<type>jar</type>
+				</dependency>
 			</dependencies>
 		</location>
 	</locations>

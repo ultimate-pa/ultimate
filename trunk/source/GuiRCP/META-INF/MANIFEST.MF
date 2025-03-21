@@ -8,7 +8,7 @@ Require-Bundle:
  org.eclipse.ui;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.gui.preferencepages,
  de.uni_freiburg.informatik.ultimate.gui.logging
 Export-Package: 

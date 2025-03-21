@@ -12,7 +12,7 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
  de.uni_freiburg.informatik.ultimate.astbuilder,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: de.uni_freiburg.informatik.ultimate.core.util,

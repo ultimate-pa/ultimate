@@ -8,7 +8,7 @@ Bundle-Activator: de.uni_freiburg.informatik.ultimate.reqparser.Activator
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: com.github.jhoenicke.javacup,
- de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.lib.srparse,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.util
