@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +80,10 @@ public class DfsBookkeeping<V> {
 	 */
 	public int stackIndexOf(final V node) {
 		return mStack.indexOf(node);
+	}
+
+	public List<V> getStackSince(final int index) {
+		return Collections.unmodifiableList(mStack.subList(index, mStack.size()));
 	}
 
 	/**

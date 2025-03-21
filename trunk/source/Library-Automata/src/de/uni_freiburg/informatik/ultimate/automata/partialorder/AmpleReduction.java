@@ -189,9 +189,17 @@ public class AmpleReduction<L, S> {
 					// check for all outgoing transitions of next state if they'd close a cycle
 					for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
 						// it seems finding the stack index is rather time consuming
-						if (mDfs.isVisited(currentTS.getSucc()) && mDfs.stackIndexOf(currentTS.getSucc()) != -1) {
+						int stackIndex;
+						if (mDfs.isVisited(currentTS.getSucc())
+								&& (stackIndex = mDfs.stackIndexOf(currentTS.getSucc())) != -1) {
+							final var loop = mDfs.getStackSince(stackIndex);
+							// TODO maybe check if any node on loop is already in mLoopNodes
+
 							mLoopNodes.add(nextState);
-							mAmpleSets.put(nextState, null);
+							final var oldAmple = mAmpleSets.put(nextState, null);
+							if (oldAmple != null) {
+								mLogger.warn("Non-loop node is now a loop node: " + nextState);
+							}
 							break;
 						}
 					}
