@@ -26,18 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ConstantTermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
  * Use CommuhashNormalForm to simplify TransformulaLR
@@ -67,47 +62,9 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	@Override
 	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf)
 			throws TermException {
-		final Term normalized1 = (new ConstantTermNormalizer2()).transform(tf.getFormula());
+		final Term normalized1 = (new ConstantTermNormalizer()).transform(tf.getFormula());
 		final Term normalized2 = (new CommuhashNormalForm(mServices, script.getScript())).transform(normalized1);
 		tf.setFormula(normalized2);
 		return tf;
-	}
-
-	/*
-	 * This class was copied from the package. de.uni_freiburg.informatik.ultimate.smtinterpol.model FIXME: Proper
-	 * solution.
-	 *
-	 */
-	public static class ConstantTermNormalizer2 extends TermTransformer {
-
-		@Override
-		protected void convert(final Term term) {
-			if (term instanceof ConstantTerm) {
-				final ConstantTerm ct = (ConstantTerm) term;
-				if (ct.getValue() instanceof BigInteger) {
-					final Rational rat = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
-					setResult(rat.toTerm(term.getSort()));
-				} else if (ct.getValue() instanceof BigDecimal) {
-					final BigDecimal decimal = (BigDecimal) ct.getValue();
-					Rational rat;
-					if (decimal.scale() <= 0) {
-						final BigInteger num = decimal.toBigInteger();
-						rat = Rational.valueOf(num, BigInteger.ONE);
-					} else {
-						final BigInteger num = decimal.unscaledValue();
-						final BigInteger denom = BigInteger.TEN.pow(decimal.scale());
-						rat = Rational.valueOf(num, denom);
-					}
-					setResult(rat.toTerm(term.getSort()));
-				} else if (ct.getValue() instanceof Rational) {
-					setResult(ct);
-				} else {
-					setResult(term);
-				}
-			} else {
-				super.convert(term);
-			}
-		}
-
 	}
 }
