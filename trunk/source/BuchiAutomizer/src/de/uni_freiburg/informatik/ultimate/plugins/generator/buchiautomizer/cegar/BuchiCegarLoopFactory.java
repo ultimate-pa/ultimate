@@ -75,6 +75,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @param <L>
  */
 public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
+	// Dominik (2025-03-21): Mostly for statistics evaluation.
+	// TODO Remove this behaviour after evaluation, or make it into a proper setting.
+	private static final boolean USE_EAGER_PRODUCT = false;
+
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPrefs;
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
@@ -135,14 +139,20 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			createAutomatonProvider(final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> petriProvider,
 					final AutomatonTypeConcurrent automatonType,
 					final PredicateFactoryRefinement stateFactoryForRefinement) {
-		final var lazyProductProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices, petriProvider,
-				stateFactoryForRefinement);
-		// TODO: Statistics, Check if input automaton meets requirements?
-		final var ampleProvider = new AmpleRedAbstractionProvider<>(lazyProductProvider, mServices,
-				stateFactoryForRefinement, mPrefs.getDfsOrderSeed());
+		final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> productProvider;
+		if (USE_EAGER_PRODUCT) {
+			productProvider = new Petri2FiniteAutomatonAbstractionProvider.Eager<>(mServices, petriProvider,
+					stateFactoryForRefinement);
+		} else {
+			productProvider = new Petri2FiniteAutomatonAbstractionProvider.Lazy<>(mServices, petriProvider,
+					stateFactoryForRefinement);
+		}
+
 		return switch (automatonType) {
-		case BUCHI_AUTOMATON -> lazyProductProvider;
-		case PARTIAL_ORDER_BA -> ampleProvider;
+		case BUCHI_AUTOMATON -> productProvider;
+		// TODO: Statistics, Check if input automaton meets requirements?
+		case PARTIAL_ORDER_BA -> new AmpleRedAbstractionProvider<>(productProvider, mServices,
+				stateFactoryForRefinement, mPrefs.getDfsOrderSeed());
 		case BUCHI_PETRI_NET, RABIN_PETRI_NET ->
 				throw new AssertionError("Petri nets should be handled elsewhere: " + automatonType);
 		};
