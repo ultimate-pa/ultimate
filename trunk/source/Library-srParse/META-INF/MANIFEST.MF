@@ -11,11 +11,11 @@ Require-Bundle: com.github.jhoenicke.javacup,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.pea,
  de.uni_freiburg.informatik.ultimate.lib.boogieast,
+ de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.astbuilder,
  wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol,
  de.uni_freiburg.informatik.ultimate.lib.smtlibutils
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: de.uni_freiburg.informatik.ultimate.core.util,
- de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.datastructures.relation
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.srparse
