@@ -20,8 +20,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -102,9 +100,6 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
-		final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
-		final var htc = new MonolithicHoareTripleChecker(mMgdScript, mModifiableGlobals);
-
 		final var automaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
 		mLogger.debug("Constructed Empire Automaton");
 
@@ -119,26 +114,20 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 	}
 
 	private boolean checkAutomatonValidity(final EmpireAutomaton<L, P> automaton) {
-		try {
-			final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
-					mModifiableGlobals, automaton);
-			return checker.getValidity() != Validity.INVALID;
-		} finally {
-		}
+		final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
+				mModifiableGlobals, automaton);
+		return checker.getValidity() != Validity.INVALID;
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
-		try {
-			final var validity =
-					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mProgram, mModifiableGlobals, annotation)
-							.isValid();
-			assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
-			if (validity == Validity.UNKNOWN) {
-				mLogger.warn("Could not prove validity of Owicki-Gries annotation");
-			}
-			return validity != Validity.INVALID;
-		} finally {
+		final var validity =
+				new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mProgram, mModifiableGlobals, annotation)
+						.isValid();
+		assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
+		if (validity == Validity.UNKNOWN) {
+			mLogger.warn("Could not prove validity of Owicki-Gries annotation");
 		}
+		return validity != Validity.INVALID;
 	}
 
 	@Override
@@ -159,14 +148,11 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>
 			getOwickiGriesAnnotation(final EmpireAutomaton<L, P> empireAutomaton) {
-		try {
-			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-					mProgram.getPlaces(), mDiff2OriginalTransition);
-			final EmpireAutomatonToOG<L, P> empireToOwickiGries = new EmpireAutomatonToOG<>(mServices, mMgdScript,
-					mProgram, mSymbolTable, mProcedures, empireAutomaton, possibleInterferences);
-			return empireToOwickiGries.getAnnotation();
-		} finally {
-		}
+		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
+				mProgram.getPlaces(), mDiff2OriginalTransition);
+		final EmpireAutomatonToOG<L, P> empireToOwickiGries = new EmpireAutomatonToOG<>(mServices, mMgdScript, mProgram,
+				mSymbolTable, mProcedures, empireAutomaton, possibleInterferences);
+		return empireToOwickiGries.getAnnotation();
 	}
 
 	private static final class UnionFactory implements IUnionStateFactory<IPredicate> {
