@@ -115,12 +115,15 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		// get the reduction
 		// as we assume a deterministic input automaton, there should only be one initial state here
 		final IPredicate initState = originalAutomaton.getInitialStates().iterator().next();
-		final AmpleReduction<L, IPredicate> ampleRed = new AmpleReduction<>(mAutomataServices, originalAutomaton,
-				ConstantDfsOrder.byHashCode(), visitor, initState, persistent);
+		new AmpleReduction<>(mAutomataServices, originalAutomaton, ConstantDfsOrder.byHashCode(), visitor, initState,
+				persistent);
 		final NestedWordAutomaton<L, IPredicate> redAutomaton = visitor.getReductionAutomaton();
 		mStatistics.stopTimer();
 		mStatistics.mReductionStates = redAutomaton.getStates().size();
 		mStatistics.mReductionTS = redAutomaton.computeNumberOfInternalTransitions();
+
+		mServices.getLoggingService().getLogger(getClass())
+				.info("Constructed initial ample set-reduced NBA abstraction that " + redAutomaton.sizeInformation());
 		return redAutomaton;
 	}
 

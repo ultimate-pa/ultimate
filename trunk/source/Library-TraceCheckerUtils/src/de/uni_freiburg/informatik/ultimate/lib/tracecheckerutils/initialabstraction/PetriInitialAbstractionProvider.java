@@ -79,6 +79,14 @@ public class PetriInitialAbstractionProvider<L extends IIcfgTransition<?>>
 	@Override
 	public BoundedPetriNet<L, IPredicate> getInitialAbstraction(final IIcfg<? extends IcfgLocation> icfg,
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
+		final var net = constructPetriNet(icfg, errorLocs);
+		mServices.getLoggingService().getLogger(getClass())
+				.info("Constructed initial Petri net abstraction that has " + net.sizeInformation());
+		return net;
+	}
+
+	private BoundedPetriNet<L, IPredicate> constructPetriNet(final IIcfg<? extends IcfgLocation> icfg,
+			final Set<? extends IcfgLocation> errorLocs) throws AutomataOperationCanceledException {
 		final BoundedPetriNet<L, IPredicate> net =
 				Cfg2Automaton.constructPetriNetWithSPredicates(mServices, icfg, errorLocs, mPredicateFactory);
 		if (!mRemoveDeadEnds) {
