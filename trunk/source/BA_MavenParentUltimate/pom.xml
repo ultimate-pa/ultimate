@@ -122,22 +122,6 @@
 			**/src/de/uni_freiburg/informatik/ultimate/ltl2aut/ParserAP.java,
 			**/src/de/uni_freiburg/informatik/ultimate/ltl2aut/Symbols.java,
 			**/src/de/uni_freiburg/informatik/ultimate/ltl2aut/SymbolsAP.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/Lexer.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/Lexer.java~,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/LexerSymbols.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/dimacs/Parser.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/Lexer.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/Lexer.java~,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/LexerSymbols.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib/Parser.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Lexer.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Lexer.java~,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/LexerSymbols.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib2/Parser.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofLexer.java~,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofSymbols.java,
-			**/src/de/uni_freiburg/informatik/ultimate/smtinterpol/proof/checker/ProofParser.java,
 			**/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java,
 			**/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/Lexer.java~,
 			**/src/de/uni_freiburg/informatik/ultimate/smtsolver/external/LexerSymbols.java,
@@ -356,7 +340,6 @@
 		<module>../Library-PreferenceJson</module>
 		<module>../Library-Proofs</module>
 		<module>../Library-Sifa</module>
-		<module>../Library-SMTLIB</module>
 		<module>../Library-SmtLibUtils</module>
 		<module>../Library-srParse</module>
 		<module>../Library-TraceCheckerUtils</module>
@@ -374,7 +357,6 @@
 		<module>../ReqPrinter</module>
 		<module>../ReqToTest</module>
 		<module>../Sifa</module>
-		<module>../SMTInterpol</module>
 		<module>../SmtParser</module>
 		<module>../SMTSolverBridge</module>
 		<module>../SpaceExParser</module>
@@ -404,13 +386,11 @@
 		<module>../Library-ModelCheckerUtilsTest</module>
 		<module>../Library-TraceCheckerUtilsTest</module>
 		<module>../Library-MSODTest</module>
-		<module>../Library-SMTLIBTest</module>
 		<module>../Library-srParseTest</module>
 		<module>../Library-UltimateTestTest</module>
 		<module>../Library-UltimateUtilTest</module>
 		<module>../Library-PathExpressionsTest</module>
 		<module>../Library-SifaTest</module>
-		<module>../SMTInterpolTest</module>
 		<module>../SMTSolverBridgeTest</module>
 		<module>../SpaceExParserTest</module>
 		<module>../PEAtoBoogieTest</module>
