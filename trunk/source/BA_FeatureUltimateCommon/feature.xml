@@ -151,10 +151,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="de.uni_freiburg.informatik.ultimate.lib.smtlib"
-         version="0.0.0"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.srparse"
          version="0.0.0"/>
 
@@ -172,10 +168,6 @@
 
    <plugin
          id="de.uni_freiburg.informatik.ultimate.pea2boogie"
-         version="0.0.0"/>
-
-   <plugin
-         id="de.uni_freiburg.informatik.ultimate.smtinterpol"
          version="0.0.0"/>
 
    <plugin

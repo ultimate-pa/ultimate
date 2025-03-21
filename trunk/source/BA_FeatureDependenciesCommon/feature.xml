@@ -275,4 +275,8 @@
    <plugin
          id="wrapped.xerces.xercesImpl"
          version="0.0.0"/>
+
+   <plugin
+         id="wrapped.de.uni-freiburg.informatik.ultimate.smtinterpol"
+         version="0.0.0"/>
 </feature>
