@@ -158,10 +158,21 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mStartTime = System.nanoTime();
 
 		mServices = UltimateMocks.createUltimateServiceProviderMock();
-		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TIMEOUT_MS);
-
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
+
+		final long timeout;
+		final String envTimeout = System.getenv(getClass().getSimpleName() + ".Timeout");
+		if (envTimeout != null && !envTimeout.isBlank()) {
+			timeout = Long.parseLong(envTimeout);
+			mLogger.warn("Using environment timeout: " + timeout + "ms");
+		} else {
+			timeout = TIMEOUT_MS;
+		}
+		if (timeout >= 0) {
+			mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + timeout);
+		}
+
 		mInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
 
 		final var script = new HistoryRecordingScript(UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL));

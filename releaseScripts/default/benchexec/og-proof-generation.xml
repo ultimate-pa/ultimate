@@ -6,20 +6,20 @@
   <option name="failure">1 tests failed</option>
 
   <rundefinition name="EmpireAutomatonOG-WithAssert">
-    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} true</option>
+    <option name="command">env EmpireAutomatonOG.Timeout=-1 ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} true</option>
   </rundefinition>
 
   <rundefinition name="EmpireAutomatonOG-NoAssert">
-    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} false</option>
+    <option name="command">env EmpireAutomatonOG.Timeout=-1 ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} false</option>
   </rundefinition>
 
 
   <rundefinition name="NaiveOG-WithAssert">
-    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} true</option>
+    <option name="command">env NaiveOG.Timeout=-1 ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} true</option>
   </rundefinition>
 
   <rundefinition name="NaiveOG-NoAssert">
-    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} false</option>
+    <option name="command">env NaiveOG.Timeout=-1 ${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} false</option>
   </rundefinition>
   
 
