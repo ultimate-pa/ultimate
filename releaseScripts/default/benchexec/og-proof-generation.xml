@@ -5,6 +5,24 @@
   <option name="success">1 tests successful</option>
   <option name="failure">1 tests failed</option>
 
+  <rundefinition name="EmpireAutomatonOG-WithAssert">
+    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="EmpireAutomatonOG-NoAssert">
+    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$EmpireAutomatonOG ${inputfile_name} false</option>
+  </rundefinition>
+
+
+  <rundefinition name="NaiveOG-WithAssert">
+    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} true</option>
+  </rundefinition>
+
+  <rundefinition name="NaiveOG-NoAssert">
+    <option name="command">${benchmark_path}/../run-test.sh Library-ProofsTest de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OGProofProducerTest$NaiveOG ${inputfile_name} false</option>
+  </rundefinition>
+
+
   <rundefinition name="PetriOwickiGriesTestSuite-WithAssert">
     <option name="command">${benchmark_path}/../run-test.sh Library-TraceCheckerUtilsTest de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.owickigries.PetriOwickiGriesTestSuite ${inputfile_name} true</option>
   </rundefinition>
@@ -45,5 +63,9 @@
 
   <tasks name="SVBenchmarks-NoOverflow">
     <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/NoOverflow.*.ats</include>
+  </tasks>
+
+  <tasks name="canary">
+    <include>../../../trunk/examples/concurrent/OwickiGries/PetriPrograms/separate-threads*.ats</include>
   </tasks>
 </benchmark>
