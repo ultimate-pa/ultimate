@@ -669,17 +669,17 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		}
 		final StringBuilder sb = new StringBuilder();
 		sb.append(" has ").append(getStates().size()).append(" states, " + statesWithInternalSuccessors)
-				.append(" states have (on average " + internalSuccAvg + ") internal successors, (")
+				.append(" states have (on average " + internalSuccAvg + ") internal successors, (in total ")
 				.append(internalSuccessors).append("), ").append(statesWithInternalPredecessors)
 				.append(" states have internal predecessors, (").append(internalPredecessors).append("), ")
 				.append(statesWithCallSuccessors)
 
 				.append(" states have call successors, (").append(callSuccessors).append("), ")
-				.append(statesWithCallPredecessors).append(" states have call predecessors, (").append(callPredecessors)
-				.append("), ").append(statesWithReturnSuccessor)
+				.append(statesWithCallPredecessors).append(" states have call predecessors, (in total ")
+				.append(callPredecessors).append("), ").append(statesWithReturnSuccessor)
 
 				.append(" states have return successors, (").append(returnSuccessors).append("), ")
-				.append(statesWithReturnLinearPredecessors).append(" states have call predecessors, (")
+				.append(statesWithReturnLinearPredecessors).append(" states have call predecessors, ( in total")
 				.append(returnLinearPredecessors).append("), " + statesWithReturnHierarchicalSuccessor)
 				.append(" states have call successors, (").append(returnHierarchicalSuccessors).append(")");
 		return sb.toString();
