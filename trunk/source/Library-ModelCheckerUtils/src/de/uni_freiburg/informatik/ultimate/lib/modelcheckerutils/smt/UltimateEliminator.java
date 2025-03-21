@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -274,6 +275,17 @@ public class UltimateEliminator extends WrapperScript {
 		final IResult result = constructResult("simplify", String.valueOf(lessQuantifier));
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return lessQuantifier;
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
 	}
 
 	private IResult constructResult(final String command, final String response) {

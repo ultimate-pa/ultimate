@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Quantifier
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -211,4 +212,14 @@ public class QuantifierOverapproximatingSolver extends WrapperScript {
 		return mAdditionalUnsatCoreContent;
 	}
 
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
+	}
 }

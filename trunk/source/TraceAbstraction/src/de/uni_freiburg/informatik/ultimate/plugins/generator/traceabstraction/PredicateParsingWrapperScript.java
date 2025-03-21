@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolk
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -79,5 +80,16 @@ public class PredicateParsingWrapperScript extends WrapperScript {
 			return mProgramVarId2Tv.get(funcname);
 		}
 		return mScript.term(funcname, indices, returnSort, params);
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
 	}
 }

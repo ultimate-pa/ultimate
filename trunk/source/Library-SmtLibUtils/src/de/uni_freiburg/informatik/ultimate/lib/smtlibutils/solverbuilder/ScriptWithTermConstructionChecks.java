@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -89,5 +91,16 @@ public class ScriptWithTermConstructionChecks extends WrapperScript {
 	@Override
 	public void resetAssertions() {
 		throw new UnsupportedOperationException("Introduced in SMTInterpol 2.1-324-ga0525a0, not yet supported");
+	}
+
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
 	}
 }

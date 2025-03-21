@@ -42,11 +42,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.DiffWrapperScript;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.muses.MusEnumerationScript;
@@ -799,6 +802,17 @@ public final class SolverBuilder {
 
 		private String getKey() {
 			return getClass().getSimpleName() + mId;
+		}
+
+		@Override
+		public FunctionSymbol getFunctionSymbol(final String constructor) {
+			return mScript.getFunctionSymbol(constructor);
+		}
+
+		@Override
+		public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+				throws SMTLIBException, UnsupportedOperationException {
+			return mScript.getInterpolants(partition, startOfSubtree, proofTree);
 		}
 	}
 

@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.WrapperScript;
 
 /**
@@ -88,4 +90,14 @@ public class UndoableWrapperScript extends WrapperScript {
 		return rtr;
 	}
 
+	@Override
+	public FunctionSymbol getFunctionSymbol(final String constructor) {
+		return mScript.getFunctionSymbol(constructor);
+	}
+
+	@Override
+	public Term[] getInterpolants(final Term[] partition, final int[] startOfSubtree, final Term proofTree)
+			throws SMTLIBException, UnsupportedOperationException {
+		return mScript.getInterpolants(partition, startOfSubtree, proofTree);
+	}
 }
