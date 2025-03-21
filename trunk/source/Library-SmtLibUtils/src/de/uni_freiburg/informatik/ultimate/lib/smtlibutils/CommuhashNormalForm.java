@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
  * Brings Terms into a normal form where all parameters that of commutative functions (resp. functions for that this
