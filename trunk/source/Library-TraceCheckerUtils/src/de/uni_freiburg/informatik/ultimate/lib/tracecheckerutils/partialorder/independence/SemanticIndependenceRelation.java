@@ -383,16 +383,15 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 			final LBool result = SmtUtils.checkSatTerm(mManagedScript.getScript(), inclusion);
 			mManagedScript.unlock(this);
 
-			switch (result) {
+			return switch (result) {
 			case UNKNOWN:
 				mStatistics.reportUnknownSymbolicCondition();
 				// $FALL-THROUGH$
 			case SAT:
-				return inclusion;
+				yield inclusion;
 			case UNSAT:
-				return mManagedScript.getScript().term(SMTLIBConstants.FALSE);
-			}
-			throw new IllegalStateException("Unknown LBool: " + result);
+				yield mManagedScript.getScript().term(SMTLIBConstants.FALSE);
+			};
 		}
 
 		@Override
@@ -469,17 +468,17 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 		private int mSymbolicConditionComputations;
 		private int mUnknownSymbolicConditions;
 
-		public Statistics() {
+		private Statistics() {
 			super(SemanticIndependenceRelation.class);
 			declare(SYMBOLIC_CONDITION_COMPUTATIONS, () -> mSymbolicConditionComputations, KeyType.COUNTER);
 			declare(UNKNOWN_SYMBOLIC_CONDITIONS, () -> mUnknownSymbolicConditions, KeyType.COUNTER);
 		}
 
-		public void reportSymbolicConditionComputation() {
+		private void reportSymbolicConditionComputation() {
 			mSymbolicConditionComputations++;
 		}
 
-		public void reportUnknownSymbolicCondition() {
+		private void reportUnknownSymbolicCondition() {
 			mUnknownSymbolicConditions++;
 		}
 	}
