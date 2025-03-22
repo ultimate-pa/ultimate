@@ -382,26 +382,23 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate>
 			constructRelevantTransFormulas(final Set<Term> unsatCore) {
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
-		if (mUnsatCores == UnsatCores.IGNORE) {
-			rtf = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
-					mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
-		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
+		return switch (mUnsatCores) {
+		case IGNORE -> new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
+				mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
+		case CONJUNCT_LEVEL ->
+				new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
+						mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
+		case STATEMENT_LEVEL -> {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			// Filter out the statements, which doesn't occur in the unsat core.
 			final Set<L> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
-			rtf = new RelevantTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
+			yield new RelevantTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
 					mPendingContexts, codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(),
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
-		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
-			rtf = new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts,
-					unsatCore, mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA,
-					mAnnotateAndAsserterConjuncts);
-		} else {
-			throw new AssertionError("unknown case:" + mUnsatCores);
 		}
-		return rtf;
+		};
 	}
 
 	/***

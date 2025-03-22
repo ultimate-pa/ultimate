@@ -187,7 +187,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 				final Map<IPredicate, Validity> succ2Val = pred2succ.get(strongP);
 				final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), weakerThanSucc);
 				for (final IPredicate weakS : succs) {
-					final Validity validity = evaluteResultStrongerThanPreAndWeakerThanSucc(succ2Val.get(weakS));
+					final Validity validity = evaluateResultStrongerThanPreAndWeakerThanSucc(succ2Val.get(weakS));
 					if (validity == null) {
 						continue;
 					}
@@ -215,7 +215,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 				final Map<IPredicate, Validity> succ2Val = pred2succ.get(weakP);
 				final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), strongerThanSucc);
 				for (final IPredicate strongS : succs) {
-					final Validity validity = evaluteResultWeakerThanPreAndStrongerThanSucc(succ2Val.get(strongS));
+					final Validity validity = evaluateResultWeakerThanPreAndStrongerThanSucc(succ2Val.get(strongS));
 					if (validity == null) {
 						continue;
 					}
@@ -269,7 +269,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 					final Map<IPredicate, Validity> succ2Val = preLin2succ2Val.get(strongPreLin);
 					final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), weakerThanSucc);
 					for (final IPredicate weakS : succs) {
-						final Validity validity = evaluteResultStrongerThanPreAndWeakerThanSucc(succ2Val.get(weakS));
+						final Validity validity = evaluateResultStrongerThanPreAndWeakerThanSucc(succ2Val.get(weakS));
 						if (validity == null) {
 							continue;
 						}
@@ -307,7 +307,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 					final Map<IPredicate, Validity> succ2Val = preLin2succ2Val.get(weakPreLin);
 					final Iterable<IPredicate> succs = new IterableIntersection<>(succ2Val.keySet(), strongerThanSucc);
 					for (final IPredicate weakS : succs) {
-						final Validity validity = evaluteResultWeakerThanPreAndStrongerThanSucc(succ2Val.get(weakS));
+						final Validity validity = evaluateResultWeakerThanPreAndStrongerThanSucc(succ2Val.get(weakS));
 						if (validity == null) {
 							continue;
 						}
@@ -335,7 +335,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 		return null;
 	}
 
-	private Validity evaluteResultWeakerThanPreAndStrongerThanSucc(final Validity validity) {
+	private static Validity evaluateResultWeakerThanPreAndStrongerThanSucc(final Validity validity) {
 		return switch (validity) {
 		// pass result, if Hoare triple holds for weaker pre and for stronger succ,
 		// it also does not hold for original pre/succ
@@ -349,7 +349,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 		};
 	}
 
-	private Validity evaluteResultStrongerThanPreAndWeakerThanSucc(final Validity validity) {
+	private static Validity evaluateResultStrongerThanPreAndWeakerThanSucc(final Validity validity) {
 		return switch (validity) {
 		// information does not help
 		case VALID, NOT_CHECKED -> null;

@@ -1615,19 +1615,11 @@ public final class SmtUtils {
 				result = script.term("select", as.getTerm(), index);
 			} else {
 				final Equivalence comparison = selectIndex.compare(storeIndex);
-				switch (comparison) {
-				case DISTINCT:
-					result = select(script, as.getArray(), index);
-					break;
-				case EQUALS:
-					result = as.getValue();
-					break;
-				case INCOMPARABLE:
-					result = script.term("select", as.getTerm(), index);
-					break;
-				default:
-					throw new AssertionError("unknown value " + comparison);
-				}
+				result = switch (comparison) {
+				case DISTINCT -> select(script, as.getArray(), index);
+				case EQUALS -> as.getValue();
+				case INCOMPARABLE -> script.term("select", as.getTerm(), index);
+				};
 			}
 		}
 		return result;
@@ -2392,24 +2384,14 @@ public final class SmtUtils {
 		final LBool lbool = SmtUtils.checkEquivalence(result, input, script);
 		script.echo(new QuotedObject(
 				String.format("Finished correctness check for %s. Result: " + lbool, checkedClass.getSimpleName())));
-		final String errorMessage;
-		switch (lbool) {
-		case SAT:
-			errorMessage = String.format("%s: Not equivalent to expected result: %s Input: %s",
-					checkedClass.getSimpleName(), result, input);
-			break;
-		case UNKNOWN:
-			errorMessage = String.format(
-					"%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s",
-					checkedClass.getSimpleName(), result, input);
-			break;
-		case UNSAT:
-			errorMessage = null;
-			break;
-		default:
-			throw new AssertionError("unknown value " + lbool);
-		}
-		if (lbool == LBool.SAT || !tolerateUnknown && lbool == LBool.UNKNOWN) {
+		final String errorMessage = switch (lbool) {
+		case SAT -> "%s: Not equivalent to expected result: %s Input: %s".formatted(checkedClass.getSimpleName(),
+				result, input);
+		case UNKNOWN -> "%s: Insufficient ressources for checking equivalence to expected result: %s Input: %s"
+				.formatted(checkedClass.getSimpleName(), result, input);
+		case UNSAT -> null;
+		};
+		if (lbool == LBool.SAT || (!tolerateUnknown && lbool == LBool.UNKNOWN)) {
 			throw new AssertionError(errorMessage);
 		}
 	}
@@ -2450,16 +2432,15 @@ public final class SmtUtils {
 			final Term fPart = annotateAndAssert(script, first, "first");
 			final Term sPart = annotateAndAssert(script, second, "second");
 			final LBool checkSatResult = script.checkSat();
-			switch (checkSatResult) {
+			return switch (checkSatResult) {
 			case UNSAT:
 				final Term[] interpolants = script.getInterpolants(new Term[] { fPart, sPart });
 				assert interpolants != null && interpolants.length == 1;
-				return new Pair<>(checkSatResult, interpolants[0]);
+				yield new Pair<>(checkSatResult, interpolants[0]);
 			case SAT:
 			case UNKNOWN:
-			default:
-				return new Pair<>(checkSatResult, null);
-			}
+				yield new Pair<>(checkSatResult, null);
+			};
 		} finally {
 			script.pop(1);
 		}

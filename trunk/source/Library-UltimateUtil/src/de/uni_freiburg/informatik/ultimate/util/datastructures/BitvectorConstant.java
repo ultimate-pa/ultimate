@@ -604,56 +604,33 @@ public class BitvectorConstant {
 			throw new IllegalArgumentException("Operation " + sbo + " has arity " + sbo.getArity() + " but "
 					+ operands.length + " operands given");
 		}
-		switch (sbo) {
-		case bvadd:
-			return new BitvectorConstantOperationResult(bvadd(operands[0], operands[1]));
-		case bvand:
-			return new BitvectorConstantOperationResult(bvand(operands[0], operands[1]));
-		case bvashr:
-			return new BitvectorConstantOperationResult(bvashr(operands[0], operands[1]));
-		case bvlshr:
-			return new BitvectorConstantOperationResult(bvlshr(operands[0], operands[1]));
-		case bvmul:
-			return new BitvectorConstantOperationResult(bvmul(operands[0], operands[1]));
-		case bvneg:
-			return new BitvectorConstantOperationResult(bvneg(operands[0]));
-		case bvnot:
-			return new BitvectorConstantOperationResult(bvnot(operands[0]));
-		case bvor:
-			return new BitvectorConstantOperationResult(bvor(operands[0], operands[1]));
-		case bvsdiv:
-			return new BitvectorConstantOperationResult(bvsdiv(operands[0], operands[1]));
-		case bvsge:
-			return new BitvectorConstantOperationResult(bvsge(operands[0], operands[1]));
-		case bvsgt:
-			return new BitvectorConstantOperationResult(bvsgt(operands[0], operands[1]));
-		case bvshl:
-			return new BitvectorConstantOperationResult(bvshl(operands[0], operands[1]));
-		case bvsle:
-			return new BitvectorConstantOperationResult(bvsle(operands[0], operands[1]));
-		case bvslt:
-			return new BitvectorConstantOperationResult(bvslt(operands[0], operands[1]));
-		case bvsrem:
-			return new BitvectorConstantOperationResult(bvsrem(operands[0], operands[1]));
-		case bvsub:
-			return new BitvectorConstantOperationResult(bvsub(operands[0], operands[1]));
-		case bvudiv:
-			return new BitvectorConstantOperationResult(bvudiv(operands[0], operands[1]));
-		case bvuge:
-			return new BitvectorConstantOperationResult(bvuge(operands[0], operands[1]));
-		case bvugt:
-			return new BitvectorConstantOperationResult(bvugt(operands[0], operands[1]));
-		case bvule:
-			return new BitvectorConstantOperationResult(bvule(operands[0], operands[1]));
-		case bvult:
-			return new BitvectorConstantOperationResult(bvult(operands[0], operands[1]));
-		case bvurem:
-			return new BitvectorConstantOperationResult(bvurem(operands[0], operands[1]));
-		case bvxor:
-			return new BitvectorConstantOperationResult(bvxor(operands[0], operands[1]));
-		default:
-			throw new UnsupportedOperationException("Operation currently unsupported: " + sbo);
-		}
+		return switch (sbo) {
+		case bvadd -> new BitvectorConstantOperationResult(bvadd(operands[0], operands[1]));
+		case bvand -> new BitvectorConstantOperationResult(bvand(operands[0], operands[1]));
+		case bvashr -> new BitvectorConstantOperationResult(bvashr(operands[0], operands[1]));
+		case bvlshr -> new BitvectorConstantOperationResult(bvlshr(operands[0], operands[1]));
+		case bvmul -> new BitvectorConstantOperationResult(bvmul(operands[0], operands[1]));
+		case bvneg -> new BitvectorConstantOperationResult(bvneg(operands[0]));
+		case bvnot -> new BitvectorConstantOperationResult(bvnot(operands[0]));
+		case bvor -> new BitvectorConstantOperationResult(bvor(operands[0], operands[1]));
+		case bvsdiv -> new BitvectorConstantOperationResult(bvsdiv(operands[0], operands[1]));
+		case bvsge -> new BitvectorConstantOperationResult(bvsge(operands[0], operands[1]));
+		case bvsgt -> new BitvectorConstantOperationResult(bvsgt(operands[0], operands[1]));
+		case bvshl -> new BitvectorConstantOperationResult(bvshl(operands[0], operands[1]));
+		case bvsle -> new BitvectorConstantOperationResult(bvsle(operands[0], operands[1]));
+		case bvslt -> new BitvectorConstantOperationResult(bvslt(operands[0], operands[1]));
+		case bvsrem -> new BitvectorConstantOperationResult(bvsrem(operands[0], operands[1]));
+		case bvsub -> new BitvectorConstantOperationResult(bvsub(operands[0], operands[1]));
+		case bvudiv -> new BitvectorConstantOperationResult(bvudiv(operands[0], operands[1]));
+		case bvuge -> new BitvectorConstantOperationResult(bvuge(operands[0], operands[1]));
+		case bvugt -> new BitvectorConstantOperationResult(bvugt(operands[0], operands[1]));
+		case bvule -> new BitvectorConstantOperationResult(bvule(operands[0], operands[1]));
+		case bvult -> new BitvectorConstantOperationResult(bvult(operands[0], operands[1]));
+		case bvurem -> new BitvectorConstantOperationResult(bvurem(operands[0], operands[1]));
+		case bvxor -> new BitvectorConstantOperationResult(bvxor(operands[0], operands[1]));
+		case bvsmod, concat, extract, sign_extend, zero_extend ->
+				throw new UnsupportedOperationException("Operation currently unsupported: " + sbo);
+		};
 	}
 
 	/**

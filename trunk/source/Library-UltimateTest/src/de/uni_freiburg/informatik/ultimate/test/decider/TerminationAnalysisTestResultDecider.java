@@ -195,7 +195,7 @@ public class TerminationAnalysisTestResultDecider extends ThreeTierTestResultDec
 				throws AssertionError {
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
-				mCategory = "Inkonsistent keywords";
+				mCategory = "Inconsistent keywords";
 				mMessage = expectedResultFinder.getExpectedResultFinderMessage();
 				mTestResult = TestResult.FAIL;
 				break;

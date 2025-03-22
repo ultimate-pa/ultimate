@@ -57,21 +57,11 @@ public class TerminationAnalysisResult extends AbstractResult implements IResult
 
 	@Override
 	public String getShortDescription() {
-		final String shortDescription;
-		switch (mTermination) {
-		case NONTERMINATING:
-			shortDescription = "Nontermination possible";
-			break;
-		case TERMINATING:
-			shortDescription = "Termination proven";
-			break;
-		case UNKNOWN:
-			shortDescription = "Unable to decide termination";
-			break;
-		default:
-			throw new AssertionError();
-		}
-		return shortDescription;
+		return switch (mTermination) {
+		case NONTERMINATING -> "Nontermination possible";
+		case TERMINATING -> "Termination proven";
+		case UNKNOWN -> "Unable to decide termination";
+		};
 	}
 
 	@Override
@@ -81,21 +71,11 @@ public class TerminationAnalysisResult extends AbstractResult implements IResult
 
 	@Override
 	public Severity getSeverity() {
-		Severity severity;
-		switch (mTermination) {
-		case NONTERMINATING:
-			severity = Severity.ERROR;
-			break;
-		case TERMINATING:
-			severity = Severity.INFO;
-			break;
-		case UNKNOWN:
-			severity = Severity.ERROR;
-			break;
-		default:
-			throw new AssertionError();
-		}
-		return severity;
+		return switch (mTermination) {
+		case NONTERMINATING -> Severity.ERROR;
+		case TERMINATING -> Severity.INFO;
+		case UNKNOWN -> Severity.ERROR;
+		};
 	}
 
 }

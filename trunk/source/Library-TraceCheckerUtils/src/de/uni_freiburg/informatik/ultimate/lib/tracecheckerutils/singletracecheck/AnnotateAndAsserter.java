@@ -116,28 +116,18 @@ public class AnnotateAndAsserter<L extends IAction> {
 	}
 
 	private IAssertOrder<L> getAssertOrder(final AssertCodeBlockOrder order) {
-		switch (order.getAssertCodeBlockOrderType()) {
-		case NOT_INCREMENTALLY:
-			return new AssertOrderNotIncrementally<>();
-		case OUTSIDE_LOOP_FIRST1:
-			return new AssertOrderOutsideLoopFirst1<>();
-		case OUTSIDE_LOOP_FIRST2:
-			return new AssertOrderOutsideLoopFirst2<>();
-		case INSIDE_LOOP_FIRST1:
-			return new AssertOrderInsideLoopFirst1<>();
-		case MIX_INSIDE_OUTSIDE:
-			return new AssertOrderMixInsideOutside<>();
-		case TERMS_WITH_SMALL_CONSTANTS_FIRST:
-			return new AssertOrderSmallConstantsFirst<>();
-		case SMT_FEATURE_HEURISTIC:
-			return new AssertOrderSmtFeatureHeuristic<>(order.getSmtFeatureHeuristicScoringMethod(),
-					order.getSmtFeatureHeuristicNumPartitions(), order.getSmtFeatureHeuristicThreshold(),
-					order.getSmtFeatureHeuristicPartitioningType(), mLogger);
-		case SHUFFLED_SINGLETONS:
-			return new AssertOrderShuffledSingletons<>();
-		default:
-			throw new AssertionError("unknown heuristic " + order);
-		}
+		return switch (order.getAssertCodeBlockOrderType()) {
+		case NOT_INCREMENTALLY -> new AssertOrderNotIncrementally<>();
+		case OUTSIDE_LOOP_FIRST1 -> new AssertOrderOutsideLoopFirst1<>();
+		case OUTSIDE_LOOP_FIRST2 -> new AssertOrderOutsideLoopFirst2<>();
+		case INSIDE_LOOP_FIRST1 -> new AssertOrderInsideLoopFirst1<>();
+		case MIX_INSIDE_OUTSIDE -> new AssertOrderMixInsideOutside<>();
+		case TERMS_WITH_SMALL_CONSTANTS_FIRST -> new AssertOrderSmallConstantsFirst<>();
+		case SMT_FEATURE_HEURISTIC -> new AssertOrderSmtFeatureHeuristic<>(order.getSmtFeatureHeuristicScoringMethod(),
+				order.getSmtFeatureHeuristicNumPartitions(), order.getSmtFeatureHeuristicThreshold(),
+				order.getSmtFeatureHeuristicPartitioningType(), mLogger);
+		case SHUFFLED_SINGLETONS -> new AssertOrderShuffledSingletons<>();
+		};
 	}
 
 	private LBool annotateAndAssert(final NestedWord<? extends IAction> trace, final List<Set<Integer>> partitions) {

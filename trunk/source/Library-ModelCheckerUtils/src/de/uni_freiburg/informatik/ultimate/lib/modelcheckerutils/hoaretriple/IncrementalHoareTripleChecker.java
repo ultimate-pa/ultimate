@@ -678,26 +678,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
 
 		final LBool isSat = mManagedScript.checkSat(this);
-
-		switch (isSat) {
-		case SAT:
-			if (mConstructCounterexamples) {
-				mCounterexampleStatePrecond = constructCounterexampleStateForPrecondition();
-				mCounterexampleStatePostcond = constructCounterexampleStateForPostcondition();
-			}
-			mEdgeCheckerBenchmark.getSolverCounterSat().incRe();
-			break;
-		case UNKNOWN:
-			mEdgeCheckerBenchmark.getSolverCounterUnknown().incRe();
-			break;
-		case UNSAT:
-			mEdgeCheckerBenchmark.getSolverCounterUnsat().incRe();
-			break;
-		default:
-			throw new AssertionError("unknown case");
+		if (isSat == LBool.SAT && mConstructCounterexamples) {
+			mCounterexampleStatePrecond = constructCounterexampleStateForPrecondition();
+			mCounterexampleStatePostcond = constructCounterexampleStateForPostcondition();
 		}
+
+		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isSat);
+		mEdgeCheckerBenchmark.getSolverCounter(result).incRe();
 		mEdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return IncrementalPlicationChecker.convertLBool2Validity(isSat);
+		return result;
 	}
 
 	private ProgramState<Term> constructCounterexampleStateForPrecondition() {

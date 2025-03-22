@@ -314,31 +314,15 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		if (!term.isConstant()) {
 			return checkMinMaxValues(term, symbol);
 		}
-		switch (symbol) {
-		case DISTINCT:
-			return computeTrivialityStatus(term, a -> a != 0);
-		case EQ:
-			return computeTrivialityStatus(term, a -> a == 0);
-		case LESS:
-			return computeTrivialityStatus(term, a -> a < 0);
-		case GREATER:
-			return computeTrivialityStatus(term, a -> a > 0);
-		case GEQ:
-			return computeTrivialityStatus(term, a -> a >= 0);
-		case LEQ:
-			return computeTrivialityStatus(term, a -> a <= 0);
-		case BVULE:
-		case BVULT:
-		case BVUGE:
-		case BVUGT:
-		case BVSLE:
-		case BVSLT:
-		case BVSGE:
-		case BVSGT:
-			return TrivialityStatus.NONTRIVIAL;
-		default:
-			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
-		}
+		return switch (symbol) {
+		case DISTINCT -> computeTrivialityStatus(term, a -> a != 0);
+		case EQ -> computeTrivialityStatus(term, a -> a == 0);
+		case LESS -> computeTrivialityStatus(term, a -> a < 0);
+		case GREATER -> computeTrivialityStatus(term, a -> a > 0);
+		case GEQ -> computeTrivialityStatus(term, a -> a >= 0);
+		case LEQ -> computeTrivialityStatus(term, a -> a <= 0);
+		case BVULE, BVULT, BVUGE, BVUGT, BVSLE, BVSLT, BVSGE, BVSGT -> TrivialityStatus.NONTRIVIAL;
+		};
 	}
 
 	private static TrivialityStatus checkMinMaxValues(final AbstractGeneralizedAffineTerm<?> term,

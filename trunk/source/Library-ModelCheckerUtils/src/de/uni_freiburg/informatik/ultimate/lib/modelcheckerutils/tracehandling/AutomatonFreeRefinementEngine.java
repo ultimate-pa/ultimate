@@ -284,27 +284,17 @@ public final class AutomatonFreeRefinementEngine<L extends IAction>
 			return null;
 		}
 
-		final ExceptionHandlingCategory category;
-		switch (status.getStatus()) {
-		case ALGORITHM_FAILED:
-			category = ExceptionHandlingCategory.KNOWN_IGNORE;
-			break;
-		case OTHER:
-			category = ExceptionHandlingCategory.UNKNOWN;
-			break;
-		case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT:
-			category = ExceptionHandlingCategory.KNOWN_IGNORE;
-			break;
-		case SMT_SOLVER_CRASH:
-			category = ExceptionHandlingCategory.KNOWN_DEPENDING;
-			break;
-		case TRACE_FEASIBLE:
-			final String msg = String.format("Tracecheck %s said UNSAT, interpolant generator %s failed with %s",
+		final ExceptionHandlingCategory category = switch (status.getStatus()) {
+		case ALGORITHM_FAILED -> ExceptionHandlingCategory.KNOWN_IGNORE;
+		case OTHER -> ExceptionHandlingCategory.UNKNOWN;
+		case SMT_SOLVER_CANNOT_INTERPOLATE_INPUT -> ExceptionHandlingCategory.KNOWN_IGNORE;
+		case SMT_SOLVER_CRASH -> ExceptionHandlingCategory.KNOWN_DEPENDING;
+		case TRACE_FEASIBLE -> {
+			final String msg = "Tracecheck %s said UNSAT, interpolant generator %s failed with %s".formatted(
 					mUsedTraceCheckFingerprint, getModuleFingerprintString(interpolantGenerator), status.getStatus());
 			throw new IllegalStateException(msg);
-		default:
-			throw new AssertionError("unknown case : " + status.getStatus());
 		}
+		};
 		throwIfNecessary(category, status.getException());
 		final String message =
 				status.getException() == null ? String.valueOf(status.getStatus()) : status.getException().getMessage();

@@ -209,29 +209,26 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 
 	private IDfsOrder<L, IPredicate> getDfsOrder(final OrderType orderType, final long randomOrderSeed,
 			final IIcfg<?> icfg, final Collection<? extends IcfgLocation> errorLocs) {
-		switch (orderType) {
-		case BY_SERIAL_NUMBER:
+		return switch (orderType) {
+		case BY_SERIAL_NUMBER -> {
 			final Set<String> errorThreads =
 					errorLocs.stream().map(IcfgLocation::getProcedure).collect(Collectors.toSet());
-			return new ConstantDfsOrder<>(
+			yield new ConstantDfsOrder<>(
 					Comparator.<L, Boolean> comparing(x -> !errorThreads.contains(x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparing(x -> x.getPrecedingProcedure()))
 							.thenComparing(Comparator.comparingInt(Object::hashCode)));
-		case PSEUDO_LOCKSTEP:
-			return new BetterLockstepOrder<>(this::normalizePredicate);
-		case RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, false);
-		case POSITIONAL_RANDOM:
-			return new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
-		case LOOP_LOCKSTEP:
+		}
+		case PSEUDO_LOCKSTEP -> new BetterLockstepOrder<>(this::normalizePredicate);
+		case RANDOM -> new RandomDfsOrder<>(randomOrderSeed, false);
+		case POSITIONAL_RANDOM -> new RandomDfsOrder<>(randomOrderSeed, true, this::normalizePredicate);
+		case LOOP_LOCKSTEP -> {
 			final var order =
 					new LoopLockstepOrder<L>(icfg, mStateSplitter == null ? null : mStateSplitter::getOriginal);
 			mStateSplitter = StateSplitter.extend(mStateSplitter, x -> ((PredicateWithLastThread) x).getUnderlying(),
 					x -> ((PredicateWithLastThread) x).getLastThread());
-			return order;
-		default:
-			throw new UnsupportedOperationException("Unknown order type: " + orderType);
+			yield order;
 		}
+		};
 	}
 
 	private final IPersistentSetChoice<L, IPredicate> createPersistentSets(final IIcfg<?> icfg,
@@ -310,19 +307,13 @@ public class PartialOrderReductionFacade<L extends IIcfgTransition<?>> {
 	// Some fields of this class may become fields of the respective ITraversal implementations.
 	private ITraversal<L, IPredicate> buildReducedTraversal(final PartialOrderMode mode,
 			final ITraversal<L, IPredicate> underlying) {
-		switch (mode) {
-		case NONE:
-			return underlying;
-		case SLEEP_NEW_STATES:
-			return buildSleepTraversal(underlying);
-		case PERSISTENT_SETS:
-			return new PersistentSetTraversal<>(mPersistent, underlying);
-		case PERSISTENT_SLEEP_NEW_STATES:
-		case PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER:
-			return buildSleepTraversal(new PersistentSetTraversal<>(mPersistent, underlying));
-		default:
-			throw new UnsupportedOperationException("Unsupported POR mode: " + mode);
-		}
+		return switch (mode) {
+		case NONE -> underlying;
+		case SLEEP_NEW_STATES -> buildSleepTraversal(underlying);
+		case PERSISTENT_SETS -> new PersistentSetTraversal<>(mPersistent, underlying);
+		case PERSISTENT_SLEEP_NEW_STATES, PERSISTENT_SLEEP_NEW_STATES_FIXEDORDER ->
+				buildSleepTraversal(new PersistentSetTraversal<>(mPersistent, underlying));
+		};
 	}
 
 	private ITraversal<L, IPredicate> buildSleepTraversal(final ITraversal<L, IPredicate> underlying) {

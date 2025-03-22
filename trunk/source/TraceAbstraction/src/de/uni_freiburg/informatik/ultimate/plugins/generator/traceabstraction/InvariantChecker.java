@@ -262,20 +262,12 @@ public class InvariantChecker {
 
 	private ILocation guessLocation(final IcfgLocation programPoint) {
 		final ProgramPointType programPointType = classify(programPoint);
-		final IcfgEdge someEdge;
-		switch (programPointType) {
-		case ENTRY:
-		case LOOP_HEAD:
-			someEdge = programPoint.getOutgoingEdges().get(0);
-			break;
-		case ERROR_LOC:
-		case LOOP_INVARIANT_ERROR_LOC:
-			someEdge = programPoint.getIncomingEdges().get(0);
-			break;
-		case UNKNOWN:
-		default:
-			throw new AssertionError("unable to determine type of program point");
-		}
+		final IcfgEdge someEdge = switch (programPointType) {
+		case ENTRY, LOOP_HEAD -> programPoint.getOutgoingEdges().get(0);
+		case ERROR_LOC, LOOP_INVARIANT_ERROR_LOC -> programPoint.getIncomingEdges().get(0);
+		case UNKNOWN -> throw new AssertionError("unable to determine type of program point");
+		};
+
 		final ILocation loc = ILocation.getAnnotation(someEdge);
 		final ILocation result;
 		if (loc instanceof MergedLocation) {
@@ -628,21 +620,14 @@ public class InvariantChecker {
 		return loa != null;
 	}
 
-	private String getNiceSubgraphPointDescription(final ProgramPointType lt) {
-		switch (lt) {
-		case ENTRY:
-			return "procedure entry";
-		case ERROR_LOC:
-			return "error location";
-		case LOOP_HEAD:
-			return "loop head";
-		case LOOP_INVARIANT_ERROR_LOC:
-			return "loop head";
-		case UNKNOWN:
-			return "unspecified location type";
-		default:
-			throw new AssertionError("unknown location type " + lt);
-		}
+	private static String getNiceSubgraphPointDescription(final ProgramPointType lt) {
+		return switch (lt) {
+		case ENTRY -> "procedure entry";
+		case ERROR_LOC -> "error location";
+		case LOOP_HEAD -> "loop head";
+		case LOOP_INVARIANT_ERROR_LOC -> "loop head";
+		case UNKNOWN -> "unspecified location type";
+		};
 	}
 
 	public IResultWithSeverity getResultForUltimateUser() {

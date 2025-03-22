@@ -195,9 +195,6 @@ public class BoogieUtils {
 				final Integer occ = map.getOrDefault(label, 0);
 				map.put(label, occ + 1);
 			}
-			return;
-		default:
-			throw new UnsupportedOperationException("Statement " + st.getClass() + " not supported");
 		}
 	}
 

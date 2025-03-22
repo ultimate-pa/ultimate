@@ -100,34 +100,20 @@ public class Case implements ITermProvider {
 		if (mSolvedBinaryRelation != null) {
 			params.add(mSolvedBinaryRelation.toTerm(script));
 		}
-		final Term result;
-		switch (mXnf) {
-		case CNF:
-			result = SmtUtils.or(script, params);
-			break;
-		case DNF:
-			result = SmtUtils.and(script, params);
-			break;
-		default:
-			throw new AssertionError("unknown case " + mXnf);
-		}
-		return result;
+		return switch (mXnf) {
+		case CNF -> SmtUtils.or(script, params);
+		case DNF -> SmtUtils.and(script, params);
+		};
 	}
 
 	@Override
 	public String toString() {
-		String junctor;
+		final String junctor = switch (mXnf) {
+		case CNF -> " \\/ ";
+		case DNF -> " /\\ ";
+		};
+
 		String result;
-		switch (mXnf) {
-		case CNF:
-			junctor = " \\/ ";
-			break;
-		case DNF:
-			junctor = " /\\ ";
-			break;
-		default:
-			throw new AssertionError("unknown case " + mXnf);
-		}
 		if (mSolvedBinaryRelation == null) {
 			result = "{";
 		} else {

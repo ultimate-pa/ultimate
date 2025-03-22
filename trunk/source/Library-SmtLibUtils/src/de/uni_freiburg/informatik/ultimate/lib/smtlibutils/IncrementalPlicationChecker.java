@@ -49,47 +49,30 @@ public class IncrementalPlicationChecker {
 		VALID, INVALID, UNKNOWN, NOT_CHECKED;
 
 		public Validity and(final Validity other) {
-			switch (this) {
-			case INVALID:
-				return INVALID;
-			case NOT_CHECKED:
-				return other == INVALID ? other : this;
-			case UNKNOWN:
-				return (other == NOT_CHECKED || other == INVALID) ? other : this;
-			case VALID:
-				return other;
-			default:
-				throw new AssertionError("unexpected validity " + this);
-			}
+			return switch (this) {
+			case INVALID -> INVALID;
+			case NOT_CHECKED -> other == INVALID ? other : this;
+			case UNKNOWN -> (other == NOT_CHECKED || other == INVALID) ? other : this;
+			case VALID -> other;
+			};
 		}
 	}
 
 	public static Validity convertLBool2Validity(final LBool lbool) {
-		switch (lbool) {
-		case SAT:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return Validity.UNKNOWN;
-		case UNSAT:
-			return Validity.VALID;
-		default:
-			throw new AssertionError();
-		}
+		return switch (lbool) {
+		case SAT -> Validity.INVALID;
+		case UNKNOWN -> Validity.UNKNOWN;
+		case UNSAT -> Validity.VALID;
+		};
 	}
 
 	public static LBool convertValidity2Lbool(final Validity validity) {
-		switch (validity) {
-		case INVALID:
-			return LBool.SAT;
-		case NOT_CHECKED:
-			throw new AssertionError();
-		case UNKNOWN:
-			return LBool.UNKNOWN;
-		case VALID:
-			return LBool.UNSAT;
-		default:
-			throw new AssertionError();
-		}
+		return switch (validity) {
+		case INVALID -> LBool.SAT;
+		case NOT_CHECKED -> throw new AssertionError();
+		case UNKNOWN -> LBool.UNKNOWN;
+		case VALID -> LBool.UNSAT;
+		};
 	}
 
 	public enum Plication {
@@ -114,17 +97,11 @@ public class IncrementalPlicationChecker {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mVar2ConstSubstitution = constructVar2ConstSubstitution(lhs);
-		final Term assertTerm;
-		switch (mPlication) {
-		case EXPLICATION:
-			assertTerm = SmtUtils.not(mMgdScript.getScript(), lhs);
-			break;
-		case IMPLICATION:
-			assertTerm = lhs;
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+
+		final Term assertTerm = switch (mPlication) {
+		case EXPLICATION -> SmtUtils.not(mMgdScript.getScript(), lhs);
+		case IMPLICATION -> lhs;
+		};
 		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		mLhsIsAsserted = true;
 	}
@@ -144,17 +121,11 @@ public class IncrementalPlicationChecker {
 			assertLhs(mLhs);
 		}
 		mMgdScript.push(this, 1);
-		final Term assertTerm;
-		switch (mPlication) {
-		case EXPLICATION:
-			assertTerm = rhs;
-			break;
-		case IMPLICATION:
-			assertTerm = SmtUtils.not(mMgdScript.getScript(), rhs);
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+
+		final Term assertTerm = switch (mPlication) {
+		case EXPLICATION -> rhs;
+		case IMPLICATION -> SmtUtils.not(mMgdScript.getScript(), rhs);
+		};
 		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);
@@ -166,18 +137,11 @@ public class IncrementalPlicationChecker {
 			assertLhs(mLhs);
 		}
 		mMgdScript.push(this, 1);
-		final Term assertTerm;
-		switch (mPlication) {
-		case EXPLICATION:
-			assertTerm = additionalTerm;
-			break;
-		case IMPLICATION:
-			assertTerm = additionalTerm;
-			// assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		final Term assertTerm = switch (mPlication) {
+		case EXPLICATION -> additionalTerm;
+		case IMPLICATION -> additionalTerm;
+		// assertTerm = SmtUtils.not(mMgdScript.getScript(), additionalTerm);
+		};
 		mMgdScript.assertTerm(this, Substitution.apply(mMgdScript, mVar2ConstSubstitution, assertTerm));
 		final LBool isSat = mMgdScript.checkSat(this);
 		mMgdScript.pop(this, 1);

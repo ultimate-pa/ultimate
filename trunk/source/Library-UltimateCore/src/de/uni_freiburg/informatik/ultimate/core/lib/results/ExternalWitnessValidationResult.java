@@ -63,18 +63,12 @@ public class ExternalWitnessValidationResult extends AbstractResult {
 			return "No witness for: " + mResult.getShortDescription();
 		}
 
-		switch (getVerificationStatus()) {
-		case INTERNAL_ERROR:
-			return "An error occured during witness verification for: " + mResult.getShortDescription();
-		case UNVERIFIED:
-			return "Unverified witness for: " + mResult.getShortDescription();
-		case VERIFICATION_FAILED:
-			return "Witness verification failed for: " + mResult.getShortDescription();
-		case VERIFIED:
-			return "Verified witness for: " + mResult.getShortDescription();
-		default:
-			throw new UnsupportedOperationException("Enum value " + getVerificationStatus() + " is unhandled");
-		}
+		return switch (getVerificationStatus()) {
+		case INTERNAL_ERROR -> "An error occured during witness verification for: " + mResult.getShortDescription();
+		case UNVERIFIED -> "Unverified witness for: " + mResult.getShortDescription();
+		case VERIFICATION_FAILED -> "Witness verification failed for: " + mResult.getShortDescription();
+		case VERIFIED -> "Verified witness for: " + mResult.getShortDescription();
+		};
 	}
 
 	@Override

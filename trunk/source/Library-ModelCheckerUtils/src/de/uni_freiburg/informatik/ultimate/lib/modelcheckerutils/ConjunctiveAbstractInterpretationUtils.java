@@ -220,20 +220,12 @@ public class ConjunctiveAbstractInterpretationUtils {
 		if (isFalse(oldConjuncts)) {
 			newConjunction = postcondition;
 		} else {
-			final Set<Term> newConjuncts;
-			switch (widen) {
-			case INTERSECTION:
-				newConjuncts = widenNaively(oldConjuncts, postconditionConjuncts);
-				break;
-			case POLY_PAC:
-				throw new AssertionError("Not yet implemented.");
-			case SMT_SOLVER:
-				newConjuncts = widenBySolver(services, icfg.getCfgSmtToolkit().getManagedScript(), predFac,
-						oldTargetPredicate, postcondition, oldConjuncts, postconditionConjuncts);
-				break;
-			default:
-				throw new AssertionError("Unknown value");
-			}
+			final Set<Term> newConjuncts = switch (widen) {
+			case INTERSECTION -> widenNaively(oldConjuncts, postconditionConjuncts);
+			case POLY_PAC -> throw new AssertionError("Not yet implemented.");
+			case SMT_SOLVER -> widenBySolver(services, icfg.getCfgSmtToolkit().getManagedScript(), predFac,
+					oldTargetPredicate, postcondition, oldConjuncts, postconditionConjuncts);
+			};
 			newConjunction = SmtUtils.and(icfg.getCfgSmtToolkit().getManagedScript().getScript(), newConjuncts);
 		}
 		if (newConjunction.equals(oldTargetPredicate.getFormula())) {

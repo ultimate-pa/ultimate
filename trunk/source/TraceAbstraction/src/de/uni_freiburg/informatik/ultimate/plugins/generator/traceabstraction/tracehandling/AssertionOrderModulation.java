@@ -112,19 +112,17 @@ public class AssertionOrderModulation<LETTER> {
 			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
 		}
 
-		switch (interpolationTechnique) {
+		return switch (interpolationTechnique) {
 		case Craig_NestedInterpolation:
 		case PDR:
-			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
+			yield AssertCodeBlockOrder.NOT_INCREMENTALLY;
 		case Craig_TreeInterpolation:
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
-			return mOrder[index];
-		default:
-			throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
-		}
+			yield mOrder[index];
+		};
 	}
 }

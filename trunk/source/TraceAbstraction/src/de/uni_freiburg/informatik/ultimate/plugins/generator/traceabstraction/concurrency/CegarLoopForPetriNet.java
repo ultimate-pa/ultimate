@@ -541,17 +541,10 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 
 	private Set<L> determineUniversalSubtrahendLoopers(final Set<L> alphabet, final Set<IPredicate> states,
 			final IHoareTripleChecker htc, final IPredicateCoverageChecker coverage) {
-		ILooperCheck<L> looperCheck;
-		switch (mPref.looperCheck()) {
-		case SEMANTIC:
-			looperCheck = new ILooperCheck.HoareLooperCheck<>(htc, coverage);
-			break;
-		case SYNTACTIC:
-			looperCheck = new ILooperCheck.IndependentLooperCheck<>();
-			break;
-		default:
-			throw new AssertionError("Unsupported looper check");
-		}
+		final ILooperCheck<L> looperCheck = switch (mPref.looperCheck()) {
+		case SEMANTIC -> new ILooperCheck.HoareLooperCheck<>(htc, coverage);
+		case SYNTACTIC -> new ILooperCheck.IndependentLooperCheck<>();
+		};
 
 		return alphabet.stream().filter(letter -> looperCheck.isUniversalLooper(letter, states) == LBool.UNSAT)
 				.collect(Collectors.toSet());

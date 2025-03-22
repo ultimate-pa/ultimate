@@ -82,19 +82,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isInductive(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
-		switch (result) {
-		case INVALID:
-			mHoareTripleCheckerStatistics.getSolverCounterSat().incIn();
-			break;
-		case UNKNOWN:
-			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incIn();
-			break;
-		case VALID:
-			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incIn();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mHoareTripleCheckerStatistics.getSolverCounter(result).incIn();
 		return result;
 	}
 
@@ -103,19 +91,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result = IncrementalPlicationChecker.convertLBool2Validity(isInductiveCall(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
-		switch (result) {
-		case INVALID:
-			mHoareTripleCheckerStatistics.getSolverCounterSat().incCa();
-			break;
-		case UNKNOWN:
-			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incCa();
-			break;
-		case VALID:
-			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incCa();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mHoareTripleCheckerStatistics.getSolverCounter(result).incCa();
 		return result;
 	}
 
@@ -126,19 +102,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final Validity result =
 				IncrementalPlicationChecker.convertLBool2Validity(isInductiveReturn(preLin, preHier, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
-		switch (result) {
-		case INVALID:
-			mHoareTripleCheckerStatistics.getSolverCounterSat().incRe();
-			break;
-		case UNKNOWN:
-			mHoareTripleCheckerStatistics.getSolverCounterUnknown().incRe();
-			break;
-		case VALID:
-			mHoareTripleCheckerStatistics.getSolverCounterUnsat().incRe();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mHoareTripleCheckerStatistics.getSolverCounter(result).incRe();
 		return result;
 	}
 

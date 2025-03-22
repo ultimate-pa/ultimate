@@ -499,21 +499,16 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 
 		private IHoareTripleChecker constructHtc() {
 			final FloydHoareAutomataReuseEnhancement mode = mPref.getFloydHoareAutomataReuseEnhancement();
-			switch (mode) {
-			case AS_USUAL:
-				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
-				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
-				return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
-						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
-			case ONLY_NEW_LETTERS:
-				return constructEfficientIgnoringHtc(false);
-			case ONLY_NEW_LETTERS_SOLVER:
-				return constructEfficientIgnoringHtc(true);
-			case NONE:
-			default:
-				throw new UnsupportedOperationException("Unknown / illegal mode: " + mode);
+			return switch (mode) {
+			// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
+			// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
+			case AS_USUAL -> HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+					mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
 
-			}
+			case ONLY_NEW_LETTERS -> constructEfficientIgnoringHtc(false);
+			case ONLY_NEW_LETTERS_SOLVER -> constructEfficientIgnoringHtc(true);
+			case NONE -> throw new UnsupportedOperationException("Illegal mode: " + mode);
+			};
 		}
 
 		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
