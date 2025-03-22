@@ -63,7 +63,7 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 	@Override
 	public Object getValue(final String key) {
 		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
-				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
+				AcceleratedInterpolationStatisticsDefinitions.valueOf(key);
 		final String errorMsg = "clock still running: ";
 		return switch (keyEnum) {
 		case ACCELINTERPOL_CORE, ACCELINTERPOL_OVERALL, ACCELINTERPOL_LOOPDETECTOR, ACCELINTERPOL_LOOPACCELERATOR:

@@ -74,8 +74,7 @@ public class InvariantSynthesisStatisticsGenerator implements IStatisticsDataPro
 
 	@Override
 	public Object getValue(final String key) {
-		final InvariantSynthesisStatisticsDefinitions keyEnum =
-				Enum.valueOf(InvariantSynthesisStatisticsDefinitions.class, key);
+		final InvariantSynthesisStatisticsDefinitions keyEnum = InvariantSynthesisStatisticsDefinitions.valueOf(key);
 		switch (keyEnum) {
 		case ProgramSizeConjuncts:
 			return mProgramSizeConjuncts;

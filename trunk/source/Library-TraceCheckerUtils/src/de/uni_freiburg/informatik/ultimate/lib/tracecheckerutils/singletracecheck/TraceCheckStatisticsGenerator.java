@@ -140,7 +140,7 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	@Override
 	public Object getValue(final String key) {
-		final TraceCheckStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckStatisticsDefinitions.class, key);
+		final TraceCheckStatisticsDefinitions keyEnum = TraceCheckStatisticsDefinitions.valueOf(key);
 		return switch (keyEnum) {
 		case SsaConstructionTime, SatisfiabilityAnalysisTime, InterpolantComputationTime -> {
 			try {

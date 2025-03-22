@@ -60,7 +60,7 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 
 	@Override
 	public Object getValue(final String key) {
-		final JordanLoopAccelerationDefinitions keyEnum = Enum.valueOf(JordanLoopAccelerationDefinitions.class, key);
+		final JordanLoopAccelerationDefinitions keyEnum = JordanLoopAccelerationDefinitions.valueOf(key);
 		return switch (keyEnum) {
 		case AssignedVariables -> mNumberOfAssignedVariables;
 		case HavocedVariables -> mNumberOfHavocedVariables;

@@ -776,7 +776,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 
 		@Override
 		public Object getValue(final String key) {
-			final ReuseStatisticsDefinitions keyEnum = Enum.valueOf(ReuseStatisticsDefinitions.class, key);
+			final ReuseStatisticsDefinitions keyEnum = ReuseStatisticsDefinitions.valueOf(key);
 			return switch (keyEnum) {
 			case REUSE_PREDICATE_UNIFIER -> mPredicateUnifierStats;
 			case REUSE_TIME -> getTime();

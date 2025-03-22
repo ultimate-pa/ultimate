@@ -48,13 +48,9 @@ class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
 	private int mPreInvPairs;
 	private int mNumberOfFragments;
 
-	public HoareAnnotationStatisticsGenerator() {
-	}
-
 	@Override
 	public Object getValue(final String key) {
-		final HoareAnnotationStatisticsDefinitions keyEnum =
-				Enum.valueOf(HoareAnnotationStatisticsDefinitions.class, key);
+		final HoareAnnotationStatisticsDefinitions keyEnum = HoareAnnotationStatisticsDefinitions.valueOf(key);
 		return switch (keyEnum) {
 		case FormulaSimplifications -> mFormulaSimplifications;
 		case FormulaSimplificationTreeSizeReduction -> mFormulaSimplificationTreeSizeReduction;

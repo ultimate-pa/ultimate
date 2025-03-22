@@ -136,7 +136,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	@Override
 	public Object getValue(final String key) {
-		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
+		final CegarLoopStatisticsDefinitions keyEnum = CegarLoopStatisticsDefinitions.valueOf(key);
 		return switch (keyEnum) {
 		case OverallTime, EmptinessCheckTime, AutomataDifference, DeadEndRemovalTime, HoareAnnotationTime,
 				BasicInterpolantAutomatonTime, InitialAbstractionConstructionTime, DumpTime -> {

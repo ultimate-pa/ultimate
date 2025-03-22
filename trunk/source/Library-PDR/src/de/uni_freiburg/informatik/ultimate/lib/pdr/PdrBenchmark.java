@@ -54,7 +54,7 @@ public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches imple
 
 	@Override
 	public Object getValue(final String key) {
-		final PdrStatisticsDefinitions keyEnum = Enum.valueOf(PdrStatisticsDefinitions.class, key);
+		final PdrStatisticsDefinitions keyEnum = PdrStatisticsDefinitions.valueOf(key);
 		return switch (keyEnum) {
 		case PDR_RUNTIME:
 			try {

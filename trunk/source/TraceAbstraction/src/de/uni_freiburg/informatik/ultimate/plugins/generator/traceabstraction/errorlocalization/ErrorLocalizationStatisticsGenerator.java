@@ -115,8 +115,7 @@ public class ErrorLocalizationStatisticsGenerator implements IStatisticsDataProv
 
 	@Override
 	public Object getValue(final String key) {
-		final ErrorLocalizationStatisticsDefinitions keyEnum =
-				Enum.valueOf(ErrorLocalizationStatisticsDefinitions.class, key);
+		final ErrorLocalizationStatisticsDefinitions keyEnum = ErrorLocalizationStatisticsDefinitions.valueOf(key);
 		switch (keyEnum) {
 		case ErrorAdmittingIcfgEdges:
 			return mErrorAdmittingIcfgEdges;
