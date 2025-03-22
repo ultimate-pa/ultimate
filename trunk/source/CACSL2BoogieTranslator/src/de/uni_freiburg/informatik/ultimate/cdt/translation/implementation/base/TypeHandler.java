@@ -634,27 +634,25 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public ASTType byteSize2AstType(final ILocation loc, final CPrimitiveCategory generalprimitive,
 			final int bytesize) {
-		switch (generalprimitive) {
+		return switch (generalprimitive) {
 		case VOID:
 			throw new UnsupportedOperationException();
 		case INTTYPE:
 			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				return new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
+				yield new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 			}
-			return new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
+			yield new PrimitiveType(loc, BoogieType.TYPE_INT, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mTranslationSettings.isBitvectorTranslation()) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
-				return new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
+				yield new PrimitiveType(loc, BoogieType.createBitvectorType(bitsize), name);
 			}
-			return new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
-		default:
-			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
-		}
+			yield new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL);
+		};
 	}
 
 	@Override
@@ -768,16 +766,11 @@ public class TypeHandler implements ITypeHandler {
 				final Integer byteSize = mTypeSizes.getSize(((CPrimitive) cType).getType());
 				return BoogieType.createBitvectorType(byteSize * 8);
 			}
-			switch (((CPrimitive) cType).getGeneralType()) {
-			case FLOATTYPE:
-				return BoogieType.TYPE_REAL;
-			case INTTYPE:
-				return BoogieType.TYPE_INT;
-			case VOID:
-				return BoogieType.TYPE_ERROR;
-			default:
-				throw new AssertionError();
-			}
+			return switch (((CPrimitive) cType).getGeneralType()) {
+			case FLOATTYPE -> BoogieType.TYPE_REAL;
+			case INTTYPE -> BoogieType.TYPE_INT;
+			case VOID -> BoogieType.TYPE_ERROR;
+			};
 		} else if (cType instanceof CPointer) {
 			return getBoogiePointerType();
 		} else if (cType instanceof CEnum) {
@@ -933,24 +926,22 @@ public class TypeHandler implements ITypeHandler {
 	private ASTType cPrimitive2AstType(final ILocation loc, final CPrimitive cPrimitive) {
 		final BoogieType boogieType = getBoogieTypeForCType(cPrimitive);
 
-		switch (cPrimitive.getGeneralType()) {
+		return switch (cPrimitive.getGeneralType()) {
 		case VOID:
 			// (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
-			return null;
+			yield null;
 		case INTTYPE:
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+				yield new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
-			return new PrimitiveType(loc, boogieType, SFO.INT);
+			yield new PrimitiveType(loc, boogieType, SFO.INT);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
 			if (mTranslationSettings.isBitvectorTranslation()) {
-				return new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+				yield new NamedType(loc, boogieType, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
-			return new PrimitiveType(loc, boogieType, SFO.REAL);
-		default:
-			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
-		}
+			yield new PrimitiveType(loc, boogieType, SFO.REAL);
+		};
 	}
 
 	private static boolean areMatchingTypes(final CType type1, final CType type2,

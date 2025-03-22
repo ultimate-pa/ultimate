@@ -276,15 +276,10 @@ public final class DataRaceChecker {
 		// Non-heap LHS whose root variable is not global do not admit races. Even when passed to other threads, they
 		// are either copied (primitives, structs) or passed via pointer (but then they must be on heap!).
 		final VariableLHS varLhs = getRootLhs(((LocalLValue) lrVal).getLhs());
-		switch (varLhs.getDeclarationInformation().getStorageClass()) {
-		case LOCAL:
-		case IMPLEMENTATION_INPARAM:
-		case IMPLEMENTATION_OUTPARAM:
-		case PROC_FUNC:
-			return true;
-		default:
-			return false;
-		}
+		return switch (varLhs.getDeclarationInformation().getStorageClass()) {
+		case LOCAL, IMPLEMENTATION_INPARAM, IMPLEMENTATION_OUTPARAM, PROC_FUNC -> true;
+		case GLOBAL, IMPLEMENTATION, PROC_FUNC_INPARAM, PROC_FUNC_OUTPARAM, QUANTIFIED -> false;
+		};
 	}
 
 	private static VariableLHS getRootLhs(LeftHandSide lhs) {

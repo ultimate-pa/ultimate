@@ -96,21 +96,16 @@ public abstract class ExpressionTranslation {
 		mSymboltable = symboltable;
 		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
 
-		switch (mSettings.getPointerIntegerCastMode()) {
+		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
 		case IdentityAxiom:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
 		case NonBijectiveMapping:
-			mPointerIntegerConversion = new NonBijectiveMapping(this, mTypeSizes);
-			break;
+			yield new NonBijectiveMapping(this, mTypeSizes);
 		case NutzBijection:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
-			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown value " + mSettings.getPointerIntegerCastMode());
-
-		}
+			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
+		};
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -384,26 +379,19 @@ public abstract class ExpressionTranslation {
 	}
 
 	public Expression constructZero(final ILocation loc, final CType cType) {
-		final Expression result;
 		if (cType instanceof CPrimitive) {
-			switch (((CPrimitive) cType).getGeneralType()) {
+			return switch (((CPrimitive) cType).getGeneralType()) {
 			case FLOATTYPE:
-				result = constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
-				break;
+				yield constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
 			case INTTYPE:
-				result = mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
-				break;
+				yield mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
 			case VOID:
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
-			default:
-				throw new AssertionError("illegal type");
-			}
+			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			result = constructNullPointer(loc);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
+			return constructNullPointer(loc);
 		}
-		return result;
+		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}
 
 	/**

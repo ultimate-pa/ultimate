@@ -55,32 +55,19 @@ class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvider {
 	public Object getValue(final String key) {
 		final HoareAnnotationStatisticsDefinitions keyEnum =
 				Enum.valueOf(HoareAnnotationStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case FormulaSimplifications:
-			return mFormulaSimplifications;
-		case FormulaSimplificationTreeSizeReduction:
-			return mFormulaSimplificationTreeSizeReduction;
-		case HoareSimplificationTime:
-			return mHoareSimplificationTime;
-		case FormulaSimplificationsInter:
-			return mFormulaSimplificationsInter;
-		case FormulaSimplificationTreeSizeReductionInter:
-			return mFormulaSimplificationTreeSizeReductionInter;
-		case HoareSimplificationTimeInter:
-			return mHoareSimplificationTimeInter;
-		case HoareAnnotationTime:
-			return mHoareAnnotationTime;
-		case HoareAnnotationTreeSize:
-			return mHoareAnnotationTreeSize;
-		case LocationsWithAnnotation:
-			return mLocationsWithAnnotation;
-		case PreInvPairs:
-			return mPreInvPairs;
-		case NumberOfFragments:
-			return mNumberOfFragments;
-		default:
-			throw new AssertionError("unknown data");
-		}
+		return switch (keyEnum) {
+		case FormulaSimplifications -> mFormulaSimplifications;
+		case FormulaSimplificationTreeSizeReduction -> mFormulaSimplificationTreeSizeReduction;
+		case HoareSimplificationTime -> mHoareSimplificationTime;
+		case FormulaSimplificationsInter -> mFormulaSimplificationsInter;
+		case FormulaSimplificationTreeSizeReductionInter -> mFormulaSimplificationTreeSizeReductionInter;
+		case HoareSimplificationTimeInter -> mHoareSimplificationTimeInter;
+		case HoareAnnotationTime -> mHoareAnnotationTime;
+		case HoareAnnotationTreeSize -> mHoareAnnotationTreeSize;
+		case LocationsWithAnnotation -> mLocationsWithAnnotation;
+		case PreInvPairs -> mPreInvPairs;
+		case NumberOfFragments -> mNumberOfFragments;
+		};
 	}
 
 	@Override

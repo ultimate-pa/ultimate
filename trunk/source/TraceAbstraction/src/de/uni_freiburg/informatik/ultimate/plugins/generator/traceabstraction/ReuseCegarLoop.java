@@ -777,46 +777,26 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 		@Override
 		public Object getValue(final String key) {
 			final ReuseStatisticsDefinitions keyEnum = Enum.valueOf(ReuseStatisticsDefinitions.class, key);
-			switch (keyEnum) {
-			case REUSE_PREDICATE_UNIFIER:
-				return mPredicateUnifierStats;
-			case REUSE_TIME:
-				return getTime();
-			case NONREUSE_ITERATIONS:
-				return mNonReuseIterations;
-			case REUSE_HTC:
-				return mHtcStats;
-			case AUTOMATA_FROM_FILE:
-				return mAutomataFromFile;
-			case AUTOMATA_FROM_PREV_ERROR_LOC:
-				return mAutomataFromPreviousErrorLocation;
-			case REUSED_STATES:
-				return mReusedStates;
-			case TOTAL_STATES:
-				return mTotalStates;
-			case REUSED_LETTERS:
-				return mReusedLetters;
-			case REUSED_TRANSITIONS:
-				return mReusedTransitions;
-			case TOTAL_LETTERS:
-				return mTotalLetters;
-			case TOTAL_TRANSITIONS:
-				return mTotalTransitions;
-			case AFTER_DIFF_TRANS:
-				return mAfterDiffTransitions;
-			case BEFORE_DIFF_TRANS:
-				return mBeforeDiffTransitions;
-			case AFTER_ACCEPT_TRANS:
-				return mAfterAcceptanceTransitions;
-			case BEFORE_ACCEPT_TRANS:
-				return mBeforeAcceptanceTransitions;
-			case USELESS_PREDICATES:
-				return mUselessPredicates;
-			case DROPPED_AUTOMATA:
-				return mDroppedAutomata;
-			default:
-				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
-			}
+			return switch (keyEnum) {
+			case REUSE_PREDICATE_UNIFIER -> mPredicateUnifierStats;
+			case REUSE_TIME -> getTime();
+			case NONREUSE_ITERATIONS -> mNonReuseIterations;
+			case REUSE_HTC -> mHtcStats;
+			case AUTOMATA_FROM_FILE -> mAutomataFromFile;
+			case AUTOMATA_FROM_PREV_ERROR_LOC -> mAutomataFromPreviousErrorLocation;
+			case REUSED_STATES -> mReusedStates;
+			case TOTAL_STATES -> mTotalStates;
+			case REUSED_LETTERS -> mReusedLetters;
+			case REUSED_TRANSITIONS -> mReusedTransitions;
+			case TOTAL_LETTERS -> mTotalLetters;
+			case TOTAL_TRANSITIONS -> mTotalTransitions;
+			case AFTER_DIFF_TRANS -> mAfterDiffTransitions;
+			case BEFORE_DIFF_TRANS -> mBeforeDiffTransitions;
+			case AFTER_ACCEPT_TRANS -> mAfterAcceptanceTransitions;
+			case BEFORE_ACCEPT_TRANS -> mBeforeAcceptanceTransitions;
+			case USELESS_PREDICATES -> mUselessPredicates;
+			case DROPPED_AUTOMATA -> mDroppedAutomata;
+			};
 		}
 
 		@Override

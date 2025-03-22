@@ -240,24 +240,12 @@ public class Statements2TransFormula {
 		final StorageClass storageClass = declInfo.getStorageClass();
 		// assert (declInfo.getProcedure() == null ||
 		// declInfo.getProcedure().equals(mCurrentProcedure));
-		IProgramVar result;
-		switch (storageClass) {
-		case GLOBAL:
-		case LOCAL:
-		case IMPLEMENTATION_OUTPARAM:
-		case PROC_FUNC_OUTPARAM:
-			result = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
-		case IMPLEMENTATION_INPARAM:
-		case PROC_FUNC_INPARAM:
-			throw new AssertionError("not modifiable");
-		case IMPLEMENTATION:
-		case PROC_FUNC:
-		case QUANTIFIED:
-		default:
-			throw new AssertionError("no appropriate variable ");
-		}
-		return result;
+		return switch (storageClass) {
+		case GLOBAL, LOCAL, IMPLEMENTATION_OUTPARAM, PROC_FUNC_OUTPARAM ->
+				mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
+		case IMPLEMENTATION_INPARAM, PROC_FUNC_INPARAM -> throw new AssertionError("not modifiable");
+		case IMPLEMENTATION, PROC_FUNC, QUANTIFIED -> throw new AssertionError("no appropriate variable ");
+		};
 	}
 
 	private IIdentifierTranslator[] getIdentifierTranslatorsIntraprocedural() {
@@ -553,21 +541,12 @@ public class Statements2TransFormula {
 		protected IProgramVar getBoogieVar(final String id, final DeclarationInformation declInfo,
 				final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 			final StorageClass storageClass = declInfo.getStorageClass();
-			switch (storageClass) {
-			case IMPLEMENTATION_INPARAM:
-			case IMPLEMENTATION_OUTPARAM:
-			case PROC_FUNC_INPARAM:
-			case PROC_FUNC_OUTPARAM:
-			case LOCAL:
-				return mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
-			case GLOBAL:
-				return null;
-			case IMPLEMENTATION:
-			case PROC_FUNC:
-			case QUANTIFIED:
-			default:
-				throw new AssertionError();
-			}
+			return switch (storageClass) {
+			case IMPLEMENTATION_INPARAM, IMPLEMENTATION_OUTPARAM, PROC_FUNC_INPARAM, PROC_FUNC_OUTPARAM, LOCAL ->
+					mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+			case GLOBAL -> null;
+			case IMPLEMENTATION, PROC_FUNC, QUANTIFIED -> throw new AssertionError();
+			};
 		}
 	}
 
@@ -591,31 +570,28 @@ public class Statements2TransFormula {
 		protected IProgramVar getBoogieVar(final String id, final DeclarationInformation declInfo,
 				final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 			final StorageClass storageClass = declInfo.getStorageClass();
-			switch (storageClass) {
+			return switch (storageClass) {
 			case IMPLEMENTATION_INPARAM:
 			case IMPLEMENTATION_OUTPARAM:
 			case PROC_FUNC_INPARAM:
 			case PROC_FUNC_OUTPARAM:
 			case LOCAL:
-				return null;
+				yield null;
+
 			case GLOBAL:
-				IProgramVar bv;
 				if (isOldContext) {
 					if (mAllNonOld || !modifiableByCurrentProcedure(id)) {
-						bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-					} else {
-						bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, true);
+						yield mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
 					}
-				} else {
-					bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
+					yield mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, true);
 				}
-				return bv;
+				yield mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
+
 			case IMPLEMENTATION:
 			case PROC_FUNC:
 			case QUANTIFIED:
-			default:
 				throw new AssertionError();
-			}
+			};
 		}
 
 		private boolean modifiableByCurrentProcedure(final String id) {
@@ -714,18 +690,18 @@ public class Statements2TransFormula {
 		initialize(procId);
 		for (int i = statements.size() - 1; i >= 0; i--) {
 			final Statement st = statements.get(i);
-			if (st instanceof AssumeStatement) {
-				addAssume((AssumeStatement) st);
-			} else if (st instanceof AssignmentStatement) {
-				addAssignment((AssignmentStatement) st);
-			} else if (st instanceof HavocStatement) {
-				addHavoc((HavocStatement) st);
-			} else if (st instanceof CallStatement) {
-				addSummary((CallStatement) st);
-			} else if (st instanceof ForkStatement) {
-				addForkCurrentThread((ForkStatement) st);
-			} else if (st instanceof JoinStatement) {
-				addJoinCurrentThread((JoinStatement) st);
+			if (st instanceof final AssumeStatement assumeStmt) {
+				addAssume(assumeStmt);
+			} else if (st instanceof final AssignmentStatement assignStmt) {
+				addAssignment(assignStmt);
+			} else if (st instanceof final HavocStatement havocStmt) {
+				addHavoc(havocStmt);
+			} else if (st instanceof final CallStatement call) {
+				addSummary(call);
+			} else if (st instanceof final ForkStatement fork) {
+				addForkCurrentThread(fork);
+			} else if (st instanceof final JoinStatement join) {
+				addJoinCurrentThread(join);
 			} else {
 				throw new IllegalArgumentException(
 						"Intenal Edge only contains" + " Assume, Assignment or Havoc Statement");

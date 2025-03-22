@@ -1120,27 +1120,21 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		LeftHandSide newLhs = null;
-		if (lhs instanceof VariableLHS) {
-			final VariableLHS varLhs = (VariableLHS) lhs;
+		final LeftHandSide newLhs = switch (lhs) {
+		case final VariableLHS varLhs:
 			final DeclarationInformation declInfo = varLhs.getDeclarationInformation();
 			final VarMapValue mapping =
 					mVarMap.get(new VarMapKey(varLhs.getIdentifier(), declInfo, isGobalInOldExprOfProc(declInfo)));
-			final String newId = mapping.getVarId();
 			final DeclarationInformation newDeclInfo = mapping.getDeclInfo();
-			newLhs = new VariableLHS(varLhs.getLocation(), varLhs.getType(), newId, newDeclInfo);
-		} else if (lhs instanceof StructLHS) {
-			final StructLHS structLhs = (StructLHS) lhs;
+			yield new VariableLHS(varLhs.getLocation(), varLhs.getType(), mapping.getVarId(), newDeclInfo);
+		case final StructLHS structLhs:
 			final LeftHandSide newStructStruct = processLeftHandSide(structLhs.getStruct());
-			newLhs = new StructLHS(structLhs.getLocation(), newStructStruct, structLhs.getField());
-		} else if (lhs instanceof ArrayLHS) {
-			final ArrayLHS arrayLhs = (ArrayLHS) lhs;
+			yield new StructLHS(structLhs.getLocation(), newStructStruct, structLhs.getField());
+		case final ArrayLHS arrayLhs:
 			final LeftHandSide newArray = processLeftHandSide(arrayLhs.getArray());
 			final Expression[] newIndices = processExpressions(arrayLhs.getIndices());
-			newLhs = new ArrayLHS(lhs.getLocation(), arrayLhs.getType(), newArray, newIndices);
-		} else {
-			throw new UnsupportedOperationException("Cannot process unknown LHS: " + lhs.getClass().getName());
-		}
+			yield new ArrayLHS(lhs.getLocation(), arrayLhs.getType(), newArray, newIndices);
+		};
 		ModelUtils.copyAnnotations(lhs, newLhs);
 		return newLhs;
 	}

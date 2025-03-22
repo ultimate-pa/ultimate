@@ -222,26 +222,25 @@ public class Boogie2SmtSymbolTable
 			final boolean inOldContext) {
 		final StorageClass storageClass = declarationInformation.getStorageClass();
 		final String procedure = declarationInformation.getProcedure();
-		switch (storageClass) {
+		return switch (storageClass) {
 		case GLOBAL:
 			if (inOldContext) {
-				return mOldGlobals.get(varId);
+				yield mOldGlobals.get(varId);
 			}
-			return mGlobals.get(varId);
+			yield mGlobals.get(varId);
 		case PROC_FUNC_INPARAM:
 		case IMPLEMENTATION_INPARAM:
-			return get(varId, procedure, mImplementationInParam);
+			yield get(varId, procedure, mImplementationInParam);
 		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_OUTPARAM:
-			return get(varId, procedure, mImplementationOutParam);
+			yield get(varId, procedure, mImplementationOutParam);
 		case LOCAL:
-			return get(varId, procedure, mImplementationLocals);
+			yield get(varId, procedure, mImplementationLocals);
 		case IMPLEMENTATION:
 		case PROC_FUNC:
 		case QUANTIFIED:
-		default:
 			throw new AssertionError("inappropriate decl info " + declarationInformation);
-		}
+		};
 	}
 
 	/**

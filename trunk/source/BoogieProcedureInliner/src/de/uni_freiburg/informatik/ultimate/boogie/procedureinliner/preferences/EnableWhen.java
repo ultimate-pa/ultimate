@@ -16,17 +16,12 @@ public enum EnableWhen {
 	}
 
 	public boolean isEnabled(final boolean programIsConcurrent) {
-		switch (this) {
-		case ALWAYS:
-			return true;
-		case NEVER:
-			return false;
-		case ONLY_FOR_CONCURRENT_PROGRAMS:
-			return programIsConcurrent;
-		case ONLY_FOR_SEQUENTIAL_PROGRAMS:
-			return !programIsConcurrent;
-		}
-		throw new IllegalStateException("This enum object has an unknown state: " + this);
+		return switch (this) {
+		case ALWAYS -> true;
+		case NEVER -> false;
+		case ONLY_FOR_CONCURRENT_PROGRAMS -> programIsConcurrent;
+		case ONLY_FOR_SEQUENTIAL_PROGRAMS -> !programIsConcurrent;
+		};
 	}
 
 }

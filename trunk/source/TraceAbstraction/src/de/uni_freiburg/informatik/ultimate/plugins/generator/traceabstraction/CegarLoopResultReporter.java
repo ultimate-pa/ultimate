@@ -100,25 +100,12 @@ public final class CegarLoopResultReporter<L extends IIcfgTransition<?>> {
 			final CegarLoopLocalResult<L> localResult = entry.getValue();
 			final IcfgLocation errorLoc = entry.getKey();
 			switch (localResult.getResult()) {
-			case SAFE:
-				reportPositiveResult(errorLoc);
-				break;
-			case UNSAFE:
-				reportCounterexampleResult(errorLoc, localResult.getProgramExecution());
-				break;
-			case TIMEOUT:
-			case USER_LIMIT_ITERATIONS:
-			case USER_LIMIT_PATH_PROGRAM:
-			case USER_LIMIT_TIME:
-			case USER_LIMIT_TRACEHISTOGRAM:
-				reportLimitResult(errorLoc, localResult);
-				break;
-			case UNKNOWN:
-				final IProgramExecution<L, Term> pe = localResult.getProgramExecution();
-				reportUnproveableResult(errorLoc, pe, localResult.getUnprovabilityReasons());
-				break;
-			default:
-				throw new UnsupportedOperationException("Unknown result type " + localResult.getResult());
+			case SAFE -> reportPositiveResult(errorLoc);
+			case UNSAFE -> reportCounterexampleResult(errorLoc, localResult.getProgramExecution());
+			case TIMEOUT, USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM ->
+					reportLimitResult(errorLoc, localResult);
+			case UNKNOWN -> reportUnproveableResult(errorLoc, localResult.getProgramExecution(),
+					localResult.getUnprovabilityReasons());
 			}
 		}
 	}

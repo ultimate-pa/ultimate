@@ -242,14 +242,10 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	}
 
 	public static String getPrefix(final StructOrUnion structOrUnion) {
-		switch (structOrUnion) {
-		case STRUCT:
-			return "STRUCT~";
-		case UNION:
-			return "UNION~";
-		default:
-			throw new AssertionError();
-		}
+		return switch (structOrUnion) {
+		case STRUCT -> "STRUCT~";
+		case UNION -> "UNION~";
+		};
 	}
 
 }

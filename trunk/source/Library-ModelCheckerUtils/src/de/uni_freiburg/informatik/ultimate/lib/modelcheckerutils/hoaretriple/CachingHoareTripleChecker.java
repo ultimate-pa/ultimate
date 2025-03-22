@@ -336,43 +336,31 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private Validity evaluteResultWeakerThanPreAndStrongerThanSucc(final Validity validity) {
-		switch (validity) {
-		case VALID:
-			// pass result, if Hoare triple holds for weaker pre and for stronger succ,
-			// it also does not hold for original pre/succ
-			return validity;
-		case UNKNOWN:
-			// we pass this result as a warning that the corresponding check might be
-			// expensive
-			return validity;
-		case INVALID:
-			// information does not help
-			return null;
-		case NOT_CHECKED:
-			return null;
-		default:
-			throw new AssertionError(UNKNOWN_CASE);
-		}
+		return switch (validity) {
+		// pass result, if Hoare triple holds for weaker pre and for stronger succ,
+		// it also does not hold for original pre/succ
+		case VALID -> validity;
+
+		// we pass this result as a warning that the corresponding check might be expensive
+		case UNKNOWN -> validity;
+
+		// information does not help
+		case INVALID, NOT_CHECKED -> null;
+		};
 	}
 
 	private Validity evaluteResultStrongerThanPreAndWeakerThanSucc(final Validity validity) {
-		switch (validity) {
-		case VALID:
-			// information does not help
-			return null;
-		case UNKNOWN:
-			// we pass this result as a warning that the corresponding check might be
-			// expensive
-			return validity;
-		case INVALID:
-			// pass result, if Hoare triple does not hold for stronger pre and for weaker
-			// succ,
-			// it also does not hold for original pre/succ
-			return validity;
-		case NOT_CHECKED:
-			return null;
-		default:
-			throw new AssertionError(UNKNOWN_CASE);
-		}
+		return switch (validity) {
+		// information does not help
+		case VALID, NOT_CHECKED -> null;
+
+		// we pass this result as a warning that the corresponding check might be
+		// expensive
+		case UNKNOWN -> validity;
+
+		// pass result, if Hoare triple does not hold for stronger pre and for weaker succ,
+		// it also does not hold for original pre/succ
+		case INVALID -> validity;
+		};
 	}
 }

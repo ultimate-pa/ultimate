@@ -248,8 +248,7 @@ public class CPrimitive extends CType {
 	}
 
 	private static CPrimitiveCategory getGeneralType(final CPrimitives type) throws AssertionError {
-		final CPrimitiveCategory generalType;
-		switch (type) {
+		return switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
@@ -257,10 +256,7 @@ public class CPrimitive extends CType {
 		case DOUBLE:
 		case LONGDOUBLE:
 		case FLOAT128:
-			generalType = CPrimitiveCategory.FLOATTYPE;
-			// throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support
-			// floats");
-			break;
+			yield CPrimitiveCategory.FLOATTYPE;
 		case BOOL:
 		case UCHAR:
 		case UINT:
@@ -278,15 +274,10 @@ public class CPrimitive extends CType {
 		case SCHAR:
 		case SHORT:
 			// case WCHAR:
-			generalType = CPrimitiveCategory.INTTYPE;
-			break;
+			yield CPrimitiveCategory.INTTYPE;
 		case VOID:
-			generalType = CPrimitiveCategory.VOID;
-			break;
-		default:
-			throw new AssertionError("case missing");
-		}
-		return generalType;
+			yield CPrimitiveCategory.VOID;
+		};
 	}
 
 	public CPrimitives getType() {

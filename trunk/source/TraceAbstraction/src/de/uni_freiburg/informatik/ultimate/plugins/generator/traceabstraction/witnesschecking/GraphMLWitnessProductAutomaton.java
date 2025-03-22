@@ -486,8 +486,8 @@ public class GraphMLWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	boolean isCompatible(final Statement st, final WitnessEdge we) {
-		if (st instanceof AssumeStatement) {
-			return isCompatible(((AssumeStatement) st).getFormula().getLocation(), we);
+		if (st instanceof final AssumeStatement assumeStmt) {
+			return isCompatible(assumeStmt.getFormula().getLocation(), we);
 		}
 		return isCompatible(st.getLocation(), we);
 	}

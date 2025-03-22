@@ -175,10 +175,9 @@ public class LineCoverageCalculator<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private static ILocation getLocation(final Statement stmt) {
-			if (stmt instanceof AssumeStatement) {
-				return ((AssumeStatement) stmt).getFormula().getLocation();
-			} else if (stmt instanceof CallStatement) {
-				final CallStatement call = (CallStatement) stmt;
+			if (stmt instanceof final AssumeStatement assumeStmt) {
+				return assumeStmt.getFormula().getLocation();
+			} else if (stmt instanceof final CallStatement call) {
 				if (call.getLocation().getStartLine() == call.getLocation().getEndLine()) {
 					return call.getLocation();
 				}

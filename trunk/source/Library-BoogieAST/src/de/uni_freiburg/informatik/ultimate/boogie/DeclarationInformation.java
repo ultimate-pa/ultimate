@@ -106,24 +106,19 @@ public class DeclarationInformation {
 	 */
 	private boolean isValid(final StorageClass storageClass, final String procedure) {
 		final boolean result;
-		switch (storageClass) {
+		return switch (storageClass) {
 		case IMPLEMENTATION:
 		case PROC_FUNC:
 		case GLOBAL:
 		case QUANTIFIED:
-			result = (procedure == null);
-			break;
+			yield (procedure == null);
 		case PROC_FUNC_INPARAM:
 		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_INPARAM:
 		case IMPLEMENTATION_OUTPARAM:
 		case LOCAL:
-			result = (procedure != null);
-			break;
-		default:
-			throw new AssertionError("unknown StorageClass");
-		}
-		return result;
+			yield (procedure != null);
+		};
 	}
 
 	@Override

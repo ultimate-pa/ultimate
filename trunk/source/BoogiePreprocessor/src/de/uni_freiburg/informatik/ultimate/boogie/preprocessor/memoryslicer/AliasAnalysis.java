@@ -140,39 +140,39 @@ public class AliasAnalysis {
 
 	private void processStatementList(final MayAlias ma, final Statement[] sts) {
 		for (final Statement st : sts) {
-			if (st instanceof GotoStatement) {
+			switch (st) {
+			case final GotoStatement gotoStmt -> {
 				// do nothing
-			} else if (st instanceof Label) {
+			}
+			case final Label label -> {
 				// do nothing
-			} else if (st instanceof CallStatement) {
-				processCallStatement(ma, (CallStatement) st);
-			} else if (st instanceof AssignmentStatement) {
-				processAssignmentStatement(ma, (AssignmentStatement) st);
-			} else if (st instanceof AssumeStatement) {
-				processAssumeStatement(ma, (AssumeStatement) st);
-			} else if (st instanceof AssertStatement) {
-				processAssertStatement(ma, (AssertStatement) st);
-			} else if (st instanceof HavocStatement) {
+			}
+			case final HavocStatement havocStmt -> {
 				// do nothing
-			} else if (st instanceof ReturnStatement) {
+			}
+			case final ReturnStatement returnStmt -> {
 				// do nothing
-			} else if (st instanceof BreakStatement) {
+			}
+			case final BreakStatement breakStmt -> {
 				// do nothing
-			} else if (st instanceof IfStatement) {
-				analyzeExpression(ma, ((IfStatement) st).getCondition());
-				processStatementList(ma, ((IfStatement) st).getThenPart());
-				processStatementList(ma, ((IfStatement) st).getElsePart());
-			} else if (st instanceof WhileStatement) {
-				analyzeExpression(ma, ((WhileStatement) st).getCondition());
-				processStatementList(ma, ((WhileStatement) st).getBody());
-			} else if (st instanceof ForkStatement) {
-				processForkStatement(ma, (ForkStatement) st);
-			} else if (st instanceof JoinStatement) {
-				processJoinStatement(ma, (JoinStatement) st);
-			} else if (st instanceof AtomicStatement) {
-				processStatementList(ma, ((AtomicStatement) st).getBody());
-			} else {
-				throw new MemorySliceException("Unsuppored " + st);
+			}
+
+			case final CallStatement call -> processCallStatement(ma, call);
+			case final AssignmentStatement assignStmt -> processAssignmentStatement(ma, assignStmt);
+			case final AssumeStatement assumeStmt -> processAssumeStatement(ma, assumeStmt);
+			case final AssertStatement assertStmt -> processAssertStatement(ma, assertStmt);
+			case final IfStatement ifStmt -> {
+				analyzeExpression(ma, ifStmt.getCondition());
+				processStatementList(ma, ifStmt.getThenPart());
+				processStatementList(ma, ifStmt.getElsePart());
+			}
+			case final WhileStatement whileStmt -> {
+				analyzeExpression(ma, whileStmt.getCondition());
+				processStatementList(ma, whileStmt.getBody());
+			}
+			case final ForkStatement fork -> processForkStatement(ma, fork);
+			case final JoinStatement join -> processJoinStatement(ma, join);
+			case final AtomicStatement atomicStmt -> processStatementList(ma, atomicStmt.getBody());
 			}
 		}
 	}

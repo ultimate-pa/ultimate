@@ -349,50 +349,29 @@ public class ACSLHandler implements IACSLHandler {
 	 */
 	private static Operator getBoogieBinaryExprOperator(
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
-		switch (op) {
-		case ARITHDIV:
-			return Operator.ARITHDIV;
-		case ARITHMINUS:
-			return Operator.ARITHMINUS;
-		case ARITHMOD:
-			return Operator.ARITHMOD;
-		case ARITHMUL:
-			return Operator.ARITHMUL;
-		case ARITHPLUS:
-			return Operator.ARITHPLUS;
-		case BITVECCONCAT:
-			return Operator.BITVECCONCAT;
-		case COMPEQ:
-			return Operator.COMPEQ;
-		case COMPGEQ:
-			return Operator.COMPGEQ;
-		case COMPGT:
-			return Operator.COMPGT;
-		case COMPLEQ:
-			return Operator.COMPLEQ;
-		case COMPLT:
-			return Operator.COMPLT;
-		case COMPNEQ:
-			return Operator.COMPNEQ;
-		case COMPPO:
-			return Operator.COMPPO;
-		case LOGICAND:
-			return Operator.LOGICAND;
-		case LOGICIFF:
-			return Operator.LOGICIFF;
-		case LOGICIMPLIES:
-			return Operator.LOGICIMPLIES;
-		case LOGICOR:
-			return Operator.LOGICOR;
-		case BITXOR:
-		case BITAND:
-		case BITIFF:
-		case BITIMPLIES:
-		case BITOR:
-		case LOGICXOR:
-		default:
-			return null;
-		}
+		return switch (op) {
+		case ARITHDIV -> Operator.ARITHDIV;
+		case ARITHMINUS -> Operator.ARITHMINUS;
+		case ARITHMOD -> Operator.ARITHMOD;
+		case ARITHMUL -> Operator.ARITHMUL;
+		case ARITHPLUS -> Operator.ARITHPLUS;
+		case BITVECCONCAT -> Operator.BITVECCONCAT;
+		case COMPEQ -> Operator.COMPEQ;
+		case COMPGEQ -> Operator.COMPGEQ;
+		case COMPGT -> Operator.COMPGT;
+		case COMPLEQ -> Operator.COMPLEQ;
+		case COMPLT -> Operator.COMPLT;
+		case COMPNEQ -> Operator.COMPNEQ;
+		case COMPPO -> Operator.COMPPO;
+		case LOGICAND -> Operator.LOGICAND;
+		case LOGICIFF -> Operator.LOGICIFF;
+		case LOGICIMPLIES -> Operator.LOGICIMPLIES;
+		case LOGICOR -> Operator.LOGICOR;
+
+		case LOGICXOR -> null;
+		case BITXOR, BITAND, BITIFF, BITIMPLIES, BITOR, BITSHIFTLEFT, BITSHIFTRIGHT -> null;
+		case LTLRELEASE, LTLUNTIL, LTLWEAKUNTIL -> null;
+		};
 	}
 
 	/**
@@ -400,67 +379,29 @@ public class ACSLHandler implements IACSLHandler {
 	 */
 	private static int getCASTBinaryExprOperator(
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator op) {
-		switch (op) {
-		case ARITHDIV:
-			return IASTBinaryExpression.op_divide;
-		case ARITHMINUS:
-			return IASTBinaryExpression.op_minus;
-		case ARITHMOD:
-			return IASTBinaryExpression.op_modulo;
-		case ARITHMUL:
-			return IASTBinaryExpression.op_multiply;
-		case ARITHPLUS:
-			return IASTBinaryExpression.op_plus;
-		case BITAND:
-			return IASTBinaryExpression.op_binaryAnd;
-		case BITIFF:
-			break;
-		case BITIMPLIES:
-			break;
-		case BITOR:
-			return IASTBinaryExpression.op_binaryOr;
-		case BITSHIFTLEFT:
-			return IASTBinaryExpression.op_shiftLeft;
-		case BITSHIFTRIGHT:
-			return IASTBinaryExpression.op_shiftRight;
-		case BITVECCONCAT:
-			break;
-		case BITXOR:
-			return IASTBinaryExpression.op_binaryXor;
-		case COMPEQ:
-			return IASTBinaryExpression.op_equals;
-		case COMPGEQ:
-			return IASTBinaryExpression.op_greaterEqual;
-		case COMPGT:
-			return IASTBinaryExpression.op_greaterThan;
-		case COMPLEQ:
-			return IASTBinaryExpression.op_lessEqual;
-		case COMPLT:
-			return IASTBinaryExpression.op_lessThan;
-		case COMPNEQ:
-			return IASTBinaryExpression.op_notequals;
-		case COMPPO:
-			break;
-		case LOGICAND:
-			return IASTBinaryExpression.op_logicalAnd;
-		case LOGICIFF:
-			break;
-		case LOGICIMPLIES:
-			break;
-		case LOGICOR:
-			return IASTBinaryExpression.op_logicalOr;
-		case LOGICXOR:
-			break;
-		case LTLRELEASE:
-			break;
-		case LTLUNTIL:
-			break;
-		case LTLWEAKUNTIL:
-			break;
-		default:
-			break;
-		}
-		throw new IllegalArgumentException("don't know equivalent C operator");
+		return switch (op) {
+		case ARITHDIV -> IASTBinaryExpression.op_divide;
+		case ARITHMINUS -> IASTBinaryExpression.op_minus;
+		case ARITHMOD -> IASTBinaryExpression.op_modulo;
+		case ARITHMUL -> IASTBinaryExpression.op_multiply;
+		case ARITHPLUS -> IASTBinaryExpression.op_plus;
+		case BITAND -> IASTBinaryExpression.op_binaryAnd;
+		case BITOR -> IASTBinaryExpression.op_binaryOr;
+		case BITSHIFTLEFT -> IASTBinaryExpression.op_shiftLeft;
+		case BITSHIFTRIGHT -> IASTBinaryExpression.op_shiftRight;
+		case BITXOR -> IASTBinaryExpression.op_binaryXor;
+		case COMPEQ -> IASTBinaryExpression.op_equals;
+		case COMPGEQ -> IASTBinaryExpression.op_greaterEqual;
+		case COMPGT -> IASTBinaryExpression.op_greaterThan;
+		case COMPLEQ -> IASTBinaryExpression.op_lessEqual;
+		case COMPLT -> IASTBinaryExpression.op_lessThan;
+		case COMPNEQ -> IASTBinaryExpression.op_notequals;
+		case LOGICAND -> IASTBinaryExpression.op_logicalAnd;
+		case LOGICOR -> IASTBinaryExpression.op_logicalOr;
+
+		case BITVECCONCAT, COMPPO, LOGICIFF, LOGICIMPLIES, LOGICXOR, LTLRELEASE, LTLUNTIL, LTLWEAKUNTIL, BITIFF,
+				BITIMPLIES -> throw new IllegalArgumentException("don't know equivalent C operator");
+		};
 	}
 
 	private ExpressionResult dispatchSwitch(final IDispatcher main,
@@ -577,28 +518,24 @@ public class ACSLHandler implements IACSLHandler {
 			final de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
 
-		switch (node.getOperator()) {
-		case LOGICNEG:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not,
-					dispatchSwitch(main, node.getExpr(), loc));
-		case MINUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus,
-					dispatchSwitch(main, node.getExpr(), loc));
-		case PLUS:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus,
-					dispatchSwitch(main, node.getExpr(), loc));
-		case LOGICCOMPLEMENT:
-			return mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde,
-					dispatchSwitch(main, node.getExpr(), loc));
-		case POINTER:
-			// TODO: We don't have the hook available here, does null always work here?
-			return mCHandler.handleIndirectionOperator(dispatchSwitch(main, node.getExpr(), loc), loc, null);
-		case ADDROF:
-			return handleAddressof(loc, (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook()));
-		default:
-			final String msg = "Unknown or unsupported unary operation: " + node.getOperator();
-			throw new UnsupportedSyntaxException(loc, msg);
-		}
+		return switch (node.getOperator()) {
+		case LOGICNEG -> mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_not,
+				dispatchSwitch(main, node.getExpr(), loc));
+		case MINUS -> mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_minus,
+				dispatchSwitch(main, node.getExpr(), loc));
+		case PLUS -> mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_plus,
+				dispatchSwitch(main, node.getExpr(), loc));
+		case LOGICCOMPLEMENT -> mCExpressionTranslator.handleUnaryArithmeticOperators(loc, IASTUnaryExpression.op_tilde,
+				dispatchSwitch(main, node.getExpr(), loc));
+
+		// TODO: We don't have the hook available here, does null always work here?
+		case POINTER -> mCHandler.handleIndirectionOperator(dispatchSwitch(main, node.getExpr(), loc), loc, null);
+
+		case ADDROF -> handleAddressof(loc, (ExpressionResult) main.dispatch(node.getExpr(), main.getAcslHook()));
+
+		case LTLFINALLY, LTLGLOBALLY, LTLNEXT -> throw new UnsupportedSyntaxException(loc,
+				"Unknown or unsupported unary operation: " + node.getOperator());
+		};
 	}
 
 	private ExpressionResult handleAddressof(final ILocation loc, final ExpressionResult res) {
@@ -675,28 +612,26 @@ public class ACSLHandler implements IACSLHandler {
 		if (stv == null) {
 			throw new IncorrectSyntaxException(loc, "Undeclared variable in ACSL expression: " + node.getIdentifier());
 		}
-		switch (mSpecType) {
+		return switch (mSpecType) {
 		case ASSIGNS:
 			// modifies case in boogie, should be always global!
 			// maybe it is allowed to assign also in parameters?
 			// Global variable
 			if (stv.isBoogieGlobalVar()) {
-				return stv.getBoogieName();
+				yield stv.getBoogieName();
 			}
 			throw new IncorrectSyntaxException(loc,
 					"It is not allowed to assign to in parameters! Should be global variables! [" + node.getIdentifier()
 							+ "]");
 		case ENSURES:
 			if ("\result".equalsIgnoreCase(node.getIdentifier())) {
-				return SFO.RES;
+				yield SFO.RES;
 			}
-			return stv.getBoogieName();
+			yield stv.getBoogieName();
 		case REQUIRES:
 		case NOT:
-			return stv.getBoogieName();
-		default:
-			throw new IncorrectSyntaxException(loc, "The type of specType should be in some type!");
-		}
+			yield stv.getBoogieName();
+		};
 	}
 
 	@Override

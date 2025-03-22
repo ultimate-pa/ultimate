@@ -108,82 +108,46 @@ public class LTLPrettyPrinter extends ACSLVisitor {
 		return super.visit(node);
 	}
 
-	private String getString(final UnaryExpression.Operator operator) {
-		switch (operator) {
-		case ADDROF:
-			return STRING_AND;
-		case LOGICNEG:
-			return "!";
-		case LTLFINALLY:
-			return "F";
-		case LTLGLOBALLY:
-			return "G";
-		case LTLNEXT:
-			return "X";
-		case MINUS:
-			return STRING_MINUS;
-		case PLUS:
-			return STRING_PLUS;
-		case POINTER:
-			return STRING_TIMES;
-		case LOGICCOMPLEMENT:
-		default:
-			throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
-		}
+	private static String getString(final UnaryExpression.Operator operator) {
+		return switch (operator) {
+		case ADDROF -> STRING_AND;
+		case LOGICNEG -> "!";
+		case LTLFINALLY -> "F";
+		case LTLGLOBALLY -> "G";
+		case LTLNEXT -> "X";
+		case MINUS -> STRING_MINUS;
+		case PLUS -> STRING_PLUS;
+		case POINTER -> STRING_TIMES;
+		case LOGICCOMPLEMENT -> throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
+		};
 	}
 
-	private String getString(final Operator operator) {
-		switch (operator) {
-		case ARITHDIV:
-			return "/";
-		case ARITHMINUS:
-			return STRING_MINUS;
-		case ARITHMOD:
-			return "%";
-		case ARITHMUL:
-			return STRING_TIMES;
-		case ARITHPLUS:
-			return STRING_PLUS;
-		case BITAND:
-			return STRING_AND;
-		case BITIFF:
-			return "<-->";
-		case BITIMPLIES:
-			return "-->";
-		case BITOR:
-			return "|";
-		case COMPEQ:
-			return "==";
-		case COMPGEQ:
-			return ">=";
-		case COMPGT:
-			return ">";
-		case COMPLEQ:
-			return "<=";
-		case COMPLT:
-			return "<";
-		case COMPNEQ:
-			return "!=";
-		case LOGICAND:
-			return "&&";
-		case LOGICIFF:
-			return "<==>";
-		case LOGICIMPLIES:
-			return "==>";
-		case LOGICOR:
-			return "||";
-		case LTLUNTIL:
-			return "U";
-		case LTLRELEASE:
-			return "R";
-		case LTLWEAKUNTIL:
-			return "WU";
-		case LOGICXOR:
-		case COMPPO:
-		case BITXOR:
-		case BITVECCONCAT:
-		default:
-			throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
-		}
+	private static String getString(final Operator operator) {
+		return switch (operator) {
+		case ARITHDIV -> "/";
+		case ARITHMINUS -> STRING_MINUS;
+		case ARITHMOD -> "%";
+		case ARITHMUL -> STRING_TIMES;
+		case ARITHPLUS -> STRING_PLUS;
+		case BITAND -> STRING_AND;
+		case BITIFF -> "<-->";
+		case BITIMPLIES -> "-->";
+		case BITOR -> "|";
+		case COMPEQ -> "==";
+		case COMPGEQ -> ">=";
+		case COMPGT -> ">";
+		case COMPLEQ -> "<=";
+		case COMPLT -> "<";
+		case COMPNEQ -> "!=";
+		case LOGICAND -> "&&";
+		case LOGICIFF -> "<==>";
+		case LOGICIMPLIES -> "==>";
+		case LOGICOR -> "||";
+		case LTLUNTIL -> "U";
+		case LTLRELEASE -> "R";
+		case LTLWEAKUNTIL -> "WU";
+		case LOGICXOR, COMPPO, BITXOR, BITVECCONCAT, BITSHIFTLEFT, BITSHIFTRIGHT ->
+				throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
+		};
 	}
 }

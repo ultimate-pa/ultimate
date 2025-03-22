@@ -176,19 +176,12 @@ public class TypeManager {
 			throw new IllegalArgumentException("ASTType is null - cannot resolve type.");
 		}
 
-		BoogieType boogieType;
-		if (type instanceof PrimitiveType) {
-			boogieType = getPrimitiveType(((PrimitiveType) type).getName());
-		} else if (type instanceof NamedType) {
-			boogieType = resolveNamedType((NamedType) type, markUsed);
-		} else if (type instanceof ArrayType) {
-			boogieType = resolveArrayType((ArrayType) type, markUsed);
-		} else if (type instanceof StructType) {
-			boogieType = resolveStructType((StructType) type, markUsed);
-		} else {
-			mLogger.fatal("Unknown ASTType " + type);
-			boogieType = BoogieType.TYPE_ERROR;
-		}
+		final BoogieType boogieType = switch (type) {
+		case final PrimitiveType primitive -> getPrimitiveType(primitive.getName());
+		case final NamedType named -> resolveNamedType(named, markUsed);
+		case final ArrayType array -> resolveArrayType(array, markUsed);
+		case final StructType struct -> resolveStructType(struct, markUsed);
+		};
 		type.setBoogieType(boogieType);
 		return boogieType;
 	}

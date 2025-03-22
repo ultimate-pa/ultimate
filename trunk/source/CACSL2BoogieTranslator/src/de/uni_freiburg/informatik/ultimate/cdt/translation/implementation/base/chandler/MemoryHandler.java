@@ -147,14 +147,10 @@ public class MemoryHandler {
 		STACK, HEAP,;
 
 		MemoryModelDeclarations getMemoryModelDeclaration() {
-			switch (this) {
-			case HEAP:
-				return MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP;
-			case STACK:
-				return MemoryModelDeclarations.ULTIMATE_ALLOC_STACK;
-			default:
-				throw new AssertionError();
-			}
+			return switch (this) {
+			case HEAP -> MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP;
+			case STACK -> MemoryModelDeclarations.ULTIMATE_ALLOC_STACK;
+			};
 		}
 	}
 
@@ -1120,38 +1116,28 @@ public class MemoryHandler {
 
 	private BaseMemoryModel getMemoryModel(final boolean bitvectorTranslation, final MemoryModel memoryModelPreference)
 			throws AssertionError {
-		final BaseMemoryModel memoryModel;
 		if (bitvectorTranslation) {
-			switch (memoryModelPreference) {
+			return switch (memoryModelPreference) {
 			case HoenickeLindenmann_1ByteResolution:
 			case HoenickeLindenmann_2ByteResolution:
 			case HoenickeLindenmann_4ByteResolution:
 			case HoenickeLindenmann_8ByteResolution:
-				memoryModel = new MemoryModel_SingleBitprecise(memoryModelPreference.getByteSize(), mTypeSizes,
+				yield new MemoryModel_SingleBitprecise(memoryModelPreference.getByteSize(), mTypeSizes,
 						(TypeHandler) mTypeHandler, mExpressionTranslation);
-				break;
 			case HoenickeLindenmann_Original:
-				memoryModel = new MemoryModel_MultiBitprecise(mTypeSizes, mTypeHandler, mExpressionTranslation);
-				break;
-			default:
-				throw new AssertionError("unknown value");
-			}
-		} else {
-			switch (memoryModelPreference) {
-			case HoenickeLindenmann_Original:
-				memoryModel = new MemoryModel_Unbounded(mTypeSizes, mTypeHandler, mExpressionTranslation);
-				break;
-			case HoenickeLindenmann_1ByteResolution:
-			case HoenickeLindenmann_2ByteResolution:
-			case HoenickeLindenmann_4ByteResolution:
-			case HoenickeLindenmann_8ByteResolution:
-				throw new UnsupportedOperationException(
-						"Memory model " + memoryModelPreference + " only available in bitprecise translation");
-			default:
-				throw new AssertionError("unknown value");
-			}
+				yield new MemoryModel_MultiBitprecise(mTypeSizes, mTypeHandler, mExpressionTranslation);
+			};
 		}
-		return memoryModel;
+		return switch (memoryModelPreference) {
+		case HoenickeLindenmann_Original:
+			yield new MemoryModel_Unbounded(mTypeSizes, mTypeHandler, mExpressionTranslation);
+		case HoenickeLindenmann_1ByteResolution:
+		case HoenickeLindenmann_2ByteResolution:
+		case HoenickeLindenmann_4ByteResolution:
+		case HoenickeLindenmann_8ByteResolution:
+			throw new UnsupportedOperationException(
+					"Memory model " + memoryModelPreference + " only available in bitprecise translation");
+		};
 	}
 
 	/**
@@ -1790,20 +1776,11 @@ public class MemoryHandler {
 		final ASTType valueAstType = rda.getASTType();
 
 		// create procedure signature
-		final String procName;
-		switch (writeMode) {
-		case SELECT:
-			procName = rda.getInitWriteProcedureName();
-			break;
-		case STORE_CHECKED:
-			procName = rda.getWriteProcedureName();
-			break;
-		case STORE_UNCHECKED:
-			procName = rda.getUncheckedWriteProcedureName();
-			break;
-		default:
-			throw new AssertionError("todo: update according to new enum contents");
-		}
+		final String procName = switch (writeMode) {
+		case SELECT -> rda.getInitWriteProcedureName();
+		case STORE_CHECKED -> rda.getWriteProcedureName();
+		case STORE_UNCHECKED -> rda.getUncheckedWriteProcedureName();
+		};
 
 		final IdentifierExpression inPtrExp =
 				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), inPtr,
@@ -2640,23 +2617,16 @@ public class MemoryHandler {
 	}
 
 	private String determineWriteProcedureForPointer(final HeapWriteMode writeMode) throws AssertionError {
-		final String writeCallProcedureName;
-		switch (writeMode) {
+		return switch (writeMode) {
 		case SELECT:
 			mRequiredMemoryModelFeatures.reportPointerInitWriteRequired();
-			writeCallProcedureName = mMemoryModel.getInitPointerProcedureName();
-			break;
+			yield mMemoryModel.getInitPointerProcedureName();
 		case STORE_CHECKED:
-			writeCallProcedureName = mMemoryModel.getWritePointerProcedureName();
-			break;
+			yield mMemoryModel.getWritePointerProcedureName();
 		case STORE_UNCHECKED:
 			mRequiredMemoryModelFeatures.reportPointerUncheckedWriteRequired();
-			writeCallProcedureName = mMemoryModel.getUncheckedWritePointerProcedureName();
-			break;
-		default:
-			throw new AssertionError("todo: add new enum case");
-		}
-		return writeCallProcedureName;
+			yield mMemoryModel.getUncheckedWritePointerProcedureName();
+		};
 	}
 
 	private List<Statement> getWriteCallEnum(final ILocation loc, final HeapLValue hlv, final Expression value,
@@ -2679,23 +2649,16 @@ public class MemoryHandler {
 
 	private String determineWriteProcedureForPrimitive(final CPrimitive valueType, final HeapWriteMode writeMode)
 			throws AssertionError {
-		final String writeCallProcedureName;
-		switch (writeMode) {
+		return switch (writeMode) {
 		case SELECT:
 			mRequiredMemoryModelFeatures.reportInitWriteRequired(valueType.getType());
-			writeCallProcedureName = mMemoryModel.getInitWriteProcedureName(valueType.getType());
-			break;
+			yield mMemoryModel.getInitWriteProcedureName(valueType.getType());
 		case STORE_CHECKED:
-			writeCallProcedureName = mMemoryModel.getWriteProcedureName(valueType.getType());
-			break;
+			yield mMemoryModel.getWriteProcedureName(valueType.getType());
 		case STORE_UNCHECKED:
 			mRequiredMemoryModelFeatures.reportUncheckedWriteRequired(valueType.getType());
-			writeCallProcedureName = mMemoryModel.getUncheckedWriteProcedureName(valueType.getType());
-			break;
-		default:
-			throw new AssertionError("todo: add new enum case");
-		}
-		return writeCallProcedureName;
+			yield mMemoryModel.getUncheckedWriteProcedureName(valueType.getType());
+		};
 	}
 
 	private MemoryModelDeclarationInfo constructMemoryModelDeclarationInfo(final MemoryModelDeclarations mmd) {

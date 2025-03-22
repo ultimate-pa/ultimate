@@ -65,34 +65,14 @@ public final class AcceleratedInterpolationBenchmark extends StatisticsGenerator
 		final AcceleratedInterpolationStatisticsDefinitions keyEnum =
 				Enum.valueOf(AcceleratedInterpolationStatisticsDefinitions.class, key);
 		final String errorMsg = "clock still running: ";
-		switch (keyEnum) {
-		case ACCELINTERPOL_CORE:
+		return switch (keyEnum) {
+		case ACCELINTERPOL_CORE, ACCELINTERPOL_OVERALL, ACCELINTERPOL_LOOPDETECTOR, ACCELINTERPOL_LOOPACCELERATOR:
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError(errorMsg + key);
 			}
-		case ACCELINTERPOL_OVERALL:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_LOOPDETECTOR:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		case ACCELINTERPOL_LOOPACCELERATOR:
-			try {
-				return getElapsedTime(key);
-			} catch (final StopwatchStillRunningException e) {
-				throw new AssertionError(errorMsg + key);
-			}
-		default:
-			throw new AssertionError("unknown data: " + keyEnum);
-		}
+		};
 	}
 
 	@Override

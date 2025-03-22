@@ -1180,14 +1180,14 @@ public class FunctionHandler {
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour) {
 		final Procedure proc = mProcedureManager.getProcedureDeclaration(name);
 		final ILocation loc = LocationFactory.createIgnoreLocation(proc.getLoc());
-		switch (undefinedFunctionBehaviour) {
+		return switch (undefinedFunctionBehaviour) {
 		case CRASH:
 			throw new IllegalArgumentException("Calls to undefined functions are not supported.");
 		case NON_DETERMINISTIC_RETURN:
 			// To model a non-determinstic return value, we can simply omit the declaration, as a Boogie procedure
 			// without an implementation does exactly that.
-			return Optional.empty();
-		case OVERAPPROXIMATE_BEHAVIOUR: {
+			yield Optional.empty();
+		case OVERAPPROXIMATE_BEHAVIOUR:
 			// Implement the function using while (true) assert false;
 			final Statement statement =
 					ExpressionTranslation.modelUnsupportedFeature(loc, "undefined function " + name);
@@ -1195,11 +1195,8 @@ public class FunctionHandler {
 					new Statement[] { statement }, name);
 			final Procedure result = new Procedure(loc, proc.getAttributes(), name, proc.getTypeParams(),
 					proc.getInParams(), proc.getOutParams(), null, body);
-			return Optional.of(result);
-		}
-		default:
-			throw new AssertionError("Invalid setting " + undefinedFunctionBehaviour);
-		}
+			yield Optional.of(result);
+		};
 	}
 
 	public Set<Declaration>

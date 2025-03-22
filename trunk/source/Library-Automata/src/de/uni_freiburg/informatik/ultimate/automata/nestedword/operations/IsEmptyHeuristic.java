@@ -1128,19 +1128,12 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 		static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
 				final ScoringMethod scoringMethod, final long seed) {
-			switch (astarHeuristic) {
-			case RANDOM_FULL:
-				return IHeuristic.getRandomHeuristicFull(seed);
-			case RANDOM_HALF:
-				return IHeuristic.getRandomHeuristicHalf(seed);
-			case SMT_FEATURE_COMPARISON:
-				return IHeuristic.getSmtFeatureHeuristic(scoringMethod);
-			case ZERO:
-				return IHeuristic.getZeroHeuristic();
-			default:
-				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
-
-			}
+			return switch (astarHeuristic) {
+			case RANDOM_FULL -> IHeuristic.getRandomHeuristicFull(seed);
+			case RANDOM_HALF -> IHeuristic.getRandomHeuristicHalf(seed);
+			case SMT_FEATURE_COMPARISON -> IHeuristic.getSmtFeatureHeuristic(scoringMethod);
+			case ZERO -> IHeuristic.getZeroHeuristic();
+			};
 		}
 
 		static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {

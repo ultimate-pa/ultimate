@@ -205,18 +205,12 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 
 	@Override
 	public ISymbolicIndependenceRelation<L, IPredicate> getSymbolicRelation() {
-		switch (mSymbolicIndependenceMode) {
-		case NONE:
-			return null;
-		case SUFFICIENT:
-			return new ConditionGeneratorIndependence(mIndependenceGenerator, false);
-		case SUFFICIENT_WITH_CONTEXT:
-			return new ConditionGeneratorIndependence(mIndependenceGenerator, true);
-		case NECESSARY_AND_SUFFICIENT:
-			return new SymbolicSemanticIndependence(mPredicateFactory);
-		default:
-			throw new IllegalArgumentException("Unsupported symbolic independence mode: " + mSymbolicIndependenceMode);
-		}
+		return switch (mSymbolicIndependenceMode) {
+		case NONE -> null;
+		case SUFFICIENT -> new ConditionGeneratorIndependence(mIndependenceGenerator, false);
+		case SUFFICIENT_WITH_CONTEXT -> new ConditionGeneratorIndependence(mIndependenceGenerator, true);
+		case NECESSARY_AND_SUFFICIENT -> new SymbolicSemanticIndependence(mPredicateFactory);
+		};
 	}
 
 	@Override
@@ -316,15 +310,11 @@ public class SemanticIndependenceRelation<L extends IAction> implements IIndepen
 	}
 
 	private static Dependence toDependence(final LBool value) {
-		switch (value) {
-		case UNSAT:
-			return Dependence.INDEPENDENT;
-		case SAT:
-			return Dependence.DEPENDENT;
-		case UNKNOWN:
-			return Dependence.UNKNOWN;
-		}
-		throw new IllegalArgumentException("Unknown value: " + value);
+		return switch (value) {
+		case UNSAT -> Dependence.INDEPENDENT;
+		case SAT -> Dependence.DEPENDENT;
+		case UNKNOWN -> Dependence.UNKNOWN;
+		};
 	}
 
 	/**

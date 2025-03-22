@@ -54,8 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private static final String INVALID_SYMBOL_TYPE = "Invalid symbol type.";
-
 	private static final int THREE = 3;
 
 	/**
@@ -169,28 +167,12 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		if (!mNumberOfSymbolsComputed) {
 			computeNumberOfSymbols();
 		}
-		final int result;
-		switch (type) {
-		case INTERNAL:
-			result = mNumberOfInternalSymbols;
-			break;
-
-		case CALL:
-			result = mNumberOfCallSymbols;
-			break;
-
-		case RETURN:
-			result = mNumberOfReturnSymbols;
-			break;
-
-		case TOTAL:
-			result = mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
-			break;
-
-		default:
-			throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
-		}
-		return result;
+		return switch (type) {
+		case INTERNAL -> mNumberOfInternalSymbols;
+		case CALL -> mNumberOfCallSymbols;
+		case RETURN -> mNumberOfReturnSymbols;
+		case TOTAL -> mNumberOfInternalSymbols + mNumberOfCallSymbols + mNumberOfReturnSymbols;
+		};
 	}
 
 	/**
@@ -202,28 +184,12 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		if (!mNumberOfTransitionsComputed) {
 			computeNumberOfTransitions();
 		}
-		final int result;
-		switch (type) {
-		case INTERNAL:
-			result = mNumberOfInternalTransitions;
-			break;
-
-		case CALL:
-			result = mNumberOfCallTransitions;
-			break;
-
-		case RETURN:
-			result = mNumberOfReturnTransitions;
-			break;
-
-		case TOTAL:
-			result = mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
-			break;
-
-		default:
-			throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
-		}
-		return result;
+		return switch (type) {
+		case INTERNAL -> mNumberOfInternalTransitions;
+		case CALL -> mNumberOfCallTransitions;
+		case RETURN -> mNumberOfReturnTransitions;
+		case TOTAL -> mNumberOfInternalTransitions + mNumberOfCallTransitions + mNumberOfReturnTransitions;
+		};
 	}
 
 	/**
@@ -242,28 +208,12 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		if (!mTransitionDensityComputed) {
 			computeTransitionDensity();
 		}
-		final double result;
-		switch (type) {
-		case INTERNAL:
-			result = mInternalTransitionDensity;
-			break;
-
-		case CALL:
-			result = mCallTransitionDensity;
-			break;
-
-		case RETURN:
-			result = mReturnTransitionDensity;
-			break;
-
-		case TOTAL:
-			result = (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / THREE;
-			break;
-
-		default:
-			throw new IllegalArgumentException(INVALID_SYMBOL_TYPE);
-		}
-		return result;
+		return switch (type) {
+		case INTERNAL -> mInternalTransitionDensity;
+		case CALL -> mCallTransitionDensity;
+		case RETURN -> mReturnTransitionDensity;
+		case TOTAL -> (mInternalTransitionDensity + mCallTransitionDensity + mReturnTransitionDensity) / THREE;
+		};
 	}
 
 	/**

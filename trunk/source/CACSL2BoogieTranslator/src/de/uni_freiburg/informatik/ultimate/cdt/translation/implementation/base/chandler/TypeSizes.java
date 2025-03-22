@@ -134,7 +134,7 @@ public class TypeSizes {
 	}
 
 	public boolean isUnsigned(final CPrimitives type) throws AssertionError {
-		switch (type) {
+		return switch (type) {
 		case BOOL:
 		case UCHAR:
 		case UINT:
@@ -142,16 +142,16 @@ public class TypeSizes {
 		case ULONGLONG:
 		case USHORT:
 		case UINT128:
-			return true;
+			yield true;
 		case CHAR:
-			return mSignednessOfChar == Signedness.UNSIGNED;
+			yield mSignednessOfChar == Signedness.UNSIGNED;
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
 		case INT128:
-			return false;
+			yield false;
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
@@ -164,9 +164,7 @@ public class TypeSizes {
 			// case WCHAR:
 		case VOID:
 			throw new IllegalArgumentException("attribute signedness not applicable to " + type);
-		default:
-			throw new AssertionError("case missing");
-		}
+		};
 	}
 
 	public BigInteger getMaxValueOfPrimitiveType(final CPrimitive cPrimitive) {

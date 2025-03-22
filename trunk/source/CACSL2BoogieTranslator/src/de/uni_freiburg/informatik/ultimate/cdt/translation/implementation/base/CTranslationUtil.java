@@ -379,30 +379,25 @@ public class CTranslationUtil {
 	public static BigInteger computeConstantValue(final Expression value) {
 		if (value instanceof IntegerLiteral) {
 			return new BigInteger(((IntegerLiteral) value).getValue());
-		} else if (value instanceof UnaryExpression) {
-			switch (((UnaryExpression) value).getOperator()) {
+		} else if (value instanceof final UnaryExpression unaryExp) {
+			switch (unaryExp.getOperator()) {
 			case ARITHNEGATIVE:
-				return computeConstantValue(((UnaryExpression) value).getExpr()).negate();
+				return computeConstantValue(unaryExp.getExpr()).negate();
 			default:
 				throw new UnsupportedOperationException("could not compute constant value");
 			}
-		} else if (value instanceof BinaryExpression) {
-			switch (((BinaryExpression) value).getOperator()) {
+		} else if (value instanceof final BinaryExpression binExp) {
+			switch (binExp.getOperator()) {
 			case ARITHDIV:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.divide(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).divide(computeConstantValue(binExp.getRight()));
 			case ARITHMINUS:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.subtract(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).subtract(computeConstantValue(binExp.getRight()));
 			case ARITHMOD:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.mod(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).mod(computeConstantValue(binExp.getRight()));
 			case ARITHMUL:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.multiply(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).multiply(computeConstantValue(binExp.getRight()));
 			case ARITHPLUS:
-				return computeConstantValue(((BinaryExpression) value).getLeft())
-						.add(computeConstantValue(((BinaryExpression) value).getRight()));
+				return computeConstantValue(binExp.getLeft()).add(computeConstantValue(binExp.getRight()));
 			default:
 				throw new UnsupportedOperationException("could not compute constant value");
 			}

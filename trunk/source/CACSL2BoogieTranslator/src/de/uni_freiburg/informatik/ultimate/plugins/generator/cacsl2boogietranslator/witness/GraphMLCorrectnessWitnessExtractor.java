@@ -508,22 +508,14 @@ public class GraphMLCorrectnessWitnessExtractor extends CorrectnessWitnessExtrac
 		}
 
 		private Predicate<IASTNode> determineMatcher(final DecoratedWitnessEdge edge) {
-			switch (edge.getConditional()) {
-			case NONE:
-				return this::matchNonConditional;
-			case CONDITION_EVAL_FALSE:
-				return a -> matchConditional(false, a);
-			case CONDITION_EVAL_TRUE:
-				return a -> matchConditional(true, a);
-			case ARG_EVAL:
-			case EXPR_EVAL:
-			case FUNC_CALL:
-			case PROC_CALL:
-			case PROC_RETURN:
-			default:
-				throw new UnsupportedOperationException(
-						"This conditional case was not yet considered: " + edge.getConditional());
-			}
+			return switch (edge.getConditional()) {
+			case NONE -> this::matchNonConditional;
+			case CONDITION_EVAL_FALSE -> (a -> matchConditional(false, a));
+			case CONDITION_EVAL_TRUE -> (a -> matchConditional(true, a));
+			case ARG_EVAL, EXPR_EVAL, FUNC_CALL, PROC_CALL, PROC_RETURN, FORK, JOIN ->
+					throw new UnsupportedOperationException(
+							"This conditional case was not yet considered: " + edge.getConditional());
+			};
 		}
 
 		public void run(final IASTTranslationUnit translationUnit) {

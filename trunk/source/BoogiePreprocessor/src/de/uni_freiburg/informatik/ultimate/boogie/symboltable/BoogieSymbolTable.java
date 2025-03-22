@@ -401,28 +401,17 @@ public class BoogieSymbolTable {
 	}
 
 	private String shorten(final StorageClass scClass) {
-		switch (scClass) {
-		case GLOBAL:
-			return "G";
-		case IMPLEMENTATION:
-			return "IMPL";
-		case IMPLEMENTATION_INPARAM:
-			return "I_IN";
-		case IMPLEMENTATION_OUTPARAM:
-			return "I_OUT";
-		case LOCAL:
-			return "LOC";
-		case PROC_FUNC:
-			return "PF";
-		case PROC_FUNC_INPARAM:
-			return "PF_IN";
-		case PROC_FUNC_OUTPARAM:
-			return "PF_OUT";
-		case QUANTIFIED:
-			return "Q";
-		default:
-			return "UNKNOWN";
-		}
+		return switch (scClass) {
+		case GLOBAL -> "G";
+		case IMPLEMENTATION -> "IMPL";
+		case IMPLEMENTATION_INPARAM -> "I_IN";
+		case IMPLEMENTATION_OUTPARAM -> "I_OUT";
+		case LOCAL -> "LOC";
+		case PROC_FUNC -> "PF";
+		case PROC_FUNC_INPARAM -> "PF_IN";
+		case PROC_FUNC_OUTPARAM -> "PF_OUT";
+		case QUANTIFIED -> "Q";
+		};
 	}
 
 	private String prettyPrintProcedureSignature(final Declaration decl) {

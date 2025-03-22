@@ -200,8 +200,8 @@ public class InitializationHandler {
 	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final CType targetCTypeRaw,
 			final InitializerResult initializerRaw, final IASTNode hook) {
 		final boolean onHeap;
-		if (lhsRaw instanceof VariableLHS) {
-			onHeap = mCHandler.isHeapVar(((VariableLHS) lhsRaw).getIdentifier());
+		if (lhsRaw instanceof final VariableLHS varLHS) {
+			onHeap = mCHandler.isHeapVar(varLHS.getIdentifier());
 		} else {
 			onHeap = false;
 		}
@@ -659,9 +659,7 @@ public class InitializationHandler {
 					getDefaultValueForSimpleType(loc, cType), Collections.emptyList(), hook);
 			initialization.addStatements(defaultInit);
 			return initialization.build();
-		} else if (cType instanceof CStructOrUnion) {
-			final CStructOrUnion cStructType = (CStructOrUnion) cType;
-
+		} else if (cType instanceof final CStructOrUnion cStructType) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
 			final String[] fieldIds = cStructType.getFieldIds();
@@ -680,8 +678,8 @@ public class InitializationHandler {
 				}
 			}
 			return initialization.build();
-		} else if (cType instanceof CArray) {
-			return makeNaiveOnHeapDefaultInitializationForArray(loc, baseAddress, (CArray) cType, hook);
+		} else if (cType instanceof final CArray cArray) {
+			return makeNaiveOnHeapDefaultInitializationForArray(loc, baseAddress, cArray, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
@@ -723,9 +721,7 @@ public class InitializationHandler {
 				initializer.setLrValue(initializationValue);
 			}
 			return initializer.build();
-		} else if (cType instanceof CStructOrUnion) {
-			final CStructOrUnion cStructType = (CStructOrUnion) cType;
-
+		} else if (cType instanceof final CStructOrUnion cStructType) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 
 			final ArrayList<LRValue> fieldLrValues = new ArrayList<>();
@@ -771,7 +767,7 @@ public class InitializationHandler {
 			}
 
 			return initialization.build();
-		} else if (cType instanceof CArray) {
+		} else if (cType instanceof final CArray cArray) {
 			assert lhsToInitIfAny != null;
 
 			/*
@@ -779,11 +775,11 @@ public class InitializationHandler {
 			 * applicable if the value type is simple, i.e., not a struct or union type.
 			 */
 			if (useConstArrayInitialization(cType, null, hook)
-					&& !(CTranslationUtil.getValueTypeOfNestedArray((CArray) cType) instanceof CStructOrUnion)) {
-				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, (CArray) cType, lhsToInitIfAny);
+					&& !(CTranslationUtil.getValueTypeOfNestedArray(cArray) instanceof CStructOrUnion)) {
+				return makeSophisticatedOffHeapDefaultInitializationForArray(loc, cArray, lhsToInitIfAny);
 			}
 
-			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, (CArray) cType, lhsToInitIfAny, nondet, hook);
+			return makeNaiveOffHeapDefaultOrNondetInitForArray(loc, cArray, lhsToInitIfAny, nondet, hook);
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
@@ -979,16 +975,11 @@ public class InitializationHandler {
 		final CType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) cType;
-			switch (cPrimitive.getGeneralType()) {
-			case INTTYPE:
-				return mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
-			case FLOATTYPE:
-				return mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
-			case VOID:
-				throw new AssertionError("cannot initialize something that has type void");
-			default:
-				throw new AssertionError("unknown category of type");
-			}
+			return switch (cPrimitive.getGeneralType()) {
+			case INTTYPE -> mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO);
+			case FLOATTYPE -> mExpressionTranslation.constructLiteralForFloatingType(loc, cPrimitive, BigDecimal.ZERO);
+			case VOID -> throw new AssertionError("cannot initialize something that has type void");
+			};
 		} else if (cType instanceof CEnum) {
 			return mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		} else if (cType instanceof CPointer) {

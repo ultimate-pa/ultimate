@@ -151,108 +151,48 @@ public class ACSLPrettyPrinter {
 	}
 
 	private static String printUnaryExpression(final UnaryExpression expression) {
-		final String op;
-		switch (expression.getOperator()) {
-		case ADDROF:
-			op = "&";
-			break;
-		case LOGICCOMPLEMENT:
-			op = "~";
-			break;
-		case LOGICNEG:
-			op = "!";
-			break;
-		case MINUS:
-			op = "-";
-			break;
-		case PLUS:
-			op = "+";
-			break;
-		case POINTER:
-			op = "*";
-			break;
-		default:
-			throw new AssertionError("Unhandled operator " + expression.getOperator());
-		}
+		final String op = switch (expression.getOperator()) {
+		case ADDROF -> "&";
+		case LOGICCOMPLEMENT -> "~";
+		case LOGICNEG -> "!";
+		case MINUS -> "-";
+		case PLUS -> "+";
+		case POINTER -> "*";
+		case LTLFINALLY, LTLGLOBALLY, LTLNEXT ->
+				throw new AssertionError("Unhandled operator " + expression.getOperator());
+		};
 		return op + printExpression(expression.getExpr());
 	}
 
 	// TODO: Check the operator precedence to avoid unnecessary parentheses
 	private static String printBinaryExpression(final BinaryExpression expression) {
-		final String op;
-		switch (expression.getOperator()) {
-		case ARITHDIV:
-			op = "/";
-			break;
-		case ARITHMINUS:
-			op = "-";
-			break;
-		case ARITHMOD:
-			op = "%";
-			break;
-		case ARITHMUL:
-			op = "*";
-			break;
-		case ARITHPLUS:
-			op = "+";
-			break;
-		case BITAND:
-			op = "&";
-			break;
-		case BITIFF:
-			op = "<-->";
-			break;
-		case BITIMPLIES:
-			op = "-->";
-			break;
-		case BITOR:
-			op = "|";
-			break;
-		case BITXOR:
-			op = "^";
-			break;
-		case COMPEQ:
-			op = "==";
-			break;
-		case COMPGEQ:
-			op = ">=";
-			break;
-		case COMPGT:
-			op = ">";
-			break;
-		case COMPLEQ:
-			op = "<=";
-			break;
-		case COMPLT:
-			op = "<";
-			break;
-		case COMPNEQ:
-			op = "!=";
-			break;
-		case LOGICAND:
-			op = "&&";
-			break;
-		case LOGICIFF:
-			op = "<==>";
-			break;
-		case LOGICIMPLIES:
-			op = "==>";
-			break;
-		case LOGICOR:
-			op = "||";
-			break;
-		case LOGICXOR:
-			op = "^^";
-			break;
-		case BITSHIFTLEFT:
-			op = "<<";
-			break;
-		case BITSHIFTRIGHT:
-			op = ">>";
-			break;
-		default:
-			throw new AssertionError("Unhandled operator " + expression.getOperator());
-		}
+		final String op = switch (expression.getOperator()) {
+		case ARITHDIV -> "/";
+		case ARITHMINUS -> "-";
+		case ARITHMOD -> "%";
+		case ARITHMUL -> "*";
+		case ARITHPLUS -> "+";
+		case BITAND -> "&";
+		case BITIFF -> "<-->";
+		case BITIMPLIES -> "-->";
+		case BITOR -> "|";
+		case BITXOR -> "^";
+		case COMPEQ -> "==";
+		case COMPGEQ -> ">=";
+		case COMPGT -> ">";
+		case COMPLEQ -> "<=";
+		case COMPLT -> "<";
+		case COMPNEQ -> "!=";
+		case LOGICAND -> "&&";
+		case LOGICIFF -> "<==>";
+		case LOGICIMPLIES -> "==>";
+		case LOGICOR -> "||";
+		case LOGICXOR -> "^^";
+		case BITSHIFTLEFT -> "<<";
+		case BITSHIFTRIGHT -> ">>";
+		case BITVECCONCAT, COMPPO, LTLRELEASE, LTLUNTIL, LTLWEAKUNTIL ->
+				throw new AssertionError("Unhandled operator " + expression.getOperator());
+		};
 		final String left = printExpression(expression.getLeft());
 		final String right = printExpression(expression.getRight());
 		return String.format("(%s %s %s)", left, op, right);

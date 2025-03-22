@@ -406,21 +406,16 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final int placesBefore = input.getPlaces().size();
 			final int transitionsBefore = input.getTransitions().size();
 			final int flowBefore = input.size();
-			switch (method) {
+			reducedNet = switch (method) {
 			case REMOVE_DEAD:
-				reducedNet = new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
+				yield new de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.RemoveDead<>(
 						new AutomataLibraryServices(getServices()), input, null, true).getResult();
-				break;
 			case REMOVE_REDUNDANT_FLOW:
 				final Set<IPredicate> redundancyCandidates = input.getPlaces().stream()
 						.filter(x -> !mProgramPointPlaces.contains(x)).collect(Collectors.toSet());
-				reducedNet =
-						new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, null, null, null)
-								.getResult();
-				break;
-			default:
-				throw new AssertionError("unknown value " + method);
-			}
+				yield new RemoveRedundantFlow<>(new AutomataLibraryServices(getServices()), input, null, null, null)
+						.getResult();
+			};
 			final int placesAfterwards = reducedNet.getPlaces().size();
 			final int transitionsAfterwards = reducedNet.getTransitions().size();
 			final int flowAfterwards = reducedNet.size();

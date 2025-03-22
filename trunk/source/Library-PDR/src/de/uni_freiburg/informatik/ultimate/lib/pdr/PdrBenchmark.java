@@ -55,16 +55,14 @@ public final class PdrBenchmark extends StatisticsGeneratorWithStopwatches imple
 	@Override
 	public Object getValue(final String key) {
 		final PdrStatisticsDefinitions keyEnum = Enum.valueOf(PdrStatisticsDefinitions.class, key);
-		switch (keyEnum) {
+		return switch (keyEnum) {
 		case PDR_RUNTIME:
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		default:
-			throw new AssertionError("unknown data: " + keyEnum);
-		}
+		};
 	}
 
 	@Override

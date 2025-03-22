@@ -337,22 +337,15 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * take a state pair that has been discovered by taking an internal transition, a return transition or a summary.
 	 */
 	private DoubleDecker<STATE> dequeue() {
-		switch (mStrategy) {
-		case BFS:
-			/*
-			 * If available take a state pair that has been discovered by taking a call transition. If not take a state
-			 * pair that has been discovered by taking an internal or a return transition or a summary.
-			 */
-			return dequeueGivenQueues(mQueueCall, mQueue);
-		case DFS:
-			/*
-			 * If available take a state pair that has been discovered by taking an internal or a return transition or a
-			 * summary. If not take a state pair that has been discovered by taking a call transition.
-			 */
-			return dequeueGivenQueues(mQueue, mQueueCall);
-		default:
-			throw new IllegalArgumentException("Unknown search strategy.");
-		}
+		return switch (mStrategy) {
+		// If available, take a state pair that has been discovered by taking a call transition. If not, take a
+		// state pair that has been discovered by taking an internal or a return transition or a summary.
+		case BFS -> dequeueGivenQueues(mQueueCall, mQueue);
+
+		// If available, take a state pair that has been discovered by taking an internal or a return transition or a
+		// summary. If not, take a state pair that has been discovered by taking a call transition.
+		case DFS -> dequeueGivenQueues(mQueue, mQueueCall);
+		};
 	}
 
 	/**

@@ -50,19 +50,13 @@ public class AutomataMinimizationStatisticsGenerator implements IStatisticsDataP
 	@Override
 	public Object getValue(final String key) {
 		final AutomataMinimizationStatisticsDefinitions keyEnum =
-				Enum.valueOf(AutomataMinimizationStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case AutomataMinimizationTime:
-			return mAutomataMinimizationTime;
-		case MinimizatonAttempts:
-			return mMinimizatonAttempt ? 1 : 0;
-		case NontrivialMinimizations:
-			return mNontrivialMinimizaton ? 1 : 0;
-		case StatesRemovedByMinimization:
-			return mStatesRemovedByMinimization;
-		default:
-			throw new AssertionError("unknown data");
-		}
+				AutomataMinimizationStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case AutomataMinimizationTime -> mAutomataMinimizationTime;
+		case MinimizatonAttempts -> mMinimizatonAttempt ? 1 : 0;
+		case NontrivialMinimizations -> mNontrivialMinimizaton ? 1 : 0;
+		case StatesRemovedByMinimization -> mStatesRemovedByMinimization;
+		};
 	}
 
 	@Override

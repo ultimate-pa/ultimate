@@ -751,18 +751,12 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 
 		public static final Result convert(final TaskCanceledException.UserDefinedLimit limit) {
-			switch (limit) {
-			case ITERATIONS:
-				return Result.USER_LIMIT_ITERATIONS;
-			case PATH_PROGRAM_ATTEMPTS:
-				return Result.USER_LIMIT_PATH_PROGRAM;
-			case TIME_PER_ERROR_LOCATION:
-				return USER_LIMIT_TIME;
-			case TRACE_HISTOGRAM:
-				return Result.USER_LIMIT_TRACEHISTOGRAM;
-			default:
-				throw new UnsupportedOperationException("Unknown UserDefinedLimit " + limit);
-			}
+			return switch (limit) {
+			case ITERATIONS -> Result.USER_LIMIT_ITERATIONS;
+			case PATH_PROGRAM_ATTEMPTS -> Result.USER_LIMIT_PATH_PROGRAM;
+			case TIME_PER_ERROR_LOCATION -> USER_LIMIT_TIME;
+			case TRACE_HISTOGRAM -> Result.USER_LIMIT_TRACEHISTOGRAM;
+			};
 		}
 
 	}
