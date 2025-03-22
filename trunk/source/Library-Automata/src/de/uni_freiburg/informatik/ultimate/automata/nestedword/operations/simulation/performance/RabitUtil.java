@@ -227,9 +227,9 @@ public final class RabitUtil {
 			// Fix fields
 			line.append(outputData[rabitNameIndex]);
 			line.append(SEPARATOR).append(commandName);
-			line.append(SEPARATOR).append(Boolean.valueOf(false).booleanValue());
-			line.append(SEPARATOR).append(Boolean.valueOf(false).booleanValue());
-			line.append(SEPARATOR).append(Boolean.valueOf(false).booleanValue());
+			line.append(SEPARATOR).append(false);
+			line.append(SEPARATOR).append(false);
+			line.append(SEPARATOR).append(false);
 			// Variable fields
 			line.append(SEPARATOR)
 					.append(ComparisonTables.millisToSeconds(Long.parseLong(outputData[rabitOverallTime])));

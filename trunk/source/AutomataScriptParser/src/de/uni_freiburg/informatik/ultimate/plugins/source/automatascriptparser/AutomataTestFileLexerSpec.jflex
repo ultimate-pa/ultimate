@@ -148,8 +148,8 @@ StringCharacter = [^\r\n\"\\]
   "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
   "acceptingPlaces"                 { m_LastToken = m_CurToken; m_CurToken = "acceptingPlaces"; return symbol(sym.ACCEPTING_PLACES); }
   /* boolean literals */
-  "true"                         { m_LastToken = m_CurToken; m_CurToken = "true"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(true)); }
-  "false"                        { m_LastToken = m_CurToken; m_CurToken = "false"; return symbol(sym.BOOLEAN_LITERAL, new Boolean(false)); }
+  "true"                         { m_LastToken = m_CurToken; m_CurToken = "true"; return symbol(sym.BOOLEAN_LITERAL, true); }
+  "false"                        { m_LastToken = m_CurToken; m_CurToken = "false"; return symbol(sym.BOOLEAN_LITERAL, false); }
   
 
   /* separators */
@@ -192,7 +192,7 @@ StringCharacter = [^\r\n\"\\]
   \"                             { yybegin(STRING); stringBuffer.setLength(0); }
 
   /* numeric literals */
-  {IntegerLiteral}               { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.INTEGER_LITERAL, new Integer(yytext())); }
+  {IntegerLiteral}               { m_LastToken = m_CurToken; m_CurToken = yytext(); return symbol(sym.INTEGER_LITERAL, Integer.valueOf(yytext())); }
 
 
   /* comments */
