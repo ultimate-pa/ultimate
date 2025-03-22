@@ -384,21 +384,19 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		if (restartBehaviour == CegarRestartBehaviour.ONE_CEGAR_PER_ERROR_LOCATION) {
 			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
-			if (mIsConcurrent && mPrefs.getOrderOfErrorLocations() == OrderOfErrorLocations.PROGRAM_FIRST) {
-				switch (mPrefs.getOrderOfErrorLocations()) {
-				case PROGRAM_FIRST:
-					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
-					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(x),
-							isInsufficientThreadsLocation(y)));
-					break;
-				case INSUFFICIENT_FIRST:
-					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations first
-					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(y),
-							isInsufficientThreadsLocation(x)));
-					break;
-				default:
-					break;
-				}
+			if (mIsConcurrent) {
+				errorLocs = switch (mPrefs.getOrderOfErrorLocations()) {
+				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
+				case PROGRAM_FIRST -> errorLocs.sorted(
+						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(x), isInsufficientThreadsLocation(y)));
+
+				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations first
+				case INSUFFICIENT_FIRST -> errorLocs.sorted(
+						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(y), isInsufficientThreadsLocation(x)));
+
+				// no sorting
+				case TOGETHER -> errorLocs;
+				};
 			}
 			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}
