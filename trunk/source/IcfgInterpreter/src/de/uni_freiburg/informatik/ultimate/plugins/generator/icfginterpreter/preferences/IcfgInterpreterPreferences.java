@@ -69,7 +69,9 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	 * The labels used for each settings, to enable easy value retrieval.
 	 */
 	public enum SettingLabel {
-		PROJECT_DIRECTORY("Ultimate directory"), NDC_IMLPEMENTATIONS("Non-Deterministic Interface implementations:"),
+		PROJECT_DIRECTORY("Ultimate directory"),
+		NDC_IMLPEMENTATIONS(
+				"Non-Deterministic Interface (" + NonDeterministicChoice.class.getSimpleName() + ") implementations:"),
 		INTERFACE_SUB_SETTINGS("Non-Deterministic Interface specific settings:"),
 		EXECUTIONS_PER_ENTRYPOINT("Number of executions to generate per program entry point");
 

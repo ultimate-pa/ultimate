@@ -1,18 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
-public class Restriction<T> {
-	private final T[] mInequal;
-	private final T mLess;
-	private final T mLessEqual;
-	private final T mGreater;
-	private final T mGreaterEqual;
+import java.util.HashSet;
 
-	public Restriction(final T[] inequal, final T less, final T lessEqual, final T greaterEqual, final T greater) {
+public class Restriction<T> {
+	private final HashSet<T> mInequal;
+	protected final T mLess;
+	protected final T mGreater;
+
+	/**
+	 * @param inequal All specific values that the variable cannot take
+	 * @param less    The value that the variable has to be smaller than
+	 * @param greater The value that the variable has to be greater than
+	 */
+	public Restriction(final HashSet<T> inequal, final T less, final T greater) {
 		mInequal = inequal;
 		mLess = less;
-		mLessEqual = lessEqual;
 		mGreater = greater;
-		mGreaterEqual = greaterEqual;
 	}
 
+	public HashSet<T> getInequal() {
+		return mInequal;
+	}
 }

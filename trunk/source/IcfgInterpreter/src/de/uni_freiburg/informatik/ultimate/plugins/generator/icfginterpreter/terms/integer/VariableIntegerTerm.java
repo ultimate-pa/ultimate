@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -85,10 +84,5 @@ public class VariableIntegerTerm extends IntegerTerm implements Variable {
 	@Override
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return (mVariableTerm.isInVar ? currentState : nextState).getIntOf(mVariableTerm.programVar);
-	}
-
-	@Override
-	public IntegerDomain getDomain() {
-		return Util.constructFullDomain(mVariableTerm.termvar.getSort());
 	}
 }

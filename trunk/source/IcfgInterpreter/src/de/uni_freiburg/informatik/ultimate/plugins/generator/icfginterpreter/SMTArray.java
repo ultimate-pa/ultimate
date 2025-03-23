@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.Settings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
 
@@ -27,13 +26,11 @@ public class SMTArray {
 		variable = mVariable;
 	}
 
-	private static final Settings settings = Settings.getSettings();
-
-	public Object select(final Object index) {
+	public Object select(final Object index, final ProgramState currentState) {
 		if (entries.containsKey(index)) {
 			return entries.get(index);
 		}
-		return settings.getNDC().havocArrayEntry(this, index);
+		return currentState.getNDC().havocArrayEntry(this, index);
 	}
 
 	public SMTArray store(final Object index, final Object value) {

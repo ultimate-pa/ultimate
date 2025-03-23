@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
@@ -16,6 +17,7 @@ public class ProgramState {
 	private final HashMap<IProgramVar, BitVector> mBVVars;
 	private final HashMap<IProgramVar, Integer> mIntVars;
 	private boolean mFinal;
+	private final NonDeterministicChoice mNDC;
 
 	public ProgramState(final ArrayList<Variable> allVariables, final NonDeterministicChoice ndc) {
 		mArrayVars = new HashMap<>();
@@ -39,7 +41,7 @@ public class ProgramState {
 				if (mBVVars.containsKey(programVar)) {
 					continue;
 				}
-				mBVVars.put(programVar, ndc.havocBitVector(variable, null));
+				mBVVars.put(programVar, ndc.havocBitVector((VariableBitVectorTerm) variable, null));
 				break;
 			case Boolean:
 				if (mBoolVars.containsKey(programVar)) {
@@ -57,14 +59,17 @@ public class ProgramState {
 				break;
 			}
 		}
+		mNDC = ndc;
 	}
 
 	public ProgramState(final HashMap<IProgramVar, SMTArray> arrayVars, final HashMap<IProgramVar, Boolean> boolVars,
-			final HashMap<IProgramVar, BitVector> bvVars, final HashMap<IProgramVar, Integer> intVars) {
+			final HashMap<IProgramVar, BitVector> bvVars, final HashMap<IProgramVar, Integer> intVars,
+			final NonDeterministicChoice ndc) {
 		mArrayVars = arrayVars;
 		mBoolVars = boolVars;
 		mBVVars = bvVars;
 		mIntVars = intVars;
+		mNDC = ndc;
 	}
 
 	public HashMap<IProgramVar, Object> getVariableValues() {
@@ -87,12 +92,13 @@ public class ProgramState {
 	}
 
 	/**
-	 * Create a clone of the program state. The clone may be changed, even if the original {@link #isFinalized()}
+	 * Create a clone of the program state. The clone may be changed, even if the original {@link #isFinalized()} They
+	 * use the same {@link NonDeterministicChoice} instance.
 	 */
 	@Override
 	public ProgramState clone() {
 		return new ProgramState(Util.copyMap(mArrayVars), Util.copyMap(mBoolVars), Util.copyMap(mBVVars),
-				Util.copyMap(mIntVars));
+				Util.copyMap(mIntVars), mNDC);
 	}
 
 	public void setValue(final IProgramVar variable, final boolean value) {
@@ -145,5 +151,9 @@ public class ProgramState {
 
 	public boolean isFinalized() {
 		return mFinal;
+	}
+
+	public NonDeterministicChoice getNDC() {
+		return mNDC;
 	}
 }

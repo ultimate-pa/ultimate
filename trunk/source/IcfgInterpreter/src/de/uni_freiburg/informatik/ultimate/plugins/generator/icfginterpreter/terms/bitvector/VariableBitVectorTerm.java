@@ -3,12 +3,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BitVectorDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -17,9 +17,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 	private final VariableTerm mVariableTerm;
 
-	public VariableBitVectorTerm(final ReturnType mReturnType, final String symbol, final int length,
-			final VariableTerm variableTerm) {
-		super(mReturnType, symbol, length);
+	public VariableBitVectorTerm(final int length, final VariableTerm variableTerm) {
+		super(SMTLIBConstants.BITVEC, length);
 		mVariableTerm = variableTerm;
 	}
 
@@ -36,11 +35,6 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 	@Override
 	public String getName() {
 		return mVariableTerm.name;
-	}
-
-	@Override
-	public BitVectorDomain getDomain() {
-		return Util.constructFullDomain(mVariableTerm.termvar.getSort());
 	}
 
 	@Override
@@ -88,5 +82,4 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		return out.append(Util.getIndent(depth)).append(getName());
 	}
-
 }

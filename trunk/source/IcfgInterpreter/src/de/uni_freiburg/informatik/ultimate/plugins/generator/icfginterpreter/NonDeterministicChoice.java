@@ -3,11 +3,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
@@ -29,30 +31,27 @@ public interface NonDeterministicChoice {
 	 * @param possibleValues
 	 * @return
 	 */
-	default Object havoc(final Variable variable, final Domain<?> possibleValues) {
-		switch (possibleValues.getType()) {
+	default Object havoc(final Variable variable, final Restriction<?> possibleValues) {
+		switch (variable.getTerm().returnType) {
 		case Array:
-			final ArrayDomain<?, ?> arrayDomain = (ArrayDomain<?, ?>) possibleValues;
-			return newArray((VariableArrayTerm) variable, arrayDomain);
+			return newArray((VariableArrayTerm) variable, (ArrayRestriction) possibleValues);
 		case BitVector:
-			return havocBitVector(variable, possibleValues);
+			return havocBitVector((VariableBitVectorTerm) variable, (BitVectorRestriction) possibleValues);
 		case Boolean:
-			final BooleanDomain booleanDomain = (BooleanDomain) possibleValues;
-			return havocBool((VariableBooleanTerm) variable, booleanDomain);
+			return havocBool((VariableBooleanTerm) variable, (BooleanRestriction) possibleValues);
 		case Int:
-			final IntegerDomain integerDomain = (IntegerDomain) possibleValues;
-			return havocInt((VariableIntegerTerm) variable, integerDomain);
+			return havocInt((VariableIntegerTerm) variable, (IntegerRestriction) possibleValues);
 		}
 		return null;
 	}
 
-	int havocInt(VariableIntegerTerm variable, IntegerDomain values);
+	int havocInt(VariableIntegerTerm variable, IntegerRestriction values);
 
-	boolean havocBool(VariableBooleanTerm variable, BooleanDomain values);
+	boolean havocBool(VariableBooleanTerm variable, BooleanRestriction values);
 
-	BitVector havocBitVector(Variable variable, Domain<?> values);
+	BitVector havocBitVector(VariableBitVectorTerm variable, BitVectorRestriction values);
 
-	SMTArray newArray(VariableArrayTerm variable, ArrayDomain<?, ?> values);
+	SMTArray newArray(VariableArrayTerm variable, ArrayRestriction values);
 
 	/**
 	 * Called when an array entry is read where no value has been stored with

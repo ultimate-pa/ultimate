@@ -6,8 +6,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Pro
 public abstract class BitVectorTerm extends ExecutionTerm {
 	protected final int mLength;
 
-	public BitVectorTerm(final ReturnType mReturnType, final String symbol, final int length) {
-		super(mReturnType, symbol);
+	public BitVectorTerm(final String symbol, final int length) {
+		super(ReturnType.BitVector, symbol);
 		assert length > 0;
 		mLength = length;
 	}

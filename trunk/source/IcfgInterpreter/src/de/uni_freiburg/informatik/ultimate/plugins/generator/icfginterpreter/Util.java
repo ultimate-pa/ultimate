@@ -19,11 +19,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BitVectorDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
 
@@ -168,10 +163,6 @@ public class Util {
 		return false;
 	}
 
-	/* Quantifier-free Arrays, Bit-Vectors, and integer maths */
-	// private static Theory mTheory;// = new Theory(Logics.AUFBVDTNIA);// QF_AUFBVLIA);
-	// private final static Sort booleanSort = theory.getBooleanSort();
-	// private final static Sort integerSort = theory.getNumericSort();
 	/**
 	 * The generic array sorts by
 	 */
@@ -279,30 +270,6 @@ public class Util {
 			return ReturnType.Int;
 		}
 		return null;
-	}
-
-	@SuppressWarnings("unchecked")
-	public static <T extends Domain<T>> T constructFullDomain(final Sort sort) {
-		switch (sort.getName()) {
-		case SMTLIBConstants.ARRAY:
-			final Sort[] keyValue = sort.getArguments();
-			return (T) getArrayDomain(keyValue[0], keyValue[1]);
-		case SMTLIBConstants.BITVEC:
-			return (T) BitVectorDomain.getDomain(sort);
-		case SMTLIBConstants.BOOL:
-			return (T) new BooleanDomain().getFullDomain();
-		case SMTLIBConstants.INT:
-			return (T) new IntegerDomain().getFullDomain();
-		}
-
-		return null;
-	}
-
-	private static <keyType extends Domain<keyType>, valueType extends Domain<valueType>> ArrayDomain<keyType, valueType> getArrayDomain(
-			final Sort keySort, final Sort valueSort) {
-
-		return new ArrayDomain<keyType, valueType>(new HashMap<>(), constructFullDomain(keySort),
-				constructFullDomain(valueSort));
 	}
 
 	public static int compareBaseOrder(final ExecutionTerm a, final ExecutionTerm b) {

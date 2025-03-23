@@ -7,22 +7,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain.Interval;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
 public class RNGChoice implements NonDeterministicChoice {
 	private int mSeed;
 	private int mMinHavocInt;
-	private int mMaxHavocInt;
-	private IntegerDomain capDomain;
+	private int mHavocCapMap;
 
 	public RNGChoice() {
 		// non-instance constructor that will be used to create actual instances with specific seeds
@@ -32,13 +30,13 @@ public class RNGChoice implements NonDeterministicChoice {
 		mSeed = seed;
 
 		final RcpPreferenceProvider settings = IcfgInterpreterPreferences.getPreferences();
-		mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
+		final int mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
 		mMinHavocInt = settings.getInt(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE + 1);
+		mHavocCapMap = mMaxHavocInt - mMinHavocInt + 1;
 		if (mMaxHavocInt < mMinHavocInt) {
 			throw new Exception("Wrong settings for " + IcfgInterpreter.class.getSimpleName()
 					+ ", maximum havoc value is less than the minimum havoc value");
 		}
-		capDomain = new IntegerDomain(new Interval(mMinHavocInt, mMaxHavocInt));
 	}
 
 	@Override
@@ -56,52 +54,38 @@ public class RNGChoice implements NonDeterministicChoice {
 		return edges.get((int) chooseElement(edges.size()));
 	}
 
-	private int capValue(final int value) {
-		return (Math.abs(xorShift()) % (mMaxHavocInt - mMinHavocInt + 1)) + mMinHavocInt;
+	@Override
+	public int havocInt(final VariableIntegerTerm variable, final IntegerRestriction values) {
+		if (values == null) {
+			return (Math.abs(xorShift()) % mHavocCapMap) + mMinHavocInt;
+		}
+
+		final int index = (Math.abs(xorShift()) % values.getValueCount());
+		int value = values.getLess() + 1 + index;
+		while (values.getInequal().contains(value)) {
+			value++;
+		}
+
+		return value;
 	}
 
 	@Override
-	public int havocInt(final VariableIntegerTerm variable, IntegerDomain values) {
-		if (values == null || values.isEmpty()) {
-			return capValue(xorShift());
+	public boolean havocBool(final VariableBooleanTerm variable, final BooleanRestriction values) {
+		if (values != null && values.getInequal().size() == 1) {
+			// can only be the value that is not in the inequalities
+			return values.getInequal().contains(false);
 		}
-
-		values = values.intersection(capDomain);
-		long index = chooseElement(values.getValueCount());
-
-		final ArrayList<Interval> intervals = values.getValues();
-
-		for (final Interval interval : intervals) {
-			final float containedValues = interval.getValueCount();
-
-			if (containedValues >= index) {
-				return (int) (interval.getMin() + index);
-			}
-
-			index -= containedValues;
-		}
-
-		assert false;
-		return 0;
-	}
-
-	@Override
-	public boolean havocBool(final VariableBooleanTerm variable, final BooleanDomain values) {
-		if (values != null && values.getValueCount() == 1) {
-			// can either only be true or only be false
-			return values.canBeTrue;
-		}
-		// can be false or true
+		// can be false or true (either both allowed or neither)
 		return xorShift() < 0; // == is first bit 0 or 1
 	}
 
 	@Override
-	public BitVector havocBitVector(final Variable variable, final Domain<?> values) {
+	public BitVector havocBitVector(final VariableBitVectorTerm variable, final BitVectorRestriction values) {
 		return null;
 	}
 
 	@Override
-	public SMTArray newArray(final VariableArrayTerm variable, final ArrayDomain<?, ?> values) {
+	public SMTArray newArray(final VariableArrayTerm variable, final ArrayRestriction values) {
 		return new SMTArray(variable.keyType, variable.valueType, variable);
 	}
 
@@ -110,14 +94,13 @@ public class RNGChoice implements NonDeterministicChoice {
 		final long hashKey = array.variable.getVariableTerm().programVar.hashCode() + index.hashCode();
 		switch (array.valueType) {
 		case Array:
-			return newArray(array.variable, array.variable.getDomain());
+			return newArray(array.variable, null);
 		case BitVector:
-			return havocBitVector(null, null);
-
+			return null;
 		case Boolean:
 			return 0 < hash(hashKey);
 		case Int:
-			return capValue((int) hash(hashKey));
+			return (Math.abs((int) hash(hashKey)) % mHavocCapMap) + mMinHavocInt;
 		}
 		return null;
 	}

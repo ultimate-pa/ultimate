@@ -1,7 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
+import java.util.HashSet;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -10,50 +11,81 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Non
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
-public class Update {
-	private final Variable mVariable;
-	private final IProgramVar mProgramVar;
-	private final ExecutionTerm mValueDefinition;
-	private final boolean mIsHavoced;
-	private final boolean mIsUndefined;
-	private final ReturnType mReturnType;
-	private final RelationSymbol mRelation;
+public abstract class Update {
+	protected final Variable mVariable;
+	protected final IProgramVar mProgramVar;
+	protected final ReturnType mReturnType;
 
-	static BooleanDomain fullBooleanDomain = null;
-	static IntegerDomain fullIntegerDomain = null;
+	private static class AssignmentUpdate extends Update {
+		private final ExecutionTerm mValueDefinition;
 
-	public static Update getAssignmentUpdate(final Variable variable, final ExecutionTerm equalTerm) {
-		return new Update(variable, equalTerm, false, RelationSymbol.EQ);
+		protected AssignmentUpdate(final Variable variable, final ExecutionTerm equalTerm) {
+			super(variable, variable.getVariableTerm().programVar);
+			assert variable.getTerm().returnType.equals(equalTerm.returnType);
+			mValueDefinition = equalTerm;
+		}
+
+		@Override
+		protected Object makeValue(final ProgramState currentState, final ProgramState nextState,
+				final NonDeterministicChoice havoc) {
+			return mValueDefinition.evaluate(currentState, nextState);
+		}
+
+		@Override
+		public String toString() {
+			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := " + mValueDefinition;
+		}
 	}
 
-	// TODO make havocs for OutVars that depend on other OutVars
-
-	public static Update getHavocUpdate(final Variable variable, final ExecutionTerm relativeTerm,
-			final RelationSymbol relation) {
-		assert relation != RelationSymbol.EQ;
-		for (final Variable var : relativeTerm.getVariables()) {
-			// Has to not be OutVar or constant (both OutVar and InVar)
-			assert !var.getVariableTerm().isOutVar || var.getVariableTerm().isInVar;
+	private static class HavocAnyUpdate extends Update {
+		protected HavocAnyUpdate(final Variable variable) {
+			super(variable, variable.getVariableTerm().programVar);
 		}
-		return new Update(variable, relativeTerm, true, relation);
+
+		@Override
+		protected Object makeValue(final ProgramState currentState, final ProgramState nextState,
+				final NonDeterministicChoice havoc) {
+			switch (mReturnType) {
+			case Array:
+				return havoc.newArray((VariableArrayTerm) mVariable, null);
+			case BitVector:
+				return havoc.havocBitVector((VariableBitVectorTerm) mVariable, null);
+			case Boolean:
+				return havoc.havocBool((VariableBooleanTerm) mVariable, null);
+			case Int:
+				return havoc.havocInt((VariableIntegerTerm) mVariable, null);
+			}
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc()";
+		}
+	}
+
+	public static Update getAssignmentUpdate(final Variable variable, final ExecutionTerm equalTerm) {
+		return new AssignmentUpdate(variable, equalTerm);
+	}
+
+	public static Update getHavocUpdate(final Variable variable, final HashSet<Constraint> constraints,
+			final HashSet<Arc> arcs) {
+		return null; // TODO make havoc updates for constraints (restrictions can be pre-calculated) and arcs
 	}
 
 	/**
 	 * When a variable is undefined in the next state. Assigns any value of the given type.
 	 */
 	public static Update getHavocUpdateAny(final IProgramVar programVar, final ReturnType type) {
-		final Variable replacementVar;
 
 		final Sort mainSort = programVar.getSort();
 		final Theory theory = programVar.getSort().getTheory();
@@ -61,6 +93,7 @@ public class Update {
 
 		final VariableTerm variableTerm = new VariableTerm(false, true, false, true, programVar, termVar);
 
+		final Variable replacementVar;
 		switch (type) {
 		case Array:
 			final Sort[] keyValueSorts = mainSort.getArguments();
@@ -69,8 +102,9 @@ public class Update {
 			replacementVar = new VariableArrayTerm(keyType, valueType, variableTerm);
 			break;
 		case BitVector:
-			return null; // TODO
-
+			final int length = Integer.parseInt(programVar.getSort().getIndices()[0]);
+			replacementVar = new VariableBitVectorTerm(length, variableTerm);
+			break;
 		case Boolean:
 			replacementVar = new VariableBooleanTerm(variableTerm);
 			break;
@@ -88,74 +122,22 @@ public class Update {
 	 * When a variable is undefined in the next state. Assigns any value of the given type.
 	 */
 	public static Update getHavocUpdateAny(final Variable variable) {
-		return new Update(variable, variable.getVariableTerm().programVar, null, true, true, RelationSymbol.EQ);
+		return new HavocAnyUpdate(variable);
 	}
 
-	private Update(final Variable variable, final ExecutionTerm valueDefinition, final boolean isHavoced,
-			final RelationSymbol relation) {
-		this(variable, variable.getVariableTerm().programVar, valueDefinition, isHavoced, false, relation);
-	}
-
-	private Update(final Variable variable, final IProgramVar programVar, final ExecutionTerm valueDefinition,
-			final boolean isHavoced, final boolean isUndefined, final RelationSymbol relation) {
+	private Update(final Variable variable, final IProgramVar programVar) {
 		assert !variable.getVariableTerm().isInVar && variable.getVariableTerm().isOutVar;
-		assert isUndefined || variable.getTerm().returnType.equals(valueDefinition.returnType);
-
 		mVariable = variable;
+		mReturnType = mVariable.getTerm().returnType;
 		mProgramVar = programVar;
-		mValueDefinition = valueDefinition;
-		mIsHavoced = isHavoced;
-		mReturnType = variable.getTerm().returnType;
-		mIsUndefined = isUndefined;
-		mRelation = relation;
-
-		if (fullBooleanDomain == null) {
-			final Theory theory = variable.getVariableTerm().termvar.getSort().getTheory();
-			fullBooleanDomain = Util.constructFullDomain(Util.getSort(ReturnType.Boolean, theory));
-			fullIntegerDomain = Util.constructFullDomain(Util.getSort(ReturnType.Int, theory));
-		}
 	}
+
+	protected abstract Object makeValue(final ProgramState currentState, final ProgramState nextState,
+			final NonDeterministicChoice havoc);
 
 	public void apply(final ProgramState currentState, final ProgramState nextState,
 			final NonDeterministicChoice havoc) {
-		if (mIsUndefined) {
-			putValue(nextState, havoc.havoc(mVariable, mVariable.getDomain()));
-		} else if (mIsHavoced) {
-			final Domain<?> fullDomain = mVariable.getDomain();
-
-			// TODO define domain well and calculate it from ExecutionTerm and state
-			final Domain<?> valueDomain;
-			switch (mRelation) {
-			case EQ:
-				valueDomain = fullDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState));
-				break;
-			case DISTINCT:
-				valueDomain = fullDomain
-						.complement(fullDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
-				break;
-			case GEQ:
-				valueDomain = fullIntegerDomain
-						.greaterEqual(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
-				break;
-			case GREATER:
-				valueDomain = fullIntegerDomain
-						.greaterThen(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
-				break;
-			case LEQ:
-				valueDomain = fullIntegerDomain
-						.lessEqual(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
-				break;
-			case LESS:
-				valueDomain = fullIntegerDomain
-						.lessThen(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
-				break;
-			default:
-				return;
-			}
-			putValue(nextState, havoc.havoc(mVariable, valueDomain));
-		} else {
-			putValue(nextState, mValueDefinition.evaluate(currentState, nextState));
-		}
+		putValue(nextState, makeValue(currentState, nextState, havoc));
 	}
 
 	private void putValue(final ProgramState state, final Object value) {
@@ -173,16 +155,5 @@ public class Update {
 			state.setValue(mProgramVar, (Integer) value);
 			break;
 		}
-	}
-
-	@Override
-	public String toString() {
-		if (mIsUndefined) {
-			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc()";
-		} else if (mIsHavoced) {
-			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc(" + mRelation + " "
-					+ mValueDefinition + ")";
-		}
-		return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := " + mValueDefinition;
 	}
 }

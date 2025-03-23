@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -27,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.AndTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.NotTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.OrTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -88,11 +90,17 @@ public class ArcSolver {
 					continue;
 				}
 				final Term definition = solvedBinEQ.getRightHandSide();
-				final RelationSymbol relation = solvedBinEQ.getRelationSymbol();
+				RelationSymbol relation = solvedBinEQ.getRelationSymbol();
 				if (definition == null) {
 					continue;
 				}
-				final ExecutionTerm rhsTerm = TermNormalizer.parseTerm(definition, smtConvertedVariables).simplify();
+				ExecutionTerm rhsTerm = TermNormalizer.parseTerm(definition, smtConvertedVariables).simplify();
+				if (rhsTerm.returnType == ReturnType.Boolean && relation == RelationSymbol.DISTINCT) {
+					// bool_x != bool_y would become the update havoc(bool_x, "!= bool_y")
+					// but we can just simplify to bool_x = !(bool_y) to get an assignment update set(bool_x, !bool_y)
+					rhsTerm = new NotTerm((BooleanTerm) rhsTerm);
+					relation = RelationSymbol.EQ;
+				}
 				if (rhsTerm.getVariables().size() == 0) {
 					mConstraints.add(new Constraint(var, rhsTerm, relation));
 				} else {
@@ -198,7 +206,7 @@ public class ArcSolver {
 			return Map.entry(var.getVariableTerm().programVar, var);
 		}, new HashMap<>());
 		// Make updates for variables that are not defined in the next state (havoc any value), this happens when:
-		// A. The OutVars do not contain a variable that is in the InVars. TODO is this actually correct?
+		// A. The OutVars do not contain a variable that is in the InVars.
 		// B. A variable of the OutVars does not appear in the InVars or the term.
 
 		for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) {
@@ -218,11 +226,13 @@ public class ArcSolver {
 		}
 
 		/*
-		 * If a variable is not well defined but not dependent on other variables, it can be havoced at will. Such a
-		 * variable would also not have any other variables that depend on it, as any arc var_a < var_b would lead to an
-		 * arc var_b > var_a when initially solving BinaryRelations.
+		 * If a variable is not well defined but not dependent on variables that aren't well defined, it can be havoced
+		 * at will. Such a variable would also not have any other variables that depend on it, as any arc var_a < var_b
+		 * would lead to an arc var_b > var_a when initially solving BinaryRelations.
 		 */
 
+		final HashMap<Variable, HashSet<Constraint>> restrictionsConstraint = new HashMap<>();
+		final HashMap<Variable, HashSet<Arc>> restrictionsArc = new HashMap<>();
 		for (final Constraint constraint : mConstraints) {
 			if (wellDefined.contains(constraint.getVariable())) {
 				continue;
@@ -231,9 +241,33 @@ public class ArcSolver {
 				continue;
 			}
 
-			updates.add(
-					Update.getHavocUpdate(constraint.getVariable(), constraint.getConstraint(), constraint.relation));
-			wellDefined.add(constraint.getVariable());
+			final HashSet<Constraint> constraintSet = restrictionsConstraint.getOrDefault(constraint.getVariable(),
+					new HashSet<>());
+			constraintSet.add(constraint);
+
+			// updates.add(
+			// Update.getHavocUpdate(constraint.getVariable(), constraint.getConstraint(), constraint.relation));
+			// wellDefined.add(constraint.getVariable());
+		}
+		for (final Arc arc : mArcs) {
+			if (wellDefined.contains(arc.getDefinedVariable())) {
+				continue;
+			}
+			if (dependentVars.contains(arc.getDefinedVariable())) {
+				continue;
+			}
+
+			final HashSet<Arc> arcSet = restrictionsArc.getOrDefault(arc.getDefinedVariable(), new HashSet<>());
+			arcSet.add(arc);
+
+			// updates.add(Update.getHavocUpdate(arc.getDefinedVariable(), arc.getConstraint(), arc.relation));
+			// wellDefined.add(arc.getDefinedVariable());
+		}
+		final Set<Variable> independentVars = restrictionsConstraint.keySet();
+		independentVars.addAll(restrictionsArc.keySet());
+		for (final Variable independentVar : independentVars) {
+			updates.add(Update.getHavocUpdate(independentVar, restrictionsConstraint.get(independentVar),
+					restrictionsArc.get(independentVar)));
 		}
 
 		// TODO Take care of outVars that depend on other outVars
