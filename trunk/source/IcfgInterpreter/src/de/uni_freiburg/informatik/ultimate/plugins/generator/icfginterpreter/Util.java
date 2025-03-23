@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.ArrayDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BitVectorDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.BooleanDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
@@ -234,8 +235,8 @@ public class Util {
 			}
 			return arraySort;
 		case BitVector:
-			// use appropriate method
-			break;
+			assert args.length == 1 && args[0].isBitVecSort();
+			return getGenericSort(args[0], theory);
 		}
 		return null;
 	}
@@ -243,11 +244,15 @@ public class Util {
 	private static Sort getGenericSort(final Sort sort, final Theory theory) {
 		switch (sort.getName()) {
 		case SMTLIBConstants.INT:
-			return theory.getNumericSort();// integerSort;
+			return theory.getNumericSort();
 		case SMTLIBConstants.BOOL:
-			return theory.getBooleanSort();// booleanSort;
+			return theory.getBooleanSort();
 		case SMTLIBConstants.BITVEC:
-			break; // TODO
+
+			final int length = Integer.parseInt(sort.getIndices()[0]);
+			final String[] indices = {};
+			return theory.getSort(SMTLIBConstants.BITVEC, indices);
+
 		case SMTLIBConstants.ARRAY:
 			final Sort[] args = new Sort[2];
 			args[0] = getGenericSort(sort.getArguments()[0], theory);
@@ -283,7 +288,7 @@ public class Util {
 			final Sort[] keyValue = sort.getArguments();
 			return (T) getArrayDomain(keyValue[0], keyValue[1]);
 		case SMTLIBConstants.BITVEC:
-			break; // TODO
+			return (T) BitVectorDomain.getDomain(sort);
 		case SMTLIBConstants.BOOL:
 			return (T) new BooleanDomain().getFullDomain();
 		case SMTLIBConstants.INT:

@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -16,20 +15,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
 
 public class VariableArrayTerm extends ArrayTerm implements Variable {
-	private final VariableTerm variableTerm;
+	private final VariableTerm mVariableTerm;
 
-	private VariableArrayTerm(final ReturnType mKeyType, final ReturnType mValueType,
-			final VariableTerm iVariableTerm) {
+	public VariableArrayTerm(final ReturnType mKeyType, final ReturnType mValueType, final VariableTerm variableTerm) {
 		super(mKeyType, mValueType, SMTLIBConstants.ARRAY);
 		assert mKeyType != ReturnType.Array;
-		variableTerm = iVariableTerm;
-	}
-
-	public VariableArrayTerm(final ReturnType mKeyType, final ReturnType mValueType, final boolean mIsInVar,
-			final boolean mIsOutVar, final boolean mIsAuxVar, final boolean mIsAssignable,
-			final IProgramVar mProgramVar, final TermVariable mTermVar) {
-		this(mKeyType, mValueType,
-				new VariableTerm(mIsInVar, mIsOutVar, mIsAuxVar, mIsAssignable, mProgramVar, mTermVar));
+		mVariableTerm = variableTerm;
 	}
 
 	@Override
@@ -54,7 +45,7 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 		}
 		final VariableArrayTerm castB = (VariableArrayTerm) b;
 
-		return castB.variableTerm.termvar.equals(variableTerm.termvar) && keyType.equals(castB.keyType)
+		return castB.mVariableTerm.termvar.equals(mVariableTerm.termvar) && keyType.equals(castB.keyType)
 				&& valueType.equals(castB.valueType);
 	}
 
@@ -67,7 +58,7 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 
 	@Override
 	public VariableTerm getVariableTerm() {
-		return variableTerm;
+		return mVariableTerm;
 	}
 
 	@Override
@@ -84,21 +75,21 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 
 	@Override
 	public String getName() {
-		return variableTerm.name;
+		return mVariableTerm.name;
 	}
 
 	@Override
 	public TermVariable toSMTTerm(final Theory theory) {
-		return Util.makeVariable(variableTerm.termvar, theory);
+		return Util.makeVariable(mVariableTerm.termvar, theory);
 	}
 
 	@Override
 	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (variableTerm.isInVar ? currentState : nextState).getArrayOf(variableTerm.programVar);
+		return (mVariableTerm.isInVar ? currentState : nextState).getArrayOf(mVariableTerm.programVar);
 	}
 
 	@Override
 	public ArrayDomain<?, ?> getDomain() {
-		return Util.constructFullDomain(variableTerm.termvar.getSort());
+		return Util.constructFullDomain(mVariableTerm.termvar.getSort());
 	}
 }

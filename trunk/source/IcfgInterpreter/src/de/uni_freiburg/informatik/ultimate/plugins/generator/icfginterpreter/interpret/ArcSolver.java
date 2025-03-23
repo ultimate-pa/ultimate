@@ -120,23 +120,22 @@ public class ArcSolver {
 			final Term term, final Infeasibility infeasibility, final Collection<TermVariable> branchEncoders) {
 		final HashMap<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (final Variable inVar : mInVars) {
-			inVars.put(inVar.getVariableTerm().programVar, inVar/* .toSMTTerm() */.getVariableTerm().termvar);
+			inVars.put(inVar.getVariableTerm().programVar, inVar.getVariableTerm().termvar);
 		}
 		final HashMap<IProgramVar, TermVariable> outVars = new HashMap<>();
 		for (final Variable outVar : mOutVars) {
-			outVars.put(outVar.getVariableTerm().programVar, outVar/* .toSMTTerm() */.getVariableTerm().termvar);
+			outVars.put(outVar.getVariableTerm().programVar, outVar.getVariableTerm().termvar);
 		}
 		final HashSet<TermVariable> auxVars = new HashSet<>();
 		for (final Variable var : mVariables.values()) {
 			if (var.getVariableTerm().isAuxVar) {
-				auxVars.add(var.getVariableTerm().termvar/* .toSMTTerm() */);
+				auxVars.add(var.getVariableTerm().termvar);
 			}
 		}
 
 		final TransFormulaBuilder formulaBuilder = new TransFormulaBuilder(inVars, outVars, false, null,
 				branchEncoders.isEmpty(), branchEncoders, false);
-		// final Term closedTerm = UnmodifiableTransFormula.computeClosedFormula(term, inVars, outVars, auxVars,
-		// script);
+
 		formulaBuilder.setFormula(term);
 		formulaBuilder.setInfeasibility(infeasibility);
 		final UnmodifiableTransFormula subTermFormula = formulaBuilder.finishConstruction(script);

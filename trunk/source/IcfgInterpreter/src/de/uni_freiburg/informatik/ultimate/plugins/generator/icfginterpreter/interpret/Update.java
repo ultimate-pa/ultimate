@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
 public class Update {
@@ -58,21 +59,23 @@ public class Update {
 		final Theory theory = programVar.getSort().getTheory();
 		final TermVariable termVar = Util.makeVariable(programVar.getGloballyUniqueId() + "_Havoc", mainSort, theory);
 
+		final VariableTerm variableTerm = new VariableTerm(false, true, false, true, programVar, termVar);
+
 		switch (type) {
 		case Array:
 			final Sort[] keyValueSorts = mainSort.getArguments();
 			final ReturnType keyType = Util.getType(keyValueSorts[0]);
 			final ReturnType valueType = Util.getType(keyValueSorts[1]);
-			replacementVar = new VariableArrayTerm(keyType, valueType, false, true, false, true, programVar, termVar);
+			replacementVar = new VariableArrayTerm(keyType, valueType, variableTerm);
 			break;
 		case BitVector:
 			return null; // TODO
 
 		case Boolean:
-			replacementVar = new VariableBooleanTerm(false, true, false, true, programVar, termVar);
+			replacementVar = new VariableBooleanTerm(variableTerm);
 			break;
 		case Int:
-			replacementVar = new VariableIntegerTerm(false, true, false, true, programVar, termVar);
+			replacementVar = new VariableIntegerTerm(variableTerm);
 			break;
 		default:
 			return null;

@@ -12,9 +12,6 @@ public abstract class BooleanTerm extends ExecutionTerm {
 	@Override
 	public abstract BooleanTerm simplify();
 
-	// @Override
-	// public abstract BooleanDomain evaluate(HashMap<Variable<?>, Domain<?>> variableDomains);
-
 	@Override
 	public abstract Boolean evaluate(ProgramState currentState, ProgramState nextState);
 }

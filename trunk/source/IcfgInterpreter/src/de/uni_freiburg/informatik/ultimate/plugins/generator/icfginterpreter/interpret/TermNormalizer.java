@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.ITETerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.SelectTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.AbsoluteTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.AdditionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.ConstIntegerTerm;
@@ -142,19 +143,20 @@ public class TermNormalizer {
 	private static Variable getVariable(final boolean isInVar, final boolean isOutVar, final boolean isAuxVar,
 			final boolean isAssignable, final IProgramVar progVariable, final TermVariable termVariable) {
 		final Sort sort = termVariable.getDeclaredSort();
+		final VariableTerm variableTerm = new VariableTerm(isInVar, isOutVar, isAuxVar, isAssignable, progVariable,
+				termVariable);
 		switch (ReturnType.getType(sort)) {
 		case Array:
 			final ReturnType valueType = ReturnType.getType(sort.getArguments()[1]);
 			final ReturnType keyType = ReturnType.getType(sort.getArguments()[0]);
-			return new VariableArrayTerm(keyType, valueType, isInVar, isOutVar, isAuxVar, isAssignable, progVariable,
-					termVariable);
+			return new VariableArrayTerm(keyType, valueType, variableTerm);
 		case BitVector:
 			// TODO
 			break;
 		case Boolean:
-			return new VariableBooleanTerm(isInVar, isOutVar, isAuxVar, isAssignable, progVariable, termVariable);
+			return new VariableBooleanTerm(variableTerm);
 		case Int:
-			return new VariableIntegerTerm(isInVar, isOutVar, isAuxVar, isAssignable, progVariable, termVariable);
+			return new VariableIntegerTerm(variableTerm);
 		}
 		return null;
 	}
