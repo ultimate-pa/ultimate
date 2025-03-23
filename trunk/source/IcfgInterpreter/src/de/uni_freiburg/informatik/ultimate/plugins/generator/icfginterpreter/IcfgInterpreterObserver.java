@@ -13,17 +13,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgTranslation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.Settings;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
-	private HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> sourceToEdge;
+
+	private static IcfgInterpreterObserver instance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		instance = this;
+	}
+
+	public static ILogger getLogger() {
+		return instance == null ? null : instance.mLogger;
 	}
 
 	@Override
@@ -53,8 +60,12 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		// * SmtUtils.getConjuncts
 		// * SmtUtils.toDnf
 		// * mLogger can be used for output (e.g., for debugging)
-		final int testExecutionCount = 5;
-		sourceToEdge = IcfgTranslation.edgeBFS(mIcfg, mServices);
+
+		IcfgInterpreterPreferences.updatePreferences();
+		final int testExecutionCount = IcfgInterpreterPreferences.getPreferences()
+				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString(), 5);
+		final HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> sourceToEdge = IcfgTranslation.edgeBFS(mIcfg,
+				mServices);
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
 		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
 		final Random random = new Random();
@@ -64,15 +75,17 @@ public class IcfgInterpreterObserver extends BaseObserver {
 					final long seed = random.nextLong();
 
 					final NonDeterministicChoice ndcInstance = ndc.newInstance(seed);
-					final ProgramState state = new ProgramState(outEdge.getVariables(), ndcInstance);
+					ProgramState state = new ProgramState(outEdge.getReachableVariables(), ndcInstance);
+					state.finalizeState();
 					final IcfgExecution execution = new IcfgExecution(state, node);
 
 					final ArrayList<ICFGExecutionEdge> nextEdges = new ArrayList<>();
 					nextEdges.add(outEdge);
 
 					while (!nextEdges.isEmpty()) {
+						final ProgramState stateRefernce = state;
 						final ArrayList<ICFGExecutionEdge> availableEdges = Util.filter(nextEdges, (edge) -> {
-							return edge.canBeTaken(state);
+							return edge.canBeTaken(stateRefernce);
 						});
 
 						ICFGExecutionEdge nextEdge;
@@ -85,12 +98,13 @@ public class IcfgInterpreterObserver extends BaseObserver {
 							nextEdge = availableEdges.get(0);
 						}
 
-						nextEdge.execute(state, ndcInstance);
-						execution.addStep(state, nextEdge.mTarget);
+						state = nextEdge.execute(state, ndcInstance);
+						execution.addStep(state, nextEdge.mTarget, nextEdge.getTransFormula());
 						nextEdges.clear();
 						nextEdges.addAll(sourceToEdge.getOrDefault(nextEdge.mTarget, new ArrayList<>()));
 					}
-					System.out.println("Execution " + (i + 1) + "\n" + execution + "\n");
+
+					mLogger.info("Execution " + (i + 1) + "\n" + execution + "\n");
 					nextEdges.clear();
 				}
 

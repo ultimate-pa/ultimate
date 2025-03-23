@@ -87,10 +87,10 @@ public class ModuloTerm extends IntegerTerm {
 	 */
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		// a mod b := a - ((a div b) * b);
-		final int a = X.evaluate(state);
-		final int b = Y.evaluate(state);
+		final int a = X.evaluate(currentState, nextState);
+		final int b = Y.evaluate(currentState, nextState);
 
 		return a - ((Util.SMTDiv(a, b)) * b);
 	}

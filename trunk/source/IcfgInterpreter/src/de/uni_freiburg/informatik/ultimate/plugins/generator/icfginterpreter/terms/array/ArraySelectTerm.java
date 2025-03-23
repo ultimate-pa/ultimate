@@ -69,7 +69,7 @@ public class ArraySelectTerm extends ArrayTerm {
 	 */
 
 	@Override
-	public SMTArray evaluate(final ProgramState state) {
-		return (SMTArray) select.evaluate(state);
+	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (SMTArray) select.evaluate(currentState, nextState);
 	}
 }

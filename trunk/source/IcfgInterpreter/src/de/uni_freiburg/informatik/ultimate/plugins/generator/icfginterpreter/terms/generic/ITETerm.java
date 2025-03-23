@@ -82,10 +82,10 @@ public class ITETerm<T extends ExecutionTerm> {
 	 * C; return new ITETerm<>(mA, mB, mC); }
 	 */
 
-	public Object evaluate(final ProgramState state) {
-		if (A.evaluate(state)) {
-			return B.evaluate(state);
+	public Object evaluate(final ProgramState currentState, final ProgramState nextState) {
+		if (A.evaluate(currentState, nextState)) {
+			return B.evaluate(currentState, nextState);
 		}
-		return C.evaluate(state);
+		return C.evaluate(currentState, nextState);
 	}
 }

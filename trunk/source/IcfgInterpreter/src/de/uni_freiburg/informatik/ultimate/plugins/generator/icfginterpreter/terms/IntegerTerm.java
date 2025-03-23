@@ -16,5 +16,5 @@ public abstract class IntegerTerm extends ExecutionTerm {
 	// public abstract IntegerDomain evaluate(HashMap<Variable<?>, Domain<?>> variableDomains);
 
 	@Override
-	public abstract Integer evaluate(ProgramState state);
+	public abstract Integer evaluate(ProgramState currentState, ProgramState nextState);
 }

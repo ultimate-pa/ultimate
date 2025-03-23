@@ -60,7 +60,7 @@ public class FalseTerm extends BooleanTerm {
 	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { return this; }
 	 */
 	@Override
-	public Boolean evaluate(final ProgramState state) {
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return false;
 	}
 

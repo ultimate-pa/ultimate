@@ -80,7 +80,7 @@ public class IntegerSelectTerm extends IntegerTerm {
 	 */
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		return (int) select.evaluate(state);
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (int) select.evaluate(currentState, nextState);
 	}
 }

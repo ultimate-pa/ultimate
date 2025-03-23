@@ -79,7 +79,7 @@ public class AbsoluteTerm extends IntegerTerm {
 	 */
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		return Math.abs(X.evaluate(state));
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return Math.abs(X.evaluate(currentState, nextState));
 	}
 }

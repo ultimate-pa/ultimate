@@ -79,7 +79,7 @@ public class BooleanSelectTerm extends BooleanTerm {
 	 */
 
 	@Override
-	public Boolean evaluate(final ProgramState state) {
-		return (boolean) select.evaluate(state);
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (boolean) select.evaluate(currentState, nextState);
 	}
 }

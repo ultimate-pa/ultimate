@@ -201,12 +201,14 @@ public class ArcSolver {
 		// Make updates for variables that are not defined in the next state (havoc any value), this happens when:
 		// A. The OutVars do not contain a variable that is in the InVars. TODO is this actually correct?
 		// B. A variable of the OutVars does not appear in the InVars or the term.
-		/*
-		 * for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) { if
-		 * (outProgVars.containsKey(inVar.getKey())) { // The program variable has a defining term variable in the next
-		 * state continue; } updates.add(Update.getHavocUpdateAny(inVar.getKey(),
-		 * inVar.getValue().getTerm().returnType)); }
-		 */
+
+		for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) {
+			if (outProgVars.containsKey(inVar.getKey())) {
+				// The program variable has a defining term variable in the next state
+				continue;
+			}
+			updates.add(Update.getHavocUpdateAny(inVar.getKey(), inVar.getValue().getTerm().returnType));
+		}
 
 		for (final Entry<IProgramVar, Variable> outVar : outProgVars.entrySet()) {
 			if (mentionedVars.contains(outVar.getValue()) || inProgVars.containsKey(outVar.getKey())) {

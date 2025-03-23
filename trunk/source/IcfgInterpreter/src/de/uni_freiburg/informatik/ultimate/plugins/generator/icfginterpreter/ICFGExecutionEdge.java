@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.AndTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.FalseTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.OrTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.TrueTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -35,8 +36,8 @@ public class ICFGExecutionEdge {
 	/**
 	 * The set of all edges where a path exists from this egde to it. If it includes this edge, there is a loop.
 	 */
-	private final HashSet<ICFGExecutionEdge> reachable = new HashSet<>();
-	private final HashSet<ICFGExecutionEdge> ancestors = new HashSet<>();
+	private final HashSet<ICFGExecutionEdge> mReachable = new HashSet<>();
+	private final HashSet<ICFGExecutionEdge> mAncestors = new HashSet<>();
 	private final HashMap<TermVariable, Variable> mVariables;
 	private final ArcSolver mArcSolver;
 	private final OrTerm mGuardTerm;
@@ -90,6 +91,10 @@ public class ICFGExecutionEdge {
 		final OrTerm guardTerm = TermNormalizer
 				.simplifyToDNF((BooleanTerm) TermNormalizer.parseTerm(guardFormula.getFormula(), variables));
 
+		if (falseGuard.equals(guardTerm)) {
+			return new ArrayList<>(); // edge can never be taken, no need to return it for execution
+		}
+
 		final ArrayList<BooleanTerm> andTerms = outerTerm.getSubTerms();
 
 		final HashMap<ArcSolver, AndTerm> arcSolvers = new HashMap<>();
@@ -103,8 +108,8 @@ public class ICFGExecutionEdge {
 			arcSolvers.put(newSolver, andChild);
 		}
 
-		System.out.println("Full term:");
-		System.out.println(outerTerm);
+		// System.out.println("Full term:");
+		// System.out.println(outerTerm);
 
 		final ArrayList<ICFGExecutionEdge> edges = new ArrayList<>();
 		if (constrainingArcs == 0) {
@@ -113,8 +118,8 @@ public class ICFGExecutionEdge {
 					outVars, service, formulaTheory);
 			edges.add(new ICFGExecutionEdge(transFormula, source, target, variables, trivialArc, guardTerm));
 
-			System.out.println(edges.get(0));
-			System.out.println("\n\n\n");
+			// System.out.println(edges.get(0));
+			// System.out.println("\n\n\n");
 			return edges;
 		}
 
@@ -126,21 +131,33 @@ public class ICFGExecutionEdge {
 			final OrTerm arcGuardTerm = TermNormalizer
 					.simplifyToDNF((BooleanTerm) TermNormalizer.parseTerm(arcGuardFormula.getFormula(), variables));
 
+			if (falseGuard.equals(arcGuardTerm)) {
+				continue; // edge can never be taken, no need to return it for execution
+			}
+
 			final ICFGExecutionEdge newEdge = new ICFGExecutionEdge(transFormula, source, target, variables,
 					entry.getKey(), arcGuardTerm);
-			System.out.println(newEdge);
+			// System.out.println(newEdge);
 			edges.add(newEdge);
 		}
-		System.out.println("\n\n\n");
+		// System.out.println("\n\n\n");
 		return edges;
 	}
 
-	public void execute(final ProgramState state, final NonDeterministicChoice ndc) {
-		// TODO Create and check each arcs guard, choose one
+	private static final OrTerm falseGuard = new OrTerm(new AndTerm(new FalseTerm()));
+
+	public ProgramState execute(final ProgramState currentState, final NonDeterministicChoice ndc) {
+		final ProgramState nextState = currentState.clone();
 		final Update[] updates = mArcSolver.makeUpdates();
 		for (final Update update : updates) {
-			update.apply(state, ndc);
+			update.apply(currentState, nextState, ndc);
 		}
+		nextState.finalizeState();
+		return nextState;
+	}
+
+	public boolean canBeTaken(final ProgramState currentState) {
+		return mGuardTerm.evaluate(currentState, currentState); // guard should contain no outVars
 	}
 
 	@Override
@@ -167,10 +184,6 @@ public class ICFGExecutionEdge {
 		return out.toString();
 	}
 
-	public boolean canBeTaken(final ProgramState state) {
-		return mGuardTerm.evaluate(state);
-	}
-
 	public void addChildren(final ArrayList<ICFGExecutionEdge> mChildren) {
 		children.addAll(mChildren);
 
@@ -183,30 +196,34 @@ public class ICFGExecutionEdge {
 
 	private void addParent(final ICFGExecutionEdge parent) {
 		parents.add(parent);
-		ancestors.add(parent);
-		propagateAncestors(parent.ancestors);
+		mAncestors.add(parent);
+		propagateAncestors(parent.mAncestors);
 	}
 
-	private void propagateAncestors(final HashSet<ICFGExecutionEdge> mAncestors) {
-		ancestors.addAll(mAncestors);
+	private void propagateAncestors(final HashSet<ICFGExecutionEdge> ancestors) {
+		mAncestors.addAll(ancestors);
 
 		for (final ICFGExecutionEdge child : children) {
-			if (child.ancestors.containsAll(ancestors)) {
+			if (child.mAncestors.containsAll(mAncestors)) {
 				continue;
 			}
-			child.propagateAncestors(ancestors);
+			child.propagateAncestors(mAncestors);
 		}
 	}
 
-	private void propagateReachable(final HashSet<ICFGExecutionEdge> mReachable) {
-		reachable.addAll(mReachable);
+	private void propagateReachable(final HashSet<ICFGExecutionEdge> reachable) {
+		mReachable.addAll(reachable);
 
 		for (final ICFGExecutionEdge parent : parents) {
-			if (parent.reachable.containsAll(reachable)) {
+			if (parent.mReachable.containsAll(mReachable)) {
 				continue;
 			}
-			parent.propagateReachable(reachable);
+			parent.propagateReachable(mReachable);
 		}
+	}
+
+	public UnmodifiableTransFormula getTransFormula() {
+		return mTransFormula;
 	}
 
 	public ArrayList<ICFGExecutionEdge> getParents() {
@@ -218,14 +235,29 @@ public class ICFGExecutionEdge {
 	}
 
 	public HashSet<ICFGExecutionEdge> getAncestors() {
-		return Util.copySet(ancestors);
+		return Util.copySet(mAncestors);
 	}
 
 	public ArrayList<Variable> getVariables() {
 		return new ArrayList<>(mVariables.values());
 	}
 
+	/**
+	 * Get all variables that can appear in this edge or any edge reachable from this edge
+	 *
+	 * @return
+	 */
+	public ArrayList<Variable> getReachableVariables() {
+		final HashSet<Variable> out = new HashSet<>(mVariables.values());
+
+		for (final ICFGExecutionEdge reachable : mReachable) {
+			out.addAll(reachable.mVariables.values());
+		}
+
+		return new ArrayList<>(out);
+	}
+
 	public boolean isInLoop() {
-		return reachable.contains(this);
+		return mReachable.contains(this);
 	}
 }

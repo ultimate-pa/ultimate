@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.dom
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.Domain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.domains.IntegerDomain.Interval;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -19,21 +20,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 
 public class RNGChoice implements NonDeterministicChoice {
 	private int mSeed;
-	private final int mMinHavocInt;
-	private final int mMaxHavocInt;
-	private final IntegerDomain capDomain;
+	private int mMinHavocInt;
+	private int mMaxHavocInt;
+	private IntegerDomain capDomain;
 
-	public RNGChoice(final int seed) {
+	public RNGChoice() {
+		// non-instance constructor that will be used to create actual instances with specific seeds
+	}
+
+	public RNGChoice(final int seed) throws Exception {
 		mSeed = seed;
 
-		mMaxHavocInt = new RcpPreferenceProvider(Activator.PLUGIN_ID).getInt(MAX_INT_HAVOC_LABEL);
-		mMinHavocInt = new RcpPreferenceProvider(Activator.PLUGIN_ID).getInt(MIN_INT_HAVOC_LABEL);
+		final RcpPreferenceProvider settings = IcfgInterpreterPreferences.getPreferences();
+		mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
+		mMinHavocInt = settings.getInt(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE + 1);
+		if (mMaxHavocInt < mMinHavocInt) {
+			throw new Exception("Wrong settings for " + IcfgInterpreter.class.getSimpleName()
+					+ ", maximum havoc value is less than the minimum havoc value");
+		}
 		capDomain = new IntegerDomain(new Interval(mMinHavocInt, mMaxHavocInt));
 	}
 
 	@Override
 	public RNGChoice newInstance(final long seed) {
-		return new RNGChoice((int) seed);
+		try {
+			return new RNGChoice((int) seed);
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	@Override
@@ -155,7 +170,6 @@ public class RNGChoice implements NonDeterministicChoice {
 
 	@Override
 	public UltimatePreferenceItemGroup getImplementationSettings() {
-		// TODO Auto-generated method stub
 		return new UltimatePreferenceItemGroup(getClass().getSimpleName(),
 				new UltimatePreferenceItem<>(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE, MAX_INT_HAVOC_HINT,
 						PreferenceType.Integer),

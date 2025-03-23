@@ -55,7 +55,7 @@ public abstract class ExecutionTerm {
 		return Util.copySet(variables);
 	}
 
-	public abstract Object evaluate(ProgramState state);
+	public abstract Object evaluate(ProgramState state, ProgramState nextState);
 
 	public boolean containsVariable(final Variable var) {
 		return getVariables().contains(var);

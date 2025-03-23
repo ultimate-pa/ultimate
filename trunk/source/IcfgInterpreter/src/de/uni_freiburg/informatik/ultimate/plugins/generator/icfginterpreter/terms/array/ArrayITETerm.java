@@ -72,7 +72,7 @@ public class ArrayITETerm extends ArrayTerm {
 	 */
 
 	@Override
-	public SMTArray evaluate(final ProgramState state) {
-		return (SMTArray) ite.evaluate(state);
+	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (SMTArray) ite.evaluate(currentState, nextState);
 	}
 }

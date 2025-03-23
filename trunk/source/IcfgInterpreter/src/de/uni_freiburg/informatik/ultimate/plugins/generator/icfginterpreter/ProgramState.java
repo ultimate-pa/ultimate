@@ -15,6 +15,7 @@ public class ProgramState {
 	private final HashMap<IProgramVar, Boolean> mBoolVars;
 	private final HashMap<IProgramVar, BitVector> mBVVars;
 	private final HashMap<IProgramVar, Integer> mIntVars;
+	private boolean mFinal;
 
 	public ProgramState(final ArrayList<Variable> allVariables, final NonDeterministicChoice ndc) {
 		mArrayVars = new HashMap<>();
@@ -22,21 +23,37 @@ public class ProgramState {
 		mBVVars = new HashMap<>();
 		mIntVars = new HashMap<>();
 		for (final Variable variable : allVariables) {
+			final IProgramVar programVar = variable.getVariableTerm().programVar;
+			if (programVar == null) {
+				continue;
+			}
 			switch (variable.getTerm().returnType) {
 			case Array:
+				if (mArrayVars.containsKey(programVar)) {
+					continue;
+				}
 				final VariableArrayTerm arrayVariable = (VariableArrayTerm) variable;
-				mArrayVars.put(variable.getVariableTerm().programVar, ndc.newArray(arrayVariable, null));
+				mArrayVars.put(programVar, ndc.newArray(arrayVariable, null));
 				break;
 			case BitVector:
-				mBVVars.put(variable.getVariableTerm().programVar, ndc.havocBitVector(variable, null));
+				if (mBVVars.containsKey(programVar)) {
+					continue;
+				}
+				mBVVars.put(programVar, ndc.havocBitVector(variable, null));
 				break;
 			case Boolean:
+				if (mBoolVars.containsKey(programVar)) {
+					continue;
+				}
 				final VariableBooleanTerm boolVariable = (VariableBooleanTerm) variable;
-				mBoolVars.put(variable.getVariableTerm().programVar, ndc.havocBool(boolVariable, null));
+				mBoolVars.put(programVar, ndc.havocBool(boolVariable, null));
 				break;
 			case Int:
+				if (mIntVars.containsKey(programVar)) {
+					continue;
+				}
 				final VariableIntegerTerm intVariable = (VariableIntegerTerm) variable;
-				mIntVars.put(variable.getVariableTerm().programVar, ndc.havocInt(intVariable, null));
+				mIntVars.put(programVar, ndc.havocInt(intVariable, null));
 				break;
 			}
 		}
@@ -69,6 +86,9 @@ public class ProgramState {
 		return out.toString().stripTrailing();
 	}
 
+	/**
+	 * Create a clone of the program state. The clone may be changed, even if the original {@link #isFinalized()}
+	 */
 	@Override
 	public ProgramState clone() {
 		return new ProgramState(Util.copyMap(mArrayVars), Util.copyMap(mBoolVars), Util.copyMap(mBVVars),
@@ -76,18 +96,30 @@ public class ProgramState {
 	}
 
 	public void setValue(final IProgramVar variable, final boolean value) {
+		if (mFinal) {
+			assert false;
+		}
 		mBoolVars.put(variable, value);
 	}
 
 	public void setValue(final IProgramVar variable, final int value) {
+		if (mFinal) {
+			assert false;
+		}
 		mIntVars.put(variable, value);
 	}
 
 	public void setValue(final IProgramVar variable, final SMTArray value) {
+		if (mFinal) {
+			assert false;
+		}
 		mArrayVars.put(variable, value);
 	}
 
 	public void setValue(final IProgramVar variable, final BitVector value) {
+		if (mFinal) {
+			assert false;
+		}
 		mBVVars.put(variable, value);
 	}
 
@@ -105,5 +137,13 @@ public class ProgramState {
 
 	public BitVector getBitVectorOf(final IProgramVar variable) {
 		return mBVVars.getOrDefault(variable, null);
+	}
+
+	public void finalizeState() {
+		mFinal = true;
+	}
+
+	public boolean isFinalized() {
+		return mFinal;
 	}
 }

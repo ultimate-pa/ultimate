@@ -90,8 +90,8 @@ public class StoreTerm extends ArrayTerm {
 	 */
 
 	@Override
-	public SMTArray evaluate(final ProgramState state) {
-		final SMTArray mArray = array.evaluate(state);
-		return mArray.store(index.evaluate(state), value.evaluate(state));
+	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
+		final SMTArray mArray = array.evaluate(currentState, nextState);
+		return mArray.store(index.evaluate(currentState, nextState), value.evaluate(currentState, nextState));
 	}
 }

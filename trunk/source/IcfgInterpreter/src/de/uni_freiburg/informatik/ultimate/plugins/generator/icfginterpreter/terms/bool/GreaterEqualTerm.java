@@ -95,7 +95,7 @@ public class GreaterEqualTerm extends BooleanTerm {
 	 */
 
 	@Override
-	public Boolean evaluate(final ProgramState state) {
-		return mX.evaluate(state) >= mY.evaluate(state);
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return mX.evaluate(currentState, nextState) >= mY.evaluate(currentState, nextState);
 	}
 }

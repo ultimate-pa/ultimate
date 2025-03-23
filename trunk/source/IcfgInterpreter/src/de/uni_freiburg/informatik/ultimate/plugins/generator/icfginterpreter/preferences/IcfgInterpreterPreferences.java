@@ -1,21 +1,31 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences;
 
-import java.io.File;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 
-public class ICFGExecuterPreferences extends UltimatePreferenceInitializer {
-	public ICFGExecuterPreferences() {
+public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
+	private static RcpPreferenceProvider mSettings = null;
+
+	public IcfgInterpreterPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+
+	/**
+	 * Replace the preference provider returned by {@link #getPreferences()} with a new instance to reflect any changes.
+	 */
+	public static void updatePreferences() {
+		mSettings = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+	}
+
+	public static RcpPreferenceProvider getPreferences() {
+		return mSettings;
 	}
 
 	@Override
@@ -30,12 +40,15 @@ public class ICFGExecuterPreferences extends UltimatePreferenceInitializer {
 		}
 
 		final BaseUltimatePreferenceItem[] mainPrefs = {
-				new UltimatePreferenceItem<>(PROJECT_DIRECTORY_LABEL, projectDirectory.getAbsolutePath(),
-						PROJECT_DIRECTORY_HINT, PreferenceType.Directory),
-				new UltimatePreferenceItem<>(NDC_IMLPEMENTATIONS_LABEL, interfaces[0], NDC_IMLPEMENTATIONS_HINT,
-						PreferenceType.Radio, names),
+				new UltimatePreferenceItem<>(SettingLabel.PROJECT_DIRECTORY.toString(),
+						DynamicLoader.getProjectSourceDirectory().getAbsolutePath(), PROJECT_DIRECTORY_HINT,
+						PreferenceType.Directory),
+				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString(), 5, EXECUTIONS_PE_HINT,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(SettingLabel.NDC_IMLPEMENTATIONS.toString(), interfaces[0],
+						NDC_IMLPEMENTATIONS_HINT, PreferenceType.Radio, names),
 				// ADD NEW SETTINGS HERE
-				new UltimatePreferenceItem<>("Non-Deterministic Interface specific settings:", null,
+				new UltimatePreferenceItem<>(SettingLabel.INTERFACE_SUB_SETTINGS.toString(), null,
 						PreferenceType.Label) };
 
 		final BaseUltimatePreferenceItem[] allPrefs = new BaseUltimatePreferenceItem[mainPrefs.length
@@ -52,24 +65,27 @@ public class ICFGExecuterPreferences extends UltimatePreferenceInitializer {
 		return allPrefs;
 	}
 
-	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
-		return services.getPreferenceProvider(Activator.PLUGIN_ID);
-	}
-
-	private final static File projectDirectory = new File(
-			DynamicLoader.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-
 	/**
-	 * @return The file pointing to the base directory of this plug-in: <br>
-	 *         Like .../ultimate/trunk/source/IcfgInterpreter/
+	 * The labels used for each settings, to enable easy value retrieval.
 	 */
-	public static File getProjectSourceDirectory() {
-		return projectDirectory;
+	public enum SettingLabel {
+		PROJECT_DIRECTORY("Ultimate directory"), NDC_IMLPEMENTATIONS("Non-Deterministic Interface implementations:"),
+		INTERFACE_SUB_SETTINGS("Non-Deterministic Interface specific settings:"),
+		EXECUTIONS_PER_ENTRYPOINT("Number of executions to generate per program entry point");
+
+		private final String mText;
+
+		SettingLabel(final String text) {
+			mText = text;
+		}
+
+		@Override
+		public String toString() {
+			return mText;
+		}
 	}
 
-	public static String PROJECT_DIRECTORY_LABEL = "Ultimate directory";
 	public static String PROJECT_DIRECTORY_HINT = "Path of directory which contains the /ultimate/ directory";
-
-	public static String NDC_IMLPEMENTATIONS_LABEL = "Non-Deterministic Interface implementations:";
 	public static String NDC_IMLPEMENTATIONS_HINT = "Class to use for methods like havoc.";
+	public static String EXECUTIONS_PE_HINT = "Should be at least 1";
 }

@@ -148,11 +148,11 @@ public class MultiplicationTerm extends IntegerTerm {
 	 */
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		int out = 1;
 
 		for (final IntegerTerm subTerm : subTerms) {
-			out *= subTerm.evaluate(state);
+			out *= subTerm.evaluate(currentState, nextState);
 		}
 
 		return out;

@@ -20,5 +20,5 @@ public abstract class ArrayTerm extends ExecutionTerm {
 	// public abstract ArrayDomain<keyType, valueType> evaluate(HashMap<Variable, Domain<?>> variableDomains);
 
 	@Override
-	public abstract SMTArray evaluate(ProgramState state);
+	public abstract SMTArray evaluate(ProgramState currentState, ProgramState nextState);
 }

@@ -85,9 +85,9 @@ public class DivisionTerm extends IntegerTerm {
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		final int a = X.evaluate(state);
-		final int b = Y.evaluate(state);
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		final int a = X.evaluate(currentState, nextState);
+		final int b = Y.evaluate(currentState, nextState);
 
 		return Util.SMTDiv(a, b);
 	}

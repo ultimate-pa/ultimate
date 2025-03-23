@@ -281,9 +281,9 @@ public class Util {
 		switch (sort.getName()) {
 		case SMTLIBConstants.ARRAY:
 			final Sort[] keyValue = sort.getArguments();
-			return (T) getArrayDomain(constructFullDomain(keyValue[0]), constructFullDomain(keyValue[1]));
+			return (T) getArrayDomain(keyValue[0], keyValue[1]);
 		case SMTLIBConstants.BITVEC:
-			break;
+			break; // TODO
 		case SMTLIBConstants.BOOL:
 			return (T) new BooleanDomain().getFullDomain();
 		case SMTLIBConstants.INT:

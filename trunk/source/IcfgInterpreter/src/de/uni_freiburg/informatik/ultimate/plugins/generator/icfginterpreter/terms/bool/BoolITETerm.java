@@ -79,7 +79,7 @@ public class BoolITETerm extends BooleanTerm {
 	 */
 
 	@Override
-	public Boolean evaluate(final ProgramState state) {
-		return (Boolean) ite.evaluate(state);
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (Boolean) ite.evaluate(currentState, nextState);
 	}
 }

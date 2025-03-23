@@ -179,9 +179,9 @@ public class AndTerm extends BooleanTerm {
 	 *
 	 */
 	@Override
-	public Boolean evaluate(final ProgramState state) {
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		for (final BooleanTerm subTerm : subTerms) {
-			if (!subTerm.evaluate(state)) {
+			if (!subTerm.evaluate(currentState, nextState)) {
 				return false;
 			}
 		}

@@ -93,8 +93,8 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 	}
 
 	@Override
-	public SMTArray evaluate(final ProgramState state) {
-		return state.getArrayOf(variableTerm.programVar);
+	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (variableTerm.isInVar ? currentState : nextState).getArrayOf(variableTerm.programVar);
 	}
 
 	@Override

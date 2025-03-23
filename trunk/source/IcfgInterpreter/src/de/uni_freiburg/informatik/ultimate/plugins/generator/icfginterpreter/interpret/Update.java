@@ -113,9 +113,10 @@ public class Update {
 		}
 	}
 
-	public void apply(final ProgramState state, final NonDeterministicChoice havoc) {
+	public void apply(final ProgramState currentState, final ProgramState nextState,
+			final NonDeterministicChoice havoc) {
 		if (mIsUndefined) {
-			putValue(state, havoc.havoc(mVariable, mVariable.getDomain()));
+			putValue(nextState, havoc.havoc(mVariable, mVariable.getDomain()));
 		} else if (mIsHavoced) {
 			final Domain<?> fullDomain = mVariable.getDomain();
 
@@ -123,33 +124,34 @@ public class Update {
 			final Domain<?> valueDomain;
 			switch (mRelation) {
 			case EQ:
-				valueDomain = fullDomain.domainFrom(mValueDefinition.evaluate(state));
+				valueDomain = fullDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState));
 				break;
 			case DISTINCT:
-				valueDomain = fullDomain.complement(fullDomain.domainFrom(mValueDefinition.evaluate(state)));
+				valueDomain = fullDomain
+						.complement(fullDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
 				break;
 			case GEQ:
 				valueDomain = fullIntegerDomain
-						.greaterEqual(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(state)));
+						.greaterEqual(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
 				break;
 			case GREATER:
 				valueDomain = fullIntegerDomain
-						.greaterThen(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(state)));
+						.greaterThen(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
 				break;
 			case LEQ:
 				valueDomain = fullIntegerDomain
-						.lessEqual(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(state)));
+						.lessEqual(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
 				break;
 			case LESS:
 				valueDomain = fullIntegerDomain
-						.lessThen(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(state)));
+						.lessThen(fullIntegerDomain.domainFrom(mValueDefinition.evaluate(currentState, nextState)));
 				break;
 			default:
 				return;
 			}
-			putValue(state, havoc.havoc(mVariable, valueDomain));
+			putValue(nextState, havoc.havoc(mVariable, valueDomain));
 		} else {
-			putValue(state, mValueDefinition.evaluate(state));
+			putValue(nextState, mValueDefinition.evaluate(currentState, nextState));
 		}
 	}
 

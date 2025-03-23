@@ -90,7 +90,7 @@ public class IntITETerm extends IntegerTerm implements ITE {
 	 */
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		return (int) ite.evaluate(state);
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (int) ite.evaluate(currentState, nextState);
 	}
 }

@@ -23,7 +23,7 @@ public class Settings {
 		// TODO load stored implementations
 		final String[] datas = {};
 		interfaceSet = new NonDeterministicChoice[datas.length + 1];
-		interfaceSet[0] = new RNGChoice(0);
+		interfaceSet[0] = new RNGChoice();
 
 		for (int i = 0; i < datas.length; i++) {
 			final String data = datas[i];

@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -20,21 +21,38 @@ import javax.tools.ToolProvider;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.wiring.BundleWiring;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.ICFGExecuterPreferences;
-
 public class DynamicLoader {
 	private final static String packageName = IcfgInterpreter.class.getPackageName();
 	private final static String[] packageParts = packageName.split("[.]");
 	private final static String packagePath = connectPath(packageParts);
 
-	private final static String projectPath = ICFGExecuterPreferences.getProjectSourceDirectory().getAbsolutePath();
+	private final static File projectDirectory = getDirectory();
+
+	private static File getDirectory() {
+		try {
+			return new File(DynamicLoader.class.getProtectionDomain().getCodeSource().getLocation().toURI().normalize()
+					.getPath());
+		} catch (final URISyntaxException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	private final static String projectPath = projectDirectory.getAbsolutePath();
 
 	private final static String outputFolder = connectPath("compiler", "ICFG_Out");
-
 	private static final String seperatorRegex = "[" + File.separator + File.separator + "]";
 
 	private static String connectPath(final String... parts) {
 		return String.join(File.separator, parts);
+	}
+
+	/**
+	 * @return The file pointing to the base directory of this plug-in: <br>
+	 *         Like .../ultimate/trunk/source/IcfgInterpreter/
+	 */
+	public static File getProjectSourceDirectory() {
+		return projectDirectory;
 	}
 
 	/**

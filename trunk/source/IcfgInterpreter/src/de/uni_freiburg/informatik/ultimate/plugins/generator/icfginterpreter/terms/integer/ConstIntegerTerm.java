@@ -77,7 +77,7 @@ public class ConstIntegerTerm extends IntegerTerm {
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return value;
 	}
 }

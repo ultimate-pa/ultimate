@@ -91,8 +91,8 @@ public class SelectTerm {
 	 * (ExecutionTerm<keyType>) replacement : index; return new SelectTerm<>(mArray, mIndex); }
 	 */
 
-	public Object evaluate(final ProgramState state) {
-		final SMTArray mArray = array.evaluate(state);
-		return mArray.select(index.evaluate(state));
+	public Object evaluate(final ProgramState currentState, final ProgramState nextState) {
+		final SMTArray mArray = array.evaluate(currentState, nextState);
+		return mArray.select(index.evaluate(currentState, nextState));
 	}
 }

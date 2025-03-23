@@ -119,11 +119,11 @@ public class SubtractionTerm extends IntegerTerm {
 	 */
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		int out = subTerms[0].evaluate(state);
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		int out = subTerms[0].evaluate(currentState, nextState);
 
 		for (int i = 1; i < subTerms.length; i++) {
-			out -= subTerms[i].evaluate(state);
+			out -= subTerms[i].evaluate(currentState, nextState);
 		}
 
 		return out;

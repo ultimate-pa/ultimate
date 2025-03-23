@@ -55,6 +55,17 @@ public class IcfgTranslation {
 			}
 		}
 
+		final ArrayList<ICFGExecutionEdge> emptyList = new ArrayList<>();
+		for (final IcfgLocation location : visited) {
+			for (final ICFGExecutionEdge edge : sourceToEdges.getOrDefault(location, emptyList)) {
+				final ArrayList<ICFGExecutionEdge> children = sourceToEdges.get(edge.mTarget);
+				if (children == null) {
+					continue;
+				}
+				edge.addChildren(children);
+			}
+		}
+
 		return sourceToEdges;
 	}
 }

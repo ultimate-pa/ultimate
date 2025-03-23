@@ -89,8 +89,8 @@ public class VariableIntegerTerm extends IntegerTerm implements Variable {
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		return state.getIntOf(variableTerm.programVar);
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (variableTerm.isInVar ? currentState : nextState).getIntOf(variableTerm.programVar);
 	}
 
 	@Override

@@ -119,9 +119,9 @@ public class EqualsTerm extends BooleanTerm {
 	 */
 
 	@Override
-	public Boolean evaluate(final ProgramState state) {
-		final Object aValue = mA.evaluate(state);
-		final Object bValue = mB.evaluate(state);
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
+		final Object aValue = mA.evaluate(currentState, nextState);
+		final Object bValue = mB.evaluate(currentState, nextState);
 
 		return aValue == bValue;
 	}

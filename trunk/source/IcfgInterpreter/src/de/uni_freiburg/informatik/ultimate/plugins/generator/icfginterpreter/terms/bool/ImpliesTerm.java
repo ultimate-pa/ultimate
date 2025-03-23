@@ -91,7 +91,7 @@ public class ImpliesTerm extends BooleanTerm {
 	 */
 
 	@Override
-	public Boolean evaluate(final ProgramState state) {
-		return (!A.evaluate(state)) || B.evaluate(state);
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (!A.evaluate(currentState, nextState)) || B.evaluate(currentState, nextState);
 	}
 }

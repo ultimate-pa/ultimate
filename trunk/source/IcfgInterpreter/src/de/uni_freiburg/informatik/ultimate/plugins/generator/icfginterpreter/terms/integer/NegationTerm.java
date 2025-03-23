@@ -80,7 +80,7 @@ public class NegationTerm extends IntegerTerm {
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState state) {
-		return -X.evaluate(state);
+	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return -X.evaluate(currentState, nextState);
 	}
 }

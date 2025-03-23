@@ -80,8 +80,8 @@ public class NotTerm extends BooleanTerm {
 	}
 
 	@Override
-	public Boolean evaluate(final ProgramState state) {
-		return !A.evaluate(state);
+	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return !A.evaluate(currentState, nextState);
 	}
 
 	@Override
