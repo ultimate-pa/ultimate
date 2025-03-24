@@ -75,7 +75,7 @@ public class CsvProviderRounding<T> implements ICsvProviderTransformer<T> {
 
 	@SuppressWarnings("unchecked")
 	private void replaceDouble(final ListIterator<T> rowIt, final T entry) {
-		rowIt.set((T) round(new BigDecimal((Double) entry)));
+		rowIt.set((T) round(BigDecimal.valueOf((Double) entry)));
 	}
 
 	@SuppressWarnings("unchecked")

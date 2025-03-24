@@ -114,7 +114,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 *            The value to set.
 	 */
 	public IntervalValue(final double val) {
-		this(new BigDecimal(val));
+		this(BigDecimal.valueOf(val));
 	}
 
 	/**

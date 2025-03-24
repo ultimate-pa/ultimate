@@ -1341,7 +1341,7 @@ public final class ComparisonTables {
 	 * @return The rounded value
 	 */
 	private static float roundTo(final double value, final int scale) {
-		BigDecimal valueAsBigDecimal = new BigDecimal(value);
+		BigDecimal valueAsBigDecimal = BigDecimal.valueOf(value);
 		valueAsBigDecimal = valueAsBigDecimal.setScale(scale, RoundingMode.HALF_UP);
 		return valueAsBigDecimal.floatValue();
 	}
