@@ -908,6 +908,7 @@ public class CfgBuilder {
 				mergeLocNodes((BoogieIcfgLocation) currentElement, loopEntryLoc, false);
 			}
 
+			new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(loopEntryLoc);
 			mProcLocNodes.put(loopEntryLoc.getDebugIdentifier(), loopEntryLoc);
 			mIcfg.getLoopLocations().add(loopEntryLoc);
 
