@@ -1092,8 +1092,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		Statement newStat = null;
 		if (stat instanceof Label) {
 			final Label label = (Label) stat;
-			newStat = BoogieUtils.constuctAuxiliaryLabel(label.getLocation(), getNewLabelId(label.getName()),
-					label.getAttributes());
+			newStat = new Label(label.getLocation(), getNewLabelId(label.getName()), label.getAttributes());
 		} else if (stat instanceof GotoStatement) {
 			final GotoStatement gotoStat = (GotoStatement) stat;
 			final String[] labelIds = gotoStat.getLabels();
