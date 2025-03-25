@@ -1426,7 +1426,7 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				final boolean childIsLoopEntry = LoopEntryAnnotation.getAnnotation(mother) != null;
+				final boolean childIsLoopEntry = LoopEntryAnnotation.getAnnotation(child) != null;
 				if (childIsLoopEntry) {
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
