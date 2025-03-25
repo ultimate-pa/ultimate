@@ -1557,11 +1557,11 @@ public class CfgBuilder {
 				value = value + 1;
 			}
 			mNameCache.put(startLine, value);
-			final LoopEntryAnnotation lea = LoopEntryAnnotation.getAnnotation(astNode);
-			if (lea != null && lea.getLoopEntryType() == LoopEntryType.WHILE) {
+			if (astNode instanceof WhileStatement) {
 				return new LoopEntryDebugIdentifier(startLine, value);
+			} else {
+				return new OrdinaryDebugIdentifier(startLine, value);
 			}
-			return new OrdinaryDebugIdentifier(startLine, value);
 		}
 
 		/**
