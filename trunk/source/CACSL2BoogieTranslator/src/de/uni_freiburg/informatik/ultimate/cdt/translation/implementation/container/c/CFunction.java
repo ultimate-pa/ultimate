@@ -104,12 +104,6 @@ public class CFunction implements CType {
 			final boolean takesVarArgs = ((IFunctionType) typedefType).takesVarArgs();
 			return new CFunction(resultType, paramDeclarations, takesVarArgs);
 		}
-		final IPointerType initialPointer;
-		if (typedefType instanceof IPointerType) {
-			initialPointer = (IPointerType) typedefType;
-		} else {
-			throw new UnsupportedOperationException("Cannot extract function type from typedef " + typedefType);
-		}
 		while (typedefType instanceof IPointerType) {
 			typedefType = ((IPointerType) typedefType).getType();
 		}
@@ -136,7 +130,6 @@ public class CFunction implements CType {
 		} else {
 			throw new UnsupportedOperationException("Cannot extract function type from variable " + varType);
 		}
-		final IPointerType initialPointer = (IPointerType) varType;
 		while (varType instanceof IPointerType) {
 			varType = ((IPointerType) varType).getType();
 		}
