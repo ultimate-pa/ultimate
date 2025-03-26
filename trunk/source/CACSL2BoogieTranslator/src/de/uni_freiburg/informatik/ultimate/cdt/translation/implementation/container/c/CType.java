@@ -42,49 +42,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author nutz
  */
 public abstract class CType {
-
-	/* C type modifiers */
-	private final boolean mIsConst;
-	private final boolean mIsInline;
-	private final boolean mIsRestrict;
-	private final boolean mIsVolatile;
-
-	private final boolean mIsExtern;
 	private final boolean mIsAtomic;
 
 	/**
 	 * Constructor.
-	 *
-	 * @param isExtern
 	 */
-	public CType(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern, final boolean isAtomic) {
-		mIsConst = isConst;
-		mIsInline = isInline;
-		mIsRestrict = isRestrict;
-		mIsVolatile = isVolatile;
-		mIsExtern = isExtern;
+	public CType(final boolean isAtomic) {
 		mIsAtomic = isAtomic;
-	}
-
-	public boolean isConst() {
-		return mIsConst;
-	}
-
-	public boolean isInline() {
-		return mIsInline;
-	}
-
-	public boolean isRestrict() {
-		return mIsRestrict;
-	}
-
-	public boolean isVolatile() {
-		return mIsVolatile;
-	}
-
-	public boolean isExtern() {
-		return mIsExtern;
 	}
 
 	public boolean isAtomic() {
@@ -188,7 +152,7 @@ public abstract class CType {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mIsConst, mIsExtern, mIsInline, mIsRestrict, mIsVolatile);
+		return Objects.hash(mIsAtomic);
 	}
 
 	@Override
@@ -203,21 +167,6 @@ public abstract class CType {
 			return false;
 		}
 		final CType other = (CType) obj;
-		if (mIsConst != other.mIsConst) {
-			return false;
-		}
-		if (mIsExtern != other.mIsExtern) {
-			return false;
-		}
-		if (mIsInline != other.mIsInline) {
-			return false;
-		}
-		if (mIsRestrict != other.mIsRestrict) {
-			return false;
-		}
-		if (mIsVolatile != other.mIsVolatile) {
-			return false;
-		}
 		return true;
 	}
 }
