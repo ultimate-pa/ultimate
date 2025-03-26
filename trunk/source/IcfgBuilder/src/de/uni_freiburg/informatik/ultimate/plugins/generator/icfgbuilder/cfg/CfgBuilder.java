@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.JoinStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -1073,29 +1074,43 @@ public class CfgBuilder {
 		}
 
 		private BoogieIcfgLocation buildLabel(final IIcfgElement currentElement, final Label st) {
-			final BoogieIcfgLocation newLocation = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
-			final BoogieIcfgLocation resultLocation;
+			final BoogieIcfgLocation newLoc = getLocNodeForLabel(new StringDebugIdentifier(st.getName()), st);
+			final BoogieIcfgLocation resultLoc;
 			if (currentElement instanceof BoogieIcfgLocation) {
 				// We do not want to introduce a new program point for this label but
 				// merge the just constructed BoogieIcfgLocation with currentElement.
 				// A merge in the other direction is not possible, because currentElement
 				// might be a the successor of an if-then-else. If we replace currentElement
 				// here, we also would have to replace it for the other branches.
-				mergeLocNodes(newLocation, (BoogieIcfgLocation) currentElement, true);
-				resultLocation = (BoogieIcfgLocation) currentElement;
+				mergeLocNodes(newLoc, (BoogieIcfgLocation) currentElement, true);
+				resultLoc = (BoogieIcfgLocation) currentElement;
 			} else {
-				endStatementSequence((StatementSequence) currentElement, newLocation);
-				if (!isAuxiliaryLabel(st)) {
-					// TODO: add to labels of CFG after we have labels in the CFG
-				}
-				resultLocation = newLocation;
+				endStatementSequence((StatementSequence) currentElement, newLoc);
+				resultLoc = newLoc;
 			}
-			return resultLocation;
+			if (!isAuxiliaryLabel(st)) {
+				mIcfg.getProcedureLabelNodes().put(resultLoc.getProcedure(), resultLoc.getDebugIdentifier().toString(),
+						resultLoc);
+			}
+			return resultLoc;
 		}
 
-		// TODO Implement support for the attribute
+		/**
+		 * Auxiliary labels identified by an {@link NamedAttribute}.
+		 */
 		private boolean isAuxiliaryLabel(final Label st) {
-			return true;
+			if (st.getAttributes() == null) {
+				return false;
+			}
+			for (final NamedAttribute attr : st.getAttributes()) {
+				if (attr.getName().equals(BoogieUtils.AUXILIARY_LABEL)) {
+					if (attr.getValues().length != 0) {
+						throw new AssertionError("Attribut must not have values");
+					}
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private BoogieIcfgLocation buildGoto(final BoogieIcfgLocation currentLocation, final GotoStatement st) {
@@ -1426,11 +1441,17 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				final boolean childIsLoopEntry = LoopEntryAnnotation.getAnnotation(child) != null;
-				if (childIsLoopEntry) {
+				final boolean childMustBeKept =
+						mIcfg.getLoopLocations().contains(child) || IcfgUtils.isLabelNode(mIcfg, child);
+				if (childMustBeKept) {
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
 				} else {
+					final boolean motherMustBeKept =
+							mIcfg.getLoopLocations().contains(mother) || IcfgUtils.isLabelNode(mIcfg, mother);
+					if (motherMustBeKept) {
+						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
+					}
 					mergeLocNodes(child, mother, true);
 					mLogger.debug(child + " gets absorbed by " + mother);
 				}

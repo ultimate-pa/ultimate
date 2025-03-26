@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class BoogieUtils {
 
-	private static final String AUXILIARY_LABEL = "auxiliary_label";
+	public static final String AUXILIARY_LABEL = "auxiliary_label";
 
 	private BoogieUtils() {
 		// Prevent instantiation of this utility class

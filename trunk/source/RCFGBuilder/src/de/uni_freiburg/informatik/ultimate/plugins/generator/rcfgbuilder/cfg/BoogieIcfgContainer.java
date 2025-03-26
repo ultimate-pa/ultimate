@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SerialProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Stores references to all objects that represent an interprocedural control-flow graph (ICFG) that was directly
@@ -77,6 +78,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Set<BoogieIcfgLocation> mLoopLocations;
 	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
+	private final NestedMap2<String, String, BoogieIcfgLocation> mLabelNodes;
 	private final Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> mLocNodes;
 
 	/**
@@ -107,6 +109,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		mErrorNodes = new LinkedHashMap<>();
 		mLoopLocations = new LinkedHashSet<>();
 		mInitialNodes = new LinkedHashSet<>();
+		mLabelNodes = new NestedMap2<>();
 
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
@@ -154,6 +157,11 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	@Override
 	public Map<String, Set<BoogieIcfgLocation>> getProcedureErrorNodes() {
 		return mErrorNodes;
+	}
+
+	@Override
+	public NestedMap2<String, String, BoogieIcfgLocation> getProcedureLabelNodes() {
+		return mLabelNodes;
 	}
 
 	public int getNumberOfErrorNodes() {
@@ -244,4 +252,5 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public String toString() {
 		return graphStructureToString();
 	}
+
 }

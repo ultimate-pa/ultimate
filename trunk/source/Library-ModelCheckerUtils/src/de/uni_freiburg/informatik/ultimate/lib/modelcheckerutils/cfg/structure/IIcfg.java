@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.TgfBuilder;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -70,6 +71,20 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	 * Maps a procedure name to error locations generated for this procedure.
 	 */
 	Map<String, Set<LOC>> getProcedureErrorNodes();
+
+	/**
+	 * In our CFG we have distinct nodes that we call label nodes.
+	 * <li>Label nodes typically represent labels in programs code.
+	 * <li>Label nodes are nodes for which verification algorithms typically produce invariants and for which
+	 * counterexamples have to provide values.
+	 * <li>ICFG transformations should try to preserve label nodes or provide a backtranslation that can compute
+	 * invariants or values of counterexample states for label nodes.
+	 * <li>We use the toString() representation of a nodes {@link DebugIdentifier} as an identifier for a label. These
+	 * identifiers have to be unique per procedure.
+	 *
+	 * This method returns the label nodes of the given procedure.
+	 */
+	NestedMap2<String, String, LOC> getProcedureLabelNodes();
 
 	/**
 	 * Return all locations that are considered to be loop heads.
