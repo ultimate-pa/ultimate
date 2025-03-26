@@ -83,13 +83,7 @@ public class CNamed implements CType {
 	 */
 	@Override
 	public CType getUnderlyingType() {
-		CType previous = mMappedType;
-		CType current = mMappedType;
-		do {
-			previous = current;
-			current = current.getUnderlyingType();
-		} while (previous != current);
-		return current;
+		return mMappedType.getUnderlyingType();
 	}
 
 	@Override
