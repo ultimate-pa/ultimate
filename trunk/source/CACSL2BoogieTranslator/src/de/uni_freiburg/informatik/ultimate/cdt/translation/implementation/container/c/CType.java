@@ -76,6 +76,13 @@ public interface CType {
 	}
 
 	/**
+	 * Returns true iff this type is a complex type according to the definition 6.2.5.11 of the C11 standard.
+	 */
+	default boolean isComplexType() {
+		return false;
+	}
+
+	/**
 	 * Returns true iff this type is a real type according to the definition 6.2.5.17 in the C11 standard.
 	 */
 	default boolean isRealType() {
