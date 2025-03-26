@@ -249,29 +249,15 @@ public class CFunction extends CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CFunction)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-
-		final CFunction other = (CFunction) o;
-		if (mParamTypes.length != other.mParamTypes.length) {
-			return false;
-		}
-
-		if (!mResultType.equals(other.mResultType)) {
-			return false;
-		}
-		if (mTakesVarArgs != other.mTakesVarArgs) {
-			return false;
-		}
-
-		for (int i = 0; i < mParamTypes.length; i++) {
-			if (!mParamTypes[i].getType().equals(other.mParamTypes[i].getType())) {
-				return false;
-			}
-		}
-
-		return true;
+		final CFunction other = (CFunction) obj;
+		return Arrays.equals(mParamTypes, other.mParamTypes) && Objects.equals(mResultType, other.mResultType)
+				&& mTakesVarArgs == other.mTakesVarArgs;
 	}
 }
