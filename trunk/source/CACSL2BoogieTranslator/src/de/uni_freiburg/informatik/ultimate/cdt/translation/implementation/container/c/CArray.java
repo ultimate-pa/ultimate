@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 
 /**
+ * Array type (see C11 6.2.5.20.1)
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)

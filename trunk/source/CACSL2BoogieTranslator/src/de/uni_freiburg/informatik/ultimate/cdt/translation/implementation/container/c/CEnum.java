@@ -26,9 +26,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes an enum given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
@@ -37,6 +34,8 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
+ * Enum types (see C11 6.2.5.16)
+ *
  * @author Markus Lindenmann
  * @author nutz
  * @date 18.09.2012

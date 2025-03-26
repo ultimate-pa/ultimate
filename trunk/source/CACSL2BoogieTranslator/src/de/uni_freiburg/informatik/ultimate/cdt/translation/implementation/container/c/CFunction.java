@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 
 /**
+ * Function type (see C11 6.2.5.20.4)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

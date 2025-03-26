@@ -26,9 +26,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a pointer given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Objects;
@@ -36,6 +33,8 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
+ * Pointer type (see C11 6.2.5.20.5)
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  */

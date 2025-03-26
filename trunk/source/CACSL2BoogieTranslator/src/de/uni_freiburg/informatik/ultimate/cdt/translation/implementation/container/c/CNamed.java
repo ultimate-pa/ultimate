@@ -25,14 +25,13 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a named type given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Objects;
 
 /**
+ * Describes a named type given in C.
+ *
  * @author Markus Lindenmann
  * @date 01.11.2012
  */

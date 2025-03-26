@@ -25,9 +25,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a primitive variable given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.List;
@@ -39,6 +36,8 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 
 /**
+ * Primitive types (e.g., int, double, void) (see C11 6.2.5.2-19)
+ *
  * @author Markus Lindenmann
  * @date 13.07.2012
  */

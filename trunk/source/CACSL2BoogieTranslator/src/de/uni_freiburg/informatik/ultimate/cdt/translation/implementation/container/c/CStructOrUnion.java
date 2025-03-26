@@ -27,9 +27,6 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a struct given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
@@ -38,6 +35,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
+ * Struct / Union type (see C11 6.2.5.20.2/3)
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
