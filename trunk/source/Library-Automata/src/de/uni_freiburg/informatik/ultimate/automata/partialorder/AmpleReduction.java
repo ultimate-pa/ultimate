@@ -73,6 +73,9 @@ public class AmpleReduction<L, S> {
 	private final HashMap<S, Set<L>> mAmpleSets;
 	// TODO: think about whether we need this
 	private final HashSet<S> mLoopNodes; // cache nodes from which a cycle was found
+	private int mLoopNotLoopCount; // count number of incidents where upon fist discovery, a node was identified as a
+									// loop node and upon a subsequent discovery wasn't
+	private int mNonTrivialAmple; // count number of nodes with non-trivial ample set
 	private int mIndentLevel = -1;
 
 	/**
@@ -112,6 +115,8 @@ public class AmpleReduction<L, S> {
 		mAmpleSets.put(mStartState, mPersistent.persistentSet(startingState));
 		mLogger.info("Starting ample reduction");
 		traverse();
+		mLogger.warn("Loop nodes with \"changing loop node status\": %s ", mLoopNotLoopCount);
+		mLogger.warn("Number of non-trivial ample sets:" + mNonTrivialAmple);
 		mLogger.info("Finished ample reduction");
 	}
 
@@ -180,12 +185,18 @@ public class AmpleReduction<L, S> {
 			final Set<L> currentAmple = mAmpleSets.get(current);
 			final L letter = currentTransition.getLetter();
 			final boolean prune;
+			// count non-trivial ample sets for statistics
+			if (!Objects.isNull(currentAmple)) {
+				mNonTrivialAmple++;
+			}
+
 			// Prune outgoing edges not in the state's ample set
 			if (!Objects.isNull(currentAmple) && !currentAmple.contains(letter)) {
 				prune = true;
 			} else {
 				// compute ample set for next state
 				if (!mLoopNodes.contains(nextState)) {
+					// TODO: Finde den Denkfehler, wegen dem wir keine nicht-trivialen ample sets mehr haben
 					// check for all outgoing transitions of next state if they'd close a cycle
 					for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
 						// it seems finding the stack index is rather time consuming
@@ -198,6 +209,7 @@ public class AmpleReduction<L, S> {
 							mLoopNodes.add(nextState);
 							final var oldAmple = mAmpleSets.put(nextState, null);
 							if (oldAmple != null) {
+								mLoopNotLoopCount++;
 								mLogger.warn("Non-loop node is now a loop node: " + nextState);
 							}
 							break;
@@ -205,6 +217,11 @@ public class AmpleReduction<L, S> {
 					}
 				}
 				if (!mAmpleSets.containsKey(nextState)) {
+					// TODO: remove next 3 lines
+					final var nextAmple = mPersistent.persistentSet(nextState);
+					if (!Objects.isNull(nextAmple)) {
+						final boolean deb = true;
+					}
 					mAmpleSets.put(nextState, mPersistent.persistentSet(nextState));
 				}
 				prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
