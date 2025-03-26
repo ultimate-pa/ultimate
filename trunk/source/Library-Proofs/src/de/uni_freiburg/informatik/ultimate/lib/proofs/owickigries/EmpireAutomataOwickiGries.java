@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
+package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import java.util.Map;
 import java.util.Set;
@@ -24,15 +24,21 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.PetriOwickiGriesValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ComputeAutomataStatistics;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomatonToOG;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomatonValidityCheck;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
-public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
+public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IPetriNet<L, P> mProgram;
@@ -44,18 +50,19 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 	private BranchingProcess<L, P> mRefinedUnfolding;
 
 	private final IUnionStateFactory<IPredicate> mUnionFactory;
+	private final Statistics mStatistics;
 
 	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProofProduct;
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
 
-	public EmpireAutomataConstruction(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final CfgSmtToolkit csToolkit, final PredicateFactory factory) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
 				csToolkit.getModifiableGlobalsTable(), factory);
 	}
 
-	public EmpireAutomataConstruction(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
+	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory) {
 		mServices = services;
@@ -67,6 +74,7 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 		mModifiableGlobals = modifiableGlobals;
 		mFactory = factory;
 		mUnionFactory = new UnionFactory(factory);
+		mStatistics = new Statistics(mLogger);
 	}
 
 	@Override
@@ -94,18 +102,24 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 
 	@Override
 	public boolean isReadyToComputeProof() {
-		// TODO Auto-generated method stub
 		return true;
 	}
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
+		mStatistics.startEmpireComputation();
 		final var automaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
+		mStatistics.stopEmpireComputation();
 		mLogger.debug("Constructed Empire Automaton");
 
 		assert checkAutomatonValidity(automaton) : "Empire automaton is invalid";
 
-		mOwickiGries = getOwickiGriesAnnotation(automaton);
+		final var empireToOG = getOwickiGriesAnnotation(automaton);
+		final var automatonStatisticsComputation = getAutomataStatisticsComputation(empireToOG);
+		final var empireStatistics = new EmpireAutomataStatistics();
+		empireStatistics.reportEmpire(automatonStatisticsComputation);
+		mStatistics.reportEmpire(empireStatistics);
+		mOwickiGries = empireToOG.getAnnotation();
 		mLogger.debug("Computed Owicki-Gries annotation:\n%s", mOwickiGries);
 
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
@@ -113,27 +127,37 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 		return mOwickiGries;
 	}
 
+	private ComputeAutomataStatistics<L, P>
+			getAutomataStatisticsComputation(final EmpireAutomatonToOG<L, P> empireAutomatonToOG) {
+		final var automaton = empireAutomatonToOG.getAutomatonReachableStates();
+		return new ComputeAutomataStatistics<>(automaton);
+	}
+
 	private boolean checkAutomatonValidity(final EmpireAutomaton<L, P> automaton) {
-		final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
-				mModifiableGlobals, automaton);
-		return checker.getValidity() != Validity.INVALID;
+		mStatistics.startEmpireValidity();
+		try {
+			final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
+					mModifiableGlobals, automaton);
+			return checker.getValidity() != Validity.INVALID;
+		} finally {
+			mStatistics.stopEmpireValidity();
+		}
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
-		final var validity =
-				new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mProgram, mModifiableGlobals, annotation)
-						.isValid();
-		assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
-		if (validity == Validity.UNKNOWN) {
-			mLogger.warn("Could not prove validity of Owicki-Gries annotation");
+		mStatistics.startOwickiGriesValidity();
+		try {
+			final var validity =
+					new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mProgram, mModifiableGlobals, annotation)
+							.isValid();
+			assert validity != Validity.INVALID : "Owicki-Gries annotation is invalid";
+			if (validity == Validity.UNKNOWN) {
+				mLogger.warn("Could not prove validity of Owicki-Gries annotation");
+			}
+			return validity != Validity.INVALID;
+		} finally {
+			mStatistics.stopOwickiGriesValidity();
 		}
-		return validity != Validity.INVALID;
-	}
-
-	@Override
-	public IStatisticsDataProvider getStatistics() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -146,13 +170,62 @@ public class EmpireAutomataConstruction<L extends IAction, P> implements IPetriN
 		return mProgram;
 	}
 
-	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>
-			getOwickiGriesAnnotation(final EmpireAutomaton<L, P> empireAutomaton) {
+	private EmpireAutomatonToOG<L, P> getOwickiGriesAnnotation(final EmpireAutomaton<L, P> empireAutomaton) {
+		mStatistics.startOwickiGriesComputation();
 		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
 				mProgram.getPlaces(), mDiff2OriginalTransition);
 		final EmpireAutomatonToOG<L, P> empireToOwickiGries = new EmpireAutomatonToOG<>(mServices, mMgdScript, mProgram,
 				mSymbolTable, mProcedures, empireAutomaton, possibleInterferences);
-		return empireToOwickiGries.getAnnotation();
+		mStatistics.stopOwickiGriesComputation();
+		return empireToOwickiGries;
+	}
+
+	@Override
+	public IStatisticsDataProvider getStatistics() {
+		return mStatistics;
+	}
+
+	private static final class Statistics extends OwickiGriesStatistics {
+		public Statistics(final ILogger logger) {
+			super(logger, EmpireComputation.class, EmpireToOwickiGries.class);
+		}
+
+		public void reportEmpire(final IStatisticsDataProvider statistics) {
+			reportEmpireStatistics(statistics, null);
+		}
+	}
+
+	public static final class EmpireAutomataStatistics extends AbstractStatisticsDataProvider {
+		public static final String AUTOMATON_SIZE = "automaton size";
+		public static final String UNIQUE_PAIRS = "number of unique pairs";
+		public static final String LAW_SIZE = "empire law size";
+		public static final String ANNOTATION_SIZE = "empire annotation size";
+		public static final String REGION_COUNT = "number of regions";
+
+		public static final String REGION_TERRITORY = "number of regions per territory";
+		public static final String PLACES_PER_REGION = "number of places per region";
+
+		private long mAutomatonSize;
+		private long mUniquePairs;
+		private long mLawSize;
+		private long mAnnotationSize;
+		private long mRegionCount;
+
+		public EmpireAutomataStatistics() {
+			declare(AUTOMATON_SIZE, () -> mAutomatonSize, KeyType.COUNTER);
+			declare(UNIQUE_PAIRS, () -> mUniquePairs, KeyType.COUNTER);
+			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
+			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
+			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
+		}
+
+		public void reportEmpire(final ComputeAutomataStatistics<?, ?> statisticsComputation) {
+			mRegionCount = statisticsComputation.getRegionCount();
+			mAutomatonSize = statisticsComputation.getAutomatonSize();
+			mUniquePairs = statisticsComputation.getUniquePairsSize();
+			mLawSize = statisticsComputation.getLawSize();
+			mAnnotationSize = statisticsComputation.getAnnotationSize();
+		}
 	}
 
 	private static final class UnionFactory implements IUnionStateFactory<IPredicate> {

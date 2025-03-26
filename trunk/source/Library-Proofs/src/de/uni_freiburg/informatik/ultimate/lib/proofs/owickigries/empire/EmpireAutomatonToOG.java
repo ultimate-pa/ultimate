@@ -229,4 +229,8 @@ public class EmpireAutomatonToOG<L, P> {
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getAnnotation() {
 		return mOwickiGriesAnnotation;
 	}
+
+	public NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> getAutomatonReachableStates() {
+		return mEmpireAutomaton;
+	}
 }

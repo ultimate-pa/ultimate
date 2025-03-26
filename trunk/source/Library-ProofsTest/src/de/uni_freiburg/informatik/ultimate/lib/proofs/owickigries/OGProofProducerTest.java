@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Branching
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomataConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 
@@ -132,7 +131,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataConstruction<>(mServices, program, createCsToolkit(), mPredicateFactory);
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory);
 		}
 
 		@Override
