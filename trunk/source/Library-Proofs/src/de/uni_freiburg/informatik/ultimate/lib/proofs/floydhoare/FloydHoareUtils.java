@@ -108,18 +108,17 @@ public final class FloydHoareUtils {
 			final Consumer<InvariantResult<IIcfgElement, ?>> reporter) {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 
-		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(icfg));
-		locsForLoopLocations.addAll(icfg.getLoopLocations());
+		// IcfgLocations for which we report loop invariants if available
+		final Set<IcfgLocation> invariantLocations = new HashSet<>(icfg.getLoopLocations());
+		invariantLocations.addAll(IcfgUtils.getLabelNodes(icfg));
 
-		for (final IcfgLocation locNode : locsForLoopLocations) {
+		for (final IcfgLocation locNode : invariantLocations) {
 			final IPredicate hoare = annotation.getAnnotation(locNode);
 			if (hoare == null) {
 				continue;
 			}
 
 			final Term invariant = hoare.getFormula();
-
 			final ILocation context = ILocation.getAnnotation(locNode);
 			final var translatedInvariant =
 					backTranslatorService.translateExpressionWithContext(invariant, context, Term.class);
