@@ -140,28 +140,16 @@ public class CEnum implements CType, ICPossibleIncompleteType<CEnum> {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CEnum)) {
-			return false;
-		}
-
-		final CEnum oEnum = (CEnum) oType;
-		if (!(mIdentifier.equals(oEnum.mIdentifier))) {
-			return false;
-		}
-		if (mNames.length != oEnum.mNames.length) {
-			return false;
-		}
-		for (int i = mNames.length - 1; i >= 0; --i) {
-			if (!(mNames[i].equals(oEnum.mNames[i]))) {
-				return false;
-			}
-		}
-		return true;
+		final CEnum other = (CEnum) obj;
+		return Objects.equals(mIdentifier, other.mIdentifier) && mIsComplete == other.mIsComplete
+				&& Arrays.equals(mNames, other.mNames);
 	}
 
 	@Override

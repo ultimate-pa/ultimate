@@ -92,18 +92,14 @@ public class CPointer implements CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (!(o instanceof CType)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (oType instanceof CPointer) {
-			return mPointsToType.equals(((CPointer) oType).mPointsToType);
-		}
-		return false;
+		return Objects.equals(mPointsToType, ((CPointer) obj).mPointsToType);
 	}
 
 	@Override

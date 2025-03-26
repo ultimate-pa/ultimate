@@ -135,24 +135,15 @@ public class CArray implements CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CArray)) {
-			return false;
-		}
-
-		final CArray oArr = (CArray) oType;
-		if (!mValueType.equals(oArr.mValueType)) {
-			return false;
-		}
-		if (!mBound.equals(oArr.mBound)) {
-			return false;
-		}
-
-		return true;
+		final CArray other = (CArray) obj;
+		return Objects.equals(mBound, other.mBound) && Objects.equals(mValueType, other.mValueType);
 	}
 
 	@Override

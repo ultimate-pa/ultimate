@@ -108,14 +108,15 @@ public class CNamed implements CType {
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (!(o instanceof CType)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		return getUnderlyingType().equals(o);
+		final CNamed other = (CNamed) obj;
+		return Objects.equals(mMappedType, other.mMappedType) && Objects.equals(mName, other.mName);
 	}
 
 	@Override

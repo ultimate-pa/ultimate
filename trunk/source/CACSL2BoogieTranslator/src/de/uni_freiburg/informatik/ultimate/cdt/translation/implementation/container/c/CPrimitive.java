@@ -308,19 +308,19 @@ public class CPrimitive implements CType {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mGeneralType, mType);
+		return Objects.hash(mGeneralType, mIsAtomic, mType);
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (oType instanceof CPrimitive) {
-			return mType == ((CPrimitive) oType).mType;
-		}
-		return false;
+		final CPrimitive other = (CPrimitive) obj;
+		return mGeneralType == other.mGeneralType && mIsAtomic == other.mIsAtomic && mType == other.mType;
 	}
 
 	@Override
