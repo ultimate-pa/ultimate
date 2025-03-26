@@ -1004,7 +1004,7 @@ public class TypeHandler implements ITypeHandler {
 
 	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
 			final SymmetricHashRelation<CType> visitedPairs) {
-		return areMatchingTypes(type1.getTargetType(), type2.getTargetType(), visitedPairs);
+		return areMatchingTypes(type1.getPointsToType(), type2.getPointsToType(), visitedPairs);
 	}
 
 	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,

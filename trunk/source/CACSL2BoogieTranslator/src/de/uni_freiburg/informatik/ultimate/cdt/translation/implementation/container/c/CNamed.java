@@ -71,15 +71,6 @@ public class CNamed implements CType {
 		return mName;
 	}
 
-	/**
-	 * Getter for the directly mapped type.
-	 *
-	 * @return the type this named type is referring to.
-	 */
-	public CType getMappedType() {
-		return mMappedType;
-	}
-
 	@Override
 	public boolean isAtomic() {
 		return mMappedType.isAtomic();

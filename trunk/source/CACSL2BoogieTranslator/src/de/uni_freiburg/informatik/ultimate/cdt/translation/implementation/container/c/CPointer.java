@@ -59,10 +59,6 @@ public class CPointer implements CType {
 		return mPointsToType;
 	}
 
-	public CType getTargetType() {
-		return mPointsToType;
-	}
-
 	@Override
 	public boolean isIncomplete() {
 		// pointer is never incomplete - even if it points to an incomplete type!
