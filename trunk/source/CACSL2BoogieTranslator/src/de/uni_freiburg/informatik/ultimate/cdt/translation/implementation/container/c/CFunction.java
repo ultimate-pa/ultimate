@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IFunction;
@@ -59,7 +60,6 @@ public class CFunction extends CType {
 
 	private CFunction(final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
 			final VarArgsUsage varArgsUsage) {
-		super(false);
 		mResultType = resultType;
 		mParamTypes = paramTypes;
 		mTakesVarArgs = takesVarArgs;
@@ -232,6 +232,12 @@ public class CFunction extends CType {
 	}
 
 	@Override
+	public boolean isAtomic() {
+		// Function types cannot be atomic
+		return false;
+	}
+
+	@Override
 	public boolean isIncomplete() {
 		// can a CFunction be incomplete? I never checked that carefully
 		return false;
@@ -239,20 +245,12 @@ public class CFunction extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Arrays.hashCode(mParamTypes);
-		result = prime * result + ((mResultType == null) ? 0 : mResultType.hashCode());
-		result = prime * result + (mTakesVarArgs ? 1231 : 1237);
-		return result;
+		return Objects.hash(Arrays.hashCode(mParamTypes), mResultType, mTakesVarArgs);
 	}
 
 	@Override
 	public boolean equals(final Object o) {
 		if (!(o instanceof CFunction)) {
-			return false;
-		}
-		if (!super.equals(o)) {
 			return false;
 		}
 
@@ -276,5 +274,4 @@ public class CFunction extends CType {
 
 		return true;
 	}
-
 }

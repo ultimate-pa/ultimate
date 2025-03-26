@@ -32,6 +32,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
@@ -63,8 +64,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 *            this enums identifier.
 	 */
 	public CEnum(final String id, final String[] fNames) {
-		super(false);
-
 		assert id != null;
 		mIdentifier = id;
 		mNames = fNames;
@@ -72,9 +71,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	}
 
 	public CEnum(final String id) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false);
-
 		mIdentifier = id;
 		mIsComplete = false;
 		mNames = null;
@@ -140,12 +136,7 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
-		result = prime * result + (mIsComplete ? 1231 : 1237);
-		result = prime * result + Arrays.hashCode(mNames);
-		return result;
+		return Objects.hash(mIdentifier, mIsComplete, Arrays.hashCode(mNames));
 	}
 
 	@Override
@@ -171,5 +162,10 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 			}
 		}
 		return true;
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return false;
 	}
 }

@@ -32,6 +32,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -71,7 +72,6 @@ public class CArray extends CType {
 	 *            the C declaration used.
 	 */
 	public CArray(final RValue bound, final CType valueType) {
-		super(false);
 		mBound = bound;
 		mValueType = valueType;
 	}
@@ -131,11 +131,7 @@ public class CArray extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mBound == null) ? 0 : mBound.hashCode());
-		result = prime * result + ((mValueType == null) ? 0 : mValueType.hashCode());
-		return result;
+		return Objects.hash(mBound, mValueType);
 	}
 
 	@Override
@@ -157,5 +153,10 @@ public class CArray extends CType {
 		}
 
 		return true;
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return false;
 	}
 }

@@ -81,7 +81,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name, final String[] fNames,
 			final CType[] fTypes, final List<Integer> bitFieldWidths) {
-		super(false);
 		assert name != null;
 		assert fNames.length == bitFieldWidths.size();
 		mIsStructOrUnion = isStructOrUnion;
@@ -93,8 +92,6 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 	}
 
 	public CStructOrUnion(final StructOrUnion isStructOrUnion, final String name) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false);
 		assert name != null && !name.isEmpty();
 		mIsStructOrUnion = isStructOrUnion;
 		mFieldNames = new String[0];
@@ -247,4 +244,8 @@ public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CS
 		};
 	}
 
+	@Override
+	public boolean isAtomic() {
+		return false;
+	}
 }

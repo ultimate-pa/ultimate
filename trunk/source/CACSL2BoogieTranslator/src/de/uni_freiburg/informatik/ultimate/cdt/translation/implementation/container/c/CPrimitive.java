@@ -30,6 +30,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Objects;
+
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
@@ -142,15 +144,17 @@ public class CPrimitive extends CType {
 	 */
 	private final CPrimitives mType;
 
+	private final boolean mIsAtomic;
+
 	/**
 	 * more general type, i.e. inttype, floattype, void -- is derived from type
 	 */
 	private final CPrimitiveCategory mGeneralType;
 
 	public CPrimitive(final CPrimitives type) {
-		super(false);
 		mType = type;
 		mGeneralType = getGeneralType(type);
+		mIsAtomic = false;
 	}
 
 	/**
@@ -160,13 +164,12 @@ public class CPrimitive extends CType {
 	 *            the C declaration specifier.
 	 */
 	public CPrimitive(final IASTDeclSpecifier cDeclSpec) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(CTranslationUtil.hasAttribute(cDeclSpec, "atomic"));
 		if (!(cDeclSpec instanceof IASTSimpleDeclSpecifier)) {
 			throw new IllegalArgumentException("Unknown C Declaration!");
 		}
 		mType = getType(cDeclSpec);
 		mGeneralType = getGeneralType(mType);
+		mIsAtomic = CTranslationUtil.hasAttribute(cDeclSpec, "atomic");
 	}
 
 	private static CPrimitives getType(final IASTDeclSpecifier cDeclSpec) {
@@ -298,12 +301,13 @@ public class CPrimitive extends CType {
 	}
 
 	@Override
+	public boolean isAtomic() {
+		return mIsAtomic;
+	}
+
+	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + (mGeneralType == null ? 0 : mGeneralType.hashCode());
-		result = prime * result + (mType == null ? 0 : mType.hashCode());
-		return result;
+		return Objects.hash(mGeneralType, mType);
 	}
 
 	@Override

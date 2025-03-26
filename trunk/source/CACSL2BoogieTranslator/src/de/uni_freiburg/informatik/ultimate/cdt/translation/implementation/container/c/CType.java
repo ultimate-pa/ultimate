@@ -31,8 +31,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import java.util.Objects;
-
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
@@ -42,18 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author nutz
  */
 public abstract class CType {
-	private final boolean mIsAtomic;
-
-	/**
-	 * Constructor.
-	 */
-	public CType(final boolean isAtomic) {
-		mIsAtomic = isAtomic;
-	}
-
-	public boolean isAtomic() {
-		return mIsAtomic;
-	}
+	public abstract boolean isAtomic();
 
 	public abstract boolean isIncomplete();
 
@@ -151,22 +138,8 @@ public abstract class CType {
 	}
 
 	@Override
-	public int hashCode() {
-		return Objects.hash(mIsAtomic);
-	}
+	public abstract int hashCode();
 
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final CType other = (CType) obj;
-		return true;
-	}
+	public abstract boolean equals(final Object obj);
 }

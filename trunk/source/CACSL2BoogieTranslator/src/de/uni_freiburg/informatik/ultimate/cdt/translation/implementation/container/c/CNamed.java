@@ -30,6 +30,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Objects;
+
 /**
  * @author Markus Lindenmann
  * @date 01.11.2012
@@ -56,7 +58,6 @@ public class CNamed extends CType {
 	 *            the type this named type is referring to.
 	 */
 	public CNamed(final String name, final CType mappedType) {
-		super(mappedType.isAtomic());
 		mName = name;
 		mMappedType = mappedType;
 	}
@@ -77,6 +78,11 @@ public class CNamed extends CType {
 	 */
 	public CType getMappedType() {
 		return mMappedType;
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return mMappedType.isAtomic();
 	}
 
 	/**
@@ -107,11 +113,7 @@ public class CNamed extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mMappedType == null) ? 0 : mMappedType.hashCode());
-		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
-		return result;
+		return Objects.hash(mMappedType, mName);
 	}
 
 	@Override

@@ -31,6 +31,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
@@ -50,7 +52,6 @@ public class CPointer extends CType {
 	 *            the type, this pointer points to.
 	 */
 	public CPointer(final CType pointsToType) {
-		super(false);
 		mPointsToType = pointsToType;
 	}
 
@@ -91,10 +92,7 @@ public class CPointer extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mPointsToType == null) ? 0 : mPointsToType.hashCode());
-		return result;
+		return Objects.hash(mPointsToType);
 	}
 
 	@Override
@@ -112,4 +110,8 @@ public class CPointer extends CType {
 		return false;
 	}
 
+	@Override
+	public boolean isAtomic() {
+		return false;
+	}
 }
