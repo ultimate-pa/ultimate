@@ -36,7 +36,7 @@ import java.util.Objects;
  * @author Markus Lindenmann
  * @date 01.11.2012
  */
-public class CNamed extends CType {
+public class CNamed implements CType {
 	/**
 	 * The type this named type is mapping to.
 	 */

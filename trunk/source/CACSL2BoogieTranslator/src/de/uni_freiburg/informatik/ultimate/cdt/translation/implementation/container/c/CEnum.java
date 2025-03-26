@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author nutz
  * @date 18.09.2012
  */
-public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
+public class CEnum implements CType, ICPossibleIncompleteType<CEnum> {
 	/**
 	 * Field names.
 	 */

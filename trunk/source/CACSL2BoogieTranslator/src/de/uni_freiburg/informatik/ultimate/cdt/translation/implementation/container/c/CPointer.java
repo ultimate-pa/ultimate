@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CPointer extends CType {
+public class CPointer implements CType {
 	/**
 	 * The type, this pointer points to.
 	 */

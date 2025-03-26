@@ -41,7 +41,7 @@ import java.util.Objects;
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CStructOrUnion extends CType implements ICPossibleIncompleteType<CStructOrUnion> {
+public class CStructOrUnion implements CType, ICPossibleIncompleteType<CStructOrUnion> {
 
 	public enum StructOrUnion {
 		STRUCT, UNION,

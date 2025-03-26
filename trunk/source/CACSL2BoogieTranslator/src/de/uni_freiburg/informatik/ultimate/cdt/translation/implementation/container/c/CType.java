@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @date 18.09.2012
  * @author nutz
  */
-public abstract class CType {
-	public abstract boolean isAtomic();
+public interface CType {
+	boolean isAtomic();
 
-	public abstract boolean isIncomplete();
+	boolean isIncomplete();
 
 	@Override
-	public abstract String toString();
+	String toString();
 
 	/**
 	 * In C programmers can use typedef to introduce new alternative names for existing types. This is especially
@@ -57,64 +57,64 @@ public abstract class CType {
 	 *            CType object
 	 * @return the underlying type in case of CNamed, else the input object
 	 */
-	public CType getUnderlyingType() {
+	default CType getUnderlyingType() {
 		return this;
 	}
 
 	/**
 	 * Returns true iff this type is an integer type according to the definition 6.2.5.7 in the C11 standard.
 	 */
-	public boolean isIntegerType() {
+	default boolean isIntegerType() {
 		return false;
 	}
 
 	/**
 	 * Returns true iff this type is a real floating type according to the definition 6.2.5.10 of the C11 standard.
 	 */
-	public boolean isRealFloatingType() {
+	default boolean isRealFloatingType() {
 		return false;
 	}
 
 	/**
 	 * Returns true iff this type is an floating type according to the definition 6.2.5.11 in the C11 standard.
 	 */
-	public boolean isFloatingType() {
+	default boolean isFloatingType() {
 		return false;
 	}
 
 	/**
 	 * Returns true iff this type is a real type according to the definition 6.2.5.17 in the C11 standard.
 	 */
-	public boolean isRealType() {
+	default boolean isRealType() {
 		return isIntegerType() || isRealFloatingType();
 	}
 
 	/**
 	 * Returns true iff this type is an arithmetic type according to the definition 6.2.5.18 in the C11 standard.
 	 */
-	public boolean isArithmeticType() {
+	default boolean isArithmeticType() {
 		return isIntegerType() || isFloatingType();
 	}
 
 	/**
 	 * Returns true iff this type is a scalar type according to the definition 6.2.5.21 in the C11 standard.
 	 */
-	public boolean isScalarType() {
+	default boolean isScalarType() {
 		return isArithmeticType();
 	}
 
-	public boolean isVoidPointerType() {
+	default boolean isVoidPointerType() {
 		return getUnderlyingType() instanceof CPointer && ((CPointer) getUnderlyingType()).getTargetType()
 				.getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
 	}
 
-	public boolean isVoidType() {
+	default boolean isVoidType() {
 		return getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
 	}
 
 	@Override
-	public abstract int hashCode();
+	int hashCode();
 
 	@Override
-	public abstract boolean equals(final Object obj);
+	boolean equals(final Object obj);
 }
