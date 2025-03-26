@@ -71,11 +71,6 @@ public class CNamed implements CType {
 		return mName;
 	}
 
-	@Override
-	public boolean isAtomic() {
-		return mMappedType.isAtomic();
-	}
-
 	/**
 	 * Getter for the real underlying type.
 	 *
@@ -111,6 +106,11 @@ public class CNamed implements CType {
 		}
 		final CNamed other = (CNamed) obj;
 		return Objects.equals(mMappedType, other.mMappedType) && Objects.equals(mName, other.mName);
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return mMappedType.isAtomic();
 	}
 
 	@Override

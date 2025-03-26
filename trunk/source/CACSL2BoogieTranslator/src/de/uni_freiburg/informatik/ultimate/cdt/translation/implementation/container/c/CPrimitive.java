@@ -302,11 +302,6 @@ public class CPrimitive implements CType {
 	}
 
 	@Override
-	public boolean isAtomic() {
-		return mIsAtomic;
-	}
-
-	@Override
 	public int hashCode() {
 		return Objects.hash(mGeneralType, mIsAtomic, mType);
 	}
@@ -321,6 +316,11 @@ public class CPrimitive implements CType {
 		}
 		final CPrimitive other = (CPrimitive) obj;
 		return mGeneralType == other.mGeneralType && mIsAtomic == other.mIsAtomic && mType == other.mType;
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return mIsAtomic;
 	}
 
 	@Override

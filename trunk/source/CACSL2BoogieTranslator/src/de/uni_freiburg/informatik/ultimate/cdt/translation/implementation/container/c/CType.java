@@ -37,12 +37,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
  * @author nutz
  */
 public interface CType {
-	boolean isAtomic();
-
 	boolean isIncomplete();
-
-	@Override
-	String toString();
 
 	/**
 	 * In C programmers can use typedef to introduce new alternative names for existing types. This is especially
@@ -109,9 +104,14 @@ public interface CType {
 		return false;
 	}
 
+	boolean isAtomic();
+
 	@Override
 	int hashCode();
 
 	@Override
 	boolean equals(final Object obj);
+
+	@Override
+	String toString();
 }
