@@ -114,4 +114,9 @@ public class CPointer extends CType {
 	public boolean isAtomic() {
 		return false;
 	}
+
+	@Override
+	public boolean isScalarType() {
+		return true;
+	}
 }

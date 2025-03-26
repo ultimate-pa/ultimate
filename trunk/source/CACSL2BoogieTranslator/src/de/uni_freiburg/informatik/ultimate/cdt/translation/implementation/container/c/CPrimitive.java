@@ -30,6 +30,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
@@ -320,5 +321,28 @@ public class CPrimitive extends CType {
 			return mType == ((CPrimitive) oType).mType;
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isIntegerType() {
+		return mGeneralType == CPrimitiveCategory.INTTYPE;
+	}
+
+	@Override
+	public boolean isRealFloatingType() {
+		return List.of(CPrimitives.FLOAT, CPrimitives.DOUBLE, CPrimitives.LONGDOUBLE).contains(mType);
+	}
+
+	/**
+	 * Returns true iff this type is a complex type according to the definition 6.2.5.11 of the C11 standard.
+	 */
+	public boolean isComplexType() {
+		return List.of(CPrimitives.COMPLEX_FLOAT, CPrimitives.COMPLEX_DOUBLE, CPrimitives.COMPLEX_LONGDOUBLE)
+				.contains(mType);
+	}
+
+	@Override
+	public boolean isFloatingType() {
+		return mGeneralType == CPrimitiveCategory.FLOATTYPE;
 	}
 }

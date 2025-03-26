@@ -31,7 +31,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
@@ -66,34 +65,13 @@ public abstract class CType {
 	 * Returns true iff this type is an integer type according to the definition 6.2.5.7 in the C11 standard.
 	 */
 	public boolean isIntegerType() {
-		if (this instanceof CPrimitive) {
-			return (((CPrimitive) this).getGeneralType() == CPrimitiveCategory.INTTYPE);
-		}
-		return this instanceof CEnum;
+		return false;
 	}
 
 	/**
 	 * Returns true iff this type is a real floating type according to the definition 6.2.5.10 of the C11 standard.
 	 */
 	public boolean isRealFloatingType() {
-		if (this instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == CPrimitives.FLOAT || cPrimitive.getType() == CPrimitives.DOUBLE
-					|| cPrimitive.getType() == CPrimitives.LONGDOUBLE;
-		}
-		return false;
-	}
-
-	/**
-	 * Returns true iff this type is a complex type according to the definition 6.2.5.11 of the C11 standard.
-	 */
-	public boolean isComplexType() {
-		if (this instanceof CPrimitive) {
-			final CPrimitive cPrimitive = (CPrimitive) this;
-			return cPrimitive.getType() == CPrimitives.COMPLEX_FLOAT
-					|| cPrimitive.getType() == CPrimitives.COMPLEX_DOUBLE
-					|| cPrimitive.getType() == CPrimitives.COMPLEX_LONGDOUBLE;
-		}
 		return false;
 	}
 
@@ -101,9 +79,6 @@ public abstract class CType {
 	 * Returns true iff this type is an floating type according to the definition 6.2.5.11 in the C11 standard.
 	 */
 	public boolean isFloatingType() {
-		if (this instanceof CPrimitive) {
-			return (((CPrimitive) this).getGeneralType() == CPrimitiveCategory.FLOATTYPE);
-		}
 		return false;
 	}
 
@@ -125,7 +100,7 @@ public abstract class CType {
 	 * Returns true iff this type is a scalar type according to the definition 6.2.5.21 in the C11 standard.
 	 */
 	public boolean isScalarType() {
-		return (this instanceof CPointer) || isArithmeticType();
+		return isArithmeticType();
 	}
 
 	public boolean isVoidPointerType() {

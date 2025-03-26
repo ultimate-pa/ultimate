@@ -168,4 +168,9 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	public boolean isAtomic() {
 		return false;
 	}
+
+	@Override
+	public boolean isIntegerType() {
+		return true;
+	}
 }
