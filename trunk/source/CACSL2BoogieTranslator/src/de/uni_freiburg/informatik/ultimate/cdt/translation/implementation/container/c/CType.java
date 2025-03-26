@@ -32,11 +32,16 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 /**
+ * Interface to model types as defined in 6.2.5 in the C11 standard.
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  * @author nutz
  */
 public interface CType {
+	/**
+	 * Returns true iff this type is incomplete according to the definition 6.2.5.1/19/22/23 in the C11 standard.
+	 */
 	boolean isIncomplete();
 
 	/**
@@ -103,14 +108,23 @@ public interface CType {
 		return isArithmeticType();
 	}
 
+	/**
+	 * Returns true iff this type is a void pointer according to the definition 6.3.2.3.3 in the C11 standard.
+	 */
 	default boolean isVoidPointerType() {
 		return false;
 	}
 
+	/**
+	 * Returns true iff this type is void according to the definition 6.2.5.19 in the C11 standard.
+	 */
 	default boolean isVoidType() {
 		return false;
 	}
 
+	/**
+	 * Returns true iff this type is atomic according to the definition 6.2.5.27 in the C11 standard.
+	 */
 	boolean isAtomic();
 
 	@Override
