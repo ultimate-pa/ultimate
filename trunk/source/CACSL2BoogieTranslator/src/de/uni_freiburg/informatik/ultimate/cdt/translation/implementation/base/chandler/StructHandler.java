@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.BitfieldInformation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -107,12 +107,12 @@ public class StructHandler {
 				fieldOwner.getNeighbourUnionFields() == null ? new ArrayList<>()
 						: new ArrayList<>(fieldOwner.getNeighbourUnionFields());
 
-		final CType foType = (node.isPointerDereference()
+		final ICType foType = (node.isPointerDereference()
 				? ((CPointer) fieldOwner.getLrValue().getUnderlyingType()).getPointsToType()
 				: fieldOwner.getLrValue().getUnderlyingType());
 
 		final CStructOrUnion cStructType = (CStructOrUnion) foType.getUnderlyingType();
-		final CType cFieldType = cStructType.getFieldType(field);
+		final ICType cFieldType = cStructType.getFieldType(field);
 		final int bitfieldWidth = cStructType.getBitfieldWidth(field);
 
 		if (node.isPointerDereference()) {
@@ -231,7 +231,7 @@ public class StructHandler {
 	public Result readFieldInTheStructAtAddress(final ILocation loc, final int fieldIndex,
 			final Expression structAddress, final CStructOrUnion structType) {
 		final Expression newPointer = computeStructFieldAddress(loc, fieldIndex, structAddress, structType);
-		final CType resultType = structType.getFieldTypes()[fieldIndex];
+		final ICType resultType = structType.getFieldTypes()[fieldIndex];
 
 		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();

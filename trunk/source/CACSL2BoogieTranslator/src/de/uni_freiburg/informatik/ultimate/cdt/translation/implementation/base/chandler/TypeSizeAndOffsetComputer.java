@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -78,7 +78,7 @@ public class TypeSizeAndOffsetComputer {
 	 */
 	private final LinkedHashSet<Axiom> mAxioms;
 
-	private final HashMap<CType, SizeTValue> mTypeSizeCache;
+	private final HashMap<ICType, SizeTValue> mTypeSizeCache;
 	private final HashMap<CStructOrUnion, Offset[]> mStructOffsets;
 	private final ITypeHandler mTypeHandler;
 
@@ -117,7 +117,7 @@ public class TypeSizeAndOffsetComputer {
 	 *         using the {@link TypeSizeAndOffsetComputer#getConstants()} and
 	 *         {@link TypeSizeAndOffsetComputer#getAxioms()} methods.
 	 */
-	public Expression constructBytesizeExpression(final ILocation loc, final CType cType) {
+	public Expression constructBytesizeExpression(final ILocation loc, final ICType cType) {
 		final SizeTValue value = computeSize(loc, cType);
 		return value.asExpression(loc);
 	}
@@ -141,7 +141,7 @@ public class TypeSizeAndOffsetComputer {
 		return constructOffsetForField(loc, cStruct, fieldIndex);
 	}
 
-	private Expression constructTypeSizeConstant(final ILocation loc, final CType cType) {
+	private Expression constructTypeSizeConstant(final ILocation loc, final ICType cType) {
 		final String id = SFO.SIZEOF + cType.toString();
 		declareConstant(loc, id);
 		return ExpressionFactory.constructIdentifierExpression(loc, BoogieType.TYPE_INT, id,
@@ -162,8 +162,8 @@ public class TypeSizeAndOffsetComputer {
 		mConstants.add(decl);
 	}
 
-	private SizeTValue computeSize(final ILocation loc, final CType cType) {
-		final CType underlyingType = cType.getUnderlyingType();
+	private SizeTValue computeSize(final ILocation loc, final ICType cType) {
+		final ICType underlyingType = cType.getUnderlyingType();
 		if (underlyingType instanceof CPointer) {
 			if (mTypeSizePointer == null) {
 				mTypeSizePointer = constructSizeTValuePointer(loc);
@@ -243,7 +243,7 @@ public class TypeSizeAndOffsetComputer {
 		if (cStruct.isStructOrUnion() == StructOrUnion.UNION) {
 			final SizeTValue[] fieldTypeSizes = new SizeTValue[fieldCount];
 			for (int i = 0; i < fieldCount; i++) {
-				final CType fieldType = cStruct.getFieldTypes()[i];
+				final ICType fieldType = cStruct.getFieldTypes()[i];
 				final int bitsize;
 				if (mBitPreciseBitfields) {
 					bitsize = cStruct.getBitFieldWidths().get(i);
@@ -283,7 +283,7 @@ public class TypeSizeAndOffsetComputer {
 		// If the last member of a struct is a flexible (i.e. incomplete) array, ignore it for sizeof.
 		// See https://en.cppreference.com/w/c/language/struct
 		final int lastPosition;
-		final CType lastType = cStruct.getFieldTypes()[fieldCount - 1];
+		final ICType lastType = cStruct.getFieldTypes()[fieldCount - 1];
 		if (lastType instanceof CArray && lastType.isIncomplete()) {
 			lastPosition = fieldCount - 2;
 		} else {
@@ -528,7 +528,7 @@ public class TypeSizeAndOffsetComputer {
 		}
 	}
 
-	private Offset computeMemberOffset(final Offset precedingMemberOffset, final CType precedingMemberType,
+	private Offset computeMemberOffset(final Offset precedingMemberOffset, final ICType precedingMemberType,
 			final int bitfieldSize, final ILocation loc) {
 		final boolean currentMemberIsBitfield = (bitfieldSize != -1);
 		if (precedingMemberOffset.isBitfieldOffset()) {
@@ -561,7 +561,7 @@ public class TypeSizeAndOffsetComputer {
 				-1);
 	}
 
-	private SizeTValue computeOffsetOfNextByte(final Offset offset, final CType precedingMemberType,
+	private SizeTValue computeOffsetOfNextByte(final Offset offset, final ICType precedingMemberType,
 			final ILocation loc) {
 		if (offset.getStartBit() == -1) {
 			final SizeTValue precedingTypeSize = computeSize(loc, precedingMemberType);

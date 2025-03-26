@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -246,14 +246,14 @@ public class TypeHandler implements ITypeHandler {
 			 */
 			final Result opRes = main.dispatch(node.getDeclTypeExpression());
 			if (opRes instanceof ExpressionResult) {
-				final CType cType = ((ExpressionResult) opRes).getLrValue().getCType();
+				final ICType cType = ((ExpressionResult) opRes).getLrValue().getCType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			} else if (opRes instanceof DeclaratorResult) {
 				final var declResult = (DeclaratorResult) opRes;
 				if (!declResult.hasNoSideEffects()) {
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
-				final CType cType = declResult.getDeclaration().getType();
+				final ICType cType = declResult.getDeclaration().getType();
 				return new TypesResult(cType2AstType(loc, cType), node.isConst(), false, cType);
 			}
 		}
@@ -307,7 +307,7 @@ public class TypeHandler implements ITypeHandler {
 					final String msg = "Undefined type " + cId;
 					throw new UnsupportedSyntaxException(loc, msg);
 				}
-				final CType cType = stv.getCType();
+				final ICType cType = stv.getCType();
 				final BoogieType boogieType = getBoogieTypeForCType(cType);
 				final String bId = stv.getBoogieName();
 				// TODO: replace constants "false, false"
@@ -409,7 +409,7 @@ public class TypeHandler implements ITypeHandler {
 
 			mIncompleteType.add(incompleteTypeName);
 			// FIXME : not sure, if null is a good idea!
-			CType ctype;
+			ICType ctype;
 			if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct) {
 				ctype = new CStructOrUnion(StructOrUnion.STRUCT, type);
 				addIncompleteStructOrUnion(rslvName, (CStructOrUnion) ctype);
@@ -444,7 +444,7 @@ public class TypeHandler implements ITypeHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		// TODO : include inactives? what are inactives?
 		final ArrayList<String> fNames = new ArrayList<>();
-		final ArrayList<CType> fTypes = new ArrayList<>();
+		final ArrayList<ICType> fTypes = new ArrayList<>();
 		final ArrayList<Integer> bitFieldWidths = new ArrayList<>();
 		for (final IASTDeclaration dec : node.getDeclarations(false)) {
 			final Result r = main.dispatch(dec);
@@ -517,14 +517,14 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private void redirectNamedType(final Set<String> names, final CStructOrUnion completeStruct, final IASTNode hook) {
-		final Map<String, CType> alreadyRedirected = new HashMap<>();
+		final Map<String, ICType> alreadyRedirected = new HashMap<>();
 		for (final String name : names) {
 			constructUpdatedCNamedAndAddToSymbolTable(name, completeStruct, alreadyRedirected, hook);
 		}
 	}
 
-	private CType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStructOrUnion completeStruct,
-			final Map<String, CType> alreadyRedirected, final IASTNode hook) {
+	private ICType constructUpdatedCNamedAndAddToSymbolTable(final String name, final CStructOrUnion completeStruct,
+			final Map<String, ICType> alreadyRedirected, final IASTNode hook) {
 		if (alreadyRedirected.containsKey(name)) {
 			return alreadyRedirected.get(name);
 		}
@@ -533,13 +533,13 @@ public class TypeHandler implements ITypeHandler {
 			throw new AssertionError("Unable to locate " + name + " in the symbol table");
 		}
 
-		CType newDefiningType;
+		ICType newDefiningType;
 		if (oldStv.getCType() instanceof CNamed) {
 			// end of chain not yet reached
 			final var boogieId = ((CNamed) oldStv.getCType()).getName();
 			final var cId = mSymboltable.getCIdForBoogieId(boogieId);
 
-			final CType definingTypeOfDefiningType =
+			final ICType definingTypeOfDefiningType =
 					constructUpdatedCNamedAndAddToSymbolTable(cId, completeStruct, alreadyRedirected, hook);
 			newDefiningType = new CNamed(name, definingTypeOfDefiningType);
 		} else {
@@ -577,7 +577,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public ASTType cType2AstType(final ILocation loc, final CType cType) {
+	public ASTType cType2AstType(final ILocation loc, final ICType cType) {
 		if (cType instanceof CPrimitive) {
 			return cPrimitive2AstType(loc, (CPrimitive) cType);
 		} else if (cType instanceof CPointer) {
@@ -718,7 +718,7 @@ public class TypeHandler implements ITypeHandler {
 	 * @param type2
 	 * @return
 	 */
-	public static boolean areMatchingTypes(final CType type1, final CType type2) {
+	public static boolean areMatchingTypes(final ICType type1, final ICType type2) {
 		return areMatchingTypes(type1, type2, new SymmetricHashRelation<>());
 	}
 
@@ -731,7 +731,7 @@ public class TypeHandler implements ITypeHandler {
 	 * @param type2
 	 * @return
 	 */
-	public static boolean isCompatibleType(final CType type1, final CType type2) {
+	public static boolean isCompatibleType(final ICType type1, final ICType type2) {
 		// TODO: check the notion of compatibility with the standard
 		if (isCharArray(type1) && isCharArray(type2)) {
 			return true;
@@ -758,8 +758,8 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public BoogieType getBoogieTypeForCType(final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+	public BoogieType getBoogieTypeForCType(final ICType cTypeRaw) {
+		final ICType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive) {
 			if (mTranslationSettings.isBitvectorTranslation()) {
@@ -804,8 +804,8 @@ public class TypeHandler implements ITypeHandler {
 		return getBoogieTypeForCType(mTranslationSettings.getCTypeOfPointerComponents());
 	}
 
-	private static boolean isCharArray(final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+	private static boolean isCharArray(final ICType cTypeRaw) {
+		final ICType cType = cTypeRaw.getUnderlyingType();
 		if (!(cType instanceof CArray)) {
 			return false;
 		}
@@ -944,14 +944,14 @@ public class TypeHandler implements ITypeHandler {
 		};
 	}
 
-	private static boolean areMatchingTypes(final CType type1, final CType type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+	private static boolean areMatchingTypes(final ICType type1, final ICType type2,
+			final SymmetricHashRelation<ICType> visitedPairs) {
 		if (type1 == type2) {
 			return true;
 		}
 
-		final CType ulType1 = type1.getUnderlyingType();
-		final CType ulType2 = type2.getUnderlyingType();
+		final ICType ulType1 = type1.getUnderlyingType();
+		final ICType ulType2 = type2.getUnderlyingType();
 
 		if (!ulType1.getClass().equals(ulType2.getClass())) {
 			return false;
@@ -980,12 +980,12 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private static boolean areMatchingTypes(final CPrimitive type1, final CPrimitive type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+			final SymmetricHashRelation<ICType> visitedPairs) {
 		return type1.getType() == type2.getType();
 	}
 
 	private static boolean areMatchingTypes(final CEnum type1, final CEnum type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+			final SymmetricHashRelation<ICType> visitedPairs) {
 
 		if (!type1.getName().equals(type2.getName())) {
 			return false;
@@ -1003,12 +1003,12 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private static boolean areMatchingTypes(final CPointer type1, final CPointer type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+			final SymmetricHashRelation<ICType> visitedPairs) {
 		return areMatchingTypes(type1.getPointsToType(), type2.getPointsToType(), visitedPairs);
 	}
 
 	private static boolean areMatchingTypes(final CFunction type1, final CFunction type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+			final SymmetricHashRelation<ICType> visitedPairs) {
 
 		visitedPairs.addPair(type1, type2);
 
@@ -1038,7 +1038,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private static boolean areMatchingTypes(final CStructOrUnion type1, final CStructOrUnion type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+			final SymmetricHashRelation<ICType> visitedPairs) {
 
 		visitedPairs.addPair(type1, type2);
 
@@ -1071,7 +1071,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	private static boolean areMatchingTypes(final CArray type1, final CArray type2,
-			final SymmetricHashRelation<CType> visitedPairs) {
+			final SymmetricHashRelation<ICType> visitedPairs) {
 		// if dimensions dont match, array dont match
 		if (!type1.getBound().toString().equals(type2.getBound().toString())) {
 			return false;

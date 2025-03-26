@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -145,8 +145,8 @@ public class CExpressionTranslator {
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		left = mExprResultTransformer.rexBoolToInt(left, loc);
 		right = mExprResultTransformer.rexBoolToInt(right, loc);
-		CType lType = left.getLrValue().getCType().getUnderlyingType();
-		CType rType = right.getLrValue().getCType().getUnderlyingType();
+		ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		ICType rType = right.getLrValue().getCType().getUnderlyingType();
 
 		final Expression expr;
 
@@ -229,20 +229,20 @@ public class CExpressionTranslator {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 
-		CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 
 		if (lType instanceof CArray && rType.isArithmeticType()) {
 			// arrays decay to pointers in this case
 			assert !(((CArray) lType).getBound().getCType() instanceof CArray) : "TODO: think about this case";
-			final CType valueType = ((CArray) lType).getValueType().getUnderlyingType();
+			final ICType valueType = ((CArray) lType).getValueType().getUnderlyingType();
 			left = mExprResultTransformer.performImplicitConversion(left, new CPointer(valueType), loc);
 			lType = left.getLrValue().getCType().getUnderlyingType();
 		}
 
 		final ExpressionResultBuilder builder;
 		final Expression expr;
-		final CType typeOfResult;
+		final ICType typeOfResult;
 		if (lType.isArithmeticType() && rType.isArithmeticType()) {
 			final Pair<ExpressionResult, ExpressionResult> newOps =
 					mExprResultTransformer.usualArithmeticConversions(loc, left, right);
@@ -259,7 +259,7 @@ public class CExpressionTranslator {
 					primitiveTypeOfResult, right.getLrValue().getValue(), primitiveTypeOfResult);
 		} else if (lType instanceof CPointer && rType.isArithmeticType()) {
 			typeOfResult = left.getLrValue().getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
+			final ICType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
 					left.getLrValue().getValue(), (RValue) right.getLrValue(), pointsToType);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -271,7 +271,7 @@ public class CExpressionTranslator {
 				throw new AssertionError("lType arithmetic, rType CPointer only legal if op is plus");
 			}
 			typeOfResult = right.getLrValue().getCType();
-			final CType pointsToType = ((CPointer) typeOfResult).getPointsToType();
+			final ICType pointsToType = ((CPointer) typeOfResult).getPointsToType();
 			final ExpressionResult re = mMemoryHandler.doPointerArithmeticWithConversion(op, loc,
 					right.getLrValue().getValue(), (RValue) left.getLrValue(), pointsToType);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -289,10 +289,10 @@ public class CExpressionTranslator {
 			// We randomly choose the type whose Boogie translation we use to
 			// represent pointer components.
 			typeOfResult = mExpressionTranslation.getCTypeOfPointerComponents();
-			CType pointsToType;
+			ICType pointsToType;
 			{
-				final CType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
-				final CType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
+				final ICType leftPointsToType = ((CPointer) lType).getPointsToType().getUnderlyingType();
+				final ICType rightPointsToType = ((CPointer) rType).getPointsToType().getUnderlyingType();
 				if (!leftPointsToType.equals(rightPointsToType)) {
 					throw new UnsupportedOperationException(
 							"incompatible pointers: pointsto " + leftPointsToType + " " + rightPointsToType);
@@ -332,7 +332,7 @@ public class CExpressionTranslator {
 	public ExpressionResult handleUnaryArithmeticOperators(final ILocation loc, final int op,
 			ExpressionResult operand) {
 		assert operand.getLrValue() instanceof RValue : "no RValue";
-		final CType inputType = operand.getLrValue().getCType().getUnderlyingType();
+		final ICType inputType = operand.getLrValue().getCType().getUnderlyingType();
 
 		switch (op) {
 		case IASTUnaryExpression.op_not: {
@@ -417,8 +417,8 @@ public class CExpressionTranslator {
 		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
-		final CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
@@ -447,8 +447,8 @@ public class CExpressionTranslator {
 			ExpressionResult right) {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
-		final CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 		if (!rType.isArithmeticType() || !lType.isArithmeticType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
@@ -497,8 +497,8 @@ public class CExpressionTranslator {
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
 		{
-			final CType lType = left.getLrValue().getCType().getUnderlyingType();
-			final CType rType = right.getLrValue().getCType().getUnderlyingType();
+			final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+			final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 			// FIXME Matthias 2015-09-05: operation only legal if both have type
 			// CPointer I guess the following implicit casts are a workaround
 			// for arrays (or structs or union?)
@@ -548,8 +548,8 @@ public class CExpressionTranslator {
 		}
 		assert left.getLrValue() instanceof RValue : "no RValue";
 		assert right.getLrValue() instanceof RValue : "no RValue";
-		final CType lType = left.getLrValue().getCType().getUnderlyingType();
-		final CType rType = right.getLrValue().getCType().getUnderlyingType();
+		final ICType lType = left.getLrValue().getCType().getUnderlyingType();
+		final ICType rType = right.getLrValue().getCType().getUnderlyingType();
 		if (!rType.isIntegerType() || !lType.isIntegerType()) {
 			throw new UnsupportedOperationException("operands have to have integer types");
 		}
@@ -591,7 +591,7 @@ public class CExpressionTranslator {
 		final LeftHandSide[] tmpAsLhs = { auxvar.getLhs() };
 		final Expression[] oldValue = { exprRes.getLrValue().getValue() };
 		builder.addStatement(StatementFactory.constructAssignmentStatement(loc, tmpAsLhs, oldValue));
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		final ICType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		final RValue tmpRValue = new RValue(auxvar.getExp(), oType);
 
 		final int op;
@@ -643,7 +643,7 @@ public class CExpressionTranslator {
 			throw new AssertionError("no prefix");
 		}
 
-		final CType oType = exprRes.getLrValue().getCType().getUnderlyingType();
+		final ICType oType = exprRes.getLrValue().getCType().getUnderlyingType();
 		// in-/decremented value
 		final Expression valueXcremented =
 				constructXcrementedValue(loc, builder, oType, op, exprRes.getLrValue().getValue());
@@ -739,7 +739,7 @@ public class CExpressionTranslator {
 			}
 		}
 
-		final CType resultCType;
+		final ICType resultCType;
 		if (opPositive.getLrValue().getCType().isArithmeticType()
 				&& opNegative.getLrValue().getCType().isArithmeticType()) {
 			/*
@@ -819,7 +819,7 @@ public class CExpressionTranslator {
 	 */
 	private ExpressionResult constructResultForConditionalOperator(final ILocation loc,
 			final ExpressionResult opCondition, final ExpressionResult opPositive, final ExpressionResult opNegative,
-			final CType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
+			final ICType resultCType, final boolean secondArgIsVoid, final boolean thirdArgIsVoid) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 
 		// TODO: a solution that checks if the void value is ever assigned would be nice, but unclear if necessary
@@ -888,7 +888,7 @@ public class CExpressionTranslator {
 	 *            note that this method has sideeffects on this object! (add..BoundCheck(..) calls)
 	 */
 	private Expression constructXcrementedValue(final ILocation loc, final ExpressionResultBuilder result,
-			final CType ctype, final int op, final Expression value) {
+			final ICType ctype, final int op, final Expression value) {
 		assert op == IASTBinaryExpression.op_plus || op == IASTBinaryExpression.op_minus
 				: "has to be either minus or plus";
 		final Expression valueIncremented;
@@ -1088,7 +1088,7 @@ public class CExpressionTranslator {
 	 * Subtract two pointers.
 	 *
 	 * @param pointsToType
-	 *            {@link CType} of the objects to which the pointers point.
+	 *            {@link ICType} of the objects to which the pointers point.
 	 * @param leftPtr
 	 *            Boogie {@link Expression} that represents the left pointer.
 	 * @param rightPtr
@@ -1097,7 +1097,7 @@ public class CExpressionTranslator {
 	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
 	 */
 	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
-			final CType pointsToType) {
+			final ICType pointsToType) {
 		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
 		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
 		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,

@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion.StructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -102,7 +102,7 @@ public class CTranslationUtil {
 			index[i] = typeSizes.constructLiteralForIntegerType(loc, currentIndexType,
 					new BigInteger(arrayIndex.get(i).toString()));
 
-			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
 				currentArrayType = (CArray) valueType;
 			} else {
@@ -126,7 +126,7 @@ public class CTranslationUtil {
 		final ArrayLHS alhs = ExpressionFactory.constructNestedArrayLHS(loc, arrayLhsToInitialize.getLhs(),
 				new Expression[] { index });
 
-		final CType cellType = cArrayType.getValueType();
+		final ICType cellType = cArrayType.getValueType();
 
 		return new LocalLValue(alhs, cellType, null);
 	}
@@ -138,7 +138,7 @@ public class CTranslationUtil {
 				// found a variable length bound
 				return true;
 			}
-			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
 				currentArrayType = (CArray) valueType;
 			} else {
@@ -162,7 +162,7 @@ public class CTranslationUtil {
 		while (true) {
 			result.add(Integer.parseUnsignedInt(typeSizes.extractIntegerValue(currentArrayType.getBound()).toString()));
 
-			final CType valueType = currentArrayType.getValueType().getUnderlyingType();
+			final ICType valueType = currentArrayType.getValueType().getUnderlyingType();
 			if (valueType instanceof CArray) {
 				currentArrayType = (CArray) valueType;
 			} else {
@@ -175,20 +175,20 @@ public class CTranslationUtil {
 	 * According to 6.2.5.21 of C11 the structure types and the array types (but not the union types) are called
 	 * aggregate types.
 	 */
-	public static boolean isAggregateType(final CType valueTypeRaw) {
-		final CType valueType = valueTypeRaw.getUnderlyingType();
+	public static boolean isAggregateType(final ICType valueTypeRaw) {
+		final ICType valueType = valueTypeRaw.getUnderlyingType();
 		return (valueType instanceof CStructOrUnion
 				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.STRUCT)
 				|| valueType instanceof CArray);
 	}
 
-	public static boolean isAggregateOrUnionType(final CType valueTypeRaw) {
-		final CType valueType = valueTypeRaw.getUnderlyingType();
+	public static boolean isAggregateOrUnionType(final ICType valueTypeRaw) {
+		final ICType valueType = valueTypeRaw.getUnderlyingType();
 		return isAggregateType(valueType) || isUnionType(valueType);
 	}
 
-	private static boolean isUnionType(final CType valueTypeRaw) {
-		final CType valueType = valueTypeRaw.getUnderlyingType();
+	private static boolean isUnionType(final ICType valueTypeRaw) {
+		final ICType valueType = valueTypeRaw.getUnderlyingType();
 		return valueType instanceof CStructOrUnion
 				&& (((CStructOrUnion) valueType).isStructOrUnion() == StructOrUnion.UNION);
 	}
@@ -411,7 +411,7 @@ public class CTranslationUtil {
 	 * </p>
 	 * Warning: This method is not suitable for obtaining the value of C expressions. If you also want to get integer
 	 * values of constants (in the sense of variables that got statically some value assigned) then use
-	 * {@link TypeSizes#extractIntegerValue(Expression, CType)}
+	 * {@link TypeSizes#extractIntegerValue(Expression, ICType)}
 	 *
 	 */
 	public static BigInteger extractIntegerValue(final Expression expr) {
@@ -426,8 +426,8 @@ public class CTranslationUtil {
 		return result;
 	}
 
-	public static CType getValueTypeOfNestedArray(final CArray arrayType) {
-		CType result = arrayType.getValueType().getUnderlyingType();
+	public static ICType getValueTypeOfNestedArray(final CArray arrayType) {
+		ICType result = arrayType.getValueType().getUnderlyingType();
 		while (result instanceof CArray) {
 			result = ((CArray) result).getValueType().getUnderlyingType();
 		}
@@ -440,19 +440,19 @@ public class CTranslationUtil {
 	 * @param aggregateOrUnionCType
 	 * @return
 	 */
-	public static Set<CType> extractNonAggregateNonUnionTypes(final CType aggregateOrUnionCType) {
+	public static Set<ICType> extractNonAggregateNonUnionTypes(final ICType aggregateOrUnionCType) {
 		assert isAggregateOrUnionType(aggregateOrUnionCType) : "not an aggregate or union type";
-		final CType underlyingType = aggregateOrUnionCType.getUnderlyingType();
+		final ICType underlyingType = aggregateOrUnionCType.getUnderlyingType();
 		if (underlyingType instanceof CArray) {
-			final CType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
+			final ICType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
 			if (isAggregateOrUnionType(valueType)) {
 				return extractNonAggregateNonUnionTypes(valueType);
 			} else {
 				return Collections.singleton(valueType.getUnderlyingType());
 			}
 		} else if (underlyingType instanceof CStructOrUnion) {
-			final Set<CType> result = new HashSet<>();
-			for (final CType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
+			final Set<ICType> result = new HashSet<>();
+			for (final ICType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
 				if (isAggregateOrUnionType(fieldType)) {
 					result.addAll(extractNonAggregateNonUnionTypes(fieldType.getUnderlyingType()));
 				} else {

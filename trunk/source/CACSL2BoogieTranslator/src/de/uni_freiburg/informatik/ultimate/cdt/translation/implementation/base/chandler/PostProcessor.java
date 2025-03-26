@@ -89,7 +89,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -944,7 +944,7 @@ public class PostProcessor {
 		if (checkedMethodOutParams.length != 0) {
 			assert checkedMethodOutParams.length == 1;
 			// there is 1(!) return value
-			final CType checkedMethodResultCType = mProcedureManager.getCFunctionType(checkedMethod).getResultType();
+			final ICType checkedMethodResultCType = mProcedureManager.getCFunctionType(checkedMethod).getResultType();
 			final AuxVarInfo checkedMethodReturnAuxVar =
 					mAuxVarInfoBuilder.constructAuxVarInfo(loc, checkedMethodResultCType, SFO.AUXVAR.RETURNED);
 			mSymboltable.addBoogieCIdPair(checkedMethodReturnAuxVar.getExp().getIdentifier(),

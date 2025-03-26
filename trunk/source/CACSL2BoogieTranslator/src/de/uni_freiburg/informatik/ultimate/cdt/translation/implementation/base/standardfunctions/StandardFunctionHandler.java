@@ -101,7 +101,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -2008,7 +2008,7 @@ public class StandardFunctionHandler {
 			final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[i]);
 			builder.addAllExceptLrValue(pointer);
 			// Write a non-deterministic value to the given address, but make sure the value is in range
-			final CType valueType = ((CPointer) pointer.getCType()).getPointsToType();
+			final ICType valueType = ((CPointer) pointer.getCType()).getPointsToType();
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, valueType, SFO.AUXVAR.NONDET);
 			builder.addAuxVarWithDeclaration(auxvar);
 			mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), valueType, builder);
@@ -2324,7 +2324,7 @@ public class StandardFunctionHandler {
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
 		// Return a non-deterministic aux-var as an overapproximation
 		// (since we cannot be sure, if the call was interrupted)
-		final CType retType = new CPrimitive(CPrimitives.UINT);
+		final ICType retType = new CPrimitive(CPrimitives.UINT);
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.RETURNED);
 		builder.addAuxVarWithDeclaration(auxVar).setLrValue(new RValue(auxVar.getExp(), retType));
 		return builder.addOverapprox(new Overapprox(name, loc)).build();
@@ -2474,7 +2474,7 @@ public class StandardFunctionHandler {
 			builder.addStatement(js);
 		} else {
 			// auxvar for joined procedure's return value
-			final CType cType = new CPointer(new CPrimitive(CPrimitives.VOID));
+			final ICType cType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
 			builder.addAuxVarWithDeclaration(auxvarinfo);
 			js = new JoinStatement(loc, threadId, new VariableLHS[] { auxvarinfo.getLhs() });
@@ -2537,7 +2537,7 @@ public class StandardFunctionHandler {
 		// Therefore we just dispatch the argument and return a non-deterministic value (indicating success)
 		builder.addAllExceptLrValue(
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]));
-		final CType retType = new CPrimitive(CPrimitives.INT);
+		final ICType retType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo retValue = mAuxVarInfoBuilder.constructAuxVarInfo(loc, retType, AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(retValue);
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, retValue.getExp(), retType, builder);
@@ -2637,7 +2637,7 @@ public class StandardFunctionHandler {
 		erb.addAllExceptLrValue(arg);
 
 		// auxvar for procedure's return value
-		final CType cType = new CPrimitive(CPrimitives.INT);
+		final ICType cType = new CPrimitive(CPrimitives.INT);
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
 		erb.addAuxVarWithDeclaration(auxvarinfo);
 
@@ -2953,7 +2953,7 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, methodName, arguments);
 
-		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final ICType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final ExpressionResult ptr = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
 				arguments[0], voidPointerType);
 
@@ -3041,7 +3041,7 @@ public class StandardFunctionHandler {
 		return resultBuilder.build();
 	}
 
-	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final CType cType) {
+	private ExpressionResult handleVerifierNonDet(final IDispatcher main, final ILocation loc, final ICType cType) {
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
 		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
@@ -3568,7 +3568,7 @@ public class StandardFunctionHandler {
 	 * @return An {@link ExpressionResult} representing the effect of the call
 	 */
 	private Result handleByOverapproximation(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String methodName, final int numberOfArgs, final CType resultType) {
+			final ILocation loc, final String methodName, final int numberOfArgs, final ICType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -3605,7 +3605,7 @@ public class StandardFunctionHandler {
 	 * the assert is labeled with an overapproximation
 	 */
 	private Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
-			final String name, final CType returnType) {
+			final String name, final ICType returnType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addStatement(ExpressionTranslation.modelUnsupportedFeature(loc, name));
 		if (!returnType.isVoidType()) {
@@ -3618,7 +3618,7 @@ public class StandardFunctionHandler {
 
 	private Result handleUnsoundByOverapproximationWithoutDispatch(final IDispatcher main,
 			final IASTFunctionCallExpression node, final ILocation loc, final String methodName, final int numberOfArgs,
-			final CType resultType) {
+			final ICType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
 		return constructOverapproximationForFunctionCall(loc, methodName, resultType);
@@ -3635,12 +3635,12 @@ public class StandardFunctionHandler {
 	 *            CType that determinies the type of the auxiliary variable
 	 */
 	private ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
-			final CType resultType) {
+			final ICType resultType) {
 		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
 	}
 
 	private ExpressionResult handleByFunctionCall(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name, final CType resultType) {
+			final ILocation loc, final String name, final ICType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final IASTInitializerClause[] arguments = node.getArguments();
 		final Expression[] translatedArgs = new Expression[arguments.length];
@@ -3661,7 +3661,7 @@ public class StandardFunctionHandler {
 		return builder.build();
 	}
 
-	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final CType resultType) {
+	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final ICType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(auxvar);

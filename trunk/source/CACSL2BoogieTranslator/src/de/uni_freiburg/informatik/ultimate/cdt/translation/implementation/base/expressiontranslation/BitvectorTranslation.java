@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -745,7 +745,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final CType cType) {
+	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final ICType cType) {
 		// do nothing. not needed for bitvectors
 		return Optional.empty();
 	}
@@ -900,14 +900,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	protected Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		return constructBinaryComparisonFloatingPointExpression(loc, nodeOperator, exp1, (CPrimitive) type1, exp2,
 				(CPrimitive) type2);
 	}
 
 	@Override
 	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 		} else if (nodeOperator == IASTBinaryExpression.op_notequals) {

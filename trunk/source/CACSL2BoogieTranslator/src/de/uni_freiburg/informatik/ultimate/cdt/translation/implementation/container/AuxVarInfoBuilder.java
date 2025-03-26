@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
@@ -64,14 +64,14 @@ public class AuxVarInfoBuilder {
 		mProcedureManager = procedureManager;
 	}
 
-	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final CType cType, final AUXVAR auxVarType) {
+	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final ICType cType, final AUXVAR auxVarType) {
 		final String id = mNameHandler.getTempVarUID(auxVarType, cType);
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 
 		return constructAuxVarHelper(loc, id, astType, mProcedureManager.isGlobalScope());
 	}
 
-	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final CType cType, final ASTType astType,
+	public AuxVarInfo constructAuxVarInfo(final ILocation loc, final ICType cType, final ASTType astType,
 			final AUXVAR auxVarType) {
 		final String id = mNameHandler.getTempVarUID(auxVarType, cType);
 		return constructAuxVarHelper(loc, id, astType, false);
@@ -82,12 +82,12 @@ public class AuxVarInfoBuilder {
 		return constructAuxVarHelper(loc, id, astType, false);
 	}
 
-	public AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final CType cType, final AUXVAR auxVarType) {
+	public AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final ICType cType, final AUXVAR auxVarType) {
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 		return constructGlobalAuxVarInfo(loc, cType, astType, auxVarType);
 	}
 
-	public AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final CType cType, final ASTType astType,
+	public AuxVarInfo constructGlobalAuxVarInfo(final ILocation loc, final ICType cType, final ASTType astType,
 			final AUXVAR auxVarType) {
 		final String id = mNameHandler.getTempVarUID(auxVarType, cType);
 		return constructAuxVarHelper(loc, id, astType, true);
@@ -125,7 +125,7 @@ public class AuxVarInfoBuilder {
 	 * @param compoundliteral
 	 * @return
 	 */
-	public AuxVarInfo constructAuxVarInfoForBlockScope(final ILocation loc, final CType cType, final AUXVAR auxVarType,
+	public AuxVarInfo constructAuxVarInfoForBlockScope(final ILocation loc, final ICType cType, final AUXVAR auxVarType,
 			final DeclarationInformation declInfo) {
 		assert auxVarType == SFO.AUXVAR.COMPOUNDLITERAL
 				: "only block-scope aux vars are allowed here (extend the " + "assertion if you added a new one)";

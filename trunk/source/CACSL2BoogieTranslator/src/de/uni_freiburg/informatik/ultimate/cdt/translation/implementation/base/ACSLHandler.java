@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -295,7 +295,7 @@ public class ACSLHandler implements IACSLHandler {
 					"C variable " + update.getIdentifier() + " cannot be assigned in ghost statement.");
 		}
 		final ExpressionResult exprResult = (ExpressionResult) main.dispatch(update.getExpr(), main.getAcslHook());
-		final CType cType = stv.getCType();
+		final ICType cType = stv.getCType();
 		final ExpressionResult converted = mExprResultTransformer
 				.makeRepresentationReadyForConversionAndRexBoolToInt(exprResult, loc, cType, main.getAcslHook());
 		final VariableLHS lhs = new VariableLHS(loc, mTypeHandler.getBoogieTypeForCType(cType), stv.getBoogieName(),
@@ -312,7 +312,7 @@ public class ACSLHandler implements IACSLHandler {
 		}
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final String boogieName = SFO.GHOST + decl.getIdentifier();
-		final CType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+		final ICType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 		final Declaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
@@ -582,7 +582,7 @@ public class ACSLHandler implements IACSLHandler {
 
 		final String cId = mSymboltable.getCIdForBoogieId(id);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(main.getAcslHook(), cId);
-		final CType cType;
+		final ICType cType;
 		if (stv != null) {
 			cType = stv.getCType();
 		} else {
@@ -643,7 +643,7 @@ public class ACSLHandler implements IACSLHandler {
 		for (final var decl : node.getVariables()) {
 			// For each quantified variable in the ACSL expression, create a corresponding Boogie variable and store it
 			// in the mBoundVariables to be used when handling IdentifierExpressions.
-			final CType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+			final ICType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 			if (!(cType instanceof CPrimitive)) {
 				throw new UnsupportedSyntaxException(loc, "Only quantified variables of primitive type are supported.");
 			}
@@ -760,7 +760,7 @@ public class ACSLHandler implements IACSLHandler {
 	public Result visit(final IDispatcher main, final ACSLResultExpression node) {
 		final String id = SFO.RES;
 		final CACSLLocation loc = mLocationFactory.createACSLLocation(node);
-		final CType type = mProcedureManager.getReturnTypeOfCurrentProcedure();
+		final ICType type = mProcedureManager.getReturnTypeOfCurrentProcedure();
 		final IdentifierExpression idEx = ExpressionFactory.constructIdentifierExpression(loc,
 				mTypeHandler.getBoogieTypeForCType(type), id,
 				new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, mProcedureManager.getCurrentProcedureID()));
@@ -921,7 +921,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final IDispatcher main, final CastExpression node) {
 		final ILocation loc = mLocationFactory.createACSLLocation(node);
-		final CType resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
+		final ICType resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
 		expr = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, resultType, main.getAcslHook());
 		return mExprResultTransformer.performImplicitConversion(expr, resultType, loc);

@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -419,7 +419,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final CType cType) {
+	public Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr, final ICType cType) {
 		if (!mSettings.assumeNondeterministicValuesInRange() || !cType.getUnderlyingType().isIntegerType()) {
 			// only integer types can be out of range
 			return Optional.empty();
@@ -574,7 +574,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	protected Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
 		if (mSettings.overapproximateFloatingPointOperations()) {
 			return ExpressionFactory.constructFunctionApplication(loc, prefixedFunctionName,
@@ -585,7 +585,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	protected Expression constructBinaryEqualityExpressionInteger(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		Expression leftExpr = exp1;
 		Expression rightExpr = exp2;
 		if (type1 instanceof CPrimitive && type2 instanceof CPrimitive) {

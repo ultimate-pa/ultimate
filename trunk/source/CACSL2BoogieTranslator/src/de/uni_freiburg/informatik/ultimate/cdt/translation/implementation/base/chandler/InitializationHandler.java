@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -197,7 +197,7 @@ public class InitializationHandler {
 	 * @param initializerRaw
 	 * @return
 	 */
-	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final CType targetCTypeRaw,
+	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final ICType targetCTypeRaw,
 			final InitializerResult initializerRaw, final IASTNode hook) {
 		final boolean onHeap;
 		if (lhsRaw instanceof final VariableLHS varLHS) {
@@ -209,7 +209,7 @@ public class InitializationHandler {
 		return initialize(loc, lhsRaw, targetCTypeRaw, initializerRaw, onHeap, hook);
 	}
 
-	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final CType targetCTypeRaw,
+	public ExpressionResult initialize(final ILocation loc, final LeftHandSide lhsRaw, final ICType targetCTypeRaw,
 			final InitializerResult initializerRaw, final boolean onHeap, final IASTNode hook) {
 
 		final LRValue lhs;
@@ -306,7 +306,7 @@ public class InitializationHandler {
 	 * @param hook
 	 * @return
 	 */
-	private ExpressionResult initRec(final ILocation loc, final CType targetCTypeRaw,
+	private ExpressionResult initRec(final ILocation loc, final ICType targetCTypeRaw,
 			final InitializerInfo initInfoIfAny, final boolean onHeap,
 			final boolean usingOnHeapInitializationViaConstArray, final LRValue lhsIfAny,
 			final boolean outermostNestedArray, final IASTNode hook) {
@@ -314,7 +314,7 @@ public class InitializationHandler {
 		assert lhsIfAny == null || lhsIfAny.getCType().getUnderlyingType().equals(targetCTypeRaw.getUnderlyingType());
 		assert !onHeap || lhsIfAny != null : "we need a start address for on-heap initialization";
 
-		final CType targetCType = targetCTypeRaw.getUnderlyingType();
+		final ICType targetCType = targetCTypeRaw.getUnderlyingType();
 
 		if (initInfoIfAny == null) {
 			if (onHeap && usingOnHeapInitializationViaConstArray) {
@@ -348,7 +348,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeNondetInitAndAddOverapprFromInitInfo(final ILocation loc,
-			final InitializerInfo initInfo, final boolean onHeap, final LRValue lhsIfAny, final CType targetCType,
+			final InitializerInfo initInfo, final boolean onHeap, final LRValue lhsIfAny, final ICType targetCType,
 			final IASTNode hook) {
 		assert initInfo != null;
 		assert initInfo.isMakeNondeterministicInitialization();
@@ -370,7 +370,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult initExpressionWithExpression(final ILocation loc, final LRValue lhsIfAny,
-			final boolean onHeap, final boolean useSelectInsteadOfStoreForOnHeapAssignment, final CType cType,
+			final boolean onHeap, final boolean useSelectInsteadOfStoreForOnHeapAssignment, final ICType cType,
 			final InitializerInfo initInfo, final IASTNode hook) {
 		assert initInfo.hasExpressionResult();
 
@@ -415,7 +415,7 @@ public class InitializationHandler {
 				obtainLhsToInitialize(loc, lhsIfAny, cStructType, onHeap, initialization);
 
 		for (int i = 0; i < cStructType.getFieldCount(); i++) {
-			final CType currentFieldUnderlyingType = cStructType.getFieldTypes()[i].getUnderlyingType();
+			final ICType currentFieldUnderlyingType = cStructType.getFieldTypes()[i].getUnderlyingType();
 			if (currentFieldUnderlyingType instanceof CArray && currentFieldUnderlyingType.isIncomplete()) {
 				continue;
 			}
@@ -567,7 +567,7 @@ public class InitializationHandler {
 
 			final int arrayIndex = i;
 
-			final CType cellType = cArrayType.getValueType();
+			final ICType cellType = cArrayType.getValueType();
 
 			final LRValue arrayCellLhs;
 
@@ -603,10 +603,10 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeDefaultOrNondetInitialization(final ILocation loc, final LRValue lhsIfAny,
-			final CType cTypeRaw, final boolean onHeap, final boolean nondet, final IASTNode hook) {
+			final ICType cTypeRaw, final boolean onHeap, final boolean nondet, final IASTNode hook) {
 		assert !onHeap || lhsIfAny != null : "for on-heap initialization we need a start address";
 
-		final CType cType = cTypeRaw.getUnderlyingType();
+		final ICType cType = cTypeRaw.getUnderlyingType();
 
 		/*
 		 * If one of the following conditions holds, we must have an lhs for initialization. <li> we initialize
@@ -650,8 +650,8 @@ public class InitializationHandler {
 	 * @return
 	 */
 	private ExpressionResult makeNaiveOnHeapDefaultInitializationForType(final ILocation loc,
-			final HeapLValue baseAddress, final CType cTypeRaw, final IASTNode hook) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+			final HeapLValue baseAddress, final ICType cTypeRaw, final IASTNode hook) {
+		final ICType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
@@ -695,9 +695,9 @@ public class InitializationHandler {
 	 *            if this is true, a nondeterministic value is used for initialization otherwise the default value
 	 * @return
 	 */
-	private ExpressionResult makeOffHeapDefaultOrNondetInitializationForType(final ILocation loc, final CType cTypeRaw,
+	private ExpressionResult makeOffHeapDefaultOrNondetInitializationForType(final ILocation loc, final ICType cTypeRaw,
 			final LocalLValue lhsToInitIfAny, final boolean nondet, final IASTNode hook) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+		final ICType cType = cTypeRaw.getUnderlyingType();
 
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 
@@ -785,7 +785,7 @@ public class InitializationHandler {
 		}
 	}
 
-	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final CType fieldType) {
+	private ExpressionResult makeUnionAuxVarExpressionResult(final ILocation loc, final ICType fieldType) {
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, fieldType, SFO.AUXVAR.NONDET);
 		return new ExpressionResultBuilder().setLrValue(new RValue(auxVar.getExp(), fieldType))
 				.addAuxVarWithDeclaration(auxVar)
@@ -816,7 +816,7 @@ public class InitializationHandler {
 	}
 
 	private ExpressionResult makeOnHeapDefaultInitializationViaConstArray(final ILocation loc,
-			final HeapLValue baseAddress, final CType cType) {
+			final HeapLValue baseAddress, final ICType cType) {
 		final ExpressionResultBuilder initialization = new ExpressionResultBuilder();
 		final List<Statement> initStatements =
 				mMemoryHandler.getInitializationForOnHeapVariableOfAggregateOrUnionType(loc, baseAddress, cType);
@@ -832,7 +832,7 @@ public class InitializationHandler {
 
 		final LocalLValue arrayLhsToInitialize = lhsToInit;
 
-		CType innerMostValueType = cArrayType.getValueType().getUnderlyingType();
+		ICType innerMostValueType = cArrayType.getValueType().getUnderlyingType();
 		while (innerMostValueType instanceof CArray) {
 			innerMostValueType = ((CArray) innerMostValueType).getValueType().getUnderlyingType();
 		}
@@ -878,7 +878,7 @@ public class InitializationHandler {
 	 * Side effect notice: This method may update the given initialization with declarations for an auxiliary variable
 	 * and possibly set the LrValue.
 	 */
-	private LRValue obtainLhsToInitialize(final ILocation loc, final LRValue lhsIfAny, final CType cType,
+	private LRValue obtainLhsToInitialize(final ILocation loc, final LRValue lhsIfAny, final ICType cType,
 			final boolean onHeap, final ExpressionResultBuilder initialization) {
 		final LRValue arrayLhsToInitialize;
 		if (onHeap) {
@@ -897,7 +897,7 @@ public class InitializationHandler {
 	 *            is set as LrValue
 	 */
 	private LocalLValue obtainLocalLValueToInitialize(final ILocation loc, final LocalLValue lhsIfAny,
-			final CType cType, final ExpressionResultBuilder initialization) {
+			final ICType cType, final ExpressionResultBuilder initialization) {
 		final LocalLValue arrayLhsToInitialize;
 		if (lhsIfAny != null) {
 			arrayLhsToInitialize = lhsIfAny;
@@ -913,7 +913,7 @@ public class InitializationHandler {
 	 *            side effects on this parameter: is updated with the necessary declaration and the returned LocalLValue
 	 *            is set as LrValue
 	 */
-	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final CType cType,
+	private LocalLValue obtainAuxVarLocalLValue(final ILocation loc, final ICType cType,
 			final ExpressionResultBuilder initialization) {
 		final AUXVAR auxVarType;
 		if (cType instanceof CArray) {
@@ -949,7 +949,7 @@ public class InitializationHandler {
 	 * Construct assignment statements that make sure that "lhs" gets the value "initializationValue".
 	 */
 	private List<Statement> makeAssignmentStatements(final ILocation loc, final LRValue lhs, final boolean onHeap,
-			final boolean useSelectInsteadOfStoreForOnHeapAssignment, final CType cType,
+			final boolean useSelectInsteadOfStoreForOnHeapAssignment, final ICType cType,
 			final Expression initializationValue, final Collection<Overapprox> overAppr, final IASTNode hook) {
 		assert lhs != null;
 
@@ -971,8 +971,8 @@ public class InitializationHandler {
 		return assigningStatements;
 	}
 
-	private Expression getDefaultValueForSimpleType(final ILocation loc, final CType cTypeRaw) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+	private Expression getDefaultValueForSimpleType(final ILocation loc, final ICType cTypeRaw) {
+		final ICType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) cType;
 			return switch (cPrimitive.getGeneralType()) {
@@ -1004,14 +1004,14 @@ public class InitializationHandler {
 	 * array, this can be decided e.g. for each sub-array of a struct, thus this should be queried only for arrays, in
 	 * contrast to general aggregate types. Background: In contrast, on-heap aggregate types are initialized by setting
 	 * the whole sub-array to a const array once in
-	 * {@link #initialize(ILocation, LeftHandSide, CType, InitializerResult, boolean, IASTNode)}.
+	 * {@link #initialize(ILocation, LeftHandSide, ICType, InitializerResult, boolean, IASTNode)}.
 	 *
 	 * @param initInfo
 	 *
 	 * @param initializerIfAny
 	 * @return true iff sophisticated initialization should be applied
 	 */
-	private boolean useConstArrayInitialization(final CType cType, final InitializerInfo initInfo,
+	private boolean useConstArrayInitialization(final ICType cType, final InitializerInfo initInfo,
 			final IASTNode hook) {
 		if (!mUseConstantArrays) {
 			// make sure that const arrays are only used when the corresponding setting is switched on
@@ -1031,8 +1031,8 @@ public class InitializationHandler {
 		return numberOfInitializerValues.compareTo(threshold) > 0;
 	}
 
-	private BigInteger countNumberOfPrimitiveElementInType(final CType cTypeRaw, final IASTNode hook) {
-		final CType cType = cTypeRaw.getUnderlyingType();
+	private BigInteger countNumberOfPrimitiveElementInType(final ICType cTypeRaw, final IASTNode hook) {
+		final ICType cType = cTypeRaw.getUnderlyingType();
 		if (cType instanceof CPrimitive || cType instanceof CEnum || cType instanceof CPointer) {
 			return BigInteger.ONE;
 		}
@@ -1098,7 +1098,7 @@ public class InitializationHandler {
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
 
-		final CType cellType = cArrayType.getValueType();
+		final ICType cellType = cArrayType.getValueType();
 
 		final Expression cellOffset =
 				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cellType, flatCellNumber, pointerComponentType);
@@ -1144,8 +1144,8 @@ public class InitializationHandler {
 	 * @param targetCType
 	 */
 	public InitializerInfo constructInitializerInfo(final ILocation loc, final InitializerResult initializerResult,
-			final CType targetCTypeRaw, final IASTNode hook) {
-		final CType targetCType = targetCTypeRaw.getUnderlyingType();
+			final ICType targetCTypeRaw, final IASTNode hook) {
+		final ICType targetCType = targetCTypeRaw.getUnderlyingType();
 
 		if (initializerResult.hasRootExpressionResult()) {
 			/*
@@ -1232,7 +1232,7 @@ public class InitializationHandler {
 		return new InitializerInfo(expressionResultSwitched, new ArrayList<>(ad));
 	}
 
-	protected ExpressionResult convertInitResultWithExpressionResult(final ILocation loc, final CType targetCType,
+	protected ExpressionResult convertInitResultWithExpressionResult(final ILocation loc, final ICType targetCType,
 			final InitializerResult first, final IASTNode hook) {
 
 		final ExpressionResult er = first.getRootExpressionResult();
@@ -1250,11 +1250,11 @@ public class InitializationHandler {
 	}
 
 	private InitializerInfo constructIndexToInitInfo(final ILocation loc,
-			final List<InitializerResult> initializerResults, final CType targetCType, final IASTNode hook) {
+			final List<InitializerResult> initializerResults, final ICType targetCType, final IASTNode hook) {
 		assert targetCType instanceof CArray || targetCType instanceof CStructOrUnion;
 
 		final int bound;
-		CType cellType = null;
+		ICType cellType = null;
 		if (targetCType instanceof CArray) {
 			cellType = ((CArray) targetCType).getValueType();
 			bound = CTranslationUtil.getConstantFirstDimensionOfArray((CArray) targetCType, mTypeSizes);
@@ -1342,7 +1342,7 @@ public class InitializationHandler {
 	 * @return
 	 */
 	public InitializerInfo constructInitInfoFromCStringLiteral(final ILocation loc, final CStringLiteral stringLiteral,
-			final CType cType, final IASTNode hook) {
+			final ICType cType, final IASTNode hook) {
 		/*
 		 * It seems that the business regarding different types of string literals (e.g. wide string literals) is all
 		 * dealt with through CStringLiteral. In that case, it is ok, to use just char here.

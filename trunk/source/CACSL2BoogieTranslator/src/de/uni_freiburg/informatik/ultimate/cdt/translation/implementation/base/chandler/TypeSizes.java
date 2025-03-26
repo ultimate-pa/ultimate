@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -281,7 +281,7 @@ public class TypeSizes {
 		return extractIntegerValue(rval.getValue(), rval.getCType().getUnderlyingType());
 	}
 
-	public BigInteger extractIntegerValue(final Expression expr, final CType cType) {
+	public BigInteger extractIntegerValue(final Expression expr, final ICType cType) {
 		if (expr instanceof IntegerLiteral) {
 			final BigInteger value = new BigInteger(((IntegerLiteral) expr).getValue());
 			final CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);

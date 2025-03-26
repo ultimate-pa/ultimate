@@ -36,11 +36,11 @@ import java.util.Objects;
  * @author Markus Lindenmann
  * @date 01.11.2012
  */
-public class CNamed implements CType {
+public class CNamed implements ICType {
 	/**
 	 * The type this named type is mapping to.
 	 */
-	private final CType mMappedType;
+	private final ICType mMappedType;
 
 	/**
 	 * The name that is mapped.
@@ -57,7 +57,7 @@ public class CNamed implements CType {
 	 * @param mappedType
 	 *            the type this named type is referring to.
 	 */
-	public CNamed(final String name, final CType mappedType) {
+	public CNamed(final String name, final ICType mappedType) {
 		mName = name;
 		mMappedType = mappedType;
 	}
@@ -77,7 +77,7 @@ public class CNamed implements CType {
 	 * @return the type this named type is referring to.
 	 */
 	@Override
-	public CType getUnderlyingType() {
+	public ICType getUnderlyingType() {
 		return mMappedType.getUnderlyingType();
 	}
 

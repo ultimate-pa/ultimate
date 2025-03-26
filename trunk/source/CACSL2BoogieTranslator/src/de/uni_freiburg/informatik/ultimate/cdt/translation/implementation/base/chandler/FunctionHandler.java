@@ -106,7 +106,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -285,7 +285,7 @@ public class FunctionHandler {
 
 		final CFunction oldFunType = (CFunction) cDec.getType();
 		final CFunction funType = updateVarArgsUsage(loc, node, oldFunType, definedProcName);
-		final CType returnCType = funType.getResultType();
+		final ICType returnCType = funType.getResultType();
 		mNameHandler.addFunction(definedProcName, returnCType);
 		definedProcInfo.updateCFunction(funType);
 		final boolean returnTypeIsVoid =
@@ -468,7 +468,7 @@ public class FunctionHandler {
 		assert functionPointer != null : "functionName is null";
 		final ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionPointer);
 
-		CType calledFuncType = funcNameRex.getLrValue().getCType().getUnderlyingType();
+		ICType calledFuncType = funcNameRex.getLrValue().getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction) && calledFuncType instanceof CPointer) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
@@ -576,7 +576,7 @@ public class FunctionHandler {
 					mExprResultTransformer.transformDecaySwitchRexBoolToInt(returnValue, loc, node.getReturnValue());
 
 			// do some implicit casts
-			final CType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
+			final ICType functionResultType = mProcedureManager.getCurrentProcedureInfo().getCType().getResultType();
 			// TODO 2018-09-22 Matthias: I have some doubts that the following lines are usefull.
 			// Does C11 really mention a special treatment for zero literals in return statements?
 			if (!returnValue.getLrValue().getCType().equals(functionResultType)
@@ -684,7 +684,7 @@ public class FunctionHandler {
 					functionCallExpressionResultBuilder.addAllExceptLrValue(inPromoted);
 					continue;
 				}
-				CType expectedParamType =
+				ICType expectedParamType =
 						calleeProcInfo.getCType().getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
@@ -736,7 +736,7 @@ public class FunctionHandler {
 			final Expression originalBase = MemoryHandler.getPointerBaseAddress(auxvarinfo.getExp(), loc);
 			final Expression originalOffset = MemoryHandler.getPointerOffset(auxvarinfo.getExp(), loc);
 			for (final ExpressionResult param : varargs) {
-				final CType argType = param.getCType().getUnderlyingType();
+				final ICType argType = param.getCType().getUnderlyingType();
 				// Write the current parameter to *(varargs + currentOffset) and increment currentOffset by the typesize
 				// afterwards
 				final Expression pointerOffset = mExpressionTranslation.constructArithmeticExpression(loc,
@@ -925,7 +925,7 @@ public class FunctionHandler {
 				final String inparamCId = mSymboltable.getCIdForBoogieId(inparamBId);
 
 				ASTType type = inparamVarList.getType();
-				final CType cvar = mSymboltable.findCSymbol(paramDec, inparamCId).getCType();
+				final ICType cvar = mSymboltable.findCSymbol(paramDec, inparamCId).getCType();
 
 				// TODO: This is a workaround for the command line arguments of the main function
 				// The main function can only take arguments of type int and char** or char*[]
@@ -1151,7 +1151,7 @@ public class FunctionHandler {
 			builder.addStatement(call);
 		}
 
-		final CType returnCType = mProcedureManager.isCalledBeforeDeclared(procInfo) ? new CPrimitive(CPrimitives.INT)
+		final ICType returnCType = mProcedureManager.isCalledBeforeDeclared(procInfo) ? new CPrimitive(CPrimitives.INT)
 				: procInfo.getCType().getResultType();
 
 		if (returnedValue != null) {

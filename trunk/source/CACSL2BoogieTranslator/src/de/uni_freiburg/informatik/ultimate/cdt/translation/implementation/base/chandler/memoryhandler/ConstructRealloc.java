@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -109,7 +109,7 @@ public final class ConstructRealloc {
 	 */
 	public List<Declaration> declareRealloc(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-		final CType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final ICType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
 		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final String reallocProcName = SFO.C_REALLOC;
 

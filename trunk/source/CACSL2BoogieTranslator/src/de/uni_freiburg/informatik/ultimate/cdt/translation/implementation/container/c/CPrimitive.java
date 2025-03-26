@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
  * @author Markus Lindenmann
  * @date 13.07.2012
  */
-public class CPrimitive implements CType {
+public class CPrimitive implements ICType {
 	/**
 	 * @author Markus Lindenmann
 	 * @date 18.09.2012 Describing primitive C types. (updated 10.12.2013 by nutz)

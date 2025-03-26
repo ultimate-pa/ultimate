@@ -38,7 +38,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
  * @date 18.09.2012
  * @author nutz
  */
-public interface CType {
+public interface ICType {
 	/**
 	 * Returns true iff this type is incomplete according to the definition 6.2.5.1/19/22/23 in the C11 standard.
 	 */
@@ -55,7 +55,7 @@ public interface CType {
 	 *            CType object
 	 * @return the underlying type in case of CNamed, else the input object
 	 */
-	default CType getUnderlyingType() {
+	default ICType getUnderlyingType() {
 		return this;
 	}
 

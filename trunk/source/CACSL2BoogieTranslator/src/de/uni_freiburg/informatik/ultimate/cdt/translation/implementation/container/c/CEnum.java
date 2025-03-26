@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author nutz
  * @date 18.09.2012
  */
-public class CEnum implements CType, ICPossibleIncompleteType<CEnum> {
+public class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 	/**
 	 * Field names.
 	 */
@@ -127,7 +127,7 @@ public class CEnum implements CType, ICPossibleIncompleteType<CEnum> {
 	 * as an enumeration constant has type int.
 	 *
 	 */
-	public static CType replaceEnumWithInt(final CType cType) {
+	public static ICType replaceEnumWithInt(final ICType cType) {
 		if (cType.getUnderlyingType() instanceof CEnum) {
 			return new CPrimitive(CPrimitives.INT);
 		}

@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -150,7 +150,7 @@ public class ExpressionResultTransformer {
 		mDataRaceChecker = dataRaceChecker;
 	}
 
-	private ExpressionResult transform(final ExpressionResult expr, final CType targetCType, final ILocation loc,
+	private ExpressionResult transform(final ExpressionResult expr, final ICType targetCType, final ILocation loc,
 			final IASTNode hook, final Transformation... transformations) {
 		if (transformations == null || transformations.length == 0) {
 			return expr;
@@ -192,7 +192,7 @@ public class ExpressionResultTransformer {
 	 * </ul>
 	 */
 	public ExpressionResult transformDispatchDecaySwitchImplicitConversion(final IDispatcher main, final ILocation loc,
-			final IASTInitializerClause hook, final CType newTypeRaw) {
+			final IASTInitializerClause hook, final ICType newTypeRaw) {
 		final ExpressionResult dispatched = (ExpressionResult) main.dispatch(hook);
 		return transform(dispatched, newTypeRaw, loc, hook, Transformation.DECAY_ARRAY_TO_POINTER,
 				Transformation.SWITCH_TO_RVALUE, Transformation.IMPLICIT_CONVERSION);
@@ -235,10 +235,10 @@ public class ExpressionResultTransformer {
 			return replaceEnumByInt(replaceCFunctionByCPointer(expr));
 		}
 		if (lrVal instanceof LocalLValue) {
-			final CType underlyingType = lrVal.getCType().getUnderlyingType();
+			final ICType underlyingType = lrVal.getCType().getUnderlyingType();
 			mCHandler.moveArrayAndStructIdsOnHeap(underlyingType, lrVal.getValue(), hook);
 
-			final CType resultType;
+			final ICType resultType;
 			if (underlyingType instanceof CArray) {
 				resultType = new CPointer(((CArray) underlyingType).getValueType());
 			} else if (underlyingType instanceof CFunction) {
@@ -257,7 +257,7 @@ public class ExpressionResultTransformer {
 		}
 		if (lrVal instanceof HeapLValue) {
 			final HeapLValue hlv = (HeapLValue) lrVal;
-			CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
+			ICType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 			if (underlyingType instanceof CEnum) {
 				underlyingType = new CPrimitive(CPrimitives.INT);
 			}
@@ -328,7 +328,7 @@ public class ExpressionResultTransformer {
 		final Set<AuxVarInfo> newAuxVars = new LinkedHashSet<>();
 
 		final String[] fieldIds = structType.getFieldIds();
-		final CType[] fieldTypes = structType.getFieldTypes();
+		final ICType[] fieldTypes = structType.getFieldTypes();
 
 		// the new Arrays for the StructConstructor
 		final ArrayList<String> fieldIdentifiers = new ArrayList<>();
@@ -337,7 +337,7 @@ public class ExpressionResultTransformer {
 		for (int i = 0; i < fieldIds.length; i++) {
 			fieldIdentifiers.add(fieldIds[i]);
 
-			CType underlyingType;
+			ICType underlyingType;
 			if (fieldTypes[i] instanceof CNamed) {
 				underlyingType = ((CNamed) fieldTypes[i]).getUnderlyingType();
 			} else {
@@ -438,7 +438,7 @@ public class ExpressionResultTransformer {
 	 */
 	private ExpressionResult readArrayFromHeap(final ExpressionResult old, final ILocation loc,
 			final Expression address, final CArray arrayType, final IASTNode hook) {
-		final CType arrayValueType = arrayType.getValueType().getUnderlyingType();
+		final ICType arrayValueType = arrayType.getValueType().getUnderlyingType();
 		if (arrayValueType instanceof CArray) {
 			throw new UnsupportedSyntaxException(loc,
 					"we need to generalize this to nested and/or variable length arrays");
@@ -546,7 +546,7 @@ public class ExpressionResultTransformer {
 	}
 
 	public ExpressionResult makeRepresentationReadyForConversionAndRexBoolToInt(final ExpressionResult expr,
-			final ILocation loc, final CType targetCType, final IASTNode hook) {
+			final ILocation loc, final ICType targetCType, final IASTNode hook) {
 		final ExpressionResult readyExpr = makeRepresentationReadyForConversion(expr, loc, targetCType, hook);
 		return rexBoolToInt(readyExpr, loc);
 	}
@@ -557,7 +557,7 @@ public class ExpressionResultTransformer {
 	 * {@link CArray} the array is decayed to a pointer, otherwise we just switch to an RValue.
 	 */
 	public ExpressionResult makeRepresentationReadyForConversion(final ExpressionResult expr, final ILocation loc,
-			final CType targetCType, final IASTNode hook) {
+			final ICType targetCType, final IASTNode hook) {
 		if (expr.getLrValue() == null) {
 			throw new AssertionError("Missing value " + loc);
 		}
@@ -612,7 +612,7 @@ public class ExpressionResultTransformer {
 	}
 
 	/**
-	 * If the {@link CType} of is a {@link CArray}, we will return a new {@link ExpressionResult} in which the
+	 * If the {@link ICType} of is a {@link CArray}, we will return a new {@link ExpressionResult} in which the
 	 * representation was switched from array to pointer. Otherwise this object is returned (without any modifications).
 	 *
 	 * Triggers that the array is moved on heap, if necessary.
@@ -637,17 +637,17 @@ public class ExpressionResultTransformer {
 	 *
 	 * See also {@link ExpressionTranslation#usualArithmeticConversions(ILocation, ExpressionResult, ExpressionResult)}.
 	 *
-	 * Modifies a given {@link ExpressionResult} such that the effect of a cast from the current {@link CType} of the
+	 * Modifies a given {@link ExpressionResult} such that the effect of a cast from the current {@link ICType} of the
 	 * {@link ExpressionResult} to resultType is captured. Method may exchange the {@link RValue} of the
 	 * {@link ExpressionResult} and add additional objects (statements, auxVars, etc.).
 	 *
 	 */
-	public ExpressionResult performImplicitConversion(final ExpressionResult expr, final CType targetCType,
+	public ExpressionResult performImplicitConversion(final ExpressionResult expr, final ICType targetCType,
 			final ILocation loc) {
 		final RValue rValIn = (RValue) expr.getLrValue();
-		final CType newType = targetCType.getUnderlyingType();
+		final ICType newType = targetCType.getUnderlyingType();
 
-		final CType oldType = rValIn.getCType().getUnderlyingType();
+		final ICType oldType = rValIn.getCType().getUnderlyingType();
 
 		final BoogieType oldBoogieType = (BoogieType) expr.getLrValue().getValue().getType();
 		final BoogieType newBoogieType = mTypeHandler.getBoogieTypeForCType(targetCType);
@@ -695,7 +695,7 @@ public class ExpressionResultTransformer {
 	private ExpressionResult convertToIntegerType(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
-		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
 		if (oldType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
@@ -730,7 +730,7 @@ public class ExpressionResultTransformer {
 	private ExpressionResult convertToPointer(final ILocation loc, final ExpressionResult rexp,
 			final CPointer newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
-		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
 		if (oldType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
@@ -784,7 +784,7 @@ public class ExpressionResultTransformer {
 	private static ExpressionResult convertToVoid(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
-		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
 		if (oldType instanceof CPrimitive) {
 			// ok
 		} else if (oldType instanceof CPointer) {
@@ -814,7 +814,7 @@ public class ExpressionResultTransformer {
 	private ExpressionResult convertToFloatingType(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
-		final CType oldType = rexp.getLrValue().getCType().getUnderlyingType();
+		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
 		if (oldType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
@@ -908,7 +908,7 @@ public class ExpressionResultTransformer {
 	 * performed (because we don't have a smaller integer type), the operand is returned.
 	 */
 	public final ExpressionResult promoteToIntegerIfNecessary(final ILocation loc, final ExpressionResult operand) {
-		final CType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
+		final ICType ctype = CEnum.replaceEnumWithInt(operand.getLrValue().getCType().getUnderlyingType());
 		if (ctype instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) ctype;
 			if (integerPromotionNeeded(cPrimitive)) {
@@ -1001,7 +1001,7 @@ public class ExpressionResultTransformer {
 	 *
 	 */
 	public ExpressionResult convertNullPointerConstantToPointer(final ExpressionResult nullPointerConstant,
-			final CType desiredResultType, final ILocation loc) {
+			final ICType desiredResultType, final ILocation loc) {
 		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			return mExprTrans.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
 		}
@@ -1074,7 +1074,7 @@ public class ExpressionResultTransformer {
 					StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
 
 		} else if (lhs instanceof HeapLValue) {
-			final CType resultType = ((CPointer) lhs.getCType()).getPointsToType();
+			final ICType resultType = ((CPointer) lhs.getCType()).getPointsToType();
 			builder.addStatements(mMemoryHandler.getWriteCall(loc, (HeapLValue) lhs, rhs, resultType, false));
 		}
 		if (mDataRaceChecker != null) {
@@ -1096,7 +1096,7 @@ public class ExpressionResultTransformer {
 	 */
 	public ExpressionResult readPointerValue(final ILocation loc, final LRValue value) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final CType resultType = ((CPointer) value.getCType()).getPointsToType();
+		final ICType resultType = ((CPointer) value.getCType()).getPointsToType();
 		if (mDataRaceChecker != null) {
 			mDataRaceChecker.checkOnRead(builder, loc, value);
 		}
@@ -1116,6 +1116,6 @@ public class ExpressionResultTransformer {
 	@FunctionalInterface
 	private interface ITransformationFunction {
 		ExpressionResult apply(final ExpressionResultTransformer ert, final ExpressionResult expr,
-				final CType targetCType, final ILocation loc, final IASTNode hook);
+				final ICType targetCType, final ILocation loc, final IASTNode hook);
 	}
 }

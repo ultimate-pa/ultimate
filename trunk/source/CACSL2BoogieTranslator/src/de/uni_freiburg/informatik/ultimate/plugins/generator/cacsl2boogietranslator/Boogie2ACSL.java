@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -226,11 +226,11 @@ public final class Boogie2ACSL {
 			final de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression expr, final ILocation context) {
 		final String boogieId = expr.getIdentifier();
 		if (boogieId.equals(SFO.RES)) {
-			final CType type = mMapping.getReturnTypeOfFunction(expr.getDeclarationInformation().getProcedure());
+			final ICType type = mMapping.getReturnTypeOfFunction(expr.getDeclarationInformation().getProcedure());
 			final var range = getRangeForCType(type);
 			return new BacktranslatedExpression(new ACSLResultExpression(), type, range);
 		} else if (mMapping.hasVar(boogieId, expr.getDeclarationInformation())) {
-			final Triple<String, CType, Boolean> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
+			final Triple<String, ICType, Boolean> pair = mMapping.getVar(boogieId, expr.getDeclarationInformation());
 
 			// TODO If the C variable is on-heap, we technically have to backtranslate the Boogie variable to an
 			// address-of expression (the Boogie variable represents the pointer to the C variable), and similarly for
@@ -244,7 +244,7 @@ public final class Boogie2ACSL {
 				return new BacktranslatedExpression(new IdentifierExpression(pair.getFirst()), pair.getSecond(), range);
 			}
 		} else if (mMapping.hasInVar(boogieId, expr.getDeclarationInformation())) {
-			final Pair<String, CType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
+			final Pair<String, ICType> pair = mMapping.getInVar(boogieId, expr.getDeclarationInformation());
 			final var range = getRangeForCType(pair.getSecond());
 
 			if (isFunctionDefinition(context)) {
@@ -475,7 +475,7 @@ public final class Boogie2ACSL {
 		return new BacktranslatedExpression(result, resultType, BigInterval.singleton(value));
 	}
 
-	private CType determineTypeForArithmeticOperation(final CType type1, final CType type2) {
+	private ICType determineTypeForArithmeticOperation(final ICType type1, final ICType type2) {
 		if (type1 == null || type2 == null) {
 			return null;
 		}
@@ -497,20 +497,20 @@ public final class Boogie2ACSL {
 		return mTypeSizes.getSize(prim1.getType()) >= mTypeSizes.getSize(prim2.getType()) ? prim1 : prim2;
 	}
 
-	private boolean fitsInType(final BigInteger value, final CType type) {
+	private boolean fitsInType(final BigInteger value, final ICType type) {
 		return fitsInType(BigInterval.singleton(value), type);
 	}
 
-	private boolean fitsInType(final BigInterval range, final CType type) {
+	private boolean fitsInType(final BigInterval range, final ICType type) {
 		return getRangeForCType(type).contains(range);
 	}
 
-	private CType determineTypeForRange(final BigInterval range) {
+	private ICType determineTypeForRange(final BigInterval range) {
 		final List<CPrimitives> orderedTypes = List.of(CPrimitives.CHAR, CPrimitives.UCHAR, CPrimitives.SHORT,
 				CPrimitives.USHORT, CPrimitives.INT, CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG,
 				CPrimitives.LONGLONG, CPrimitives.ULONGLONG, CPrimitives.INT128, CPrimitives.UINT128);
 		for (final CPrimitives prim : orderedTypes) {
-			final CType type = new CPrimitive(prim);
+			final ICType type = new CPrimitive(prim);
 			if (fitsInType(range, type)) {
 				return type;
 			}
@@ -608,11 +608,11 @@ public final class Boogie2ACSL {
 		final BacktranslatedExpression rhs = translateExpression(expression.getRight(), context, isNegated);
 		final BigInterval leftRange = lhs == null ? BigInterval.unbounded() : lhs.range();
 		final BigInterval rightRange = rhs == null ? BigInterval.unbounded() : rhs.range();
-		final CType leftType = lhs == null ? null : lhs.cType();
-		final CType rightType = rhs == null ? null : rhs.cType();
+		final ICType leftType = lhs == null ? null : lhs.cType();
+		final ICType rightType = rhs == null ? null : rhs.cType();
 		final Operator operator;
 		final BigInterval range;
-		CType resultType;
+		ICType resultType;
 		switch (expression.getOperator()) {
 		case ARITHDIV:
 			return translateDiv(lhs, rhs);
@@ -724,7 +724,7 @@ public final class Boogie2ACSL {
 			final boolean isNegated) {
 		final Expression resultExpr;
 		final BigInterval range;
-		final CType cType;
+		final ICType cType;
 		switch (expr.getOperator()) {
 		case ARITHNEGATIVE: {
 			final BacktranslatedExpression innerTrans = translateExpression(expr.getExpr(), context, isNegated);
@@ -777,7 +777,7 @@ public final class Boogie2ACSL {
 		return true;
 	}
 
-	private BigInterval getRangeForCType(final CType type) {
+	private BigInterval getRangeForCType(final ICType type) {
 		if (type == null || !(type.getUnderlyingType() instanceof CPrimitive)) {
 			return BigInterval.unbounded();
 		}
@@ -802,7 +802,7 @@ public final class Boogie2ACSL {
 			return null;
 		}
 		Expression result = array.expression();
-		CType resultType = array.cType();
+		ICType resultType = array.cType();
 		for (final var index : expression.getIndices()) {
 			final BacktranslatedExpression translatedIndex = translateExpression(index, context);
 			if (translatedIndex == null) {

@@ -192,7 +192,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -794,7 +794,7 @@ public class CHandler {
 		case IASTBinaryExpression.op_assign: {
 			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 			builder.addAllExceptLrValue(leftOperand);
-			final CType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
+			final ICType lType = leftOperand.getLrValue().getCType().getUnderlyingType();
 			final ExpressionResult rightOperandSwitched = mExprResultTransformer
 					.makeRepresentationReadyForConversionAndRexBoolToInt(rightOperand, loc, lType, node);
 			builder.addAllIncludingLrValue(rightOperandSwitched);
@@ -1050,7 +1050,7 @@ public class CHandler {
 
 		mCurrentDeclaredTypes.push(resTypes);
 		final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
-		final CType newCType = declResult.getDeclaration().getType();
+		final ICType newCType = declResult.getDeclaration().getType();
 		mCurrentDeclaredTypes.pop();
 
 		final ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand());
@@ -1074,23 +1074,23 @@ public class CHandler {
 		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
-	private void checkIfNecessaryMemoryModelAdaption(final ILocation loc, final CType castTargetType,
+	private void checkIfNecessaryMemoryModelAdaption(final ILocation loc, final ICType castTargetType,
 			final ExpressionResult operand) {
-		final CType operandType = operand.getLrValue().getCType().getUnderlyingType();
+		final ICType operandType = operand.getLrValue().getCType().getUnderlyingType();
 		if (!(operandType instanceof CArray) && !(operandType instanceof CPointer)
 				|| !(castTargetType instanceof CArray) && !(castTargetType instanceof CPointer)) {
 			return;
 		}
 
 		// memory model adaptation might be necessary
-		final CType operandValueType;
+		final ICType operandValueType;
 		if (operandType instanceof CArray) {
 			operandValueType = ((CArray) operandType).getValueType().getUnderlyingType();
 		} else {
 			operandValueType = ((CPointer) operandType).getPointsToType().getUnderlyingType();
 		}
 
-		final CType castTargetValueType;
+		final ICType castTargetValueType;
 		if (castTargetType instanceof CArray) {
 			castTargetValueType = ((CArray) castTargetType).getValueType().getUnderlyingType();
 		} else {
@@ -1274,18 +1274,18 @@ public class CHandler {
 		final boolean isOnHeap = isOnHeap(node);
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
-		final CType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
+		final ICType nestedPointerType = getPointerType(pointerOps.length, pendingResType.getCType());
 		final TypesResult resType = TypesResult.create(pendingResType, nestedPointerType);
 
 		// Adapt the name for multiparse input
 		final String declName;
-		final CType cType;
+		final ICType cType;
 		ResultWithSideEffects sideEffects = null;
 		if (node instanceof IASTArrayDeclarator) {
 			final IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 
 			// the innermost type is the value type..
-			CType arrayType = resType.getCType();
+			ICType arrayType = resType.getCType();
 
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<>();
@@ -1489,8 +1489,8 @@ public class CHandler {
 	 *            The underlying type
 	 * @return The new CPointer.
 	 */
-	private static CType getPointerType(int length, final CType cType) {
-		CType type = cType;
+	private static ICType getPointerType(int length, final ICType cType) {
+		ICType type = cType;
 		for (; length > 0; --length) {
 			type = new CPointer(type);
 		}
@@ -1706,7 +1706,7 @@ public class CHandler {
 
 		}
 		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
-			final CType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final ICType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.NONDET);
 			final RValue rvalue = new RValue(auxvar.getExp(), returnType);
 			return new ExpressionResult(List.of(), rvalue, List.of(auxvar.getVarDec()), Set.of(auxvar));
@@ -1721,7 +1721,7 @@ public class CHandler {
 		}
 
 		final String bId;
-		final CType cType;
+		final ICType cType;
 		final boolean useHeap;
 		final boolean intFromPtr;
 		DeclarationInformation declarationInformation;
@@ -1881,7 +1881,7 @@ public class CHandler {
 		final CDeclaration cDeclaration = declaratorResult.getDeclaration();
 		assert !cDeclaration.hasInitializer() : "unexpected, inspect this case";
 		assert !cDeclaration.isOnHeap() : "unexpected, inspect this case";
-		final CType cType = cDeclaration.getType().getUnderlyingType();
+		final ICType cType = cDeclaration.getType().getUnderlyingType();
 
 		// translate initializer
 		final IASTInitializer initializer = node.getInitializer();
@@ -2640,7 +2640,7 @@ public class CHandler {
 		case IASTUnaryExpression.op_bracketedPrimary:
 			return operand;
 		case IASTUnaryExpression.op_sizeof:
-			final CType operandType = operand.getCType().getUnderlyingType();
+			final ICType operandType = operand.getCType().getUnderlyingType();
 			return new ExpressionResult(
 					new RValue(mMemoryHandler.calculateSizeOf(loc, operandType), mTypeSizeComputer.getSizeT()),
 					Collections.emptySet());
@@ -2747,7 +2747,7 @@ public class CHandler {
 			// There could be multiple PointerOperators (i.e.
 			// IASTPointer) - what does that mean for the translation?
 			final ASTType t = mTypeHandler.constructPointerType(null);
-			final CType cvar = new CPointer(resType.getCType());
+			final ICType cvar = new CPointer(resType.getCType());
 			return new TypesResult(t, resType.isConst(), resType.isVoid(), cvar);
 		}
 		return resType;
@@ -2782,7 +2782,7 @@ public class CHandler {
 		} else {
 			newValue = ((HeapLValue) rightLrVal).getAddress();
 		}
-		final CType newType = new CPointer(((CArray) rightLrVal.getCType().getUnderlyingType()).getValueType());
+		final ICType newType = new CPointer(((CArray) rightLrVal.getCType().getUnderlyingType()).getValueType());
 		return new RValue(newValue, newType);
 	}
 
@@ -3023,7 +3023,7 @@ public class CHandler {
 	/**
 	 * @return true iff this is called while in prerun mode, false otherwise
 	 */
-	public void moveArrayAndStructIdsOnHeap(final CType underlyingType, final Expression expr, final IASTNode hook) {
+	public void moveArrayAndStructIdsOnHeap(final ICType underlyingType, final Expression expr, final IASTNode hook) {
 		if (!mIsPrerun) {
 			if (underlyingType instanceof CArray) {
 				throw new AssertionError("on-heap/off-heap bug: array has to be on-heap");
@@ -3042,7 +3042,7 @@ public class CHandler {
 			if (value == null) {
 				throw new AssertionError("no entry in symbol table for C-ID " + cid);
 			}
-			final CType type = value.getCType().getUnderlyingType();
+			final ICType type = value.getCType().getUnderlyingType();
 			if (type instanceof CArray || type instanceof CStructOrUnion) {
 				addToVariablesOnHeap(value.getDeclarationNode());
 			}
@@ -3053,13 +3053,13 @@ public class CHandler {
 		return mReachableDeclarations == null || mReachableDeclarations.contains(node);
 	}
 
-	private void checkUnsupportedPointerCast(final ExpressionResult expr, final ILocation loc, final CType newCType) {
+	private void checkUnsupportedPointerCast(final ExpressionResult expr, final ILocation loc, final ICType newCType) {
 		if (!POINTER_CAST_IS_UNSUPPORTED_SYNTAX || !(newCType instanceof CPointer)
 				|| !(expr.getLrValue().getCType() instanceof CPointer)) {
 			return;
 		}
-		final CType newPointsToType = ((CPointer) newCType).getPointsToType();
-		final CType exprPointsToType = ((CPointer) expr.getLrValue().getCType()).getPointsToType();
+		final ICType newPointsToType = ((CPointer) newCType).getPointsToType();
+		final ICType exprPointsToType = ((CPointer) expr.getLrValue().getCType()).getPointsToType();
 		if (newPointsToType instanceof CPrimitive && exprPointsToType instanceof CPrimitive) {
 			if (((CPrimitive) newPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE
 					&& ((CPrimitive) exprPointsToType).getGeneralType() == CPrimitiveCategory.INTTYPE) {
@@ -3112,9 +3112,9 @@ public class CHandler {
 
 			mTypeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, boogieType, cDec.getName(), null),
 					false, false, cDec.getType()));
-			final CType cType = cDec.getType();
+			final ICType cType = cDec.getType();
 			if (cType.isIncomplete() && !cType.isVoidType()) {
-				final CType underlying = cType.getUnderlyingType();
+				final ICType underlying = cType.getUnderlyingType();
 				final String identifier;
 				if (underlying instanceof CStructOrUnion) {
 					identifier = ((CStructOrUnion) underlying).getName();
@@ -3543,7 +3543,7 @@ public class CHandler {
 					String.format("The ghost variable %s shadows another variable.", decl.getIdentifier()));
 		}
 		final String boogieName = SFO.GHOST + decl.getIdentifier();
-		final CType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
+		final ICType cType = AcslTypeUtils.translateAcslTypeToCType(decl.getType());
 		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
 		final VariableDeclaration boogieDecl = new VariableDeclaration(loc, new Attribute[0],
 				new VarList[] { new VarList(loc, new String[] { boogieName }, astType) });
@@ -3656,7 +3656,7 @@ public class CHandler {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
 		}
 		final CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
-		final CType pointedType = pointer.getPointsToType();
+		final ICType pointedType = pointer.getPointsToType();
 		if (pointedType.isIncomplete()) {
 			return new ExpressionWithIncompleteTypeResult(rop.getStatements(),
 					LRValueFactory.constructHeapLValue(mTypeHandler, rValue.getValue(), pointedType, null),

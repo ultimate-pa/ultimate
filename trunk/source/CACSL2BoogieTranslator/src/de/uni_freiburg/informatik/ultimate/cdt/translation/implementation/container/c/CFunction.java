@@ -47,18 +47,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CFunction implements CType {
+public class CFunction implements ICType {
 
 	public enum VarArgsUsage {
 		USED, UNUSED, UNKNOWN
 	}
 
-	private final CType mResultType;
+	private final ICType mResultType;
 	private final CDeclaration[] mParamTypes;
 	private final boolean mTakesVarArgs;
 	private final VarArgsUsage mVarArgsUsage;
 
-	private CFunction(final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
+	private CFunction(final ICType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
 			final VarArgsUsage varArgsUsage) {
 		mResultType = resultType;
 		mParamTypes = paramTypes;
@@ -72,7 +72,7 @@ public class CFunction implements CType {
 	/**
 	 * Create C function with unknown varargs usage
 	 */
-	private CFunction(final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs) {
+	private CFunction(final ICType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs) {
 		this(resultType, paramTypes, takesVarArgs, takesVarArgs ? VarArgsUsage.UNKNOWN : VarArgsUsage.UNUSED);
 	}
 
@@ -92,12 +92,12 @@ public class CFunction implements CType {
 		return new CFunction(null, new CDeclaration[0], false);
 	}
 
-	public static CFunction createCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+	public static CFunction createCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final IFunction binding) {
 		return new CFunction(resultType, paramDeclarations, binding.takesVarArgs());
 	}
 
-	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+	public static CFunction tryCreateCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final ITypedef binding) {
 		IType typedefType = binding.getType();
 		if (typedefType instanceof IFunctionType) {
@@ -113,7 +113,7 @@ public class CFunction implements CType {
 		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + typedefType);
 	}
 
-	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+	public static CFunction tryCreateCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final IVariable binding) {
 		IType varType = binding.getType();
 		if (varType instanceof IPointerType) {
@@ -150,7 +150,7 @@ public class CFunction implements CType {
 	/**
 	 * Create a new {@link CFunction} that is identical to this one except for the return type.
 	 */
-	public CFunction newReturnType(final CType returnType) {
+	public CFunction newReturnType(final ICType returnType) {
 		return new CFunction(returnType, getParameterTypes(), hasVarArgs(), getVarArgsUsage());
 	}
 
@@ -164,7 +164,7 @@ public class CFunction implements CType {
 				usesVarArgs ? VarArgsUsage.USED : VarArgsUsage.UNUSED);
 	}
 
-	public CType getResultType() {
+	public ICType getResultType() {
 		return mResultType;
 	}
 
@@ -198,7 +198,7 @@ public class CFunction implements CType {
 		return sb.toString();
 	}
 
-	private static StringBuilder appendCType(final StringBuilder sb, final CType type) {
+	private static StringBuilder appendCType(final StringBuilder sb, final ICType type) {
 		if (type == null) {
 			sb.append("?");
 		} else {

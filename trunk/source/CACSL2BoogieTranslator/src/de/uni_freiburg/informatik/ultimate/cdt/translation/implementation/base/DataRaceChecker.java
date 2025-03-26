@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
@@ -319,7 +319,7 @@ public final class DataRaceChecker {
 		return Arrays.stream(getRaceLhs(loc, lrVal)).map(CTranslationUtil::convertLhsToExpression);
 	}
 
-	private int getTypeSize(final ILocation loc, final CType type) {
+	private int getTypeSize(final ILocation loc, final ICType type) {
 		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type);
 		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT()).intValueExact();
 	}

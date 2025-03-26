@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CPointer implements CType {
+public class CPointer implements ICType {
 	/**
 	 * The type, this pointer points to.
 	 */
-	private final CType mPointsToType;
+	private final ICType mPointsToType;
 
 	/**
 	 * Constructor.
@@ -51,11 +51,11 @@ public class CPointer implements CType {
 	 * @param pointsToType
 	 *            the type, this pointer points to.
 	 */
-	public CPointer(final CType pointsToType) {
+	public CPointer(final ICType pointsToType) {
 		mPointsToType = pointsToType;
 	}
 
-	public CType getPointsToType() {
+	public ICType getPointsToType() {
 		return mPointsToType;
 	}
 
@@ -68,7 +68,7 @@ public class CPointer implements CType {
 	@Override
 	public String toString() {
 		CPointer pointer = this;
-		CType pointsTo = null;
+		ICType pointsTo = null;
 		int i = 1;
 		while (true) {
 			pointsTo = pointer.getPointsToType();

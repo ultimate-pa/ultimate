@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @date 18.09.2012
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class CArray implements CType {
+public class CArray implements ICType {
 
 	/**
 	 * Size that we use to indicate that an array has a variable length.
@@ -59,7 +59,7 @@ public class CArray implements CType {
 	 */
 	private final RValue mBound;
 
-	private final CType mValueType;
+	private final ICType mValueType;
 
 	/**
 	 * Constructor.
@@ -71,7 +71,7 @@ public class CArray implements CType {
 	 * @param cDeclSpec
 	 *            the C declaration used.
 	 */
-	public CArray(final RValue bound, final CType valueType) {
+	public CArray(final RValue bound, final ICType valueType) {
 		mBound = bound;
 		mValueType = valueType;
 	}
@@ -86,7 +86,7 @@ public class CArray implements CType {
 	/**
 	 * @return the valueType
 	 */
-	public CType getValueType() {
+	public ICType getValueType() {
 		return mValueType;
 	}
 

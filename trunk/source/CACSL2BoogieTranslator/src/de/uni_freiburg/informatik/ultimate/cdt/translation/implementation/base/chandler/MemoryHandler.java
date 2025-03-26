@@ -117,7 +117,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -280,12 +280,12 @@ public class MemoryHandler {
 		return mMemoryModel;
 	}
 
-	public Expression calculateSizeOf(final ILocation loc, final CType cType) {
+	public Expression calculateSizeOf(final ILocation loc, final ICType cType) {
 		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
 
 	// TODO: This handling is quite imprecise and does not even consider cType
-	public ExpressionResult handleAlignOf(final ILocation loc, final CType cType, final CType resultType) {
+	public ExpressionResult handleAlignOf(final ILocation loc, final ICType cType, final ICType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addOverapprox(new Overapprox("alignof", loc));
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
@@ -733,7 +733,7 @@ public class MemoryHandler {
 	 *            type of the object for which we allocate memory (unlike {@link MemoryHandler#getUltimateMemAllocCall}
 	 *            which takes a pointer to the object for which allocate.
 	 */
-	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final CType cType) {
+	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final ICType cType) {
 		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
 		final Expression addressExpression =
 				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
@@ -762,11 +762,11 @@ public class MemoryHandler {
 	 *         read value.
 	 */
 	// 2015-10
-	public ExpressionResult getReadCall(final Expression address, final CType resultType) {
+	public ExpressionResult getReadCall(final Expression address, final ICType resultType) {
 		return getReadCall(address, resultType, false);
 	}
 
-	public ExpressionResult getReadCall(final Expression address, final CType resultType, final boolean unchecked) {
+	public ExpressionResult getReadCall(final Expression address, final ICType resultType, final boolean unchecked) {
 		final ILocation loc = address.getLocation();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MEMREAD);
@@ -788,9 +788,9 @@ public class MemoryHandler {
 		return resultBuilder.build();
 	}
 
-	private String determineReadProcedure(final CType resultType, final boolean unchecked, final ILocation loc)
+	private String determineReadProcedure(final ICType resultType, final boolean unchecked, final ILocation loc)
 			throws AssertionError {
-		final CType ut = resultType.getUnderlyingType();
+		final ICType ut = resultType.getUnderlyingType();
 		if (ut instanceof CPrimitive) {
 			final CPrimitive cp = (CPrimitive) ut;
 			checkFloatOnHeapSupport(loc, cp);
@@ -849,8 +849,8 @@ public class MemoryHandler {
 	 * @return the required Statements to perform the write.
 	 */
 	public List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CType valueType, final boolean isStaticInitialization) {
-		final CType realValueType = valueType.getUnderlyingType();
+			final ICType valueType, final boolean isStaticInitialization) {
+		final ICType realValueType = valueType.getUnderlyingType();
 
 		final HeapWriteMode writeMode =
 				isStaticInitialization ? HeapWriteMode.STORE_UNCHECKED : HeapWriteMode.STORE_CHECKED;
@@ -862,8 +862,8 @@ public class MemoryHandler {
 	}
 
 	private List<Statement> getWriteCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CType valueType, final HeapWriteMode writeMode) {
-		final CType realValueType = valueType.getUnderlyingType();
+			final ICType valueType, final HeapWriteMode writeMode) {
+		final ICType realValueType = valueType.getUnderlyingType();
 
 		if (realValueType instanceof CPrimitive) {
 			return getWriteCallPrimitive(loc, hlv, value, (CPrimitive) realValueType, writeMode);
@@ -881,7 +881,7 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Like {@link #getWriteCall(ILocation, HeapLValue, Expression, CType, boolean)}, but working under the assumption
+	 * Like {@link #getWriteCall(ILocation, HeapLValue, Expression, ICType, boolean)}, but working under the assumption
 	 * that the to-be-written heap cells are uninitialized so far. Thus we can use "select-constraints" instead of
 	 * "store-constraints" for the heap array.
 	 *
@@ -894,8 +894,8 @@ public class MemoryHandler {
 	 * @return
 	 */
 	public List<Statement> getInitCall(final ILocation loc, final HeapLValue hlv, final Expression value,
-			final CType valueType, final IASTNode hook) {
-		final CType realValueType = valueType.getUnderlyingType();
+			final ICType valueType, final IASTNode hook) {
+		final ICType realValueType = valueType.getUnderlyingType();
 		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT);
 	}
 
@@ -982,7 +982,7 @@ public class MemoryHandler {
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset + integer * sizeof(valueType)}
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
-			final RValue integer, final CType valueType) {
+			final RValue integer, final ICType valueType) {
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
 				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
@@ -998,12 +998,12 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * Like {@link #doPointerArithmetic(int, ILocation, Expression, RValue, CType)} but additionally the integer operand
+	 * Like {@link #doPointerArithmetic(int, ILocation, Expression, RValue, ICType)} but additionally the integer operand
 	 * is converted to the same type that we use to represent pointer components. As a consequence we have to return an
 	 * ExpressionResult.
 	 */
 	public ExpressionResult doPointerArithmeticWithConversion(final int operator, final ILocation loc,
-			final Expression ptrAddress, final RValue integer, final CType valueType) {
+			final Expression ptrAddress, final RValue integer, final ICType valueType) {
 		final ExpressionResult eres = mExpressionTranslation.convertIntToInt(loc, new ExpressionResult(integer),
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression resultExpression =
@@ -1016,11 +1016,11 @@ public class MemoryHandler {
 	 * Multiply an integerExpresion with the size of another type.
 	 *
 	 * @param integerExpresionType
-	 *            {@link CType} whose translation is the Boogie type of integerExpression and the result.
+	 *            {@link ICType} whose translation is the Boogie type of integerExpression and the result.
 	 *
 	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
 	 */
-	public Expression multiplyWithSizeOfAnotherType(final ILocation loc, final CType valueType,
+	public Expression multiplyWithSizeOfAnotherType(final ILocation loc, final ICType valueType,
 			final Expression integerExpression, final CPrimitive integerExpresionType) {
 		final Expression timesSizeOf;
 		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
@@ -1237,7 +1237,7 @@ public class MemoryHandler {
 			final HeapLValue hlv = LRValueFactory.constructHeapLValue(mTypeHandler, pointerIdExpr,
 					new CPointer(new CPrimitive(CPrimitives.VOID)), null);
 
-			final Set<CType> cPrimitivesWithRequiredHeapArray = mRequiredMemoryModelFeatures.getDataOnHeapRequired()
+			final Set<ICType> cPrimitivesWithRequiredHeapArray = mRequiredMemoryModelFeatures.getDataOnHeapRequired()
 					.stream().map(CPrimitive::new).collect(Collectors.toSet());
 			stmt.addAll(getInitializationForHeapAtPointer(ignoreLoc, hlv, cPrimitivesWithRequiredHeapArray));
 
@@ -2585,7 +2585,7 @@ public class MemoryHandler {
 			final Expression startAddress = hlv.getAddress();
 			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-			final CType fieldType = valueType.getFieldType(fieldId);
+			final ICType fieldType = valueType.getFieldType(fieldId);
 			if (checkForFloats && fieldType.getUnderlyingType().isFloatingType()) {
 				stmt.add(ExpressionTranslation.modelUnsupportedFeature(loc,
 						"write for union with floats in the HoenickeLindenmann_Original memory model"));
@@ -2940,7 +2940,7 @@ public class MemoryHandler {
 		final ASTType inputPointerAstType =
 				typeHandler.cType2AstType(tuLoc, new CPointer(new CPrimitive(CPrimitives.VOID)));
 		final String resultIdentifier = SFO.RES;
-		final CType resultCType = new CPrimitive(CPrimitives.INT);
+		final ICType resultCType = new CPrimitive(CPrimitives.INT);
 		final ASTType resultAstType = typeHandler.cType2AstType(tuLoc, resultCType);
 		final BoogieType resultBoogieType = typeHandler.getBoogieTypeForCType(resultCType);
 
@@ -2973,19 +2973,19 @@ public class MemoryHandler {
 	 * @return
 	 */
 	public List<Statement> getInitializationForOnHeapVariableOfAggregateOrUnionType(final ILocation loc,
-			final HeapLValue baseAddress, final CType cType) {
+			final HeapLValue baseAddress, final ICType cType) {
 		assert CTranslationUtil.isAggregateOrUnionType(cType) : "Argument is not aggregate or union but " + cType;
 
-		final Set<CType> relevantBaseTypes = CTranslationUtil.extractNonAggregateNonUnionTypes(cType);
+		final Set<ICType> relevantBaseTypes = CTranslationUtil.extractNonAggregateNonUnionTypes(cType);
 
 		return getInitializationForHeapAtPointer(loc, baseAddress, relevantBaseTypes);
 	}
 
 	private List<Statement> getInitializationForHeapAtPointer(final ILocation loc, final HeapLValue baseAddress,
-			final Set<CType> relevantBaseTypes) throws AssertionError {
+			final Set<ICType> relevantBaseTypes) throws AssertionError {
 		// first collect the concerned heap arrays (in a set, to avoid duplicates)
 		final Set<HeapDataArray> relevantHeapArrays = new LinkedHashSet<>();
-		for (final CType baseType : relevantBaseTypes) {
+		for (final ICType baseType : relevantBaseTypes) {
 			assert !(baseType instanceof CNamed);
 			if (baseType instanceof CPointer) {
 				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();

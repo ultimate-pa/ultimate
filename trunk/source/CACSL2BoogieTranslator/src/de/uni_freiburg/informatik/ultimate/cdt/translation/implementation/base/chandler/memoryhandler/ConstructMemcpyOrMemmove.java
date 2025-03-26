@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -224,7 +224,7 @@ public final class ConstructMemcpyOrMemmove {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final CType charCType = new CPrimitive(CPrimitives.CHAR);
+		final ICType charCType = new CPrimitive(CPrimitives.CHAR);
 		final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 				mTypeHandler.getBoogiePointerType(), srcPtrName,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
@@ -242,7 +242,7 @@ public final class ConstructMemcpyOrMemmove {
 					charCType);
 
 			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
-				final CType cPrimType = new CPrimitive(cPrim);
+				final ICType cPrimType = new CPrimitive(cPrim);
 				final Expression srcAcc;
 				{
 					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPrimType, true);
@@ -273,7 +273,7 @@ public final class ConstructMemcpyOrMemmove {
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
-		final CType charCType = new CPrimitive(CPrimitives.CHAR);
+		final ICType charCType = new CPrimitive(CPrimitives.CHAR);
 		final Expression srcId = ExpressionFactory.constructIdentifierExpression(ignoreLoc,
 				mTypeHandler.getBoogiePointerType(), srcPtrName,
 				new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, surroundingProcedure));
@@ -291,7 +291,7 @@ public final class ConstructMemcpyOrMemmove {
 					charCType);
 
 			if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-				final CType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
+				final ICType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
 				final Expression srcAcc;
 				{
 					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPointer, true);
