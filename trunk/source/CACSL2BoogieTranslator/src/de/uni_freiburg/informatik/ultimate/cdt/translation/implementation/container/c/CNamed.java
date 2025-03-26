@@ -126,4 +126,14 @@ public class CNamed implements CType {
 		}
 		return getUnderlyingType().equals(o);
 	}
+
+	@Override
+	public boolean isVoidPointerType() {
+		return mMappedType.isVoidPointerType();
+	}
+
+	@Override
+	public boolean isVoidType() {
+		return mMappedType.isVoidType();
+	}
 }

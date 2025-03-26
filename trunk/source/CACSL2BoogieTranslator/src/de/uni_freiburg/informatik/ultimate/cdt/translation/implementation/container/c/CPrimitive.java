@@ -345,4 +345,9 @@ public class CPrimitive implements CType {
 	public boolean isFloatingType() {
 		return mGeneralType == CPrimitiveCategory.FLOATTYPE;
 	}
+
+	@Override
+	public boolean isVoidType() {
+		return mType == CPrimitives.VOID;
+	}
 }

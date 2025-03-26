@@ -31,8 +31,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-
 /**
  * @author Markus Lindenmann
  * @date 18.09.2012
@@ -104,12 +102,11 @@ public interface CType {
 	}
 
 	default boolean isVoidPointerType() {
-		return getUnderlyingType() instanceof CPointer && ((CPointer) getUnderlyingType()).getTargetType()
-				.getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
+		return false;
 	}
 
 	default boolean isVoidType() {
-		return getUnderlyingType().equals(new CPrimitive(CPrimitives.VOID));
+		return false;
 	}
 
 	@Override

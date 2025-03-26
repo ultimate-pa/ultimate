@@ -119,4 +119,9 @@ public class CPointer implements CType {
 	public boolean isScalarType() {
 		return true;
 	}
+
+	@Override
+	public boolean isVoidPointerType() {
+		return mPointsToType.getUnderlyingType().isVoidType();
+	}
 }
