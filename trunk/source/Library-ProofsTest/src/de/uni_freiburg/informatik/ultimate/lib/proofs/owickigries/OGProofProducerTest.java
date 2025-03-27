@@ -73,7 +73,8 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size(),
 				annotation);
 
-		// TODO print proof producer statistics
+		// print proof producer statistics
+		mLogger.info(producer.getStatistics());
 	}
 
 	protected CfgSmtToolkit createCsToolkit() {
