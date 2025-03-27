@@ -31,12 +31,15 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireA
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 
 public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
 	private final IUltimateServiceProvider mServices;
@@ -214,6 +217,9 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		private long mRegionCount;
 		private long mNumberOfTerritories;
 
+		private final MinMaxMed mRegionsPerTerritory = new MinMaxMed();
+		private final MinMaxMed mPlacesPerRegion = new MinMaxMed();
+
 		public EmpireAutomataStatistics() {
 			declare(AUTOMATON_SIZE, () -> mAutomatonSize, KeyType.COUNTER);
 			declare(UNIQUE_PAIRS, () -> mUniquePairs, KeyType.COUNTER);
@@ -221,6 +227,9 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
 			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
 			declareCounter(TERRITORY_COUNT, () -> mNumberOfTerritories);
+
+			declareMinMaxMed(REGION_TERRITORY, mRegionsPerTerritory);
+			declareMinMaxMed(PLACES_PER_REGION, mPlacesPerRegion);
 		}
 
 		public void reportEmpire(final ComputeAutomataStatistics<?, ?> statisticsComputation) {
@@ -230,6 +239,9 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 			mLawSize = statisticsComputation.getLawSize();
 			mAnnotationSize = statisticsComputation.getAnnotationSize();
 			mNumberOfTerritories = statisticsComputation.getNumberOfTerritories();
+
+			mRegionsPerTerritory.report(statisticsComputation.getTerritories(), Territory::size);
+			mPlacesPerRegion.report(statisticsComputation.getRegions(), Region::size);
 		}
 	}
 

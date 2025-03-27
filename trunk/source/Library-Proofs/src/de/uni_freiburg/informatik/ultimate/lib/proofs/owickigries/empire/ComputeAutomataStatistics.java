@@ -75,4 +75,12 @@ public class ComputeAutomataStatistics<L, P> {
 	public final long getNumberOfTerritories() {
 		return mNumberOfTerritories;
 	}
+
+	public Set<Region<P>> getRegions() {
+		return mRegions;
+	}
+
+	public Set<Territory<P>> getTerritories() {
+		return mUniquePairs.stream().map(Pair::getFirst).collect(Collectors.toSet());
+	}
 }
