@@ -345,8 +345,8 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 			varLine = lines.filter(l -> l.startsWith(prefix)).findFirst();
 		}
 		if (!varLine.isPresent()) {
-			mLogger.info("no specification of program variables found");
-			throw new IllegalArgumentException();
+			mLogger.warn("no specification of program variables found");
+			return symbolTable;
 		}
 
 		final String varDescr = varLine.get().substring(prefix.length());
