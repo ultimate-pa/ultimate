@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvid
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
-	public static final String EMPIRE_VALIDITY_TIME = "Empire validity check time [ms]";
+	public static final String EMPIRE_VALIDITY_TIME = "Empire validity check time";
 	public static final String OWICKI_GRIES_VALIDITY_TIME = "Owicki-Gries validity check time";
 
 	protected final ILogger mLogger;
@@ -51,13 +51,13 @@ abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
 		mLogger = logger;
 
 		if (empireComputation != null) {
-			declareTimeTracker(empireComputation.getSimpleName() + " time [ms]", mEmpireTime);
+			declareTimeTracker(empireComputation.getSimpleName() + " time", mEmpireTime);
 			forward(empireComputation.getSimpleName() + " statistics", () -> mEmpireStatistics);
 			declareTimeTracker(EMPIRE_VALIDITY_TIME, mEmpireValidityTime);
 		}
 
 		Objects.requireNonNull(ogComputation);
-		declareTimeTracker(ogComputation.getSimpleName() + " time [ms]", mOwickiGriesTime);
+		declareTimeTracker(ogComputation.getSimpleName() + " time", mOwickiGriesTime);
 		declareTimeTracker(OWICKI_GRIES_VALIDITY_TIME, mOwickiGriesValidityTime);
 	}
 
