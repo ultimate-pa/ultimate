@@ -36,6 +36,7 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -73,6 +74,10 @@ public abstract class AbstractStatisticsDataProvider implements IStatisticsDataP
 
 	protected final void declareCounter(final String key, final IntSupplier getter) {
 		declare(key, getter::getAsInt, KeyType.COUNTER);
+	}
+
+	protected final void declareCounter(final String key, final LongSupplier getter) {
+		declare(key, getter::getAsLong, KeyType.COUNTER);
 	}
 
 	protected final void declare(final String key, final Supplier<Object> getter,

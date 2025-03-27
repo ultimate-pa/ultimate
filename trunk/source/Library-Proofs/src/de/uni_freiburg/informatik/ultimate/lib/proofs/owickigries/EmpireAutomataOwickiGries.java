@@ -201,7 +201,9 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		public static final String LAW_SIZE = "empire law size";
 		public static final String ANNOTATION_SIZE = "empire annotation size";
 		public static final String REGION_COUNT = "number of regions";
+		public static final String TERRITORY_COUNT = "number of territories";
 
+		// TODO
 		public static final String REGION_TERRITORY = "number of regions per territory";
 		public static final String PLACES_PER_REGION = "number of places per region";
 
@@ -210,6 +212,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		private long mLawSize;
 		private long mAnnotationSize;
 		private long mRegionCount;
+		private long mNumberOfTerritories;
 
 		public EmpireAutomataStatistics() {
 			declare(AUTOMATON_SIZE, () -> mAutomatonSize, KeyType.COUNTER);
@@ -217,6 +220,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
 			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
 			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
+			declareCounter(TERRITORY_COUNT, () -> mNumberOfTerritories);
 		}
 
 		public void reportEmpire(final ComputeAutomataStatistics<?, ?> statisticsComputation) {
@@ -225,6 +229,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 			mUniquePairs = statisticsComputation.getUniquePairsSize();
 			mLawSize = statisticsComputation.getLawSize();
 			mAnnotationSize = statisticsComputation.getAnnotationSize();
+			mNumberOfTerritories = statisticsComputation.getNumberOfTerritories();
 		}
 	}
 

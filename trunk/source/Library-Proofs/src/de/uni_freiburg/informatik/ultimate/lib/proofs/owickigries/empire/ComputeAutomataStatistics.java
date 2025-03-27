@@ -12,8 +12,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class ComputeAutomataStatistics<L, P> {
 	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
-	Set<Region<P>> mRegions;
-	Set<Pair<Territory<P>, IPredicate>> mUniquePairs;
+	private final Set<Region<P>> mRegions;
+	private final Set<Pair<Territory<P>, IPredicate>> mUniquePairs;
+	private final long mNumberOfTerritories;
 
 	public ComputeAutomataStatistics(
 			final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empireAutomaton) {
@@ -22,6 +23,7 @@ public class ComputeAutomataStatistics<L, P> {
 				.collect(Collectors.toSet());
 		mUniquePairs = mEmpireAutomaton.getStates().stream().map(s -> new Pair<>(s.territory(), s.law()))
 				.collect(Collectors.toSet());
+		mNumberOfTerritories = mEmpireAutomaton.getStates().stream().map(State::territory).distinct().count();
 	}
 
 	/**
@@ -57,8 +59,8 @@ public class ComputeAutomataStatistics<L, P> {
 	 */
 	public final long getLawSize() {
 		final DAGSize sizeComputation = new DAGSize();
-		return mUniquePairs.stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getSecond().getFormula())));
+		return mEmpireAutomaton.getStates().stream()
+				.collect(Collectors.summingLong(x -> sizeComputation.size(x.law().getFormula())));
 	}
 
 	/**
@@ -68,5 +70,9 @@ public class ComputeAutomataStatistics<L, P> {
 	 */
 	public final long getAnnotationSize() {
 		return getAutomatonSize() + getLawSize();
+	}
+
+	public final long getNumberOfTerritories() {
+		return mNumberOfTerritories;
 	}
 }
