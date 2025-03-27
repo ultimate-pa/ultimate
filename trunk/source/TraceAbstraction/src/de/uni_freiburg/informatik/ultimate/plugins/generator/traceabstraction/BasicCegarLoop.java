@@ -3,6 +3,7 @@
  * Copyright (C) 2011-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2022 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 Niklas Kult (niklas111098@gmail.com)
  * Copyright (C) 2015-2022 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.

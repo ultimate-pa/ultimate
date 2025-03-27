@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2024 Niklas Kult (niklas111098@gmail.com)
  * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
