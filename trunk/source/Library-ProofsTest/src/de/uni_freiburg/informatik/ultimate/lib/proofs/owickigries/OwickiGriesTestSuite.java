@@ -157,7 +157,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	public void setUp() {
 		mStartTime = System.nanoTime();
 
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
 
