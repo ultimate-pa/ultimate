@@ -63,8 +63,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  *
  * @author Max Barth (Max.Barth@lmu.de)
  *
- * @param <LETTER> letter type
- * @param <STATE>  state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE> {
 
@@ -86,16 +88,19 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	 * Constructor for parallel search strategy. Gets as additional argument the list of all counterexamples currently
 	 * investigated Tries to find a new counterexample as much different as possible from the once considered.
 	 *
-	 * @param services Ultimate services
-	 * @param operand  input NWA
-	 * @param strategy search strategy
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
+	 * @param strategy
+	 *            search strategy
 	 * @see #IsEmptyParallel(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
 	public IsEmptyParallel(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
 			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, ?>> counterexamples)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, operand, startStates, forbiddenStates, goalStates, goalStateIsAcceptingState, strategy, true);
 
 		// BFS or DFS for search when we call IsEmpty at the end of parallel search
@@ -201,7 +206,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	}
 
-
 	@Override
 	protected Set<STATE> getCallStatesOfCallState(final STATE callState) {
 		Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
@@ -262,34 +266,60 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		return new PQState(currentScore, returnPred, symbol, succ, state, activeCounterexamples, false, true);
 	}
 
-	private PQState getSuccOfInternal(final OutgoingInternalTransition<LETTER, STATE> transition,
-			final int position, final STATE state, final STATE stateK, final ArrayList<Integer> counterexamples) {
+	private boolean increaseScoreDefault(final NestedRun<LETTER, ?> counterexample, final STATE succ,
+			final LETTER symbol, final int position) {
+		if (counterexample.getLength() > position) {
+			IcfgLocation programPoint = null;
+			final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
+			if (stateInCEx instanceof ISLPredicate) {
+				programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
+			} else {
+				throw new AssertionError();
+			}
+
+			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
+				if (symbol == counterexample.getSymbol(position - 1)) {
+					return true;
+				}
+			} else {
+				// can have different serial numbers! is that a problem?
+				// assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
+			}
+		}
+		return false;
+	}
+
+	/*
+	 * We are less strict here and increase already if the succ occurs in the counterexample no matter the position
+	 */
+	private boolean increaseScoreNoLoops(final NestedRun<LETTER, ?> counterexample, final STATE succ,
+			final LETTER symbol, final int position) {
+		for (int i = 0; i < counterexample.getLength(); i++) {
+			IcfgLocation programPoint = null;
+			final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(i);
+			if (stateInCEx instanceof ISLPredicate) {
+				programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
+			} else {
+				throw new AssertionError();
+			}
+			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private PQState getSuccOfInternal(final OutgoingInternalTransition<LETTER, STATE> transition, final int position,
+			final STATE state, final STATE stateK, final ArrayList<Integer> counterexamples) {
 		final LETTER symbol = transition.getLetter();
 		final STATE succ = transition.getSucc();
 		final ArrayList<Integer> activeCounterexamples = new ArrayList<>();
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (counterexample.getLength() > position) {
-
-				IcfgLocation programPoint = null;
-				final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
-				if (stateInCEx instanceof ISLPredicate) {
-					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-				} else {
-					throw new AssertionError();
-				}
-
-				if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-					if (symbol == counterexample.getSymbol(position - 1)) {
-						currentScore += 1;
-						activeCounterexamples.add(cexHash);
-					}
-				} else {
-					// can have different serial numbers! is that a problem?
-					// assert !counterexample.getStateAtPosition(position).equals(transition.getSucc());
-				}
-
+			if (increaseScoreNoLoops(counterexample, succ, symbol, position)) {
+				currentScore += 1;
+				activeCounterexamples.add(cexHash);
 			}
 		}
 		return new PQState(currentScore, state, symbol, transition.getSucc(), stateK, activeCounterexamples, false,
@@ -304,27 +334,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (counterexample.getLength() > position) {
-
-				IcfgLocation programPoint = null;
-				final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
-				if (stateInCEx instanceof ISLPredicate) {
-					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-				} else {
-					throw new AssertionError();
-				}
-
-				if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-					if (symbol == counterexample.getSymbol(position - 1)) {
-						currentScore += 1;
-						activeCounterexamples.add(cexHash);
-					}
-				} else {
-					if (counterexample.getStateAtPosition(position).equals(transition.getSucc())) {
-						throw new AssertionError();
-					}
-				}
-
+			if (increaseScoreNoLoops(counterexample, succ, symbol, position)) {
+				currentScore += 1;
+				activeCounterexamples.add(cexHash);
 			}
 		}
 		return new PQState(currentScore, state, symbol, transition.getSucc(), stateK, activeCounterexamples, true,
@@ -339,26 +351,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (counterexample.getLength() > position) {
-				IcfgLocation programPoint = null;
-				final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(position);
-				if (stateInCEx instanceof ISLPredicate) {
-					programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-				} else {
-					throw new AssertionError();
-				}
-
-				if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-					if (symbol == counterexample.getSymbol(position - 1)) {
-						currentScore += 1;
-						activeCounterexamples.add(cexHash);
-					}
-				} else {
-					if (counterexample.getStateAtPosition(position).equals(transition.getSucc())) {
-						throw new AssertionError();
-					}
-				}
-
+			if (increaseScoreNoLoops(counterexample, succ, symbol, position)) {
+				currentScore += 1;
+				activeCounterexamples.add(cexHash);
 			}
 		}
 
@@ -461,7 +456,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	 */
 	private NestedRun<LETTER, STATE> constructRunFromStateToNextBranch(final int position,
 			final DoubleDecker<STATE> pair, final ArrayList<Integer> counterexamples)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		mCountRecursionSteps += 1;
 		if (System.nanoTime() / 1000000000 > mTimeOut || mTimedout) {
 			mTimedout = true;
@@ -504,8 +499,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 		// enqueues successors
 		if (!counterexamples.isEmpty()) {
-			final PriorityQueue<PQState> pqStart = pickSuccToExplore(positionOfThisSubSearch, state, stateK,
-					counterexamples); // statek is not
+			final PriorityQueue<PQState> pqStart =
+					pickSuccToExplore(positionOfThisSubSearch, state, stateK, counterexamples); // statek is not
 
 			if (pqStart.isEmpty()) {
 				return null;
