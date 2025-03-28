@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.CommuhashNormalForm;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ConstantTermNormalizer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.ConstantTermNormalizer;
 
 /**
  * Use CommuhashNormalForm to simplify TransformulaLR
