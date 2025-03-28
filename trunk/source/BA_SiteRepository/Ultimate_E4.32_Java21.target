@@ -59,12 +59,6 @@
 		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
 			<dependencies>
 				<dependency>
-					<groupId>com.lmax</groupId>
-					<artifactId>disruptor</artifactId>
-					<version>3.4.4</version>
-					<type>jar</type>
-				</dependency>
-				<dependency>
 					<groupId>io.github.uuverifiers</groupId>
 					<artifactId>eldarica_2.12</artifactId>
 					<version>2.1</version>
