@@ -63,7 +63,7 @@ public class ComparativeSummary extends BaseTestSummary {
 			}
 			entries.add(entry);
 
-			HashSet<String> tools = file2tool.get(entry);
+			HashSet<String> tools = file2tool.get(filename);
 			if (tools == null) {
 				tools = new HashSet<>();
 				file2tool.put(filename, tools);
