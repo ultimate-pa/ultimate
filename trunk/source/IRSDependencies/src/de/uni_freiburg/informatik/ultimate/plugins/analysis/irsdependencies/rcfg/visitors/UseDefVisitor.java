@@ -99,13 +99,9 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 		} else if (edge instanceof SequentialComposition) {
 			mLogger.info("Ignoring SequentialComposition edge " + edge);
 			return;
-		} else if (edge instanceof StatementSequence) {
-			mLogger.info("Ignoring StatementSequence edge " + edge);
-			return;
 		} else if (edge instanceof Summary) {
 			mLogger.info("Ignoring summary edge " + edge);
 			return;
-
 		} else if (edge instanceof RootEdge) {
 			mLogger.info("Ignoring root edge " + edge);
 			return;
