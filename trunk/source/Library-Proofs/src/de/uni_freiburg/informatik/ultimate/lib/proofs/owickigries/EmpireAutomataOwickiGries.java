@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 
 public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
@@ -221,11 +220,11 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		private final MinMaxMed mPlacesPerRegion = new MinMaxMed();
 
 		public EmpireAutomataStatistics() {
-			declare(AUTOMATON_SIZE, () -> mAutomatonSize, KeyType.COUNTER);
-			declare(UNIQUE_PAIRS, () -> mUniquePairs, KeyType.COUNTER);
-			declare(LAW_SIZE, () -> mLawSize, KeyType.COUNTER);
-			declare(ANNOTATION_SIZE, () -> mAnnotationSize, KeyType.COUNTER);
-			declare(REGION_COUNT, () -> mRegionCount, KeyType.COUNTER);
+			declareCounter(AUTOMATON_SIZE, () -> mAutomatonSize);
+			declareCounter(UNIQUE_PAIRS, () -> mUniquePairs);
+			declareCounter(LAW_SIZE, () -> mLawSize);
+			declareCounter(ANNOTATION_SIZE, () -> mAnnotationSize);
+			declareCounter(REGION_COUNT, () -> mRegionCount);
 			declareCounter(TERRITORY_COUNT, () -> mNumberOfTerritories);
 
 			declareMinMaxMed(REGION_TERRITORY, mRegionsPerTerritory);
