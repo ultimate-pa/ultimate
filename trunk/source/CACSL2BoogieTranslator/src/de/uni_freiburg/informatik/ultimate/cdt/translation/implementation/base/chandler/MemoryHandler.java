@@ -764,15 +764,14 @@ public class MemoryHandler {
 	 * expression of the returned ResultExpression. Note that we only read simple types from the heap -- when reading
 	 * e.g. an array, we have to make readCalls for each cell.
 	 *
-	 * @param tPointer
+	 * @param address
 	 *            the address to read from.
-	 * @param pointerCType
-	 *            the CType of the pointer in tPointer
+	 * @param resultType
+	 *            the CType of the pointer
 	 *
 	 * @return all declarations and statements required to perform the read, plus an identifierExpression holding the
 	 *         read value.
 	 */
-	// 2015-10
 	public ExpressionResult getReadCall(final Expression address, final ICType resultType) {
 		final ILocation loc = address.getLocation();
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -795,6 +794,16 @@ public class MemoryHandler {
 		return resultBuilder.build();
 	}
 
+	/**
+	 * Handles a read to the given address without any additional memory checks. Therefore, this method always returns a
+	 * single Expression (i.e., access in the corresponding memory array) without any additional statements etc.
+	 *
+	 * @param address
+	 *            the address to read from.
+	 * @param resultType
+	 *            the CType of the pointer
+	 * @return an ExpressionResult consisting only of a array access to the memory array.
+	 */
 	public ExpressionResult getReadUnchecked(final Expression address, final ICType resultType) {
 		final int byteSize;
 		if (resultType instanceof CPointer) {
