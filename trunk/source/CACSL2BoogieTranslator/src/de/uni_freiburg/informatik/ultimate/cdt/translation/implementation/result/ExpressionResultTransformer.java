@@ -266,7 +266,9 @@ public class ExpressionResultTransformer {
 			final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(expr);
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive || underlyingType instanceof CPointer) {
-				final ExpressionResult rex = mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType, unchecked);
+				final ExpressionResult rex =
+						unchecked ? mMemoryHandler.getReadUnchecked(hlv.getAddress(), underlyingType)
+								: mMemoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				newValue = (RValue) rex.getLrValue();
 				erb.addAllExceptLrValue(rex);
 			} else if (underlyingType instanceof CArray) {
@@ -476,8 +478,10 @@ public class ExpressionResultTransformer {
 			final ExpressionResult readRex;
 			if (arrayValueType instanceof CStructOrUnion) {
 				readRex = readStructFromHeap(old, loc, readAddress, (CStructOrUnion) arrayValueType, hook, unchecked);
+			} else if (unchecked) {
+				readRex = mMemoryHandler.getReadUnchecked(readAddress, arrayType.getValueType());
 			} else {
-				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType(), unchecked);
+				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType());
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());

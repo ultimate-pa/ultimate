@@ -774,24 +774,7 @@ public class MemoryHandler {
 	 */
 	// 2015-10
 	public ExpressionResult getReadCall(final Expression address, final ICType resultType) {
-		return getReadCall(address, resultType, false);
-	}
-
-	public ExpressionResult getReadCall(final Expression address, final ICType resultType, final boolean unchecked) {
 		final ILocation loc = address.getLocation();
-		if (unchecked) {
-			final int byteSize;
-			if (resultType instanceof CPointer) {
-				byteSize = mTypeSizes.getSizeOfPointer();
-			} else if (resultType instanceof final CPrimitive prim) {
-				byteSize = mTypeSizes.getSize(prim.getType());
-			} else {
-				throw new AssertionError("We only support reading primitive or pointer types");
-			}
-			return new ExpressionResult(new RValue(
-					readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize),
-					resultType));
-		}
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MEMREAD);
 		resultBuilder.addAuxVarWithDeclaration(auxvar);
@@ -810,6 +793,20 @@ public class MemoryHandler {
 		// mExpressionTranslation.addAssumeValueInRangeStatements(loc, auxvar.getExp(), resultType, resultBuilder);
 		resultBuilder.setLrValue(new RValue(auxvar.getExp(), resultType));
 		return resultBuilder.build();
+	}
+
+	public ExpressionResult getReadUnchecked(final Expression address, final ICType resultType) {
+		final int byteSize;
+		if (resultType instanceof CPointer) {
+			byteSize = mTypeSizes.getSizeOfPointer();
+		} else if (resultType instanceof final CPrimitive prim) {
+			byteSize = mTypeSizes.getSize(prim.getType());
+		} else {
+			throw new AssertionError("We only support reading primitive or pointer types");
+		}
+		final ILocation loc = address.getLocation();
+		return new ExpressionResult(new RValue(
+				readFromHeap(loc, determineMemoryArrayForType(resultType), address, resultType, byteSize), resultType));
 	}
 
 	private String determineReadProcedure(final ICType resultType, final ILocation loc) throws AssertionError {
@@ -1406,7 +1403,7 @@ public class MemoryHandler {
 
 			final Expression srcAcc;
 			{
-				final ExpressionResult srcAccExpRes = this.getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR));
+				final ExpressionResult srcAccExpRes = getReadCall(currentSrc, new CPrimitive(CPrimitives.CHAR));
 				srcAcc = srcAccExpRes.getLrValue().getValue();
 				loopBody.addAll(srcAccExpRes.getStatements());
 				decl.addAll(srcAccExpRes.getDeclarations());
