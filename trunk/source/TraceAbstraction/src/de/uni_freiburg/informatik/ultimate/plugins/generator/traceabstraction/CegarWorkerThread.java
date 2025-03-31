@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
-implements Callable<WorkerThreadResult<L, A>> {
+		implements Callable<WorkerThreadResult<L, A>> {
 
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
@@ -152,12 +152,13 @@ implements Callable<WorkerThreadResult<L, A>> {
 				// in this setting we dont use error automata
 
 				mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
-						mCsToolkit.getManagedScript(), mCounterexample, null);
+						mCsToolkit.getManagedScript(), mCounterexample, null, true);
 				return mThreadResult;
 			}
 			final AbstractCegarLoop.AutomatonType automatonType =
 					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 
+			// TODO check if we want to generalize
 			constructRefinementAutomaton(automatonType);
 
 			mThreadResult = refineAbstractionInternally();
@@ -265,8 +266,7 @@ implements Callable<WorkerThreadResult<L, A>> {
 		mErrorGeneralizationEngine.constructErrorAutomaton(mCounterexample, mPredicateFactory,
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
-				mMainThread.getAbstraction(),
-				mIteration);
+				mMainThread.getAbstraction(), mIteration);
 		mInterpolAutomaton = null;
 		for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
 			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
@@ -275,10 +275,10 @@ implements Callable<WorkerThreadResult<L, A>> {
 
 				final VarAssignmentReuseAnnotation pLocAnnoVA =
 						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.get(VarAssignmentReuseAnnotation.class.getName());
+								.get(VarAssignmentReuseAnnotation.class.getName());
 				// If it contains a VA it should contain a TG
 				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
-				.containsKey(TestGoalAnnotation.class.getName());
+						.containsKey(TestGoalAnnotation.class.getName());
 				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
 						.getAnnotations().get(TestGoalAnnotation.class.getName());
 
@@ -330,12 +330,7 @@ implements Callable<WorkerThreadResult<L, A>> {
 	 * construct the subtrahend automaton
 	 *
 	 *
-	 * Globals:
-	 * mErrorGeneralizationEngine
-	 * mIteration
-	 * mStateFactoryForRefinement
-	 * mRefinementResult
-	 * mInterpolAutomaton
+	 * Globals: mErrorGeneralizationEngine mIteration mStateFactoryForRefinement mRefinementResult mInterpolAutomaton
 	 */
 	public WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(mIteration); // TODO warning global var
@@ -375,12 +370,12 @@ implements Callable<WorkerThreadResult<L, A>> {
 		// at the end of the htc lifecycle instead of there
 		mLogger.info("Difference in Worker for Generalization");
 		computeAutomataDifference(mMainThread.getAbstraction(), subtrahend, subtrahendBeforeEnhancement,
-				predicateUnifier,
-				exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
+				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend,
-				subtrahendBeforeEnhancement, predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode,
-				useErrorAutomaton, automatonType, mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory);
+		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
+				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
+				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
+				mRefinementResult.somePerfectSequenceFound());
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 
@@ -388,9 +383,8 @@ implements Callable<WorkerThreadResult<L, A>> {
 	}
 
 	/*
-	 * WARNING
-	 * The real difference has to be computed in the Main Thrad / CEGAR loop
-	 * This is only used to enhance the interpolant automaton
+	 * WARNING The real difference has to be computed in the Main Thrad / CEGAR loop This is only used to enhance the
+	 * interpolant automaton
 	 */
 	private void computeAutomataDifference(final INestedWordAutomaton<L, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
@@ -398,7 +392,7 @@ implements Callable<WorkerThreadResult<L, A>> {
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final AutomatonType automatonType)
-					throws AutomataLibraryException, AssertionError {
+			throws AutomataLibraryException, AssertionError {
 		if (automatonType.equals(AutomatonType.ERROR) || enhanceMode == InterpolantAutomatonEnhancement.NONE) {
 			return;
 		}
@@ -423,7 +417,8 @@ implements Callable<WorkerThreadResult<L, A>> {
 				throw tce;
 			} finally {
 
-				assert subtrahend instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
+				assert subtrahend instanceof AbstractInterpolantAutomaton
+						: "if enhancement is used, we need AbstractInterpolantAutomaton";
 				((AbstractInterpolantAutomaton<L>) subtrahend).switchToReadonlyMode();
 
 			}
@@ -469,8 +464,8 @@ implements Callable<WorkerThreadResult<L, A>> {
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) {
 		final String taskDescription = "WORKER: constructing difference of abstraction (" + minuend.size()
-		+ "states) and " + automatonType + " automaton (currently " + subtrahend.size() + " states, "
-		+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
+				+ "states) and " + automatonType + " automaton (currently " + subtrahend.size() + " states, "
+				+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
 		return new RunningTaskInfo(getClass(), taskDescription);
 	}
 
@@ -542,10 +537,10 @@ implements Callable<WorkerThreadResult<L, A>> {
 	}
 
 	private DeterministicInterpolantAutomaton<L>
-	constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
-			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-			final InterpolantAutomatonEnhancement enhanceMode) {
+			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+					final InterpolantAutomatonEnhancement enhanceMode) {
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
