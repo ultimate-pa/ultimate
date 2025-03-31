@@ -192,7 +192,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			break;
 		case 2: {
 			mStrategyForWorker[0] = RefinementStrategy.CAMEL;
-			mStrategyForWorker[1] = RefinementStrategy.CAMEL;
+			mStrategyForWorker[1] = RefinementStrategy.ACCELERATED_INTERPOLATION;
 			break;
 		}
 		default:
@@ -323,12 +323,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 							refinement(workerResult);
 							abstractionWasRefined = true;
 
-							// If perfect terminate ThreadGroup (executor)
-							if (workerResult.wasPerfect()) {
-								final int pathProgramRepresentative =
-										workerResult.getCounterexample().getWord().asList().hashCode();
-								mPpExecutorMap.get(pathProgramRepresentative).shutdown();
-							}
 							// If new abstraction is empty terminate immediately
 							if (isSafeThenTerminate()) {
 								return;
@@ -477,7 +471,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			for (int i = 0; i < flags.length; i++) {
 				if (!flags[i]) {
 					return mStrategyForWorker[i];
-
 				}
 			}
 			throw new AssertionError("TODO handle the case where the straegy is going but we find a new cex of PP");
@@ -493,7 +486,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final Integer count = mProgramCache.getPaths().get(pathProgramRepresentative);
 		final List<L> trace = counterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
-		if (count == 0) { // Its 0 since we didnt report yet TODO switch order
+		if (count == null) { // TODO null is ugly make it 0
 			final ThreadFactory factory = new GroupedThreadFactory("PP-" + traceHash + "-");
 			// Executor Services for different thread groups
 			final ExecutorService executor = Executors.newFixedThreadPool(mThreadLimitPerPathProgram, factory);
@@ -501,6 +494,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mPpStrageyTrackerMap.put(traceHash, new boolean[mThreadLimitPerPathProgram]);
 			return executor;
 		}
+		assert count != 0; // must never be 0 it is null if there is a new pathprogam
 		return mPpExecutorMap.get(traceHash);
 	}
 
@@ -565,6 +559,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		if (mPref.minimizeAbstractionPerWorker) {
 			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
 					new PredicateFactoryResultChecking(mPredicateFactory));
+		}
+
+		// If perfect terminate ThreadGroup (executor)
+		if (threadResult.wasPerfect()) {
+			final int pathProgramRepresentative = threadResult.getCounterexample().getWord().asList().hashCode();
+			mPpExecutorMap.get(pathProgramRepresentative).shutdown();
 		}
 
 		// Kill the worker script
