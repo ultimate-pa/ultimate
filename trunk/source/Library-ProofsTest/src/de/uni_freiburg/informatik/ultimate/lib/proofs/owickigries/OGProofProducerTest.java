@@ -140,4 +140,17 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 			return new OwickiGriesSettings(OwickiGriesComputation.AUTOMATA, false, false);
 		}
 	}
+
+	public static final class AutomatonConjunctionOG extends OGProofProducerTest {
+		@Override
+		protected IPetriNetProofProducer<SimpleAction, IPredicate>
+				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
+			return new AutomataOwickiGriesConjunction<>(mServices, program, createCsToolkit());
+		}
+
+		@Override
+		protected OwickiGriesSettings getSettings() {
+			return new OwickiGriesSettings(OwickiGriesComputation.CONJUNCTION, false, false);
+		}
+	}
 }

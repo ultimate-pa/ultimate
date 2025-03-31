@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class OwickiGriesConjunction<L, P> {
 	private final ManagedScript mManagedScript;
@@ -73,14 +72,20 @@ public class OwickiGriesConjunction<L, P> {
 		mAnnotation2 = annotation2;
 
 		mGhostVariables = getGhostVariables();
-		final Map<P, IPredicate> formulaMapping = getFormulaMap();
-		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
-		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
+		if (mAnnotation1 != null && mAnnotation2 != null) {
+			final Map<P, IPredicate> formulaMapping = getFormulaMap();
+			final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
+			final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mOwickiGriesAnnotation =
-				new OwickiGriesAnnotation<>(OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory),
-						possibleInterferences, mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
-						ghostInitAssignment, assignmentMapping);
+			mOwickiGriesAnnotation =
+					new OwickiGriesAnnotation<>(OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory),
+							possibleInterferences, mSymbolTable, formulaMapping,
+							new HashSet<>(mGhostVariables.values()), ghostInitAssignment, assignmentMapping);
+		} else if (mAnnotation1 == null) {
+			mOwickiGriesAnnotation = mAnnotation2;
+		} else {
+			mOwickiGriesAnnotation = mAnnotation1;
+		}
 	}
 
 	/**
@@ -88,8 +93,15 @@ public class OwickiGriesConjunction<L, P> {
 	 */
 	private Map<String, IProgramVar> getGhostVariables() {
 		final Map<String, IProgramVar> ghostVars = new HashMap<>();
-		final var vars = DataStructureUtils.union(mAnnotation1.getGhostVariables(), mAnnotation2.getGhostVariables());
+		final var vars = new HashSet<IProgramVar>();
+		if (mAnnotation1 != null) {
+			vars.addAll(mAnnotation1.getGhostVariables());
+		}
+		if (mAnnotation2 != null) {
+			vars.addAll(mAnnotation2.getGhostVariables());
+		}
 		for (final IProgramVar iProgramVar : vars) {
+			mSymbolTable.add(iProgramVar);
 			ghostVars.put(iProgramVar.toString(), iProgramVar);
 		}
 		return ghostVars;
@@ -136,6 +148,12 @@ public class OwickiGriesConjunction<L, P> {
 
 	private static GhostUpdate combineGhostUpdates(final GhostUpdate update1, final GhostUpdate update2) {
 		final Map<IProgramVar, Term> assignments = new HashMap<>();
+		if (update1 == null) {
+			return update2;
+		}
+		if (update2 == null) {
+			return update1;
+		}
 
 		final var assignmentVars1 = update1.getAssignedVariables();
 		final var assignmentVars2 = update2.getAssignedVariables();
@@ -143,7 +161,7 @@ public class OwickiGriesConjunction<L, P> {
 			assignments.put(iProgramVar, update1.getExpressionFor(iProgramVar));
 		}
 		for (final IProgramVar iProgramVar : assignmentVars2) {
-			assignments.put(iProgramVar, update1.getExpressionFor(iProgramVar));
+			assignments.put(iProgramVar, update2.getExpressionFor(iProgramVar));
 		}
 		return new GhostUpdate(assignments);
 	}
