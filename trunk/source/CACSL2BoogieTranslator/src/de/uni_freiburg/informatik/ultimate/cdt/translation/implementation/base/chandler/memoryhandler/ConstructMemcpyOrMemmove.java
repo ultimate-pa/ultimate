@@ -245,7 +245,7 @@ public final class ConstructMemcpyOrMemmove {
 				final ICType cPrimType = new CPrimitive(cPrim);
 				final Expression srcAcc;
 				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPrimType, true);
+					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPrimType);
 					srcAcc = srcAccExpRes.getLrValue().getValue();
 					loopBody.addStatements(srcAccExpRes.getStatements());
 					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
@@ -294,7 +294,7 @@ public final class ConstructMemcpyOrMemmove {
 				final ICType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
 				final Expression srcAcc;
 				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadCall(currentSrc, cPointer, true);
+					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
 					srcAcc = srcAccExpRes.getLrValue().getValue();
 					loopBody.addStatements(srcAccExpRes.getStatements());
 					loopBody.addDeclarations(srcAccExpRes.getDeclarations());

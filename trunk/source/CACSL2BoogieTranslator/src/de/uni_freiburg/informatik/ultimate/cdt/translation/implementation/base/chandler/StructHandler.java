@@ -233,7 +233,8 @@ public class StructHandler {
 		final Expression newPointer = computeStructFieldAddress(loc, fieldIndex, structAddress, structType);
 		final ICType resultType = structType.getFieldTypes()[fieldIndex];
 
-		final ExpressionResult call = mMemoryHandler.getReadCall(newPointer, resultType, unchecked);
+		final ExpressionResult call = unchecked ? mMemoryHandler.getReadUnchecked(newPointer, resultType)
+				: mMemoryHandler.getReadCall(newPointer, resultType);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
 		resultBuilder.addAllExceptLrValue(call);
 		resultBuilder.setLrValue(new RValue(call.getLrValue().getValue(), resultType));
