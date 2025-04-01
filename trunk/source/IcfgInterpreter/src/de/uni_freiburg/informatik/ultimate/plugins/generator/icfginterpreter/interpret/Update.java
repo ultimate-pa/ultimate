@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
@@ -54,19 +55,19 @@ public abstract class Update {
 			final StringBuilder out = new StringBuilder("nextState.");
 			switch (mReturnType) {
 			case Array:
-				out.append("setArray(m");
+				out.append("setArray(");
 				break;
 			case BitVector:
-				out.append("setBitVec(m");
+				out.append("setBitVec(");
 				break;
 			case Boolean:
-				out.append("setBool(m");
+				out.append("setBool(");
 				break;
 			case Int:
-				out.append("setInt(m");
+				out.append("setInt(");
 				break;
 			}
-			out.append(mProgramVar.getGloballyUniqueId());
+			out.append(DynamicLoader.getEnumClassName()).append(".").append(mProgramVar.getGloballyUniqueId());
 			out.append(", ").append(mValueDefinition.toCode()).append(");");
 			return out.toString();
 		}
@@ -106,19 +107,19 @@ public abstract class Update {
 			final StringBuilder out = new StringBuilder("nextState.");
 			switch (mReturnType) {
 			case Array:
-				out.append("havocArray(m");
+				out.append("havocArray(");
 				break;
 			case BitVector:
-				out.append("havocBitVec(m");
+				out.append("havocBitVec(");
 				break;
 			case Boolean:
-				out.append("havocBool(m");
+				out.append("havocBool(");
 				break;
 			case Int:
-				out.append("havocInt(m");
+				out.append("havocInt(");
 				break;
 			}
-			out.append(mProgramVar.getGloballyUniqueId());
+			out.append(DynamicLoader.getEnumClassName()).append(".").append(mProgramVar.getGloballyUniqueId());
 			out.append(", null);");
 			return out.toString();
 		}
@@ -191,7 +192,7 @@ public abstract class Update {
 				break;
 			}
 			out.append(mProgramVar.getGloballyUniqueId());
-			out.append(", ").append(mRestriction).append(");");
+			out.append(", ").append(mRestriction.toCode()).append(");");
 			return out.toString();
 		}
 	}

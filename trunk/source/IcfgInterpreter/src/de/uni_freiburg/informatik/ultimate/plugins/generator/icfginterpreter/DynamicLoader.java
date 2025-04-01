@@ -24,8 +24,9 @@ import org.osgi.framework.wiring.BundleWiring;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.EnumState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.IVariableName;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.JavaCodeEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.SimpleState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -373,19 +374,6 @@ public class DynamicLoader {
 			return classData.getDeclaredConstructor(parameterTypes).newInstance(initargs);
 		}
 
-		public boolean doesExtend(final Class<?> superClass) {
-			return superClass.isAssignableFrom(classData);
-		}
-
-		@SuppressWarnings("unchecked")
-		public <T> Class<? extends T> getClassObject() {
-			if (!doesExtend(NonDeterministicChoice.class)) {
-				throw new ClassCastException(
-						"LoadedClass " + className + " does not implement " + NonDeterministicChoice.class.getName());
-			}
-			return (Class<? extends T>) classData;
-		}
-
 		public String encodeClassData() { // TODO
 			System.out.println("Data of class \"" + className + "\"");
 			System.out.println("Source file: " + sourceFile);
@@ -394,6 +382,15 @@ public class DynamicLoader {
 				System.out.println("Import: " + importClass);
 			}
 			return "";
+		}
+
+		@SuppressWarnings("unchecked")
+		public <T> Class<T> getClassObject(final Class<T> interfaceClass) {
+			if (!interfaceClass.isAssignableFrom(classData)) {
+				throw new ClassCastException(
+						"Compiled class " + className + " does not implement " + interfaceClass.getName());
+			}
+			return (Class<T>) classData;
 		}
 
 		public static LoadedClass restoreClassData(final String data) { // TODO
@@ -413,12 +410,76 @@ public class DynamicLoader {
 		return new File(clazz.getProtectionDomain().getCodeSource().getLocation().toURI().normalize().getPath());
 	}
 
+	public static String getEnumClassName() {
+		return "VariableName_v" + IcfgInterpreterObserver.getInstance().getCurrentICFGCardinality();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T extends Enum<T> & IVariableName> Class<T> makeVariableNameEnum(final HashSet<Variable> variables)
+			throws IOException, URISyntaxException, ClassNotFoundException, ClassCastException {
+		final StringBuilder code = new StringBuilder();
+		code.append("package " + mOutputPackage + ";\n\n");
+		code.append(makeImport(HashSet.class));
+		code.append(makeImport(IProgramVar.class));
+		code.append(makeImport(IVariableName.class));
+		code.append("\npublic enum ").append(getEnumClassName()).append(" implements ")
+				.append(IVariableName.class.getSimpleName()).append(" {\n\t");
+
+		final HashSet<IProgramVar> visited = new HashSet<>();
+		for (final Variable variable : variables) {
+			final IProgramVar programVar = variable.getVariableTerm().programVar;
+			if (programVar == null || visited.contains(programVar)) {
+				continue;
+			}
+			visited.add(programVar);
+			code.append(programVar.getGloballyUniqueId()).append(", ");
+		}
+		code.append(";\n\n");
+		code.append("\tprivate IProgramVar mProgramVar;\n\n");
+		code.append("\t@Override\n");
+		code.append("\tpublic void initiate(final HashSet<IProgramVar> progVars) {\n");
+		code.append("\t\tfor (final IProgramVar progVar : progVars) {\n");
+		code.append("\t\t\tvalueOf(progVar.getGloballyUniqueId()).mProgramVar = progVar;\n");
+		code.append("\t\t}\n");
+		code.append("\t}\n\n");
+		code.append("\t@Override\n");
+		code.append("\tpublic IProgramVar getProgramVar() {\n");
+		code.append("\t\treturn mProgramVar;\n");
+		code.append("\t}\n}");
+
+		final String classFullName = connectPath(mOutputPath, getEnumClassName());
+
+		final File compileDirectory = Files.createTempDirectory("IcfgInterpreterCompile").toFile();
+
+		final File codeFile = new File(compileDirectory, classFullName + ".java");
+
+		final HashSet<IProgramVar> progVars = Util.map(variables, (variable) -> {
+			return variable.getVariableTerm().programVar;
+		}, new HashSet<>());
+		progVars.remove(null);
+
+		final File main = createFile(code.toString(), codeFile);
+		final ArrayList<File> neededProjects = new ArrayList<>();
+		neededProjects.add(getProjectOfClass(IVariableName.class));
+		neededProjects.add(getProjectOfClass(IProgramVar.class));
+		final LoadedClass enumClass = loadClass(main, classFullName, new HashSet<>(), neededProjects);
+
+		final Class<?> e = enumClass.classData;
+
+		final IVariableName a = (IVariableName) e.asSubclass(Enum.class).getEnumConstants()[0];
+		a.initiate(progVars);
+
+		return (Class<T>) e.asSubclass(Enum.class);
+
+	}
+
 	private static String makeImport(final Class<?> clazz) {
 		return "import " + clazz.getName() + ";\n";
 	}
 
-	public static JavaCodeEdge makeCodeEdge(final ICFGExecutionEdge edge, final File compileDirectory)
-			throws IOException {
+	@SuppressWarnings("unchecked")
+	public static <T extends Enum<T> & IVariableName> JavaCodeEdge<T> makeCodeEdge(final ICFGExecutionEdge edge,
+			final File compileDirectory, final Class<T> enumClass) {
 		final String className = "JCEdge_" + edge.getUniqueName().replace("-", "_").replace("#", "_");
 
 		final ArrayList<Class<?>> parameterClasses = new ArrayList<>();
@@ -427,104 +488,88 @@ public class DynamicLoader {
 		parameterClasses.add(IcfgLocation.class);
 		parameterObjects.add(edge.mSource);
 		parameterObjects.add(edge.mTarget);
-		final StringBuilder parameters = new StringBuilder("IcfgLocation int_source, IcfgLocation int_target");
-		String programVarFields = null;
-		String programVarAssignments = "";
-
-		final HashSet<IProgramVar> programVars = new HashSet<>();
-		for (final Variable variable : edge.getVariables()) {
-			final IProgramVar programVar = variable.getVariableTerm().programVar;
-			if (programVar == null) {
-				continue;
-			}
-			if (!programVars.add(programVar)) {
-				continue;
-			}
-			parameterClasses.add(IProgramVar.class);
-			if (programVarFields == null) {
-				programVarFields = "private final IProgramVar m" + programVar.getGloballyUniqueId();
-			} else {
-				programVarFields += ", m" + programVar.getGloballyUniqueId();
-			}
-			parameters.append(", IProgramVar ext_").append(programVar.getGloballyUniqueId());
-			programVarAssignments += "\n\t\tthis.m" + programVar.getGloballyUniqueId() + " = ext_"
-					+ programVar.getGloballyUniqueId() + ";";
-			parameterObjects.add(programVar);
-		}
-		if (programVarFields != null) {
-			programVarFields += ";\n\t";
-		} else {
-			programVarFields = "";
-			programVarAssignments = "";
-		}
 
 		final Class<?>[] paramClasses = Util.fillArray(parameterClasses, new Class<?>[parameterClasses.size()]);
 		final Object[] paramObjects = Util.fillArray(parameterObjects, new Object[parameterObjects.size()]);
 
-		final Update[] updates = edge.getUpdates();
-		final StringBuilder updateCode = new StringBuilder();
-		for (final Update update : updates) {
-			updateCode.append("\t\t").append(update.toCode()).append("\n");
-		}
+		final String stateType = EnumState.class.getSimpleName() + "<" + getEnumClassName() + ">";
 
 		final StringBuilder codeB = new StringBuilder();
 		codeB.append("package " + mOutputPackage + ";\n\n");
+		codeB.append(makeImport(Math.class));
 		codeB.append(makeImport(IProgramVar.class));
 		codeB.append(makeImport(IcfgLocation.class));
-		codeB.append(makeImport(SimpleState.class));
-		codeB.append(makeImport(JavaCodeEdge.class));
-		codeB.append(makeImport(Math.class));
 		codeB.append(makeImport(BitVector.class));
 		codeB.append(makeImport(NonDeterministicChoice.class));
 		codeB.append(makeImport(SMTArray.class));
 		codeB.append(makeImport(Util.class));
-		codeB.append("\npublic class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + " {\n");
-		codeB.append("\tpublic final IcfgLocation source, target;\n\t");
-		codeB.append(programVarFields);
-		codeB.append("\n\tpublic " + className + "(").append(parameters).append(") {\n");
-		codeB.append("\t\tthis.source = int_source;\n\t\tthis.target = int_target;");
-		codeB.append(programVarAssignments).append("\n\t}\n");
+		codeB.append(makeImport(EnumState.class));
+		codeB.append(makeImport(JavaCodeEdge.class));
+		codeB.append("import ").append(mOutputPackage).append(".").append(getEnumClassName()).append(";\n");
+		codeB.append("\npublic class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + "<"
+				+ getEnumClassName() + "> {\n");
+		codeB.append("\tpublic final IcfgLocation source, target;\n\n");
+		codeB.append("\tpublic " + className + "(IcfgLocation int_source, IcfgLocation int_target) {\n");
+		codeB.append("\t\tsource = int_source;\n\t\ttarget = int_target;\n");
+		codeB.append("\t}\n");
 		codeB.append("\tpublic IcfgLocation getSource() {\n\t\treturn source;\n\t}\n\n");
 		codeB.append("\tpublic IcfgLocation getTarget() {\n\t\treturn target;\n\t}\n\n");
-		codeB.append("\tpublic boolean guard(final SimpleState currentState) {\n");
+
+		codeB.append("\tpublic boolean guard(final " + stateType + " currentState) {\n");
 		codeB.append("\t\treturn " + edge.getGuard().toCode().replace("nextState", "currentState") + ";\n\t}\n\n");
-		codeB.append("\tpublic SimpleState update(final SimpleState currentState) {\n");
-		codeB.append("\t\tfinal SimpleState nextState = currentState.clone();\n");
-		codeB.append(updateCode.toString());
+		codeB.append("\tpublic " + stateType + " update(final " + stateType + " currentState) {\n");
+		codeB.append("\t\tfinal " + stateType + " nextState = currentState.clone();\n");
+
+		final Update[] updates = edge.getUpdates();
+		for (final Update update : updates) {
+			codeB.append("\t\t").append(update.toCode()).append("\n");
+		}
 		codeB.append("\t\treturn nextState;\n").append("\t}\n").append("}").toString();
 
 		final String code = codeB.toString();
 		final String classFullName = connectPath(mOutputPath, className);
 		final File codeFile = new File(compileDirectory, classFullName + ".java");
-		final File main = createFile(code, codeFile);
 
 		try {
+			final File main = createFile(code, codeFile);
 			final ArrayList<File> neededProjects = new ArrayList<>();
 			neededProjects.add(getProjectOfClass(IcfgInterpreter.class));
 			neededProjects.add(getProjectOfClass(IProgramVar.class));
-			final LoadedClass stateClass = loadClass(main, classFullName, new HashSet<>(), neededProjects);
-			final JavaCodeEdge stateCreator = stateClass.createInstance(JavaCodeEdge.class, paramClasses, paramObjects);
-			return stateCreator;
+			final HashSet<File> importedFiles = new HashSet<>();
+			// importedFiles.add(varEnumCompiled);
+			final LoadedClass stateClass = loadClass(main, classFullName, importedFiles, neededProjects);
+
+			return (JavaCodeEdge<T>) stateClass.createInstanceUncast(paramClasses, paramObjects);
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return null;
 	}
 
-	public static HashMap<IcfgLocation, JavaCodeEdge[]> makeUpdates(
-			final HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> edges) {
+	public static <T extends Enum<T> & IVariableName> HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> makeUpdates(
+			final HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> edges, final Class<T> enumType) {
+		final HashSet<Variable> reachable = new HashSet<>();
+
+		for (final ArrayList<ICFGExecutionEdge> edgeOfLoc : edges.values()) {
+			for (final ICFGExecutionEdge edge : edgeOfLoc) {
+				reachable.addAll(edge.getVariables());
+			}
+		}
+
 		try {
 			final File compileDir = Files.createTempDirectory("IcfgInterpreterCompile").toFile();
-			final HashMap<IcfgLocation, JavaCodeEdge[]> out = new HashMap<>();
+
+			final HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> out = new HashMap<>();
 			for (final IcfgLocation location : edges.keySet()) {
 				final ArrayList<ICFGExecutionEdge> outEdges = edges.get(location);
-				final JavaCodeEdge[] compiledEdges = new JavaCodeEdge[outEdges.size()];
-				for (int i = 0; i < compiledEdges.length; i++) {
-					compiledEdges[i] = makeCodeEdge(outEdges.get(i), compileDir);
+				final ArrayList<JavaCodeEdge<T>> compiledEdges = new ArrayList<>();
+				for (final ICFGExecutionEdge outEdge : outEdges) {
+					compiledEdges.add(makeCodeEdge(outEdge, compileDir, enumType));
 				}
 				out.put(location, compiledEdges);
 			}
 			return out;
+
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}

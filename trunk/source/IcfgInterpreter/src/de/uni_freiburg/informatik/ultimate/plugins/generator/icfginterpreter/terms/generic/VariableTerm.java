@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 
 public class VariableTerm {
@@ -35,18 +36,19 @@ public class VariableTerm {
 		final StringBuilder out = new StringBuilder(isInVar ? "currentState" : "nextState");
 		switch (ReturnType.getType(programVar.getSort())) {
 		case Array:
-			out.append(".getArray(m");
+			out.append(".getArray(");
 			break;
 		case BitVector:
-			out.append(".getBitVec(m");
+			out.append(".getBitVec(");
 			break;
 		case Boolean:
-			out.append(".getBool(m");
+			out.append(".getBool(");
 			break;
 		case Int:
-			out.append(".getInt(m");
+			out.append(".getInt(");
 			break;
 		}
-		return out.append(programVar.getGloballyUniqueId()).append(")").toString();
+		return out.append(DynamicLoader.getEnumClassName()).append(".").append(programVar.getGloballyUniqueId())
+				.append(")").toString();
 	}
 }

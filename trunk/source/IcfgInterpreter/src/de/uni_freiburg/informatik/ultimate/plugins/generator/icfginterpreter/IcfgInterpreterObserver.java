@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
+import java.util.ArrayList;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -11,16 +13,16 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
-	private static IcfgInterpreterObserver instance = null;
+	private static IcfgInterpreterObserver mInstance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		instance = this;
+		mInstance = this;
 	}
 
 	public static ILogger getLogger() {
-		return instance == null ? null : instance.mLogger;
+		return mInstance == null ? null : mInstance.mLogger;
 	}
 
 	@Override
@@ -33,6 +35,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		}
 		return false;
 	}
+
+	private static final ArrayList<IIcfg<?>> seenICFGs = new ArrayList<>();
 
 	@Override
 	public void finish() {
@@ -50,8 +54,21 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		// * SmtUtils.getConjuncts
 		// * SmtUtils.toDnf
 		// * mLogger can be used for output (e.g., for debugging)
-
+		if (!seenICFGs.contains(mIcfg)) {
+			seenICFGs.add(mIcfg);
+		}
 		ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger);
+	}
+
+	public static IcfgInterpreterObserver getInstance() {
+		return mInstance;
+	}
+
+	/**
+	 * Returns a number unique to an ICFG that was previously or is currently beeing processed.
+	 */
+	public int getCurrentICFGCardinality() {
+		return seenICFGs.indexOf(mIcfg);
 	}
 
 	public IElement getRootOfNewModel() {

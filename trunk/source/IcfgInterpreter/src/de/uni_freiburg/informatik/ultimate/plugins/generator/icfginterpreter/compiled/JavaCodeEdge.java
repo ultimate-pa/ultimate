@@ -2,12 +2,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.co
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public interface JavaCodeEdge {
+public interface JavaCodeEdge<T extends Enum<T> & IVariableName> {
 	IcfgLocation getSource();
 
 	IcfgLocation getTarget();
 
-	boolean guard(SimpleState currentState);
+	boolean guard(EnumState<T> currentState);
 
-	SimpleState update(SimpleState currentState);
+	EnumState<T> update(EnumState<T> currentState);
 }

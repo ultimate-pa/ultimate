@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -14,8 +13,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgram
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.EnumState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.JavaCodeEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.SimpleState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.IVariableName;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgTranslation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
@@ -23,29 +23,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.pre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ExecutionProducer {
-	public static void makeExecutions(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
-			final ILogger logger) {
+	public static <T extends Enum<T> & IVariableName> void makeExecutions(
+			final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services, final ILogger logger) {
 		IcfgInterpreterPreferences.updatePreferences();
 		final int testExecutionCount = Math.max(1, IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString(), 5));
 
-		final int threadNumber = Math.max(1, IcfgInterpreterPreferences.getPreferences()
-				.getInt(IcfgInterpreterPreferences.SettingLabel.THREAD_COUNT.toString(), 1));
+		logger.info("Creating " + testExecutionCount + " executions per initial node.");
 
 		final HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> sourceToEdge = IcfgTranslation.edgeBFS(icfg,
 				services);
 
-		final HashMap<IcfgLocation, JavaCodeEdge[]> compiledEdges = new HashMap<>();
-		try {
-			compiledEdges.putAll(DynamicLoader.makeUpdates(sourceToEdge));
-		} catch (final Exception e) {
-			e.printStackTrace();
-			return;
-		}
-
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
-		Random random = new Random();
+		final Random random = new Random();
 		final long sharedSeed = random.nextLong();
 
 		final HashSet<Variable> allVariables = new HashSet<>();
@@ -54,6 +45,16 @@ public class ExecutionProducer {
 			for (final ICFGExecutionEdge outEdge : sourceToEdge.get(node)) {
 				allVariables.addAll(outEdge.getReachableVariables());
 			}
+		}
+
+		final HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> compiledEdgesB;
+		final Class<T> enumClass;
+		try {
+			enumClass = DynamicLoader.makeVariableNameEnum(allVariables);
+			compiledEdgesB = (DynamicLoader.makeUpdates(sourceToEdge, enumClass));
+		} catch (final Exception e) {
+			e.printStackTrace();
+			return;
 		}
 
 		final HashSet<IProgramVar> arrayVars = new HashSet<>();
@@ -82,36 +83,25 @@ public class ExecutionProducer {
 		}
 
 		final Random randomA = new Random(sharedSeed);
-		final Function<NonDeterministicChoice, SimpleState> stateMaker = SimpleState.getStateInitializer(arrayVars,
-				intVars, boolVars, bvVars);
-
-		final int executionsPerThread = testExecutionCount / threadNumber;
-		int leftExecutions = testExecutionCount % threadNumber;
-		final int[] executionOfThread = new int[threadNumber];
-		for (int i = 0; i < threadNumber; i++) {
-			executionOfThread[i] = executionsPerThread;
-			if (leftExecutions > 0) {
-				leftExecutions--;
-				executionOfThread[i]++;
-			}
-		}
+		final Function<NonDeterministicChoice, EnumState<T>> stateMakerB = EnumState.getStateInitializer(arrayVars,
+				intVars, boolVars, bvVars, enumClass);
 
 		long startTime = System.nanoTime();
 		for (final IcfgLocation node : initialNodes) {
-			for (final JavaCodeEdge outEdge : compiledEdges.get(node)) {
+			for (final JavaCodeEdge<T> outEdge : compiledEdgesB.get(node)) {
 				for (int i = 0; i < testExecutionCount; i++) {
-					final long seed = random.nextLong();
+					final long seed = randomA.nextLong();
 					final NonDeterministicChoice ndcInstance = ndc.newInstance(seed);
-					makeExecutionCompiled(stateMaker, ndcInstance, outEdge, compiledEdges);
+					makeExecutionEnumCompiled(stateMakerB, ndcInstance, outEdge, compiledEdgesB);
 				}
 			}
 		}
 		long endTime = System.nanoTime();
 		long totalTime = endTime - startTime;
-		logger.info("Total time was " + (totalTime / 1000000.0) + "ms");
+		logger.info("Enum + compiled total time was " + (totalTime / 1000000.0) + "ms");
 		totalTime = 0;
 
-		random = new Random(sharedSeed);
+		final Random randomB = new Random(sharedSeed);
 
 		startTime = System.nanoTime();
 		for (final IcfgLocation node : initialNodes) {
@@ -119,7 +109,7 @@ public class ExecutionProducer {
 
 				for (int i = 0; i < testExecutionCount; i++) {
 
-					final long seed = random.nextLong();
+					final long seed = randomB.nextLong();
 					final NonDeterministicChoice ndcInstance = ndc.newInstance(seed);
 					makeExecutionOld(ndcInstance, outEdge, node, allVariables, sourceToEdge);
 
@@ -130,50 +120,27 @@ public class ExecutionProducer {
 		endTime = System.nanoTime();
 		totalTime = endTime - startTime;
 
-		logger.info("Total time was " + (totalTime / 1000000.0) + "ms");
+		logger.info("Uncompiled total time was " + (totalTime / 1000000.0) + "ms");
 	}
 
-	private final static JavaCodeEdge[] emptyArray = {};
-
-	protected static class ExecutionThread<T> extends Thread {
-		private final Callable<T> mMethod;
-		private T mResult;
-
-		public ExecutionThread(final Callable<T> method) {
-			mMethod = method;
-		}
-
-		@Override
-		public void run() {
-			try {
-				mResult = mMethod.call();
-			} catch (final Exception e) {
-				e.printStackTrace();
-			}
-		}
-
-		public T getResult() {
-			return mResult;
-		}
-	}
-
-	private static IcfgProgramExecution<?> makeExecutionCompiled(
-			final Function<NonDeterministicChoice, SimpleState> stateMaker, final NonDeterministicChoice ndc,
-			final JavaCodeEdge outEdge, final HashMap<IcfgLocation, JavaCodeEdge[]> compiledEdges) {
-		final ArrayList<SimpleState> states = new ArrayList<>();
-		final ArrayList<JavaCodeEdge> edges = new ArrayList<>();
-		SimpleState state = stateMaker.apply(ndc);
+	private static <T extends Enum<T> & IVariableName> IcfgProgramExecution<?> makeExecutionEnumCompiled(
+			final Function<NonDeterministicChoice, EnumState<T>> stateMaker, final NonDeterministicChoice ndc,
+			final JavaCodeEdge<T> outEdge, final HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> compiledEdges) {
+		final ArrayList<EnumState<T>> states = new ArrayList<>();
+		final ArrayList<JavaCodeEdge<T>> edges = new ArrayList<>();
+		EnumState<T> state = stateMaker.apply(ndc);
 		states.add(state);
 
-		JavaCodeEdge[] nextEdges = { outEdge };
+		ArrayList<JavaCodeEdge<T>> nextEdges = new ArrayList<>();
+		nextEdges.add(outEdge);
 
-		while (nextEdges.length > 0) {
-			final SimpleState stateReference = state;
-			final ArrayList<JavaCodeEdge> availableEdges = Util.filter(nextEdges, (edge) -> {
+		while (nextEdges.size() > 0) {
+			final EnumState<T> stateReference = state;
+			final ArrayList<JavaCodeEdge<T>> availableEdges = Util.filter(nextEdges, (edge) -> {
 				return edge.guard(stateReference);
 			});
 
-			JavaCodeEdge nextEdge;
+			JavaCodeEdge<T> nextEdge;
 			if (availableEdges.size() > 1) {
 				nextEdge = ndc.chooseEdge(availableEdges);
 			} else if (availableEdges.size() == 0) {
@@ -187,7 +154,7 @@ public class ExecutionProducer {
 			state = nextEdge.update(state);
 			states.add(state);
 
-			nextEdges = compiledEdges.getOrDefault(nextEdge.getTarget(), emptyArray);
+			nextEdges = compiledEdges.getOrDefault(nextEdge.getTarget(), new ArrayList<>());
 		}
 
 		return null;

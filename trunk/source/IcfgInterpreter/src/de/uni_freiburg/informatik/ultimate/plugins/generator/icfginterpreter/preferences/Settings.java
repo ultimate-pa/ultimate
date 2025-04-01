@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader.LoadedClass;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.RNGChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences.SettingLabel;
 
 public class Settings {
 	private final static Settings settings = new Settings();
@@ -13,43 +16,42 @@ public class Settings {
 		return settings;
 	}
 
-	private final NonDeterministicChoice[] interfaceSet;
+	private final HashMap<String, NonDeterministicChoice> interfaces;
 
-	public NonDeterministicChoice[] getInterfaces() {
-		return interfaceSet.clone();
+	public ArrayList<NonDeterministicChoice> getInterfaces() {
+		return new ArrayList<>(interfaces.values());
 	}
 
 	private Settings() {
 		// TODO load stored implementations
 		final String[] datas = {};
-		interfaceSet = new NonDeterministicChoice[datas.length + 1];
-		interfaceSet[0] = new RNGChoice();
+		interfaces = new HashMap<>();
+		interfaces.put(RNGChoice.class.getSimpleName(), new RNGChoice());
 
-		for (int i = 0; i < datas.length; i++) {
-			final String data = datas[i];
+		for (final String data : datas) {
 			final LoadedClass implementation = LoadedClass.restoreClassData(data);
 			try {
-				interfaceSet[i + 1] = implementation.createInstance(NonDeterministicChoice.class, new Class<?>[0],
-						new Object[0]);
+				final NonDeterministicChoice next = implementation.createInstance(NonDeterministicChoice.class,
+						new Class<?>[0], new Object[0]);
+				interfaces.put(next.getClass().getSimpleName(), next);
+
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException | NoSuchMethodException | SecurityException | ClassCastException e) {
 				e.printStackTrace();
 			}
 		}
-		// TODO query settings for selected interface
-		ndc = interfaceSet[0];
 	}
 
 	public void storeNDCInterface(final LoadedClass implementation) {
 		// TODO store implementation
 	}
 
-	private final NonDeterministicChoice ndc;
-
 	public NonDeterministicChoice getNDC() {
 		// final IPreferenceProvider preferences =
 		// ICFGExecuterPreferences.getPreferences(IcfgInterpreter.getServices());
+		final String chosenNDC = IcfgInterpreterPreferences.getPreferences()
+				.getString(SettingLabel.NDC_IMLPEMENTATIONS.toString(), RNGChoice.class.getSimpleName());
 
-		return ndc;
+		return interfaces.get(chosenNDC);
 	}
 }

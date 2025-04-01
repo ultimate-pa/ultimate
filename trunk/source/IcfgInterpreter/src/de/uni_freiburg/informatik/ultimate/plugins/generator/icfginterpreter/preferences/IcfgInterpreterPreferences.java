@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences;
 
+import java.util.ArrayList;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
@@ -30,13 +32,13 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
-		final NonDeterministicChoice[] interfaces = Settings.getSettings().getInterfaces();
-		final UltimatePreferenceItemGroup[] subPrefs = new UltimatePreferenceItemGroup[interfaces.length];
-		final String[] names = new String[interfaces.length];
+		final ArrayList<NonDeterministicChoice> interfaces = Settings.getSettings().getInterfaces();
+		final UltimatePreferenceItemGroup[] subPrefs = new UltimatePreferenceItemGroup[interfaces.size()];
+		final String[] names = new String[interfaces.size()];
 
-		for (int i = 0; i < interfaces.length; i++) {
-			names[i] = interfaces[i].getClass().getSimpleName();
-			subPrefs[i] = interfaces[i].getImplementationSettings();
+		for (int i = 0; i < interfaces.size(); i++) {
+			names[i] = interfaces.get(i).getClass().getSimpleName();
+			subPrefs[i] = interfaces.get(i).getImplementationSettings();
 		}
 
 		final BaseUltimatePreferenceItem[] mainPrefs = {
@@ -48,7 +50,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(SettingLabel.THREAD_COUNT.toString(), 1, THREAD_COUNT_HINT,
 						PreferenceType.Integer),
 				// ADD NEW SETTINGS HERE
-				new UltimatePreferenceItem<>(SettingLabel.NDC_IMLPEMENTATIONS.toString(), interfaces[0],
+				new UltimatePreferenceItem<>(SettingLabel.NDC_IMLPEMENTATIONS.toString(), interfaces.get(0),
 						NDC_IMLPEMENTATIONS_HINT, PreferenceType.Radio, names),
 				new UltimatePreferenceItem<>(SettingLabel.INTERFACE_SUB_SETTINGS.toString(), null,
 						PreferenceType.Label) };
