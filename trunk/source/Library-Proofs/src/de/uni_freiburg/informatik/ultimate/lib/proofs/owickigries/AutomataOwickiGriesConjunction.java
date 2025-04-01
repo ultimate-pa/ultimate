@@ -85,6 +85,7 @@ public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPe
 		mOwickiGries = annotations.stream().reduce(null, (a, b) -> new OwickiGriesConjunction<L, P>(mServices,
 				mMgdScript, mProgram, mSymbolTable, mProcedures, a, b, possibleInterferences).getAnnotation());
 		mStatistics.stopOwickiGriesComputation();
+		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 		return mOwickiGries;
 	}
 
@@ -95,7 +96,6 @@ public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPe
 			final var empireAutomaton = new EmpireAutomaton<>(mProgram, proof, mServices);
 			final var empireToOG = getOwickiGriesAnnotation(empireAutomaton, possibleInterferences);
 			mLogger.info(empireToOG.getAnnotation());
-			assert checkOwickiGriesValidity(empireToOG.getAnnotation()) : "Owicki Gries annotation is invalid";
 			annotations.add(empireToOG.getAnnotation());
 		}
 		return annotations;
