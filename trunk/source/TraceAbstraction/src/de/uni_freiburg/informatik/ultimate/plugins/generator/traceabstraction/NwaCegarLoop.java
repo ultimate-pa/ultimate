@@ -146,7 +146,7 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 
 	protected final Collection<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mStoredRawInterpolantAutomata;
 
-	private final SearchStrategy mSearchStrategy;
+	protected final SearchStrategy mSearchStrategy;
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	private final boolean mUseHeuristicEmptinessCheck;
@@ -276,9 +276,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mIcfg, allowedTransitions, Collections.emptySet(), x -> true);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final PredicateFactory predicateFactory = mPredicateFactory;
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
-				mCsToolkit.getManagedScript(), predicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final IPredicateUnifier predicateUnifier =
+				new PredicateUnifier(mLogger, getServices(), mCsToolkit.getManagedScript(), predicateFactory,
+						mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA);
 		final IPredicate precondition = predicateUnifier.getTruePredicate();
 		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, getServices(), precondition,
 				predicateFactory, predicateUnifier, mCsToolkit);
@@ -306,8 +306,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 				mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
-		assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(),
-				false) : "Error automaton broken!";
+		assert accepts(getServices(), resultBeforeEnhancement, mCounterexample.getWord(), false)
+				: "Error automaton broken!";
 	}
 
 	@Override
@@ -384,7 +384,8 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				throw tce;
 			} finally {
 				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
-					assert subtrahend instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
+					assert subtrahend instanceof AbstractInterpolantAutomaton
+							: "if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton<L>) subtrahend).switchToReadonlyMode();
 				}
 			}
@@ -397,8 +398,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
 							mPref.interprocedural(), mPredicateFactory);
 					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
-							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique, mIcfg.getCfgSmtToolkit().getSymbolTable(),
-							null, (NestedRun<L, IPredicate>) mCounterexample, (IIcfg<IcfgLocation>) mIcfg);
+							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique,
+							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
+							(IIcfg<IcfgLocation>) mIcfg);
 				}
 			}
 

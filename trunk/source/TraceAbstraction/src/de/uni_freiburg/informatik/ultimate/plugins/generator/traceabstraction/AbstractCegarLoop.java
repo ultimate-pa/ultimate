@@ -320,7 +320,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected abstract void finish();
 
-	public final CegarLoopResult<L> runCegar() {
+	public CegarLoopResult<L> runCegar() {
 		final CegarLoopResult<L> r = startCegar();
 		finish();
 		return r;

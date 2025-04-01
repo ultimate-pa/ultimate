@@ -62,7 +62,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		return new SafetyCheckTestResultDecider(ultimateRunDefinition, true);
+		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
-		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
+		final ColumnDefinition[] columnDef = {
 						new ColumnDefinition(
 								CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),

@@ -146,7 +146,7 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 
 	protected final RelevanceAnalysisMode mFaultLocalizationMode;
 	private final boolean mFaultLocalizationAngelic;
-	private final StrategyFactory<L> mStrategyFactory;
+	protected final StrategyFactory<L> mStrategyFactory;
 	private final PathProgramDumpController<L> mPathProgramDumpController;
 	private final boolean mStoreFloydHoareAutomata;
 	private final Set<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> mFloydHoareAutomata =
@@ -391,8 +391,8 @@ public abstract class BasicCegarLoop<L extends IIcfgTransition<?>, A extends IAu
 			}
 		}
 
-		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(),
-				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(), false)
+				: "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 
 		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
 		// In particular, NwaFloydHoareValidityCheck calls IncrementalHoareTripleChecker, which in the method

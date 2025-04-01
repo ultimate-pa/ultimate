@@ -201,6 +201,8 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		return new Pair<>(cegar, proofProducer);
 	}
 
+	public static final boolean USE_SUMMARY_CEGAR_LOOP = true;
+
 	private NwaCegarLoop<L> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
 			final Set<IcfgLocation> errorLocs,
@@ -219,6 +221,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		if (mPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
 			return new CegarLoopSWBnonRecursive<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs,
 					errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+		}
+
+		if (USE_SUMMARY_CEGAR_LOOP) { // TODO
+			return new SummaryCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
 		switch (mPrefs.getFloydHoareAutomataReuse()) {

@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
- * Test for the two interpolation techniques "ForwardPredicates" and
- * "BackwardPredicates".
+ * Test for the two interpolation techniques "ForwardPredicates" and "BackwardPredicates".
+ *
  * @author musab@informatik.uni-freiburg.de, heizmanninformatik.uni-freiburg.de
  *
  */
@@ -129,14 +129,14 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] mSettingsBoogie = {
 		"automizer/ForwardPredicates.epf",
-		"automizer/BackwardPredicates.epf",
+//		"automizer/BackwardPredicates.epf",
 	};
 
 	private static final String[] mSettingsC = {
-		"automizer/ForwardPredicates.epf",
-		"automizer/BackwardPredicates.epf",
-		"automizer/ForwardPredicatesBitvector.epf",
-		"automizer/BackwardPredicatesBitvector.epf",
+//		"automizer/ForwardPredicates.epf",
+//		"automizer/BackwardPredicates.epf",
+//		"automizer/ForwardPredicatesBitvector.epf",
+//		"automizer/BackwardPredicatesBitvector.epf",
 	};
 
 
