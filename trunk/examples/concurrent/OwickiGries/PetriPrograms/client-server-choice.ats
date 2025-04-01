@@ -44,6 +44,7 @@ FiniteAutomaton proof1 = (
      transitions   = {
        ("true" "[0]" "(and (= req 0) (= res 0))")
        ("(and (= req 0) (= res 0))" "[1]" "(and (= req 1) (= res 0))")
+       ("(and (= req 0) (= res 0))" "[2]" "true")
        ("(and (= req 0) (= res 0))" "[3]" "false")
        ("(and (= req 0) (= res 0))" "[4]" "false")
        ("(and (= req 0) (= res 0))" "[5]" "false")
@@ -76,6 +77,7 @@ FiniteAutomaton proof2 = (
      finalStates   = { "false" },
      transitions   = {
        ("true" "[0]" "(and (= req 0) (= res 0))")
+       ("(and (= req 0) (= res 0))" "[1]" "true")
        ("(and (= req 0) (= res 0))" "[2]" "(and (= req 2) (= res 0))")
        ("(and (= req 0) (= res 0))" "[3]" "false")
        ("(and (= req 0) (= res 0))" "[4]" "false")
