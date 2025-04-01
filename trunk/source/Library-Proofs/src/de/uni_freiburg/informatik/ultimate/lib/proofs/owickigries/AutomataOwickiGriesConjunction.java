@@ -95,7 +95,6 @@ public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPe
 		for (final INestedWordAutomaton<L, IPredicate> proof : mProofs) {
 			final var empireAutomaton = new EmpireAutomaton<>(mProgram, proof, mServices);
 			final var empireToOG = getOwickiGriesAnnotation(empireAutomaton, possibleInterferences);
-			mLogger.info(empireToOG.getAnnotation());
 			annotations.add(empireToOG.getAnnotation());
 		}
 		return annotations;
