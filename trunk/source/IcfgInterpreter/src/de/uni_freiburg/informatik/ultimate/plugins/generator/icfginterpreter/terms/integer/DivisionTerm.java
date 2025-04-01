@@ -91,4 +91,9 @@ public class DivisionTerm extends IntegerTerm {
 
 		return Util.SMTDiv(a, b);
 	}
+
+	@Override
+	public String toCode() {
+		return "Util.SMTDiv(" + X.toCode() + ",  " + Y.toCode() + ")";
+	}
 }

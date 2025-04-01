@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.SelectTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -71,5 +72,10 @@ public class ArraySelectTerm extends ArrayTerm {
 	@Override
 	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return (SMTArray) select.evaluate(currentState, nextState);
+	}
+
+	@Override
+	public String toCode() {
+		return "((SMTArray) " + select.toCode() + ")";
 	}
 }

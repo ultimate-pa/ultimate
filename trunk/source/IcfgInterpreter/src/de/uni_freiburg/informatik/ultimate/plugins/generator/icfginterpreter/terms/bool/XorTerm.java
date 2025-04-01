@@ -16,13 +16,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the binary boolean function "A xor B"
  */
 public class XorTerm extends BooleanTerm {
-	private final BooleanTerm A;
-	private final BooleanTerm B;
+	private final BooleanTerm mA;
+	private final BooleanTerm mB;
 
-	public XorTerm(final BooleanTerm mA, final BooleanTerm mB) {
+	public XorTerm(final BooleanTerm A, final BooleanTerm B) {
 		super(SMTLIBConstants.XOR);
-		A = mA;
-		B = mB;
+		mA = A;
+		mB = B;
 	}
 
 	/**
@@ -30,9 +30,9 @@ public class XorTerm extends BooleanTerm {
 	 */
 	@Override
 	public BooleanTerm simplify() {
-		final BooleanTerm notAandB = new AndTerm(A.negate(), B);
+		final BooleanTerm notAandB = new AndTerm(mA.negate(), mB);
 
-		final BooleanTerm AandnotB = new AndTerm(A, B.negate());
+		final BooleanTerm AandnotB = new AndTerm(mA, mB.negate());
 
 		return new OrTerm(notAandB, AandnotB).simplify();
 	}
@@ -42,24 +42,24 @@ public class XorTerm extends BooleanTerm {
 	 */
 	@Override
 	public BooleanTerm negate() {
-		final BooleanTerm AandB = new AndTerm(A, B);
+		final BooleanTerm AandB = new AndTerm(mA, mB);
 
-		final BooleanTerm notAandnotB = new AndTerm(A.negate(), B.negate());
+		final BooleanTerm notAandnotB = new AndTerm(mA.negate(), mB.negate());
 		return new OrTerm(AandB, notAandnotB);
 	}
 
 	@Override
 	public ArrayList<BooleanTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(A, B));
+		return new ArrayList<>(Arrays.asList(mA, mB));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		final String indent = Util.getIndent(depth);
 		out.append(indent).append("xor(\n");
-		A.toString(out, depth + 1);
+		mA.toString(out, depth + 1);
 		out.append(",\n");
-		B.toString(out, depth + 1).append("\n");
+		mB.toString(out, depth + 1).append("\n");
 		return out.append(indent).append(")");
 	}
 
@@ -69,36 +69,34 @@ public class XorTerm extends BooleanTerm {
 			return false;
 		}
 		final XorTerm castB = (XorTerm) b;
-		return (A.equals(castB.A) && B.equals(castB.B)) || (A.equals(castB.B) && B.equals(castB.A));
+		return (mA.equals(castB.mA) && mB.equals(castB.mB)) || (mA.equals(castB.mB) && mB.equals(castB.mA));
 	}
 
 	@Override
 	public int hashCode() {
-		final int result = 101 * 31 + A.hashCode();
-		return result * 31 + B.hashCode();
+		final int result = 101 * 31 + mA.hashCode();
+		return result * 31 + mB.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = A.getVariables();
-		out.addAll(B.getVariables());
+		final HashSet<Variable> out = mA.getVariables();
+		out.addAll(mB.getVariables());
 		return out;
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, A.toSMTTerm(theory), B.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mA.toSMTTerm(theory), mB.toSMTTerm(theory));
 	}
-
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final BooleanTerm mA = A.equals(current) ?
-	 * (BooleanTerm) replacement : A; final BooleanTerm mB = B.equals(current) ? (BooleanTerm) replacement : B; return
-	 * new XorTerm(mA, mB); }
-	 */
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return A.evaluate(currentState, nextState) ^ B.evaluate(currentState, nextState);
+		return mA.evaluate(currentState, nextState) ^ mB.evaluate(currentState, nextState);
+	}
+
+	@Override
+	public String toCode() {
+		return "(" + mA.toCode() + " ^ " + mB.toCode() + ")";
 	}
 }

@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class IntegerRestriction extends Restriction<Integer> {
 	private final int mValueCount;
@@ -26,5 +29,13 @@ public class IntegerRestriction extends Restriction<Integer> {
 
 	public int getLess() {
 		return mLess;
+	}
+
+	@Override
+	public String toCode() {
+		return "new " + this.getClass().getSimpleName() + "(Util.toHashSet("
+				+ String.join(", ", Util.map(mInequal, (inequal) -> {
+					return inequal.toString();
+				}, new ArrayList<>())) + "), " + mLess + ", " + mGreater + ")";
 	}
 }

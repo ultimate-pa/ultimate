@@ -16,13 +16,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the binary boolean function "A -> B"
  */
 public class ImpliesTerm extends BooleanTerm {
-	private final BooleanTerm A;
-	private final BooleanTerm B;
+	private final BooleanTerm mA;
+	private final BooleanTerm mB;
 
-	public ImpliesTerm(final BooleanTerm mA, final BooleanTerm mB) {
+	public ImpliesTerm(final BooleanTerm A, final BooleanTerm B) {
 		super(SMTLIBConstants.IMPLIES);
-		A = mA;
-		B = mB;
+		mA = A;
+		mB = B;
 	}
 
 	/**
@@ -30,7 +30,7 @@ public class ImpliesTerm extends BooleanTerm {
 	 */
 	@Override
 	public BooleanTerm simplify() {
-		return new OrTerm(A.negate(), B).simplify();
+		return new OrTerm(mA.negate(), mB).simplify();
 	}
 
 	/**
@@ -38,21 +38,21 @@ public class ImpliesTerm extends BooleanTerm {
 	 */
 	@Override
 	public BooleanTerm negate() {
-		return new AndTerm(A, B.negate());
+		return new AndTerm(mA, mB.negate());
 	}
 
 	@Override
 	public ArrayList<BooleanTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(A, B));
+		return new ArrayList<>(Arrays.asList(mA, mB));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		final String indent = Util.getIndent(depth);
 		out.append(indent).append("->(\n");
-		A.toString(out, depth + 1);
+		mA.toString(out, depth + 1);
 		out.append(",\n");
-		B.toString(out, depth + 1).append("\n");
+		mB.toString(out, depth + 1).append("\n");
 		return out.append(indent).append(")");
 	}
 
@@ -62,36 +62,34 @@ public class ImpliesTerm extends BooleanTerm {
 			return false;
 		}
 		final ImpliesTerm castB = (ImpliesTerm) b;
-		return A.equals(castB.A) && B.equals(castB.B);
+		return mA.equals(castB.mA) && mB.equals(castB.mB);
 	}
 
 	@Override
 	public int hashCode() {
-		final int result = 59 * 31 + A.hashCode();
-		return result * 31 + B.hashCode();
+		final int result = 59 * 31 + mA.hashCode();
+		return result * 31 + mB.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = A.getVariables();
-		out.addAll(B.getVariables());
+		final HashSet<Variable> out = mA.getVariables();
+		out.addAll(mB.getVariables());
 		return out;
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, A.toSMTTerm(theory), B.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mA.toSMTTerm(theory), mB.toSMTTerm(theory));
 	}
-
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final BooleanTerm mA = A.equals(current) ?
-	 * (BooleanTerm) replacement : A; final BooleanTerm mB = B.equals(current) ? (BooleanTerm) replacement : B; return
-	 * new ImpliesTerm(mA, mB); }
-	 */
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (!A.evaluate(currentState, nextState)) || B.evaluate(currentState, nextState);
+		return (!mA.evaluate(currentState, nextState)) || mB.evaluate(currentState, nextState);
+	}
+
+	@Override
+	public String toCode() {
+		return "((!" + mA.toCode() + ") || " + mB.toCode() + ")";
 	}
 }

@@ -114,18 +114,7 @@ public class DistinctTerm extends BooleanTerm {
 	@Override
 	public Term toSMTTerm(final Theory theory) {
 		return new NotTerm(new EqualsTerm(mA, mB)).toSMTTerm(theory);
-
-		// return Util.makeTerm(mSymbol, theory, mA.toSMTTerm(theory), mB.toSMTTerm(theory));
 	}
-
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(ExecutionTerm<subT>
-	 * current, ExecutionTerm<subT> replacement) { ArrayList<ExecutionTerm<T>> mSubTerms = new ArrayList<>(); for
-	 * (ExecutionTerm<T> subTerm : subTerms) { mSubTerms.add(subTerm.equals(current) ? (ExecutionTerm<T>) replacement :
-	 * subTerm); }
-	 *
-	 * return new DistinctTerm<>(mSubTerms); }
-	 */
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
@@ -133,5 +122,10 @@ public class DistinctTerm extends BooleanTerm {
 		final Object bValue = mB.evaluate(currentState, nextState);
 
 		return aValue != bValue;
+	}
+
+	@Override
+	public String toCode() {
+		return "(" + mA.toCode() + " != " + mB.toCode() + ")";
 	}
 }

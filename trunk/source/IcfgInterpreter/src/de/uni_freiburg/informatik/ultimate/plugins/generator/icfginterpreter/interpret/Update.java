@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
 import java.util.HashSet;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -12,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
@@ -25,6 +26,9 @@ public abstract class Update {
 	protected final IProgramVar mProgramVar;
 	protected final ReturnType mReturnType;
 
+	/**
+	 * An update that sets the variable value to a value defined by a term.
+	 */
 	private static class AssignmentUpdate extends Update {
 		private final ExecutionTerm mValueDefinition;
 
@@ -44,8 +48,33 @@ public abstract class Update {
 		public String toString() {
 			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := " + mValueDefinition;
 		}
+
+		@Override
+		public String toCode() {
+			final StringBuilder out = new StringBuilder("nextState.");
+			switch (mReturnType) {
+			case Array:
+				out.append("setArray(m");
+				break;
+			case BitVector:
+				out.append("setBitVec(m");
+				break;
+			case Boolean:
+				out.append("setBool(m");
+				break;
+			case Int:
+				out.append("setInt(m");
+				break;
+			}
+			out.append(mProgramVar.getGloballyUniqueId());
+			out.append(", ").append(mValueDefinition.toCode()).append(");");
+			return out.toString();
+		}
 	}
 
+	/**
+	 * A havoc update that sets the variable value to any value of the same sort.
+	 */
 	private static class HavocAnyUpdate extends Update {
 		protected HavocAnyUpdate(final Variable variable) {
 			super(variable, variable.getVariableTerm().programVar);
@@ -56,13 +85,13 @@ public abstract class Update {
 				final NonDeterministicChoice havoc) {
 			switch (mReturnType) {
 			case Array:
-				return havoc.newArray((VariableArrayTerm) mVariable, null);
+				return havoc.newArray(mProgramVar, null);
 			case BitVector:
-				return havoc.havocBitVector((VariableBitVectorTerm) mVariable, null);
+				return havoc.havocBitVector(mProgramVar, null);
 			case Boolean:
-				return havoc.havocBool((VariableBooleanTerm) mVariable, null);
+				return havoc.havocBool(mProgramVar, null);
 			case Int:
-				return havoc.havocInt((VariableIntegerTerm) mVariable, null);
+				return havoc.havocInt(mProgramVar, null);
 			}
 			return null;
 		}
@@ -70,6 +99,100 @@ public abstract class Update {
 		@Override
 		public String toString() {
 			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc()";
+		}
+
+		@Override
+		public String toCode() {
+			final StringBuilder out = new StringBuilder("nextState.");
+			switch (mReturnType) {
+			case Array:
+				out.append("havocArray(m");
+				break;
+			case BitVector:
+				out.append("havocBitVec(m");
+				break;
+			case Boolean:
+				out.append("havocBool(m");
+				break;
+			case Int:
+				out.append("havocInt(m");
+				break;
+			}
+			out.append(mProgramVar.getGloballyUniqueId());
+			out.append(", null);");
+			return out.toString();
+		}
+	}
+
+	/**
+	 * A havoc update that sets the variable value to a value of the same sort in a range that does not depend on the
+	 * state, and can therefore be defined by a pre-calculated restriction.
+	 */
+	private static class HavocLimitedUpdate extends Update {
+		private final Function<NonDeterministicChoice, Object> func;
+		private final Restriction<?> mRestriction;
+
+		protected HavocLimitedUpdate(final Variable variable, final Restriction<?> restriction) {
+			super(variable, variable.getVariableTerm().programVar);
+			switch (restriction) {
+			case final ArrayRestriction ar:
+				func = (havoc) -> {
+					return havoc.newArray(mProgramVar, ar);
+				};
+				break;
+			case final BitVectorRestriction bvr:
+				func = (havoc) -> {
+					return havoc.havocBitVector(mProgramVar, bvr);
+				};
+				break;
+			case final BooleanRestriction br:
+				func = (havoc) -> {
+					return havoc.havocBool(mProgramVar, br);
+				};
+				break;
+			case final IntegerRestriction ir:
+				func = (havoc) -> {
+					return havoc.havocInt(mProgramVar, ir);
+				};
+				break;
+			default:
+				func = null;
+				break;
+			}
+			mRestriction = restriction;
+		}
+
+		@Override
+		protected Object makeValue(final ProgramState currentState, final ProgramState nextState,
+				final NonDeterministicChoice havoc) {
+			return func.apply(havoc);
+		}
+
+		@Override
+		public String toString() {
+			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc()";
+		}
+
+		@Override
+		public String toCode() {
+			final StringBuilder out = new StringBuilder("nextState.");
+			switch (mReturnType) {
+			case Array:
+				out.append("havocArray(m");
+				break;
+			case BitVector:
+				out.append("havocBitVec(m");
+				break;
+			case Boolean:
+				out.append("havocBool(m");
+				break;
+			case Int:
+				out.append("havocInt(m");
+				break;
+			}
+			out.append(mProgramVar.getGloballyUniqueId());
+			out.append(", ").append(mRestriction).append(");");
+			return out.toString();
 		}
 	}
 
@@ -79,7 +202,81 @@ public abstract class Update {
 
 	public static Update getHavocUpdate(final Variable variable, final HashSet<Constraint> constraints,
 			final HashSet<Arc> arcs) {
-		return null; // TODO make havoc updates for constraints (restrictions can be pre-calculated) and arcs
+		switch (variable.getTerm().returnType) {
+		case Int:
+			// Find the lowest constant value that the variable is bigger than, vice versa biggest constant
+			int lowestConst = Integer.MIN_VALUE;
+			int highestConst = Integer.MAX_VALUE;
+			HashSet<Integer> inequals = new HashSet<>();
+			for (final Constraint constraint : constraints) {
+				int value = (int) constraint.getConstraint().evaluate(null, null);
+				switch (constraint.relation) {
+				case DISTINCT:
+					inequals.add(value);
+					break;
+				case GEQ:
+					// variable >= value
+					// -> variable > value - 1
+					value--;
+					//$FALL-THROUGH$
+				case GREATER:
+					if (lowestConst < value) {
+						// variable > value > lowestConst
+						lowestConst = value;
+					}
+					break;
+				case LEQ:
+					// variable <= value
+					// -> variable < value + 1
+					value++;
+					//$FALL-THROUGH$
+				case LESS:
+					if (highestConst > value) {
+						// variable < value < highestConst
+						highestConst = value;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+
+			// combine restrictions like variable > 4 and variable != 5 to variable > 5
+			boolean changing = true;
+			while (changing) {
+				if (inequals.contains(lowestConst + 1)) {
+					lowestConst++;
+					inequals.remove(lowestConst);
+					changing = true;
+					continue;
+				}
+				if (inequals.contains(highestConst - 1)) {
+					highestConst--;
+					inequals.remove(highestConst);
+					changing = true;
+					continue;
+				}
+				changing = false;
+			}
+
+			final int finalHighest = highestConst;
+			final int finalLowest = lowestConst;
+			// remove any unequal values that are out of bounds anyways
+			inequals = Util.filter(inequals, (value) -> {
+				return finalHighest > value && value > finalLowest;
+			});
+
+			if (arcs.isEmpty()) {
+				// only constraints, we can do most of the work at creation, as we are unaffected by state.
+				return new HavocLimitedUpdate(variable, new IntegerRestriction(inequals, finalHighest, finalLowest));
+			}
+
+			// TODO make havoc Updates that depend on terms with variables
+			break;
+		default:
+			break;
+		}
+		return null; // TODO make havoc updates for non-ints
 	}
 
 	/**
@@ -134,6 +331,8 @@ public abstract class Update {
 
 	protected abstract Object makeValue(final ProgramState currentState, final ProgramState nextState,
 			final NonDeterministicChoice havoc);
+
+	public abstract String toCode();
 
 	public void apply(final ProgramState currentState, final ProgramState nextState,
 			final NonDeterministicChoice havoc) {

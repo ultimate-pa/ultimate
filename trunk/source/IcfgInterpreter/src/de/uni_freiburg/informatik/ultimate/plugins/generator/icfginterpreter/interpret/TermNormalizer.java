@@ -16,11 +16,12 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.ArrayITETerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.StoreTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
@@ -145,10 +146,10 @@ public class TermNormalizer {
 		final Sort sort = termVariable.getDeclaredSort();
 		final VariableTerm variableTerm = new VariableTerm(isInVar, isOutVar, isAuxVar, isAssignable, progVariable,
 				termVariable);
-		switch (ReturnType.getType(sort)) {
+		switch (Util.getType(sort)) {
 		case Array:
-			final ReturnType valueType = ReturnType.getType(sort.getArguments()[1]);
-			final ReturnType keyType = ReturnType.getType(sort.getArguments()[0]);
+			final ReturnType valueType = Util.getType(sort.getArguments()[1]);
+			final ReturnType keyType = Util.getType(sort.getArguments()[0]);
 			return new VariableArrayTerm(keyType, valueType, variableTerm);
 		case BitVector:
 			// TODO

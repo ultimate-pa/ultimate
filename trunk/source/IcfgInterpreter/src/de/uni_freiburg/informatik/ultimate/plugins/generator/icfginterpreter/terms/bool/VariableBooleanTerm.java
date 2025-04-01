@@ -85,4 +85,9 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return (mVariableTerm.isInVar ? currentState : nextState).getBoolOf(mVariableTerm.programVar);
 	}
+
+	@Override
+	public String toCode() {
+		return mVariableTerm.toCode();
+	}
 }

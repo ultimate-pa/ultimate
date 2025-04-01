@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 
 public class Util {
 	public static <T> ArrayList<T> copyList(final Collection<T> map) {
@@ -41,6 +41,11 @@ public class Util {
 	@SafeVarargs
 	public static <T> ArrayList<T> toList(final T... terms) {
 		return new ArrayList<>(Arrays.asList(terms));
+	}
+
+	@SafeVarargs
+	public static <T> HashSet<T> toHashSet(final T... terms) {
+		return new HashSet<>(Arrays.asList(terms));
 	}
 
 	public static <T> T[] fillArray(final List<T> elements, final T[] newList) {
@@ -154,6 +159,19 @@ public class Util {
 		return out;
 	}
 
+	public static <T> ArrayList<T> filter(final T[] elements, final Predicate<T> isIncluded) {
+		final ArrayList<T> out = new ArrayList<>();
+
+		for (final T element : elements) {
+			if (!isIncluded.test(element)) {
+				continue;
+			}
+			out.add(element);
+		}
+
+		return out;
+	}
+
 	public static <T> boolean any(final Collection<T> elements, final Predicate<T> condition) {
 		for (final T element : elements) {
 			if (condition.test(element)) {
@@ -163,23 +181,14 @@ public class Util {
 		return false;
 	}
 
-	/**
-	 * The generic array sorts by
-	 */
 	private final static HashMap<Sort[], Sort> arraySorts = new HashMap<>();
-
-	/*
-	 * public static Theory getTheory() { return theory; }
-	 */
 
 	public static FunctionSymbol makeFunction(final String symbol, final Theory theory, final Term... params) {
 		final Sort[] sorts = new Sort[params.length];
 		for (int i = 0; i < params.length; i++) {
 			final Sort specificSort = params[i].getSort().getRealSort();
-			// sorts must be same instance for functionSymbol
 			sorts[i] = getGenericSort(specificSort, theory);
 		}
-		// sorts[params.length] = resultSort;
 
 		return theory.getFunctionWithResult(symbol, null, null, sorts);
 	}
@@ -212,9 +221,9 @@ public class Util {
 	public static Sort getSort(final ReturnType type, final Theory theory, final Sort... args) {
 		switch (type) {
 		case Boolean:
-			return theory.getBooleanSort();// booleanSort;
+			return theory.getBooleanSort();
 		case Int:
-			return theory.getNumericSort();// integerSort;
+			return theory.getNumericSort();
 		case Array:
 			assert args.length == 2;
 			final Sort[] argsGeneric = { getGenericSort(args[0], theory), getGenericSort(args[1], theory) };
@@ -241,7 +250,7 @@ public class Util {
 		case SMTLIBConstants.BITVEC:
 
 			final int length = Integer.parseInt(sort.getIndices()[0]);
-			final String[] indices = {};
+			final String[] indices = { length + "" }; // TODO find out about sort indices representation
 			return theory.getSort(SMTLIBConstants.BITVEC, indices);
 
 		case SMTLIBConstants.ARRAY:

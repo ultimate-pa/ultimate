@@ -85,17 +85,13 @@ public class GreaterTerm extends BooleanTerm {
 		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory), mY.toSMTTerm(theory));
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(ExecutionTerm<subT>
-	 * current, ExecutionTerm<subT> replacement) { IntegerTerm[] mSubTerms = new IntegerTerm[subTerms.length]; for(int i
-	 * = 0; i < subTerms.length; i++) { mSubTerms[i] = subTerms[i].equals(current) ? (IntegerTerm) replacement :
-	 * subTerms[i]; }
-	 *
-	 * return new GreaterTerm(mSubTerms); }
-	 */
-
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return mX.evaluate(currentState, nextState) > mY.evaluate(currentState, nextState);
+	}
+
+	@Override
+	public String toCode() {
+		return "(" + mX.toCode() + " > " + mY.toCode() + ")";
 	}
 }

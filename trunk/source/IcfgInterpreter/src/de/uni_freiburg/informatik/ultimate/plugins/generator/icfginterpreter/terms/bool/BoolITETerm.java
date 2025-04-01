@@ -82,4 +82,9 @@ public class BoolITETerm extends BooleanTerm {
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return (Boolean) ite.evaluate(currentState, nextState);
 	}
+
+	@Override
+	public String toCode() {
+		return ite.toCode();
+	}
 }

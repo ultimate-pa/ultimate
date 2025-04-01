@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.SelectTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -81,5 +82,10 @@ public class BooleanSelectTerm extends BooleanTerm {
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return (boolean) select.evaluate(currentState, nextState);
+	}
+
+	@Override
+	public String toCode() {
+		return "((boolean) " + select.toCode() + ")";
 	}
 }

@@ -82,4 +82,9 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		return out.append(Util.getIndent(depth)).append(getName());
 	}
+
+	@Override
+	public String toCode() {
+		return mVariableTerm.toCode();
+	}
 }

@@ -88,4 +88,8 @@ public class ITETerm<T extends ExecutionTerm> {
 		}
 		return C.evaluate(currentState, nextState);
 	}
+
+	public String toCode() {
+		return "(" + A + " ? " + B.toCode() + " : " + C.toCode() + ")";
+	}
 }

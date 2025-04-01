@@ -7,15 +7,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
 public class RNGChoice implements NonDeterministicChoice {
 	private int mSeed;
@@ -30,13 +28,27 @@ public class RNGChoice implements NonDeterministicChoice {
 		mSeed = seed;
 
 		final RcpPreferenceProvider settings = IcfgInterpreterPreferences.getPreferences();
-		final int mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
+		int mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
 		mMinHavocInt = settings.getInt(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE + 1);
-		mHavocCapMap = mMaxHavocInt - mMinHavocInt + 1;
 		if (mMaxHavocInt < mMinHavocInt) {
+			// Settings are the wrong way around
+			final int swap = mMaxHavocInt;
+			mMaxHavocInt = mMinHavocInt;
+			mMinHavocInt = swap;
+
+			settings.put(MAX_INT_HAVOC_HINT, mMaxHavocInt);
+			settings.put(MIN_INT_HAVOC_LABEL, mMinHavocInt);
 			throw new Exception("Wrong settings for " + IcfgInterpreter.class.getSimpleName()
 					+ ", maximum havoc value is less than the minimum havoc value");
 		}
+		mHavocCapMap = mMaxHavocInt - mMinHavocInt + 1;
+	}
+
+	private RNGChoice(final int seed, final int minHavoc, final int havocCap) {
+		// constructor used for quick cloning
+		mSeed = seed;
+		mMinHavocInt = minHavoc;
+		mHavocCapMap = havocCap;
 	}
 
 	@Override
@@ -55,7 +67,7 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public int havocInt(final VariableIntegerTerm variable, final IntegerRestriction values) {
+	public int havocInt(final IProgramVar variable, final IntegerRestriction values) {
 		if (values == null) {
 			return (Math.abs(xorShift()) % mHavocCapMap) + mMinHavocInt;
 		}
@@ -70,7 +82,7 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public boolean havocBool(final VariableBooleanTerm variable, final BooleanRestriction values) {
+	public boolean havocBool(final IProgramVar variable, final BooleanRestriction values) {
 		if (values != null && values.getInequal().size() == 1) {
 			// can only be the value that is not in the inequalities
 			return values.getInequal().contains(false);
@@ -80,26 +92,29 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public BitVector havocBitVector(final VariableBitVectorTerm variable, final BitVectorRestriction values) {
+	public BitVector havocBitVector(final IProgramVar variable, final BitVectorRestriction values) {
+		// return new BitVector(variable.getSort().getIndices(), );
 		return null;
 	}
 
 	@Override
-	public SMTArray newArray(final VariableArrayTerm variable, final ArrayRestriction values) {
-		return new SMTArray(variable.keyType, variable.valueType, variable);
+	public SMTArray newArray(final IProgramVar programVar, final ArrayRestriction values) {
+		return new SMTArray(programVar);
 	}
 
 	@Override
 	public Object havocArrayEntry(final SMTArray array, final Object index) {
-		final long hashKey = array.variable.getVariableTerm().programVar.hashCode() + index.hashCode();
-		switch (array.valueType) {
-		case Array:
-			return newArray(array.variable, null);
-		case BitVector:
+		final long hashKey = array.hashCode() + index.hashCode();
+		switch (array.mValueSort.getName()) {
+		case SMTLIBConstants.ARRAY:
+			return new SMTArray(array.getEntries(), array.mVariable, array.mValueSort.getArguments()[0],
+					array.mValueSort.getArguments()[1]);
+		case SMTLIBConstants.BITVEC:
+
 			return null;
-		case Boolean:
+		case SMTLIBConstants.BOOL:
 			return 0 < hash(hashKey);
-		case Int:
+		case SMTLIBConstants.INT:
 			return (Math.abs((int) hash(hashKey)) % mHavocCapMap) + mMinHavocInt;
 		}
 		return null;
@@ -158,6 +173,11 @@ public class RNGChoice implements NonDeterministicChoice {
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE, MIN_INT_HAVOC_HINT,
 						PreferenceType.Integer));
+	}
+
+	@Override
+	public RNGChoice clone() {
+		return new RNGChoice(mSeed, mMinHavocInt, mHavocCapMap);
 	}
 
 	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";

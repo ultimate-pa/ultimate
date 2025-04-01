@@ -83,4 +83,9 @@ public class NegationTerm extends IntegerTerm {
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return -X.evaluate(currentState, nextState);
 	}
+
+	@Override
+	public String toCode() {
+		return "(-" + X.toCode() + ")";
+	}
 }

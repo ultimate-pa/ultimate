@@ -68,4 +68,9 @@ public class FalseTerm extends BooleanTerm {
 	public Term toSMTTerm(final Theory theory) {
 		return Util.makeTerm(mSymbol, theory);// return Util.makeConstant(false, returnType, theory);
 	}
+
+	@Override
+	public String toCode() {
+		return String.valueOf(false);
+	}
 }

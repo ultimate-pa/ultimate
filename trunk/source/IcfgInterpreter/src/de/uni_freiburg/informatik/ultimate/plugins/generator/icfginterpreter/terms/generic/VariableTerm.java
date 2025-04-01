@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 
 public class VariableTerm {
 	public VariableTerm(final boolean mIsInVar, final boolean mIsOutVar, final boolean mIsAuxVar,
@@ -28,5 +29,24 @@ public class VariableTerm {
 	public String toString() {
 		return "Variable " + name + (isAuxVar ? "" : (" (of " + programVar.getGloballyUniqueId() + ")")) + " {InVar="
 				+ isInVar + ", OutVar=" + isOutVar + ", AuxVar=" + isAuxVar + ", Assignable=" + isAssignable + "}";
+	}
+
+	public String toCode() {
+		final StringBuilder out = new StringBuilder(isInVar ? "currentState" : "nextState");
+		switch (ReturnType.getType(programVar.getSort())) {
+		case Array:
+			out.append(".getArray(m");
+			break;
+		case BitVector:
+			out.append(".getBitVec(m");
+			break;
+		case Boolean:
+			out.append(".getBool(m");
+			break;
+		case Int:
+			out.append(".getInt(m");
+			break;
+		}
+		return out.append(programVar.getGloballyUniqueId()).append(")").toString();
 	}
 }

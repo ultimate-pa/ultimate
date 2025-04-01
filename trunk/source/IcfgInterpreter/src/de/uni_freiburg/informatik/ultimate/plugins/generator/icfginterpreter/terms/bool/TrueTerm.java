@@ -67,4 +67,9 @@ public class TrueTerm extends BooleanTerm {
 	public Term toSMTTerm(final Theory theory) {
 		return Util.makeTerm(mSymbol, theory);// .makeConstant(true, returnType, theory);
 	}
+
+	@Override
+	public String toCode() {
+		return String.valueOf(true);
+	}
 }

@@ -159,25 +159,6 @@ public class AndTerm extends BooleanTerm {
 		return out;
 	}
 
-	/*
-	 * @Override public BooleanDomain evaluate(final HashMap<Variable<?>, Domain<?>> variableDomains) { BooleanDomain
-	 * result = subTerms[0].evaluate(variableDomains);
-	 *
-	 * for (int i = 1; i < subTerms.length; i++) { result = result.and(subTerms[i].evaluate(variableDomains)); } return
-	 * result; }
-	 *
-	 * @Override public <T extends Domain<T>> ExecutionTerm<T> solveFor(final Variable<T> var, final ExecutionTerm<?>
-	 * otherSide, final Relation relation) { // Cannot solve for variable, even if inside. return null; }
-	 *
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final BooleanTerm[] mSubTerms = new
-	 * BooleanTerm[subTerms.length]; for (int i = 0; i < subTerms.length; i++) { mSubTerms[i] =
-	 * subTerms[i].equals(current) ? (BooleanTerm) replacement : subTerms[i]; }
-	 *
-	 * return new AndTerm(mSubTerms); }
-	 *
-	 *
-	 */
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		for (final BooleanTerm subTerm : subTerms) {
@@ -202,5 +183,17 @@ public class AndTerm extends BooleanTerm {
 		}
 
 		return A;
+	}
+
+	@Override
+	public String toCode() {
+		final ArrayList<String> elements = new ArrayList<>();
+		for (final BooleanTerm subTerm : subTerms) {
+			elements.add(subTerm.toCode());
+		}
+		if (elements.size() == 1) {
+			return elements.get(0);
+		}
+		return "(" + String.join(" && ", elements) + ")";
 	}
 }

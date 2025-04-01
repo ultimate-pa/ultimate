@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
@@ -11,25 +10,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Uti
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public abstract class ExecutionTerm {
-	public enum ReturnType {
-		Boolean, Int, Array, BitVector;
-
-		public static ReturnType getType(final Sort sort) {
-			switch (sort.getName()) {
-			case "Array":
-				return Array;
-			case "BitVec":
-				return BitVector;
-			case "Bool":
-				return Boolean;
-			case "Int":
-				return Int;
-			}
-			assert false;
-			return null;
-		}
-	}
-
 	public final ReturnType returnType;
 	public final String mSymbol;
 
@@ -73,4 +53,6 @@ public abstract class ExecutionTerm {
 	public String toString() {
 		return toString(new StringBuilder(""), 0).toString();
 	}
+
+	public abstract String toCode();
 }

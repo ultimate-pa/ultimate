@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm.ReturnType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.AndTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.NotTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.OrTerm;
@@ -244,10 +244,6 @@ public class ArcSolver {
 			final HashSet<Constraint> constraintSet = restrictionsConstraint.getOrDefault(constraint.getVariable(),
 					new HashSet<>());
 			constraintSet.add(constraint);
-
-			// updates.add(
-			// Update.getHavocUpdate(constraint.getVariable(), constraint.getConstraint(), constraint.relation));
-			// wellDefined.add(constraint.getVariable());
 		}
 		for (final Arc arc : mArcs) {
 			if (wellDefined.contains(arc.getDefinedVariable())) {
@@ -259,9 +255,6 @@ public class ArcSolver {
 
 			final HashSet<Arc> arcSet = restrictionsArc.getOrDefault(arc.getDefinedVariable(), new HashSet<>());
 			arcSet.add(arc);
-
-			// updates.add(Update.getHavocUpdate(arc.getDefinedVariable(), arc.getConstraint(), arc.relation));
-			// wellDefined.add(arc.getDefinedVariable());
 		}
 		final Set<Variable> independentVars = restrictionsConstraint.keySet();
 		independentVars.addAll(restrictionsArc.keySet());

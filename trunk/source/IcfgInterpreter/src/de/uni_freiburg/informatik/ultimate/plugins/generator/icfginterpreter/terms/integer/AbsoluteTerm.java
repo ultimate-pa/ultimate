@@ -72,14 +72,13 @@ public class AbsoluteTerm extends IntegerTerm {
 		return Util.makeTerm(mSymbol, theory, X.toSMTTerm(theory));
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm replaceSubTerm(ExecutionTerm<subT> current,
-	 * ExecutionTerm<subT> replacement) { if(X.equals(current)) { return new AbsoluteTerm((IntegerTerm) replacement); }
-	 * return this; }
-	 */
-
 	@Override
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return Math.abs(X.evaluate(currentState, nextState));
+	}
+
+	@Override
+	public String toCode() {
+		return "Math.abs(" + X.toCode() + ")";
 	}
 }

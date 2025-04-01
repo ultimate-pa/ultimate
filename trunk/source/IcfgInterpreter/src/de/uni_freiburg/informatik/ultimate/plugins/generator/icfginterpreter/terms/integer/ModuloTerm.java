@@ -94,4 +94,11 @@ public class ModuloTerm extends IntegerTerm {
 
 		return a - ((Util.SMTDiv(a, b)) * b);
 	}
+
+	@Override
+	public String toCode() {
+		final String xCode = X.toCode();
+		final String yCode = Y.toCode();
+		return "(" + xCode + " - (Util.SMTDiv(" + xCode + ",  " + yCode + ") * " + yCode + "))";
+	}
 }

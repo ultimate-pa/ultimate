@@ -85,17 +85,13 @@ public class LessTerm extends BooleanTerm {
 		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory), mY.toSMTTerm(theory));
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final IntegerTerm[] mSubTerms = new
-	 * IntegerTerm[subTerms.length]; for (int i = 0; i < subTerms.length; i++) { mSubTerms[i] =
-	 * subTerms[i].equals(current) ? (IntegerTerm) replacement : subTerms[i]; }
-	 *
-	 * return new LessTerm(mSubTerms); }
-	 */
-
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return mX.evaluate(currentState, nextState) < mY.evaluate(currentState, nextState);
+	}
+
+	@Override
+	public String toCode() {
+		return "(" + mX.toCode() + " < " + mY.toCode() + ")";
 	}
 }

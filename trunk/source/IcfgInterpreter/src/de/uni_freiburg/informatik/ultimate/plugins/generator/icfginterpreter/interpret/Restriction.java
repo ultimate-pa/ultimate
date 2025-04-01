@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.in
 
 import java.util.HashSet;
 
-public class Restriction<T> {
-	private final HashSet<T> mInequal;
+public abstract class Restriction<T> {
+	protected final HashSet<T> mInequal;
 	protected final T mLess;
 	protected final T mGreater;
 
@@ -21,4 +21,6 @@ public class Restriction<T> {
 	public HashSet<T> getInequal() {
 		return mInequal;
 	}
+
+	public abstract String toCode();
 }

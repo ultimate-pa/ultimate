@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 /**
@@ -127,5 +128,17 @@ public class SubtractionTerm extends IntegerTerm {
 		}
 
 		return out;
+	}
+
+	@Override
+	public String toCode() {
+		final ArrayList<String> elements = new ArrayList<>();
+		for (final IntegerTerm subTerm : subTerms) {
+			elements.add(subTerm.toCode());
+		}
+		if (elements.size() == 1) {
+			return elements.get(0);
+		}
+		return "(" + String.join(" - ", elements) + ")";
 	}
 }

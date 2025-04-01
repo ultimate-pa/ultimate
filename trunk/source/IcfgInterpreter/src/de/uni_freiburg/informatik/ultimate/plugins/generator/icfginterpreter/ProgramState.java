@@ -5,11 +5,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
 public class ProgramState {
 	private final HashMap<IProgramVar, SMTArray> mArrayVars;
@@ -34,28 +30,25 @@ public class ProgramState {
 				if (mArrayVars.containsKey(programVar)) {
 					continue;
 				}
-				final VariableArrayTerm arrayVariable = (VariableArrayTerm) variable;
-				mArrayVars.put(programVar, ndc.newArray(arrayVariable, null));
+				mArrayVars.put(programVar, ndc.newArray(programVar, null));
 				break;
 			case BitVector:
 				if (mBVVars.containsKey(programVar)) {
 					continue;
 				}
-				mBVVars.put(programVar, ndc.havocBitVector((VariableBitVectorTerm) variable, null));
+				mBVVars.put(programVar, ndc.havocBitVector(programVar, null));
 				break;
 			case Boolean:
 				if (mBoolVars.containsKey(programVar)) {
 					continue;
 				}
-				final VariableBooleanTerm boolVariable = (VariableBooleanTerm) variable;
-				mBoolVars.put(programVar, ndc.havocBool(boolVariable, null));
+				mBoolVars.put(programVar, ndc.havocBool(programVar, null));
 				break;
 			case Int:
 				if (mIntVars.containsKey(programVar)) {
 					continue;
 				}
-				final VariableIntegerTerm intVariable = (VariableIntegerTerm) variable;
-				mIntVars.put(programVar, ndc.havocInt(intVariable, null));
+				mIntVars.put(programVar, ndc.havocInt(programVar, null));
 				break;
 			}
 		}

@@ -93,6 +93,10 @@ public class SelectTerm {
 
 	public Object evaluate(final ProgramState currentState, final ProgramState nextState) {
 		final SMTArray mArray = array.evaluate(currentState, nextState);
-		return mArray.select(index.evaluate(currentState, nextState), currentState);
+		return mArray.select(index.evaluate(currentState, nextState), currentState.getNDC());
+	}
+
+	public String toCode() {
+		return array.toCode() + ".select(" + index.toCode() + ", nextState.getNDC())";
 	}
 }

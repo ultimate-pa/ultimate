@@ -138,17 +138,6 @@ public class OrTerm extends BooleanTerm {
 		return out;
 	}
 
-	/*
-	 *
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final BooleanTerm[] mSubTerms = new
-	 * BooleanTerm[subTerms.length]; for (int i = 0; i < subTerms.length; i++) { mSubTerms[i] =
-	 * subTerms[i].equals(current) ? (BooleanTerm) replacement : subTerms[i]; }
-	 *
-	 * return new OrTerm(mSubTerms); }
-	 *
-	 *
-	 */
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		for (final BooleanTerm subTerm : subTerms) {
@@ -173,5 +162,17 @@ public class OrTerm extends BooleanTerm {
 		}
 
 		return A;
+	}
+
+	@Override
+	public String toCode() {
+		final ArrayList<String> elements = new ArrayList<>();
+		for (final BooleanTerm subTerm : subTerms) {
+			elements.add(subTerm.toCode());
+		}
+		if (elements.size() == 1) {
+			return elements.get(0);
+		}
+		return "(" + String.join(" || ", elements) + ")";
 	}
 }

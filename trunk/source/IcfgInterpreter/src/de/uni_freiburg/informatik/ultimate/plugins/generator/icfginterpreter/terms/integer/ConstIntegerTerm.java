@@ -80,4 +80,9 @@ public class ConstIntegerTerm extends IntegerTerm {
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return value;
 	}
+
+	@Override
+	public String toCode() {
+		return String.valueOf(value);
+	}
 }

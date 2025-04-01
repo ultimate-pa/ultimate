@@ -3,16 +3,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.VariableIntegerTerm;
 
 /**
  * This class should be deterministic for its seed. This ensures that the same "non-deterministic" values appear when
@@ -31,27 +28,25 @@ public interface NonDeterministicChoice {
 	 * @param possibleValues
 	 * @return
 	 */
-	default Object havoc(final Variable variable, final Restriction<?> possibleValues) {
-		switch (variable.getTerm().returnType) {
-		case Array:
-			return newArray((VariableArrayTerm) variable, (ArrayRestriction) possibleValues);
-		case BitVector:
-			return havocBitVector((VariableBitVectorTerm) variable, (BitVectorRestriction) possibleValues);
-		case Boolean:
-			return havocBool((VariableBooleanTerm) variable, (BooleanRestriction) possibleValues);
-		case Int:
-			return havocInt((VariableIntegerTerm) variable, (IntegerRestriction) possibleValues);
+	default Object havoc(final IProgramVar variable, final Restriction<?> possibleValues) {
+		switch (variable.getSort().getName()) {
+		case SMTLIBConstants.ARRAY:
+			return newArray(variable, (ArrayRestriction) possibleValues);
+		case SMTLIBConstants.BITVEC:
+			return havocBitVector(variable, (BitVectorRestriction) possibleValues);
+		case SMTLIBConstants.BOOL:
+			return havocBool(variable, (BooleanRestriction) possibleValues);
+		case SMTLIBConstants.INT:
+			return havocInt(variable, (IntegerRestriction) possibleValues);
 		}
 		return null;
 	}
 
-	int havocInt(VariableIntegerTerm variable, IntegerRestriction values);
+	int havocInt(IProgramVar variable, IntegerRestriction values);
 
-	boolean havocBool(VariableBooleanTerm variable, BooleanRestriction values);
+	boolean havocBool(IProgramVar variable, BooleanRestriction values);
 
-	BitVector havocBitVector(VariableBitVectorTerm variable, BitVectorRestriction values);
-
-	SMTArray newArray(VariableArrayTerm variable, ArrayRestriction values);
+	BitVector havocBitVector(IProgramVar variable, BitVectorRestriction values);
 
 	/**
 	 * Called when an array entry is read where no value has been stored with
@@ -62,9 +57,13 @@ public interface NonDeterministicChoice {
 	 * @param type
 	 * @return
 	 */
-	Object havocArrayEntry(SMTArray array, Object index);
+	Object havocArrayEntry(SMTArray smtArray, Object index);
+
+	SMTArray newArray(IProgramVar programVar, ArrayRestriction values);
 
 	boolean areArraysEqual(SMTArray a, SMTArray b);
 
 	UltimatePreferenceItemGroup getImplementationSettings();
+
+	NonDeterministicChoice clone();
 }

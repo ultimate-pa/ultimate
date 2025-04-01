@@ -41,16 +41,18 @@ public class ICFGExecutionEdge {
 	private final HashMap<TermVariable, Variable> mVariables;
 	private final ArcSolver mArcSolver;
 	private final OrTerm mGuardTerm;
+	private final String mIndentifier;
 
 	private ICFGExecutionEdge(final UnmodifiableTransFormula transFormula, final IcfgLocation source,
 			final IcfgLocation target, final HashMap<TermVariable, Variable> variables, final ArcSolver arcSolver,
-			final OrTerm guardTerm) {
+			final OrTerm guardTerm, final String identifier) {
 		mTransFormula = transFormula;
 		mSource = source;
 		mTarget = target;
 		mVariables = variables;
 		mArcSolver = arcSolver;
 		mGuardTerm = guardTerm;
+		mIndentifier = identifier;
 	}
 
 	/**
@@ -116,7 +118,7 @@ public class ICFGExecutionEdge {
 			// all ways to the next state have no updates, make trivial arc with the guard of the whole term
 			final ArcSolver trivialArc = new ArcSolver(new AndTerm(new TrueTerm()), managedScript, variables, inVars,
 					outVars, service, formulaTheory);
-			edges.add(new ICFGExecutionEdge(transFormula, source, target, variables, trivialArc, guardTerm));
+			edges.add(new ICFGExecutionEdge(transFormula, source, target, variables, trivialArc, guardTerm, "A"));
 
 			// System.out.println(edges.get(0));
 			// System.out.println("\n\n\n");
@@ -125,6 +127,8 @@ public class ICFGExecutionEdge {
 
 		final Infeasibility isInfeasable = guardFormula.isInfeasible();
 		final Set<TermVariable> branchEncoders = guardFormula.getBranchEncoders();
+
+		int i = 0;
 		for (final Entry<ArcSolver, AndTerm> entry : arcSolvers.entrySet()) {
 			final UnmodifiableTransFormula arcGuardFormula = entry.getKey().makeGuardFormula(managedScript, service,
 					entry.getValue().toSMTTerm(formulaTheory), isInfeasable, branchEncoders);
@@ -135,13 +139,25 @@ public class ICFGExecutionEdge {
 				continue; // edge can never be taken, no need to return it for execution
 			}
 
+			final String edgeID = intToLetters(i);
+			i++;
+
 			final ICFGExecutionEdge newEdge = new ICFGExecutionEdge(transFormula, source, target, variables,
-					entry.getKey(), arcGuardTerm);
+					entry.getKey(), arcGuardTerm, edgeID);
 			// System.out.println(newEdge);
 			edges.add(newEdge);
 		}
 		// System.out.println("\n\n\n");
 		return edges;
+	}
+
+	private static String intToLetters(int numb) {
+		final StringBuilder result = new StringBuilder();
+		while (numb >= 0) {
+			result.insert(0, (char) ('A' + (numb % 26)));
+			numb = (numb / 26) - 1;
+		}
+		return result.toString();
 	}
 
 	private static final OrTerm falseGuard = new OrTerm(new AndTerm(new FalseTerm()));
@@ -182,6 +198,14 @@ public class ICFGExecutionEdge {
 		}
 
 		return out.toString();
+	}
+
+	public Update[] getUpdates() {
+		return mArcSolver.makeUpdates();
+	}
+
+	public OrTerm getGuard() {
+		return mGuardTerm;
 	}
 
 	public void addChildren(final ArrayList<ICFGExecutionEdge> mChildren) {
@@ -259,5 +283,9 @@ public class ICFGExecutionEdge {
 
 	public boolean isInLoop() {
 		return mReachable.contains(this);
+	}
+
+	public String getUniqueName() {
+		return mSource.toString() + "_To_" + mTarget.toString() + "_" + mIndentifier;
 	}
 }

@@ -93,4 +93,9 @@ public class IntITETerm extends IntegerTerm implements ITE {
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return (int) ite.evaluate(currentState, nextState);
 	}
+
+	@Override
+	public String toCode() {
+		return ite.toCode();
+	}
 }

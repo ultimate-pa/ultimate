@@ -94,4 +94,9 @@ public class StoreTerm extends ArrayTerm {
 		final SMTArray mArray = array.evaluate(currentState, nextState);
 		return mArray.store(index.evaluate(currentState, nextState), value.evaluate(currentState, nextState));
 	}
+
+	@Override
+	public String toCode() {
+		return array.toCode() + ".store(" + index.toCode() + ", " + value.toCode() + ")";
+	}
 }
