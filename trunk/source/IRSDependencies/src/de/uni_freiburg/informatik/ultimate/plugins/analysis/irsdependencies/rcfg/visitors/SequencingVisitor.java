@@ -224,7 +224,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 				}
 			}
 		}
-		if (start.compareTo(end) == -1) {
+		if (start.compareTo(end) < 0) {
 			zones.add(new Tuple<>(start, end));
 		}
 		// sLogger.debug(insertLineBreaks(200, traceToString(trace)));
