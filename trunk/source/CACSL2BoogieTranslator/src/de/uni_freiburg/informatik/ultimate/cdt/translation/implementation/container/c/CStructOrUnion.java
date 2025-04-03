@@ -188,12 +188,22 @@ public class CStructOrUnion implements ICType, ICPossibleIncompleteType<CStructO
 				cvar.getBitFieldWidths());
 	}
 
+	/**
+	 * Complete {@code this} in with the given names, types and bitfield widths (in-place).
+	 *
+	 * @param memberNames
+	 *            names of the members to be completed.
+	 * @param memberTypes
+	 *            types of the members to be completed.
+	 * @param bitfieldWidths
+	 *            the widths of the bitfields to be completed.
+	 */
 	public void complete(final List<String> memberNames, final List<ICType> memberTypes,
-			final List<Integer> bitfieldWidth) {
-		assert memberNames.size() == bitfieldWidth.size();
+			final List<Integer> bitfieldWidths) {
+		assert memberNames.size() == bitfieldWidths.size();
 		mFieldNames = memberNames.toArray(String[]::new);
 		mFieldTypes = memberTypes.toArray(ICType[]::new);
-		mBitFieldWidths = bitfieldWidth;
+		mBitFieldWidths = bitfieldWidths;
 		mIsComplete = true;
 	}
 

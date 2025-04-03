@@ -66,12 +66,10 @@ public class CArray implements ICType {
 	/**
 	 * Constructor.
 	 *
-	 * @param dimensions
+	 * @param bound
 	 *            the dimensions of this array.
 	 * @param valueType
 	 *            the type of the array.
-	 * @param cDeclSpec
-	 *            the C declaration used.
 	 */
 	public CArray(final RValue bound, final ICType valueType) {
 		mBound = bound;

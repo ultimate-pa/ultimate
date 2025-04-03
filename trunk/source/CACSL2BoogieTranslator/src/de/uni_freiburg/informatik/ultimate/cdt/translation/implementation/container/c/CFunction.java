@@ -78,21 +78,31 @@ public class CFunction implements ICType {
 	}
 
 	/**
-	 * Create a default CFunction without arguments and with int as return type.
+	 * @return a default CFunction without arguments and with int as return type.
 	 */
 	public static CFunction createDefaultCFunction() {
 		return new CFunction(new CPrimitive(CPrimitives.INT), new CDeclaration[0], false);
 	}
 
 	/**
-	 * Create an empty CFunction without arguments and with return type null
-	 *
-	 * TODO: This seems like a legacy method
+	 * @return an empty CFunction without arguments and with return type null
 	 */
 	public static CFunction createEmptyCFunction() {
 		return new CFunction(null, new CDeclaration[0], false);
 	}
 
+	/**
+	 * Create a function with the given return type and parameter declarations and bindingwith the given return type and
+	 * parameter declarations and binding
+	 *
+	 * @param resultType
+	 *            the return type of the function.
+	 * @param paramDeclarations
+	 *            an array of parameter declarations.
+	 * @param binding
+	 *            the binding of the function in the program (to determine whether it takes varargs).
+	 * @return with the given return type and parameter declarations and binding.
+	 */
 	public static CFunction createCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final IFunction binding) {
 		return new CFunction(resultType, paramDeclarations, binding.takesVarArgs());

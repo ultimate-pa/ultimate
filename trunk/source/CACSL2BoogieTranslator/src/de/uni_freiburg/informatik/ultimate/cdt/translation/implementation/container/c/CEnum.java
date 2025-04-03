@@ -125,6 +125,9 @@ public class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 	 * Replace CEnum types by signed int, other types are untouched. According to C11 6.4.4.3.2 an identifier declared
 	 * as an enumeration constant has type int.
 	 *
+	 * @param cType
+	 *            a given C-type
+	 * @return either cType itself or int if it is an enum
 	 */
 	public static ICType replaceEnumWithInt(final ICType cType) {
 		if (cType.getUnderlyingType() instanceof CEnum) {
