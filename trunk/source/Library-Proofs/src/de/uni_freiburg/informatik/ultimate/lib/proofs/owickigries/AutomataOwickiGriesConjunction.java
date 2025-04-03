@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
@@ -27,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireT
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
 public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
@@ -42,7 +45,7 @@ public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPe
 	private final Statistics mStatistics;
 
 	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
-	private final List<INestedWordAutomaton<L, IPredicate>> mProofs = new ArrayList<>();
+	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofs = new ArrayList<>();
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
 
 	public AutomataOwickiGriesConjunction(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
@@ -68,7 +71,11 @@ public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPe
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
-		mProofs.add(interpolantAutomaton);
+
+		final var initialTrueState =
+				DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
+		final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false);
+		mProofs.add(totalizedProof);
 	}
 
 	@Override
@@ -92,7 +99,7 @@ public class AutomataOwickiGriesConjunction<L extends IAction, P> implements IPe
 	private Set<OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>>
 			getOGAnnotations(final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		final var annotations = new HashSet<OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>>>();
-		for (final INestedWordAutomaton<L, IPredicate> proof : mProofs) {
+		for (final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> proof : mProofs) {
 			final var empireAutomaton = new EmpireAutomaton<>(mProgram, proof, mServices);
 			final var empireToOG = getOwickiGriesAnnotation(empireAutomaton, possibleInterferences);
 			annotations.add(empireToOG.getAnnotation());
