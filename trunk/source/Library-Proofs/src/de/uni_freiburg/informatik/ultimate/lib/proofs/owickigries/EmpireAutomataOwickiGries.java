@@ -143,7 +143,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		assert checkAutomatonValidity(automaton) : "Empire automaton is invalid";
 
 		final var empireToOG = getOwickiGriesAnnotation(automaton);
-		final var automatonStatisticsComputation = getAutomataStatisticsComputation(empireToOG);
+		final var automatonStatisticsComputation = empireToOG.getAutomatonStatistics();
 		final var empireStatistics = new EmpireAutomataStatistics();
 		empireStatistics.reportEmpire(automatonStatisticsComputation);
 		mStatistics.reportEmpire(empireStatistics);
@@ -153,12 +153,6 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 
 		return mOwickiGries;
-	}
-
-	private ComputeAutomataStatistics<L, P>
-			getAutomataStatisticsComputation(final EmpireAutomatonToOG<L, P> empireAutomatonToOG) {
-		final var automaton = empireAutomatonToOG.getAutomatonReachableStates();
-		return new ComputeAutomataStatistics<>(automaton);
 	}
 
 	private boolean checkAutomatonValidity(final EmpireAutomaton<L, P> automaton) {

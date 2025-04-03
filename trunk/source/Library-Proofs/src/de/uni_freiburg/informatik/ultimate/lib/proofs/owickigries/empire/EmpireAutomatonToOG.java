@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesCon
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -65,31 +67,31 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class EmpireAutomatonToOG<L, P> {
-	private static String GHOST = "g";
-	private final ManagedScript mManagedScript;
-	private final Script mScript;
-	private final BasicPredicateFactory mFactory;
+	private static final String GHOST = "g";
 
 	private final IPetriNet<L, P> mNet;
+	private final ManagedScript mManagedScript;
+	private final Script mScript;
 
+	private final BasicPredicateFactory mFactory;
 	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
-
-	private final DefaultIcfgSymbolTable mSymbolTable;
-	private final Map<String, IProgramVar> mGhostVariables;
+	private final IProgramVar mGhostVariable;
 	private final Map<State<L, P>, Term> mStateTerms;
-
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
 	public EmpireAutomatonToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final INwaOutgoingTransitionProvider<Transition<L, P>, State<L, P>> empireAutomaton,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
+		mNet = net;
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
-		mSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
-		mFactory = new BasicPredicateFactory(services, mManagedScript, mSymbolTable);
 
-		mNet = net;
+		mGhostVariable = createGhostVariable();
+		final var newSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
+		newSymbolTable.add(mGhostVariable);
+		mFactory = new BasicPredicateFactory(services, mManagedScript, newSymbolTable);
+
 		try {
 			mEmpireAutomaton =
 					new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empireAutomaton);
@@ -98,32 +100,23 @@ public class EmpireAutomatonToOG<L, P> {
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
 		}
 
-		mGhostVariables = getGhostVariables();
 		mStateTerms = getStateTerms();
 		final Map<P, IPredicate> formulaMapping = getFormulaMap();
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
-		mOwickiGriesAnnotation =
-				new OwickiGriesAnnotation<>(OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory),
-						possibleInterferences, mSymbolTable, formulaMapping, new HashSet<>(mGhostVariables.values()),
-						ghostInitAssignment, assignmentMapping);
+		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
+				OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory), possibleInterferences,
+				newSymbolTable, formulaMapping, Set.of(mGhostVariable), ghostInitAssignment, assignmentMapping);
 	}
 
-	/**
-	 * @return map of a single ghost variable g
-	 */
-	private Map<String, IProgramVar> getGhostVariables() {
-		final Map<String, IProgramVar> ghostVars = new HashMap<>();
+	private IProgramVar createGhostVariable() {
 		mManagedScript.lock(this);
 		try {
 			final TermVariable tVar =
 					mManagedScript.constructFreshTermVariable(GHOST, SmtSortUtils.getIntSort(mManagedScript));
-			final IProgramVar pVar = ProgramVarUtils.constructGlobalProgramVarPair(tVar.getName(),
+			return ProgramVarUtils.constructGlobalProgramVarPair(tVar.getName(),
 					SmtSortUtils.getIntSort(mManagedScript), mManagedScript, this);
-			mSymbolTable.add(pVar);
-			ghostVars.put(GHOST, pVar);
-			return ghostVars;
 		} finally {
 			mManagedScript.unlock(this);
 		}
@@ -134,14 +127,16 @@ public class EmpireAutomatonToOG<L, P> {
 	 */
 	private Map<P, IPredicate> getFormulaMap() {
 		final Map<P, IPredicate> formulaMap = new HashMap<>();
-		for (final P P : mNet.getPlaces()) {
-			final var states = mEmpireAutomaton.getStates().stream().filter(s -> s.territory().containsPlace(P))
-					.collect(Collectors.toList());
-			final var formula = mFactory.or(states.stream()
-					.map(s -> mFactory.and(mFactory.newPredicate(mScript.term(SMTLIBConstants.EQUALS,
-							mGhostVariables.get(GHOST).getTerm(), mStateTerms.get(s))), s.law()))
-					.collect(Collectors.toSet()));
-			formulaMap.put(P, formula);
+		for (final P place : mNet.getPlaces()) {
+			final var disjuncts = mStateTerms.entrySet().stream()
+					// find states for this place
+					.filter(s -> s.getKey().territory().containsPlace(place))
+					// create disjunct for each state
+					.map(s -> SmtUtils.and(mScript,
+							SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), s.getValue()),
+							s.getKey().law().getFormula()))
+					.toList();
+			formulaMap.put(place, mFactory.newPredicate(SmtUtils.or(mScript, disjuncts)));
 		}
 		return formulaMap;
 	}
@@ -166,20 +161,18 @@ public class EmpireAutomatonToOG<L, P> {
 	private Map<IProgramVar, Term> getGhostInitAssignment() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
 		final var initState = DataStructureUtils.getOneAndOnly(mEmpireAutomaton.getInitialStates(), "initial state");
-		initAssignments.put(mGhostVariables.get(GHOST), mStateTerms.get(initState));
+		initAssignments.put(mGhostVariable, mStateTerms.get(initState));
 		return initAssignments;
 	}
 
 	private GhostUpdate getTransitionAssignment(final Transition<L, P> transition) {
-		final Map<IProgramVar, Term> assignments = new HashMap<>();
-
 		final var states = mEmpireAutomaton.getStates();
 		final var enablingStates =
 				states.stream().filter(s -> s.territory().enables(transition)).collect(Collectors.toSet());
-
 		if (enablingStates.isEmpty()) {
 			return null;
 		}
+
 		final var pairs = new HashSet<Pair<State<L, P>, State<L, P>>>();
 		for (final State<L, P> state : enablingStates) {
 			final var successors = mEmpireAutomaton.internalSuccessors(state, transition).iterator();
@@ -189,23 +182,25 @@ public class EmpireAutomatonToOG<L, P> {
 			}
 			assert !successors.hasNext() : "More than one successors in automaton for a transition";
 		}
+
 		final var noUpdates = pairs.stream().allMatch(s -> s.getFirst().equals(s.getSecond()));
 		if (noUpdates) {
 			return null;
 		}
+
 		final Term term = getGhostUpdateTerm(new ArrayList<>(pairs));
-		assignments.put(mGhostVariables.get(GHOST), term);
-		return new GhostUpdate(assignments);
+		return new GhostUpdate(Map.of(mGhostVariable, term));
 	}
 
 	private Map<State<L, P>, Term> getStateTerms() {
-		final var states = mEmpireAutomaton.getStates();
-		final var stateTerms = new HashMap<State<L, P>, Term>();
+		final var stateTerms = new LinkedHashMap<State<L, P>, Term>();
+
 		var num = 1;
-		for (final State<L, P> state : states) {
+		for (final State<L, P> state : mEmpireAutomaton.getStates()) {
 			stateTerms.put(state, mScript.numeral(String.valueOf(num)));
 			num++;
 		}
+
 		return stateTerms;
 	}
 
@@ -214,11 +209,9 @@ public class EmpireAutomatonToOG<L, P> {
 		final var pair = statePairs.get(0);
 		final var pred = pair.getFirst();
 		final var succ = pair.getSecond();
-		final var equalsTerm =
-				mScript.term(SMTLIBConstants.EQUALS, mGhostVariables.get(GHOST).getTerm(), mStateTerms.get(pred));
+		final var equalsTerm = mScript.term(SMTLIBConstants.EQUALS, mGhostVariable.getTerm(), mStateTerms.get(pred));
 		if (statePairs.size() == 1) {
-			updateTerm = mScript.term(SMTLIBConstants.ITE, equalsTerm, mStateTerms.get(succ),
-					mGhostVariables.get(GHOST).getTerm());
+			updateTerm = mScript.term(SMTLIBConstants.ITE, equalsTerm, mStateTerms.get(succ), mGhostVariable.getTerm());
 		} else {
 			updateTerm = mScript.term(SMTLIBConstants.ITE, equalsTerm, mStateTerms.get(succ),
 					getGhostUpdateTerm(statePairs.subList(1, statePairs.size())));
@@ -230,7 +223,9 @@ public class EmpireAutomatonToOG<L, P> {
 		return mOwickiGriesAnnotation;
 	}
 
-	public NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> getAutomatonReachableStates() {
-		return mEmpireAutomaton;
+	// TODO Does this really need to be specific about the type of statistics?
+	// Or could it return an IStatisticsDataProvider?
+	public ComputeAutomataStatistics<L, P> getAutomatonStatistics() {
+		return new ComputeAutomataStatistics<>(mEmpireAutomaton);
 	}
 }
