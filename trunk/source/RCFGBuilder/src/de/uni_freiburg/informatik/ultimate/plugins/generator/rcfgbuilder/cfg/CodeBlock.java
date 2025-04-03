@@ -80,8 +80,6 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	private String mPrecedingProcedure;
 	private String mSucceedingProcedure;
 
-	protected RCFGEdgeAnnotation mAnnotation;
-
 	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
 		super(source, target, source == null ? new Payload() : new Payload(source.getPayload()));

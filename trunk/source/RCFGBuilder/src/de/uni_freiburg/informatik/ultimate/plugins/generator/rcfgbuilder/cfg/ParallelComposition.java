@@ -102,10 +102,6 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 			ModelUtils.copyAnnotations(currentCodeblock, this);
 		}
 
-		// workaround: set annotation with this pluginId again, because it was
-		// overwritten by the mergeAnnotations method
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
-
 		final boolean transformToCNF =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
