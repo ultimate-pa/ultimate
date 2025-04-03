@@ -63,8 +63,11 @@ public final class GhostUpdate {
 		mUpdates = updates;
 
 		assert !mUpdates.isEmpty() : "empty ghost updates are redundant";
-		assert !mUpdates.containsKey(null) : "invalid ghost update for null";
-		assert !mUpdates.containsValue(null) : "cannot update ghost variable to null";
+
+		// Intentionally strange null checks, because some Maps/Sets throw errors when checking if they contain null.
+		assert mUpdates.keySet().stream().noneMatch(Objects::isNull) : "invalid ghost update for null";
+		assert mUpdates.values().stream().noneMatch(Objects::isNull) : "cannot update ghost variable to null";
+
 		assert mUpdates.entrySet().stream().noneMatch(e -> e.getValue().equals(e.getKey().getTermVariable()))
 				: "trivial ghost updates are redundant";
 	}
