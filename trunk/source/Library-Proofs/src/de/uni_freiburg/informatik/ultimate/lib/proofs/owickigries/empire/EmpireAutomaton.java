@@ -97,6 +97,18 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	}
 
 	@Override
+	public boolean isFinal(final State<L, P> state) {
+		final var successors = internalSuccessors(state);
+		for (final OutgoingInternalTransition<Transition<L, P>, State<L, P>> outgoingInternalTransition : successors) {
+			final var succState = outgoingInternalTransition.getSucc();
+			if (state != succState) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
 	public int size() {
 		return -1;
 	}
