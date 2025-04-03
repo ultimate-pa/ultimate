@@ -105,7 +105,16 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 				return false;
 			}
 		}
-		return true;
+		final var territory = state.territory();
+		final var enabledTransitions = territory.getEnabledTransitions(mNet);
+		final var acceptingPlaces = mNet.getAcceptingPlaces();
+		if (DataStructureUtils.haveNonEmptyIntersection(territory.getPlaces(), acceptingPlaces)) {
+			return true;
+		}
+		final var acceptingTransitions = enabledTransitions
+				.filter(t -> DataStructureUtils.haveNonEmptyIntersection(t.getSuccessors(), acceptingPlaces))
+				.collect(Collectors.toSet());
+		return !acceptingTransitions.isEmpty();
 	}
 
 	@Override
