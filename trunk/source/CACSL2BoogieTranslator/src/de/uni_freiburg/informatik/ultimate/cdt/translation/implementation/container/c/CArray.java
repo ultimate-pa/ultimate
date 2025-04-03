@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @date 18.09.2012
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class CArray implements ICType {
+public final class CArray implements ICType {
 
 	/**
 	 * Size that we use to indicate that an array has a variable length.

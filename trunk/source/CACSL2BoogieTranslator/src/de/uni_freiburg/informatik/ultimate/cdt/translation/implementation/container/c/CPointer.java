@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Markus Lindenmann
  * @date 18.09.2012
  */
-public class CPointer implements ICType {
+public final class CPointer implements ICType {
 	/**
 	 * The type, this pointer points to.
 	 */

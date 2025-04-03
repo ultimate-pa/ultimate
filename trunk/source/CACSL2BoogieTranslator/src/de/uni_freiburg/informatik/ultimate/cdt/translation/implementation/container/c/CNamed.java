@@ -35,7 +35,7 @@ import java.util.Objects;
  * @author Markus Lindenmann
  * @date 01.11.2012
  */
-public class CNamed implements ICType {
+public final class CNamed implements ICType {
 	/**
 	 * The type this named type is mapping to.
 	 */

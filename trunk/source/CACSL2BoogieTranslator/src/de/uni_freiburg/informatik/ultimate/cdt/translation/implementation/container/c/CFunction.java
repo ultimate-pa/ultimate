@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CFunction implements ICType {
+public final class CFunction implements ICType {
 
 	public enum VarArgsUsage {
 		USED, UNUSED, UNKNOWN
