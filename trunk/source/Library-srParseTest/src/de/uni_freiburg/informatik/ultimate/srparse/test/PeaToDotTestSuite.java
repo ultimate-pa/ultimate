@@ -237,9 +237,9 @@ public class PeaToDotTestSuite {
 		// }
 		fmt.format(LINE_SEP);
 
-		final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true));
-		writer.write(fmt.toString());
-		writer.close();
+		try (final BufferedWriter writer = new BufferedWriter(new FileWriter(markdownFile, true))) {
+			writer.write(fmt.toString());
+		}
 		fmt.close();
 	}
 
@@ -271,9 +271,10 @@ public class PeaToDotTestSuite {
 		fmt.format("<!-- Auto generated file, do not make any changes here. -->%s%s", LINE_SEP, LINE_SEP);
 
 		if (ULTIMATE_REVISION_FILE.canRead()) {
-			final BufferedReader reader = new BufferedReader(new FileReader(ULTIMATE_REVISION_FILE));
-			final String ultimateRevision = reader.readLine();
-			reader.close();
+			final String ultimateRevision;
+			try (final BufferedReader reader = new BufferedReader(new FileReader(ULTIMATE_REVISION_FILE))) {
+				ultimateRevision = reader.readLine();
+			}
 
 			// fmt.format("### Ultimate revision at GitHub%s", LINE_SEP);
 			fmt.format("Ultimate revision on Github that corresponds to this documention: %s", LINE_SEP);
@@ -286,9 +287,9 @@ public class PeaToDotTestSuite {
 				.forEach(e -> fmt.format("--8<-- \"%s/%s\"%s", markdownDir, e, LINE_SEP));
 
 		final File file = new File(MARKDOWN_DIR + "/includeAllPatterns.md");
-		final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-		writer.write(fmt.toString());
-		writer.close();
+		try (final BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+			writer.write(fmt.toString());
+		}
 		fmt.close();
 	}
 

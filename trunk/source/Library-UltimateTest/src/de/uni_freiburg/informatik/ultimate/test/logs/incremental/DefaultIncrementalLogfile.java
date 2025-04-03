@@ -97,12 +97,10 @@ public class DefaultIncrementalLogfile extends BaseTestLogfile implements IIncre
 			}
 		}
 
-		try {
-			final FileWriter fw = new FileWriter(mLogFile, true);
+		try (final FileWriter fw = new FileWriter(mLogFile, true)) {
 			log.info("Writing " + getDescriptiveLogName() + " for " + getUltimateTestSuiteClass().getCanonicalName()
 					+ " to " + mLogFile.getAbsolutePath());
 			fw.append(logmessage);
-			fw.close();
 		} catch (final IOException e) {
 			log.fatal("Could not write " + getDescriptiveLogName() + " to file", e);
 		}

@@ -280,9 +280,9 @@ public final class RandomNwaBenchmarkCreator {
 			final String fileNamePost = "_" + i;
 			final File automatonFile = new File(pathToSaveBenchmark, fileName + fileNamePost + fileFormat);
 
-			final FileWriter fw = new FileWriter(automatonFile);
-			fw.write(mPreamble + nwa);
-			fw.close();
+			try (final FileWriter fw = new FileWriter(automatonFile)) {
+				fw.write(mPreamble + nwa);
+			}
 		}
 	}
 

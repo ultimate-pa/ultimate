@@ -192,9 +192,9 @@ public class RunRabitUtil {
 		}
 
 		final File inFile = new File(file);
-		final FileWriter writer = new FileWriter(inFile);
-		writer.write(sb.toString());
-		writer.close();
+		try (final FileWriter writer = new FileWriter(inFile)) {
+			writer.write(sb.toString());
+		}
 
 	}
 

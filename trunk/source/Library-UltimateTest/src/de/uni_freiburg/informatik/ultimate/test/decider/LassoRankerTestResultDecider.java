@@ -84,12 +84,9 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	 * Expected results are expected to be specified in an input file's first line and start with '//#r'.
 	 */
 	private static ExpectedResult checkExpectedResult(final File inputFile) {
-		BufferedReader br;
 		String line = null;
-		try {
-			br = new BufferedReader(new FileReader(inputFile));
+		try (final BufferedReader br = new BufferedReader(new FileReader(inputFile))) {
 			line = br.readLine();
-			br.close();
 		} catch (final IOException e) {
 			line = null;
 		}

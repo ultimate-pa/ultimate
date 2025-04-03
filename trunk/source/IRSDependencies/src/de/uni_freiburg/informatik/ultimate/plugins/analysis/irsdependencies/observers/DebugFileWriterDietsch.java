@@ -300,8 +300,8 @@ public class DebugFileWriterDietsch {
 	private void writeLargerTextFile(final String aFileName, final StringBuilder sb) throws IOException {
 		final Path path = Paths.get(aFileName);
 		mLogger.debug("Writing " + path.toString());
-		final BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8);
-		writer.write(sb.toString());
-		writer.close();
+		try (final BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+			writer.write(sb.toString());
+		}
 	}
 }

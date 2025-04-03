@@ -92,17 +92,17 @@ public final class PlotCsvUtils {
 	 *             If an I/O-Exception occurs
 	 */
 	public static List<String> getFileContent(final File file) throws IOException {
-		final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-		final List<String> content = new ArrayList<>();
+		try (final BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
+			final List<String> content = new ArrayList<>();
 
-		String line = br.readLine();
-		while (line != null) {
-			content.add(line);
-			line = br.readLine();
+			String line = br.readLine();
+			while (line != null) {
+				content.add(line);
+				line = br.readLine();
+			}
+
+			return content;
 		}
-
-		br.close();
-		return content;
 	}
 
 	/**

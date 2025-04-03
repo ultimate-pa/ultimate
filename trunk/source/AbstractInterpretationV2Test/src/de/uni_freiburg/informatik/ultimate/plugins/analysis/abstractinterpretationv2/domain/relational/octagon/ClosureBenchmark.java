@@ -147,9 +147,9 @@ public class ClosureBenchmark {
 	}
 
 	private List<Path> filesInBenchmark() {
-		try {
+		try (var filesStream = Files.walk(mBenchmarkDirectory)) {
 			// does not follow symbolic links
-			return Files.walk(mBenchmarkDirectory).filter(Files::isRegularFile).filter(path -> {
+			return filesStream.filter(Files::isRegularFile).filter(path -> {
 				if (Files.isReadable(path)) {
 					return true;
 				}

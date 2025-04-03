@@ -62,16 +62,14 @@ public final class BuechicUtil {
 	}
 
 	private static List<String> outputFile(final String file) throws IOException {
-
-		final BufferedReader reader = new BufferedReader(new FileReader(file));
-
 		final List<String> outputLines = new LinkedList<>();
-		String line = null;
-		while ((line = reader.readLine()) != null) {
-			// System.out.println("out: " + line);
-			outputLines.add(line);
+
+		try (final BufferedReader reader = new BufferedReader(new FileReader(file))) {
+			String line = null;
+			while ((line = reader.readLine()) != null) {
+				outputLines.add(line);
+			}
 		}
-		reader.close();
 
 		return outputLines;
 
@@ -193,9 +191,9 @@ public final class BuechicUtil {
 
 	private static void inputFile(final String content) throws IOException {
 		final File inFile = new File(IN_FILE);
-		final FileWriter writer = new FileWriter(inFile);
-		writer.write(content);
-		writer.close();
+		try (final FileWriter writer = new FileWriter(inFile)) {
+			writer.write(content);
+		}
 	}
 
 	private static <LETTER, STATE> void addState(final Map<STATE, String> state2Str, final Map<String, STATE> str2State,

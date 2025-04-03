@@ -679,12 +679,9 @@ public final class TestUtil {
 	 * Returns the first line of File file as String.
 	 */
 	public static String extractFirstLine(final File file) {
-		BufferedReader br;
 		String line = null;
-		try {
-			br = new BufferedReader(new FileReader(file));
+		try (final BufferedReader br = new BufferedReader(new FileReader(file))) {
 			line = br.readLine();
-			br.close();
 		} catch (final IOException e) {
 			throw new AssertionError("unable to read file " + file);
 		}
@@ -768,13 +765,11 @@ public final class TestUtil {
 			return;
 		}
 
-		try {
-			final FileWriter writer = new FileWriter(logFile);
+		try (final FileWriter writer = new FileWriter(logFile)) {
 			logger.info("Writing " + nonIncrementalLog.getDescriptiveLogName() + " for "
 					+ nonIncrementalLog.getUltimateTestSuiteClass().getCanonicalName() + " to "
 					+ logFile.getAbsolutePath());
 			writer.write(summaryLog);
-			writer.close();
 		} catch (final IOException e) {
 			logger.fatal("Exception while writing to " + logFile.getAbsolutePath(), e);
 		}
