@@ -264,17 +264,14 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private String[] extractPropertyFromInputFile() throws IOException {
-		BufferedReader br;
 		String line = null;
 		final List<String> properties = new ArrayList<>();
-		try {
-			br = new BufferedReader(new FileReader(mInputFile));
+		try (var br = new BufferedReader(new FileReader(mInputFile))) {
 			while ((line = br.readLine()) != null) {
 				if (line.contains(LTL_MARKER)) {
 					properties.add(line.replaceFirst("//", "").replace(LTL_MARKER, "").trim());
 				}
 			}
-			br.close();
 		} catch (final IOException e) {
 			mLogger.error("Error while reading " + mInputFile + ": " + e);
 			throw e;
