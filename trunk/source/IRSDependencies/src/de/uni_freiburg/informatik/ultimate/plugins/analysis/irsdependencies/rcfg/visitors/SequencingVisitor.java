@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -340,6 +341,11 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 				return First.equals(((Tuple<?>) arg0).First) && Last.equals(((Tuple<?>) arg0).Last);
 			}
 			return super.equals(arg0);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(First, Last);
 		}
 
 		@Override
