@@ -233,6 +233,7 @@ public class TypeManager {
 
 	public static boolean isEquivalent(final ASTType first, final ASTType second) {
 		return switch (first) {
+		case null -> second == null;
 		case final PrimitiveType ptFirst ->
 				second instanceof final PrimitiveType ptSecond && Objects.equals(ptFirst.getName(), ptSecond.getName());
 		case final NamedType ntFirst ->
