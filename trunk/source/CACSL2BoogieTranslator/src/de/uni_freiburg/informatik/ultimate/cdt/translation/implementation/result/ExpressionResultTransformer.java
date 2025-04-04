@@ -680,7 +680,7 @@ public class ExpressionResultTransformer {
 			if (cPrimitive.isRealFloatingType()) {
 				return convertToFloatingType(loc, expr, (CPrimitive) newType);
 			}
-			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+			if (cPrimitive.isVoidType()) {
 				return convertToVoid(loc, expr, (CPrimitive) newType);
 			}
 			throw new AssertionError("unknown type " + newType);
@@ -717,7 +717,7 @@ public class ExpressionResultTransformer {
 			if (cPrimitive.isRealFloatingType()) {
 				return mExprTrans.convertFloatToInt(loc, rexp, newType);
 			}
-			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+			if (cPrimitive.isVoidType()) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			}
 			throw new AssertionError("unknown type " + newType);
@@ -752,7 +752,7 @@ public class ExpressionResultTransformer {
 			if (cPrimitive.isRealFloatingType()) {
 				throw new IncorrectSyntaxException(loc, "cannot convert float to pointer");
 			}
-			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+			if (cPrimitive.isVoidType()) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			}
 			throw new AssertionError("unknown type " + newType);
@@ -809,7 +809,7 @@ public class ExpressionResultTransformer {
 		} else if (oldType instanceof CFunction) {
 			throw new AssertionError("cannot convert from CFunction");
 		} else if (oldType instanceof CStructOrUnion) {
-			if (newType.getType() == CPrimitives.VOID) {
+			if (newType.isVoidType()) {
 				// ok: we just keep the old value but change the type
 				// alternative might be to set the value to null because it should never be used
 			} else {
@@ -836,7 +836,7 @@ public class ExpressionResultTransformer {
 			if (cPrimitive.isRealFloatingType()) {
 				return convertIfNecessary(loc, rexp, newType);
 			}
-			if (cPrimitive.getType().equals(CPrimitives.VOID)) {
+			if (cPrimitive.isVoidType()) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			}
 			throw new AssertionError("unknown type " + newType);

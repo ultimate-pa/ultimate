@@ -1365,8 +1365,7 @@ public class CHandler {
 					// TODO but this should be possible
 					throw new AssertionError("passing side-effects from DeclaratorResults is not yet implemented");
 				}
-				if (decl.getDeclaration().getName() == "" && decl.getDeclaration().getType() instanceof CPrimitive
-						&& ((CPrimitive) decl.getDeclaration().getType()).getType().equals(CPrimitives.VOID)) {
+				if (decl.getDeclaration().getName().isEmpty() && decl.getDeclaration().getType().isVoidType()) {
 					assert paramDecls.length == 1;
 					paramsParsed = new CDeclaration[0];
 					break;
@@ -1701,8 +1700,8 @@ public class CHandler {
 
 		// deal with builtin constants
 		if ("NULL".equals(cId)) {
-			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),
-					new CPointer(new CPrimitive(CPrimitives.VOID))));
+			return new ExpressionResult(
+					new RValue(mExpressionTranslation.constructNullPointer(loc), CPointer.voidPointer()));
 
 		}
 		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
@@ -3649,8 +3648,8 @@ public class CHandler {
 	 * pointer dereference.)
 	 */
 	public Result handleIndirectionOperator(final ExpressionResult expr, final ILocation loc, final IASTNode hook) {
-		final ExpressionResult rop = mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc,
-				new CPointer(new CPrimitive(CPrimitives.VOID)), hook);
+		final ExpressionResult rop =
+				mExprResultTransformer.makeRepresentationReadyForConversion(expr, loc, CPointer.voidPointer(), hook);
 		final RValue rValue = (RValue) rop.getLrValue();
 		if (!(rValue.getCType().getUnderlyingType() instanceof CPointer)) {
 			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());

@@ -288,8 +288,7 @@ public class TypeHandler implements ITypeHandler {
 				return new TypesResult(constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			} else if (cId.equals("__pthread_list_t")) {
-				return new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.VOID)));
+				return new TypesResult(constructPointerType(loc), node.isConst(), false, CPointer.voidPointer());
 			} else if (cId.equals("pthread_t")) {
 				final var cType = getThreadIdType();
 				return new TypesResult(cPrimitive2AstType(loc, cType), node.isConst(), false, cType);

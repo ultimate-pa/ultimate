@@ -115,4 +115,8 @@ public final class CPointer implements ICType {
 	public boolean isVoidPointerType() {
 		return mPointsToType.getUnderlyingType().isVoidType();
 	}
+
+	public static CPointer voidPointer() {
+		return new CPointer(new CPrimitive(CPrimitive.CPrimitives.VOID));
+	}
 }

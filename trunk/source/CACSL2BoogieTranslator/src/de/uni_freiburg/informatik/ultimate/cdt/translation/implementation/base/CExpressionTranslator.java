@@ -154,14 +154,12 @@ public class CExpressionTranslator {
 		if (lType instanceof CPrimitive && rType instanceof CPointer
 				&& isNullPointerEquivalent((RValue) left.getLrValue())) {
 			// FIXME: the following is a workaround for the null pointer
-			left = mExprResultTransformer.performImplicitConversion(left,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			left = mExprResultTransformer.performImplicitConversion(left, CPointer.voidPointer(), loc);
 			lType = left.getLrValue().getCType().getUnderlyingType();
 		} else if (lType instanceof CPointer && rType instanceof CPrimitive
 				&& isNullPointerEquivalent((RValue) right.getLrValue())) {
 			// FIXME: the following is a workaround for the null pointer
-			right = mExprResultTransformer.performImplicitConversion(right,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			right = mExprResultTransformer.performImplicitConversion(right, CPointer.voidPointer(), loc);
 			rType = right.getLrValue().getCType().getUnderlyingType();
 		}
 		ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
@@ -505,13 +503,11 @@ public class CExpressionTranslator {
 			if (lType instanceof CPointer || rType instanceof CPointer) {
 				if (!(lType instanceof CPointer)) {
 					// FIXME: the following is a workaround for the null pointer
-					left = mExprResultTransformer.performImplicitConversion(left,
-							new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+					left = mExprResultTransformer.performImplicitConversion(left, CPointer.voidPointer(), loc);
 				}
 				if (!(rType instanceof CPointer)) {
 					// FIXME: the following is a workaround for the null pointer
-					right = mExprResultTransformer.performImplicitConversion(right,
-							new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+					right = mExprResultTransformer.performImplicitConversion(right, CPointer.voidPointer(), loc);
 				}
 			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 				final Pair<ExpressionResult, ExpressionResult> newOps =

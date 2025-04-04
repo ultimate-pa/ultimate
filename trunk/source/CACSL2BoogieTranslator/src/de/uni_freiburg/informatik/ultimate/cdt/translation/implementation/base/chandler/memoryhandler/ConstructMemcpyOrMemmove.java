@@ -291,7 +291,7 @@ public final class ConstructMemcpyOrMemmove {
 					charCType);
 
 			if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-				final ICType cPointer = new CPointer(new CPrimitive(CPrimitives.VOID));
+				final ICType cPointer = CPointer.voidPointer();
 				final Expression srcAcc;
 				{
 					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);

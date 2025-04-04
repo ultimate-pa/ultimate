@@ -288,8 +288,7 @@ public class FunctionHandler {
 		final ICType returnCType = funType.getResultType();
 		mNameHandler.addFunction(definedProcName, returnCType);
 		definedProcInfo.updateCFunction(funType);
-		final boolean returnTypeIsVoid =
-				returnCType instanceof CPrimitive && ((CPrimitive) returnCType).getType() == CPrimitives.VOID;
+		final boolean returnTypeIsVoid = returnCType.isVoidType();
 
 		VarList[] in = processInParams(loc, funType, definedProcInfo, node);
 		if (isInParamVoid(in)) {
@@ -1041,9 +1040,7 @@ public class FunctionHandler {
 		final String[] typeParams = {};
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, procInfo, hook);
 
-		if (funcType.getResultType() instanceof CPrimitive
-				&& ((CPrimitive) funcType.getResultType()).getType() == CPrimitives.VOID
-				&& !(funcType.getResultType() instanceof CPointer)) {
+		if (funcType.getResultType().isVoidType()) {
 			if (mProcedureManager.isCalledBeforeDeclared(procInfo)) {
 				// this method was assumed to return int -> return int
 				out[0] = new VarList(loc, new String[] { SFO.RES },
@@ -1237,7 +1234,7 @@ public class FunctionHandler {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
 		}
 		// FIXME string to SFO..?
-		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp");
+		newCDecs[newCDecs.length - 1] = new CDeclaration(CPointer.voidPointer(), "#fp");
 
 		return calledFuncCFunction.newParameter(newCDecs);
 	}

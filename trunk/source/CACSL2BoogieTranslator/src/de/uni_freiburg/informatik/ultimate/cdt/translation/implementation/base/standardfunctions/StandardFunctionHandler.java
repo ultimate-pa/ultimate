@@ -378,8 +378,8 @@ public class StandardFunctionHandler {
 		 */
 		fill(map, "fflush", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
 				new CPrimitive(CPrimitives.INT)));
-		fill(map, "fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
-				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "fopen",
+				(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2, CPointer.voidPointer()));
 		fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.INT)));
 		fill(map, "feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
@@ -441,8 +441,8 @@ public class StandardFunctionHandler {
 		 *
 		 * Current solution: replace call by a havoced aux variable.
 		 */
-		fill(map, "__builtin_return_address", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 1, new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "__builtin_return_address",
+				(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1, CPointer.voidPointer()));
 
 		fill(map, "__builtin_bswap16", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.USHORT)));
@@ -928,10 +928,10 @@ public class StandardFunctionHandler {
 		 */
 		fill(map, "ctime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPointer(new CPrimitive(CPrimitives.CHAR))));
-		fill(map, "localtime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPointer(new CPrimitive(CPrimitives.VOID))));
-		fill(map, "mktime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "localtime",
+				(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1, CPointer.voidPointer()));
+		fill(map, "mktime",
+				(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1, CPointer.voidPointer()));
 		fill(map, "strftime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
 				new CPrimitive(CPrimitives.ULONG)));
 
@@ -1008,8 +1008,8 @@ public class StandardFunctionHandler {
 		 * @formatter:on
 		 */
 		fill(map, "bsearch", die);
-		fill(map, "qsort", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
-				new CPointer(new CPrimitive(CPrimitives.VOID))));
+		fill(map, "qsort",
+				(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4, CPointer.voidPointer()));
 
 		/**
 		 * @formatter:off
@@ -2147,7 +2147,7 @@ public class StandardFunctionHandler {
 		}
 		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), CPointer.voidPointer()));
 
 		// add marker for global declaration to memory handler
 		mMemoryHandler.requireMemoryModelFeature(strCpyMmDecl);
@@ -2348,8 +2348,7 @@ public class StandardFunctionHandler {
 		{
 			final ExpressionResult tmp =
 					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[3]);
-			startRoutineArguments = mExprResultTransformer.performImplicitConversion(tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			startRoutineArguments = mExprResultTransformer.performImplicitConversion(tmp, CPointer.voidPointer(), loc);
 		}
 		builder.addAllExceptLrValue(argThreadAttributes, argStartRoutine, startRoutineArguments);
 
@@ -2462,8 +2461,8 @@ public class StandardFunctionHandler {
 			// final ExpressionResult tmp = mExprResultTransformer.dispatchDecaySwitchToRValueFunctionArgument(main,
 			// loc, arguments[1]);
 			final ExpressionResult tmp = (ExpressionResult) main.dispatch(arguments[1]);
-			final ExpressionResult argAddressOfResultPointer = mExprResultTransformer.performImplicitConversion(tmp,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+			final ExpressionResult argAddressOfResultPointer =
+					mExprResultTransformer.performImplicitConversion(tmp, CPointer.voidPointer(), loc);
 			builder.addAllExceptLrValue(argAddressOfResultPointer);
 			argAddressOfResultPointerLr = argAddressOfResultPointer.getLrValue();
 		}
@@ -2474,7 +2473,7 @@ public class StandardFunctionHandler {
 			builder.addStatement(js);
 		} else {
 			// auxvar for joined procedure's return value
-			final ICType cType = new CPointer(new CPrimitive(CPrimitives.VOID));
+			final ICType cType = CPointer.voidPointer();
 			final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.RETURNED);
 			builder.addAuxVarWithDeclaration(auxvarinfo);
 			js = new JoinStatement(loc, threadId, new VariableLHS[] { auxvarinfo.getLhs() });
@@ -2505,8 +2504,8 @@ public class StandardFunctionHandler {
 
 		final ExpressionResult arg =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		final ExpressionResult transformedArg = mExprResultTransformer.performImplicitConversion(arg,
-				new CPointer(new CPrimitive(CPrimitives.VOID)), loc);
+		final ExpressionResult transformedArg =
+				mExprResultTransformer.performImplicitConversion(arg, CPointer.voidPointer(), loc);
 
 		final IBoogieType type = mTypeHandler.getBoogiePointerType();
 		final String identifier = SFO.RES;
@@ -2828,7 +2827,7 @@ public class StandardFunctionHandler {
 		result.addAllExceptLrValue(convertedArgC);
 		result.addAllExceptLrValue(convertedArgN);
 
-		final CPointer voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final CPointer voidPointerType = CPointer.voidPointer();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, voidPointerType, SFO.AUXVAR.MEMSETRES);
 		result.addAuxVarWithDeclaration(auxvar);
 
@@ -2856,7 +2855,7 @@ public class StandardFunctionHandler {
 				size.getLrValue().getValue(), mTypeSizeComputer.getSizeT());
 		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(nmemb, size);
 
-		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final CPointer resultType = CPointer.voidPointer();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		result.addAuxVarWithDeclaration(auxvar);
 		result.addStatement(mMemoryHandler.getUltimateMemAllocCall(product, auxvar.getLhs(), loc, MemoryArea.HEAP));
@@ -2905,7 +2904,7 @@ public class StandardFunctionHandler {
 		final ExpressionResult exprResConverted =
 				mExprResultTransformer.performImplicitConversion(exprRes, mTypeSizeComputer.getSizeT(), loc);
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(exprResConverted);
-		final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final CPointer resultType = CPointer.voidPointer();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.MALLOC);
 		erb.addAuxVarWithDeclaration(auxvar);
 
@@ -2953,7 +2952,7 @@ public class StandardFunctionHandler {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 2, methodName, arguments);
 
-		final ICType voidPointerType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final ICType voidPointerType = CPointer.voidPointer();
 		final ExpressionResult ptr = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
 				arguments[0], voidPointerType);
 
@@ -2973,7 +2972,7 @@ public class StandardFunctionHandler {
 
 		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), CPointer.voidPointer()));
 
 		// add marker for global declaration to memory handler
 		mMemoryHandler.requireMemoryModelFeature(reallocMmDecl);
@@ -3400,7 +3399,7 @@ public class StandardFunctionHandler {
 			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryModelDeclarations mmDecl) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, 3, name, arguments);
-		final CPointer voidType = new CPointer(new CPrimitive(CPrimitives.VOID));
+		final CPointer voidType = CPointer.voidPointer();
 		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
 				arguments[0], voidType);
 		final ExpressionResult src = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
@@ -3420,7 +3419,7 @@ public class StandardFunctionHandler {
 						dest.getLrValue().getValue(), src.getLrValue().getValue(), size.getLrValue().getValue() });
 		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
 		resultBuilder.addStatement(call);
-		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), new CPointer(new CPrimitive(CPrimitives.VOID))));
+		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), CPointer.voidPointer()));
 
 		// add marker for global declaration to memory handler
 		mMemoryHandler.requireMemoryModelFeature(mmDecl);

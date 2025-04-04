@@ -9,8 +9,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
@@ -31,8 +29,7 @@ public class ProcedureSignature {
 			final ASTType type = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
 			mInParams.add(type);
 		}
-		if (cf.getResultType() instanceof CPrimitive
-				&& ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
+		if (cf.getResultType().isVoidType()) {
 			mReturnType = null;
 		} else {
 			mReturnType = typehandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());

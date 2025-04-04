@@ -1255,8 +1255,8 @@ public class MemoryHandler {
 			final IdentifierExpression pointerIdExpr =
 					ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogiePointerType(),
 							inParamPtr, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
-			final HeapLValue hlv = LRValueFactory.constructHeapLValue(mTypeHandler, pointerIdExpr,
-					new CPointer(new CPrimitive(CPrimitives.VOID)), null);
+			final HeapLValue hlv =
+					LRValueFactory.constructHeapLValue(mTypeHandler, pointerIdExpr, CPointer.voidPointer(), null);
 
 			final Set<ICType> cPrimitivesWithRequiredHeapArray = mRequiredMemoryModelFeatures.getDataOnHeapRequired()
 					.stream().map(CPrimitive::new).collect(Collectors.toSet());
@@ -2959,8 +2959,7 @@ public class MemoryHandler {
 			final ILocation tuLoc, final String name,
 			final BiFunction<Expression, Expression, Specification[]> getSpecs) {
 		final String inputPointerIdentifier = "#inputPtr";
-		final ASTType inputPointerAstType =
-				typeHandler.cType2AstType(tuLoc, new CPointer(new CPrimitive(CPrimitives.VOID)));
+		final ASTType inputPointerAstType = typeHandler.cType2AstType(tuLoc, CPointer.voidPointer());
 		final String resultIdentifier = SFO.RES;
 		final ICType resultCType = new CPrimitive(CPrimitives.INT);
 		final ASTType resultAstType = typeHandler.cType2AstType(tuLoc, resultCType);
