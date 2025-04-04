@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttrans
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -164,7 +165,9 @@ public class TransFormulaUnification {
 	private void addFreshTermVariable(final Map<IProgramVar, TermVariable> varMap, final IProgramVar variable,
 			final String suffix) {
 		final String baseName = variable.getGloballyUniqueId() + "_" + suffix;
-		final TermVariable termVar = mMgdScript.constructFreshTermVariable(baseName, variable.getSort());
+		final Sort transferredSort =
+				((HistoryRecordingScript) mMgdScript.getScript()).transferSortToWorker(variable.getSort());
+		final TermVariable termVar = mMgdScript.constructFreshTermVariable(baseName, transferredSort);
 		varMap.put(variable, termVar);
 	}
 
@@ -209,6 +212,8 @@ public class TransFormulaUnification {
 				substitutionMapping.put(outVar,
 						((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(mOutVars.get(pv)));
 			} else {
+				assert mInVars.get(pv).getTheory().equals(mMgdScript.getScript().getTheory());
+				assert substitutionMapping.get(outVar).getTheory().equals(mMgdScript.getScript().getTheory());
 				assert substitutionMapping.get(outVar) == mInVars.get(pv);
 			}
 		}

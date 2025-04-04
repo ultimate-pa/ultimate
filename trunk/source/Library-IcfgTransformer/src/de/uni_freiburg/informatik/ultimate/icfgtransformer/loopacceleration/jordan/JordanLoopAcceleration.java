@@ -148,8 +148,14 @@ public class JordanLoopAcceleration {
 		}
 
 		{
-			final Set<TermVariable> tvOfHavoced =
+			final Set<TermVariable> tvOfHavocedMain =
 					su.getHavocedVars().stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+			final Set<TermVariable> tvOfHavoced = new HashSet<>();
+			for (final TermVariable var : tvOfHavocedMain) {
+				tvOfHavoced
+						.add((TermVariable) ((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(var));
+			}
+
 			for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
 				if (!DataStructureUtils.haveEmptyIntersection(
 						new HashSet<>(Arrays.asList(entry.getValue().getFreeVars())), tvOfHavoced)) {
