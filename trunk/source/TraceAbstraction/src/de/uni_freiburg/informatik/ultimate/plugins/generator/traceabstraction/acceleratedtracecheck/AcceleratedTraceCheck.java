@@ -229,12 +229,11 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 	private TraceCheckSpWp<L> checkTrace(final IPredicate precondition, final IPredicate postcondition,
 			final Counterexample<L> counterexample) {
-		final TraceCheckSpWp<L> tc =
-				new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<Integer, IPredicate>(), counterexample,
-						mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
-						mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
-						mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
-						SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
+		final TraceCheckSpWp<L> tc = new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<>(), counterexample,
+				mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
+				mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
+				mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
+				SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
 		return tc;
 	}
 
@@ -339,7 +338,8 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			final Integer nextPosition = positionsWithSimilarProgramPoint.higher(i);
 			if (nextPosition != null) {
 				final NestedWord<L> subWord = counterexample.getWord().getSubWord(i, nextPosition);
-				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
+				UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
+				transitiveClosure = TransFormulaUtils.transferTransformula(mgdScript, transitiveClosure);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
 					mStatisticsGenerator.reportSuccessfullAcceleration();
@@ -405,8 +405,12 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		if (!subWord.hasEmptyNestingRelation()) {
 			return null;
 		}
-		final List<UnmodifiableTransFormula> transformulas =
+		final List<UnmodifiableTransFormula> transformulasMain =
 				subWord.asList().stream().map(L::getTransformula).collect(Collectors.toList());
+
+		final List<UnmodifiableTransFormula> transformulas = new ArrayList<>();
+		transformulasMain.forEach((tf) -> transformulas.add(TransFormulaUtils.transferTransformula(mgdScript, tf)));
+
 		final UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger, services,
 				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA, transformulas);
 		final JordanLoopAccelerationResult jla =
@@ -517,7 +521,6 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 		public AcceleratedSegment(final int startPosition, final int endPosition,
 				final UnmodifiableTransFormula transitiveClosure) {
-			super();
 			mStartPosition = startPosition;
 			mEndPosition = endPosition;
 			mTransitiveClosure = transitiveClosure;

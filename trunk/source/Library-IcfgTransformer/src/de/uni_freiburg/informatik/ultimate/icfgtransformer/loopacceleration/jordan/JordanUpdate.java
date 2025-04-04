@@ -284,6 +284,7 @@ public class JordanUpdate {
 		final Map<TermVariable, Term> closedForm = new HashMap<>();
 		for (final TermVariable tv : linearUpdate.getUpdateMap().keySet()) {
 			final Term sum = constructClosedForm(mgdScript, closedFormMatrix, var2MatrixIndex, matrixIndex2Var, tv);
+			assert tv.getTheory().equals(sum.getTheory());
 			closedForm.put(tv, sum);
 		}
 		return closedForm;

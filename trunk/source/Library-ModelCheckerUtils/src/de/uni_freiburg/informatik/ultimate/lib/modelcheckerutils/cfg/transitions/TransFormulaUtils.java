@@ -292,8 +292,8 @@ public final class TransFormulaUtils {
 			formula = SmtUtils.and(script, formula, updatedFormula);
 		}
 
-		assert !new SubtermPropertyChecker(LetTerm.class::isInstance)
-				.isSatisfiedBySomeSubterm(formula) : "formula contains LetTerm";
+		assert !new SubtermPropertyChecker(LetTerm.class::isInstance).isSatisfiedBySomeSubterm(formula)
+				: "formula contains LetTerm";
 
 		if (simplify) {
 			try {
@@ -396,8 +396,8 @@ public final class TransFormulaUtils {
 	 */
 	public static UnmodifiableTransFormula parallelComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final TermVariable[] branchIndicators, final boolean tranformToCNF,
-			final boolean isInternal, final UnmodifiableTransFormula... transFormulas) {
+			final TermVariable[] branchIndicators, final boolean tranformToCNF, final boolean isInternal,
+			final UnmodifiableTransFormula... transFormulas) {
 		logger.debug("parallel composition");
 
 		final boolean useBranchEncoders = branchIndicators != null;
@@ -462,6 +462,7 @@ public final class TransFormulaUtils {
 	/**
 	 * Returns TransFormula that describes a sequence of code blocks that contains a pending call. Note the the scope of
 	 * inVars and outVars is different. Do not compose the result with the default/intraprocedural composition.
+	 *
 	 * @param beforeCall
 	 *            TransFormula that describes transition relation before the call.
 	 * @param callTf
@@ -486,8 +487,8 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula afterCall, final ILogger logger, final IUltimateServiceProvider services,
 			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
-			final String procAtStart, final String procBeforeCall, final String procAfterCall,
-			final String procAtEnd, final ModifiableGlobalsTable modifiableGlobalsTable) {
+			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd,
+			final ModifiableGlobalsTable modifiableGlobalsTable) {
 		assert procAtStart != null : "proc at start must not be null";
 		if (!procAtStart.equals(procBeforeCall)) {
 			throw new UnsupportedOperationException("proc change before call");
@@ -567,8 +568,9 @@ public final class TransFormulaUtils {
 					Collections.emptySet(), Collections.emptyMap());
 		}
 
-		final UnmodifiableTransFormula preliminaryResult = sequentialComposition(logger, services, mgdScript, simplify,
-				extPqe, transformToCNF, simplificationTechnique, Arrays.asList(callAndBeforeTF, globalVarAssignAndAfterTF));
+		final UnmodifiableTransFormula preliminaryResult =
+				sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
+						simplificationTechnique, Arrays.asList(callAndBeforeTF, globalVarAssignAndAfterTF));
 
 		// If the procedure does not change after the call, we already have
 		// the result. Otherwise we have to remove the inparams since they
@@ -598,9 +600,10 @@ public final class TransFormulaUtils {
 			}
 		}
 
-		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, mgdScript, beforeCall,
-				callTf, oldVarsAssignment, globalVarsAssignment, afterCall, result, symbolTable,
-				modifiableGlobalsOfEndProcedure) : "sequentialCompositionWithPendingCall - incorrect result";
+		assert !result.getBranchEncoders().isEmpty()
+				|| predicateBasedResultCheck(services, mgdScript, beforeCall, callTf, oldVarsAssignment,
+						globalVarsAssignment, afterCall, result, symbolTable, modifiableGlobalsOfEndProcedure)
+				: "sequentialCompositionWithPendingCall - incorrect result";
 		return result;
 	}
 
@@ -681,13 +684,14 @@ public final class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(endPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, endPredicate, false);
-		assert check1 != Validity.INVALID
-				&& check2 != Validity.INVALID : "sequentialCompositionWithPendingCall - incorrect result";
+		assert check1 != Validity.INVALID && check2 != Validity.INVALID
+				: "sequentialCompositionWithPendingCall - incorrect result";
 		return check1 != Validity.INVALID && check2 != Validity.INVALID;
 	}
 
 	/**
 	 * Returns a TransFormula that can be seen as procedure summary.
+	 *
 	 * @param callTf
 	 *            TransFormula that describes parameter assignment of call.
 	 * @param oldVarsAssignment
@@ -806,12 +810,13 @@ public final class TransFormulaUtils {
 		final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(mgdScript, composition,
 				inVarsToRemove, outVarsToRemove, additionalOutVars);
 
-		assert SmtUtils.neitherKeyNorValueIsNull(
-				result.getOutVars()) : "sequentialCompositionWithCallAndReturn introduced null entries";
+		assert SmtUtils.neitherKeyNorValueIsNull(result.getOutVars())
+				: "sequentialCompositionWithCallAndReturn introduced null entries";
 		assert isIntraprocedural(result);
-		assert !result.getBranchEncoders().isEmpty() || predicateBasedResultCheck(services, logger, mgdScript, callTf,
-				oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf, result, symbolTable,
-				modifiableGlobalsOfCallee) : "sequentialCompositionWithCallAndReturn - incorrect result";
+		assert !result.getBranchEncoders().isEmpty()
+				|| predicateBasedResultCheck(services, logger, mgdScript, callTf, oldVarsAssignment,
+						globalVarsAssignment, procedureTf, returnTf, result, symbolTable, modifiableGlobalsOfCallee)
+				: "sequentialCompositionWithCallAndReturn - incorrect result";
 		return result;
 	}
 
@@ -843,8 +848,8 @@ public final class TransFormulaUtils {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final Validity check1 = mic.checkImplication(afterReturnPredicate, false, resultCompositionPredicate, false);
 		final Validity check2 = mic.checkImplication(resultCompositionPredicate, false, afterReturnPredicate, false);
-		assert check1 != Validity.INVALID
-				&& check2 != Validity.INVALID : "sequentialCompositionWithCallAndReturn - incorrect result";
+		assert check1 != Validity.INVALID && check2 != Validity.INVALID
+				: "sequentialCompositionWithCallAndReturn - incorrect result";
 		if (check1 == Validity.UNKNOWN || check2 == Validity.UNKNOWN) {
 			logger.warn("predicate-based correctness check returned UNKNOWN, "
 					+ "hence correctness of interprocedural sequential composition was not checked.");
@@ -1083,13 +1088,31 @@ public final class TransFormulaUtils {
 	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
 			final Term term) {
 		final Map<TermVariable, TermVariable> map = constructInvarsToDefaultvarsMap(tf);
-		return Substitution.apply(mgdScript, map, term);
+		final Map<TermVariable, TermVariable> transferredMap = new HashMap<>();
+
+		for (final Entry<TermVariable, TermVariable> entry : map.entrySet()) {
+			transferredMap.put(
+					(TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+							.transferTermToWorker(entry.getKey()),
+					(TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+							.transferTermToWorker(entry.getValue()));
+		}
+		return Substitution.apply(mgdScript, transferredMap, term);
 	}
 
 	public static Term renameOutvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript,
 			final Term term) {
 		final Map<TermVariable, TermVariable> map = constructOutvarsToDefaultvarsMap(tf);
-		return Substitution.apply(mgdScript, map, term);
+		final Map<TermVariable, TermVariable> transferredMap = new HashMap<>();
+
+		for (final Entry<TermVariable, TermVariable> entry : map.entrySet()) {
+			transferredMap.put(
+					(TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+							.transferTermToWorker(entry.getKey()),
+					(TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+							.transferTermToWorker(entry.getValue()));
+		}
+		return Substitution.apply(mgdScript, transferredMap, term);
 	}
 
 	public static Term renameInvars(final TransFormula tf, final ManagedScript mgdScript,
@@ -1099,9 +1122,13 @@ public final class TransFormulaUtils {
 			if (!map.containsKey(entry.getKey())) {
 				throw new IllegalArgumentException("did not provide mapping for " + entry.getKey());
 			}
-			substitutionMapping.put(entry.getValue(), map.get(entry.getKey()));
+
+			substitutionMapping.put(
+					((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(entry.getValue()),
+					((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(map.get(entry.getKey())));
 		}
-		return Substitution.apply(mgdScript, substitutionMapping, tf.getFormula());
+		return Substitution.apply(mgdScript, substitutionMapping,
+				((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(tf.getFormula()));
 	}
 
 	public static UnmodifiableTransFormula constructHavoc(final TransFormula tf, final ManagedScript mgdScript) {
@@ -1309,6 +1336,29 @@ public final class TransFormulaUtils {
 		return outSet;
 	}
 
+	public static UnmodifiableTransFormula transferTransformula(final ManagedScript mgdScript,
+			final UnmodifiableTransFormula inTF) {
+		final TransFormulaBuilder transferredTF = new TransFormulaBuilder(transferMap(mgdScript, inTF.getInVars()),
+				transferMap(mgdScript, inTF.getOutVars()), inTF.getNonTheoryConsts().isEmpty(),
+				inTF.getNonTheoryConsts(), inTF.getBranchEncoders().isEmpty(),
+				transferSet(mgdScript.getScript(), inTF.getBranchEncoders()), inTF.getAuxVars().isEmpty());
+		transferredTF
+				.setFormula(((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(inTF.getFormula()));
+		transferredTF.setInfeasibility(inTF.isInfeasible());
+		return transferredTF.finishConstruction(mgdScript);
+
+	}
+
+	private static Map<IProgramVar, TermVariable> transferMap(final ManagedScript mgdScript,
+			final Map<IProgramVar, TermVariable> map) {
+		final Map<IProgramVar, TermVariable> transferredMap = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
+			transferredMap.put(entry.getKey(), (TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+					.transferTermToWorker(entry.getValue()));
+		}
+		return transferredMap;
+	}
+
 	/**
 	 * Replace each term of the form (store a k v) by the conjunction (store a k aux) /\ (= aux v) for a fresh auxiliary
 	 * variable aux. Motivation: The term (store a k v) carries two information: (1) This term and the array a are
@@ -1323,7 +1373,6 @@ public final class TransFormulaUtils {
 		if (!QuantifierUtils.isQuantifierFree(tf.getFormula())) {
 			return tf;
 		}
-
 
 		Set<TermVariable> auxVars = tf.getAuxVars();
 		Term formula = tf.getFormula();
@@ -1394,13 +1443,13 @@ public final class TransFormulaUtils {
 			// the next iteration.
 			final Iterator<ArrayStore> it = arrayStores.iterator();
 			final ArrayStore currentStore = it.next();
-			final TermVariable newAuxVar = mgdScript.constructFreshTermVariable("ArrVal",
-					currentStore.getValue().getSort());
+			final TermVariable newAuxVar =
+					mgdScript.constructFreshTermVariable("ArrVal", currentStore.getValue().getSort());
 			resultVariables.add(newAuxVar);
 			final Term equalitiy = SmtUtils.binaryEquality(mgdScript.getScript(), newAuxVar, currentStore.getValue());
 			resultEqualities.add(equalitiy);
-			final Term resultStore = SmtUtils.store(mgdScript.getScript(), currentStore.getArray(),
-					currentStore.getIndex(), newAuxVar);
+			final Term resultStore =
+					SmtUtils.store(mgdScript.getScript(), currentStore.getArray(), currentStore.getIndex(), newAuxVar);
 			final Map<Term, Term> substitutionMapping = Collections.singletonMap(currentStore.getTerm(), resultStore);
 
 			resultTerm = Substitution.apply(mgdScript, substitutionMapping, resultTerm);

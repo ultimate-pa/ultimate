@@ -63,6 +63,8 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 
 	private final IPredicateUnifier mDefaultPredicateUnifier;
 
+	private StrategyFactory<L>.StrategyModuleFactory mFactory;
+
 	public BasicRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final ITraceCheckStrategyModule<L, ?>[] traceChecks, final IIpgStrategyModule<?, L>[] interpolantGenerators,
 			final IIpAbStrategyModule<L> interpolantAutomatonBuilder,
@@ -74,6 +76,7 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 		mCurrentIndexTraceCheck = 0;
 		mCurrentIndexInterpolantGenerator = 0;
 		mDefaultPredicateUnifier = factory.getDefaultPredicateUnifier();
+		mFactory = factory;
 	}
 
 	public BasicRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
@@ -169,8 +172,13 @@ public class BasicRefinementStrategy<L extends IIcfgTransition<?>> implements IT
 		return imperfectIpps.size() < DEFAULT_INTERPOLANT_THRESHOLD;
 	}
 
-	protected ITraceCheckStrategyModule<L, ?>[] getTraceCheckModules() {
+	@Override
+	public ITraceCheckStrategyModule<L, ?>[] getTraceCheckModules() {
 		return mTraceChecks;
+	}
+
+	public StrategyFactory<L>.StrategyModuleFactory getFactory() {
+		return mFactory;
 	}
 
 	protected IIpgStrategyModule<?, L>[] getInterpolantGeneratorModules() {
