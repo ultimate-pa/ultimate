@@ -74,7 +74,7 @@ public interface IJoinActionThreadCurrent extends IAction {
 
 		public UnmodifiableTransFormula constructThreadIdAssumption(final IIcfgSymbolTable symbolTable,
 				final ManagedScript mgdScript, final List<IProgramVar> leftHandSides) {
-			final Term[] terms = getThreadIdArguments().getTerms();
+			final Term[] terms = getThreadIdArguments().terms();
 			return TransFormulaBuilder.constructEqualityAssumption(leftHandSides, Arrays.asList(terms), symbolTable,
 					mgdScript);
 		}

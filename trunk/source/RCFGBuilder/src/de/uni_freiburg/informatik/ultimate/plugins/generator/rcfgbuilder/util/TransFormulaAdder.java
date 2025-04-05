@@ -134,18 +134,18 @@ public class TransFormulaAdder {
 				{ boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
 		final MultiTermResult threadId =
 				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getThreadID());
-		if (!threadId.getAuxiliaryVars().isEmpty()) {
+		if (!threadId.auxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}
-		if (!threadId.getOverappoximations().isEmpty()) {
+		if (!threadId.overapproximations().isEmpty()) {
 			throw new UnsupportedOperationException("overapproximations not yet supported");
 		}
 		final MultiTermResult procedureArguments =
 				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getArguments());
-		if (!procedureArguments.getAuxiliaryVars().isEmpty()) {
+		if (!procedureArguments.auxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}
-		if (!procedureArguments.getOverappoximations().isEmpty()) {
+		if (!procedureArguments.overapproximations().isEmpty()) {
 			throw new UnsupportedOperationException("overapproximations not yet supported");
 		}
 		return new ForkSmtArguments(threadId, procedureArguments);
@@ -156,10 +156,10 @@ public class TransFormulaAdder {
 				{ boogie2smt.new LocalVarAndGlobalVarTranslator(), boogie2smt.createConstOnlyIdentifierTranslator() };
 		final MultiTermResult threadId =
 				boogie2smt.getExpression2Term().translateToTerms(identifierTranslators, st.getThreadID());
-		if (!threadId.getAuxiliaryVars().isEmpty()) {
+		if (!threadId.auxiliaryVars().isEmpty()) {
 			throw new UnsupportedOperationException("auxvars not yet supported");
 		}
-		if (!threadId.getOverappoximations().isEmpty()) {
+		if (!threadId.overapproximations().isEmpty()) {
 			throw new UnsupportedOperationException("overapproximations not yet supported");
 		}
 		final List<IProgramVar> assignmentLhs = new ArrayList<>();

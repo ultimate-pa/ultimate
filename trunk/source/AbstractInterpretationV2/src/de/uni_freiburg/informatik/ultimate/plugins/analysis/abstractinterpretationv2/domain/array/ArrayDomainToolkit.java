@@ -181,7 +181,7 @@ public class ArrayDomainToolkit<STATE extends IAbstractState<STATE>> {
 
 	public Term getTerm(final Expression expression) {
 		return mBoogie2Smt.getExpression2Term()
-				.translateToTerm(new IIdentifierTranslator[] { new IdentifierTranslator() }, expression).getTerm();
+				.translateToTerm(new IIdentifierTranslator[] { new IdentifierTranslator() }, expression).term();
 	}
 
 	private IProgramVarOrConst getBoogieVar(final String id, final DeclarationInformation declInfo,

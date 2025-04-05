@@ -335,7 +335,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 					{ new SimpleTranslator(), mBoogie2Smt.createConstOnlyIdentifierTranslator() };
 
 			final Term expressionTerm =
-					mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression).getTerm();
+					mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression).term();
 
 			final Term valueTerm = inValue.getTerm(mBoogie2Smt.getScript(), expressionTerm.getSort(), expressionTerm);
 

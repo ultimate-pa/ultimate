@@ -385,9 +385,9 @@ public class ProcedureMultiplier {
 	private MultiTermResult copyMultiTermResult(final MultiTermResult oldProcedureArguments,
 			final Map<Term, Term> defaultVariableMapping) {
 		final UnaryOperator<Term> subst = (x -> Substitution.apply(mMgdScript, defaultVariableMapping, x));
-		final Term[] terms = Arrays.stream(oldProcedureArguments.getTerms()).map(subst).toArray(Term[]::new);
-		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.getAuxiliaryVars();
-		final Map<String, ILocation> overapproximations = oldProcedureArguments.getOverappoximations();
+		final Term[] terms = Arrays.stream(oldProcedureArguments.terms()).map(subst).toArray(Term[]::new);
+		final Collection<TermVariable> auxiliaryVars = oldProcedureArguments.auxiliaryVars();
+		final Map<String, ILocation> overapproximations = oldProcedureArguments.overapproximations();
 		final MultiTermResult copy = new MultiTermResult(overapproximations, auxiliaryVars, terms);
 		return copy;
 	}

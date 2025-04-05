@@ -79,13 +79,13 @@ public interface IForkActionThreadCurrent extends IAction {
 
 		public UnmodifiableTransFormula constructThreadIdAssignment(final IIcfgSymbolTable symbolTable,
 				final ManagedScript mgdScript, final List<IProgramVar> leftHandSides) {
-			final Term[] terms = getThreadIdArguments().getTerms();
+			final Term[] terms = getThreadIdArguments().terms();
 			return TransFormulaBuilder.constructAssignment(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
 		}
 
 		public UnmodifiableTransFormula constructInVarsAssignment(final IIcfgSymbolTable symbolTable,
 				final ManagedScript mgdScript, final List<? extends IProgramVar> leftHandSides) {
-			final Term[] terms = getProcedureArguments().getTerms();
+			final Term[] terms = getProcedureArguments().terms();
 			return TransFormulaBuilder.constructAssignment(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
 		}
 	}

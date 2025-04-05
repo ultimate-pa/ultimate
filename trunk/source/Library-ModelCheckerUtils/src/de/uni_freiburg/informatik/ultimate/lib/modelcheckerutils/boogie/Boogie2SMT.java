@@ -110,7 +110,7 @@ public class Boogie2SMT {
 		for (final Axiom decl : boogieDeclarations.getAxioms()) {
 			final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator(boogie2SmtSymbolTable);
 			final IIdentifierTranslator[] its = { coit };
-			final Term closedTerm = expression2Term.translateToTerm(its, decl.getFormula()).getTerm();
+			final Term closedTerm = expression2Term.translateToTerm(its, decl.getFormula()).term();
 			script.assertTerm(closedTerm);
 			final Term term = closedTerm;
 			axiomList.add(term);

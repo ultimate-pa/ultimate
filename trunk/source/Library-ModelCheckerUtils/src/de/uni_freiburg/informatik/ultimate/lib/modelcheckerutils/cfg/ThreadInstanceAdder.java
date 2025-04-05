@@ -129,8 +129,8 @@ public class ThreadInstanceAdder {
 		// to all target locations of each JoinCurrentThreadEdge
 		for (final IIcfgJoinTransitionThreadCurrent<IcfgLocation> jot : joinCurrentThreads) {
 			for (final ThreadInstance ti : IcfgPetrifier.getAllInstances(threadInstanceMap)) {
-				final boolean threadIdCompatible = isThreadIdCompatible(ti.getIdVars(),
-						jot.getJoinSmtArguments().getThreadIdArguments().getTerms());
+				final boolean threadIdCompatible =
+						isThreadIdCompatible(ti.getIdVars(), jot.getJoinSmtArguments().getThreadIdArguments().terms());
 				final boolean returnValueCompatible =
 						isReturnValueCompatible(jot.getJoinSmtArguments().getAssignmentLhs(),
 								icfg.getCfgSmtToolkit().getOutParams().get(ti.getThreadInstanceName()));
@@ -375,7 +375,7 @@ public class ThreadInstanceAdder {
 			final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork, final String procedureName,
 			final String threadInstanceId) {
 		final ProgramNonOldVar[] threadIdVars = constructThreadIdVariable(threadInstanceId, mgdScript,
-				fork.getForkSmtArguments().getThreadIdArguments().getTerms());
+				fork.getForkSmtArguments().getThreadIdArguments().terms());
 		return new ThreadInstance(threadInstanceId, procedureName, threadIdVars);
 	}
 
