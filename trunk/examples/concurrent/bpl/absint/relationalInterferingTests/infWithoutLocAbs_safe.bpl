@@ -12,6 +12,8 @@ modifies x;
     x := 1;
     fork 1 one();
     x := x + 1;
+    assert x >= 2;
+    assert x <= 3;
 }
 
 procedure one()

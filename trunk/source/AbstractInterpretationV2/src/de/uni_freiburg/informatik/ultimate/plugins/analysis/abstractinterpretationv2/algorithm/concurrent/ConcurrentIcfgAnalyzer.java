@@ -82,7 +82,9 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			final String forking = fork.getPrecedingProcedure();
 			final String forked = fork.getNameOfForkedProcedure();
 			mThreadsToForks.addPair(forking, fork);
-			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
+			// TODO: needed anywhere else ? need target not source for thread-modular
+//			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
+			mProceduresToForkLocations.addPair(forked, (LOC) fork.getTarget());
 			forkRelation.addPair(forking, forked);
 		}
 		mThreadsToWrites = new HashRelation<>();
@@ -108,10 +110,10 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			mInterferingWrites.addAllPairs(loc, initialInterferences);
 		}
 		for (final var fork : mThreadsToForks.getImage(thread)) {
-			final Set<ACTION> interferingWrites =
-					getTransitivelyForkedWrites(fork.getNameOfForkedProcedure(), closureForks);
-			final Collection<? extends LOC> locsOfForkedThread =
-					mIcfg.getProgramPoints().get(fork.getNameOfForkedProcedure()).values();
+			final Set<ACTION> interferingWrites = getTransitivelyForkedWrites(fork.getNameOfForkedProcedure(),
+					closureForks);
+			final Collection<? extends LOC> locsOfForkedThread = mIcfg.getProgramPoints()
+					.get(fork.getNameOfForkedProcedure()).values();
 			new IcfgLocationIterator<>((LOC) fork.getTarget()).forEachRemaining(loc -> {
 				// Add all transitively forked writes to every location after the fork
 				mInterferingWrites.addAllPairs(loc, interferingWrites);
@@ -217,8 +219,8 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 		final Set<IProgramVarOrConst> sharedVars = readsToProcedures.getDomain().stream()
 				.filter(x -> isSharedVariable(x, writesToProcedures, readsToProcedures)).collect(Collectors.toSet());
 		for (final Entry<ACTION, HashSet<IProgramVarOrConst>> entry : writesToVariables.entrySet()) {
-			final Set<IProgramVarOrConst> writtenSharedVars =
-					DataStructureUtils.intersection(entry.getValue(), sharedVars);
+			final Set<IProgramVarOrConst> writtenSharedVars = DataStructureUtils.intersection(entry.getValue(),
+					sharedVars);
 			if (!writtenSharedVars.isEmpty()) {
 				final ACTION write = entry.getKey();
 				mSharedWrites.addAllPairs(write, writtenSharedVars);

@@ -24,7 +24,7 @@ procedure Thread2()
 modifies x, y;
 {  
     while (true) {
-        if (y < 2) {
+        if (y < 10) {
             y := y + 1;
             x := (x + y) / 2;
         }

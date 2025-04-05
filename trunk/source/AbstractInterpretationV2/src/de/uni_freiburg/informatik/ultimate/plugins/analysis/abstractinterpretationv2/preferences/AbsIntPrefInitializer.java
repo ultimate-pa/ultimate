@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.GuardedInterferenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.array.ArrayDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
@@ -67,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
-	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] {
+	public static final String[] VALUES_ABSTRACT_DOMAIN = {
 
 			EmptyDomain.class.getSimpleName(), SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(),
 			OctagonDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
@@ -76,25 +75,23 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	};
 
-	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE =
-			new String[] { EmptyDomain.class.getSimpleName(), VPDomain.class.getSimpleName(),
-					DataflowDomain.class.getSimpleName(), LiveVariableDomain.class.getSimpleName(),
-					SMTTheoryDomain.class.getSimpleName(), PoormanAbstractDomain.class.getSimpleName()};
+	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE = { EmptyDomain.class.getSimpleName(),
+			VPDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
+			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
+			PoormanAbstractDomain.class.getSimpleName() };
+
+	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Fully precise", "Heuristic splitting" };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
-	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH =
-			"Maximum recursion depth of evaluation operations";
-	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN =
-			"Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
+	public static final String LABEL_MAX_EVALUATION_RECURSION_DETPH = "Maximum recursion depth of evaluation operations";
+	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN = "Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
-	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE =
-			"Settings for the abstract domain to be used when analyzing a program with the RCFG-of-the-future interface.";
+	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE = "Settings for the abstract domain to be used when analyzing a program with the RCFG-of-the-future interface.";
 	public static final String LABEL_ABSTRACT_DOMAIN_FUTURE = "Abstract domain for RCFG-of-the-future";
 
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
-	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS =
-			"Do not report any results, suppress all exceptions except OOM, use 20% of available time.";
+	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS = "Do not report any results, suppress all exceptions except OOM, use 20% of available time.";
 
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
@@ -109,8 +106,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_USE_FUTURE_RCFG = "Use the RCFG-of-the-future interface";
 	private static final Boolean DEF_USE_FUTURE_RCFG = false;
-	private static final String TOOLTIP_USE_FUTURE_RCFG =
-			"Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
+	private static final String TOOLTIP_USE_FUTURE_RCFG = "Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
+	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction Method";
 
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -131,14 +128,14 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				PreferenceType.Boolean));
 
 		// Abstract Domains Container
-		final UltimatePreferenceItemContainer abstractDomainContainer =
-				new UltimatePreferenceItemContainer("Abstract Domains");
-		abstractDomainContainer.addItem(
-				new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
+		final UltimatePreferenceItemContainer abstractDomainContainer = new UltimatePreferenceItemContainer(
+				"Abstract Domains");
+		abstractDomainContainer
+				.addItem(new UltimatePreferenceItem<>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
 				PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
-		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE,
-				null, PreferenceType.Label));
+		abstractDomainContainer.addItem(
+				new UltimatePreferenceItem<>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN_FUTURE,
 				DEF_ABSTRACT_DOMAIN_FUTURE, PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN_FUTURE));
 
@@ -151,6 +148,14 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		abstractDomainContainer.addAbstractItems(PoormanDomainPreferences.getPreferences());
 
 		rtr.add(abstractDomainContainer);
+
+		// Abstract Location Container
+		final UltimatePreferenceItemContainer concurrencyContainer = new UltimatePreferenceItemContainer(
+				"Concurrency settings");
+		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
+				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
+
+		rtr.add(concurrencyContainer);
 
 		return rtr.toArray(new BaseUltimatePreferenceItem[rtr.size()]);
 	}

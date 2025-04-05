@@ -27,4 +27,5 @@ modifies y;
     if (y == 1) {
         y := 3;
     }
+    assert y == 3 || y == 2;
 }

@@ -16,6 +16,8 @@ modifies x, y;
     while (true) {
         if (x < y) {
             x := x + 1;
+            assert x <= y;
+            assert x <= 4;
         }
     }
 }
@@ -24,9 +26,9 @@ procedure Thread2()
 modifies x, y;
 {  
     while (true) {
-        if (y < 2) {
+        if (y < 4) {
             y := y + 1;
-            x := x - 1;
+            assert x <= y;
         }
     }
 }

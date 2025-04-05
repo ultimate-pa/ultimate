@@ -1,3 +1,4 @@
+//#Unsafe
 var x: int;
 var y: int;
 
@@ -8,9 +9,7 @@ modifies y;
     x := 0;
     y := 0;
     fork 1 havocX();
-    if (x == 1) {
-        x := 2;
-    }
+    assert x == 0;
 }
 
 procedure havocX()

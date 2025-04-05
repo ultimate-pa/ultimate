@@ -4,7 +4,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 
 // TODO: Replace Integer usage with value-abstraction, so we can call abstractions on this
 // TODO: make immutable
@@ -76,11 +79,28 @@ public class ThreadInstanceCounter {
 		for (final String thread : other.getThreadInstances().keySet()) {
 			final Integer count = mThreadInstances.get(thread);
 			final Integer otherCount = other.getThreadInstances().get(thread);
-			if (count != otherCount && !(count > 0 && otherCount > 0)) {
+			if (count != otherCount) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	public SubsetResult isSubsetOf(final ThreadInstanceCounter other) {
+		SubsetResult result = SubsetResult.EQUAL;
+		for (final String thread : mThreadNameSet) {
+			final int leftCount = mThreadInstances.get(thread);
+			final int rightCount = other.getThreadInstances().get(thread);
+			// We say anything above 0 is equal for now, since seeing another thread as being forked 1 or 2 times
+			// does not change anything for our current model.
+			// TODO:
+			if (leftCount < rightCount) {
+				return SubsetResult.NONE;
+			} else if (leftCount < rightCount) {
+				result = result.min(SubsetResult.STRICT);
+			}
+		}
+		return result;
 	}
 
 	@Override
@@ -90,5 +110,21 @@ public class ThreadInstanceCounter {
 			resulString.append(", ").append(thread).append("=").append(mThreadInstances.get(thread));
 		}
 		return resulString.toString();
+	}
+
+	@Override
+	public boolean equals(final Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof final ThreadInstanceCounter other)) {
+			return false;
+		}
+		return Objects.equals(mThreadInstances, other.mThreadInstances);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(mThreadInstances);
 	}
 }
