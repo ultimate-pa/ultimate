@@ -25,14 +25,17 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	int mRunningThreadForPP = 0;
 	int mThreadLimitForPP;
 	protected final ILogger mLogger;
+	boolean mLoopAccelerationWasTried = false;
+	int mImperfectSequencesSoFar = 0;
 
 	/*
 	 * call getStrategyForWorker() to get the strategy that we want to execute. This class maintains the overview of our
 	 * parallel strategy. We can give any array of tracechecks and make it a parallel strategy
 	 */
-	public ParallelRefinementStrategy(final ILogger logger, final Set<L> pathProgramRepresentative) {
+	public ParallelRefinementStrategy(final ILogger logger, final Set<L> pathProgramRepresentative,
+			final int threadLimitForThisPP) {
 
-		mThreadLimitForPP = 4;
+		mThreadLimitForPP = threadLimitForThisPP;
 		mLogger = logger;
 		mPathProgramRepresentative = pathProgramRepresentative;
 		mExecutor = createExecutorForPathProgram(mPathProgramRepresentative.hashCode(), mThreadLimitForPP);
@@ -51,6 +54,15 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		mPriorities = priorities;
 	}
 
+	public void reportImperfectSequence() {
+		mImperfectSequencesSoFar += 1;
+	}
+
+	public boolean generalize() {
+		final boolean condition = mImperfectSequencesSoFar > 1;
+		mImperfectSequencesSoFar = 0;
+		return condition;
+	}
 	// public int getPriorityForCurrentModule(final IIpTcStrategyModule<?, L> module) {
 	// assert mModules != null;
 	// for (int i = 0; i < mModules.length; i++) {
@@ -98,9 +110,9 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		// Idee currentModule just counts up, and we do modulo and we take the new assertion order
 		// example 1 then non-inc, 5 then module 1 with new assertio order
 		// TODO track active
-		if (!mActiveModules[module]) {
-			mActiveModules[module] = true;
-		}
+		// if (!mActiveModules[module]) {
+		// mActiveModules[module] = true;
+		// }
 
 		switch (module) {
 		case 0:
@@ -111,7 +123,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 			break;
 		case 2:
 			// rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-			rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
+			if (!mLoopAccelerationWasTried) {
+				rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
+				mLoopAccelerationWasTried = true;
+			}
 			// rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation));
 			break;
 		case 3:
@@ -155,6 +170,13 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	public boolean isAtThreadLimit() {
 		return mRunningThreadForPP >= mThreadLimitForPP;
+	}
+
+	public boolean isActiveModule(final int module) {
+		if (module == 2) {
+			return false;
+		}
+		return true;
 	}
 
 }

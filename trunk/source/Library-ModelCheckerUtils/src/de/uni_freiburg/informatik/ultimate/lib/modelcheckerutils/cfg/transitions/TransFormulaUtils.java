@@ -1342,8 +1342,13 @@ public final class TransFormulaUtils {
 				transferMap(mgdScript, inTF.getOutVars()), inTF.getNonTheoryConsts().isEmpty(),
 				inTF.getNonTheoryConsts(), inTF.getBranchEncoders().isEmpty(),
 				transferSet(mgdScript.getScript(), inTF.getBranchEncoders()), inTF.getAuxVars().isEmpty());
+
 		transferredTF
 				.setFormula(((HistoryRecordingScript) mgdScript.getScript()).transferTermToWorker(inTF.getFormula()));
+
+		transferredTF.addAuxVarsButRenameToFreshCopies(transferSet(mgdScript.getScript(), inTF.getAuxVars()),
+				mgdScript);
+
 		transferredTF.setInfeasibility(inTF.isInfeasible());
 		return transferredTF.finishConstruction(mgdScript);
 

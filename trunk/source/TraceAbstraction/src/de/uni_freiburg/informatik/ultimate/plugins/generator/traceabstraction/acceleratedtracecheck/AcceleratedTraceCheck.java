@@ -339,9 +339,9 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			if (nextPosition != null) {
 				final NestedWord<L> subWord = counterexample.getWord().getSubWord(i, nextPosition);
 				UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
-				transitiveClosure = TransFormulaUtils.transferTransformula(mgdScript, transitiveClosure);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
+					transitiveClosure = TransFormulaUtils.transferTransformula(mgdScript, transitiveClosure);
 					mStatisticsGenerator.reportSuccessfullAcceleration();
 					result.put(i, new AcceleratedSegment(i, nextPosition - 1, transitiveClosure));
 					i = nextPosition - 1;

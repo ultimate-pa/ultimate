@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledExcep
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -104,6 +103,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	// Globals for Difference (Interpolant Automaton Enhancement)
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelCegarLoop<L, A> mMainThread;
+	private final boolean mGeneralize;
 
 	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
 			final int iteration, final CegarLoopResultBuilder resultBuilder,
@@ -113,7 +113,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
-			final ParallelCegarLoop<L, A> mainThread) {
+			final ParallelCegarLoop<L, A> mainThread, final boolean generalize) {
 
 		mLogger = logger;
 		mPref = pref;
@@ -137,6 +137,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mIcfg = rootNode;
 		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
 		mMainThread = mainThread;
+		mGeneralize = generalize;
 	}
 
 	@Override
@@ -226,10 +227,11 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		final Result actualResult;
 		if (programExecution != null) {
-			final UnprovabilityReason reasonUnknown =
-					new UnprovabilityReason("unable to decide satisfiability of path constraint");
-			actualResult = Result.UNKNOWN;
-			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
+			throw new AssertionError("TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
+			// final UnprovabilityReason reasonUnknown =
+			// new UnprovabilityReason("unable to decide satisfiability of path constraint");
+			// actualResult = Result.UNKNOWN;
+			// mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
 		} else {
 			actualResult = Result.TIMEOUT;
 			mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
@@ -368,10 +370,11 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO: HTC and predicateunifier statistics are saved in the following
 		// method, but it seems better to save them
 		// at the end of the htc lifecycle instead of there
-		mLogger.info("Difference in Worker for Generalization");
-		computeAutomataDifference(mMainThread.getAbstraction(), subtrahend, subtrahendBeforeEnhancement,
-				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
-
+		if (mGeneralize) {
+			mLogger.info("Difference in Worker for Generalization");
+			computeAutomataDifference(mMainThread.getAbstraction(), subtrahend, subtrahendBeforeEnhancement,
+					predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
+		}
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
 				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,

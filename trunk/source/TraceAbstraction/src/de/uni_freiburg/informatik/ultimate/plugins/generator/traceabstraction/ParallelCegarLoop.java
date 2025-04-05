@@ -26,6 +26,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyParallel;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -240,19 +242,27 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
 		// TODO only increase cache if module == 0, need new constuct strategy
-		// setup the strategy from getRefinementStrategy() such that the factory has the modules
-		final ITARefinementStrategy<L> strategy = strategyFactory.constructStrategy(getServices(), counterexample,
-				mAbstraction, new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-				predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-				mPref.getRefinementStrategy(), mProgramCache, parallelStrategy, module);
+		final ITARefinementStrategy<L> strategy;
+		if (module == -1) { // TODO better case distiction
+			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					mPref.getRefinementStrategy(), mProgramCache);
+		} else {
 
+			// setup the strategy from getRefinementStrategy() such that the factory has the modules
+			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					mPref.getRefinementStrategy(), mProgramCache, parallelStrategy, module);
+		}
 		// create a new strategy that has only one module, the one we want to use for this worker
 
 		// start worker
 		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
-				currentErrorLoc, mRootNode, this);
+				currentErrorLoc, mRootNode, this, parallelStrategy.generalize());
 	}
 
 	/*
@@ -428,21 +438,27 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mServices = iterationServices;
 		final RefinementStrategy strategyType;
 		final ExecutorService executor;
-		if (true) { // mPref.getParallelPathProgramStrategy) {
-			final Set<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asList());
-			if (!mPpStrategyMap.containsKey(ppRepresentative)) {
-				mPpStrategyMap.put(ppRepresentative, new ParallelRefinementStrategy<>(mLogger, ppRepresentative));
-			}
-			assert (!mPpStrategyMap.get(ppRepresentative).isAtThreadLimit());
-			executor = mPpStrategyMap.get(ppRepresentative).getExecutor();
-		} else { // TODO default setting
-			executor = mExec;
-		}
+		final Set<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asList());
 
-		for (int module = 0; module < 4; module++) {
-			// strategies
-			final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc, module);
-			mWorkerResultQueue.add(executor.submit(worker));
+		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
+			mPpStrategyMap.put(ppRepresentative, new ParallelRefinementStrategy<>(mLogger, ppRepresentative, 3));
+		}
+		assert (!mPpStrategyMap.get(ppRepresentative).isAtThreadLimit());
+		executor = mPpStrategyMap.get(ppRepresentative).getExecutor();
+
+		if (!executor.isTerminated()) {
+
+			for (int module = 0; module < 4; module++) {
+				if (mPpStrategyMap.get(ppRepresentative).isActiveModule(module)) {
+					// strategies
+					final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc, module);
+					mWorkerResultQueue.add(executor.submit(worker));
+					mRunningThreads += 1;
+				}
+			}
+		} else {
+			final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc, -1);
+			mWorkerResultQueue.add(mExec.submit(worker));
 			mRunningThreads += 1;
 		}
 		// strategies
@@ -525,6 +541,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mPpStrategyMap.get(pathProgramRepresentative).getExecutor().shutdown();
 		} else {
 			final Set<L> pathProgramRepresentative = new HashSet<>(threadResult.getCounterexample().getWord().asList());
+			mPpStrategyMap.get(pathProgramRepresentative).reportImperfectSequence();
 		}
 
 		// Kill the worker script
@@ -668,6 +685,22 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mCountFailedToFindCex += 1;
 		assert mRunningThreads > 0;
 		return null;
+	}
+
+	@Override
+	protected INwaOutgoingLetterAndTransitionProvider<L, IPredicate> enhanceInterpolantAutomaton(
+			final InterpolantAutomatonEnhancement enhanceMode, final IPredicateUnifier predicateUnifier,
+			final IHoareTripleChecker htc, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
+		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
+		// if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+		// Worker does the ehancement!
+		subtrahend = interpolantAutomaton;
+		// } else {
+		// final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
+		// interpolantAutomaton, predicateUnifier, htc, enhanceMode);
+		// subtrahend = ia;
+		// }
+		return subtrahend;
 	}
 
 	/*
