@@ -159,15 +159,15 @@ public class XMLWriter {
 	 *            The <code>Document</code> element to be written in a file.
 	 * @param fileName
 	 *            The file, where <code>document</code> shall be written
-	 * @throws Exception
-	 *             IOException, when the <code>FileWriter</code> cannot be instantiated with file <code>fileName</code>
-	 *             or an error occurs writing the file or closing it.
+	 * @throws IOException
+	 *             when the <code>FileWriter</code> cannot be instantiated with file <code>fileName</code> or an error
+	 *             occurs writing the file or closing it.
 	 */
 	public void writeXMLDocumentToFile(final Document document, final String fileName) throws IOException {
-		final FileWriter writer = new FileWriter(fileName);
-		writer.write(traverse(document, 0));
-		writer.flush();
-		writer.close();
+		try (final FileWriter writer = new FileWriter(fileName)) {
+			writer.write(traverse(document, 0));
+			writer.flush();
+		}
 	}
 
 	public String writeXMLDocumentToString(final Element element) {
