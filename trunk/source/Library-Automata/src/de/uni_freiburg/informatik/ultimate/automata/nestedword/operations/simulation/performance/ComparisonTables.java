@@ -58,7 +58,7 @@ public final class ComparisonTables {
 	/**
 	 * Factor that, if multiplied with, converts seconds to milliseconds.
 	 */
-	public static final int SECONDS_TO_MILLIS = 1000;
+	public static final long SECONDS_TO_MILLIS = 1000L;
 	/**
 	 * Decimal places to round duration of a method to.
 	 */

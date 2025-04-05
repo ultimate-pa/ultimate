@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Int array with get, set, add, and clear operations which is implemented using a native int[] array for efficiency.
@@ -39,7 +40,6 @@ import java.util.Iterator;
  * @author stimpflj
  */
 final class IntArray implements Iterable<Integer> {
-
 	private int[] mArray;
 	private int mSize;
 	private int mCapacity;
@@ -68,12 +68,13 @@ final class IntArray implements Iterable<Integer> {
 
 	void add(final int val) {
 		if (mSize == mCapacity) {
-			final int newCapacity = (mCapacity == 0) ? 4 : 2 * mCapacity;
+			final int newCapacity = (mCapacity == 0) ? 4 : (2 * mCapacity);
 			mArray = Arrays.copyOf(mArray, newCapacity);
 			mCapacity = newCapacity;
 		}
 
-		mArray[mSize++] = val;
+		mArray[mSize] = val;
+		mSize++;
 	}
 
 	void clear() {
@@ -88,23 +89,7 @@ final class IntArray implements Iterable<Integer> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (obj == null || !(obj instanceof IntArray)) {
-			return false;
-		}
-
-		final IntArray b = (IntArray) obj;
-
-		if (b.mSize != mSize) {
-			return false;
-		}
-
-		for (int i = 0; i < mSize; i++) {
-			if (b.mArray[i] != mArray[i]) {
-				return false;
-			}
-		}
-
-		return true;
+		return obj == this || (obj instanceof final IntArray b && Arrays.equals(mArray, b.mArray));
 	}
 
 	@Override
@@ -137,11 +122,13 @@ final class IntArray implements Iterable<Integer> {
 
 		@Override
 		public Integer next() {
-			if (mIdx == mLast) {
-				throw new ArrayIndexOutOfBoundsException();
+			if (mIdx >= mLast) {
+				throw new NoSuchElementException();
 			}
 
-			return mInnerArray[mIdx++];
+			final int element = mInnerArray[mIdx];
+			mIdx++;
+			return element;
 		}
 	}
 }
