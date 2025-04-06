@@ -273,7 +273,7 @@ public class DerPreprocessor extends TermTransformer {
 						eliminatee, mgdScript.getScript(), quantifier, aiem);
 			}
 			assert indices.isEmpty();
-			values.isEmpty();
+			assert values.isEmpty();
 			result = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
 					resultDualFiniteJuncts);
 		} else {
