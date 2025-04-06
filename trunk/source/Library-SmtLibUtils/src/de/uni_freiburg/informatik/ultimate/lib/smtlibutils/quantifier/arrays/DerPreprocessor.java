@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -52,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -264,9 +262,6 @@ public class DerPreprocessor extends TermTransformer {
 		}
 		final Term result;
 		if (nas.getArray().equals(eliminatee)) {
-			final ThreeValuedEquivalenceRelation<Term> tver;
-			final Term context;
-			final ILogger logger;
 			// is (possibly nested) self-update
 			final LinkedList<ArrayIndex> indices = new LinkedList<>(newIndices);
 			final LinkedList<Term> values = new LinkedList<>(newValues);
@@ -341,7 +336,7 @@ public class DerPreprocessor extends TermTransformer {
 			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
 			final int quantifier, final ArrayIndexEqualityManager aiem) {
 		final Term select = new MultiDimensionalSelect(arr, innermostIndex).toTerm(script);
-		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
+		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList<>(
 				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
 						.collect(Collectors.toList()));
 		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(script, quantifier, select, innermostValue);
