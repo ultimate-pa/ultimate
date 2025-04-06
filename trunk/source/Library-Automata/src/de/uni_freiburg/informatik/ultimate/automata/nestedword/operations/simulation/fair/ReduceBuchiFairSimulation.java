@@ -356,7 +356,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
 
 		// Compare size
-		if (simSCCVertices.size() != simSCCVertices.size()) {
+		if (simSCCVertices.size() != simNoSCCVertices.size()) {
 			logMessage("SimSCC and SimNoSCC have different size: " + simSCCVertices.size() + " & "
 					+ simNoSCCVertices.size(), logger);
 			errorOccurred = true;
