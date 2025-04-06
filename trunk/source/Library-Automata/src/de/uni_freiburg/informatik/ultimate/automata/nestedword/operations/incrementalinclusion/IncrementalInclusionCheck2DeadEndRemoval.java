@@ -456,7 +456,6 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 
 	private void deadEndRemove() {
 		mLogger.info("Node size before delete: " + mCompleteTree.size());
-		mCompleteTree.size();
 		toBeKeepedNodes = new HashSet<>();
 		int i = 0;
 		HashSet<NodeData<LETTER, STATE>> toBeDeletedNodes = new HashSet<>(mAllNodes);
