@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -8,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.CompiledEnumExecutionProducer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LiteralExecutionProducer;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
@@ -32,33 +37,40 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				throw new UnsupportedOperationException("Multiple CFGs are not supported.");
 			}
 			mIcfg = icfg;
+
+			// TODO: Extract executions from mIcfg (mServices will be also needed for some operations)
+			// This should be probably moved to a separate class
+
+			// Useful methods:
+			// * mIcfg.getCfgSmtToolkit().getManagedScript()
+			// (also .getScript() if the Script instead of the ManagedScript is needed)
+			// * mIcfg.getInitialNodes()
+			// * TransFormulaUtils.computeGuard
+			// * SmtUtils.getConjuncts
+			// * SmtUtils.toDnf
+			// * mLogger can be used for output (e.g., for debugging)
+			if (!seenICFGs.contains(mIcfg)) {
+				seenICFGs.add(mIcfg);
+			}
+			DynamicLoader.makeCompilationDirectory();
+			try {
+				final Random random = new Random();
+				final long seed = random.nextLong();
+				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LiteralExecutionProducer(),
+						new Random(seed));
+				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new CompiledEnumExecutionProducer<>(),
+						new Random(seed));
+			} catch (final Exception e) {
+				final PrintStream message = new PrintStream(new ByteArrayOutputStream());
+				e.printStackTrace(message);
+				mLogger.error(message.toString());
+			}
+			DynamicLoader.deleteCompilationDirectory();
 		}
 		return false;
 	}
 
 	private static final ArrayList<IIcfg<?>> seenICFGs = new ArrayList<>();
-
-	@Override
-	public void finish() {
-		if (mIcfg == null) {
-			return;
-		}
-		// TODO: Extract executions from mIcfg (mServices will be also needed for some operations)
-		// This should be probably moved to a separate class
-
-		// Useful methods:
-		// * mIcfg.getCfgSmtToolkit().getManagedScript()
-		// (also .getScript() if the Script instead of the ManagedScript is needed)
-		// * mIcfg.getInitialNodes()
-		// * TransFormulaUtils.computeGuard
-		// * SmtUtils.getConjuncts
-		// * SmtUtils.toDnf
-		// * mLogger can be used for output (e.g., for debugging)
-		if (!seenICFGs.contains(mIcfg)) {
-			seenICFGs.add(mIcfg);
-		}
-		ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger);
-	}
 
 	public static IcfgInterpreterObserver getInstance() {
 		return mInstance;

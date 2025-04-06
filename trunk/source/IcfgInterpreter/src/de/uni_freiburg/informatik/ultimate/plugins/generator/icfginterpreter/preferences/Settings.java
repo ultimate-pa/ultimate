@@ -50,7 +50,7 @@ public class Settings {
 		// final IPreferenceProvider preferences =
 		// ICFGExecuterPreferences.getPreferences(IcfgInterpreter.getServices());
 		final String chosenNDC = IcfgInterpreterPreferences.getPreferences()
-				.getString(SettingLabel.NDC_IMLPEMENTATIONS.toString(), RNGChoice.class.getSimpleName());
+				.getString(SettingLabel.NDC_IMLPEMENTATIONS.toString());
 
 		return interfaces.get(chosenNDC);
 	}

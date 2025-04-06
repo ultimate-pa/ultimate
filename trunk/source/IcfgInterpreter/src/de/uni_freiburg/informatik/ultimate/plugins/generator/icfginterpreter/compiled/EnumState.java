@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class EnumState<T extends Enum<T> & IVariableName> {
 
@@ -22,25 +23,31 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 	private final NonDeterministicChoice mNDC;
 
 	public static <S extends Enum<S> & IVariableName> Function<NonDeterministicChoice, EnumState<S>> getStateInitializer(
-			final HashSet<IProgramVar> arrayEntries, final HashSet<IProgramVar> intEntries,
-			final HashSet<IProgramVar> boolEntries, final HashSet<IProgramVar> bvEntries, final Class<S> varEnum) {
-
+			final HashSet<Variable> variables, final Class<S> varEnum) {
 		final HashSet<S> arrayNames = new HashSet<>();
 		final HashSet<S> intNames = new HashSet<>();
 		final HashSet<S> boolNames = new HashSet<>();
 		final HashSet<S> bvNames = new HashSet<>();
 
-		for (final IProgramVar programVar : arrayEntries) {
-			arrayNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
-		}
-		for (final IProgramVar programVar : intEntries) {
-			intNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
-		}
-		for (final IProgramVar programVar : boolEntries) {
-			boolNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
-		}
-		for (final IProgramVar programVar : bvEntries) {
-			bvNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
+		for (final Variable variable : variables) {
+			final IProgramVar programVar = variable.getVariableTerm().programVar;
+			if (programVar == null) {
+				continue;
+			}
+			switch (variable.getTerm().returnType) {
+			case Array:
+				arrayNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
+				break;
+			case BitVector:
+				bvNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
+				break;
+			case Boolean:
+				boolNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
+				break;
+			case Int:
+				intNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
+				break;
+			}
 		}
 
 		return (ndc) -> {

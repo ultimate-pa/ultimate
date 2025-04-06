@@ -33,9 +33,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ArcSolver {
-	private final HashMap<TermVariable, Variable> mVariables;
-	private final HashSet<Variable> mOutVars;
-	private final HashSet<Variable> mInVars;
+	private final VariableSet mVariables;
 	private final ArrayList<Constraint> mConstraints = new ArrayList<>();
 	private final ArrayList<Arc> mArcs = new ArrayList<>();
 	private final int constraintCount;
@@ -52,19 +50,11 @@ public class ArcSolver {
 	 *                       {@link TermNormalizer#simplifyToDNF(BooleanTerm)}
 	 * @param mAllVariables
 	 */
-	public ArcSolver(final AndTerm constraintTerm, final ManagedScript managedScript,
-			final HashMap<TermVariable, Variable> variables, final HashSet<Variable> inVars,
-			final HashSet<Variable> outVars, final IUltimateServiceProvider service, final Theory theory) {
+	public ArcSolver(final AndTerm constraintTerm, final ManagedScript managedScript, final VariableSet variables,
+			final Theory theory) {
 		mVariables = variables;
-		mOutVars = outVars;
-		mInVars = inVars;
 
 		final ArrayList<BooleanTerm> constraints = constraintTerm.getSubTerms();
-
-		final HashMap<TermVariable, Variable> smtConvertedVariables = new HashMap<>();
-		for (final Variable var : variables.values()) {
-			smtConvertedVariables.put((TermVariable) var.getTerm().toSMTTerm(theory), var);
-		}
 
 		for (final BooleanTerm constraint : constraints) {
 			final HashSet<Variable> containedOutVars = Util.filter(constraint.getVariables(), (var) -> {
@@ -73,7 +63,7 @@ public class ArcSolver {
 
 			if (containedOutVars.isEmpty()) {
 				continue;
-				// does not constrain next state variables, perhaps only a guard
+				// does not constrain next state variables, may only be a guard
 			}
 
 			BinaryRelation binRel;
@@ -83,7 +73,7 @@ public class ArcSolver {
 				binRel = BinaryEqualityRelation.convert(constraint.toSMTTerm(theory));
 			}
 
-			for (final Variable var : mOutVars) {
+			for (final Variable var : variables.getOutVars().values()) {
 				final Term termVar = var.getTerm().toSMTTerm(theory);
 				final SolvedBinaryRelation solvedBinEQ = binRel.solveForSubject(managedScript.getScript(), termVar);
 				if (solvedBinEQ == null) {
@@ -94,7 +84,7 @@ public class ArcSolver {
 				if (definition == null) {
 					continue;
 				}
-				ExecutionTerm rhsTerm = TermNormalizer.parseTerm(definition, smtConvertedVariables).simplify();
+				ExecutionTerm rhsTerm = IcfgTranslation.parseTerm(definition, variables).simplify();
 				if (rhsTerm.returnType == ReturnType.Boolean && relation == RelationSymbol.DISTINCT) {
 					// bool_x != bool_y would become the update havoc(bool_x, "!= bool_y")
 					// but we can just simplify to bool_x = !(bool_y) to get an assignment update set(bool_x, !bool_y)
@@ -127,18 +117,12 @@ public class ArcSolver {
 	public UnmodifiableTransFormula makeGuardFormula(final ManagedScript script, final IUltimateServiceProvider service,
 			final Term term, final Infeasibility infeasibility, final Collection<TermVariable> branchEncoders) {
 		final HashMap<IProgramVar, TermVariable> inVars = new HashMap<>();
-		for (final Variable inVar : mInVars) {
-			inVars.put(inVar.getVariableTerm().programVar, inVar.getVariableTerm().termvar);
+		for (final Entry<TermVariable, Variable> entry : mVariables.getInVars().entrySet()) {
+			inVars.put(entry.getValue().getVariableTerm().programVar, entry.getKey());
 		}
 		final HashMap<IProgramVar, TermVariable> outVars = new HashMap<>();
-		for (final Variable outVar : mOutVars) {
-			outVars.put(outVar.getVariableTerm().programVar, outVar.getVariableTerm().termvar);
-		}
-		final HashSet<TermVariable> auxVars = new HashSet<>();
-		for (final Variable var : mVariables.values()) {
-			if (var.getVariableTerm().isAuxVar) {
-				auxVars.add(var.getVariableTerm().termvar);
-			}
+		for (final Entry<TermVariable, Variable> entry : mVariables.getOutVars().entrySet()) {
+			outVars.put(entry.getValue().getVariableTerm().programVar, entry.getKey());
 		}
 
 		final TransFormulaBuilder formulaBuilder = new TransFormulaBuilder(inVars, outVars, false, null,
@@ -159,7 +143,8 @@ public class ArcSolver {
 
 		final ArrayList<Update> updates = new ArrayList<>();
 
-		final HashSet<Variable> wellDefined = Util.copySet(mInVars);
+		final Collection<Variable> inVars = mVariables.getInVars().values();
+		final HashSet<Variable> wellDefined = new HashSet<>(inVars);
 		final HashSet<Variable> mentionedVars = new HashSet<>();
 
 		// get all updates that are in the form wellDefinedVar = Term(const, const, ...)
@@ -198,11 +183,11 @@ public class ArcSolver {
 
 		// All remaining variables have to be havoced, or depend on a variable that has to be havoced.
 
-		final HashMap<IProgramVar, Variable> inProgVars = Util.map(mInVars, (var) -> {
+		final HashMap<IProgramVar, Variable> inProgVars = Util.map(inVars, (var) -> {
 			return Map.entry(var.getVariableTerm().programVar, var);
 		}, new HashMap<>());
 
-		final HashMap<IProgramVar, Variable> outProgVars = Util.map(mOutVars, (var) -> {
+		final HashMap<IProgramVar, Variable> outProgVars = Util.map(mVariables.getOutVars().values(), (var) -> {
 			return Map.entry(var.getVariableTerm().programVar, var);
 		}, new HashMap<>());
 		// Make updates for variables that are not defined in the next state (havoc any value), this happens when:

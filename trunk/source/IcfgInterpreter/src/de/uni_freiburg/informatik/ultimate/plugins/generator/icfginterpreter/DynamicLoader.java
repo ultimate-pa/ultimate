@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.EnumState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.IVariableName;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.JavaCodeEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.InterpretedIcfg;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -92,7 +93,7 @@ public class DynamicLoader {
 	 * @return The .java File in the folder used for compilation
 	 */
 	public static File createFile(final String mCode, final String className) throws IOException {
-		final File codeFile = new /* MainCompile */File(className + ".java");
+		final File codeFile = new File(className + ".java");
 		return createFile(mCode, codeFile);
 	}
 
@@ -301,7 +302,7 @@ public class DynamicLoader {
 
 	/**
 	 * This object represents a class compiled and loaded at runtime using
-	 * {@link DynamicLoader#loadClass(MainCompileFile, String, ArrayList)}. <br>
+	 * {@link DynamicLoader#loadClass(File, String, HashSet, ArrayList)}. <br>
 	 * It can encode itself in a String using {@link #encodeClassData()}. <br>
 	 * That String can be used to recreate the {@link LoadedClass} later by using {@link #restoreClassData(String)}
 	 */
@@ -410,19 +411,26 @@ public class DynamicLoader {
 		return new File(clazz.getProtectionDomain().getCodeSource().getLocation().toURI().normalize().getPath());
 	}
 
-	public static String getEnumClassName() {
-		return "VariableName_v" + IcfgInterpreterObserver.getInstance().getCurrentICFGCardinality();
+	public static String getVersionedClassName(final String baseName) {
+		return baseName + "_v" + IcfgInterpreterObserver.getInstance().getCurrentICFGCardinality();
 	}
+
+	public static String getEnumClassName() {
+		return getVersionedClassName(enumClassBaseName);
+	}
+
+	public static final String enumClassBaseName = "VariableName";
 
 	@SuppressWarnings("unchecked")
 	public static <T extends Enum<T> & IVariableName> Class<T> makeVariableNameEnum(final HashSet<Variable> variables)
 			throws IOException, URISyntaxException, ClassNotFoundException, ClassCastException {
+		final String versionedEnumClassName = getVersionedClassName(enumClassBaseName);
 		final StringBuilder code = new StringBuilder();
 		code.append("package " + mOutputPackage + ";\n\n");
 		code.append(makeImport(HashSet.class));
 		code.append(makeImport(IProgramVar.class));
 		code.append(makeImport(IVariableName.class));
-		code.append("\npublic enum ").append(getEnumClassName()).append(" implements ")
+		code.append("\npublic enum ").append(versionedEnumClassName).append(" implements ")
 				.append(IVariableName.class.getSimpleName()).append(" {\n\t");
 
 		final HashSet<IProgramVar> visited = new HashSet<>();
@@ -447,11 +455,9 @@ public class DynamicLoader {
 		code.append("\t\treturn mProgramVar;\n");
 		code.append("\t}\n}");
 
-		final String classFullName = connectPath(mOutputPath, getEnumClassName());
+		final String classFullName = connectPath(mOutputPath, versionedEnumClassName);
 
-		final File compileDirectory = Files.createTempDirectory("IcfgInterpreterCompile").toFile();
-
-		final File codeFile = new File(compileDirectory, classFullName + ".java");
+		final File codeFile = new File(compileDir, classFullName + ".java");
 
 		final HashSet<IProgramVar> progVars = Util.map(variables, (variable) -> {
 			return variable.getVariableTerm().programVar;
@@ -479,8 +485,10 @@ public class DynamicLoader {
 
 	@SuppressWarnings("unchecked")
 	public static <T extends Enum<T> & IVariableName> JavaCodeEdge<T> makeCodeEdge(final ICFGExecutionEdge edge,
-			final File compileDirectory, final Class<T> enumClass) {
-		final String className = "JCEdge_" + edge.getUniqueName().replace("-", "_").replace("#", "_");
+			final Class<T> enumClass) {
+		final String enumClassName = enumClass.getSimpleName();
+		final String uniqueNameSafe = edge.getUniqueName().replace("-", "_").replace("#", "_");
+		final String className = getVersionedClassName("JCEdge_" + uniqueNameSafe);
 
 		final ArrayList<Class<?>> parameterClasses = new ArrayList<>();
 		final ArrayList<Object> parameterObjects = new ArrayList<>();
@@ -492,7 +500,7 @@ public class DynamicLoader {
 		final Class<?>[] paramClasses = Util.fillArray(parameterClasses, new Class<?>[parameterClasses.size()]);
 		final Object[] paramObjects = Util.fillArray(parameterObjects, new Object[parameterObjects.size()]);
 
-		final String stateType = EnumState.class.getSimpleName() + "<" + getEnumClassName() + ">";
+		final String stateType = EnumState.class.getSimpleName() + "<" + enumClassName + ">";
 
 		final StringBuilder codeB = new StringBuilder();
 		codeB.append("package " + mOutputPackage + ";\n\n");
@@ -505,9 +513,9 @@ public class DynamicLoader {
 		codeB.append(makeImport(Util.class));
 		codeB.append(makeImport(EnumState.class));
 		codeB.append(makeImport(JavaCodeEdge.class));
-		codeB.append("import ").append(mOutputPackage).append(".").append(getEnumClassName()).append(";\n");
-		codeB.append("\npublic class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + "<"
-				+ getEnumClassName() + "> {\n");
+		codeB.append("import ").append(mOutputPackage).append(".").append(enumClassName).append(";\n\n");
+		codeB.append("public class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + "<"
+				+ enumClassName + "> {\n");
 		codeB.append("\tpublic final IcfgLocation source, target;\n\n");
 		codeB.append("\tpublic " + className + "(IcfgLocation int_source, IcfgLocation int_target) {\n");
 		codeB.append("\t\tsource = int_source;\n\t\ttarget = int_target;\n");
@@ -528,16 +536,14 @@ public class DynamicLoader {
 
 		final String code = codeB.toString();
 		final String classFullName = connectPath(mOutputPath, className);
-		final File codeFile = new File(compileDirectory, classFullName + ".java");
+		final File codeFile = new File(compileDir, classFullName + ".java");
 
 		try {
 			final File main = createFile(code, codeFile);
 			final ArrayList<File> neededProjects = new ArrayList<>();
 			neededProjects.add(getProjectOfClass(IcfgInterpreter.class));
 			neededProjects.add(getProjectOfClass(IProgramVar.class));
-			final HashSet<File> importedFiles = new HashSet<>();
-			// importedFiles.add(varEnumCompiled);
-			final LoadedClass stateClass = loadClass(main, classFullName, importedFiles, neededProjects);
+			final LoadedClass stateClass = loadClass(main, classFullName, new HashSet<>(), neededProjects);
 
 			return (JavaCodeEdge<T>) stateClass.createInstanceUncast(paramClasses, paramObjects);
 		} catch (final Exception e) {
@@ -546,25 +552,43 @@ public class DynamicLoader {
 		return null;
 	}
 
-	public static <T extends Enum<T> & IVariableName> HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> makeUpdates(
-			final HashMap<IcfgLocation, ArrayList<ICFGExecutionEdge>> edges, final Class<T> enumType) {
-		final HashSet<Variable> reachable = new HashSet<>();
+	private static File compileDir = null;
 
-		for (final ArrayList<ICFGExecutionEdge> edgeOfLoc : edges.values()) {
-			for (final ICFGExecutionEdge edge : edgeOfLoc) {
-				reachable.addAll(edge.getVariables());
+	public static void makeCompilationDirectory() {
+		try {
+			compileDir = Files.createTempDirectory("IcfgInterpreterCompile").toFile();
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void deleteCompilationDirectory() {
+		if (compileDir == null) {
+			return;
+		}
+		deleteRecursive(compileDir);
+		compileDir = null;
+	}
+
+	private static void deleteRecursive(final File file) {
+		if (file.isDirectory()) {
+			for (final File subFile : file.listFiles()) {
+				deleteRecursive(subFile);
 			}
 		}
+		file.delete();
+	}
 
+	public static <T extends Enum<T> & IVariableName> HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> makeUpdates(
+			final InterpretedIcfg execIcfg, final Class<T> enumClass) {
 		try {
-			final File compileDir = Files.createTempDirectory("IcfgInterpreterCompile").toFile();
 
 			final HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> out = new HashMap<>();
-			for (final IcfgLocation location : edges.keySet()) {
-				final ArrayList<ICFGExecutionEdge> outEdges = edges.get(location);
+			for (final IcfgLocation location : execIcfg.getLocations()) {
+				final HashSet<ICFGExecutionEdge> outEdges = execIcfg.getOutEdges(location);
 				final ArrayList<JavaCodeEdge<T>> compiledEdges = new ArrayList<>();
 				for (final ICFGExecutionEdge outEdge : outEdges) {
-					compiledEdges.add(makeCodeEdge(outEdge, compileDir, enumType));
+					compiledEdges.add(makeCodeEdge(outEdge, enumClass));
 				}
 				out.put(location, compiledEdges);
 			}

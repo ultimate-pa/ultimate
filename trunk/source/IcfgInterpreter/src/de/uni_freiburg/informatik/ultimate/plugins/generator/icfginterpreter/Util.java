@@ -298,4 +298,13 @@ public class Util {
 		// n < 0, (div m n) = ceil(m/n)
 		return (int) Math.ceil(div);
 	}
+
+	public static String intToLetters(int numb) {
+		final StringBuilder result = new StringBuilder();
+		while (numb >= 0) {
+			result.insert(0, (char) ('A' + (numb % 26)));
+			numb = (numb / 26) - 1;
+		}
+		return result.toString();
+	}
 }

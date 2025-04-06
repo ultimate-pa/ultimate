@@ -6,11 +6,13 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	private static RcpPreferenceProvider mSettings = null;
@@ -33,12 +35,16 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		final ArrayList<NonDeterministicChoice> interfaces = Settings.getSettings().getInterfaces();
-		final UltimatePreferenceItemGroup[] subPrefs = new UltimatePreferenceItemGroup[interfaces.size()];
+		final ArrayList<UltimatePreferenceItemGroup> subPrefs = new ArrayList<>();
 		final String[] names = new String[interfaces.size()];
 
 		for (int i = 0; i < interfaces.size(); i++) {
 			names[i] = interfaces.get(i).getClass().getSimpleName();
-			subPrefs[i] = interfaces.get(i).getImplementationSettings();
+			final UltimatePreferenceItemGroup settings = interfaces.get(i).getImplementationSettings();
+			if (settings == null) {
+				continue;
+			}
+			subPrefs.add(settings);
 		}
 
 		final BaseUltimatePreferenceItem[] mainPrefs = {
@@ -50,22 +56,18 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(SettingLabel.THREAD_COUNT.toString(), 1, THREAD_COUNT_HINT,
 						PreferenceType.Integer),
 				// ADD NEW SETTINGS HERE
-				new UltimatePreferenceItem<>(SettingLabel.NDC_IMLPEMENTATIONS.toString(), interfaces.get(0),
-						NDC_IMLPEMENTATIONS_HINT, PreferenceType.Radio, names),
-				new UltimatePreferenceItem<>(SettingLabel.INTERFACE_SUB_SETTINGS.toString(), null,
-						PreferenceType.Label) };
+				new UltimatePreferenceItem<>(SettingLabel.NDC_IMLPEMENTATIONS.toString(), names[0],
+						NDC_IMLPEMENTATIONS_HINT, PreferenceType.Radio, names) };
 
-		final BaseUltimatePreferenceItem[] allPrefs = new BaseUltimatePreferenceItem[mainPrefs.length
-				+ subPrefs.length];
+		final BaseUltimatePreferenceItem[] allPrefs = new BaseUltimatePreferenceItem[mainPrefs.length + 1];
 
 		for (int i = 0; i < mainPrefs.length; i++) {
 			allPrefs[i] = mainPrefs[i];
 		}
 
-		for (int i = 0; i < subPrefs.length; i++) {
-			allPrefs[i + mainPrefs.length] = subPrefs[i];
-		}
-
+		allPrefs[mainPrefs.length] = new UltimatePreferenceItemContainer(
+				"Non-Deterministic Interface specific settings",
+				Util.fillArray(subPrefs, new UltimatePreferenceItemGroup[subPrefs.size()]));
 		return allPrefs;
 	}
 
@@ -76,7 +78,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		PROJECT_DIRECTORY("Ultimate directory"), THREAD_COUNT("Thread count"),
 		NDC_IMLPEMENTATIONS(
 				"Non-Deterministic Interface (" + NonDeterministicChoice.class.getSimpleName() + ") implementations:"),
-		INTERFACE_SUB_SETTINGS("Non-Deterministic Interface specific settings:"),
 		EXECUTIONS_PER_ENTRYPOINT("Number of executions to generate per program entry point");
 
 		private final String mText;
