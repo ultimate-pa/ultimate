@@ -839,7 +839,7 @@ public class CfgBuilder {
 				mEdges.add(newStatementSequence);
 				mProcLocNodes.remove(endLoc.getDebugIdentifier());
 				ModelUtils.copyAnnotations(edgeBefore, newStatementSequence);
-				ModelUtils.copyAnnotations(edgeAfter, newStatementSequence);
+				ModelUtils.copyAnnotationsExcept(edgeAfter, newStatementSequence, ILocation.class);
 				edgeAfter.disconnectTarget();
 				edgeBefore.disconnectSource();
 				mEdges.remove(edgeAfter);
