@@ -77,6 +77,7 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	private final ISLPredicate mEmptyStackState;
 	private final Set<ProductPredicate<?>> mAllProductStates = new HashSet<>();
 	private static final boolean CHECK_ASSUMPTION_LOCATIONS = false;
+	private final Set<Waypoint> mMatchedFollowWaypoints = new HashSet<>();
 
 	public YamlWitnessProductAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final Witness witness, final PredicateFactory predicateFactory) {
@@ -202,9 +203,14 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 			// check follow assumption waypoints separately because they can match simultaneously with other waypoints
 			if (currentFollowWaypoint instanceof WaypointAssumption
 					&& (!CHECK_ASSUMPTION_LOCATIONS || matchesStartLocation(letter, currentFollowWaypoint))) {
+				mMatchedFollowWaypoints.add(currentFollowWaypoint);
 				continue;
 			}
-			return matchesWaypoint(letter, currentFollowWaypoint) ? sCounter + 1 : sCounter;
+			if (matchesWaypoint(letter, currentFollowWaypoint)) {
+				mMatchedFollowWaypoints.add(currentFollowWaypoint);
+				return sCounter + 1;
+			}
+			return sCounter;
 		}
 		return segments.size();
 	}
@@ -286,6 +292,12 @@ public class YamlWitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		}
 		mAllProductStates.add(result);
 		return result;
+	}
+
+	public List<Waypoint> getUnmatchedFollowWaypoints() {
+		return mWitness.getEntries().stream()
+				.flatMap(x -> ((ViolationSequence) x).getSegments().stream().map(Segment::getFollowWaypoint))
+				.filter(x -> !mMatchedFollowWaypoints.contains(x)).toList();
 	}
 
 	/**
