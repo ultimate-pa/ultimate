@@ -1,0 +1,50 @@
+// Simple test for computation of Owicki-Gries annotation
+// ------------------------------------------------------
+// The idea is that the invariant (= |main.x| 0) needed to prove unreachability
+// of the error location should be "transported" only along the main thread.
+// The forked thread can have "true" as O/G annotation at every location.
+
+//@ variables (y Int) (|main.x| Int)
+
+//@ semantics [0] {main.x} (= |main.x| 0)
+//@ semantics [1] {y} (= y |main.x|)
+//@ semantics [2] { } (distinct |main.x| 0)
+//@ semantics [3] {y} (= y (+ |old(y)| 1))
+//@ semantics [4] {y} (= y (- |old(y)| 1))
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" },
+  places      = { "main.l0" "main.l1" "main.l2" "main.e" "t.l1" "t.l2" "t.l3" },
+  transitions = {
+    ({ "main.l0" } "[0]" { "main.l1" "t.l1" })
+    ({ "main.l1" } "[1]" { "main.l2" })
+    ({ "main.l2" "t.l3" } "[2]" { "main.e" })
+    ({ "t.l1" } "[3]" { "t.l2" })
+    ({ "t.l2" } "[4]" { "t.l3" })
+  },
+  initialMarking = { "main.l0" },
+  acceptingPlaces = { "main.e" }
+);
+
+FiniteAutomaton proof = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" },
+     states        = { "true" "(= |main.x| 0)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[0]" "(= |main.x| 0)")
+
+       ("(= |main.x| 0)" "[1]" "(= |main.x| 0)")
+       ("(= |main.x| 0)" "[3]" "(= |main.x| 0)")
+       ("(= |main.x| 0)" "[4]" "(= |main.x| 0)")
+
+       ("(= |main.x| 0)" "[2]" "false")
+
+       ("false" "[0]" "false")
+       ("false" "[1]" "false")
+       ("false" "[2]" "false")
+       ("false" "[3]" "false")
+       ("false" "[4]" "false")
+     }
+);
+
