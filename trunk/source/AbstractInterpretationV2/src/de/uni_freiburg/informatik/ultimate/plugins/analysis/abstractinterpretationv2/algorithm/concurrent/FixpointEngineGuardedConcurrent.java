@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -28,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IFixpointEngineFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.SummaryMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 
 public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
 		implements
@@ -72,7 +74,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mVarProvider = mParams.getVariableProvider();
 //		mMaxUnwindings = mParams.getMaxUnwindings();
 //		mMaxParallelStates = mParams.getMaxParallelStates();
-		mMaxUnwindings = 10;
+		mMaxUnwindings = 5;
 		mMaxParallelStates = 999;
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 
@@ -188,8 +190,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			} else {
 				fix = 1;
 			}
-//			if (iteration > mMaxUnwindings) {
-			if (iteration > 10) {
+			if (iteration > mMaxUnwindings) {
 				((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
 						.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
 				mLogger.error("DID WIDENING ON INTERFERENCES.");
@@ -260,6 +261,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private DisjunctiveAbstractState<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
 			final String procedure) {
 		DisjunctiveAbstractState<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> result = null;
+		final var allForkLocs = new HashSet<LOC>();
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> state = mStateStorage
 					.getAbstractState(loc);
@@ -267,15 +269,39 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				result = null;
 				break;
 			}
+			allForkLocs.add(loc);
 			final var clearedState = removeLocalVars(state);
 			result = (result == null) ? clearedState : result.union(clearedState);
 		}
 		// combine forking states
 		if (result != null) {
+			int forks = 0;
+			boolean isCircular = false;
+			boolean multipleThreads = false;
+			for (final LOC forkLoc : allForkLocs) {
+				forks++;
+				for (final IcfgEdge forkEdge : forkLoc.getOutgoingEdges()) {
+					if (forkEdge instanceof final ForkThreadCurrent fork1) {
+						final boolean circular = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+								.getPostOperator()).isCircular(fork1, fork1.getSource().getIncomingEdges(), 0);
+						if (circular) {
+							isCircular = true;
+						}
+					}
+				}
+
+			}
+			if (forks > 1 || isCircular) {
+				multipleThreads = true;
+			}
 			final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> forkedInitialState = constructForkedInitialState(
-					result, procedure);
-			final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> initialState = forkedInitialState
-					.setThreadsActive(List.of(procedure));
+					result, procedure, multipleThreads);
+			GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> initialState = null;
+			if (multipleThreads) {
+				initialState = forkedInitialState.setThreadsInf(List.of(procedure));
+			} else {
+				initialState = forkedInitialState.setThreadsActive(List.of(procedure));
+			}
 			// TODO:
 			return new DisjunctiveAbstractState<>(999, initialState);
 		}
@@ -292,18 +318,19 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> constructForkedInitialState(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> result,
-			final String procedure) {
+			final String procedure, final boolean multipleThreads) {
 		final Set<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> forkStates = result.getStates();
 		final Set<SingleStateRecord<UNDERLYINGSTATE, LOC>> initialStates = new HashSet<>();
 		for (final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> forkState : forkStates) {
 			// filter only states from forking threads whwere forked thread still at start position
 			// (we would do self interference by proxy otherwise
-			// TODO: but threadcounter check should be unneeded right ?
 			for (final SingleStateRecord<UNDERLYINGSTATE, LOC> singleStateRecord : forkState.getStates()) {
 				final var entryLoc = singleStateRecord.abstractLocationState().getTracker()
 						.getLocationForThread(procedure);
 				final var globalMap = singleStateRecord.abstractLocationState().getLocationMap();
 				if (entryLoc.contains(globalMap.getAbstractLocation(mEntryLocs.get(procedure)))) {
+					initialStates.add(removeLocalVars(singleStateRecord));
+				} else if (multipleThreads) {
 					initialStates.add(removeLocalVars(singleStateRecord));
 				}
 			}

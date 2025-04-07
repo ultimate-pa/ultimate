@@ -184,7 +184,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		final var procedureMap = oldstate.getThreadInstanceState().getThreadInstances();
 		for (final String threadName : threadNameSet) {
 			final int threadInstances = procedureMap.get(threadName);
-			if (threadInstances >= 3 || threadName != ownerThread && threadInstances > 0) {
+			if (threadInstances >= 2 || threadName != ownerThread && threadInstances > 0) {
 				possibleInterferenceSet.add(threadName);
 			}
 		}

@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 /*
     We handle infinite forked thread correctly.
 */
