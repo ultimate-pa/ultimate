@@ -609,9 +609,9 @@ public class CHandler {
 	}
 
 	private List<ILibraryModel> getLibraryModels() {
-		final FunctionModelHelper helper =
-				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
-						mTypeHandler, mSettings.checkMemoryLeakInMain(), mSettings.isSvcompMemtrackCompatibilityMode());
+		final FunctionModelHelper helper = new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation,
+				mMemoryHandler, mTypeSizes, mTypeHandler, mSettings.checkMemoryLeakInMain(),
+				mSettings.isSvcompMemtrackCompatibilityMode(), mSettings.assumeHeapAllocationAlwaysSucceeds());
 		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
 				new FenvLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
@@ -628,7 +628,7 @@ public class CHandler {
 						mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
 				new StdlibLibraryModel(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
 						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
-						mSettings.checkSignedIntegerBounds()),
+						mSettings.checkSignedIntegerBounds(), mSettings.assumeHeapAllocationAlwaysSucceeds()),
 				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
 						mProcedureManager, mExpressionTranslation, mTypeSizeComputer),
 				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,

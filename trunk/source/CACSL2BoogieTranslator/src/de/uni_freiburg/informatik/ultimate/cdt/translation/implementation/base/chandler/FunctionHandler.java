@@ -63,8 +63,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -751,6 +753,10 @@ public class FunctionHandler {
 			// Allocate the aux-var and add the writes of the parameters
 			functionCallExpressionResultBuilder.addStatement(
 					memoryHandler.getUltimateMemAllocCall(currentOffset, auxvarinfo.getLhs(), loc, MemoryArea.HEAP));
+			// Assume that the allocation does not fail (i.e., return null)
+			functionCallExpressionResultBuilder
+					.addStatement(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
+							auxvarinfo.getExp(), mExpressionTranslation.constructNullPointer(loc))));
 			functionCallExpressionResultBuilder.addStatements(writes);
 			translatedParams.add(auxvarinfo.getExp());
 		}

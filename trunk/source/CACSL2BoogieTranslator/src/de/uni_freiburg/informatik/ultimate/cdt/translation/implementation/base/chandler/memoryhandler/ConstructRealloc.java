@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -88,15 +87,17 @@ public final class ConstructRealloc {
 	private final TypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final ExpressionTranslation mExpressionTranslation;
+	private final boolean mAssumeAllocationAlwaysSucceeds;
 
 	public ConstructRealloc(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final TypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ExpressionTranslation expressionTranslation) {
+			final ExpressionTranslation expressionTranslation, final boolean assumeAllocationAlwaysSucceeds) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mExpressionTranslation = expressionTranslation;
+		mAssumeAllocationAlwaysSucceeds = assumeAllocationAlwaysSucceeds;
 	}
 
 	/**
@@ -147,25 +148,27 @@ public final class ConstructRealloc {
 		final List<Declaration> bodyDecl = new ArrayList<>();
 		final List<Statement> bodyStmt = new ArrayList<>();
 
-		// if (ptr == NULL) { return malloc(size) }
-		{
-			final Expression condition =
-					ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ, ptrIdExprImpl,
-							mExpressionTranslation.constructNullPointer(ignoreLoc));
-			final Statement mallocCallStm =
-					mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP);
-			final Statement returnStm = new ReturnStatement(ignoreLoc);
-			bodyStmt.add(StatementFactory.constructIfStatement(ignoreLoc, condition,
-					new Statement[] { mallocCallStm, returnStm }, new Statement[0]));
-		}
-
-		// free(ptr)
-		bodyStmt.add(mMemoryHandler.getDeallocCall(new RValue(ptrIdExprImpl, voidPointerType), ignoreLoc));
-
-		// res := malloc(size)
+		// #res := malloc(size);
 		bodyStmt.add(mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP));
 
-		// mem~X[res.base] := mem~X[ptr.base]
+		// if (ptr != NULL && #res != NULL) { free(ptr); mem~X[res.base] := mem~X[ptr.base]; }
+		// (we omit #res != NULL if mAssumAllocationAlwaysSucceeds is true)
+
+		final Expression cond;
+		final Expression inputIsNotNull =
+				ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPNEQ, ptrIdExprImpl,
+						mExpressionTranslation.constructNullPointer(ignoreLoc));
+		if (mAssumeAllocationAlwaysSucceeds) {
+			cond = inputIsNotNull;
+		} else {
+			final Expression outputIsNotNull =
+					ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPNEQ, resultExprImpl,
+							mExpressionTranslation.constructNullPointer(ignoreLoc));
+			cond = ExpressionFactory.and(ignoreLoc, List.of(inputIsNotNull, outputIsNotNull));
+		}
+
+		final List<Statement> ifBody = new ArrayList<>();
+		ifBody.add(mMemoryHandler.getDeallocCall(new RValue(ptrIdExprImpl, voidPointerType), ignoreLoc));
 		for (final HeapDataArray hda : heapDataArrays) {
 			final BoogieType innerArrayBoogieType =
 					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
@@ -177,13 +180,15 @@ public final class ConstructRealloc {
 									MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
 							innerArrayBoogieType);
 
-			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
+			ifBody.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
 					ExpressionFactory.constructFunctionApplication(ignoreLoc,
 							mMemoryHandler.getNameOfHeapStoreFunction(hda),
 							new Expression[] { hda.getIdentifierExpression(),
 									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
 		}
+
+		bodyStmt.add(StatementFactory.constructIfStatement(ignoreLoc, cond, ifBody));
 
 		final Body procBody =
 				mProcedureManager.constructBody(ignoreLoc, bodyDecl.toArray(new VariableDeclaration[bodyDecl.size()]),

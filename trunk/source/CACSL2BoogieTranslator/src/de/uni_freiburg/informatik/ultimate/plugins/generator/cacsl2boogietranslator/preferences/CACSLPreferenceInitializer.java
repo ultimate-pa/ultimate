@@ -148,6 +148,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"If this setting is enabled, we try to translate conditional expressions to if-statements in Boogie. "
 					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
 
+	public static final String LABEL_HEAP_ALLOC_SUCCEEDS = "Assume that allocation on the heap always succeeds.";
+	private static final String DESC_HEAP_ALLOC_SUCCEEDS =
+			"If set to true, our model of the translated program assumes that functions that allocate heap-memory "
+					+ "(malloc, calloc, realloc) always succeeds, i.e.,cannot return a null-pointer.";
+
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
 	}
@@ -337,7 +342,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.Integer),
 						new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 								UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
-								PreferenceType.Combo, UndefinedFunctionBehaviour.values())),
+								PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
+						new UltimatePreferenceItem<>(LABEL_HEAP_ALLOC_SUCCEEDS, true, DESC_HEAP_ALLOC_SUCCEEDS,
+								PreferenceType.Boolean)),
 				new UltimatePreferenceItemGroup("Optimizations",
 						new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),

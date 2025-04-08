@@ -84,6 +84,7 @@ public final class TranslationSettings {
 	private final int mStringOverapproximationThreshold;
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 	private final boolean mEnforceIfForConditional;
+	private boolean mAssumeHeapAllocationAlwaysSucceeds;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -135,6 +136,7 @@ public final class TranslationSettings {
 		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
 		mEnforceIfForConditional = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ENFORCE_IF_FOR_CONDITIONAL);
+		mAssumeHeapAllocationAlwaysSucceeds = ups.getBoolean(CACSLPreferenceInitializer.LABEL_HEAP_ALLOC_SUCCEEDS);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -319,6 +321,10 @@ public final class TranslationSettings {
 
 	public boolean enforceIfForConditional() {
 		return mEnforceIfForConditional;
+	}
+
+	public boolean assumeHeapAllocationAlwaysSucceeds() {
+		return mAssumeHeapAllocationAlwaysSucceeds;
 	}
 
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {

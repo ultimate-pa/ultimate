@@ -412,7 +412,7 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
 			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, (TypeHandler) mTypeHandler,
-					mTypeSizeAndOffsetComputer, mExpressionTranslation);
+					mTypeSizeAndOffsetComputer, mExpressionTranslation, mSettings.assumeHeapAllocationAlwaysSucceeds());
 			decl.addAll(cr.declareRealloc(main, heapDataArrays));
 		}
 
@@ -2334,6 +2334,7 @@ public class MemoryHandler {
 	private ArrayList<Declaration> declareMalloc(final CHandler main, final ITypeHandler typeHandler,
 			final ILocation tuLoc, final MemoryArea memArea) {
 		final MemoryModelDeclarations alloc = memArea.getMemoryModelDeclaration();
+		final boolean canAllocFail = memArea == MemoryArea.HEAP && !mSettings.assumeHeapAllocationAlwaysSucceeds();
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(tuLoc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -2384,20 +2385,38 @@ public class MemoryHandler {
 												idcMalloc),
 										bLFalse),
 								Collections.emptySet()));
-		// #valid == old(#valid)[#res!base := true]
-		specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				ensuresArrayUpdate(tuLoc, bLTrue, resBase, valid),
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
+		if (canAllocFail) {
+			// #res!base == 0 || #valid == old(#valid)[#res!base := true]
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					ExpressionFactory.or(tuLoc, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
+							ensuresArrayUpdate(tuLoc, bLTrue, resBase, valid)),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
+			// #res!base != 0 || #valid == old(#valid)
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false, ExpressionFactory.or(tuLoc,
+					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
+					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
+							ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid))),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
+		} else {
+			// #valid == old(#valid)[#res!base := true]
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					ensuresArrayUpdate(tuLoc, bLTrue, resBase, valid),
+					Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
+		}
 		// #res!offset == 0
 		specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
 						ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_OFFSET), nr0),
 				Collections.emptySet()));
-		// #res!base != 0
-		specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
-						ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
-				Collections.emptySet()));
+		if (!canAllocFail) {
+			// #res!base != 0
+			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
+					ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
+							ExpressionFactory.constructStructAccessExpression(tuLoc, res, SFO.POINTER_BASE), nr0),
+					Collections.emptySet()));
+		}
 		if (memArea == MemoryArea.STACK) {
 			// #StackHeapBarrier < res!base
 			specMalloc.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
