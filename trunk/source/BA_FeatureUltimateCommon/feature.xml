@@ -131,10 +131,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="net.sourceforge.czt"
-         version="0.0.0"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.lassoranker"
          version="0.0.0"/>
 
