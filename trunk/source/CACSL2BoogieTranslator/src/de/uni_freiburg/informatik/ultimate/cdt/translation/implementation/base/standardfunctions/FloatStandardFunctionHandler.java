@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -224,136 +223,67 @@ public class FloatStandardFunctionHandler extends StandardFunctionHandler2 {
 			"fesetenv",
 			"feupdateenv",
 	};
+
+	private static final List<String> UNARY_FUNCTIONS = List.of(
+			// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
+			"fpclassify", "__fpclassify", "__fpclassifyf", "__fpclassifyl",
+
+			// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
+			"isfinite",
+
+			// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
+			"isinf", "__isinf",
+
+			// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
+			"isnan", "__isnan",
+
+			// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
+			"finite", "__finite", "finitef", "__finitef", "finitel", "__finitel",
+			"isinff", "__isinff", "isinfl", "__isinfl",
+			"isnanf", "isnanl", "__isnanf", "__isnanl",
+
+			// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
+			"isnormal",
+
+			// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
+			"sqrt", "sqrtf", "sqrtl",
+
+			// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
+			"fabs", "fabsf", "fabsl",
+
+			// see 7.12.9.8 or http://en.cppreference.com/w/c/numeric/math/trunc
+			"trunc", "truncf", "truncl",
+
+			// see 7.12.9.6 or http://en.cppreference.com/w/c/numeric/math/round
+			"round", "roundf", "roundl",
+
+			// see 7.12.9.7 or http://en.cppreference.com/w/c/numeric/math/round
+			"lround", "lroundf", "lroundl", "llround", "llroundf", "llroundl",
+
+			// see 7.12.9.2 or http://en.cppreference.com/w/c/numeric/math/floor
+			"floor", "floorf", "floorl",
+
+			// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
+			"ceil", "ceilf", "ceilr"
+			);
+
+	private static final List<String> BINARY_FUNCTIONS = List.of(
+			// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
+			// NaN arguments are treated as missing data: if one argument is a NaN and the
+			// other numeric, then the
+			// fmin/fmax functions choose the numeric value.
+			"fmax", "fmaxf", "fmaxl",
+
+			// see 7.12.12.3 or http://en.cppreference.com/w/c/numeric/math/fmin
+			"fmin", "fminf", "fminl",
+
+			// see 7.12.10.1 or http://en.cppreference.com/w/c/numeric/math/fmod
+			"fmod", "fmodf", "fmodl",
+
+			// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
+			"fdim", "fdimf", "fdiml"
+			);
 	//@formatter:on
-
-	private final static Map<String, CPrimitives> OVERAPPROXIMATED_UNARY_FUNCTIONS = new HashMap<>();
-	static {
-		// https://en.cppreference.com/w/c/numeric/math/sin
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sin", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/exp
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/expm1
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expm1", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expm1f", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("expm1l", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/tanh
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanh", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanhf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanhl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/erf
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("erf", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("erff", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("erfl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/log
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/cos
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cos", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cosf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cosl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/log1p
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log1p", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log1pf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log1pl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/rint
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("rint", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("rintf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("rintl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/atanh
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanh", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanhf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanhl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/asin
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asin", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/acos
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acos", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acosf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acosl", CPrimitives.LONGDOUBLE);
-
-		// https://en.cppreference.com/w/c/numeric/math/nearbyint
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyint", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyintf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("nearbyintl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/signbit
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("signbit", CPrimitives.INT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("__signbit", CPrimitives.INT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("__signbitl", CPrimitives.INT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("__signbitf", CPrimitives.INT);
-
-		// http://en.cppreference.com/w/c/numeric/math/atan
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atanl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/atan2
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan2", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan2f", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("atan2l", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/tan
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tan", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("tanl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/cosh
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("cosh", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("coshf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("coshl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/sinh
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinh", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinhf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("sinhl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/acosh
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acosh", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acoshf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("acoshl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/asinh
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinh", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinhf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("asinhl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/log10
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10f", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log10l", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/logb
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logb", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logbf", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("logbl", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/exp2
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp2", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp2f", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("exp2l", CPrimitives.LONGDOUBLE);
-
-		// http://en.cppreference.com/w/c/numeric/math/log2
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2", CPrimitives.DOUBLE);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2f", CPrimitives.FLOAT);
-		OVERAPPROXIMATED_UNARY_FUNCTIONS.put("log2l", CPrimitives.LONGDOUBLE);
-	}
 
 	public FloatStandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
@@ -368,17 +298,173 @@ public class FloatStandardFunctionHandler extends StandardFunctionHandler2 {
 				expressionResultTransformer, locationFactory, typeHandler, cEpressionTranslator, dataRaceChecker);
 	}
 
+	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
+		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
+
+		// https://en.cppreference.com/w/c/numeric/math/sin
+		result.add(new Pair<>("sin", CPrimitives.DOUBLE));
+		result.add(new Pair<>("sinf", CPrimitives.FLOAT));
+		result.add(new Pair<>("sinl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/exp
+		result.add(new Pair<>("exp", CPrimitives.DOUBLE));
+		result.add(new Pair<>("expf", CPrimitives.FLOAT));
+		result.add(new Pair<>("expl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/expm1
+		result.add(new Pair<>("expm1", CPrimitives.DOUBLE));
+		result.add(new Pair<>("expm1f", CPrimitives.FLOAT));
+		result.add(new Pair<>("expm1l", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/tanh
+		result.add(new Pair<>("tanh", CPrimitives.DOUBLE));
+		result.add(new Pair<>("tanhf", CPrimitives.FLOAT));
+		result.add(new Pair<>("tanhl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/erf
+		result.add(new Pair<>("erf", CPrimitives.DOUBLE));
+		result.add(new Pair<>("erff", CPrimitives.FLOAT));
+		result.add(new Pair<>("erfl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/log
+		result.add(new Pair<>("log", CPrimitives.DOUBLE));
+		result.add(new Pair<>("logf", CPrimitives.FLOAT));
+		result.add(new Pair<>("logl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/cos
+		result.add(new Pair<>("cos", CPrimitives.DOUBLE));
+		result.add(new Pair<>("cosf", CPrimitives.FLOAT));
+		result.add(new Pair<>("cosl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/log1p
+		result.add(new Pair<>("log1p", CPrimitives.DOUBLE));
+		result.add(new Pair<>("log1pf", CPrimitives.FLOAT));
+		result.add(new Pair<>("log1pl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/rint
+		result.add(new Pair<>("rint", CPrimitives.DOUBLE));
+		result.add(new Pair<>("rintf", CPrimitives.FLOAT));
+		result.add(new Pair<>("rintl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/atanh
+		result.add(new Pair<>("atanh", CPrimitives.DOUBLE));
+		result.add(new Pair<>("atanhf", CPrimitives.FLOAT));
+		result.add(new Pair<>("atanhl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/asin
+		result.add(new Pair<>("asin", CPrimitives.DOUBLE));
+		result.add(new Pair<>("asinf", CPrimitives.FLOAT));
+		result.add(new Pair<>("asinl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/acos
+		result.add(new Pair<>("acos", CPrimitives.DOUBLE));
+		result.add(new Pair<>("acosf", CPrimitives.FLOAT));
+		result.add(new Pair<>("acosl", CPrimitives.LONGDOUBLE));
+
+		// https://en.cppreference.com/w/c/numeric/math/nearbyint
+		result.add(new Pair<>("nearbyint", CPrimitives.DOUBLE));
+		result.add(new Pair<>("nearbyintf", CPrimitives.FLOAT));
+		result.add(new Pair<>("nearbyintl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/signbit
+		result.add(new Pair<>("signbit", CPrimitives.INT));
+		result.add(new Pair<>("__signbit", CPrimitives.INT));
+		result.add(new Pair<>("__signbitl", CPrimitives.INT));
+		result.add(new Pair<>("__signbitf", CPrimitives.INT));
+
+		// http://en.cppreference.com/w/c/numeric/math/atan
+		result.add(new Pair<>("atan", CPrimitives.DOUBLE));
+		result.add(new Pair<>("atanf", CPrimitives.FLOAT));
+		result.add(new Pair<>("atanl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/atan2
+		result.add(new Pair<>("atan2", CPrimitives.DOUBLE));
+		result.add(new Pair<>("atan2f", CPrimitives.FLOAT));
+		result.add(new Pair<>("atan2l", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/tan
+		result.add(new Pair<>("tan", CPrimitives.DOUBLE));
+		result.add(new Pair<>("tanf", CPrimitives.FLOAT));
+		result.add(new Pair<>("tanl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/cosh
+		result.add(new Pair<>("cosh", CPrimitives.DOUBLE));
+		result.add(new Pair<>("coshf", CPrimitives.FLOAT));
+		result.add(new Pair<>("coshl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/sinh
+		result.add(new Pair<>("sinh", CPrimitives.DOUBLE));
+		result.add(new Pair<>("sinhf", CPrimitives.FLOAT));
+		result.add(new Pair<>("sinhl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/acosh
+		result.add(new Pair<>("acosh", CPrimitives.DOUBLE));
+		result.add(new Pair<>("acoshf", CPrimitives.FLOAT));
+		result.add(new Pair<>("acoshl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/asinh
+		result.add(new Pair<>("asinh", CPrimitives.DOUBLE));
+		result.add(new Pair<>("asinhf", CPrimitives.FLOAT));
+		result.add(new Pair<>("asinhl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/log10
+		result.add(new Pair<>("log10", CPrimitives.DOUBLE));
+		result.add(new Pair<>("log10f", CPrimitives.FLOAT));
+		result.add(new Pair<>("log10l", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/logb
+		result.add(new Pair<>("logb", CPrimitives.DOUBLE));
+		result.add(new Pair<>("logbf", CPrimitives.FLOAT));
+		result.add(new Pair<>("logbl", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/exp2
+		result.add(new Pair<>("exp2", CPrimitives.DOUBLE));
+		result.add(new Pair<>("exp2f", CPrimitives.FLOAT));
+		result.add(new Pair<>("exp2l", CPrimitives.LONGDOUBLE));
+
+		// http://en.cppreference.com/w/c/numeric/math/log2
+		result.add(new Pair<>("log2", CPrimitives.DOUBLE));
+		result.add(new Pair<>("log2f", CPrimitives.FLOAT));
+		result.add(new Pair<>("log2l", CPrimitives.LONGDOUBLE));
+
+		return result;
+	}
+
+	private static List<Pair<String, CPrimitives>> getOverapproximatedBinaryFunctions() {
+		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
+
+		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
+		result.add(new Pair<>("remainder", CPrimitives.DOUBLE));
+		result.add(new Pair<>("remainderf", CPrimitives.FLOAT));
+		result.add(new Pair<>("remainderl", CPrimitives.LONGDOUBLE));
+
+		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
+		result.add(new Pair<>("copysign", CPrimitives.DOUBLE));
+		result.add(new Pair<>("copysignf", CPrimitives.FLOAT));
+		result.add(new Pair<>("copysignl", CPrimitives.LONGDOUBLE));
+
+		return result;
+	}
+
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
 		final List<FunctionModel> result = new ArrayList<>();
-		for (final var overapprox : OVERAPPROXIMATED_UNARY_FUNCTIONS.entrySet()) {
-			result.add(new FunctionModel(overapprox.getKey(), (main, node, loc, name) -> handleByOverapproximation(main,
-					node, loc, name, 1, new CPrimitive(overapprox.getValue()))));
+		for (final var overapprox : getOverapproximatedUnaryFunctions()) {
+			result.add(
+					new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> handleByOverapproximation(main,
+							node, loc, name, 1, new CPrimitive(overapprox.getSecond()))));
 		}
-
-		// TODO: Move function with handleByOverapproximation to OVERAPPROXIMATED_UNARY_FUNCTIONS if possible
-		// TODO: Group functions with this::handleUnaryFloatFunction in List
-		// TODO: Group functions with this::handleBinaryFloatFunction in List
+		for (final var overapprox : getOverapproximatedBinaryFunctions()) {
+			result.add(
+					new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> handleByOverapproximation(main,
+							node, loc, name, 2, new CPrimitive(overapprox.getSecond()))));
+		}
+		for (final String unary : UNARY_FUNCTIONS) {
+			result.add(new FunctionModel(unary, this::handleUnaryFloatFunction));
+		}
+		for (final String binary : BINARY_FUNCTIONS) {
+			result.add(new FunctionModel(binary, this::handleBinaryFloatFunction));
+		}
 
 		/** various float builtins **/
 		result.add(new FunctionModel("nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name)));
@@ -403,127 +489,8 @@ public class FloatStandardFunctionHandler extends StandardFunctionHandler2 {
 				name) -> handleFloatBuiltinBinaryComparison(main, node, loc, name, IASTBinaryExpression.op_lessEqual)));
 		result.add(new FunctionModel("__builtin_isunordered", this::handleFloatBuiltinIsUnordered));
 		result.add(new FunctionModel("__builtin_islessgreater", this::handleFloatBuiltinIsLessGreater));
-		result.add(new FunctionModel("__builtin_constant_p", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.BOOL))));
-		result.add(new FunctionModel("__builtin_isinf_sign", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("__builtin_isnan",
 				(main, node, loc, name) -> handleUnaryFloatFunction(main, node, loc, "isnan")));
-
-		/** math.h float functions **/
-		// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
-		result.add(new FunctionModel("fpclassify", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__fpclassify", this::handleUnaryFloatFunction)); // ??
-		result.add(new FunctionModel("__fpclassifyf", this::handleUnaryFloatFunction)); // ??
-		result.add(new FunctionModel("__fpclassifyl", this::handleUnaryFloatFunction)); // ??
-
-		// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
-		result.add(new FunctionModel("isfinite", this::handleUnaryFloatFunction));
-
-		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-		result.add(new FunctionModel("finite", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__finite", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("finitef", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__finitef", this::handleUnaryFloatFunction)); // ??
-		result.add(new FunctionModel("finitel", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__finitel", this::handleUnaryFloatFunction)); // ??
-
-		// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
-		result.add(new FunctionModel("isinf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__isinf", this::handleUnaryFloatFunction)); // ??
-		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-		result.add(new FunctionModel("isinff", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__isinff", this::handleUnaryFloatFunction)); // ??
-		result.add(new FunctionModel("isinfl", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__isinfl", this::handleUnaryFloatFunction)); // ??
-
-		// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
-		result.add(new FunctionModel("isnan", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__isnan", this::handleUnaryFloatFunction)); // ??
-		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-		result.add(new FunctionModel("isnanf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("isnanl", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("__isnanf", this::handleUnaryFloatFunction)); // ??
-		result.add(new FunctionModel("__isnanl", this::handleUnaryFloatFunction)); // ??
-
-		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
-		result.add(new FunctionModel("isnormal", this::handleUnaryFloatFunction));
-
-		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
-		result.add(new FunctionModel("sqrt", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("sqrtf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("sqrtl", this::handleUnaryFloatFunction));
-
-		// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
-		result.add(new FunctionModel("fabs", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("fabsf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("fabsl", this::handleUnaryFloatFunction));
-
-		// see 7.12.9.8 or http://en.cppreference.com/w/c/numeric/math/trunc
-		result.add(new FunctionModel("trunc", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("truncf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("truncl", this::handleUnaryFloatFunction));
-
-		// see 7.12.9.6 or http://en.cppreference.com/w/c/numeric/math/round
-		result.add(new FunctionModel("round", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("roundf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("roundl", this::handleUnaryFloatFunction));
-		// see 7.12.9.7 or http://en.cppreference.com/w/c/numeric/math/round
-		result.add(new FunctionModel("lround", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("lroundf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("lroundl", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("llround", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("llroundf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("llroundl", this::handleUnaryFloatFunction));
-
-		// see 7.12.9.2 or http://en.cppreference.com/w/c/numeric/math/floor
-		result.add(new FunctionModel("floor", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("floorf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("floorl", this::handleUnaryFloatFunction));
-
-		// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
-		result.add(new FunctionModel("ceil", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("ceilf", this::handleUnaryFloatFunction));
-		result.add(new FunctionModel("ceill", this::handleUnaryFloatFunction));
-
-		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
-		// NaN arguments are treated as missing data: if one argument is a NaN and the
-		// other numeric, then the
-		// fmin/fmax functions choose the numeric value.
-		result.add(new FunctionModel("fmax", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fmaxf", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fmaxl", this::handleBinaryFloatFunction));
-
-		// see 7.12.12.3 or http://en.cppreference.com/w/c/numeric/math/fmin
-		result.add(new FunctionModel("fmin", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fminf", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fminl", this::handleBinaryFloatFunction));
-
-		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
-		result.add(new FunctionModel("remainder", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("remainderf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("remainderl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
-
-		// see 7.12.10.1 or http://en.cppreference.com/w/c/numeric/math/fmod
-		result.add(new FunctionModel("fmod", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fmodf", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fmodl", this::handleBinaryFloatFunction));
-
-		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
-		result.add(new FunctionModel("copysign", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("copysignf", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("copysignl", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
-
-		// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
-		result.add(new FunctionModel("fdim", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fdimf", this::handleBinaryFloatFunction));
-		result.add(new FunctionModel("fdiml", this::handleBinaryFloatFunction));
 
 		// TODO: Check in SUPPORTED_FLOAT_FUNCTIONS
 		return result;

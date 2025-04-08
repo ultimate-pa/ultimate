@@ -326,6 +326,11 @@ public class StandardFunctionHandler {
 		fill(map, "__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
 				new CPrimitive(CPrimitives.ULONG)));
 
+		fill(map, "__builtin_constant_p", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.BOOL)));
+		fill(map, "__builtin_isinf_sign", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+				new CPrimitive(CPrimitives.INT)));
+
 		/*
 		 * 6.56 Built-in Functions to Perform Arithmetic with Overflow Checking
 		 * https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
