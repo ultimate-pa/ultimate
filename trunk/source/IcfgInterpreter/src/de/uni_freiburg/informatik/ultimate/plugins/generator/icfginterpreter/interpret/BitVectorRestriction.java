@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.in
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
@@ -17,5 +18,20 @@ public class BitVectorRestriction extends Restriction<BitVector> {
 				+ String.join(", ", Util.map(mInequal, (inequal) -> {
 					return inequal.toString();
 				}, new ArrayList<>())) + "), " + mLess + ", " + mGreater + ")";
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder inEqual = new StringBuilder();
+		if (mInequal.size() > 0) {
+			final Iterator<BitVector> iter = mInequal.iterator();
+			inEqual.append(", bv != {").append(iter.next().valueString());
+			while (iter.hasNext()) {
+				inEqual.append(", ").append(iter.next().valueString());
+			}
+			inEqual.append("}");
+		}
+
+		return mGreater.valueString() + " < bv < " + mLess.valueString() + inEqual.toString();
 	}
 }

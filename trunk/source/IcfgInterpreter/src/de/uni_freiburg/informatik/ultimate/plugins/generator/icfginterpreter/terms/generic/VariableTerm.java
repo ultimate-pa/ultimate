@@ -1,8 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic;
 
+import java.util.HashMap;
+
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 
 public class VariableTerm {
@@ -48,7 +52,23 @@ public class VariableTerm {
 			out.append(".getInt(");
 			break;
 		}
-		return out.append(DynamicLoader.getEnumClassName()).append(".").append(programVar.getGloballyUniqueId())
-				.append(")").toString();
+
+		return out.append(DynamicLoader.getVarLookup(programVar)).append(")").toString();
+	}
+
+	private static final HashMap<String, Integer> usedNames = new HashMap<>();
+
+	public TermVariable toSMTTerm(final Theory theory) {
+		final String distinctName;
+		// when making UnmodifiableTransformulas, one name can only appear once.
+		if (isAuxVar) {
+			int version = usedNames.getOrDefault(name, 0);
+			version++;
+			distinctName = name + "_auxvar_v" + version;
+			usedNames.put(name, version);
+		} else {
+			distinctName = name;
+		}
+		return Util.makeVariable(distinctName, termvar.getSort(), theory);
 	}
 }

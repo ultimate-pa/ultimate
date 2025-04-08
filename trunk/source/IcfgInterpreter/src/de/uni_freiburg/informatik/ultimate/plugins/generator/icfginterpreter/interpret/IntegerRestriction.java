@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.in
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
@@ -19,7 +20,12 @@ public class IntegerRestriction extends Restriction<Integer> {
 		super(inequal, less, greater);
 		assert less > greater + 1;
 
-		mValueCount = (less - greater - 1) - inequal.size();
+		final long possibleValueCount = (less - (long) greater - 1) - inequal.size();
+		if (possibleValueCount > Integer.MAX_VALUE) {
+			mValueCount = Integer.MAX_VALUE;
+		} else {
+			mValueCount = (int) possibleValueCount;
+		}
 		assert mValueCount > 0;
 	}
 
@@ -31,11 +37,30 @@ public class IntegerRestriction extends Restriction<Integer> {
 		return mLess;
 	}
 
+	public int getGreater() {
+		return mGreater;
+	}
+
 	@Override
 	public String toCode() {
 		return "new " + this.getClass().getSimpleName() + "(Util.toHashSet("
 				+ String.join(", ", Util.map(mInequal, (inequal) -> {
 					return inequal.toString();
 				}, new ArrayList<>())) + "), " + mLess + ", " + mGreater + ")";
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder inEqual = new StringBuilder();
+		if (mInequal.size() > 0) {
+			final Iterator<Integer> iter = mInequal.iterator();
+			inEqual.append(", n != {").append(iter.next());
+			while (iter.hasNext()) {
+				inEqual.append(", ").append(iter.next());
+			}
+			inEqual.append("}");
+		}
+
+		return mGreater + " < n < " + mLess + inEqual.toString();
 	}
 }

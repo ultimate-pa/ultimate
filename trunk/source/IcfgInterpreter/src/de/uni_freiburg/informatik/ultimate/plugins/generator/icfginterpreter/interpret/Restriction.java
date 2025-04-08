@@ -23,4 +23,7 @@ public abstract class Restriction<T> {
 	}
 
 	public abstract String toCode();
+
+	@Override
+	public abstract String toString();
 }

@@ -201,10 +201,6 @@ public class Util {
 		return theory.constant(value, getGenericSort(type, theory));
 	}
 
-	public static TermVariable makeVariable(final TermVariable term, final Theory theory) {
-		return makeVariable(term.getName(), term.getSort(), theory);
-	}
-
 	public static TermVariable makeVariable(final String name, final Sort sort, final Theory theory) {
 		return theory.createTermVariable(name, getGenericSort(sort, theory));
 	}
@@ -297,6 +293,12 @@ public class Util {
 		}
 		// n < 0, (div m n) = ceil(m/n)
 		return (int) Math.ceil(div);
+	}
+
+	public static int SMTMod(final int m, final int n) {
+		// i == ((i / j) * j) + (i % j)
+		// i % j == i - ((i / j) * j)
+		return m - ((Util.SMTDiv(m, n)) * n);
 	}
 
 	public static String intToLetters(int numb) {

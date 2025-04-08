@@ -72,8 +72,10 @@ public class RNGChoice implements NonDeterministicChoice {
 			return (Math.abs(xorShift()) % mHavocCapMap) + mMinHavocInt;
 		}
 
-		final int index = (Math.abs(xorShift()) % values.getValueCount());
-		int value = values.getLess() + 1 + index;
+		final int lowerMax = Math.min(mHavocCapMap, values.getValueCount());
+		final int higherMin = Math.max(values.getGreater(), mMinHavocInt);
+		final int index = (Math.abs(xorShift()) % lowerMax);
+		int value = higherMin + 1 + index;
 		while (values.getInequal().contains(value)) {
 			value++;
 		}

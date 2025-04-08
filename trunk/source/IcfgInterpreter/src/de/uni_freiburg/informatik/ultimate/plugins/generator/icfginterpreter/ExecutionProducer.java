@@ -112,6 +112,12 @@ public class ExecutionProducer {
 				nextEdges = compiledEdges.getOrDefault(nextEdge.getTarget(), new ArrayList<>());
 			}
 
+			final StringBuilder out = new StringBuilder(states.get(0).toString());
+			for (int i = 0; i < edges.size(); i++) {
+				out.append("\n->\n").append(edges.get(i));
+				out.append("\n->\n").append(states.get(i + 1));
+			}
+			IcfgInterpreterObserver.getLogger().info(out.toString());
 			return null;
 		}
 
@@ -158,6 +164,7 @@ public class ExecutionProducer {
 				nextEdges.addAll(mIIcfg.getOutEdges(nextEdge.mTarget));
 			}
 
+			IcfgInterpreterObserver.getLogger().info(execution);
 			return null;
 
 		}

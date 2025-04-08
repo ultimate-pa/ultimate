@@ -64,4 +64,17 @@ public class SMTArray {
 	public int hashCode() {
 		return ((mVariable.hashCode() * 31) + mKeySort.hashCode()) * 31 + mValueSort.hashCode();
 	}
+
+	@Override
+	public boolean equals(final Object b) {
+		if (!(b instanceof SMTArray)) {
+			return false;
+		}
+		final SMTArray castB = (SMTArray) b;
+		if ((!mKeySort.equals(castB.mKeySort)) || !mValueSort.equals(castB.mValueSort)) {
+			return false;
+		}
+		// TODO ask ndc interface if equality holds if entries are the same
+		return !entries.equals(castB.entries);
+	}
 }

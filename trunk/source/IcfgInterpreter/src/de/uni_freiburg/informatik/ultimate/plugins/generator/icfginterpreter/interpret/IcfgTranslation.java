@@ -16,7 +16,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -60,8 +62,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.SubtractionTerm;
 
 public class IcfgTranslation {
-	public static OrTerm translateTerm(final UnmodifiableTransFormula transFormula) throws Exception {
-		final VariableSet variables = getVariables(transFormula);
+	public static OrTerm translateTerm(final UnmodifiableTransFormula transFormula, final ManagedScript script)
+			throws Exception {
+		final VariableSet variables = getVariables(transFormula, script);
 
 		final ExecutionTerm term = parseTerm(transFormula.getFormula(), variables);
 
@@ -74,7 +77,7 @@ public class IcfgTranslation {
 
 	private static HashMap<UnmodifiableTransFormula, VariableSet> cache = new HashMap<>();
 
-	public static VariableSet getVariables(final UnmodifiableTransFormula formula) {
+	public static VariableSet getVariables(final UnmodifiableTransFormula formula, final ManagedScript script) {
 		final VariableSet vars = cache.getOrDefault(formula, null);
 		if (vars != null) {
 			return vars;
@@ -106,10 +109,25 @@ public class IcfgTranslation {
 		}
 
 		for (final TermVariable termVariable : formula.getAuxVars()) {
+			// final IProgramVar auxVar = getAuxReplacement(termVariable, formula.getFormula().getTheory(), script);
+			// out.addVariable(false, true, false, true, auxVar, auxVar.getTermVariable());
 			out.addVariable(false, false, true, true, null, termVariable);
 		}
 
 		return out;
+	}
+
+	private static IProgramVar getAuxReplacement(final TermVariable auxVar, final Theory theory,
+			final ManagedScript script) {
+		// final TermVariable var = Util.makeVariable(auxVar.getName() + "_aux_replaced", auxVar.getSort(), theory);
+
+		script.lock(auxVar);
+		final ILocalProgramVar out = ProgramVarUtils.constructLocalProgramVar(auxVar.getName() + "_aux_replaced", "",
+				auxVar.getSort(), script, auxVar);
+
+		script.unlock(auxVar);
+		return out;
+		// return new LocalProgramVar(var.getName(), null, var, null, null);
 	}
 
 	/**
@@ -135,7 +153,7 @@ public class IcfgTranslation {
 
 				if (!visited.contains(target)) {
 					next.add(target);
-					visited.add(source);
+					visited.add(target);
 				}
 
 				final ArrayList<ICFGExecutionEdge> execEdges = parseEdges(edge.getTransformula(), source, target,
@@ -167,15 +185,15 @@ public class IcfgTranslation {
 	public static ArrayList<ICFGExecutionEdge> parseEdges(final UnmodifiableTransFormula transFormula,
 			final IcfgLocation source, final IcfgLocation target, final ManagedScript managedScript,
 			final IUltimateServiceProvider service) throws Exception {
-		final VariableSet variables = getVariables(transFormula);
+		final VariableSet variables = getVariables(transFormula, managedScript);
 
 		final Theory formulaTheory = transFormula.getFormula().getTheory();
 
 		final UnmodifiableTransFormula guardFormula = TransFormulaUtils.computeGuard(transFormula, managedScript,
 				service);
 
-		final OrTerm term = translateTerm(transFormula);
-		final OrTerm guardTerm = translateTerm(guardFormula);
+		final OrTerm term = translateTerm(transFormula, managedScript);
+		final OrTerm guardTerm = translateTerm(guardFormula, managedScript);
 
 		if (falseGuard.equals(guardTerm)) {
 			return new ArrayList<>(); // edge can never be taken, no need to return it for execution

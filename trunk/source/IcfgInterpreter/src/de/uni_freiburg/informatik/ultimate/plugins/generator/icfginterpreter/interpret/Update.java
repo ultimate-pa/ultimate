@@ -67,7 +67,7 @@ public abstract class Update {
 				out.append("setInt(");
 				break;
 			}
-			out.append(DynamicLoader.getEnumClassName()).append(".").append(mProgramVar.getGloballyUniqueId());
+			out.append(DynamicLoader.getVarLookup(mProgramVar));
 			out.append(", ").append(mValueDefinition.toCode()).append(");");
 			return out.toString();
 		}
@@ -119,7 +119,7 @@ public abstract class Update {
 				out.append("havocInt(");
 				break;
 			}
-			out.append(DynamicLoader.getEnumClassName()).append(".").append(mProgramVar.getGloballyUniqueId());
+			out.append(DynamicLoader.getVarLookup(mProgramVar));
 			out.append(", null);");
 			return out.toString();
 		}
@@ -171,7 +171,7 @@ public abstract class Update {
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc()";
+			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc(" + mRestriction + ")";
 		}
 
 		@Override
@@ -179,19 +179,19 @@ public abstract class Update {
 			final StringBuilder out = new StringBuilder("nextState.");
 			switch (mReturnType) {
 			case Array:
-				out.append("havocArray(m");
+				out.append("havocArray(");
 				break;
 			case BitVector:
-				out.append("havocBitVec(m");
+				out.append("havocBitVec(");
 				break;
 			case Boolean:
-				out.append("havocBool(m");
+				out.append("havocBool(");
 				break;
 			case Int:
-				out.append("havocInt(m");
+				out.append("havocInt(");
 				break;
 			}
-			out.append(mProgramVar.getGloballyUniqueId());
+			out.append(DynamicLoader.getVarLookup(mProgramVar));
 			out.append(", ").append(mRestriction.toCode()).append(");");
 			return out.toString();
 		}

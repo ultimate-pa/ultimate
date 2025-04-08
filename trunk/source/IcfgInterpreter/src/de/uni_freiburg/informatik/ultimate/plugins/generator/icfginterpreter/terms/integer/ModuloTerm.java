@@ -79,26 +79,16 @@ public class ModuloTerm extends IntegerTerm {
 		return Util.makeTerm(mSymbol, theory, X.toSMTTerm(theory), Y.toSMTTerm(theory));
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<IntegerDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final IntegerTerm mX = X.equals(current) ?
-	 * (IntegerTerm) replacement : X; final IntegerTerm mY = Y.equals(current) ? (IntegerTerm) replacement : Y; return
-	 * new ModuloTerm(mX, mY); }
-	 */
-
 	@Override
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		// a mod b := a - ((a div b) * b);
-		final int a = X.evaluate(currentState, nextState);
-		final int b = Y.evaluate(currentState, nextState);
+		final Integer a = X.evaluate(currentState, nextState);
+		final Integer b = Y.evaluate(currentState, nextState);
 
-		return a - ((Util.SMTDiv(a, b)) * b);
+		return Util.SMTMod(a, b);
 	}
 
 	@Override
 	public String toCode() {
-		final String xCode = X.toCode();
-		final String yCode = Y.toCode();
-		return "(" + xCode + " - (Util.SMTDiv(" + xCode + ",  " + yCode + ") * " + yCode + "))";
+		return "Util.SMTMod(" + X.toCode() + ", " + Y.toCode() + ")";
 	}
 }

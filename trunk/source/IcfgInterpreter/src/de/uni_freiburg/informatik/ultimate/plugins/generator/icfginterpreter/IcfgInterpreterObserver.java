@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -61,9 +62,10 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new CompiledEnumExecutionProducer<>(),
 						new Random(seed));
 			} catch (final Exception e) {
-				final PrintStream message = new PrintStream(new ByteArrayOutputStream());
+				final ByteArrayOutputStream bs = new ByteArrayOutputStream();
+				final PrintStream message = new PrintStream(bs);
 				e.printStackTrace(message);
-				mLogger.error(message.toString());
+				mLogger.error(bs.toString(StandardCharsets.UTF_8));
 			}
 			DynamicLoader.deleteCompilationDirectory();
 		}

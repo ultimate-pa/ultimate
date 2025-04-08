@@ -22,11 +22,17 @@ import javax.tools.ToolProvider;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.wiring.BundleWiring;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.EnumState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.IVariableName;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.JavaCodeEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.InterpretedIcfg;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -415,10 +421,6 @@ public class DynamicLoader {
 		return baseName + "_v" + IcfgInterpreterObserver.getInstance().getCurrentICFGCardinality();
 	}
 
-	public static String getEnumClassName() {
-		return getVersionedClassName(enumClassBaseName);
-	}
-
 	public static final String enumClassBaseName = "VariableName";
 
 	@SuppressWarnings("unchecked")
@@ -470,13 +472,18 @@ public class DynamicLoader {
 		neededProjects.add(getProjectOfClass(IProgramVar.class));
 		final LoadedClass enumClass = loadClass(main, classFullName, new HashSet<>(), neededProjects);
 
-		final Class<?> e = enumClass.classData;
+		final Enum<?>[] enumConstants = enumClass.classData.asSubclass(Enum.class).getEnumConstants();
+		if (enumConstants.length > 0) {
+			final IVariableName a = (IVariableName) enumConstants[0];
+			a.initiate(progVars);
+		}
 
-		final IVariableName a = (IVariableName) e.asSubclass(Enum.class).getEnumConstants()[0];
-		a.initiate(progVars);
+		return (Class<T>) enumClass.classData.asSubclass(Enum.class);
 
-		return (Class<T>) e.asSubclass(Enum.class);
+	}
 
+	public static String getVarLookup(final IProgramVar programVar) {
+		return getVersionedClassName(enumClassBaseName) + "." + programVar.getGloballyUniqueId();
 	}
 
 	private static String makeImport(final Class<?> clazz) {
@@ -502,47 +509,67 @@ public class DynamicLoader {
 
 		final String stateType = EnumState.class.getSimpleName() + "<" + enumClassName + ">";
 
-		final StringBuilder codeB = new StringBuilder();
-		codeB.append("package " + mOutputPackage + ";\n\n");
-		codeB.append(makeImport(Math.class));
-		codeB.append(makeImport(IProgramVar.class));
-		codeB.append(makeImport(IcfgLocation.class));
-		codeB.append(makeImport(BitVector.class));
-		codeB.append(makeImport(NonDeterministicChoice.class));
-		codeB.append(makeImport(SMTArray.class));
-		codeB.append(makeImport(Util.class));
-		codeB.append(makeImport(EnumState.class));
-		codeB.append(makeImport(JavaCodeEdge.class));
-		codeB.append("import ").append(mOutputPackage).append(".").append(enumClassName).append(";\n\n");
-		codeB.append("public class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + "<"
+		final StringBuilder code = new StringBuilder();
+		code.append("package " + mOutputPackage + ";\n\n");
+		code.append(makeImport(Math.class));
+		code.append(makeImport(IProgramVar.class));
+		code.append(makeImport(IcfgLocation.class));
+		// code.append(makeImport(ModifiableExplicitEdgesMultigraph.class));
+		// code.append(makeImport(IElement.class));
+		code.append(makeImport(BitVector.class));
+		code.append(makeImport(NonDeterministicChoice.class));
+		code.append(makeImport(SMTArray.class));
+		code.append(makeImport(Util.class));
+		code.append(makeImport(EnumState.class));
+		code.append(makeImport(JavaCodeEdge.class));
+		code.append(makeImport(IntegerRestriction.class));
+		code.append(makeImport(BooleanRestriction.class));
+		code.append(makeImport(ArrayRestriction.class));
+		code.append(makeImport(BitVectorRestriction.class));
+		code.append("import ").append(mOutputPackage).append(".").append(enumClassName).append(";\n\n");
+		code.append("public class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + "<"
 				+ enumClassName + "> {\n");
-		codeB.append("\tpublic final IcfgLocation source, target;\n\n");
-		codeB.append("\tpublic " + className + "(IcfgLocation int_source, IcfgLocation int_target) {\n");
-		codeB.append("\t\tsource = int_source;\n\t\ttarget = int_target;\n");
-		codeB.append("\t}\n");
-		codeB.append("\tpublic IcfgLocation getSource() {\n\t\treturn source;\n\t}\n\n");
-		codeB.append("\tpublic IcfgLocation getTarget() {\n\t\treturn target;\n\t}\n\n");
+		code.append("\tpublic final IcfgLocation source, target;\n\n");
+		code.append("\tpublic " + className + "(IcfgLocation int_source, IcfgLocation int_target) {\n");
+		code.append("\t\tsource = int_source;\n\t\ttarget = int_target;\n");
+		code.append("\t}\n");
+		code.append("\t@Override\n");
+		code.append("\tpublic IcfgLocation getSource() {\n\t\treturn source;\n\t}\n\n");
+		code.append("\t@Override\n");
+		code.append("\tpublic IcfgLocation getTarget() {\n\t\treturn target;\n\t}\n\n");
 
-		codeB.append("\tpublic boolean guard(final " + stateType + " currentState) {\n");
-		codeB.append("\t\treturn " + edge.getGuard().toCode().replace("nextState", "currentState") + ";\n\t}\n\n");
-		codeB.append("\tpublic " + stateType + " update(final " + stateType + " currentState) {\n");
-		codeB.append("\t\tfinal " + stateType + " nextState = currentState.clone();\n");
+		code.append("\t@Override\n");
+		code.append("\tpublic boolean guard(final " + stateType + " currentState) {\n");
+		code.append("\t\treturn " + edge.getGuard().toCode().replace("nextState", "currentState") + ";\n\t}\n\n");
+		code.append("\t@Override\n");
+		code.append("\tpublic " + stateType + " update(final " + stateType + " currentState) {\n");
+		code.append("\t\tfinal " + stateType + " nextState = currentState.clone();\n");
 
 		final Update[] updates = edge.getUpdates();
 		for (final Update update : updates) {
-			codeB.append("\t\t").append(update.toCode()).append("\n");
+			code.append("\t\t").append(update.toCode()).append("\n");
 		}
-		codeB.append("\t\treturn nextState;\n").append("\t}\n").append("}").toString();
+		code.append("\t\treturn nextState;\n");
+		code.append("\t}\n\n");
 
-		final String code = codeB.toString();
+		code.append("\t@Override\n");
+		code.append("\tpublic String toString() {\n");
+		code.append("\t\t return \"Edge \" + source.toString() + \" to \" + target.toString();");
+		code.append("\t}\n");
+
+		code.append("}").toString();
+
 		final String classFullName = connectPath(mOutputPath, className);
 		final File codeFile = new File(compileDir, classFullName + ".java");
 
 		try {
-			final File main = createFile(code, codeFile);
+			final File main = createFile(code.toString(), codeFile);
 			final ArrayList<File> neededProjects = new ArrayList<>();
 			neededProjects.add(getProjectOfClass(IcfgInterpreter.class));
 			neededProjects.add(getProjectOfClass(IProgramVar.class));
+			neededProjects.add(getProjectOfClass(ModifiableExplicitEdgesMultigraph.class));
+			neededProjects.add(getProjectOfClass(IElement.class));
+
 			final LoadedClass stateClass = loadClass(main, classFullName, new HashSet<>(), neededProjects);
 
 			return (JavaCodeEdge<T>) stateClass.createInstanceUncast(paramClasses, paramObjects);

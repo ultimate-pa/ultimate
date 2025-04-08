@@ -93,24 +93,28 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 
 	@Override
 	public String toString() {
-		final StringBuilder out = new StringBuilder();
+		final StringBuilder out = new StringBuilder("{");
 		for (final T variable : mArrayVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
-			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mArrayVars.get(variable)).append("\n");
+			out.append("\n\t");
+			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mArrayVars.get(variable));
 		}
 		for (final T variable : mIntVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
-			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mIntVars.get(variable)).append("\n");
+			out.append("\n\t");
+			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mIntVars.get(variable));
 		}
 		for (final T variable : mBoolVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
-			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mBoolVars.get(variable)).append("\n");
+			out.append("\n\t");
+			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mBoolVars.get(variable));
 		}
 		for (final T variable : mBVVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
-			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mBVVars.get(variable)).append("\n");
+			out.append("\n\t");
+			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mBVVars.get(variable));
 		}
-		return out.toString();
+		return out.append("\n}").toString();
 	}
 
 	public int getInt(final T var) {

@@ -31,9 +31,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.NotTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.OrTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
 
 public class ArcSolver {
 	private final VariableSet mVariables;
+	private final HashSet<Variable> mDefinedVariables;
 	private final ArrayList<Constraint> mConstraints = new ArrayList<>();
 	private final ArrayList<Arc> mArcs = new ArrayList<>();
 	private final int constraintCount;
@@ -52,13 +54,18 @@ public class ArcSolver {
 	 */
 	public ArcSolver(final AndTerm constraintTerm, final ManagedScript managedScript, final VariableSet variables,
 			final Theory theory) {
+
 		mVariables = variables;
+		mDefinedVariables = new HashSet<>();
+		final HashSet<Variable> assignableVars = new HashSet<>(variables.getOutVars().values());
+		assignableVars.addAll(variables.getAuxVars().values());
 
 		final ArrayList<BooleanTerm> constraints = constraintTerm.getSubTerms();
 
 		for (final BooleanTerm constraint : constraints) {
 			final HashSet<Variable> containedOutVars = Util.filter(constraint.getVariables(), (var) -> {
-				return var.getVariableTerm().isOutVar && !var.getVariableTerm().isInVar;
+				final VariableTerm varTerm = var.getVariableTerm();
+				return (varTerm.isOutVar || varTerm.isAuxVar) && !varTerm.isInVar;
 			});
 
 			if (containedOutVars.isEmpty()) {
@@ -73,7 +80,7 @@ public class ArcSolver {
 				binRel = BinaryEqualityRelation.convert(constraint.toSMTTerm(theory));
 			}
 
-			for (final Variable var : variables.getOutVars().values()) {
+			for (final Variable var : assignableVars) {
 				final Term termVar = var.getTerm().toSMTTerm(theory);
 				final SolvedBinaryRelation solvedBinEQ = binRel.solveForSubject(managedScript.getScript(), termVar);
 				if (solvedBinEQ == null) {
@@ -96,6 +103,7 @@ public class ArcSolver {
 				} else {
 					mArcs.add(new Arc(var, rhsTerm, relation));
 				}
+				mDefinedVariables.add(var);
 			}
 
 		}
@@ -128,6 +136,11 @@ public class ArcSolver {
 		final TransFormulaBuilder formulaBuilder = new TransFormulaBuilder(inVars, outVars, false, null,
 				branchEncoders.isEmpty(), branchEncoders, false);
 
+		final TermVariable[] freeVars = term.getFreeVars();
+		// for (final TermVariable auxVar : mVariables.getAuxVars().keySet()) {
+		// formulaBuilder.addAuxVar(auxVar);
+		// }
+
 		formulaBuilder.setFormula(term);
 		formulaBuilder.setInfeasibility(infeasibility);
 		final UnmodifiableTransFormula subTermFormula = formulaBuilder.finishConstruction(script);
@@ -145,41 +158,17 @@ public class ArcSolver {
 
 		final Collection<Variable> inVars = mVariables.getInVars().values();
 		final HashSet<Variable> wellDefined = new HashSet<>(inVars);
-		final HashSet<Variable> mentionedVars = new HashSet<>();
 
 		// get all updates that are in the form wellDefinedVar = Term(const, const, ...)
 		for (final Constraint constraint : mConstraints) {
-			mentionedVars.add(constraint.getVariable());
 			if (constraint.relation == RelationSymbol.EQ) {
 				updates.add(Update.getAssignmentUpdate(constraint.getVariable(), constraint.getConstraint()));
 				wellDefined.add(constraint.getVariable());
 			}
 		}
 
-		// get all updates that are well defined in the form wellDefinedVar = Term(const, ..., wellDefinedVar, ...)
 		final HashSet<Variable> dependentVars = new HashSet<>();
-		boolean unchanged = false;
-		while (!unchanged) {
-			unchanged = true;
-			for (final Arc arc : mArcs) {
-				mentionedVars.add(arc.getDefinedVariable());
-				if (wellDefined.contains(arc.getDefinedVariable())) {
-					continue;
-				}
-				if (arc.relation != RelationSymbol.EQ) {
-					continue;
-				}
-				if (!wellDefined.containsAll(arc.getVariables())) {
-					dependentVars.add(arc.getDefinedVariable());
-					continue;
-				}
-				// this variable is equal to a term that only contains well defined variables
-				updates.add(Update.getAssignmentUpdate(arc.getDefinedVariable(), arc.getConstraint()));
-				unchanged = false;
-				wellDefined.add(arc.getDefinedVariable());
-				dependentVars.remove(arc.getDefinedVariable());
-			}
-		}
+		propagateWellDefined(wellDefined, dependentVars, updates);
 
 		// All remaining variables have to be havoced, or depend on a variable that has to be havoced.
 
@@ -190,25 +179,29 @@ public class ArcSolver {
 		final HashMap<IProgramVar, Variable> outProgVars = Util.map(mVariables.getOutVars().values(), (var) -> {
 			return Map.entry(var.getVariableTerm().programVar, var);
 		}, new HashMap<>());
+
 		// Make updates for variables that are not defined in the next state (havoc any value), this happens when:
 		// A. The OutVars do not contain a variable that is in the InVars.
 		// B. A variable of the OutVars does not appear in the InVars or the term.
-
 		for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) {
 			if (outProgVars.containsKey(inVar.getKey())) {
 				// The program variable has a defining term variable in the next state
 				continue;
 			}
 			updates.add(Update.getHavocUpdateAny(inVar.getKey(), inVar.getValue().getTerm().returnType));
+			wellDefined.add(inVar.getValue());
 		}
 
 		for (final Entry<IProgramVar, Variable> outVar : outProgVars.entrySet()) {
-			if (mentionedVars.contains(outVar.getValue()) || inProgVars.containsKey(outVar.getKey())) {
+			if (mDefinedVariables.contains(outVar.getValue()) || inProgVars.containsKey(outVar.getKey())) {
 				// The TermVariable has some constraint in the term or is constant (inVar and outVar)
 				continue;
 			}
 			updates.add(Update.getHavocUpdateAny(outVar.getValue()));
+			wellDefined.add(outVar.getValue());
 		}
+
+		propagateWellDefined(wellDefined, dependentVars, updates);
 
 		/*
 		 * If a variable is not well defined but not dependent on variables that aren't well defined, it can be havoced
@@ -229,6 +222,7 @@ public class ArcSolver {
 			final HashSet<Constraint> constraintSet = restrictionsConstraint.getOrDefault(constraint.getVariable(),
 					new HashSet<>());
 			constraintSet.add(constraint);
+			restrictionsConstraint.put(constraint.getVariable(), constraintSet);
 		}
 		for (final Arc arc : mArcs) {
 			if (wellDefined.contains(arc.getDefinedVariable())) {
@@ -240,19 +234,51 @@ public class ArcSolver {
 
 			final HashSet<Arc> arcSet = restrictionsArc.getOrDefault(arc.getDefinedVariable(), new HashSet<>());
 			arcSet.add(arc);
+			restrictionsArc.put(arc.getDefinedVariable(), arcSet);
 		}
 		final Set<Variable> independentVars = restrictionsConstraint.keySet();
 		independentVars.addAll(restrictionsArc.keySet());
 		for (final Variable independentVar : independentVars) {
-			updates.add(Update.getHavocUpdate(independentVar, restrictionsConstraint.get(independentVar),
-					restrictionsArc.get(independentVar)));
+			updates.add(Update.getHavocUpdate(independentVar,
+					restrictionsConstraint.getOrDefault(independentVar, new HashSet<>()),
+					restrictionsArc.getOrDefault(independentVar, new HashSet<>())));
+			wellDefined.add(independentVar);
 		}
+
+		propagateWellDefined(wellDefined, dependentVars, updates);
 
 		// TODO Take care of outVars that depend on other outVars
 
 		updateCache = new Update[updates.size()];
 
 		return Util.fillArray(updates, updateCache);
+	}
+
+	// get all updates that are well defined in the form wellDefinedVar = Term(const, ..., wellDefinedVar, ...)
+
+	private void propagateWellDefined(final HashSet<Variable> wellDefined, final HashSet<Variable> dependentVars,
+			final ArrayList<Update> updates) {
+		boolean unchanged = false;
+		while (!unchanged) {
+			unchanged = true;
+			for (final Arc arc : mArcs) {
+				if (wellDefined.contains(arc.getDefinedVariable())) {
+					continue;
+				}
+				if (arc.relation != RelationSymbol.EQ) {
+					continue;
+				}
+				if (!wellDefined.containsAll(arc.getVariables())) {
+					dependentVars.add(arc.getDefinedVariable());
+					continue;
+				}
+				// this variable is equal to a term that only contains well defined variables
+				updates.add(Update.getAssignmentUpdate(arc.getDefinedVariable(), arc.getConstraint()));
+				unchanged = false;
+				wellDefined.add(arc.getDefinedVariable());
+				dependentVars.remove(arc.getDefinedVariable());
+			}
+		}
 	}
 
 	@Override

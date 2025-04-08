@@ -37,6 +37,10 @@ public class VariableSet {
 		return inVars;
 	}
 
+	public HashMap<TermVariable, Variable> getAuxVars() {
+		return auxVars;
+	}
+
 	public void addVariable(final boolean isInVar, final boolean isOutVar, final boolean isAuxVar,
 			final boolean isAssignable, final IProgramVar progVariable, final TermVariable termVariable) {
 		final Sort sort = termVariable.getDeclaredSort();

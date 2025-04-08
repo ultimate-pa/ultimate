@@ -78,7 +78,7 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 
 	@Override
 	public TermVariable toSMTTerm(final Theory theory) {
-		return Util.makeVariable(mVariableTerm.termvar, theory);
+		return mVariableTerm.toSMTTerm(theory);
 	}
 
 	@Override

@@ -111,7 +111,7 @@ public class EqualsTerm extends BooleanTerm {
 		final Object aValue = mA.evaluate(currentState, nextState);
 		final Object bValue = mB.evaluate(currentState, nextState);
 
-		return aValue == bValue;
+		return aValue.equals(bValue);
 	}
 
 	@Override

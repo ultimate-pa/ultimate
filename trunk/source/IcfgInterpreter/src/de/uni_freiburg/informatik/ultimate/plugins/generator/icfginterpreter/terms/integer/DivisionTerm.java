@@ -58,7 +58,7 @@ public class DivisionTerm extends IntegerTerm {
 			return false;
 		}
 		final DivisionTerm castB = (DivisionTerm) b;
-		return X.equals(castB.X) && X.equals(castB.Y);
+		return X.equals(castB.X) && Y.equals(castB.Y);
 	}
 
 	@Override
@@ -86,14 +86,14 @@ public class DivisionTerm extends IntegerTerm {
 
 	@Override
 	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		final int a = X.evaluate(currentState, nextState);
-		final int b = Y.evaluate(currentState, nextState);
+		final Integer a = X.evaluate(currentState, nextState);
+		final Integer b = Y.evaluate(currentState, nextState);
 
 		return Util.SMTDiv(a, b);
 	}
 
 	@Override
 	public String toCode() {
-		return "Util.SMTDiv(" + X.toCode() + ",  " + Y.toCode() + ")";
+		return "Util.SMTDiv(" + X.toCode() + ", " + Y.toCode() + ")";
 	}
 }
