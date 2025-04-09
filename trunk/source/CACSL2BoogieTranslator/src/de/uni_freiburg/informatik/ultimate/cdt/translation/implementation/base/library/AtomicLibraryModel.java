@@ -480,7 +480,17 @@ public class AtomicLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		// TODO: Handle types like atomic_int etc. here
-		return List.of();
+		return List.of(new TypeModel("atomic_bool", CPrimitive.constructAtomicType(CPrimitives.BOOL)),
+				new TypeModel("atomic_char", CPrimitive.constructAtomicType(CPrimitives.CHAR)),
+				new TypeModel("atomic_schar", CPrimitive.constructAtomicType(CPrimitives.SCHAR)),
+				new TypeModel("atomic_uchar", CPrimitive.constructAtomicType(CPrimitives.UCHAR)),
+				new TypeModel("atomic_short", CPrimitive.constructAtomicType(CPrimitives.SHORT)),
+				new TypeModel("atomic_ushort", CPrimitive.constructAtomicType(CPrimitives.USHORT)),
+				new TypeModel("atomic_int", CPrimitive.constructAtomicType(CPrimitives.INT)),
+				new TypeModel("atomic_uint", CPrimitive.constructAtomicType(CPrimitives.UINT)),
+				new TypeModel("atomic_long", CPrimitive.constructAtomicType(CPrimitives.LONG)),
+				new TypeModel("atomic_ulong", CPrimitive.constructAtomicType(CPrimitives.ULONG)),
+				new TypeModel("atomic_llong", CPrimitive.constructAtomicType(CPrimitives.LONGLONG)),
+				new TypeModel("atomic_ullong", CPrimitive.constructAtomicType(CPrimitives.ULONGLONG)));
 	}
 }

@@ -40,6 +40,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -91,6 +92,7 @@ public class SetjmpLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		return List.of();
+		// Model jmp_buf just with some arbitrary type, we cannot handle it properly anyways.
+		return List.of(new TypeModel("jmp_buf", CPointer.voidPointer()));
 	}
 }
