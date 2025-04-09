@@ -4,12 +4,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -51,16 +49,15 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class StdioFunctionModelProvider extends FunctionModelProvider {
-	public StdioFunctionModelProvider(final Map<String, IASTNode> functionTable,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+	public StdioFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
 			final TypeSizes typeSizes, final TranslationSettings settings,
 			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
 			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
-				typeSizeAndOffsetComputer, procedureManager, typeSizes, settings, expressionResultTransformer,
-				typeHandler, cEpressionTranslator, dataRaceChecker);
+		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
+				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
+				dataRaceChecker);
 	}
 
 	@Override

@@ -3,11 +3,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
@@ -61,16 +59,15 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 	private final ThreadIdManager mThreadIdManager;
 	private final FlatSymbolTable mSymboltable;
 
-	public PthreadFunctionModelProvider(final Map<String, IASTNode> functionTable,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+	public PthreadFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
 			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
 			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
-				typeSizeAndOffsetComputer, procedureManager, typeSizes, settings, expressionResultTransformer,
-				typeHandler, cEpressionTranslator, dataRaceChecker);
+		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
+				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
+				dataRaceChecker);
 		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
 				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
 		mSymboltable = symboltable;

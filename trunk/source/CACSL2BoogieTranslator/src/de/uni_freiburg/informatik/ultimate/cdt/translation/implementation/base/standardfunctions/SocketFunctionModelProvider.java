@@ -3,9 +3,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
@@ -23,16 +20,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
 public class SocketFunctionModelProvider extends FunctionModelProvider {
-	public SocketFunctionModelProvider(final Map<String, IASTNode> functionTable,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+	public SocketFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
 			final TypeSizes typeSizes, final TranslationSettings settings,
 			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
 			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
-				typeSizeAndOffsetComputer, procedureManager, typeSizes, settings, expressionResultTransformer,
-				typeHandler, cEpressionTranslator, dataRaceChecker);
+		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
+				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
+				dataRaceChecker);
 	}
 
 	@Override

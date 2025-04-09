@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -63,7 +61,6 @@ public abstract class FunctionModelProvider {
 	protected final MemoryHandler mMemoryHandler;
 	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
 	protected final ProcedureManager mProcedureManager;
-	protected final Map<String, IASTNode> mFunctionTable;
 	protected final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	protected final INameHandler mNameHandler;
 	protected final TypeSizes mTypeSizes;
@@ -73,8 +70,7 @@ public abstract class FunctionModelProvider {
 	protected final CExpressionTranslator mCEpressionTranslator;
 	protected final DataRaceChecker mDataRaceChecker;
 
-	public FunctionModelProvider(final Map<String, IASTNode> functionTable,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+	public FunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
 			final TypeSizes typeSizes, final TranslationSettings settings,
@@ -84,7 +80,6 @@ public abstract class FunctionModelProvider {
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
 		mProcedureManager = procedureManager;
-		mFunctionTable = functionTable;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
