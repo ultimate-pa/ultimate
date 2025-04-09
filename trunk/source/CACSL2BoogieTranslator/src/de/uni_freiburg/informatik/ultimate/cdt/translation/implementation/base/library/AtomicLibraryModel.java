@@ -123,10 +123,14 @@ public class AtomicLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("atomic_load", this::handleAtomicLoad));
 		result.add(new FunctionModel("atomic_store", this::handleAtomicStore));
 		result.add(new FunctionModel("atomic_exchange", this::handleAtomicExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_strong", this::handleAtomicCompareExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_weak", this::handleAtomicCompareExchange));
 
 		result.add(new FunctionModel("atomic_load_explicit", this::handleAtomicLoad));
 		result.add(new FunctionModel("atomic_store_explicit", this::handleAtomicStore));
 		result.add(new FunctionModel("atomic_exchange_explicit", this::handleAtomicExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_strong_explicit", this::handleAtomicCompareExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_weak_explicit", this::handleAtomicCompareExchange));
 
 		result.add(new FunctionModel("atomic_fetch_add",
 				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
@@ -160,7 +164,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__atomic_load", this::handleGccAtomicLoad));
 		result.add(new FunctionModel("__atomic_store", this::handleGccAtomicStore));
 		result.add(new FunctionModel("__atomic_exchange", this::handleGccAtomicExchange));
-		result.add(new FunctionModel("__atomic_compare_exchange", this::handleAtomicCompareExchange));
+		result.add(new FunctionModel("__atomic_compare_exchange", this::handleGccAtomicCompareExchange));
 
 		result.add(new FunctionModel("__atomic_load_n", this::handleAtomicLoad));
 		result.add(new FunctionModel("__atomic_store_n", this::handleAtomicStore));
@@ -295,9 +299,37 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
+	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 5 : 3, name, arguments);
+
+		// In this function, the desired value is passed directly. We create a small dummy ExpressionResult for the
+		// helper function and store only the desired LRValue.
+		final ExpressionResult desiredResult =
+				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[2]), loc, node);
+		final var desiredRead = new ExpressionResult(desiredResult.getLrValue());
+
+		final ExpressionResult weakResult =
+				new ExpressionResult(new RValue(ExpressionFactory.createBooleanLiteral(loc, name.contains("weak")),
+						new CPrimitive(CPrimitives.BOOL)));
+
+		if (hasExplicitMemoryOrder(name)) {
+			final ExpressionResult successMemoryOrder =
+					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[3]);
+			final ExpressionResult failureMemoryOrder =
+					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[4]);
+			return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
+					weakResult, successMemoryOrder, failureMemoryOrder);
+		}
+
+		return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
+				weakResult);
+	}
+
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
 	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
-	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleGccAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 6, name, arguments);
@@ -306,7 +338,15 @@ public class AtomicLibraryModel implements ILibraryModel {
 		final ExpressionResult desiredResult = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
 		final var desiredRead = mExprResultTransformer.readPointerValue(loc, desiredResult.getLrValue());
 
-		return handleAtomicCompareExchange(main, node, loc, desiredResult, desiredRead);
+		final ExpressionResult weakResult = mExprResultTransformer
+				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[3]), loc, node);
+		final ExpressionResult successMemoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[4]);
+		final ExpressionResult failureMemoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
+
+		return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
+				weakResult, successMemoryOrder, failureMemoryOrder);
 	}
 
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
@@ -322,7 +362,15 @@ public class AtomicLibraryModel implements ILibraryModel {
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[2]), loc, node);
 		final var desiredRead = new ExpressionResult(desiredResult.getLrValue());
 
-		return handleAtomicCompareExchange(main, node, loc, desiredResult, desiredRead);
+		final ExpressionResult weakResult = mExprResultTransformer
+				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[3]), loc, node);
+		final ExpressionResult successMemoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[4]);
+		final ExpressionResult failureMemoryOrder =
+				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
+
+		return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
+				weakResult, successMemoryOrder, failureMemoryOrder);
 	}
 
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
@@ -348,21 +396,16 @@ public class AtomicLibraryModel implements ILibraryModel {
 	// }
 	// return success
 	// @formatter:on
-	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final ExpressionResult desiredResult, final ExpressionResult desiredRead) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-
+	private Result handleAtomicCompareExchange(final IDispatcher main, final ILocation loc,
+			final IASTInitializerClause pointer, final IASTInitializerClause expected,
+			final ExpressionResult desiredResult, final ExpressionResult desiredRead, final ExpressionResult weakResult,
+			final ExpressionResult... memoryOrders) {
 		// Evaluate the arguments passed to the function. This happens non-atomically.
-		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
-		final ExpressionResult expectedResult = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
-		final ExpressionResult weakResult = mExprResultTransformer
-				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[3]), loc, node);
-		final ExpressionResult successMemoryOrder =
-				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[4]);
-		final ExpressionResult failureMemoryOrder =
-				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
-		final var resultBuilder = new ExpressionResultBuilder().addAllExceptLrValue(pointer, expectedResult,
-				desiredResult, weakResult, successMemoryOrder, failureMemoryOrder);
+		final ExpressionResult pointerResult = mExprResultTransformer.dispatchPointerLValue(main, loc, pointer);
+		final ExpressionResult expectedResult = mExprResultTransformer.dispatchPointerLValue(main, loc, expected);
+		final var resultBuilder = new ExpressionResultBuilder()
+				.addAllExceptLrValue(pointerResult, expectedResult, desiredResult, weakResult)
+				.addAllExceptLrValue(memoryOrders);
 		final boolean mayFailSpuriously = !ExpressionFactory.isFalseLiteral(weakResult.getLrValue().getValue());
 
 		// Introduce an auxvar indicating whether the function is successful, i.e., the exchange was performed.
@@ -376,9 +419,9 @@ public class AtomicLibraryModel implements ILibraryModel {
 		}
 
 		// Construct the code that actually executes the compare-and-exchange.
-		final var pointerRead = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
+		final var pointerRead = mExprResultTransformer.readPointerValue(loc, pointerResult.getLrValue());
 		final var expectedRead = mExprResultTransformer.readPointerValue(loc, expectedResult.getLrValue());
-		final var pointerWrite = mExprResultTransformer.makePointerAssignment(loc, pointer.getLrValue(),
+		final var pointerWrite = mExprResultTransformer.makePointerAssignment(loc, pointerResult.getLrValue(),
 				desiredRead.getLrValue().getValue());
 		final var expectedWrite = mExprResultTransformer.makePointerAssignment(loc, expectedResult.getLrValue(),
 				pointerRead.getLrValue().getValue());
@@ -400,8 +443,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 				.build();
 
 		// Wrap the compare-exchange in an atomic block, and check if the memory order arguments are supported.
-		final var atomic = applyMemoryOrders(loc, atomicBody, successMemoryOrder.getLrValue().getValue(),
-				failureMemoryOrder.getLrValue().getValue());
+		final var atomic = applyMemoryOrders(loc, atomicBody,
+				Arrays.stream(memoryOrders).map(x -> x.getLrValue().getValue()).toArray(Expression[]::new));
 
 		// Wrap atomic compare-exchange block in "if (success || !weak) { ... }" to model spurious failures.
 		if (mayFailSpuriously) {
