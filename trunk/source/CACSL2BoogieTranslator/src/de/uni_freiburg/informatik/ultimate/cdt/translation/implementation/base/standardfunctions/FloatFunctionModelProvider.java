@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,7 +10,6 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -39,10 +37,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class FloatMathFunctionModelProvider extends FunctionModelProvider {
+public class FloatFunctionModelProvider extends FunctionModelProvider {
 	//@formatter:off
 	private final static String[] SUPPORTED_FLOAT_OPERATIONS = {
 			"sqrt",
@@ -210,9 +207,6 @@ public class FloatMathFunctionModelProvider extends FunctionModelProvider {
 			"modf",
 			"modff",
 			"modfl",
-			"div",
-			"ldiv",
-			"lldiv",
 
 			// from fenv.h
 			"feclearexcept",
@@ -287,7 +281,7 @@ public class FloatMathFunctionModelProvider extends FunctionModelProvider {
 			);
 	//@formatter:on
 
-	public FloatMathFunctionModelProvider(final Map<String, IASTNode> functionTable,
+	public FloatFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
@@ -497,23 +491,6 @@ public class FloatMathFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("fegetround", this::handleBuiltinFegetround));
 		result.add(new FunctionModel("fesetround", this::handleBuiltinFesetround));
 
-		/**
-		 * @formatter:off
-		 * 7.22.6 Integer arithmetic functions
-		 *
-		 * 7.22.6.1 The abs, labs and llabs functions
-		 * 7.22.6.2 The div, ldiv, and lldiv functions
-		 * @formatter:on
-		 */
-		result.add(new FunctionModel("abs",
-				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("labs",
-				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG))));
-		result.add(new FunctionModel("llabs",
-				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG))));
-		result.add(new FunctionModel("imaxabs",
-				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG))));
-
 		// TODO: Check in SUPPORTED_FLOAT_FUNCTIONS
 		return result;
 	}
@@ -705,33 +682,5 @@ public class FloatMathFunctionModelProvider extends FunctionModelProvider {
 				mExprResultTransformer.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
 
 		return mExpressionTranslation.constructBuiltinFesetround(loc, convertedArgument, mAuxVarInfoBuilder);
-	}
-
-	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-			final String name, final CPrimitive resultType) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		final ExpressionResult argResult =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		builder.addAllExceptLrValue(argResult);
-		final Expression expr = argResult.getLrValue().getValue();
-		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
-		if (mSettings.checkSignedIntegerBounds() != CheckMode.IGNORE && resultType.isIntegerType()
-				&& !mTypeSizes.isUnsigned(resultType)) {
-			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
-					mTypeSizes.getMinValueOfPrimitiveType(resultType));
-			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_greaterThan, expr, resultType, minInt, resultType);
-			mExpressionTranslation.addOverflowCheck(loc, biggerMinInt, builder);
-		}
-		// Construct if x > 0 then x else -x as LrValue for abs(x)
-		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
-				IASTBinaryExpression.op_greaterThan, expr, resultType,
-				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
-		final Expression negated =
-				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
-		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
-		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
 	}
 }

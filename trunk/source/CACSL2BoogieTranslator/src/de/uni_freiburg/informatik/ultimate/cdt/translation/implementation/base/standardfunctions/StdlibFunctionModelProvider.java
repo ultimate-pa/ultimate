@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -10,14 +11,17 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -37,12 +41,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
 public class StdlibFunctionModelProvider extends FunctionModelProvider {
 	public StdlibFunctionModelProvider(final Map<String, IASTNode> functionTable,
@@ -129,12 +135,98 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("qsort", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 4, CPointer.voidPointer())));
 
+		/**
+		 * 7.22.2.1 The rand function
+		 *
+		 * see https://en.cppreference.com/w/c/numeric/random/rand
+		 *
+		 * Pseudo-random integer value between ​0​ and RAND_MAX, inclusive. The value of the RAND_MAX macro shall be at
+		 * least 32767.
+		 *
+		 * We handle this similar to handleVerifierNonDet, but we limit the return type to positive range of int.
+		 *
+		 * We ignore seeding with srand.
+		 */
+		result.add(new FunctionModel("rand", this::handleRand));
+
+		/**
+		 * 7.22.2.2 The srand function
+		 *
+		 * see https://en.cppreference.com/w/c/numeric/random/srand
+		 *
+		 * The srand function uses the argument as a seed for a new sequence of pseudo-random numbers to be returned by
+		 * subsequent calls to rand.
+		 *
+		 * We can safely skip this function.
+		 */
+		result.add(new FunctionModel("srand",
+				(main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)));
+
+		/**
+		 * 7.22.1.3 The strtod, strtof, and strtold functions
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/strtof
+		 *
+		 * Interprets a floating-point value in a byte string pointed to by str. 2 arguments: pointer to the
+		 * null-terminated byte string to be interpreted and pointer to a pointer to character.
+		 *
+		 * Floating-point value corresponding to the contents of str on success. If the converted value falls out of
+		 * range of corresponding return type, range error occurs and HUGE_VAL, HUGE_VALF or HUGE_VALL is returned. If
+		 * no conversion can be performed, ​0​ is returned.
+		 *
+		 * We handle this by overapproximation and do not check of range errors.
+		 *
+		 */
+		result.add(new FunctionModel("strtof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("strtod", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		/**
+		 * 7.22.1.4 The strtol, strtoll, strtoul, and strtoull functions
+		 *
+		 * see https://en.cppreference.com/w/c/string/byte/strtoul
+		 *
+		 * Interprets an unsigned integer value in a byte string pointed to by str.
+		 *
+		 * We handle this by overapproximation and do not check of range errors.
+		 *
+		 */
+		result.add(new FunctionModel("strtol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.LONG))));
+		result.add(new FunctionModel("strtoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.LONGLONG))));
+		result.add(new FunctionModel("strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.ULONGLONG))));
+
+		/**
+		 * @formatter:off
+		 * 7.22.6 Integer arithmetic functions
+		 *
+		 * 7.22.6.1 The abs, labs and llabs functions
+		 * 7.22.6.2 The div, ldiv, and lldiv functions
+		 * @formatter:on
+		 */
+		result.add(new FunctionModel("abs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("labs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONG))));
+		result.add(new FunctionModel("llabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG))));
+		result.add(new FunctionModel("imaxabs",
+				(main, node, loc, name) -> handleAbs(main, node, loc, name, new CPrimitive(CPrimitives.LONGLONG))));
+
 		return result;
 	}
 
 	@Override
 	public Collection<String> getUnsupportedFunctions() {
-		return List.of("aligned_alloc", "atexit", "at_quick_exit", "_Exit", "quick_exit", "system", "bsearch");
+		return List.of("aligned_alloc", "atexit", "at_quick_exit", "_Exit", "quick_exit", "system", "bsearch", "mblen",
+				"mbtowc", "wctomb", "mbstowcs", "wcstombs", "div", "ldiv", "lldiv");
 	}
 
 	private Result handleGetenv(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
@@ -287,5 +379,63 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		erb.setLrValue(new RValue(auxvar.getExp(), resultType));
 
 		return erb.build();
+	}
+
+	private Result handleRand(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
+		checkArguments(loc, 0, name, node.getArguments());
+
+		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
+		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		resultBuilder.addAuxVarWithDeclaration(auxvarinfo);
+
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+		resultBuilder.setLrValue(returnValue);
+
+		final Expression expr = returnValue.getValue();
+		final Expression minValue = mTypeSizes.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+		final Expression maxValue =
+				mTypeSizes.constructLiteralForIntegerType(loc, cType, mTypeSizes.getMaxValueOfPrimitiveType(cType));
+
+		final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, minValue, cType, expr, cType);
+		final Expression smallerMaxValue = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, expr, cType, maxValue, cType);
+		final AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc,
+				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		resultBuilder.addStatement(inRange);
+
+		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, resultBuilder.getDeclarations(),
+				resultBuilder.getAuxVars());
+		return resultBuilder.build();
+	}
+
+	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name, final CPrimitive resultType) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		final ExpressionResult argResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		builder.addAllExceptLrValue(argResult);
+		final Expression expr = argResult.getLrValue().getValue();
+		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
+		if (mSettings.checkSignedIntegerBounds() != CheckMode.IGNORE && resultType.isIntegerType()
+				&& !mTypeSizes.isUnsigned(resultType)) {
+			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
+					mTypeSizes.getMinValueOfPrimitiveType(resultType));
+			final Expression biggerMinInt = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+					IASTBinaryExpression.op_greaterThan, expr, resultType, minInt, resultType);
+			mExpressionTranslation.addOverflowCheck(loc, biggerMinInt, builder);
+		}
+		// Construct if x > 0 then x else -x as LrValue for abs(x)
+		final Expression positive = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterThan, expr, resultType,
+				mTypeSizes.constructLiteralForIntegerType(loc, resultType, BigInteger.ZERO), resultType);
+		final Expression negated =
+				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
+		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
+		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
 	}
 }

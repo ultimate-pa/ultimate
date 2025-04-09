@@ -124,47 +124,6 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 2, new CPrimitive(CPrimitives.ULONGLONG))));
 
-		/**
-		 * 7.22.1.3 The strtod, strtof, and strtold functions
-		 *
-		 * see https://en.cppreference.com/w/c/string/byte/strtof
-		 *
-		 * Interprets a floating-point value in a byte string pointed to by str. 2 arguments: pointer to the
-		 * null-terminated byte string to be interpreted and pointer to a pointer to character.
-		 *
-		 * Floating-point value corresponding to the contents of str on success. If the converted value falls out of
-		 * range of corresponding return type, range error occurs and HUGE_VAL, HUGE_VALF or HUGE_VALL is returned. If
-		 * no conversion can be performed, ​0​ is returned.
-		 *
-		 * We handle this by overapproximation and do not check of range errors.
-		 *
-		 */
-		result.add(new FunctionModel("strtof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("strtod", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
-
-		/**
-		 * 7.22.1.4 The strtol, strtoll, strtoul, and strtoull functions
-		 *
-		 * see https://en.cppreference.com/w/c/string/byte/strtoul
-		 *
-		 * Interprets an unsigned integer value in a byte string pointed to by str.
-		 *
-		 * We handle this by overapproximation and do not check of range errors.
-		 *
-		 */
-		result.add(new FunctionModel("strtol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.LONG))));
-		result.add(new FunctionModel("strtoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.LONGLONG))));
-		result.add(new FunctionModel("strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.ULONG))));
-		result.add(new FunctionModel("strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.ULONGLONG))));
-
 		// https://en.cppreference.com/w/c/string/wide/iswxdigit
 		result.add(new FunctionModel("iswxdigit", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
 				name, 1, new CPrimitive(CPrimitives.INT))));
@@ -174,19 +133,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 
 	@Override
 	public Collection<String> getUnsupportedFunctions() {
-		/**
-		 * @formatter:off
-		 * 7.22.7 Multibyte/wide character conversion functions
-		 * 7.22.7.1 The mblen function
-		 * 7.22.7.2 The mbtowc function
-		 * 7.22.7.3 The wctomb function
-		 *
-		 * 7.22.8 Multibyte/wide string conversion functions
-		 * 7.22.8.1 The mbstowcs function
-		 * 7.22.8.2 The wcstombs function
-		 * @formatter:on
-		 */
-		return List.of("mblen", "mbtowc", "wctomb", "mbstowcs", "wcstombs");
+		return List.of();
 	}
 
 	/**
