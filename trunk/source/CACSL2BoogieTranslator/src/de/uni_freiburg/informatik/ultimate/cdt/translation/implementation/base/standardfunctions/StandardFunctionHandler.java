@@ -84,7 +84,7 @@ public class StandardFunctionHandler {
 			final ExpressionResultTransformer expressionResultTransformer, final LocationFactory locationFactory,
 			final ITypeHandler typeHandler, final CExpressionTranslator cEpressionTranslator,
 			final DataRaceChecker dataRaceChecker) {
-		final List<FunctionModelProvider> functionHandlers = List.of(
+		final List<FunctionModelProvider> functionModelProviders = List.of(
 				new LinuxFunctionModelProvider(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
 						typeSizeAndOffsetComputer, procedureManager, typeSizes, settings, expressionResultTransformer,
 						typeHandler, cEpressionTranslator, dataRaceChecker),
@@ -132,7 +132,7 @@ public class StandardFunctionHandler {
 		mSymboltable = symboltable;
 		mSettings = settings;
 		mLocationFactory = locationFactory;
-		mFunctionModels = getFunctionModels(functionHandlers);
+		mFunctionModels = getFunctionModels(functionModelProviders);
 	}
 
 	/**
