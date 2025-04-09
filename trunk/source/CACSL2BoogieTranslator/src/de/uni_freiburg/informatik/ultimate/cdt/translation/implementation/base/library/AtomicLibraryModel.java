@@ -160,6 +160,13 @@ public class AtomicLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("atomic_test_and_set_explicit", this::handleAtomicTestAndSet));
 		result.add(new FunctionModel("atomic_clear_explicit", this::handleAtomicClear));
 
+		result.add(new FunctionModel("atomic_thread_fence", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
+		result.add(new FunctionModel("atomic_signal_fence", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
+		result.add(new FunctionModel("atomic_is_lock_free", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
+
 		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 		result.add(new FunctionModel("__atomic_load", this::handleGccAtomicLoad));
 		result.add(new FunctionModel("__atomic_store", this::handleGccAtomicStore));
