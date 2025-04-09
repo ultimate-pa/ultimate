@@ -78,7 +78,6 @@ public class AssertLibraryModel implements ILibraryModel {
 		/** C standard library functions (from assert.h) to define the 'assert' macro */
 		result.add(new FunctionModel("__assert_fail", this::handleAssertFail));
 		result.add(new FunctionModel("__assert_func", this::handleAssertFail));
-		// TODO: This should not occur in the preprocessed file, but we handle it for now
 		result.add(new FunctionModel("assert", this::handleAssert));
 		/** C11 static assertion (C language keyword, deprecated in C23) */
 		result.add(new FunctionModel("_Static_assert", this::handleStaticAssert));
