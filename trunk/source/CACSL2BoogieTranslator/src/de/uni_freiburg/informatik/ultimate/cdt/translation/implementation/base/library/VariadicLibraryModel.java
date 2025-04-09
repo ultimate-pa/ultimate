@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
@@ -195,7 +196,7 @@ public class VariadicLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		// TODO: Handle also types defined in stdarg.h
-		return List.of(new TypeModel("__builtin_va_list", new CPointer(new CPrimitive(CPrimitives.CHAR))));
+		final ICType charPointer = new CPointer(new CPrimitive(CPrimitives.CHAR));
+		return List.of(new TypeModel("__builtin_va_list", charPointer), new TypeModel("va_list", charPointer));
 	}
 }
