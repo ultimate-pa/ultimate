@@ -320,11 +320,12 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			final DisjunctiveAbstractState<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> result,
 			final String procedure, final boolean multipleThreads) {
 		final Set<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>> forkStates = result.getStates();
-		final Set<SingleStateRecord<UNDERLYINGSTATE, LOC>> initialStates = new HashSet<>();
+		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> initialStates = new HashSet<>();
 		for (final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> forkState : forkStates) {
 			// filter only states from forking threads whwere forked thread still at start position
 			// (we would do self interference by proxy otherwise
-			for (final SingleStateRecord<UNDERLYINGSTATE, LOC> singleStateRecord : forkState.getStates()) {
+			for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> singleStateRecord : forkState
+					.getStates()) {
 				final var entryLoc = singleStateRecord.abstractLocationState().getTracker()
 						.getLocationForThread(procedure);
 				final var globalMap = singleStateRecord.abstractLocationState().getLocationMap();
@@ -337,7 +338,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 		// TODO: unify them into one state
 		final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> initialDisj = new GuardedInterferenceDomainStateDisj<>(
-				mUnderlyingDomain, 999, initialStates);
+				mUnderlyingDomain, initialStates, 999);
 		final var debugState = initialDisj.getSingleState();
 		if (initialDisj.getSingleState() == null) {
 			return initialDisj;
@@ -348,11 +349,11 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		return afterInterferences;
 	}
 
-	private SingleStateRecord<UNDERLYINGSTATE, LOC> removeLocalVars(
-			final SingleStateRecord<UNDERLYINGSTATE, LOC> singleStateRecord) {
+	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(
+			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> singleStateRecord) {
 		final List<IProgramVarOrConst> varsToRemove = singleStateRecord.state().getVariables().stream()
 				.filter(ILocalProgramVar.class::isInstance).collect(Collectors.toList());
-		return new SingleStateRecord<>(singleStateRecord.state().removeVariables(varsToRemove),
+		return new GuardedInterferenceDomainState<>(singleStateRecord.state().removeVariables(varsToRemove),
 				singleStateRecord.threadCounter(), singleStateRecord.abstractLocationState());
 	}
 

@@ -1,0 +1,209 @@
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
+
+public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
+		implements IAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> {
+	private final STATE mState;
+	private final ThreadInstanceCounter mThreadCounter;
+	private final AbstractLocationState<LOC> mAbstractLocationState;
+
+	public GuardedInterferenceDomainState(final STATE state, final ThreadInstanceCounter threadCounter,
+			final AbstractLocationState<LOC> abstractLocationState) {
+		mState = state;
+		mThreadCounter = threadCounter;
+		mAbstractLocationState = abstractLocationState;
+	}
+
+	public STATE state() {
+		return mState;
+	}
+
+	public ThreadInstanceCounter threadCounter() {
+		return mThreadCounter;
+	}
+
+	public AbstractLocationState<LOC> abstractLocationState() {
+		return mAbstractLocationState;
+	}
+
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initializeLocation(final LOC location,
+			final AbstractLocationMap<LOC> globalMap, final Set<String> threadNames) {
+		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
+				new AbstractLocationState<>(location, globalMap, threadNames));
+	}
+
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initializeLocation(final LOC location,
+			final AbstractLocationMap<LOC> globalMap, final Set<String> threadNames, final Set<LOC> forkLocs) {
+		GuardedInterferenceDomainState<STATE, ACTION, LOC> newState = new GuardedInterferenceDomainState<>(this.state(),
+				this.threadCounter(), new AbstractLocationState<>(location, globalMap, threadNames));
+		for (final LOC loc : forkLocs) {
+			newState = newState.movedTo(loc.getProcedure(), newState.abstractLocationState().getLocationMap()
+					.getAbstractLocation((LOC) loc.getOutgoingNodes().iterator().next()));
+		}
+		return newState;
+	}
+
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation) {
+		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
+				this.abstractLocationState().movedTo(threadName, newLocation));
+	}
+
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsActive(
+			final Collection<String> forkingStrings) {
+		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setActive(forkingStrings));
+		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
+	}
+
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsInf(final Collection<String> forkingStrings) {
+		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setInf(forkingStrings));
+		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
+	}
+
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> incrementThread(final String thread) {
+		final var newThreadcounter = this.threadCounter().incrementThread(thread);
+		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
+	}
+
+	public boolean isEqual(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		if (!(other.state().isSubsetOf(this.state()) != SubsetResult.NONE)) {
+			return false;
+		}
+		if (!other.threadCounter().isEqual(threadCounter())) {
+			return false;
+		}
+		if (!other.abstractLocationState().isEqual(this.abstractLocationState())) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> addVariable(final IProgramVarOrConst variable) {
+		return new GuardedInterferenceDomainState<>(mState.addVariable(variable), mThreadCounter,
+				mAbstractLocationState);
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> removeVariable(final IProgramVarOrConst variable) {
+		return new GuardedInterferenceDomainState<>(mState.removeVariable(variable), mThreadCounter,
+				mAbstractLocationState);
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> addVariables(
+			final Collection<IProgramVarOrConst> variables) {
+		return new GuardedInterferenceDomainState<>(mState.addVariables(variables), mThreadCounter,
+				mAbstractLocationState);
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> removeVariables(
+			final Collection<IProgramVarOrConst> variables) {
+		return new GuardedInterferenceDomainState<>(mState.removeVariables(variables), mThreadCounter,
+				mAbstractLocationState);
+	}
+
+	@Override
+	public boolean containsVariable(final IProgramVarOrConst var) {
+		return mState.containsVariable(var);
+	}
+
+	@Override
+	public ImmutableSet<IProgramVarOrConst> getVariables() {
+		return mState.getVariables();
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> renameVariables(
+			final Map<IProgramVarOrConst, IProgramVarOrConst> old2newVars) {
+		return new GuardedInterferenceDomainState<>(mState.renameVariables(old2newVars), mThreadCounter,
+				mAbstractLocationState);
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> patch(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> dominator) {
+		return new GuardedInterferenceDomainState<>(mState.patch(dominator.state()), mThreadCounter,
+				mAbstractLocationState);
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> intersect(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		return new GuardedInterferenceDomainState<>(mState.intersect(other.state()),
+				mThreadCounter.intersect(other.threadCounter()),
+				mAbstractLocationState.intersect(other.abstractLocationState()));
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> union(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		return new GuardedInterferenceDomainState<>(mState.union(other.state()),
+				mThreadCounter.union(other.threadCounter()),
+				mAbstractLocationState.union(other.abstractLocationState()));
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mState.isEmpty();
+	}
+
+	@Override
+	public boolean isBottom() {
+		return mState.isBottom();
+	}
+
+	@Override
+	public boolean isEqualTo(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		if (!(other.state().isEqualTo(this.state()))) {
+			return false;
+		}
+		if (!other.threadCounter().isEqual(threadCounter())) {
+			return false;
+		}
+		if (!other.abstractLocationState().isEqual(this.abstractLocationState())) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public SubsetResult isSubsetOf(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		SubsetResult result = other.state().isSubsetOf(this.state());
+		// TODO: maybe be less strict
+		if (!other.threadCounter().isEqual(threadCounter())) {
+			result = SubsetResult.NONE;
+		}
+		if (!other.abstractLocationState().isEqual(this.abstractLocationState())) {
+			result = SubsetResult.NONE;
+		}
+		return result;
+	}
+
+	@Override
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> compact() {
+		return new GuardedInterferenceDomainState<>(mState.compact(), mThreadCounter, mAbstractLocationState);
+	}
+
+	// TODO: include threadcounter, abstractloc as ghost variables ?
+	@Override
+	public Term getTerm(final Script script) {
+		return mState.getTerm(script);
+	}
+
+	@Override
+	public String toLogString() {
+		return state().toString() + " | " + threadCounter().toString() + " | " + abstractLocationState().toString();
+	}
+}

@@ -38,7 +38,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mGuardedInterferenceDomain;
 	private final Set<IProgramNonOldVar> mGlobalVariables;
-	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, SingleStateRecord<STATE, LOC>> mInterferenceCache = new HashMap<>();
+	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, GuardedInterferenceDomainState<STATE, ACTION, LOC>> mInterferenceCache = new HashMap<>();
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 
 	private final int MAXITF = 9;
@@ -91,8 +91,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 		// 1. normal poststate
 		// TODO: TODO: TODO: i think i need to respect abstract location here too, not just during interference
-		GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> postRelationalState = oldstate.apply(mUnderlyingDomain,
-				mUnderlyingPostOp, transition);
+		GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> postRelationalState = oldstate.apply(mUnderlyingPostOp,
+				transition);
 //		mLogger.info("post(" + oldstate.toLogString() + ", " + transition + ") = " + postRelationalState);
 
 		// 2. Add new interference to global map
@@ -141,7 +141,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		} else {
 			throw new IllegalArgumentException("Unsupported fork transition type");
 		}
-		newState = newState.apply(mUnderlyingDomain, mUnderlyingPostOp, transition);
+		newState = newState.apply(mUnderlyingPostOp, transition);
 		// apply interferences
 		newState = stateAfterInterferences(newState, mCurrentThreadName);
 		mNewInterferences.addForkInterference(mCurrentThreadName, transition, oldstate.getSingleState().state(),
@@ -193,7 +193,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	}
 
 	private record InterferenceStatePair<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
-			Interference<STATE, ACTION, LOC> interf, SingleStateRecord<STATE, LOC> targetState) {
+			Interference<STATE, ACTION, LOC> interf, GuardedInterferenceDomainState<STATE, ACTION, LOC> targetState) {
 	}
 
 	private GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> interferenceFixpoint(
@@ -284,8 +284,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			final String ownerThread) {
 
 //		final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> resultDisj = null;
-		final Set<SingleStateRecord<STATE, LOC>> disjunction = new HashSet<>();
-		for (final SingleStateRecord<STATE, LOC> singleState : newState.getStates()) {
+		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjunction = new HashSet<>();
+		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState : newState.getStates()) {
 			// 2. check abstract locations (is interfering thread in location where it matches the interference
 			// action)
 			final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()
@@ -311,11 +311,12 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				disjunction.add(interferedState);
 			}
 		}
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, MAXITF, disjunction);
+		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjunction, MAXITF);
 	}
 
-	private SingleStateRecord<STATE, LOC> applyInterferenceToSTATE(final Interference<STATE, ACTION, LOC> interference,
-			final SingleStateRecord<STATE, LOC> singleState) {
+	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyInterferenceToSTATE(
+			final Interference<STATE, ACTION, LOC> interference,
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
 		// add variables to both states to be able to intersect
 		final STATE interferingState = interference.state();
 		final STATE stateState = singleState.state();
@@ -346,8 +347,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				unionState = unionState.union(state);
 			}
 		}
-		var guardedState = new SingleStateRecord<>(unionState, singleState.threadCounter(),
-				singleState.abstractLocationState());
+		var guardedState = new GuardedInterferenceDomainState<STATE, ACTION, LOC>(unionState,
+				singleState.threadCounter(), singleState.abstractLocationState());
 		guardedState = guardedState.movedTo(interference.action().getPrecedingProcedure(),
 				mAbstractLocationMap.getAbstractLocation(interference.action().getTarget()));
 		return guardedState;

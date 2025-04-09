@@ -29,4 +29,5 @@ modifies x;
     if (x == 3) {
         x := 5;
     }
+    assert x == 2 || x == 3 || x == 5;
 }

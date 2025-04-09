@@ -112,6 +112,7 @@ public final class AbstractInterpreter {
 			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params,
 			final IUltimateServiceProvider services) {
 		if (IcfgUtils.isConcurrent(root)) {
+//			return new FixpointEngineConcurrent<>(params, FixpointEngine::new, root);
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final String selectedLocationAbstraction = prefs
 					.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);

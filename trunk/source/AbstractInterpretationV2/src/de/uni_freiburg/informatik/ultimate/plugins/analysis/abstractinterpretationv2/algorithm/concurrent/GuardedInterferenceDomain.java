@@ -2,9 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -30,7 +30,9 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 	private final Map<String, ? extends LOC> mEntryLocs;
-	AtomicInteger counter = new AtomicInteger();
+	int locationCounter = 0;
+	private IIcfg<? extends LOC> mCfg;
+	private final int MAXSIZE = 10;
 
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
 			final ILogger logger, final String locationAbstraction) {
@@ -39,23 +41,28 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 
 		mUnderlyingDomain = underlying;
 		mEntryLocs = cfg.getProcedureEntryNodes();
+		// TODO: enum for setting strings
+		// TODO: parametrize countervalues
 		mAbstractLocationMap = switch (locationAbstraction) {
 		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
-		case "Fully precise" -> new AbstractLocationMap<>((l -> counter.getAndIncrement()), mEntryLocs);
+		case "Fully precise" -> new AbstractLocationMap<>((l -> locationCounter++), mEntryLocs);
 		case "Heuristic splitting" -> new AbstractLocationMap<>(l -> {
 			final var incoming = l.getIncomingEdges();
 			for (final IcfgEdge icfgEdge : incoming) {
 				if (shouldDifferentiate(icfgEdge.getTransformula())) {
-					return counter.getAndIncrement();
+					return locationCounter++;
 				}
 			}
-			return counter.get();
+			return locationCounter;
 		}, mEntryLocs);
 		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		};
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
 				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences, mAbstractLocationMap);
-		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying, mThreadInstanceCounterFactory);
+		final var singleWidenOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
+		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying,
+				singleWidenOperator);
+		mCfg = cfg;
 	}
 
 	private static boolean shouldDifferentiate(final UnmodifiableTransFormula tf) {
@@ -69,9 +76,6 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 		if (assigned.isEmpty()) {
 			return true;
 		}
-//		if (assigned.size() > 1) {
-//			return true;
-//		}
 		return false;
 	}
 
@@ -93,19 +97,28 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 
 	@Override
 	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> createTopState() {
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, 999, mUnderlyingDomain.createTopState(),
-				mThreadInstanceCounterFactory.createTopState());
+		final GuardedInterferenceDomainState<STATE, ACTION, LOC> topstate = new GuardedInterferenceDomainState<>(
+				mUnderlyingDomain.createTopState(), mThreadInstanceCounterFactory.createTopState(), null);
+		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState = new DisjunctiveAbstractState<>(
+				topstate);
+		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjState, MAXSIZE);
 	}
 
 	@Override
 	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> createBottomState() {
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, 999, mUnderlyingDomain.createBottomState(),
-				mThreadInstanceCounterFactory.createBottomState());
+		final GuardedInterferenceDomainState<STATE, ACTION, LOC> topstate = new GuardedInterferenceDomainState<>(
+				mUnderlyingDomain.createTopState(), mThreadInstanceCounterFactory.createBottomState(), null);
+		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState = new DisjunctiveAbstractState<>(
+				topstate);
+		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjState, MAXSIZE);
 	}
 
 	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> createBottomPreconditionState() {
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, 999, mUnderlyingDomain.createTopState(),
-				mThreadInstanceCounterFactory.createBottomState());
+		final GuardedInterferenceDomainState<STATE, ACTION, LOC> topstate = new GuardedInterferenceDomainState<>(
+				mUnderlyingDomain.createTopState(), mThreadInstanceCounterFactory.createBottomState(), null);
+		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState = new DisjunctiveAbstractState<>(
+				topstate);
+		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjState, MAXSIZE);
 	}
 
 	@Override
