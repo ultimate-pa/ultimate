@@ -23,10 +23,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -60,49 +57,39 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessa
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public abstract class StandardFunctionHandler2 {
-	protected final LocationFactory mLocationFactory;
 	protected final ExpressionTranslation mExpressionTranslation;
 	protected final MemoryHandler mMemoryHandler;
 	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
 	protected final ProcedureManager mProcedureManager;
-	protected final CTranslationResultReporter mReporter;
 	protected final Map<String, IASTNode> mFunctionTable;
 	protected final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	protected final INameHandler mNameHandler;
 	protected final TypeSizes mTypeSizes;
-	protected final FlatSymbolTable mSymboltable;
 	protected final TranslationSettings mSettings;
 	protected final ExpressionResultTransformer mExprResultTransformer;
 	protected final ITypeHandler mTypeHandler;
 	protected final CExpressionTranslator mCEpressionTranslator;
 	protected final DataRaceChecker mDataRaceChecker;
-	protected final ILogger mLogger;
 
-	public StandardFunctionHandler2(final ILogger logger, final Map<String, IASTNode> functionTable,
+	public StandardFunctionHandler2(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
-			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
-			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final TypeSizes typeSizes, final TranslationSettings settings,
+			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
 			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		mLogger = logger;
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeAndOffsetComputer;
 		mProcedureManager = procedureManager;
-		mReporter = reporter;
 		mFunctionTable = functionTable;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
-		mSymboltable = symboltable;
 		mSettings = settings;
 		mExprResultTransformer = expressionResultTransformer;
-		mLocationFactory = locationFactory;
 		mTypeHandler = typeHandler;
 		mCEpressionTranslator = cEpressionTranslator;
 		mDataRaceChecker = dataRaceChecker;

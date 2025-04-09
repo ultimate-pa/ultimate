@@ -9,10 +9,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -36,20 +33,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class TimeStandardFunctionHandler extends StandardFunctionHandler2 {
-	public TimeStandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
+	public TimeStandardFunctionHandler(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
-			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
-			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final TypeSizes typeSizes, final TranslationSettings settings,
+			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
 			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(logger, functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
-				typeSizeAndOffsetComputer, procedureManager, reporter, typeSizes, symboltable, settings,
-				expressionResultTransformer, locationFactory, typeHandler, cEpressionTranslator, dataRaceChecker);
+		super(functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
+				typeSizeAndOffsetComputer, procedureManager, typeSizes, settings, expressionResultTransformer,
+				typeHandler, cEpressionTranslator, dataRaceChecker);
 	}
 
 	@Override

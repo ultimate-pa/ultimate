@@ -21,10 +21,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationResultReporter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -45,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class AtomicStandardfunctionHandler extends StandardFunctionHandler2 {
@@ -54,17 +50,16 @@ public class AtomicStandardfunctionHandler extends StandardFunctionHandler2 {
 	 */
 	private static final int MEMORY_ORDER_SEQ_CST = 5;
 
-	public AtomicStandardfunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
+	public AtomicStandardfunctionHandler(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final CTranslationResultReporter reporter, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
-			final TranslationSettings settings, final ExpressionResultTransformer expressionResultTransformer,
-			final LocationFactory locationFactory, final ITypeHandler typeHandler,
+			final TypeSizes typeSizes, final TranslationSettings settings,
+			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
 			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(logger, functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
-				typeSizeAndOffsetComputer, procedureManager, reporter, typeSizes, symboltable, settings,
-				expressionResultTransformer, locationFactory, typeHandler, cEpressionTranslator, dataRaceChecker);
+		super(functionTable, auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler,
+				typeSizeAndOffsetComputer, procedureManager, typeSizes, settings, expressionResultTransformer,
+				typeHandler, cEpressionTranslator, dataRaceChecker);
 	}
 
 	@Override
