@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public class AssertStandardFunctionHandler extends StandardFunctionHandler2 {
-	public AssertStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class AssertFunctionModelProvider extends FunctionModelProvider {
+	public AssertFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

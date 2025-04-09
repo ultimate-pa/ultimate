@@ -22,8 +22,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 
-public class SocketStandardFunctionHandler extends StandardFunctionHandler2 {
-	public SocketStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class SocketFunctionModelProvider extends FunctionModelProvider {
+	public SocketFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

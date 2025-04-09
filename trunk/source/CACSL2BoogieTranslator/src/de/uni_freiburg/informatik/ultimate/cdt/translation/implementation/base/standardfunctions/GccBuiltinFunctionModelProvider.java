@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class GccBuiltinStandardFunctionHandler extends StandardFunctionHandler2 {
-	public GccBuiltinStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class GccBuiltinFunctionModelProvider extends FunctionModelProvider {
+	public GccBuiltinFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

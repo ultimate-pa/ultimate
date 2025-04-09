@@ -57,11 +57,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class PthreadStandardFunctionHandler extends StandardFunctionHandler2 {
+public class PthreadFunctionModelProvider extends FunctionModelProvider {
 	private final ThreadIdManager mThreadIdManager;
 	private final FlatSymbolTable mSymboltable;
 
-	public PthreadStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+	public PthreadFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

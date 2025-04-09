@@ -1,12 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
@@ -18,19 +18,24 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class SetjmpStandardFunctionHandler extends StandardFunctionHandler2 {
-	public SetjmpStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class TimeFunctionModelProvider extends FunctionModelProvider {
+	public TimeFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
@@ -46,16 +51,21 @@ public class SetjmpStandardFunctionHandler extends StandardFunctionHandler2 {
 	public Collection<FunctionModel> getFunctionModels() {
 		final List<FunctionModel> result = new ArrayList<>();
 
-		// longjmp https://en.cppreference.com/w/c/program/longjmp
-		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
-		// overraproximation for that case
-		result.add(new FunctionModel("longjmp",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID))));
-
-		// setjmp https://en.cppreference.com/w/c/program/setjmp
-		result.add(new FunctionModel("_setjmp", this::handleSetjmp));
-		result.add(new FunctionModel("setjmp", this::handleSetjmp));
+		/**
+		 * 7.27 Date and time <time.h>
+		 *
+		 * We just overapproximate all functions
+		 */
+		result.add(new FunctionModel("ctime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 1, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+		result.add(new FunctionModel("localtime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 1, CPointer.voidPointer())));
+		result.add(new FunctionModel("mktime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 1, CPointer.voidPointer())));
+		result.add(new FunctionModel("strftime", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 4, new CPrimitive(CPrimitives.ULONG))));
+		// https://en.cppreference.com/w/c/chrono/time
+		result.add(new FunctionModel("time", this::handleTime));
 
 		return result;
 	}
@@ -65,11 +75,20 @@ public class SetjmpStandardFunctionHandler extends StandardFunctionHandler2 {
 		return List.of();
 	}
 
-	// For now we do not handle setjmp properly. We crash on longjmp, so it is sufficient to always return 0 for setjmp.
-	private Result handleSetjmp(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleTime(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
-		return new ExpressionResult(new RValue(
-				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
+		final IASTInitializerClause[] arguments = node.getArguments();
+		checkArguments(loc, 1, name, arguments);
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// TODO: Also write the return value to the pointer, if it is not NULL
+		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
+		final CPrimitive cType = new CPrimitive(CPrimitives.LONG);
+		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, cType, SFO.AUXVAR.NONDET);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
+		final LRValue returnValue = new RValue(auxvarinfo.getExp(), cType);
+		builder.setLrValue(returnValue);
+		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
+				builder);
+		return builder.build();
 	}
 }

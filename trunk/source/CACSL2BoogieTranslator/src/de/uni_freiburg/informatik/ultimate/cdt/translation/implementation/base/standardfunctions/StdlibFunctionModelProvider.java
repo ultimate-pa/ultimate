@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class StdlibStandardFunctionHandler extends StandardFunctionHandler2 {
-	public StdlibStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class StdlibFunctionModelProvider extends FunctionModelProvider {
+	public StdlibFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

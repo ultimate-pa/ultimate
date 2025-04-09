@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class FloatMathStandardFunctionHandler extends StandardFunctionHandler2 {
+public class FloatMathFunctionModelProvider extends FunctionModelProvider {
 	//@formatter:off
 	private final static String[] SUPPORTED_FLOAT_OPERATIONS = {
 			"sqrt",
@@ -287,7 +287,7 @@ public class FloatMathStandardFunctionHandler extends StandardFunctionHandler2 {
 			);
 	//@formatter:on
 
-	public FloatMathStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+	public FloatMathFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

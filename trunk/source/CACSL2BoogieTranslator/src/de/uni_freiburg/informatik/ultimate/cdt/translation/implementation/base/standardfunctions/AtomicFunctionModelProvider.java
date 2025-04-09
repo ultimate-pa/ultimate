@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class AtomicStandardfunctionHandler extends StandardFunctionHandler2 {
+public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	/**
 	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
 	 */
 	private static final int MEMORY_ORDER_SEQ_CST = 5;
 
-	public AtomicStandardfunctionHandler(final Map<String, IASTNode> functionTable,
+	public AtomicFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

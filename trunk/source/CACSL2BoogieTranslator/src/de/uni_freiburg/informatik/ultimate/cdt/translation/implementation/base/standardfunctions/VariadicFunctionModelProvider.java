@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class VariadicStandardFunctionHandler extends StandardFunctionHandler2 {
-	public VariadicStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class VariadicFunctionModelProvider extends FunctionModelProvider {
+	public VariadicFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

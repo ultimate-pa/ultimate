@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class StringStandardFunctionHandler extends StandardFunctionHandler2 {
-	public StringStandardFunctionHandler(final Map<String, IASTNode> functionTable,
+public class StringFunctionModelProvider extends FunctionModelProvider {
+	public StringFunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,

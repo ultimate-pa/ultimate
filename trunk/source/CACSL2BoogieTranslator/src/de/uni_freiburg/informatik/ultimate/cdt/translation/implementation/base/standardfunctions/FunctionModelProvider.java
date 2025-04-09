@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public abstract class StandardFunctionHandler2 {
+public abstract class FunctionModelProvider {
 	protected final ExpressionTranslation mExpressionTranslation;
 	protected final MemoryHandler mMemoryHandler;
 	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
@@ -73,7 +73,7 @@ public abstract class StandardFunctionHandler2 {
 	protected final CExpressionTranslator mCEpressionTranslator;
 	protected final DataRaceChecker mDataRaceChecker;
 
-	public StandardFunctionHandler2(final Map<String, IASTNode> functionTable,
+	public FunctionModelProvider(final Map<String, IASTNode> functionTable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
