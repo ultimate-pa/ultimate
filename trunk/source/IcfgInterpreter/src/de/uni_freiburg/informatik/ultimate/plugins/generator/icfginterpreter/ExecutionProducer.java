@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
@@ -28,6 +29,8 @@ public class ExecutionProducer {
 
 		IcfgProgramExecution<?> makeExecution(NonDeterministicChoice ndc, IcfgLocation source);
 	}
+
+	private static boolean printExecution = false;
 
 	public static void makeExecutions(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
 			final ILogger logger, final IIcfgExecutionProducer producer, final Random random) throws Exception {
@@ -62,10 +65,22 @@ public class ExecutionProducer {
 		logger.info(producer.getClass().getSimpleName() + " used " + (executionTime / 1000000.0) + "ms for execution.");
 	}
 
+	private static <LOC extends IcfgLocation> HashMap<String, Set<IcfgLocation>> getErrorLocations(
+			final IIcfg<LOC> icfg) {
+		final HashMap<String, Set<IcfgLocation>> out = new HashMap<>();
+
+		for (final Entry<String, Set<LOC>> entry : icfg.getProcedureErrorNodes().entrySet()) {
+			out.put(entry.getKey(), new HashSet<>(entry.getValue()));
+		}
+		return out;
+	}
+
 	public static class CompiledEnumExecutionProducer<T extends Enum<T> & IVariableName>
 			implements IIcfgExecutionProducer {
 		private HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> compiledEdges;
 		private Function<NonDeterministicChoice, EnumState<T>> stateMaker;
+		HashSet<IcfgLocation> mErrorLocation;
+		private HashMap<String, Set<IcfgLocation>> mErrorMap;
 
 		@Override
 		public void init(final InterpretedIcfg intIcfg) {
@@ -78,6 +93,8 @@ public class ExecutionProducer {
 				e.printStackTrace();
 				return;
 			}
+
+			mErrorMap = getErrorLocations(intIcfg.getIcfg());
 		}
 
 		@Override
@@ -112,12 +129,22 @@ public class ExecutionProducer {
 				nextEdges = compiledEdges.getOrDefault(nextEdge.getTarget(), new ArrayList<>());
 			}
 
-			final StringBuilder out = new StringBuilder(states.get(0).toString());
-			for (int i = 0; i < edges.size(); i++) {
-				out.append("\n->\n").append(edges.get(i));
-				out.append("\n->\n").append(states.get(i + 1));
+			if (printExecution) {
+				final StringBuilder out = new StringBuilder();
+				out.append(states.get(0).toString());
+				for (int i = 0; i < edges.size(); i++) {
+					out.append("\n->\n").append(edges.get(i));
+					out.append("\n->\n").append(states.get(i + 1));
+				}
+				IcfgInterpreterObserver.getLogger().info(out.toString());
 			}
-			IcfgInterpreterObserver.getLogger().info(out.toString());
+
+			// Report if the exit location was an error location
+			final IcfgLocation finalLocation = edges.get(edges.size() - 1).getTarget();
+			if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
+				IcfgInterpreterObserver.getLogger()
+						.error("Execution successfully ended at error location " + finalLocation.toString());
+			}
 			return null;
 		}
 
@@ -126,11 +153,13 @@ public class ExecutionProducer {
 	public static class LiteralExecutionProducer implements IIcfgExecutionProducer {
 		private ArrayList<Variable> mVariables;
 		private InterpretedIcfg mIIcfg;
+		private HashMap<String, Set<IcfgLocation>> mErrorMap;
 
 		@Override
 		public void init(final InterpretedIcfg intIcfg) {
 			mVariables = new ArrayList<>(intIcfg.getVariables());
 			mIIcfg = intIcfg;
+			mErrorMap = getErrorLocations(intIcfg.getIcfg());
 		}
 
 		@Override
@@ -164,9 +193,16 @@ public class ExecutionProducer {
 				nextEdges.addAll(mIIcfg.getOutEdges(nextEdge.mTarget));
 			}
 
-			IcfgInterpreterObserver.getLogger().info(execution);
+			if (printExecution) {
+				IcfgInterpreterObserver.getLogger().info(execution.toString());
+			}
+			// Report if the exit location was an error location
+			final IcfgLocation finalLocation = execution.getFinalStep().getLocation();
+			if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
+				IcfgInterpreterObserver.getLogger()
+						.error("Execution successfully ended at error location " + finalLocation.toString());
+			}
 			return null;
-
 		}
 
 	}

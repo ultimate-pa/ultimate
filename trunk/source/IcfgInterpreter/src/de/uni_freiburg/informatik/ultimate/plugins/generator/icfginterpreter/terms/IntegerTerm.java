@@ -12,9 +12,14 @@ public abstract class IntegerTerm extends ExecutionTerm {
 	@Override
 	public abstract IntegerTerm simplify();
 
-	// @Override
-	// public abstract IntegerDomain evaluate(HashMap<Variable<?>, Domain<?>> variableDomains);
+	@Override
+	public abstract Long evaluate(ProgramState currentState, ProgramState nextState);
 
 	@Override
-	public abstract Integer evaluate(ProgramState currentState, ProgramState nextState);
+	protected abstract IntegerTerm replaceSubterms(ExecutionTerm old, ExecutionTerm replacement);
+
+	@Override
+	public IntegerTerm replaceTerm(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return (IntegerTerm) super.replaceTerm(old, replacement);
+	}
 }

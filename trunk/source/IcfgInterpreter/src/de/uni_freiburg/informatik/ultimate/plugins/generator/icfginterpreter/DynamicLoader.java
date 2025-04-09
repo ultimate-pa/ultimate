@@ -25,10 +25,14 @@ import org.osgi.framework.wiring.BundleWiring;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.EnumState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.IVariableName;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.JavaCodeEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
@@ -437,7 +441,7 @@ public class DynamicLoader {
 
 		final HashSet<IProgramVar> visited = new HashSet<>();
 		for (final Variable variable : variables) {
-			final IProgramVar programVar = variable.getVariableTerm().programVar;
+			final IProgramVar programVar = variable.getVariableTerm().mProgramVar;
 			if (programVar == null || visited.contains(programVar)) {
 				continue;
 			}
@@ -462,7 +466,7 @@ public class DynamicLoader {
 		final File codeFile = new File(compileDir, classFullName + ".java");
 
 		final HashSet<IProgramVar> progVars = Util.map(variables, (variable) -> {
-			return variable.getVariableTerm().programVar;
+			return variable.getVariableTerm().mProgramVar;
 		}, new HashSet<>());
 		progVars.remove(null);
 
@@ -497,16 +501,6 @@ public class DynamicLoader {
 		final String uniqueNameSafe = edge.getUniqueName().replace("-", "_").replace("#", "_");
 		final String className = getVersionedClassName("JCEdge_" + uniqueNameSafe);
 
-		final ArrayList<Class<?>> parameterClasses = new ArrayList<>();
-		final ArrayList<Object> parameterObjects = new ArrayList<>();
-		parameterClasses.add(IcfgLocation.class);
-		parameterClasses.add(IcfgLocation.class);
-		parameterObjects.add(edge.mSource);
-		parameterObjects.add(edge.mTarget);
-
-		final Class<?>[] paramClasses = Util.fillArray(parameterClasses, new Class<?>[parameterClasses.size()]);
-		final Object[] paramObjects = Util.fillArray(parameterObjects, new Object[parameterObjects.size()]);
-
 		final String stateType = EnumState.class.getSimpleName() + "<" + enumClassName + ">";
 
 		final StringBuilder code = new StringBuilder();
@@ -526,12 +520,16 @@ public class DynamicLoader {
 		code.append(makeImport(BooleanRestriction.class));
 		code.append(makeImport(ArrayRestriction.class));
 		code.append(makeImport(BitVectorRestriction.class));
+		code.append(makeImport(UnmodifiableTransFormula.class));
 		code.append("import ").append(mOutputPackage).append(".").append(enumClassName).append(";\n\n");
 		code.append("public class " + className + " implements " + JavaCodeEdge.class.getSimpleName() + "<"
 				+ enumClassName + "> {\n");
-		code.append("\tpublic final IcfgLocation source, target;\n\n");
-		code.append("\tpublic " + className + "(IcfgLocation int_source, IcfgLocation int_target) {\n");
+		code.append("\tpublic final IcfgLocation source, target;\n");
+		code.append("\tpublic final UnmodifiableTransFormula mFormula;\n\n");
+		code.append("\tpublic " + className
+				+ "(IcfgLocation int_source, IcfgLocation int_target, UnmodifiableTransFormula int_formula) {\n");
 		code.append("\t\tsource = int_source;\n\t\ttarget = int_target;\n");
+		code.append("\t\tmFormula = int_formula;\n");
 		code.append("\t}\n");
 		code.append("\t@Override\n");
 		code.append("\tpublic IcfgLocation getSource() {\n\t\treturn source;\n\t}\n\n");
@@ -554,7 +552,8 @@ public class DynamicLoader {
 
 		code.append("\t@Override\n");
 		code.append("\tpublic String toString() {\n");
-		code.append("\t\t return \"Edge \" + source.toString() + \" to \" + target.toString();");
+		code.append("\t\t return \"Edge \" + source.toString() + \" to \" + target.toString()")
+				.append(" + \" with \" + mFormula.getFormula().toStringDirect();");
 		code.append("\t}\n");
 
 		code.append("}").toString();
@@ -567,10 +566,14 @@ public class DynamicLoader {
 			final ArrayList<File> neededProjects = new ArrayList<>();
 			neededProjects.add(getProjectOfClass(IcfgInterpreter.class));
 			neededProjects.add(getProjectOfClass(IProgramVar.class));
+			neededProjects.add(getProjectOfClass(Term.class));
 			neededProjects.add(getProjectOfClass(ModifiableExplicitEdgesMultigraph.class));
 			neededProjects.add(getProjectOfClass(IElement.class));
 
 			final LoadedClass stateClass = loadClass(main, classFullName, new HashSet<>(), neededProjects);
+
+			final Class<?>[] paramClasses = { IcfgLocation.class, IcfgLocation.class, UnmodifiableTransFormula.class };
+			final Object[] paramObjects = { edge.mSource, edge.mTarget, edge.getTransFormula() };
 
 			return (JavaCodeEdge<T>) stateClass.createInstanceUncast(paramClasses, paramObjects);
 		} catch (final Exception e) {

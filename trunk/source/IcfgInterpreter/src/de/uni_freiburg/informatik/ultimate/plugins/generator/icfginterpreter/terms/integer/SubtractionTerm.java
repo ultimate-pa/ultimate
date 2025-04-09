@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -17,13 +18,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the binary function "X - Y"
  */
 public class SubtractionTerm extends IntegerTerm {
-	private final IntegerTerm[] subTerms;
+	private final IntegerTerm[] mSubTerms;
 
-	public SubtractionTerm(final IntegerTerm... mSubterms) {
+	public SubtractionTerm(final IntegerTerm... subterms) {
 		super(SMTLIBConstants.MINUS);
-		subTerms = mSubterms;
-		assert subTerms.length > 1;
-		for (final IntegerTerm subTerm : subTerms) {
+		mSubTerms = subterms;
+		assert mSubTerms.length > 1;
+		for (final IntegerTerm subTerm : mSubTerms) {
 			assert subTerm.returnType == ReturnType.Int;
 		}
 	}
@@ -33,14 +34,14 @@ public class SubtractionTerm extends IntegerTerm {
 	 */
 	@Override
 	public AdditionTerm simplify() {
-		final IntegerTerm[] mSubTerms = new IntegerTerm[subTerms.length];
+		final IntegerTerm[] subTerms = new IntegerTerm[mSubTerms.length];
 
-		mSubTerms[0] = subTerms[0].simplify();
-		for (int i = 1; i < subTerms.length; i++) {
-			mSubTerms[i] = subTerms[i].negate().simplify();
+		subTerms[0] = mSubTerms[0].simplify();
+		for (int i = 1; i < mSubTerms.length; i++) {
+			subTerms[i] = mSubTerms[i].negate().simplify();
 		}
 
-		return new AdditionTerm(mSubTerms);
+		return new AdditionTerm(subTerms);
 	}
 
 	/**
@@ -48,24 +49,24 @@ public class SubtractionTerm extends IntegerTerm {
 	 */
 	@Override
 	public AdditionTerm negate() {
-		final IntegerTerm[] mSubTerms = subTerms.clone();
-		mSubTerms[0] = subTerms[0].negate();
-		return new AdditionTerm(mSubTerms);
+		final IntegerTerm[] subTerms = mSubTerms.clone();
+		subTerms[0] = mSubTerms[0].negate();
+		return new AdditionTerm(subTerms);
 	}
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(subTerms));
+		return new ArrayList<>(Arrays.asList(mSubTerms));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(");
 
-		subTerms[0].toString(out, 0);
-		for (int i = 1; i < subTerms.length; i++) {
+		mSubTerms[0].toString(out, 0);
+		for (int i = 1; i < mSubTerms.length; i++) {
 			out.append(" - ");
-			subTerms[i].toString(out, 0);
+			mSubTerms[i].toString(out, 0);
 		}
 		return out.append(")");
 	}
@@ -77,8 +78,8 @@ public class SubtractionTerm extends IntegerTerm {
 		}
 		final SubtractionTerm castB = (SubtractionTerm) b;
 
-		final HashSet<IntegerTerm> subTermsA = new HashSet<>(Arrays.asList(subTerms));
-		final HashSet<IntegerTerm> subTermsB = new HashSet<>(Arrays.asList(castB.subTerms));
+		final HashSet<IntegerTerm> subTermsA = new HashSet<>(Arrays.asList(mSubTerms));
+		final HashSet<IntegerTerm> subTermsB = new HashSet<>(Arrays.asList(castB.mSubTerms));
 
 		return subTermsA.containsAll(subTermsB) && subTermsB.containsAll(subTermsA);
 	}
@@ -86,7 +87,7 @@ public class SubtractionTerm extends IntegerTerm {
 	@Override
 	public int hashCode() {
 		int result = 83;
-		for (final IntegerTerm subTerm : subTerms) {
+		for (final IntegerTerm subTerm : mSubTerms) {
 			result = result * 31 + subTerm.hashCode();
 		}
 		return result;
@@ -94,37 +95,28 @@ public class SubtractionTerm extends IntegerTerm {
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = subTerms[0].getVariables();
-		for (int i = 1; i < subTerms.length; i++) {
-			out.addAll(subTerms[i].getVariables());
+		final HashSet<Variable> out = mSubTerms[0].getVariables();
+		for (int i = 1; i < mSubTerms.length; i++) {
+			out.addAll(mSubTerms[i].getVariables());
 		}
 		return out;
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		final Term[] parameters = new Term[subTerms.length];
-		for (int i = 0; i < subTerms.length; i++) {
-			parameters[i] = subTerms[i].toSMTTerm(theory);
+		final Term[] parameters = new Term[mSubTerms.length];
+		for (int i = 0; i < mSubTerms.length; i++) {
+			parameters[i] = mSubTerms[i].toSMTTerm(theory);
 		}
 		return Util.makeTerm(mSymbol, theory, parameters);
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<IntegerDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final IntegerTerm[] mSubTerms = new
-	 * IntegerTerm[subTerms.length]; for (int i = 0; i < subTerms.length; i++) { mSubTerms[i] =
-	 * subTerms[i].equals(current) ? (IntegerTerm) replacement : subTerms[i]; }
-	 *
-	 * return new SubtractionTerm(mSubTerms); }
-	 */
-
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		int out = subTerms[0].evaluate(currentState, nextState);
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		long out = mSubTerms[0].evaluate(currentState, nextState);
 
-		for (int i = 1; i < subTerms.length; i++) {
-			out -= subTerms[i].evaluate(currentState, nextState);
+		for (int i = 1; i < mSubTerms.length; i++) {
+			out -= mSubTerms[i].evaluate(currentState, nextState);
 		}
 
 		return out;
@@ -133,12 +125,23 @@ public class SubtractionTerm extends IntegerTerm {
 	@Override
 	public String toCode() {
 		final ArrayList<String> elements = new ArrayList<>();
-		for (final IntegerTerm subTerm : subTerms) {
+		for (final IntegerTerm subTerm : mSubTerms) {
 			elements.add(subTerm.toCode());
 		}
 		if (elements.size() == 1) {
 			return elements.get(0);
 		}
 		return "(" + String.join(" - ", elements) + ")";
+	}
+
+	@Override
+	protected SubtractionTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm[] subTerms = new IntegerTerm[mSubTerms.length];
+
+		for (int i = 0; i < mSubTerms.length; i++) {
+			subTerms[i] = mSubTerms[i].replaceTerm(old, replacement);
+		}
+
+		return new SubtractionTerm(subTerms);
 	}
 }

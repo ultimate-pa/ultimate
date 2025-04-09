@@ -9,6 +9,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
@@ -67,15 +69,15 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public int havocInt(final IProgramVar variable, final IntegerRestriction values) {
+	public long havocInt(final IProgramVar variable, final IntegerRestriction values) {
 		if (values == null) {
 			return (Math.abs(xorShift()) % mHavocCapMap) + mMinHavocInt;
 		}
 
 		final int lowerMax = Math.min(mHavocCapMap, values.getValueCount());
-		final int higherMin = Math.max(values.getGreater(), mMinHavocInt);
-		final int index = (Math.abs(xorShift()) % lowerMax);
-		int value = higherMin + 1 + index;
+		final long higherMin = Math.max(values.getGreater(), mMinHavocInt);
+		final long index = (Math.abs(xorShift()) % lowerMax);
+		long value = higherMin + 1 + index;
 		while (values.getInequal().contains(value)) {
 			value++;
 		}
@@ -117,7 +119,7 @@ public class RNGChoice implements NonDeterministicChoice {
 		case SMTLIBConstants.BOOL:
 			return 0 < hash(hashKey);
 		case SMTLIBConstants.INT:
-			return (Math.abs((int) hash(hashKey)) % mHavocCapMap) + mMinHavocInt;
+			return (Math.abs(hash(hashKey)) % mHavocCapMap) + mMinHavocInt;
 		}
 		return null;
 	}

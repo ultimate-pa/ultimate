@@ -7,8 +7,8 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.ArraySelectTerm;
@@ -16,32 +16,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.IntegerSelectTerm;
 
 public class SelectTerm {
-	private final ArrayTerm array;
-	private final ExecutionTerm index;
+	private final ArrayTerm mArray;
+	private final ExecutionTerm mIndex;
 	public final static String mSymbol = SMTLIBConstants.SELECT;
 
-	public SelectTerm(final ArrayTerm mArray, final ExecutionTerm mIndex) {
-		assert mArray.keyType == mIndex.returnType;
-		array = mArray;
-		index = mIndex;
+	public SelectTerm(final ArrayTerm array, final ExecutionTerm index) {
+		assert array.keyType == index.returnType;
+		mArray = array;
+		mIndex = index;
 	}
 
 	public ArrayList<ExecutionTerm> getSubTerms() {
-		return Util.toList(array, index);
+		return Util.toList(mArray, mIndex);
 	}
 
 	public ArrayTerm getArray() {
-		return array;
+		return mArray;
 	}
 
 	public ExecutionTerm getIndex() {
-		return index;
+		return mIndex;
 	}
 
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(select ");
-		array.toString(out, 0).append(" ");
-		return index.toString(out, 0).append(")");
+		mArray.toString(out, 0).append(" ");
+		return mIndex.toString(out, 0).append(")");
 	}
 
 	@Override
@@ -51,18 +51,18 @@ public class SelectTerm {
 		}
 		final SelectTerm castB = (SelectTerm) b;
 
-		return array.equals(castB.array) && index.equals(castB.index);
+		return mArray.equals(castB.mArray) && mIndex.equals(castB.mIndex);
 	}
 
 	@Override
 	public int hashCode() {
-		final int result = 109 * 31 + array.hashCode();
-		return result * 31 + index.hashCode();
+		final int result = 109 * 31 + mArray.hashCode();
+		return result * 31 + mIndex.hashCode();
 	}
 
 	public HashSet<Variable> getVariables() {
-		final HashSet<Variable> out = array.getVariables();
-		out.addAll(index.getVariables());
+		final HashSet<Variable> out = mArray.getVariables();
+		out.addAll(mIndex.getVariables());
 		return out;
 	}
 
@@ -81,22 +81,22 @@ public class SelectTerm {
 	}
 
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, array.toSMTTerm(theory), index.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mArray.toSMTTerm(theory), mIndex.toSMTTerm(theory));
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<valueType> replaceSubTerm(ExecutionTerm<subT> current,
-	 * ExecutionTerm<subT> replacement) { ArrayTerm<keyType, valueType> mArray = array.equals(current) ?
-	 * (ArrayTerm<keyType, valueType>) replacement : array; ExecutionTerm<keyType> mIndex = index.equals(current) ?
-	 * (ExecutionTerm<keyType>) replacement : index; return new SelectTerm<>(mArray, mIndex); }
-	 */
-
 	public Object evaluate(final ProgramState currentState, final ProgramState nextState) {
-		final SMTArray mArray = array.evaluate(currentState, nextState);
-		return mArray.select(index.evaluate(currentState, nextState), currentState.getNDC());
+		final SMTArray array = mArray.evaluate(currentState, nextState);
+		return array.select(mIndex.evaluate(currentState, nextState), currentState.getNDC());
 	}
 
 	public String toCode() {
-		return array.toCode() + ".select(" + index.toCode() + ", nextState.getNDC())";
+		return mArray.toCode() + ".select(" + mIndex.toCode() + ", nextState.getNDC())";
+	}
+
+	public SelectTerm replaceTerm(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final ArrayTerm array = mArray.replaceTerm(old, replacement);
+		final ExecutionTerm index = mIndex.replaceTerm(old, replacement);
+
+		return new SelectTerm(array, index);
 	}
 }

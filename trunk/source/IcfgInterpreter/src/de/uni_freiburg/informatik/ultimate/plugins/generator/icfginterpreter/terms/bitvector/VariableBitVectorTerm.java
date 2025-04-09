@@ -6,10 +6,11 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BitVectorTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -34,7 +35,7 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 
 	@Override
 	public String getName() {
-		return mVariableTerm.name;
+		return mVariableTerm.mName;
 	}
 
 	@Override
@@ -43,7 +44,7 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 			return false;
 		}
 		final VariableBitVectorTerm castB = (VariableBitVectorTerm) b;
-		return mLength == castB.mLength && castB.mVariableTerm.termvar.equals(mVariableTerm.termvar);
+		return mLength == castB.mLength && castB.mVariableTerm.mTermVar.equals(mVariableTerm.mTermVar);
 	}
 
 	@Override
@@ -63,7 +64,7 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 
 	@Override
 	public BitVector evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (mVariableTerm.isInVar ? currentState : nextState).getBitVectorOf(mVariableTerm.programVar);
+		return (mVariableTerm.isInVar ? currentState : nextState).getBitVectorOf(mVariableTerm.mProgramVar);
 	}
 
 	@Override
@@ -86,5 +87,15 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 	@Override
 	public String toCode() {
 		return mVariableTerm.toCode();
+	}
+
+	@Override
+	protected VariableBitVectorTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return this;
+	}
+
+	@Override
+	public VariableBitVectorTerm replaceTermVariable(final TermVariable termVar) {
+		return new VariableBitVectorTerm(mLength, mVariableTerm.replaceTermVariable(termVar));
 	}
 }

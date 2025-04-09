@@ -1,10 +1,12 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class SMTArray {
 	private final HashMap<Object, Object> entries;

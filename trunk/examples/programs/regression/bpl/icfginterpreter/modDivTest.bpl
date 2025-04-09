@@ -1,6 +1,4 @@
-procedure main()
-{
-    var counter : int;
+procedure main() {
     var a : int;
     var b : int;
     var i : int;

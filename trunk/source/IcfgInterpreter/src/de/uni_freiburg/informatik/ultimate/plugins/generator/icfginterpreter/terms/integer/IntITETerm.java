@@ -31,14 +31,14 @@ public class IntITETerm extends IntegerTerm implements ITE {
 	 */
 	@Override
 	public IntITETerm negate() {
-		final IntegerTerm minusB = ite.B.negate();
-		final IntegerTerm minusC = ite.C.negate();
-		return new IntITETerm(ite.A, minusB, minusC);
+		final IntegerTerm minusB = ite.mB.negate();
+		final IntegerTerm minusC = ite.mC.negate();
+		return new IntITETerm(ite.mCondition, minusB, minusC);
 	}
 
 	@Override
 	public IntITETerm simplify() {
-		return new IntITETerm(ite.A.simplify(), ite.B.simplify(), ite.C.simplify());
+		return new IntITETerm(ite.mCondition.simplify(), ite.mB.simplify(), ite.mC.simplify());
 	}
 
 	@Override
@@ -76,26 +76,30 @@ public class IntITETerm extends IntegerTerm implements ITE {
 
 	@Override
 	public IntITETerm replaceCondition(final BooleanTerm replacement) {
-		return new IntITETerm(replacement, ite.B, ite.C);
+		return new IntITETerm(replacement, ite.mB, ite.mC);
 	}
 
 	@Override
 	public BooleanTerm getCondition() {
-		return ite.A;
+		return ite.mCondition;
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<IntegerDomain> replaceSubTerm(ExecutionTerm<subT>
-	 * current, ExecutionTerm<subT> replacement) { return new IntITETerm(ite.replaceSubTerm(current, replacement)); }
-	 */
-
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (Integer) ite.evaluate(currentState, nextState);
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return (Long) ite.evaluate(currentState, nextState);
 	}
 
 	@Override
 	public String toCode() {
 		return ite.toCode();
+	}
+
+	@Override
+	protected IntITETerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final BooleanTerm mA = ite.mCondition.replaceTerm(old, replacement);
+		final IntegerTerm mB = ite.mB.replaceTerm(old, replacement);
+		final IntegerTerm mC = ite.mC.replaceTerm(old, replacement);
+
+		return new IntITETerm(new ITETerm<>(mA, mB, mC));
 	}
 }

@@ -11,18 +11,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 /**
  * Represents the n-ary boolean function "A or B or C or ..."
  */
 public class OrTerm extends BooleanTerm {
-	private final BooleanTerm[] subTerms;
+	private final BooleanTerm[] mSubTerms;
 
-	public OrTerm(final BooleanTerm... mSubterms) {
+	public OrTerm(final BooleanTerm... subterms) {
 		super(SMTLIBConstants.OR);
-		subTerms = mSubterms;
-		assert subTerms.length >= 1;
+		mSubTerms = subterms;
+		assert mSubTerms.length >= 1;
 	}
 
 	/**
@@ -31,10 +32,10 @@ public class OrTerm extends BooleanTerm {
 	 */
 	@Override
 	public BooleanTerm negate() {
-		final BooleanTerm[] negatedTerms = new BooleanTerm[subTerms.length];
+		final BooleanTerm[] negatedTerms = new BooleanTerm[mSubTerms.length];
 
-		for (int i = 0; i < subTerms.length; i++) {
-			negatedTerms[i] = subTerms[i].negate();
+		for (int i = 0; i < mSubTerms.length; i++) {
+			negatedTerms[i] = mSubTerms[i].negate();
 		}
 
 		return new AndTerm(negatedTerms);
@@ -50,13 +51,13 @@ public class OrTerm extends BooleanTerm {
 		// Use HashSet to avoid duplicate terms, linked to preserve order (cosmetic decision)
 		final LinkedHashSet<BooleanTerm> tempTerms = new LinkedHashSet<>();
 
-		final ArrayList<BooleanTerm> newSubterms = new ArrayList<>(Arrays.asList(subTerms));
+		final ArrayList<BooleanTerm> newSubterms = new ArrayList<>(Arrays.asList(mSubTerms));
 
 		while (newSubterms.size() > 0) {
 			final BooleanTerm subterm = newSubterms.remove(0).simplify();
 
 			if (subterm instanceof OrTerm) {
-				newSubterms.addAll(Arrays.asList(((OrTerm) subterm).subTerms));
+				newSubterms.addAll(Arrays.asList(((OrTerm) subterm).mSubTerms));
 			} else if (subterm instanceof TrueTerm) {
 				return new TrueTerm();
 			} else if (subterm instanceof FalseTerm) {
@@ -88,7 +89,7 @@ public class OrTerm extends BooleanTerm {
 
 	@Override
 	public ArrayList<BooleanTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(subTerms));
+		return new ArrayList<>(Arrays.asList(mSubTerms));
 	}
 
 	@Override
@@ -96,7 +97,7 @@ public class OrTerm extends BooleanTerm {
 		final String indent = Util.getIndent(depth);
 		out.append(indent).append("or(\n");
 
-		for (final BooleanTerm subTerm : subTerms) {
+		for (final BooleanTerm subTerm : mSubTerms) {
 			subTerm.toString(out, depth + 1);
 			out.append(",\n");
 		}
@@ -111,11 +112,11 @@ public class OrTerm extends BooleanTerm {
 			return false;
 		}
 		final OrTerm castB = (OrTerm) b;
-		if (subTerms.length != castB.subTerms.length) {
+		if (mSubTerms.length != castB.mSubTerms.length) {
 			return false;
 		}
-		final HashSet<BooleanTerm> subTermsA = new HashSet<>(Arrays.asList(subTerms));
-		final HashSet<BooleanTerm> subTermsB = new HashSet<>(Arrays.asList(castB.subTerms));
+		final HashSet<BooleanTerm> subTermsA = new HashSet<>(Arrays.asList(mSubTerms));
+		final HashSet<BooleanTerm> subTermsB = new HashSet<>(Arrays.asList(castB.mSubTerms));
 
 		return subTermsA.containsAll(subTermsB) && subTermsB.containsAll(subTermsA);
 	}
@@ -123,7 +124,7 @@ public class OrTerm extends BooleanTerm {
 	@Override
 	public int hashCode() {
 		int result = 17;
-		for (final BooleanTerm term : subTerms) {
+		for (final BooleanTerm term : mSubTerms) {
 			result = result * 31 + term.hashCode();
 		}
 		return result;
@@ -131,16 +132,16 @@ public class OrTerm extends BooleanTerm {
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = subTerms[0].getVariables();
-		for (int i = 1; i < subTerms.length; i++) {
-			out.addAll(subTerms[i].getVariables());
+		final HashSet<Variable> out = mSubTerms[0].getVariables();
+		for (int i = 1; i < mSubTerms.length; i++) {
+			out.addAll(mSubTerms[i].getVariables());
 		}
 		return out;
 	}
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
-		for (final BooleanTerm subTerm : subTerms) {
+		for (final BooleanTerm subTerm : mSubTerms) {
 			if (subTerm.evaluate(currentState, nextState)) {
 				return true;
 			}
@@ -151,13 +152,13 @@ public class OrTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		if (subTerms.length == 1) {
-			return subTerms[0].toSMTTerm(theory);
+		if (mSubTerms.length == 1) {
+			return mSubTerms[0].toSMTTerm(theory);
 		}
 
-		Term A = subTerms[0].toSMTTerm(theory);
-		for (int i = 1; i < subTerms.length; i++) {
-			final Term B = subTerms[i].toSMTTerm(theory);
+		Term A = mSubTerms[0].toSMTTerm(theory);
+		for (int i = 1; i < mSubTerms.length; i++) {
+			final Term B = mSubTerms[i].toSMTTerm(theory);
 			A = Util.makeTerm(mSymbol, theory, A, B);
 		}
 
@@ -167,12 +168,23 @@ public class OrTerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		final ArrayList<String> elements = new ArrayList<>();
-		for (final BooleanTerm subTerm : subTerms) {
+		for (final BooleanTerm subTerm : mSubTerms) {
 			elements.add(subTerm.toCode());
 		}
 		if (elements.size() == 1) {
 			return elements.get(0);
 		}
 		return "(" + String.join(" || ", elements) + ")";
+	}
+
+	@Override
+	protected OrTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final BooleanTerm[] subTerms = new BooleanTerm[mSubTerms.length];
+
+		for (int i = 0; i < mSubTerms.length; i++) {
+			subTerms[i] = mSubTerms[i].replaceTerm(old, replacement);
+		}
+
+		return new OrTerm(subTerms);
 	}
 }

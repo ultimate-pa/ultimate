@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 /**
- * Represents the binary function "A = B"
+ * Represents the binary function "A == B"
  */
 public class EqualsTerm extends BooleanTerm {
 	private final ExecutionTerm mA;
@@ -27,7 +27,7 @@ public class EqualsTerm extends BooleanTerm {
 	}
 
 	/**
-	 * Returns A = B with arguments simplified
+	 * Returns A == B with arguments simplified
 	 */
 	@Override
 	public BooleanTerm simplify() {
@@ -55,7 +55,7 @@ public class EqualsTerm extends BooleanTerm {
 	}
 
 	/**
-	 * Returns (or (A != B) (A != C) (B != C) ...)
+	 * Returns A != B
 	 */
 	@Override
 	public BooleanTerm negate() {
@@ -117,5 +117,12 @@ public class EqualsTerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		return "(" + mA.toCode() + " == " + mB.toCode() + ")";
+	}
+
+	@Override
+	protected EqualsTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final ExecutionTerm A = mA.replaceTerm(old, replacement);
+		final ExecutionTerm B = mB.replaceTerm(old, replacement);
+		return new EqualsTerm(A, B);
 	}
 }

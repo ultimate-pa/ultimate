@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
 
@@ -46,7 +47,7 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 			return false;
 		}
 		final VariableBooleanTerm castB = (VariableBooleanTerm) b;
-		return castB.mVariableTerm.termvar.equals(mVariableTerm.termvar);
+		return castB.mVariableTerm.mTermVar.equals(mVariableTerm.mTermVar);
 	}
 
 	@Override
@@ -73,7 +74,7 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 
 	@Override
 	public String getName() {
-		return mVariableTerm.name;
+		return mVariableTerm.mName;
 	}
 
 	@Override
@@ -83,11 +84,21 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (mVariableTerm.isInVar ? currentState : nextState).getBoolOf(mVariableTerm.programVar);
+		return (mVariableTerm.isInVar ? currentState : nextState).getBoolOf(mVariableTerm.mProgramVar);
 	}
 
 	@Override
 	public String toCode() {
 		return mVariableTerm.toCode();
+	}
+
+	@Override
+	protected VariableBooleanTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return this;
+	}
+
+	@Override
+	public VariableBooleanTerm replaceTermVariable(final TermVariable termVar) {
+		return new VariableBooleanTerm(mVariableTerm.replaceTermVariable(termVar));
 	}
 }

@@ -94,4 +94,11 @@ public class GreaterEqualTerm extends BooleanTerm {
 	public String toCode() {
 		return "(" + mX.toCode() + " >= " + mY.toCode() + ")";
 	}
+
+	@Override
+	protected GreaterEqualTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm X = mX.replaceTerm(old, replacement);
+		final IntegerTerm Y = mY.replaceTerm(old, replacement);
+		return new GreaterEqualTerm(X, Y);
+	}
 }

@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -16,13 +17,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the binary function "X // Y"
  */
 public class DivisionTerm extends IntegerTerm {
-	private final IntegerTerm X;
-	private final IntegerTerm Y;
+	private final IntegerTerm mX;
+	private final IntegerTerm mY;
 
-	public DivisionTerm(final IntegerTerm mX, final IntegerTerm mY) {
+	public DivisionTerm(final IntegerTerm X, final IntegerTerm Y) {
 		super(SMTLIBConstants.DIV);
-		X = mX;
-		Y = mY;
+		mX = X;
+		mY = Y;
 	}
 
 	/**
@@ -30,7 +31,7 @@ public class DivisionTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm simplify() {
-		return new DivisionTerm(X.simplify(), Y.simplify());
+		return new DivisionTerm(mX.simplify(), mY.simplify());
 	}
 
 	@Override
@@ -40,15 +41,15 @@ public class DivisionTerm extends IntegerTerm {
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(X, Y));
+		return new ArrayList<>(Arrays.asList(mX, mY));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(");
-		X.toString(out, 0);
+		mX.toString(out, 0);
 		out.append(" / ");
-		Y.toString(out, 0);
+		mY.toString(out, 0);
 		return out.append(")");
 	}
 
@@ -58,42 +59,44 @@ public class DivisionTerm extends IntegerTerm {
 			return false;
 		}
 		final DivisionTerm castB = (DivisionTerm) b;
-		return X.equals(castB.X) && Y.equals(castB.Y);
+		return mX.equals(castB.mX) && mY.equals(castB.mY);
 	}
 
 	@Override
 	public int hashCode() {
-		final int result = 29 * 31 + X.hashCode();
-		return result * 31 + Y.hashCode();
+		final int result = 29 * 31 + mX.hashCode();
+		return result * 31 + mY.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = X.getVariables();
-		out.addAll(Y.getVariables());
+		final HashSet<Variable> out = mX.getVariables();
+		out.addAll(mY.getVariables());
 		return out;
 	}
 
-	/*
-	 * @Override public IntegerDomain evaluate(final HashMap<Variable<?>, Domain<?>> variableDomains) { return
-	 * X.evaluate(variableDomains).divide(Y.evaluate(variableDomains)); }
-	 */
-
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, X.toSMTTerm(theory), Y.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory), mY.toSMTTerm(theory));
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		final Integer a = X.evaluate(currentState, nextState);
-		final Integer b = Y.evaluate(currentState, nextState);
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		final Long a = mX.evaluate(currentState, nextState);
+		final Long b = mY.evaluate(currentState, nextState);
 
 		return Util.SMTDiv(a, b);
 	}
 
 	@Override
 	public String toCode() {
-		return "Util.SMTDiv(" + X.toCode() + ", " + Y.toCode() + ")";
+		return "Util.SMTDiv(" + mX.toCode() + ", " + mY.toCode() + ")";
+	}
+
+	@Override
+	protected DivisionTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm X = mX.replaceTerm(old, replacement);
+		final IntegerTerm Y = mY.replaceTerm(old, replacement);
+		return new DivisionTerm(X, Y);
 	}
 }

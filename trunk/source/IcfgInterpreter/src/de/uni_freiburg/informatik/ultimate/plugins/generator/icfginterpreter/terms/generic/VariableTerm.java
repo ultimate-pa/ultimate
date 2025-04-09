@@ -11,34 +11,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 
 public class VariableTerm {
 	public VariableTerm(final boolean mIsInVar, final boolean mIsOutVar, final boolean mIsAuxVar,
-			final boolean mIsAssignable, final IProgramVar mProgramVar, final TermVariable mTermVar) {
+			final boolean mIsAssignable, final IProgramVar programVar, final TermVariable termVar) {
 		isInVar = mIsInVar;
 		isOutVar = mIsOutVar;
 		isAuxVar = mIsAuxVar;
 		isAssignable = mIsAssignable;
-		programVar = mProgramVar;
-		termvar = mTermVar;
-		name = termvar.getName();
+		mProgramVar = programVar;
+		mTermVar = termVar;
+		mName = termVar.getName();
 	}
 
 	public boolean isConstant() {
 		return isInVar;
 	}
 
-	public final String name;
+	public final String mName;
 	public final boolean isInVar, isOutVar, isAssignable, isAuxVar;
-	public final IProgramVar programVar;
-	public final TermVariable termvar;
+	public final IProgramVar mProgramVar;
+	public final TermVariable mTermVar;
 
 	@Override
 	public String toString() {
-		return "Variable " + name + (isAuxVar ? "" : (" (of " + programVar.getGloballyUniqueId() + ")")) + " {InVar="
+		return "Variable " + mName + (isAuxVar ? "" : (" (of " + mProgramVar.getGloballyUniqueId() + ")")) + " {InVar="
 				+ isInVar + ", OutVar=" + isOutVar + ", AuxVar=" + isAuxVar + ", Assignable=" + isAssignable + "}";
 	}
 
 	public String toCode() {
 		final StringBuilder out = new StringBuilder(isInVar ? "currentState" : "nextState");
-		switch (ReturnType.getType(programVar.getSort())) {
+		switch (ReturnType.getType(mProgramVar.getSort())) {
 		case Array:
 			out.append(".getArray(");
 			break;
@@ -53,22 +53,31 @@ public class VariableTerm {
 			break;
 		}
 
-		return out.append(DynamicLoader.getVarLookup(programVar)).append(")").toString();
+		return out.append(DynamicLoader.getVarLookup(mProgramVar)).append(")").toString();
 	}
 
 	private static final HashMap<String, Integer> usedNames = new HashMap<>();
 
 	public TermVariable toSMTTerm(final Theory theory) {
+		return Util.makeVariable(mName, mTermVar.getSort(), theory);
+	}
+
+	public TermVariable toDistinctSmtTerm(final Theory theory) {
+		// when making UnmodifiableTransformulas, the name of an AuxVar can only appear once.
 		final String distinctName;
-		// when making UnmodifiableTransformulas, one name can only appear once.
 		if (isAuxVar) {
-			int version = usedNames.getOrDefault(name, 0);
+			int version = usedNames.getOrDefault(mName, 0);
 			version++;
-			distinctName = name + "_auxvar_v" + version;
-			usedNames.put(name, version);
+			distinctName = mName + "_auxvar_v" + version;
+			usedNames.put(mName, version);
 		} else {
-			distinctName = name;
+			distinctName = mName;
 		}
-		return Util.makeVariable(distinctName, termvar.getSort(), theory);
+
+		return Util.makeVariable(distinctName, mTermVar.getSort(), theory);
+	}
+
+	public VariableTerm replaceTermVariable(final TermVariable termVar) {
+		return new VariableTerm(isInVar, isOutVar, isAuxVar, isAssignable, mProgramVar, termVar);
 	}
 }

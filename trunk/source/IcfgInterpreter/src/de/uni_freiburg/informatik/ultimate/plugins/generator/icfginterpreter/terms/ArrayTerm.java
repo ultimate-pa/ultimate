@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 
 public abstract class ArrayTerm extends ExecutionTerm {
 	public final ReturnType keyType;
@@ -16,9 +16,14 @@ public abstract class ArrayTerm extends ExecutionTerm {
 	@Override
 	public abstract ArrayTerm simplify();
 
-	// @Override
-	// public abstract ArrayDomain<keyType, valueType> evaluate(HashMap<Variable, Domain<?>> variableDomains);
-
 	@Override
 	public abstract SMTArray evaluate(ProgramState currentState, ProgramState nextState);
+
+	@Override
+	protected abstract ArrayTerm replaceSubterms(ExecutionTerm old, ExecutionTerm replacement);
+
+	@Override
+	public ArrayTerm replaceTerm(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return (ArrayTerm) super.replaceTerm(old, replacement);
+	}
 }

@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -16,11 +17,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents a constant of integer sort.
  */
 public class ConstIntegerTerm extends IntegerTerm {
-	private final int value;
+	private final Long mValue;
 
-	public ConstIntegerTerm(final int mValue) {
+	public ConstIntegerTerm(final Long value) {
 		super(SMTLIBConstants.INT);
-		value = mValue;
+		mValue = value;
 	}
 
 	@Override
@@ -30,7 +31,7 @@ public class ConstIntegerTerm extends IntegerTerm {
 
 	@Override
 	public IntegerTerm negate() {
-		return new ConstIntegerTerm(-value);
+		return new ConstIntegerTerm(-mValue);
 	}
 
 	@Override
@@ -40,7 +41,7 @@ public class ConstIntegerTerm extends IntegerTerm {
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
-		return out.append(Util.getIndent(depth)).append(value);
+		return out.append(Util.getIndent(depth)).append(mValue);
 	}
 
 	@Override
@@ -49,22 +50,17 @@ public class ConstIntegerTerm extends IntegerTerm {
 			return false;
 		}
 		final ConstIntegerTerm castB = (ConstIntegerTerm) b;
-		return value == castB.value;
+		return mValue == castB.mValue;
 	}
 
 	@Override
 	public int hashCode() {
-		return 19 * 31 + value;
+		return (int) ((19 * 31 + mValue) % Integer.MAX_VALUE);
 	}
 
-	public int getValue() {
-		return value;
+	public Long getValue() {
+		return mValue;
 	}
-
-	/*
-	 * @Override public IntegerDomain evaluate(final HashMap<Variable<?>, Domain<?>> variableDomains) { return new
-	 * IntegerDomain(new Interval(value, value)); }
-	 */
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
@@ -73,16 +69,21 @@ public class ConstIntegerTerm extends IntegerTerm {
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeConstant(Rational.valueOf(value, 1L), returnType, theory);
+		return Util.makeConstant(Rational.valueOf(mValue, 1L), returnType, theory);
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return value;
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return mValue;
 	}
 
 	@Override
 	public String toCode() {
-		return String.valueOf(value);
+		return String.valueOf(mValue) + "L";
+	}
+
+	@Override
+	protected ConstIntegerTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return this;
 	}
 }

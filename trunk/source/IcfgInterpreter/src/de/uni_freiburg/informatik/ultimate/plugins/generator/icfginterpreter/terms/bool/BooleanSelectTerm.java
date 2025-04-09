@@ -14,18 +14,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class BooleanSelectTerm extends BooleanTerm {
-	private final SelectTerm select;
+	private final SelectTerm mSelect;
 
 	public BooleanSelectTerm(final ArrayTerm mArray, final ExecutionTerm mIndex) {
 		super(SelectTerm.mSymbol);
 		assert mArray.valueType == ReturnType.Boolean;
-		select = new SelectTerm(mArray, mIndex);
+		mSelect = new SelectTerm(mArray, mIndex);
 	}
 
-	private BooleanSelectTerm(final SelectTerm mSelect) {
+	private BooleanSelectTerm(final SelectTerm select) {
 		super(SelectTerm.mSymbol);
-		assert mSelect.getArray().valueType == ReturnType.Boolean;
-		select = mSelect;
+		assert select.getArray().valueType == ReturnType.Boolean;
+		mSelect = select;
 	}
 
 	@Override
@@ -35,20 +35,20 @@ public class BooleanSelectTerm extends BooleanTerm {
 
 	@Override
 	public BooleanSelectTerm simplify() {
-		final ArrayTerm mArray = select.getArray().simplify();
-		final ExecutionTerm mIndex = select.getIndex().simplify();
+		final ArrayTerm mArray = mSelect.getArray().simplify();
+		final ExecutionTerm mIndex = mSelect.getIndex().simplify();
 
 		return new BooleanSelectTerm(mArray, mIndex);
 	}
 
 	@Override
 	public ArrayList<ExecutionTerm> getSubTerms() {
-		return select.getSubTerms();
+		return mSelect.getSubTerms();
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
-		return select.toString(out, depth);
+		return mSelect.toString(out, depth);
 	}
 
 	@Override
@@ -56,36 +56,36 @@ public class BooleanSelectTerm extends BooleanTerm {
 		if (!(b instanceof BooleanSelectTerm)) {
 			return false;
 		}
-		return select.equals(((BooleanSelectTerm) b).select);
+		return mSelect.equals(((BooleanSelectTerm) b).mSelect);
 	}
 
 	@Override
 	public int hashCode() {
-		return select.hashCode();
+		return mSelect.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		return select.getVariables();
+		return mSelect.getVariables();
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return select.toSMTTerm(theory);
+		return mSelect.toSMTTerm(theory);
 	}
-
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(ExecutionTerm<subT>
-	 * current, ExecutionTerm<subT> replacement) { return select.replaceSubTerm(current, replacement); }
-	 */
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (boolean) select.evaluate(currentState, nextState);
+		return (boolean) mSelect.evaluate(currentState, nextState);
 	}
 
 	@Override
 	public String toCode() {
-		return "((boolean) " + select.toCode() + ")";
+		return "((boolean) " + mSelect.toCode() + ")";
+	}
+
+	@Override
+	protected BooleanSelectTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return new BooleanSelectTerm(mSelect.replaceTerm(old, replacement));
 	}
 }

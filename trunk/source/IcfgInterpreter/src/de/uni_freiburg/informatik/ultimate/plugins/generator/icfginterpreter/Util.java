@@ -285,17 +285,17 @@ public class Util {
 		return "  ".repeat(depth);
 	}
 
-	public static int SMTDiv(final int m, final int n) {
+	public static Long SMTDiv(final long m, final long n) {
 		final double div = ((double) m) / n;
 		// n > 0, (div m n) = floor(m/n)
 		if (n > 0) {
-			return (int) Math.floor(div);
+			return (long) Math.floor(div);
 		}
 		// n < 0, (div m n) = ceil(m/n)
-		return (int) Math.ceil(div);
+		return (long) Math.ceil(div);
 	}
 
-	public static int SMTMod(final int m, final int n) {
+	public static Long SMTMod(final Long m, final Long n) {
 		// i == ((i / j) * j) + (i % j)
 		// i % j == i - ((i / j) * j)
 		return m - ((Util.SMTDiv(m, n)) * n);

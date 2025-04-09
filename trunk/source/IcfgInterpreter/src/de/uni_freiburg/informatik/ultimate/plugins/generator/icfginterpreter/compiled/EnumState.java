@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
@@ -19,7 +19,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 	private final EnumMap<T, SMTArray> mArrayVars;
 	private final EnumMap<T, Boolean> mBoolVars;
 	private final EnumMap<T, BitVector> mBVVars;
-	private final EnumMap<T, Integer> mIntVars;
+	private final EnumMap<T, Long> mIntVars;
 	private final NonDeterministicChoice mNDC;
 
 	public static <S extends Enum<S> & IVariableName> Function<NonDeterministicChoice, EnumState<S>> getStateInitializer(
@@ -30,7 +30,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 		final HashSet<S> bvNames = new HashSet<>();
 
 		for (final Variable variable : variables) {
-			final IProgramVar programVar = variable.getVariableTerm().programVar;
+			final IProgramVar programVar = variable.getVariableTerm().mProgramVar;
 			if (programVar == null) {
 				continue;
 			}
@@ -54,7 +54,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 			final EnumMap<S, SMTArray> arrayVars = new EnumMap<>(varEnum);
 			final EnumMap<S, Boolean> boolVars = new EnumMap<>(varEnum);
 			final EnumMap<S, BitVector> bvVars = new EnumMap<>(varEnum);
-			final EnumMap<S, Integer> intVars = new EnumMap<>(varEnum);
+			final EnumMap<S, Long> intVars = new EnumMap<>(varEnum);
 
 			for (final S variable : arrayNames) {
 				arrayVars.put(variable, ndc.newArray(variable.getProgramVar(), null));
@@ -74,7 +74,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 	}
 
 	private EnumState(final EnumMap<T, SMTArray> arrayVars, final EnumMap<T, Boolean> boolVars,
-			final EnumMap<T, BitVector> bvVars, final EnumMap<T, Integer> intVars, final NonDeterministicChoice ndc) {
+			final EnumMap<T, BitVector> bvVars, final EnumMap<T, Long> intVars, final NonDeterministicChoice ndc) {
 		mArrayVars = arrayVars;
 		mBoolVars = boolVars;
 		mBVVars = bvVars;
@@ -117,7 +117,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 		return out.append("\n}").toString();
 	}
 
-	public int getInt(final T var) {
+	public Long getInt(final T var) {
 		return mIntVars.get(var);
 	}
 
@@ -149,7 +149,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 		setArray(var, mNDC.newArray(var.getProgramVar(), restriction));
 	}
 
-	public void setInt(final T var, final Integer value) {
+	public void setInt(final T var, final Long value) {
 		mIntVars.put(var, value);
 	}
 

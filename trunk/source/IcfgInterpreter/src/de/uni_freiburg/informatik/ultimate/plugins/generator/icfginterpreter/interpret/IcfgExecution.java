@@ -36,6 +36,10 @@ public class IcfgExecution {
 		return mInitialStep;
 	}
 
+	public ExecutionStep getFinalStep() {
+		return mFinalStep;
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder out = new StringBuilder();
@@ -65,7 +69,7 @@ public class IcfgExecution {
 		}, new ArrayList<Entry<IcfgLocation, ProgramState>>());
 	}
 
-	protected class ExecutionStep {
+	public class ExecutionStep {
 		private final ProgramState mState;
 		private final IcfgLocation mLocation;
 		private final UnmodifiableTransFormula mTransFormula;

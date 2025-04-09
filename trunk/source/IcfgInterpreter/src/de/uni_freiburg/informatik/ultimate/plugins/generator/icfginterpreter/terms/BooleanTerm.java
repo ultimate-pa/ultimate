@@ -14,4 +14,12 @@ public abstract class BooleanTerm extends ExecutionTerm {
 
 	@Override
 	public abstract Boolean evaluate(ProgramState currentState, ProgramState nextState);
+
+	@Override
+	protected abstract BooleanTerm replaceSubterms(ExecutionTerm old, ExecutionTerm replacement);
+
+	@Override
+	public BooleanTerm replaceTerm(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return (BooleanTerm) super.replaceTerm(old, replacement);
+	}
 }

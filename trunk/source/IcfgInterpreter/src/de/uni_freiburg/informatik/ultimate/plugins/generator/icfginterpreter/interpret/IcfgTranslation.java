@@ -16,9 +16,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -29,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ICFGExecutionEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
@@ -51,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.TrueTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.XorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.SelectTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.AbsoluteTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.AdditionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.ConstIntegerTerm;
@@ -117,19 +117,6 @@ public class IcfgTranslation {
 		return out;
 	}
 
-	private static IProgramVar getAuxReplacement(final TermVariable auxVar, final Theory theory,
-			final ManagedScript script) {
-		// final TermVariable var = Util.makeVariable(auxVar.getName() + "_aux_replaced", auxVar.getSort(), theory);
-
-		script.lock(auxVar);
-		final ILocalProgramVar out = ProgramVarUtils.constructLocalProgramVar(auxVar.getName() + "_aux_replaced", "",
-				auxVar.getSort(), script, auxVar);
-
-		script.unlock(auxVar);
-		return out;
-		// return new LocalProgramVar(var.getName(), null, var, null, null);
-	}
-
 	/**
 	 * Translates the ICFG using breadth first search.
 	 *
@@ -140,7 +127,7 @@ public class IcfgTranslation {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final ManagedScript script = icfg.getCfgSmtToolkit().getManagedScript();
 
-		final InterpretedIcfg out = new InterpretedIcfg();
+		final InterpretedIcfg out = new InterpretedIcfg(icfg);
 
 		final HashSet<IcfgLocation> visited = new HashSet<>();
 		final ArrayList<IcfgLocation> next = new ArrayList<>(initialNodes);
@@ -227,7 +214,7 @@ public class IcfgTranslation {
 		int i = 0;
 		for (final Entry<ArcSolver, AndTerm> entry : arcSolvers.entrySet()) {
 			final UnmodifiableTransFormula arcGuardFormula = entry.getKey().makeGuardFormula(managedScript, service,
-					entry.getValue().toSMTTerm(formulaTheory), isInfeasable, branchEncoders);
+					entry.getValue(), isInfeasable, branchEncoders);
 			final OrTerm arcGuardTerm = TermNormalizer
 					.simplifyToDNF((BooleanTerm) parseTerm(arcGuardFormula.getFormula(), variables));
 
@@ -440,15 +427,14 @@ public class IcfgTranslation {
 
 			switch (sort.getName()) {
 			case SMTLIBConstants.INT:
-				int value;
+				Long value;
 				if (valueUnparsed instanceof Rational) {
 					final Rational valueParsed = (Rational) valueUnparsed;
-					value = (valueParsed.numerator().divide(valueParsed.denominator())).intValueExact();
-
+					value = (valueParsed.numerator().divide(valueParsed.denominator())).longValue();
 				} else if (valueUnparsed instanceof BigInteger) {
-					value = ((BigInteger) valueUnparsed).intValue();
+					value = ((BigInteger) valueUnparsed).longValue();
 				} else {
-					value = (int) valueUnparsed;
+					value = (Long) valueUnparsed;
 				}
 				return new ConstIntegerTerm(value);
 			case SMTLIBConstants.BOOL:
@@ -464,7 +450,11 @@ public class IcfgTranslation {
 			 */
 			}
 		} else if (term instanceof TermVariable) {
-			return variables.getVariable((TermVariable) term).getTerm();
+			final Variable variable = variables.getVariable((TermVariable) term);
+			if (variable == null) {
+				IcfgInterpreterObserver.getLogger().error("No variable named " + term.toString() + " was found.");
+			}
+			return variable.getTerm();
 		}
 
 		return null;

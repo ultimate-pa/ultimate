@@ -18,4 +18,6 @@ public interface Variable {
 	int hashCode();
 
 	TermVariable toSMTTerm(final Theory theory);
+
+	Variable replaceTermVariable(TermVariable termVar);
 }

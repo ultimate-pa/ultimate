@@ -7,9 +7,10 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -45,7 +46,7 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 		}
 		final VariableArrayTerm castB = (VariableArrayTerm) b;
 
-		return castB.mVariableTerm.termvar.equals(mVariableTerm.termvar) && keyType.equals(castB.keyType)
+		return castB.mVariableTerm.mTermVar.equals(mVariableTerm.mTermVar) && keyType.equals(castB.keyType)
 				&& valueType.equals(castB.valueType);
 	}
 
@@ -75,7 +76,7 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 
 	@Override
 	public String getName() {
-		return mVariableTerm.name;
+		return mVariableTerm.mName;
 	}
 
 	@Override
@@ -85,11 +86,21 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 
 	@Override
 	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (mVariableTerm.isInVar ? currentState : nextState).getArrayOf(mVariableTerm.programVar);
+		return (mVariableTerm.isInVar ? currentState : nextState).getArrayOf(mVariableTerm.mProgramVar);
 	}
 
 	@Override
 	public String toCode() {
 		return mVariableTerm.toCode();
+	}
+
+	@Override
+	protected VariableArrayTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return this;
+	}
+
+	@Override
+	public VariableArrayTerm replaceTermVariable(final TermVariable termVar) {
+		return new VariableArrayTerm(keyType, valueType, mVariableTerm.replaceTermVariable(termVar));
 	}
 }

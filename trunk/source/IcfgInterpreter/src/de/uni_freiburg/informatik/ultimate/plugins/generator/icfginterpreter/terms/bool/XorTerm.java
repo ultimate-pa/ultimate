@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 /**
@@ -98,5 +99,12 @@ public class XorTerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		return "(" + mA.toCode() + " ^ " + mB.toCode() + ")";
+	}
+
+	@Override
+	protected XorTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final BooleanTerm A = mA.replaceTerm(old, replacement);
+		final BooleanTerm B = mB.replaceTerm(old, replacement);
+		return new XorTerm(A, B);
 	}
 }

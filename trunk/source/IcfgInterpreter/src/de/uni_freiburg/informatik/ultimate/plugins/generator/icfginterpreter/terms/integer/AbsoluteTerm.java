@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -16,11 +17,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the unary function "absolute(X)"
  */
 public class AbsoluteTerm extends IntegerTerm {
-	protected final IntegerTerm X;
+	protected final IntegerTerm mX;
 
-	public AbsoluteTerm(final IntegerTerm mX) {
+	public AbsoluteTerm(final IntegerTerm X) {
 		super(SMTLIBConstants.ABS);
-		X = mX;
+		mX = X;
 	}
 
 	/**
@@ -28,7 +29,7 @@ public class AbsoluteTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm simplify() {
-		return new AbsoluteTerm(X.simplify());
+		return new AbsoluteTerm(mX.simplify());
 	}
 
 	@Override
@@ -38,13 +39,13 @@ public class AbsoluteTerm extends IntegerTerm {
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(X));
+		return new ArrayList<>(Arrays.asList(mX));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("abs(");
-		X.toString(out, 0);
+		mX.toString(out, 0);
 		return out.append(")");
 	}
 
@@ -54,31 +55,36 @@ public class AbsoluteTerm extends IntegerTerm {
 			return false;
 		}
 		final AbsoluteTerm castB = (AbsoluteTerm) b;
-		return X.equals(castB.X);
+		return mX.equals(castB.mX);
 	}
 
 	@Override
 	public int hashCode() {
-		return 7 * 31 + X.hashCode();
+		return 7 * 31 + mX.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		return X.getVariables();
+		return mX.getVariables();
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, X.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory));
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return Math.abs(X.evaluate(currentState, nextState));
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return Math.abs(mX.evaluate(currentState, nextState));
 	}
 
 	@Override
 	public String toCode() {
-		return "Math.abs(" + X.toCode() + ")";
+		return "Math.abs(" + mX.toCode() + ")";
+	}
+
+	@Override
+	protected AbsoluteTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return new AbsoluteTerm(mX.replaceTerm(old, replacement));
 	}
 }

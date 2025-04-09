@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -19,13 +20,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the n-ary function "X * Y * Z * ..."
  */
 public class MultiplicationTerm extends IntegerTerm {
-	private final IntegerTerm[] subTerms;
+	private final IntegerTerm[] mSubTerms;
 
-	public MultiplicationTerm(final IntegerTerm... mSubterms) {
+	public MultiplicationTerm(final IntegerTerm... subterms) {
 		super(SMTLIBConstants.MUL);
-		subTerms = mSubterms;
-		assert subTerms.length > 1;
-		for (final IntegerTerm subTerm : subTerms) {
+		mSubTerms = subterms;
+		assert mSubTerms.length > 1;
+		for (final IntegerTerm subTerm : mSubTerms) {
 			assert subTerm.returnType == ReturnType.Int;
 		}
 	}
@@ -35,12 +36,12 @@ public class MultiplicationTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm simplify() {
-		final IntegerTerm[] mSubTerms = new IntegerTerm[subTerms.length];
+		final IntegerTerm[] subTerms = new IntegerTerm[mSubTerms.length];
 
 		// ... * -X * -Y * ... is equal to ... * X * Y * ...
 		int negatedCount = 0;
-		for (int i = 0; i < subTerms.length; i++) {
-			IntegerTerm subTerm = subTerms[i];
+		for (int i = 0; i < mSubTerms.length; i++) {
+			IntegerTerm subTerm = mSubTerms[i];
 			if (subTerm instanceof NegationTerm) {
 				int stackedMinus = 1;
 
@@ -53,14 +54,14 @@ public class MultiplicationTerm extends IntegerTerm {
 				// An even amount cancels out; (-(-X)) = X
 				negatedCount += stackedMinus % 2;
 			}
-			mSubTerms[i] = subTerm;
+			subTerms[i] = subTerm;
 		}
 
-		for (int i = 0; i < mSubTerms.length; i++) {
-			mSubTerms[i] = mSubTerms[i].simplify();
+		for (int i = 0; i < subTerms.length; i++) {
+			subTerms[i] = subTerms[i].simplify();
 		}
 
-		final List<IntegerTerm> subTermList = Arrays.asList(mSubTerms);
+		final List<IntegerTerm> subTermList = Arrays.asList(subTerms);
 		Collections.sort(subTermList, (final IntegerTerm x, final IntegerTerm y) -> Util.compareBaseOrder(x, y));
 
 		// Now, all arguments in mSubTerms are not negation terms.
@@ -77,24 +78,24 @@ public class MultiplicationTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm negate() {
-		final IntegerTerm[] mSubTerms = subTerms.clone();
-		mSubTerms[0] = new NegationTerm(mSubTerms[0]);
-		return new MultiplicationTerm(mSubTerms);
+		final IntegerTerm[] subTerms = mSubTerms.clone();
+		subTerms[0] = new NegationTerm(mSubTerms[0]);
+		return new MultiplicationTerm(subTerms);
 	}
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(subTerms));
+		return new ArrayList<>(Arrays.asList(mSubTerms));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(");
 
-		subTerms[0].toString(out, 0);
-		for (int i = 1; i < subTerms.length; i++) {
+		mSubTerms[0].toString(out, 0);
+		for (int i = 1; i < mSubTerms.length; i++) {
 			out.append(" * ");
-			subTerms[i].toString(out, 0);
+			mSubTerms[i].toString(out, 0);
 		}
 		return out.append(")");
 	}
@@ -106,8 +107,8 @@ public class MultiplicationTerm extends IntegerTerm {
 		}
 		final MultiplicationTerm castB = (MultiplicationTerm) b;
 
-		final HashSet<IntegerTerm> subTermsA = new HashSet<>(Arrays.asList(subTerms));
-		final HashSet<IntegerTerm> subTermsB = new HashSet<>(Arrays.asList(castB.subTerms));
+		final HashSet<IntegerTerm> subTermsA = new HashSet<>(Arrays.asList(mSubTerms));
+		final HashSet<IntegerTerm> subTermsB = new HashSet<>(Arrays.asList(castB.mSubTerms));
 
 		return subTermsA.containsAll(subTermsB) && subTermsB.containsAll(subTermsA);
 	}
@@ -115,7 +116,7 @@ public class MultiplicationTerm extends IntegerTerm {
 	@Override
 	public int hashCode() {
 		int result = 71;
-		for (final IntegerTerm subTerm : subTerms) {
+		for (final IntegerTerm subTerm : mSubTerms) {
 			result = result * 31 + subTerm.hashCode();
 		}
 		return result;
@@ -123,36 +124,27 @@ public class MultiplicationTerm extends IntegerTerm {
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = subTerms[0].getVariables();
-		for (int i = 1; i < subTerms.length; i++) {
-			out.addAll(subTerms[i].getVariables());
+		final HashSet<Variable> out = mSubTerms[0].getVariables();
+		for (int i = 1; i < mSubTerms.length; i++) {
+			out.addAll(mSubTerms[i].getVariables());
 		}
 		return out;
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		final Term[] parameters = new Term[subTerms.length];
-		for (int i = 0; i < subTerms.length; i++) {
-			parameters[i] = subTerms[i].toSMTTerm(theory);
+		final Term[] parameters = new Term[mSubTerms.length];
+		for (int i = 0; i < mSubTerms.length; i++) {
+			parameters[i] = mSubTerms[i].toSMTTerm(theory);
 		}
 		return Util.makeTerm(mSymbol, theory, parameters);
 	}
 
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<IntegerDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { final IntegerTerm[] mSubTerms = new
-	 * IntegerTerm[subTerms.length]; for (int i = 0; i < subTerms.length; i++) { mSubTerms[i] =
-	 * subTerms[i].equals(current) ? (IntegerTerm) replacement : subTerms[i]; }
-	 *
-	 * return new MultiplicationTerm(mSubTerms); }
-	 */
-
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		int out = 1;
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		long out = 1L;
 
-		for (final IntegerTerm subTerm : subTerms) {
+		for (final IntegerTerm subTerm : mSubTerms) {
 			out *= subTerm.evaluate(currentState, nextState);
 		}
 
@@ -162,12 +154,23 @@ public class MultiplicationTerm extends IntegerTerm {
 	@Override
 	public String toCode() {
 		final ArrayList<String> elements = new ArrayList<>();
-		for (final IntegerTerm subTerm : subTerms) {
+		for (final IntegerTerm subTerm : mSubTerms) {
 			elements.add(subTerm.toCode());
 		}
 		if (elements.size() == 1) {
 			return elements.get(0);
 		}
 		return "(" + String.join(" * ", elements) + ")";
+	}
+
+	@Override
+	protected MultiplicationTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm[] subTerms = new IntegerTerm[mSubTerms.length];
+
+		for (int i = 0; i < mSubTerms.length; i++) {
+			subTerms[i] = mSubTerms[i].replaceTerm(old, replacement);
+		}
+
+		return new MultiplicationTerm(subTerms);
 	}
 }

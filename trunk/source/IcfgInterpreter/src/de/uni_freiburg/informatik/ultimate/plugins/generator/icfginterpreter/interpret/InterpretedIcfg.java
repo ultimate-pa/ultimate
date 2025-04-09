@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ICFGExecutionEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
@@ -13,8 +14,17 @@ public class InterpretedIcfg {
 	private final HashMap<IcfgLocation, HashSet<ICFGExecutionEdge>> mInEdges = new HashMap<>();
 	private final HashSet<Variable> mVariables = new HashSet<>();
 	private final HashSet<IcfgLocation> mLocations = new HashSet<>();
+	private final IIcfg<? extends IcfgLocation> mICFG;
 
 	private final static HashSet<ICFGExecutionEdge> emptySet = new HashSet<>();
+
+	public InterpretedIcfg(final IIcfg<? extends IcfgLocation> icfg) {
+		mICFG = icfg;
+	}
+
+	public IIcfg<? extends IcfgLocation> getIcfg() {
+		return mICFG;
+	}
 
 	public HashSet<ICFGExecutionEdge> getOutEdges(final IcfgLocation location) {
 		return mOutEdges.getOrDefault(location, emptySet);

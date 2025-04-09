@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -16,13 +17,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the unary function "X % Y"
  */
 public class ModuloTerm extends IntegerTerm {
-	private final IntegerTerm X;
-	private final IntegerTerm Y;
+	private final IntegerTerm mX;
+	private final IntegerTerm mY;
 
-	public ModuloTerm(final IntegerTerm mX, final IntegerTerm mY) {
+	public ModuloTerm(final IntegerTerm X, final IntegerTerm Y) {
 		super(SMTLIBConstants.MOD);
-		X = mX;
-		Y = mY;
+		mX = X;
+		mY = Y;
 	}
 
 	/**
@@ -30,7 +31,7 @@ public class ModuloTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm simplify() {
-		return new ModuloTerm(X.simplify(), Y.simplify());
+		return new ModuloTerm(mX.simplify(), mY.simplify());
 	}
 
 	@Override
@@ -40,15 +41,15 @@ public class ModuloTerm extends IntegerTerm {
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(X, Y));
+		return new ArrayList<>(Arrays.asList(mX, mY));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(");
-		X.toString(out, 0);
+		mX.toString(out, 0);
 		out.append(" % ");
-		Y.toString(out, 0);
+		mY.toString(out, 0);
 		return out.append(")");
 	}
 
@@ -58,37 +59,44 @@ public class ModuloTerm extends IntegerTerm {
 			return false;
 		}
 		final ModuloTerm castB = (ModuloTerm) b;
-		return X.equals(castB.X) && Y.equals(castB.Y);
+		return mX.equals(castB.mX) && mY.equals(castB.mY);
 	}
 
 	@Override
 	public int hashCode() {
-		final int result = 67 * 31 + X.hashCode();
-		return result * 31 + Y.hashCode();
+		final int result = 67 * 31 + mX.hashCode();
+		return result * 31 + mY.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		final HashSet<Variable> out = X.getVariables();
-		out.addAll(Y.getVariables());
+		final HashSet<Variable> out = mX.getVariables();
+		out.addAll(mY.getVariables());
 		return out;
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, X.toSMTTerm(theory), Y.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory), mY.toSMTTerm(theory));
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		final Integer a = X.evaluate(currentState, nextState);
-		final Integer b = Y.evaluate(currentState, nextState);
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		final Long a = mX.evaluate(currentState, nextState);
+		final Long b = mY.evaluate(currentState, nextState);
 
 		return Util.SMTMod(a, b);
 	}
 
 	@Override
 	public String toCode() {
-		return "Util.SMTMod(" + X.toCode() + ", " + Y.toCode() + ")";
+		return "Util.SMTMod(" + mX.toCode() + ", " + mY.toCode() + ")";
+	}
+
+	@Override
+	protected ModuloTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm X = mX.replaceTerm(old, replacement);
+		final IntegerTerm Y = mY.replaceTerm(old, replacement);
+		return new ModuloTerm(X, Y);
 	}
 }

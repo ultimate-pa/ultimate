@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class FalseTerm extends BooleanTerm {
@@ -51,14 +52,6 @@ public class FalseTerm extends BooleanTerm {
 		return new HashSet<>();
 	}
 
-	/*
-	 * @Override public BooleanDomain evaluate(final HashMap<Variable<?>, Domain<?>> variableDomains) { return new
-	 * BooleanDomain(false, true); }
-	 *
-	 *
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(final
-	 * ExecutionTerm<subT> current, final ExecutionTerm<subT> replacement) { return this; }
-	 */
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
 		return false;
@@ -66,11 +59,16 @@ public class FalseTerm extends BooleanTerm {
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory);// return Util.makeConstant(false, returnType, theory);
+		return Util.makeTerm(mSymbol, theory);
 	}
 
 	@Override
 	public String toCode() {
 		return String.valueOf(false);
+	}
+
+	@Override
+	protected FalseTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return this;
 	}
 }

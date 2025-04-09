@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.AdditionTerm;
@@ -109,5 +110,12 @@ public class LessEqualTerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		return "(" + mX.toCode() + " <= " + mY.toCode() + ")";
+	}
+
+	@Override
+	protected LessEqualTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm X = mX.replaceTerm(old, replacement);
+		final IntegerTerm Y = mY.replaceTerm(old, replacement);
+		return new LessEqualTerm(X, Y);
 	}
 }

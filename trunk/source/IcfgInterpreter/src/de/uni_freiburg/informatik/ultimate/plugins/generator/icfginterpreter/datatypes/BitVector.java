@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes;
 
 import java.math.BigInteger;
 

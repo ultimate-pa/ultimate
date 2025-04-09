@@ -5,13 +5,15 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ProgramState {
 	private final HashMap<IProgramVar, SMTArray> mArrayVars;
 	private final HashMap<IProgramVar, Boolean> mBoolVars;
 	private final HashMap<IProgramVar, BitVector> mBVVars;
-	private final HashMap<IProgramVar, Integer> mIntVars;
+	private final HashMap<IProgramVar, Long> mIntVars;
 	private boolean mFinal;
 	private final NonDeterministicChoice mNDC;
 
@@ -21,7 +23,7 @@ public class ProgramState {
 		mBVVars = new HashMap<>();
 		mIntVars = new HashMap<>();
 		for (final Variable variable : allVariables) {
-			final IProgramVar programVar = variable.getVariableTerm().programVar;
+			final IProgramVar programVar = variable.getVariableTerm().mProgramVar;
 			if (programVar == null) {
 				continue;
 			}
@@ -56,7 +58,7 @@ public class ProgramState {
 	}
 
 	public ProgramState(final HashMap<IProgramVar, SMTArray> arrayVars, final HashMap<IProgramVar, Boolean> boolVars,
-			final HashMap<IProgramVar, BitVector> bvVars, final HashMap<IProgramVar, Integer> intVars,
+			final HashMap<IProgramVar, BitVector> bvVars, final HashMap<IProgramVar, Long> intVars,
 			final NonDeterministicChoice ndc) {
 		mArrayVars = arrayVars;
 		mBoolVars = boolVars;
@@ -101,7 +103,7 @@ public class ProgramState {
 		mBoolVars.put(variable, value);
 	}
 
-	public void setValue(final IProgramVar variable, final int value) {
+	public void setValue(final IProgramVar variable, final Long value) {
 		if (mFinal) {
 			assert false;
 		}
@@ -126,7 +128,7 @@ public class ProgramState {
 		return mBoolVars.getOrDefault(variable, null);
 	}
 
-	public Integer getIntOf(final IProgramVar variable) {
+	public Long getIntOf(final IProgramVar variable) {
 		return mIntVars.getOrDefault(variable, null);
 	}
 

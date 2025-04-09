@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.function.Function;
 
@@ -7,12 +8,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
@@ -34,7 +35,7 @@ public abstract class Update {
 		private final ExecutionTerm mValueDefinition;
 
 		protected AssignmentUpdate(final Variable variable, final ExecutionTerm equalTerm) {
-			super(variable, variable.getVariableTerm().programVar);
+			super(variable, variable.getVariableTerm().mProgramVar);
 			assert variable.getTerm().returnType.equals(equalTerm.returnType);
 			mValueDefinition = equalTerm;
 		}
@@ -47,7 +48,7 @@ public abstract class Update {
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := " + mValueDefinition;
+			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := " + mValueDefinition;
 		}
 
 		@Override
@@ -78,7 +79,7 @@ public abstract class Update {
 	 */
 	private static class HavocAnyUpdate extends Update {
 		protected HavocAnyUpdate(final Variable variable) {
-			super(variable, variable.getVariableTerm().programVar);
+			super(variable, variable.getVariableTerm().mProgramVar);
 		}
 
 		@Override
@@ -99,7 +100,7 @@ public abstract class Update {
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc()";
+			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := havoc()";
 		}
 
 		@Override
@@ -134,7 +135,7 @@ public abstract class Update {
 		private final Restriction<?> mRestriction;
 
 		protected HavocLimitedUpdate(final Variable variable, final Restriction<?> restriction) {
-			super(variable, variable.getVariableTerm().programVar);
+			super(variable, variable.getVariableTerm().mProgramVar);
 			switch (restriction) {
 			case final ArrayRestriction ar:
 				func = (havoc) -> {
@@ -171,7 +172,7 @@ public abstract class Update {
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().programVar.getGloballyUniqueId() + " := havoc(" + mRestriction + ")";
+			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := havoc(" + mRestriction + ")";
 		}
 
 		@Override
@@ -201,16 +202,17 @@ public abstract class Update {
 		return new AssignmentUpdate(variable, equalTerm);
 	}
 
-	public static Update getHavocUpdate(final Variable variable, final HashSet<Constraint> constraints,
-			final HashSet<Arc> arcs) {
+	public static Update getHavocUpdate(final Variable variable, final ArrayList<Constraint> constraints,
+			final ArrayList<Arc> arcs) {
 		switch (variable.getTerm().returnType) {
 		case Int:
 			// Find the lowest constant value that the variable is bigger than, vice versa biggest constant
-			int lowestConst = Integer.MIN_VALUE;
-			int highestConst = Integer.MAX_VALUE;
-			HashSet<Integer> inequals = new HashSet<>();
+			// As settings for min and max value are limited to int type, we can ignore any values that exceed ints.
+			Long lowestConst = (long) Integer.MIN_VALUE;
+			Long highestConst = (long) Integer.MAX_VALUE;
+			HashSet<Long> inequals = new HashSet<>();
 			for (final Constraint constraint : constraints) {
-				int value = (int) constraint.getConstraint().evaluate(null, null);
+				Long value = (Long) constraint.getConstraint().evaluate(null, null);
 				switch (constraint.relation) {
 				case DISTINCT:
 					inequals.add(value);
@@ -260,8 +262,8 @@ public abstract class Update {
 				changing = false;
 			}
 
-			final int finalHighest = highestConst;
-			final int finalLowest = lowestConst;
+			final Long finalHighest = highestConst;
+			final Long finalLowest = lowestConst;
 			// remove any unequal values that are out of bounds anyways
 			inequals = Util.filter(inequals, (value) -> {
 				return finalHighest > value && value > finalLowest;
@@ -352,7 +354,7 @@ public abstract class Update {
 			state.setValue(mProgramVar, (Boolean) value);
 			break;
 		case Int:
-			state.setValue(mProgramVar, (Integer) value);
+			state.setValue(mProgramVar, (Long) value);
 			break;
 		}
 	}

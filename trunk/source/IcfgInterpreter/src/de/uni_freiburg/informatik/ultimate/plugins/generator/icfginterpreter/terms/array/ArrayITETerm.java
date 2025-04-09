@@ -6,7 +6,7 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.SMTArray;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ArrayTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
@@ -14,32 +14,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ArrayITETerm extends ArrayTerm {
-	private final ITETerm<ArrayTerm> ite;
+	private final ITETerm<ArrayTerm> mITE;
 
 	public ArrayITETerm(final BooleanTerm condition, final ArrayTerm ifTerm, final ArrayTerm elseTerm) {
 		super(ifTerm.keyType, ifTerm.valueType, ITETerm.mSymbol);
 		assert ifTerm.keyType == elseTerm.keyType && ifTerm.valueType == elseTerm.valueType;
-		ite = new ITETerm<>(condition, ifTerm, elseTerm);
+		mITE = new ITETerm<>(condition, ifTerm, elseTerm);
 	}
 
-	private ArrayITETerm(final ITETerm<ArrayTerm> mITE) {
-		super(mITE.B.keyType, mITE.B.valueType, ITETerm.mSymbol);
-		ite = mITE;
+	private ArrayITETerm(final ITETerm<ArrayTerm> ite) {
+		super(ite.mB.keyType, ite.mB.valueType, ITETerm.mSymbol);
+		mITE = ite;
 	}
 
 	@Override
 	public ArrayITETerm simplify() {
-		return new ArrayITETerm(ite.A.simplify(), ite.B.simplify(), ite.C.simplify());
+		return new ArrayITETerm(mITE.mCondition.simplify(), mITE.mB.simplify(), mITE.mC.simplify());
 	}
 
 	@Override
 	public ArrayList<ExecutionTerm> getSubTerms() {
-		return ite.getSubTerms();
+		return mITE.getSubTerms();
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
-		return ite.toString(out, depth);
+		return mITE.toString(out, depth);
 	}
 
 	@Override
@@ -47,37 +47,40 @@ public class ArrayITETerm extends ArrayTerm {
 		if (!(b instanceof ArrayITETerm)) {
 			return false;
 		}
-		return ite.equals(((ArrayITETerm) b).ite);
+		return mITE.equals(((ArrayITETerm) b).mITE);
 	}
 
 	@Override
 	public int hashCode() {
-		return ite.hashCode();
+		return mITE.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		return ite.getVariables();
+		return mITE.getVariables();
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return ite.toSMTTerm(theory);
+		return mITE.toSMTTerm(theory);
 	}
-
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<ArrayDomain<keyType, valueType>> replaceSubTerm(
-	 * ExecutionTerm<subT> current, ExecutionTerm<subT> replacement) { return new
-	 * ArrayITETerm<>(ite.replaceSubTerm(current, replacement)); }
-	 */
 
 	@Override
 	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return (SMTArray) ite.evaluate(currentState, nextState);
+		return (SMTArray) mITE.evaluate(currentState, nextState);
 	}
 
 	@Override
 	public String toCode() {
-		return ite.toCode();
+		return mITE.toCode();
+	}
+
+	@Override
+	protected ArrayITETerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final BooleanTerm mA = mITE.mCondition.replaceTerm(old, replacement);
+		final ArrayTerm mB = mITE.mB.replaceTerm(old, replacement);
+		final ArrayTerm mC = mITE.mC.replaceTerm(old, replacement);
+
+		return new ArrayITETerm(new ITETerm<>(mA, mB, mC));
 	}
 }

@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.ITETerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -26,9 +27,9 @@ public class BoolITETerm extends BooleanTerm {
 
 	@Override
 	public BooleanTerm negate() {
-		final BooleanTerm notB = ite.B.negate();
-		final BooleanTerm notC = ite.C.negate();
-		return new BoolITETerm(ite.A, notB, notC);
+		final BooleanTerm notB = ite.mB.negate();
+		final BooleanTerm notC = ite.mC.negate();
+		return new BoolITETerm(ite.mCondition, notB, notC);
 	}
 
 	/**
@@ -36,14 +37,14 @@ public class BoolITETerm extends BooleanTerm {
 	 */
 	@Override
 	public OrTerm simplify() {
-		final AndTerm AAndB = new AndTerm(ite.A, ite.B);
-		final AndTerm NotAAndC = new AndTerm(ite.A.negate(), ite.C);
+		final AndTerm AAndB = new AndTerm(ite.mCondition, ite.mB);
+		final AndTerm NotAAndC = new AndTerm(ite.mCondition.negate(), ite.mC);
 		return new OrTerm(AAndB, NotAAndC);
 	}
 
 	@Override
 	public ArrayList<BooleanTerm> getSubTerms() {
-		return Util.toList(ite.A, ite.B, ite.C);
+		return Util.toList(ite.mCondition, ite.mB, ite.mC);
 	}
 
 	@Override
@@ -73,10 +74,6 @@ public class BoolITETerm extends BooleanTerm {
 	public Term toSMTTerm(final Theory theory) {
 		return ite.toSMTTerm(theory);
 	}
-	/*
-	 * @Override public <subT extends Domain<subT>> ExecutionTerm<BooleanDomain> replaceSubTerm(ExecutionTerm<subT>
-	 * current, ExecutionTerm<subT> replacement) { return new BoolITETerm(ite.replaceSubTerm(current, replacement)); }
-	 */
 
 	@Override
 	public Boolean evaluate(final ProgramState currentState, final ProgramState nextState) {
@@ -86,5 +83,14 @@ public class BoolITETerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		return ite.toCode();
+	}
+
+	@Override
+	protected BoolITETerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final BooleanTerm mA = ite.mCondition.replaceTerm(old, replacement);
+		final BooleanTerm mB = ite.mB.replaceTerm(old, replacement);
+		final BooleanTerm mC = ite.mC.replaceTerm(old, replacement);
+
+		return new BoolITETerm(new ITETerm<>(mA, mB, mC));
 	}
 }

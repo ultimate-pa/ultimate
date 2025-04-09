@@ -72,6 +72,11 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		return false;
 	}
 
+	@Override
+	public void finish() {
+		DynamicLoader.deleteCompilationDirectory();
+	}
+
 	private static final ArrayList<IIcfg<?>> seenICFGs = new ArrayList<>();
 
 	public static IcfgInterpreterObserver getInstance() {

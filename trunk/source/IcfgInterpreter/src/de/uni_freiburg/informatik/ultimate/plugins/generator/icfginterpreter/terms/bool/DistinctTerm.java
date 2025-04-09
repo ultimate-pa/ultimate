@@ -27,7 +27,7 @@ public class DistinctTerm extends BooleanTerm {
 	}
 
 	/**
-	 * Returns != A B C D ... with arguments simplified
+	 * Returns A != B with arguments simplified
 	 */
 	@Override
 	public BooleanTerm simplify() {
@@ -65,7 +65,7 @@ public class DistinctTerm extends BooleanTerm {
 	}
 
 	/**
-	 * Returns "A != B"
+	 * Returns "A == B"
 	 */
 	@Override
 	public BooleanTerm negate() {
@@ -127,5 +127,12 @@ public class DistinctTerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		return "(" + mA.toCode() + " != " + mB.toCode() + ")";
+	}
+
+	@Override
+	protected DistinctTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final ExecutionTerm A = mA.replaceTerm(old, replacement);
+		final ExecutionTerm B = mB.replaceTerm(old, replacement);
+		return new DistinctTerm(A, B);
 	}
 }

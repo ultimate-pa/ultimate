@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
@@ -16,11 +17,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
  * Represents the unary function "-X"
  */
 public class NegationTerm extends IntegerTerm {
-	private final IntegerTerm X;
+	private final IntegerTerm mX;
 
-	public NegationTerm(final IntegerTerm mX) {
+	public NegationTerm(final IntegerTerm X) {
 		super(SMTLIBConstants.MINUS);
-		X = mX;
+		mX = X;
 	}
 
 	/**
@@ -28,11 +29,11 @@ public class NegationTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm simplify() {
-		if (X instanceof NegationTerm) {
-			final NegationTerm xCast = (NegationTerm) X;
-			return xCast.X.simplify();
+		if (mX instanceof NegationTerm) {
+			final NegationTerm xCast = (NegationTerm) mX;
+			return xCast.mX.simplify();
 		}
-		return new NegationTerm(X.simplify());
+		return new NegationTerm(mX.simplify());
 	}
 
 	/**
@@ -40,18 +41,18 @@ public class NegationTerm extends IntegerTerm {
 	 */
 	@Override
 	public IntegerTerm negate() {
-		return X;
+		return mX;
 	}
 
 	@Override
 	public ArrayList<IntegerTerm> getSubTerms() {
-		return new ArrayList<>(Arrays.asList(X));
+		return new ArrayList<>(Arrays.asList(mX));
 	}
 
 	@Override
 	public StringBuilder toString(final StringBuilder out, final int depth) {
 		out.append(Util.getIndent(depth)).append("(-");
-		X.toString(out, 0);
+		mX.toString(out, 0);
 		return out.append(")");
 	}
 
@@ -61,31 +62,36 @@ public class NegationTerm extends IntegerTerm {
 			return false;
 		}
 		final NegationTerm castB = (NegationTerm) b;
-		return X.equals(castB.X);
+		return mX.equals(castB.mX);
 	}
 
 	@Override
 	public int hashCode() {
-		return 73 * 31 + X.hashCode();
+		return 73 * 31 + mX.hashCode();
 	}
 
 	@Override
 	protected HashSet<Variable> getVariablesInternal() {
-		return X.getVariables();
+		return mX.getVariables();
 	}
 
 	@Override
 	public Term toSMTTerm(final Theory theory) {
-		return Util.makeTerm(mSymbol, theory, X.toSMTTerm(theory));
+		return Util.makeTerm(mSymbol, theory, mX.toSMTTerm(theory));
 	}
 
 	@Override
-	public Integer evaluate(final ProgramState currentState, final ProgramState nextState) {
-		return -X.evaluate(currentState, nextState);
+	public Long evaluate(final ProgramState currentState, final ProgramState nextState) {
+		return -mX.evaluate(currentState, nextState);
 	}
 
 	@Override
 	public String toCode() {
-		return "(-" + X.toCode() + ")";
+		return "(-" + mX.toCode() + ")";
+	}
+
+	@Override
+	protected NegationTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return new NegationTerm(mX.replaceTerm(old, replacement));
 	}
 }

@@ -94,4 +94,11 @@ public class GreaterTerm extends BooleanTerm {
 	public String toCode() {
 		return "(" + mX.toCode() + " > " + mY.toCode() + ")";
 	}
+
+	@Override
+	protected GreaterTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		final IntegerTerm X = mX.replaceTerm(old, replacement);
+		final IntegerTerm Y = mY.replaceTerm(old, replacement);
+		return new GreaterTerm(X, Y);
+	}
 }

@@ -55,4 +55,13 @@ public abstract class ExecutionTerm {
 	}
 
 	public abstract String toCode();
+
+	protected abstract ExecutionTerm replaceSubterms(ExecutionTerm old, ExecutionTerm replacement);
+
+	public ExecutionTerm replaceTerm(final ExecutionTerm old, final ExecutionTerm replacement) {
+		if (equals(old)) {
+			return replacement;
+		}
+		return replaceSubterms(old, replacement);
+	}
 }

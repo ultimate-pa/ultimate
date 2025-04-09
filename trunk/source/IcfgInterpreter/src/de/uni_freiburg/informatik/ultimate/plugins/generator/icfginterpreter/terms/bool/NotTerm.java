@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 /**
@@ -92,5 +93,10 @@ public class NotTerm extends BooleanTerm {
 	@Override
 	public String toCode() {
 		return "(!" + A.toCode() + ")";
+	}
+
+	@Override
+	protected NotTerm replaceSubterms(final ExecutionTerm old, final ExecutionTerm replacement) {
+		return new NotTerm(A.replaceTerm(old, replacement));
 	}
 }
