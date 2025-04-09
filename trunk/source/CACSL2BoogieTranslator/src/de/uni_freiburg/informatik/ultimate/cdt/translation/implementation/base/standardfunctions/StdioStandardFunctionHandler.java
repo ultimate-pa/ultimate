@@ -9,7 +9,6 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
-import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -71,78 +70,82 @@ public class StdioStandardFunctionHandler extends StandardFunctionHandler2 {
 
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
-		return List.of(new FunctionModel("printf", (main, node, loc, name) -> handlePrintF(main, node, loc)),
-				new FunctionModel("fgets",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
-								new CPointer(new CPrimitive(CPrimitives.CHAR)))),
-				new FunctionModel("fgetc",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc)),
-				new FunctionModel("fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc)),
-				new FunctionModel("sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc)),
-				new FunctionModel("snprintf", this::handleSnPrintF),
-				new FunctionModel("swprintf", this::handleSnPrintF),
-				new FunctionModel("scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)),
-				new FunctionModel("scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)),
-				new FunctionModel("fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)),
-				new FunctionModel("wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)),
-				new FunctionModel("fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)),
-				new FunctionModel("puts", this::handlePuts),
-				new FunctionModel("fflush",
-						(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("fopen",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2,
-								CPointer.voidPointer())),
-				new FunctionModel("fclose",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("feof",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("fseek",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("fread",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
-								new CPrimitive(CPrimitives.ULONG))),
-				new FunctionModel("ferror",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("fputs",
-						(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("fwrite",
-						(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-								new CPrimitive(CPrimitives.ULONGLONG))),
-				new FunctionModel("setbuf",
-						(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-								new CPrimitive(CPrimitives.VOID))),
-				new FunctionModel("clearerr",
-						(main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)),
-				new FunctionModel("putchar",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("vprintf", (main, node, loc, name) -> handlePrintF(main, node, loc)),
-				new FunctionModel("vfprintf",
-						(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("vsprintf", this::handleSnPrintF),
-				new FunctionModel("vsnprintf", this::handleSnPrintF),
-				new FunctionModel("vprintf_s", (main, node, loc, name) -> handlePrintF(main, node, loc)),
-				new FunctionModel("vfprintf_s",
-						(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-								new CPrimitive(CPrimitives.INT))),
-				new FunctionModel("vsprintf_s", this::handleSnPrintF),
-				new FunctionModel("vsnprintf_s", this::handleSnPrintF));
+		final List<FunctionModel> result = new ArrayList<>();
+
+		result.add(new FunctionModel("printf", (main, node, loc, name) -> handlePrintF(main, node, loc)));
+
+		// https://en.cppreference.com/w/c/io/fgets
+		result.add(new FunctionModel("fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+
+		// https://en.cppreference.com/w/c/io/fgetc
+		result.add(new FunctionModel("fgetc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 1, new CPrimitive(CPrimitives.INT))));
+
+		// TODO 20211105 Matthias: Unsound because our implementation of printf is
+		// unsound and because we consider wchars as chars.
+		result.add(new FunctionModel("wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc)));
+		result.add(new FunctionModel("fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc)));
+		result.add(new FunctionModel("sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc)));
+		result.add(new FunctionModel("snprintf", this::handleSnPrintF));
+		result.add(new FunctionModel("swprintf", this::handleSnPrintF));
+
+		// https://en.cppreference.com/w/c/io/fscanf
+		result.add(new FunctionModel("scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+
+		// https://en.cppreference.com/w/c/io/fwscanf
+		result.add(new FunctionModel("wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1)));
+		result.add(new FunctionModel("fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+		result.add(new FunctionModel("swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2)));
+
+		// https://en.cppreference.com/w/c/io/puts
+		result.add(new FunctionModel("puts", this::handlePuts));
+
+		/**
+		 * 7.21.3 Files
+		 *
+		 * We cannot handle files properly, therefore we just overapproximate. For functions that modify the files, we
+		 * use the "assert false" overapproximation, otherwise we just overapproximate the return value.
+		 */
+		result.add(new FunctionModel("fflush",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 2, CPointer.voidPointer())));
+		result.add(new FunctionModel("fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
+				1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 3, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 4, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
+				name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(
+				new FunctionModel("fputs", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
+						loc, name, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fwrite",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.ULONGLONG))));
+		result.add(new FunctionModel("setbuf",
+				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+						new CPrimitive(CPrimitives.VOID))));
+		// https://en.cppreference.com/w/c/io/clearerr
+		// We don't handle the error flags anyway, so we just dispatch the argument.
+		result.add(new FunctionModel("clearerr",
+				(main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)));
+
+		return result;
+
 	}
 
 	@Override
@@ -430,76 +433,4 @@ public class StdioStandardFunctionHandler extends StandardFunctionHandler2 {
 		checkArguments(loc, 1, name, node.getArguments());
 		return handlePrintFunction(main, node, loc);
 	}
-
-	private static boolean isStringLiteral(final IASTInitializerClause expr) {
-		return expr instanceof IASTLiteralExpression
-				&& ((IASTLiteralExpression) expr).getKind() == IASTLiteralExpression.lk_string_literal;
-	}
-
-	// fill(map, "printf", (main, node, loc, name) -> handlePrintF(main, node, loc));
-	//
-	// // https://en.cppreference.com/w/c/io/fgets
-	// fill(map, "fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
-	// new CPointer(new CPrimitive(CPrimitives.CHAR))));
-	//
-	// // https://en.cppreference.com/w/c/io/fgetc
-	// fill(map, "fgetc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-	// new CPrimitive(CPrimitives.INT)));
-	//
-	// // TODO 20211105 Matthias: Unsound because our implementation of printf is
-	// // unsound and because we consider wchars as chars.
-	// fill(map, "wprintf", (main, node, loc, name) -> handlePrintF(main, node, loc));
-	// fill(map, "fprintf", (main, node, loc, name) -> handlePrintFunction(main, node, loc));
-	// fill(map, "sprintf", (main, node, loc, name) -> handleSPrintF(main, node, loc));
-	// fill(map, "snprintf", this::handleSnPrintF);
-	// fill(map, "swprintf", this::handleSnPrintF);
-	//
-	// // https://en.cppreference.com/w/c/io/fscanf
-	// fill(map, "scanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
-	// fill(map, "scanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
-	// fill(map, "fscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	// fill(map, "fscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	// fill(map, "sscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	// fill(map, "sscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	//
-	// // https://en.cppreference.com/w/c/io/fwscanf
-	// fill(map, "wscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
-	// fill(map, "wscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 1));
-	// fill(map, "fwscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	// fill(map, "fwscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	// fill(map, "swscanf", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	// fill(map, "swscanf_s", (main, node, loc, name) -> handleScanf(name, main, node, loc, 2));
-	//
-	// // https://en.cppreference.com/w/c/io/puts
-	// fill(map, "puts", this::handlePuts);
-
-	/**
-	 * 7.21.3 Files
-	 *
-	 * We cannot handle files properly, therefore we just overapproximate. For functions that modify the files, we use
-	 * the "assert false" overapproximation, otherwise we just overapproximate the return value.
-	 */
-	// fill(map, "fflush", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-	// new CPrimitive(CPrimitives.INT)));
-	// fill(map, "fopen",
-	// (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 2, CPointer.voidPointer()));
-	// fill(map, "fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-	// new CPrimitive(CPrimitives.INT)));
-	// fill(map, "feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-	// new CPrimitive(CPrimitives.INT)));
-	// fill(map, "fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 3,
-	// new CPrimitive(CPrimitives.INT)));
-	// fill(map, "fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 4,
-	// new CPrimitive(CPrimitives.ULONG)));
-	// fill(map, "ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
-	// new CPrimitive(CPrimitives.INT)));
-	// fill(map, "fputs", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-	// new CPrimitive(CPrimitives.INT)));
-	// fill(map, "fwrite", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-	// new CPrimitive(CPrimitives.ULONGLONG)));
-	// fill(map, "setbuf", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-	// new CPrimitive(CPrimitives.VOID)));
-	// // https://en.cppreference.com/w/c/io/clearerr
-	// // We don't handle the error flags anyway, so we just dispatch the argument.
-	// fill(map, "clearerr", (main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1));
 }
