@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -42,33 +44,48 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pa
  */
 public class AssertionOrderModulation<LETTER> {
 
-	private static final AssertCodeBlockOrder[] DEFAULT_ORDER = {
-
+	private static final AssertCodeBlockOrder[] DEFAULT_ASSERTION_ORDER = {
+			// @formatter:off
 			AssertCodeBlockOrder.NOT_INCREMENTALLY,
-
 			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1),
-
 			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
-
 			new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST),
-
 			new AssertCodeBlockOrder(AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1),
+			new AssertCodeBlockOrder(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE)
+			// @formatter:on
+	};
 
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE), };
+	private static final AssertCodeBlockOrder[] DEFAULT_WITNESS_ORDER = ArrayUtils.addAll(
+	// @formatter:off
+			new AssertCodeBlockOrder[] {
+					new AssertCodeBlockOrder(AssertCodeBlockOrderType.WITNESS_FIRST),
+					new AssertCodeBlockOrder(AssertCodeBlockOrderType.WITNESS_VARIABLE) },
+			AssertionOrderModulation.DEFAULT_ASSERTION_ORDER);
+	// @formatter:on
 
 	private final AssertCodeBlockOrder[] mOrder;
 	private final ILogger mLogger;
 	private final PathProgramCache<LETTER> mPathProgramCache;
 
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger) {
-		this(pathProgramCache, logger, DEFAULT_ORDER);
+		this(pathProgramCache, logger, false);
 	}
 
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger,
 			final AssertCodeBlockOrder... order) {
+		this(pathProgramCache, logger, false, order);
+	}
+
+	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger,
+			final boolean validateWitness, final AssertCodeBlockOrder... order) {
 		mPathProgramCache = pathProgramCache;
 		mLogger = logger;
-		mOrder = order == null || order.length == 0 ? DEFAULT_ORDER : order;
+
+		if (order == null || order.length == 0) {
+			mOrder = validateWitness ? DEFAULT_WITNESS_ORDER : DEFAULT_ASSERTION_ORDER;
+		} else {
+			mOrder = order;
+		}
 	}
 
 	/**

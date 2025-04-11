@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelOnlyBpRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelSmtAmRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelWitnessRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.DachshundRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FixedRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.FoxRefinementStrategy;
@@ -186,6 +187,8 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			return new PenguinRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case CAMEL:
 			return new CamelRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
+		case CAMEL_WITNESS:
+			return new CamelWitnessRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case CAMEL_NO_AM:
 			return new CamelNoAmRefinementStrategy<>(strategyModuleFactory, exceptionBlacklist);
 		case CAMEL_SMT_AM:
@@ -333,15 +336,22 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(
 				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
-			return createIpTcStrategyModuleSmtInterpolCraig(-1, technique, order);
+			return createIpTcStrategyModuleSmtInterpolCraig(-1, technique, false, order);
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(
+				final InterpolationTechnique technique, final boolean validateWitness,
+				final AssertCodeBlockOrder... order) {
+			return createIpTcStrategyModuleSmtInterpolCraig(-1, technique, validateWitness);
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(final long timeoutInMillis,
-				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
+				final InterpolationTechnique technique, final boolean validateWitness,
+				final AssertCodeBlockOrder... order) {
 			return createModuleWrapperIfNecessary(new IpTcStrategyModuleSmtInterpolCraig<>(mTaskIdentifier, mServices,
 					mPrefs, mCounterexample, mPrecondition, mPostcondition,
-					new AssertionOrderModulation<>(mPathProgramCache, mLogger, order), mPredicateUnifier,
-					mPredicateFactory, timeoutInMillis, technique));
+					new AssertionOrderModulation<>(mPathProgramCache, mLogger, validateWitness, order),
+					mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolSpWp(final InterpolationTechnique technique,
@@ -359,15 +369,21 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final InterpolationTechnique technique,
 				final AssertCodeBlockOrder... order) {
-			return createIpTcStrategyModuleZ3(-1, technique, order);
+			return createIpTcStrategyModuleZ3(-1, technique, false, order);
+		}
+
+		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final InterpolationTechnique technique,
+				final boolean validateWitness) {
+			return createIpTcStrategyModuleZ3(-1, technique, validateWitness);
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleZ3(final long timeoutInMillis,
-				final InterpolationTechnique technique, final AssertCodeBlockOrder... order) {
-			return createModuleWrapperIfNecessary(
-					new IpTcStrategyModuleZ3<>(mTaskIdentifier, mServices, mPrefs, mCounterexample, mPrecondition,
-							mPostcondition, new AssertionOrderModulation<>(mPathProgramCache, mLogger, order),
-							mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
+				final InterpolationTechnique technique, final boolean validateWitness,
+				final AssertCodeBlockOrder... order) {
+			return createModuleWrapperIfNecessary(new IpTcStrategyModuleZ3<>(mTaskIdentifier, mServices, mPrefs,
+					mCounterexample, mPrecondition, mPostcondition,
+					new AssertionOrderModulation<>(mPathProgramCache, mLogger, validateWitness, order),
+					mPredicateUnifier, mPredicateFactory, timeoutInMillis, technique));
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleMathsat(final InterpolationTechnique technique,

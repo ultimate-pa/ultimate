@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LoopAccelerators;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -66,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.LooperCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.AssertionOrderModulation;
 
 /**
  * Initializer and container of preferences for the trace abstraction plugin.
@@ -614,7 +616,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItemGroup("Assert Order",
 						new UltimatePreferenceItem<>(LABEL_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL,
 								DEF_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL, DESC_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL,
-								PreferenceType.Boolean),
+								PreferenceType.Boolean, new AssertOrderHierarchicalValidator()),
 						new UltimatePreferenceItem<>(LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
 								AssertCodeBlockOrderType.NOT_INCREMENTALLY, PreferenceType.Combo,
 								AssertCodeBlockOrderType.values()),
@@ -906,6 +908,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		CAMEL,
 		/**
+		 * Like {@link #CAMEL}, but uses {@link AssertionOrderModulation#DEFAULT_WITNESS_ORDER} as assertion order
+		 * modulation specifically for witness validation.
+		 */
+		CAMEL_WITNESS,
+		/**
 		 * Even more light-weight than {@link #CAMEL}. This strategy is exactly like {@link #CAMEL} but does not use any
 		 * assertion order modulation.
 		 */
@@ -1078,5 +1085,36 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
+	}
+
+	/**
+	 * Preference item validator for the hierarchical assert order setting.
+	 *
+	 * The item validator checks if the hierarchical witness assert order is used with any other refinement strategy
+	 * than {@link RefinementStrategy#CAMEL_WITNESS}.
+	 */
+	private static final class AssertOrderHierarchicalValidator implements IUltimatePreferenceItemValidator<Boolean> {
+
+		@Override
+		public boolean isValid(final Boolean value) {
+			final boolean assertOrderHierarchical = value;
+			final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+			final boolean refinementStrategyCamelWitness =
+					ups.getString(LABEL_REFINEMENT_STRATEGY).equals(RefinementStrategy.CAMEL_WITNESS.toString());
+			final boolean refinementAcipStrategyCamelWitness =
+					ups.getString(LABEL_ACIP_REFINEMENT_STRATEGY).equals(RefinementStrategy.CAMEL_WITNESS.toString());
+
+			// Do not report an error if hierarchical witness assertion order is used with any other refinement strategy
+			// than CAMEL_WITNESS. Otherwise, if hierarchical witness assertion order is used together with the
+			// CAMEL_WITNESS refinement strategy, report an error message.
+			return !assertOrderHierarchical || !refinementStrategyCamelWitness && !refinementAcipStrategyCamelWitness;
+		}
+
+		@Override
+		public String getInvalidValueErrorMessage(final Boolean value) {
+			return LABEL_ASSERT_WITNESS_ELEMENTS_HIERARCHICAL + " can only be enabled when the "
+					+ LABEL_REFINEMENT_STRATEGY + " or the " + LABEL_ACIP_REFINEMENT_STRATEGY + " is not "
+					+ RefinementStrategy.CAMEL_WITNESS.toString();
+		}
 	}
 }
