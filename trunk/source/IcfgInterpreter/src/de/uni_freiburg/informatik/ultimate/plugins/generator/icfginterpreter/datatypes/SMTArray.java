@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.da
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -43,6 +44,20 @@ public class SMTArray {
 	public SMTArray store(final Object index, final Object value) {
 		final HashMap<Object, Object> mEntries = Util.copyMap(entries);
 		mEntries.put(index, value);
+		return new SMTArray(mEntries, mVariable, mKeySort, mValueSort);
+	}
+
+	/**
+	 * Used to optimize stacked store() calls, which would need to copy the full map for every call. <br>
+	 * Stores the object at index 0 first, meaning later keys will overwrite equal ones earlier in the list.
+	 */
+	public SMTArray multiStore(final List<Object> keys, final List<Object> values) {
+		assert keys.size() == values.size();
+
+		final HashMap<Object, Object> mEntries = Util.copyMap(entries);
+		for (int i = 0; i < keys.size(); i++) {
+			mEntries.put(keys.get(i), values.get(i));
+		}
 		return new SMTArray(mEntries, mVariable, mKeySort, mValueSort);
 	}
 

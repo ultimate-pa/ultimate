@@ -82,12 +82,53 @@ public class StoreTerm extends ArrayTerm {
 
 	@Override
 	public SMTArray evaluate(final ProgramState currentState, final ProgramState nextState) {
+		if (mArray instanceof StoreTerm) {
+			// combine stacked store calls.
+			final ArrayList<Object> values = new ArrayList<>();
+			final ArrayList<Object> keys = new ArrayList<>();
+
+			ArrayTerm currentArray = this;
+
+			while (currentArray instanceof final StoreTerm store) {
+				keys.add(store.mIndex.evaluate(currentState, nextState));
+				values.add(store.mValue.evaluate(currentState, nextState));
+				currentArray = store.mArray;
+			}
+
+			// get the SMTArray from the first non-store child term
+			final SMTArray array = currentArray.evaluate(currentState, nextState);
+			// The child store call should be executed before the parents, so we will reverse the order of key / value
+			// pairs.
+			return array.multiStore(keys.reversed(), values.reversed());
+		}
+
 		final SMTArray array = mArray.evaluate(currentState, nextState);
 		return array.store(mIndex.evaluate(currentState, nextState), mValue.evaluate(currentState, nextState));
 	}
 
 	@Override
 	public String toCode() {
+		if (mArray instanceof StoreTerm) {
+			// combine stacked store calls.
+			final ArrayList<String> values = new ArrayList<>();
+			final ArrayList<String> keys = new ArrayList<>();
+
+			ArrayTerm currentArray = this;
+
+			while (currentArray instanceof final StoreTerm store) {
+				keys.add(store.mIndex.toCode());
+				values.add(store.mValue.toCode());
+				currentArray = store.mArray;
+			}
+
+			// The child store call should be executed before the parents, so we will reverse the order of key / value
+			// pairs.
+			final String keysCode = String.join(", ", keys.reversed());
+			final String valuesCode = String.join(", ", values.reversed());
+
+			return currentArray.toCode() + ".multiStore(Util.toList(" + keysCode + "), Util.toList(" + valuesCode
+					+ "))";
+		}
 		return mArray.toCode() + ".store(" + mIndex.toCode() + ", " + mValue.toCode() + ")";
 	}
 
