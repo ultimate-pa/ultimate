@@ -7,8 +7,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
@@ -69,7 +69,7 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public long havocInt(final IProgramVar variable, final IntegerRestriction values) {
+	public long havocInt(final IntegerRestriction values) {
 		if (values == null) {
 			return (Math.abs(xorShift()) % mHavocCapMap) + mMinHavocInt;
 		}
@@ -86,7 +86,7 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public boolean havocBool(final IProgramVar variable, final BooleanRestriction values) {
+	public boolean havocBool(final BooleanRestriction values) {
 		if (values != null && values.getInequal().size() == 1) {
 			// can only be the value that is not in the inequalities
 			return values.getInequal().contains(false);
@@ -96,14 +96,13 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public BitVector havocBitVector(final IProgramVar variable, final BitVectorRestriction values) {
-		// return new BitVector(variable.getSort().getIndices(), );
-		return null;
+	public BitVector havocBitVector(final int length, final BitVectorRestriction values) {
+		return new BitVector(length, BigInteger.ZERO);
 	}
 
 	@Override
-	public SMTArray newArray(final IProgramVar programVar, final ArrayRestriction values) {
-		return new SMTArray(programVar);
+	public SMTArray newArray(final Sort sort, final ArrayRestriction values) {
+		return new SMTArray(sort);
 	}
 
 	@Override
@@ -111,10 +110,8 @@ public class RNGChoice implements NonDeterministicChoice {
 		final long hashKey = array.hashCode() + index.hashCode();
 		switch (array.mValueSort.getName()) {
 		case SMTLIBConstants.ARRAY:
-			return new SMTArray(array.getEntries(), array.mVariable, array.mValueSort.getArguments()[0],
-					array.mValueSort.getArguments()[1]);
+			return newArray(array.mValueSort, null);
 		case SMTLIBConstants.BITVEC:
-
 			return null;
 		case SMTLIBConstants.BOOL:
 			return 0 < hash(hashKey);
@@ -126,7 +123,7 @@ public class RNGChoice implements NonDeterministicChoice {
 
 	@Override
 	public boolean areArraysEqual(final SMTArray a, final SMTArray b) {
-		return havocBool(null, null);
+		return havocBool(null);
 	}
 
 	/** 0xbf58476d1ce4e5b9L */

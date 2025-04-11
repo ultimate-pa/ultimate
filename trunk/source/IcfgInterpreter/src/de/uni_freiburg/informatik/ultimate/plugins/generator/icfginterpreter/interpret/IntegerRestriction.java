@@ -12,15 +12,15 @@ public class IntegerRestriction extends Restriction<Long> {
 	/**
 	 * @param inequals     All specific values that the variable cannot take (have to be less than <strong>less</strong>
 	 *                     and greater than <strong>greater</strong>),
-	 * @param finalHighest The value that the variable has to be smaller than (has to be strictly greater than
+	 * @param lessThan The value that the variable has to be smaller than (has to be strictly greater than
 	 *                     <strong>less</strong>)
-	 * @param finalLowest  The value that the variable has to be greater than
+	 * @param greaterThan  The value that the variable has to be greater than
 	 */
-	public IntegerRestriction(final HashSet<Long> inequals, final Long finalHighest, final Long finalLowest) {
-		super(inequals, finalHighest, finalLowest);
-		assert finalHighest > finalLowest + 1;
+	public IntegerRestriction(final HashSet<Long> inequals, final Long lessThan, final Long greaterThan) {
+		super(inequals, lessThan, greaterThan);
+		assert lessThan > greaterThan + 1;
 
-		final long possibleValueCount = (finalHighest - finalLowest - 1) - inequals.size();
+		final long possibleValueCount = (lessThan - greaterThan - 1) - inequals.size();
 		if (possibleValueCount > Integer.MAX_VALUE) {
 			mValueCount = Integer.MAX_VALUE;
 		} else {

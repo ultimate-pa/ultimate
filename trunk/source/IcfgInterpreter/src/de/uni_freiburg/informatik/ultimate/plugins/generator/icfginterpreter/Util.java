@@ -214,6 +214,12 @@ public class Util {
 		return getSort(type, theory, new Sort[0]);
 	}
 
+	public static String sortToCode(final Sort sort) {
+		final StringBuilder out = new StringBuilder();
+
+		return out.toString();
+	}
+
 	public static Sort getSort(final ReturnType type, final Theory theory, final Sort... args) {
 		switch (type) {
 		case Boolean:
@@ -308,5 +314,12 @@ public class Util {
 			numb = (numb / 26) - 1;
 		}
 		return result.toString();
+	}
+
+	public static int getBitVecLength(final Sort sort) {
+		if (!sort.isBitVecSort()) {
+			return -1;
+		}
+		return Integer.parseInt(sort.getIndices()[0]);
 	}
 }

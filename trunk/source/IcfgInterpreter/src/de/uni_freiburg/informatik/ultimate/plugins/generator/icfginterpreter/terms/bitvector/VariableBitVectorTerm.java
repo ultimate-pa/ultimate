@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -97,5 +98,10 @@ public class VariableBitVectorTerm extends BitVectorTerm implements Variable {
 	@Override
 	public VariableBitVectorTerm replaceTermVariable(final TermVariable termVar) {
 		return new VariableBitVectorTerm(mLength, mVariableTerm.replaceTermVariable(termVar));
+	}
+
+	@Override
+	public VariableBitVectorTerm replaceIProgramVar(final IProgramVar programVar) {
+		return new VariableBitVectorTerm(mLength, mVariableTerm.replaceIProgramVar(programVar));
 	}
 }

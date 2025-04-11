@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -100,5 +101,10 @@ public class VariableIntegerTerm extends IntegerTerm implements Variable {
 	@Override
 	public VariableIntegerTerm replaceTermVariable(final TermVariable termVar) {
 		return new VariableIntegerTerm(mVariableTerm.replaceTermVariable(termVar));
+	}
+
+	@Override
+	public VariableIntegerTerm replaceIProgramVar(final IProgramVar programVar) {
+		return new VariableIntegerTerm(mVariableTerm.replaceIProgramVar(programVar));
 	}
 }

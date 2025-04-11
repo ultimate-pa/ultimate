@@ -37,6 +37,11 @@ public class AdditionTerm extends IntegerTerm {
 	public AdditionTerm simplify() {
 		final ArrayList<IntegerTerm> subTerms = new ArrayList<>();
 		for (final IntegerTerm subTerm : mSubTerms) {
+			if (subTerm instanceof final AdditionTerm at) {
+				// simplify the underlying addition term and flatten it into this term
+				subTerms.addAll(at.simplify().getSubTerms());
+				continue;
+			}
 			subTerms.add(subTerm.simplify());
 		}
 

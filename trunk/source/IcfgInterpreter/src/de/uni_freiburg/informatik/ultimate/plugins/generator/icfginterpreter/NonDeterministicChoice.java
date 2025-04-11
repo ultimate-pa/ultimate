@@ -3,8 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
@@ -12,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 
 /**
  * This class should be deterministic for its seed. This ensures that the same "non-deterministic" values appear when
@@ -30,25 +30,25 @@ public interface NonDeterministicChoice {
 	 * @param possibleValues
 	 * @return
 	 */
-	default Object havoc(final IProgramVar variable, final Restriction<?> possibleValues) {
-		switch (variable.getSort().getName()) {
-		case SMTLIBConstants.ARRAY:
-			return newArray(variable, (ArrayRestriction) possibleValues);
-		case SMTLIBConstants.BITVEC:
-			return havocBitVector(variable, (BitVectorRestriction) possibleValues);
-		case SMTLIBConstants.BOOL:
-			return havocBool(variable, (BooleanRestriction) possibleValues);
-		case SMTLIBConstants.INT:
-			return havocInt(variable, (IntegerRestriction) possibleValues);
+	default Object havoc(final Sort sort, final Restriction<?> possibleValues) {
+		switch (Util.getType(sort)) {
+		case ReturnType.Array:
+			return newArray(sort, (ArrayRestriction) possibleValues);
+		case ReturnType.BitVector:
+			return havocBitVector(Util.getBitVecLength(sort), (BitVectorRestriction) possibleValues);
+		case ReturnType.Boolean:
+			return havocBool((BooleanRestriction) possibleValues);
+		case ReturnType.Int:
+			return havocInt((IntegerRestriction) possibleValues);
 		}
 		return null;
 	}
 
-	long havocInt(IProgramVar variable, IntegerRestriction values);
+	long havocInt(IntegerRestriction values);
 
-	boolean havocBool(IProgramVar variable, BooleanRestriction values);
+	boolean havocBool(BooleanRestriction values);
 
-	BitVector havocBitVector(IProgramVar variable, BitVectorRestriction values);
+	BitVector havocBitVector(int length, BitVectorRestriction values);
 
 	/**
 	 * Called when an array entry is read where no value has been stored with
@@ -61,7 +61,7 @@ public interface NonDeterministicChoice {
 	 */
 	Object havocArrayEntry(SMTArray smtArray, Object index);
 
-	SMTArray newArray(IProgramVar programVar, ArrayRestriction values);
+	SMTArray newArray(Sort sort, ArrayRestriction values);
 
 	boolean areArraysEqual(SMTArray a, SMTArray b);
 

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
@@ -13,25 +12,17 @@ public class SMTArray {
 	private final HashMap<Object, Object> entries;
 	public final Sort mKeySort;
 	public final Sort mValueSort;
-	public final IProgramVar mVariable;
+	public final Sort mSort;
 
-	public SMTArray(final IProgramVar variable) {
-		this(new HashMap<>(), variable);
+	public SMTArray(final Sort sort) {
+		this(new HashMap<>(), sort);
 	}
 
-	private SMTArray(final HashMap<Object, Object> mEntries, final IProgramVar variable) {
+	public SMTArray(final HashMap<Object, Object> mEntries, final Sort sort) {
 		entries = mEntries;
-		mKeySort = variable.getSort().getArguments()[0];
-		mValueSort = variable.getSort().getArguments()[1];
-		mVariable = variable;
-	}
-
-	public SMTArray(final HashMap<Object, Object> mEntries, final IProgramVar variable, final Sort keySort,
-			final Sort valueSort) {
-		entries = mEntries;
-		mKeySort = keySort;
-		mValueSort = valueSort;
-		mVariable = variable;
+		mKeySort = sort.getArguments()[0];
+		mValueSort = sort.getArguments()[1];
+		mSort = sort;
 	}
 
 	public Object select(final Object index, final NonDeterministicChoice ndc) {
@@ -44,7 +35,7 @@ public class SMTArray {
 	public SMTArray store(final Object index, final Object value) {
 		final HashMap<Object, Object> mEntries = Util.copyMap(entries);
 		mEntries.put(index, value);
-		return new SMTArray(mEntries, mVariable, mKeySort, mValueSort);
+		return new SMTArray(mEntries, mSort);
 	}
 
 	/**
@@ -58,7 +49,7 @@ public class SMTArray {
 		for (int i = 0; i < keys.size(); i++) {
 			mEntries.put(keys.get(i), values.get(i));
 		}
-		return new SMTArray(mEntries, mVariable, mKeySort, mValueSort);
+		return new SMTArray(mEntries, mSort);
 	}
 
 	public HashMap<Object, Object> getEntries() {
@@ -79,7 +70,7 @@ public class SMTArray {
 
 	@Override
 	public int hashCode() {
-		return ((mVariable.hashCode() * 31) + mKeySort.hashCode()) * 31 + mValueSort.hashCode();
+		return mSort.hashCode();
 	}
 
 	@Override

@@ -40,11 +40,11 @@ public class ICFGExecutionEdge {
 		mIndentifier = identifier;
 	}
 
-	public ProgramState execute(final ProgramState currentState, final NonDeterministicChoice ndc) {
+	public ProgramState execute(final ProgramState currentState) {
 		final ProgramState nextState = currentState.clone();
-		final Update[] updates = mArcSolver.makeUpdates();
+		final Update[] updates = mArcSolver.getUpdates();
 		for (final Update update : updates) {
-			update.apply(currentState, nextState, ndc);
+			update.apply(currentState, nextState);
 		}
 		nextState.finalizeState();
 		return nextState;
@@ -59,13 +59,13 @@ public class ICFGExecutionEdge {
 		final StringBuilder out = new StringBuilder();
 
 		out.append("Edge from ").append(mSource).append(" to ").append(mTarget);
-		out.append("\nFormula: ").append(mTransFormula.getFormula());
+		out.append("\nFormula: ").append(mTransFormula.getFormula().toStringDirect());
 		for (final Variable var : mVariables.getVariables()) {
 			out.append("\n").append(var.getVariableTerm());
 		}
 		out.append("\nGuard:\n").append(mGuardTerm);
 
-		final Update[] updates = mArcSolver.makeUpdates();
+		final Update[] updates = mArcSolver.getUpdates();
 		if (updates.length > 0) {
 			out.append("\nUpdates:");
 			for (final Update update : updates) {
@@ -79,7 +79,7 @@ public class ICFGExecutionEdge {
 	}
 
 	public Update[] getUpdates() {
-		return mArcSolver.makeUpdates();
+		return mArcSolver.getUpdates();
 	}
 
 	public OrTerm getGuard() {

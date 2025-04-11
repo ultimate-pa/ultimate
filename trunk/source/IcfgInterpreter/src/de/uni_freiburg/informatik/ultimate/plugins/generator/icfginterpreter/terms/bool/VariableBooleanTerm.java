@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -100,5 +101,10 @@ public class VariableBooleanTerm extends BooleanTerm implements Variable {
 	@Override
 	public VariableBooleanTerm replaceTermVariable(final TermVariable termVar) {
 		return new VariableBooleanTerm(mVariableTerm.replaceTermVariable(termVar));
+	}
+
+	@Override
+	public VariableBooleanTerm replaceIProgramVar(final IProgramVar programVar) {
+		return new VariableBooleanTerm(mVariableTerm.replaceIProgramVar(programVar));
 	}
 }

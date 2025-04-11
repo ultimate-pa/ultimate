@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.AuxProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ProgramState {
@@ -32,25 +33,25 @@ public class ProgramState {
 				if (mArrayVars.containsKey(programVar)) {
 					continue;
 				}
-				mArrayVars.put(programVar, ndc.newArray(programVar, null));
+				mArrayVars.put(programVar, ndc.newArray(programVar.getSort(), null));
 				break;
 			case BitVector:
 				if (mBVVars.containsKey(programVar)) {
 					continue;
 				}
-				mBVVars.put(programVar, ndc.havocBitVector(programVar, null));
+				mBVVars.put(programVar, ndc.havocBitVector(Util.getBitVecLength(programVar.getSort()), null));
 				break;
 			case Boolean:
 				if (mBoolVars.containsKey(programVar)) {
 					continue;
 				}
-				mBoolVars.put(programVar, ndc.havocBool(programVar, null));
+				mBoolVars.put(programVar, ndc.havocBool(null));
 				break;
 			case Int:
 				if (mIntVars.containsKey(programVar)) {
 					continue;
 				}
-				mIntVars.put(programVar, ndc.havocInt(programVar, null));
+				mIntVars.put(programVar, ndc.havocInt(null));
 				break;
 			}
 		}
@@ -80,6 +81,9 @@ public class ProgramState {
 	public String toString() {
 		final StringBuilder out = new StringBuilder();
 		for (final Entry<IProgramVar, Object> arrayVariable : getVariableValues().entrySet()) {
+			if (arrayVariable.getKey() instanceof AuxProgramVar) {
+				continue;
+			}
 			out.append(arrayVariable.getKey().getGloballyUniqueId()).append(" = ");
 			out.append(arrayVariable.getValue()).append("\n");
 		}

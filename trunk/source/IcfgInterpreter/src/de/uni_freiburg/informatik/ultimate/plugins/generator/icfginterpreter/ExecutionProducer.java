@@ -187,7 +187,7 @@ public class ExecutionProducer {
 					nextEdge = availableEdges.get(0);
 				}
 
-				state = nextEdge.execute(state, ndc);
+				state = nextEdge.execute(state);
 				execution.addStep(state, nextEdge.mTarget, nextEdge.getTransFormula());
 				nextEdges.clear();
 				nextEdges.addAll(mIIcfg.getOutEdges(nextEdge.mTarget));

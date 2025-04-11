@@ -25,12 +25,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.BooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.IntegerTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.AndTerm;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.NotTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.DistinctTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.EqualsTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.GreaterEqualTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.GreaterTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.LessEqualTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.LessTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.OrTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.AdditionTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.NegationTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.SubtractionTerm;
 
 public class ArcSolver {
 	private final VariableSet mVariables;
@@ -38,22 +47,13 @@ public class ArcSolver {
 	private final HashMap<Variable, ArrayList<Constraint>> mConstraints = new HashMap<>();
 	private final HashMap<Variable, ArrayList<Arc>> mArcs = new HashMap<>();
 	private final int constraintCount;
-	// private final BooleanTerm guardTerm;
 
 	/**
-	 * @param outVars
-	 * @param inVars
-	 * @param variables
-	 * @param service
-	 * @param theory
-	 * @param theory
 	 * @param constraintList should be an {@link AndTerm} from {@link OrTerm#getSubTerms()} of an OrTerm created by
 	 *                       {@link TermNormalizer#simplifyToDNF(BooleanTerm)}
-	 * @param mAllVariables
 	 */
 	public ArcSolver(final AndTerm constraintTerm, final ManagedScript managedScript, final VariableSet variables,
 			final Theory theory) {
-
 		mVariables = variables;
 		mDefinedVariables = new HashSet<>();
 
@@ -69,41 +69,62 @@ public class ArcSolver {
 			}
 
 			BinaryRelation binRel;
+			final Term constraintSMT = constraint.toSMTTerm(theory);
 			if (constraint.getSubTerms().get(0).returnType == ReturnType.Int) {
-				binRel = BinaryNumericRelation.convert(constraint.toSMTTerm(theory));
+				binRel = BinaryNumericRelation.convert(constraintSMT);
 			} else {
-				binRel = BinaryEqualityRelation.convert(constraint.toSMTTerm(theory));
+				binRel = BinaryEqualityRelation.convert(constraintSMT);
 			}
 
 			for (final Variable var : mVariables.getVariables()) {
+				final BooleanTerm mySolution = solveForSubject(constraint, var);
 				if (var.getVariableTerm().isInVar) {
 					// We do not need to solve equations for InVars, they are a known constant in a transition.
 					continue;
 				}
 				final Term termVar = var.getTerm().toSMTTerm(theory);
+
 				final SolvedBinaryRelation solvedBinEQ = binRel.solveForSubject(managedScript.getScript(), termVar);
-				if (solvedBinEQ == null) {
+				if (solvedBinEQ != null && mySolution == null) {
+					System.out.println("bad");
+				}
+
+				if (mySolution == null) {
 					continue;
 				}
-				final Term definition = solvedBinEQ.getRightHandSide();
-				RelationSymbol relation = solvedBinEQ.getRelationSymbol();
-				if (definition == null) {
-					continue;
-				}
-				ExecutionTerm rhsTerm = IcfgTranslation.parseTerm(definition, variables).simplify();
-				if (rhsTerm.returnType == ReturnType.Boolean && relation == RelationSymbol.DISTINCT) {
-					// bool_x != bool_y would become the update havoc(bool_x, "!= bool_y")
-					// but we can just simplify to bool_x = !(bool_y) to get an assignment update set(bool_x, !bool_y)
-					rhsTerm = new NotTerm((BooleanTerm) rhsTerm);
+
+				final ExecutionTerm rightHandSide = mySolution.getSubTerms().get(1);
+				RelationSymbol relation;
+				switch (mySolution) {
+				case final GreaterTerm gt:
+					relation = RelationSymbol.GREATER;
+					break;
+				case final GreaterEqualTerm gt:
+					relation = RelationSymbol.GEQ;
+					break;
+				case final LessTerm gt:
+					relation = RelationSymbol.LESS;
+					break;
+				case final LessEqualTerm gt:
+					relation = RelationSymbol.LEQ;
+					break;
+				case final DistinctTerm gt:
+					relation = RelationSymbol.DISTINCT;
+					break;
+				case final EqualsTerm gt:
 					relation = RelationSymbol.EQ;
+					break;
+				default:
+					continue;
 				}
-				if (rhsTerm.getVariables().size() == 0) {
+
+				if (rightHandSide.getVariables().size() == 0) {
 					final ArrayList<Constraint> varConstraints = mConstraints.getOrDefault(var, new ArrayList<>());
-					varConstraints.add(new Constraint(var, rhsTerm, relation));
+					varConstraints.add(new Constraint(var, rightHandSide, relation));
 					mConstraints.put(var, varConstraints);
 				} else {
 					final ArrayList<Arc> varArcs = mArcs.getOrDefault(var, new ArrayList<>());
-					varArcs.add(new Arc(var, rhsTerm, relation));
+					varArcs.add(new Arc(var, rightHandSide, relation));
 					mArcs.put(var, varArcs);
 				}
 				mDefinedVariables.add(var);
@@ -123,6 +144,8 @@ public class ArcSolver {
 		}
 
 		constraintCount = mConstraints.size() + mArcs.size();
+
+		mUpdates = makeUpdates(managedScript);
 	}
 
 	public boolean hasConstraints() {
@@ -130,7 +153,8 @@ public class ArcSolver {
 	}
 
 	public UnmodifiableTransFormula makeGuardFormula(final ManagedScript script, final IUltimateServiceProvider service,
-			ExecutionTerm term, final Infeasibility infeasibility, final Collection<TermVariable> branchEncoders) {
+			final ExecutionTerm term, final Infeasibility infeasibility,
+			final Collection<TermVariable> branchEncoders) {
 
 		final HashMap<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (final Entry<TermVariable, Variable> entry : mVariables.getInVars().entrySet()) {
@@ -146,13 +170,13 @@ public class ArcSolver {
 
 		final Theory theory = script.getScript().getTheory();
 
-		for (final Entry<TermVariable, Variable> entry : mVariables.getAuxVars().entrySet()) {
-			final TermVariable auxVar = entry.getValue().getVariableTerm().toDistinctSmtTerm(theory);
-
-			final Variable newVar = entry.getValue().replaceTermVariable(auxVar);
-			term = term.replaceTerm(entry.getValue().getTerm(), newVar.getTerm());
-			formulaBuilder.addAuxVar(auxVar);
-		}
+		/*
+		 * for (final Entry<TermVariable, Variable> entry : mVariables.getAuxVars().entrySet()) { final TermVariable
+		 * auxVar = entry.getValue().getVariableTerm().toDistinctSmtTerm(theory);
+		 *
+		 * final Variable newVar = entry.getValue().replaceTermVariable(auxVar); term =
+		 * term.replaceTerm(entry.getValue().getTerm(), newVar.getTerm()); formulaBuilder.addAuxVar(auxVar); }
+		 */
 
 		final Term smtTerm = term.toSMTTerm(theory);
 
@@ -162,13 +186,13 @@ public class ArcSolver {
 		return TransFormulaUtils.computeGuard(subTermFormula, script, service);
 	}
 
-	private Update[] updateCache = null;
+	private final Update[] mUpdates;
 
-	public Update[] makeUpdates() {
-		if (updateCache != null) {
-			return updateCache.clone();
-		}
+	public Update[] getUpdates() {
+		return mUpdates;
+	}
 
+	private Update[] makeUpdates(final ManagedScript script) {
 		final ArrayList<Update> updates = new ArrayList<>();
 
 		final Collection<Variable> inVars = mVariables.getInVars().values();
@@ -194,23 +218,22 @@ public class ArcSolver {
 			return Map.entry(var.getVariableTerm().mProgramVar, var);
 		}, new HashMap<>());
 
-		final HashMap<IProgramVar, Variable> outProgVars = Util.map(mVariables.getOutVars().values(), (var) -> {
+		final HashMap<IProgramVar, Variable> assignableProgVars = Util.map(mVariables.getOutVars().values(), (var) -> {
 			return Map.entry(var.getVariableTerm().mProgramVar, var);
 		}, new HashMap<>());
 
 		// Make updates for variables that are not defined in the next state (havoc any value), this happens when:
 		// A. The OutVars do not contain a variable that is in the InVars.
-		// B. A variable of the OutVars does not appear in the InVars or the term.
+		// B. A variable of the OutVars does not appear in the InVars or the term. (Same for AuxVars)
 		for (final Entry<IProgramVar, Variable> inVar : inProgVars.entrySet()) {
-			if (outProgVars.containsKey(inVar.getKey())) {
+			if (assignableProgVars.containsKey(inVar.getKey())) {
 				// The program variable has a defining term variable in the next state
 				continue;
 			}
 			updates.add(Update.getHavocUpdateAny(inVar.getKey(), inVar.getValue().getTerm().returnType));
 			wellDefined.add(inVar.getValue());
 		}
-
-		for (final Entry<IProgramVar, Variable> outVar : outProgVars.entrySet()) {
+		for (final Entry<IProgramVar, Variable> outVar : assignableProgVars.entrySet()) {
 			if (mDefinedVariables.contains(outVar.getValue()) || inProgVars.containsKey(outVar.getKey())) {
 				// The TermVariable has some constraint in the term or is constant (inVar and outVar)
 				continue;
@@ -218,6 +241,17 @@ public class ArcSolver {
 			updates.add(Update.getHavocUpdateAny(outVar.getValue()));
 			wellDefined.add(outVar.getValue());
 		}
+		/*
+		 * for (final Variable auxVar : mVariables.getAuxVars().values()) { if (mDefinedVariables.contains(auxVar)) { //
+		 * The TermVariable has some constraint in the term continue; }
+		 *
+		 * final AuxProgramVar tempVar = AuxProgramVar.makeAuxProgramVariable(auxVar.getVariableTerm().mTermVar,
+		 * script); updates.add(Update.getHavocUpdateAny(auxVar.replaceIProgramVar(tempVar)));
+		 *
+		 * replaceAuxWithValue(auxVar, IcfgTranslation.getVariables(null, script) tempVar.getTermVariable());
+		 *
+		 * wellDefined.add(auxVar); }
+		 */
 
 		eliminateAuxVar(wellDefined);
 		propagateWellDefined(wellDefined, dependentVars, updates);
@@ -245,9 +279,7 @@ public class ArcSolver {
 
 		// TODO Take care of outVars that depend on other outVars
 
-		updateCache = new Update[updates.size()];
-
-		return Util.fillArray(updates, updateCache);
+		return Util.fillArray(updates, new Update[updates.size()]);
 	}
 
 	private void replaceAuxWithValue(final Variable varToReplace, final ExecutionTerm replacement) {
@@ -274,6 +306,8 @@ public class ArcSolver {
 		while (!unchanged) {
 			unchanged = true;
 			for (final Variable variable : mVariables.getAuxVars().values()) {
+				// Replace defined AuxVars (auxVar == term) in their term, so
+				// [var_a = (var_aux = 3), var_aux = 4] becomes [var_a = (4 = 3)]
 				for (final Constraint constraint : mConstraints.getOrDefault(variable, new ArrayList<>())) {
 					if (constraint.relation.equals(RelationSymbol.EQ)
 							&& wellDefined.containsAll(constraint.getConstraint().getVariables())) {
@@ -350,5 +384,236 @@ public class ArcSolver {
 		}
 
 		return out.toString().stripTrailing();
+	}
+
+	public static BooleanTerm solveForSubject(final BooleanTerm term, final Variable subject) {
+		if (!term.getVariables().contains(subject)) {
+			return null;
+		}
+
+		final ExecutionTerm[] subTerms;
+		RelationSymbol relation;
+
+		switch (term) {
+		case final GreaterEqualTerm geq:
+			subTerms = Util.fillArray(geq.getSubTerms(), new IntegerTerm[2]);
+			relation = RelationSymbol.GEQ;
+			break;
+		case final GreaterTerm gt:
+			subTerms = Util.fillArray(gt.getSubTerms(), new IntegerTerm[2]);
+			relation = RelationSymbol.GREATER;
+			break;
+		case final LessEqualTerm leq:
+			subTerms = Util.fillArray(leq.getSubTerms(), new IntegerTerm[2]);
+			relation = RelationSymbol.LEQ;
+			break;
+		case final LessTerm lss:
+			subTerms = Util.fillArray(lss.getSubTerms(), new IntegerTerm[2]);
+			relation = RelationSymbol.LESS;
+			break;
+		case final EqualsTerm eq:
+			subTerms = Util.fillArray(eq.getSubTerms(), new ExecutionTerm[2]);
+			relation = RelationSymbol.EQ;
+			break;
+		case final DistinctTerm neq:
+			subTerms = Util.fillArray(neq.getSubTerms(), new ExecutionTerm[2]);
+			relation = RelationSymbol.DISTINCT;
+			break;
+		default:
+			return null;
+		}
+
+		// Term that contains the variable
+		ExecutionTerm varContainer;
+		// Term that is equivalent to the term that contains the variable
+		ExecutionTerm otherSide;
+
+		final boolean zeroContains = subTerms[0].containsVariable(subject);
+		final boolean oneContains = subTerms[1].containsVariable(subject);
+		if (zeroContains && !oneContains) {
+			varContainer = subTerms[0];
+			otherSide = subTerms[1];
+		} else if (!zeroContains && oneContains) {
+			varContainer = subTerms[1];
+			otherSide = subTerms[0];
+			relation = relation.swapParameters();
+		} else {
+			// variable appears on both or neither side
+			return null;
+		}
+
+		switch (relation) {
+		case DISTINCT:
+		case EQ:
+			if (varContainer.returnType == ReturnType.Int) {
+				return solveForSubjectEqualityInt((IntegerTerm) varContainer, (IntegerTerm) otherSide, subject,
+						relation);
+			}
+			return solveForSubjectEquality(varContainer, otherSide, subject, relation);
+		case GEQ:
+		case GREATER:
+		case LEQ:
+		case LESS:
+			return solveForSubjectCompared((IntegerTerm) varContainer, (IntegerTerm) otherSide, subject, relation);
+		default:
+			return null;
+		}
+	}
+
+	public static BooleanTerm solveForSubjectEqualityInt(IntegerTerm varContainer, IntegerTerm otherSide,
+			final Variable subject, final RelationSymbol relation) {
+		while (!varContainer.equals(subject.getTerm())) {
+			switch (varContainer) {
+			case final AdditionTerm at:
+				// otherSide = term + term + ...
+				// rewrite to
+				// term + term + ... = otherside - term - term ...
+				final ArrayList<IntegerTerm> subtractionTerms = new ArrayList<>();
+				subtractionTerms.add(otherSide);
+				final ArrayList<IntegerTerm> remainingTerms = new ArrayList<>();
+
+				for (final IntegerTerm addedTerm : at.getSubTerms()) {
+					if (addedTerm.containsVariable(subject)) {
+						remainingTerms.add(addedTerm);
+					} else {
+						subtractionTerms.add(addedTerm);
+					}
+				}
+
+				if (remainingTerms.size() == 1) {
+					// only one sub term did not contain the variable
+					// => varContainer = otherside - term - term - ...
+					varContainer = remainingTerms.get(0);
+				} else {
+					// => varContainerA + varContainerB + ... = otherside - term - term - ...
+					// more than one variable TODO
+					return null;
+				}
+				otherSide = new SubtractionTerm(
+						Util.fillArray(subtractionTerms, new IntegerTerm[subtractionTerms.size()]));
+				break;
+			case final SubtractionTerm st:
+				// simplify to AdditionTerm, then use existing implementation in next iteration.
+				varContainer = st.simplify();
+				break;
+			case final NegationTerm nt:
+				// -varContainer = otherSide
+				// becomes
+				// varContainer = -otherSide
+				varContainer = nt.getSubTerms().get(0);
+				otherSide = otherSide.negate().simplify();
+				break;
+			default:
+				return null;
+			}
+		}
+
+		if (!varContainer.equals(subject.getTerm())) {
+			return null;
+		}
+
+		IntegerTerm otherSideTemp = otherSide.simplify();
+		while (!otherSideTemp.equals(otherSide)) {
+			otherSide = otherSideTemp;
+			otherSideTemp = otherSideTemp.simplify();
+		}
+
+		switch (relation) {
+		case EQ:
+			return new EqualsTerm(varContainer, otherSide);
+		case DISTINCT:
+			return new DistinctTerm(varContainer, otherSide);
+		default:
+			return null;
+		}
+	}
+
+	public static BooleanTerm solveForSubjectCompared(IntegerTerm varContainer, IntegerTerm otherSide,
+			final Variable subject, RelationSymbol relation) {
+		while (!varContainer.equals(subject.getTerm())) {
+			switch (varContainer) {
+			case final AdditionTerm at:
+				// otherSide = term + term + ...
+				// rewrite to
+				// term + term + ... = otherside - term - term ...
+				final ArrayList<IntegerTerm> subtractionTerms = new ArrayList<>();
+				subtractionTerms.add(otherSide);
+				final ArrayList<IntegerTerm> remainingTerms = new ArrayList<>();
+
+				for (final IntegerTerm addedTerm : at.getSubTerms()) {
+					if (addedTerm.containsVariable(subject)) {
+						remainingTerms.add(addedTerm);
+					} else {
+						subtractionTerms.add(addedTerm);
+					}
+				}
+
+				if (remainingTerms.size() == 1) {
+					// only one sub term did not contain the variable
+					// => varContainer = otherside - term - term - ...
+					varContainer = remainingTerms.get(0);
+				} else {
+					// => varContainerA + varContainerB + ... = otherside - term - term - ...
+					// more than one variable TODO
+					return null;
+				}
+				otherSide = new SubtractionTerm(
+						Util.fillArray(subtractionTerms, new IntegerTerm[subtractionTerms.size()]));
+				break;
+			case final SubtractionTerm st:
+				// simplify to AdditionTerm, then use existing implementation in next iteration.
+				varContainer = st.simplify();
+				break;
+			case final NegationTerm nt:
+				// -varContainer < otherSide
+				// becomes
+				// varContainer > -otherSide
+				varContainer = nt.getSubTerms().get(0);
+				otherSide = otherSide.negate().simplify();
+				relation = relation.swapParameters();
+				break;
+			default:
+				return null;
+			}
+		}
+
+		if (!varContainer.equals(subject.getTerm())) {
+			return null;
+		}
+
+		IntegerTerm otherSideTemp = otherSide.simplify();
+		while (!otherSideTemp.equals(otherSide)) {
+			otherSide = otherSideTemp;
+			otherSideTemp = otherSideTemp.simplify();
+		}
+
+		switch (relation) {
+		case GEQ:
+			return new GreaterEqualTerm(varContainer, otherSide);
+		case GREATER:
+			return new GreaterTerm(varContainer, otherSide);
+		case LEQ:
+			return new LessEqualTerm(varContainer, otherSide);
+		case LESS:
+			return new LessTerm(varContainer, otherSide);
+		default:
+			return null;
+		}
+	}
+
+	public static BooleanTerm solveForSubjectEquality(final ExecutionTerm varContainer, final ExecutionTerm otherSide,
+			final Variable subject, final RelationSymbol relation) {
+		if (!varContainer.equals(subject.getTerm())) {
+			return null;
+		}
+
+		switch (relation) {
+		case EQ:
+			return new EqualsTerm(varContainer, otherSide);
+		case DISTINCT:
+			return new DistinctTerm(varContainer, otherSide);
+		default:
+			return null;
+		}
 	}
 }

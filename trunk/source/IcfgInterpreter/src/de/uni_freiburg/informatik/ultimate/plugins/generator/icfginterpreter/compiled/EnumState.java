@@ -1,14 +1,20 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.AuxProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
@@ -27,7 +33,7 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 		final HashSet<S> arrayNames = new HashSet<>();
 		final HashSet<S> intNames = new HashSet<>();
 		final HashSet<S> boolNames = new HashSet<>();
-		final HashSet<S> bvNames = new HashSet<>();
+		final HashMap<S, Integer> bvNames = new HashMap<>();
 
 		for (final Variable variable : variables) {
 			final IProgramVar programVar = variable.getVariableTerm().mProgramVar;
@@ -39,7 +45,8 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 				arrayNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
 				break;
 			case BitVector:
-				bvNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
+				bvNames.put(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()),
+						Util.getBitVecLength(programVar.getSort()));
 				break;
 			case Boolean:
 				boolNames.add(Enum.valueOf(varEnum, programVar.getGloballyUniqueId()));
@@ -50,6 +57,8 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 			}
 		}
 
+		final Set<Entry<S, Integer>> entrySetBV = bvNames.entrySet();
+
 		return (ndc) -> {
 			final EnumMap<S, SMTArray> arrayVars = new EnumMap<>(varEnum);
 			final EnumMap<S, Boolean> boolVars = new EnumMap<>(varEnum);
@@ -57,16 +66,16 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 			final EnumMap<S, Long> intVars = new EnumMap<>(varEnum);
 
 			for (final S variable : arrayNames) {
-				arrayVars.put(variable, ndc.newArray(variable.getProgramVar(), null));
+				arrayVars.put(variable, ndc.newArray(variable.getProgramVar().getSort(), null));
 			}
 			for (final S variable : intNames) {
-				intVars.put(variable, ndc.havocInt(variable.getProgramVar(), null));
+				intVars.put(variable, ndc.havocInt(null));
 			}
 			for (final S variable : boolNames) {
-				boolVars.put(variable, ndc.havocBool(variable.getProgramVar(), null));
+				boolVars.put(variable, ndc.havocBool(null));
 			}
-			for (final S variable : bvNames) {
-				bvVars.put(variable, ndc.havocBitVector(variable.getProgramVar(), null));
+			for (final Entry<S, Integer> variable : entrySetBV) {
+				bvVars.put(variable.getKey(), ndc.havocBitVector(variable.getValue(), null));
 			}
 
 			return new EnumState<>(arrayVars, boolVars, bvVars, intVars, ndc);
@@ -96,21 +105,33 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 		final StringBuilder out = new StringBuilder("{");
 		for (final T variable : mArrayVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
+			if (programVar instanceof AuxProgramVar) {
+				continue;
+			}
 			out.append("\n\t");
 			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mArrayVars.get(variable));
 		}
 		for (final T variable : mIntVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
+			if (programVar instanceof AuxProgramVar) {
+				continue;
+			}
 			out.append("\n\t");
 			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mIntVars.get(variable));
 		}
 		for (final T variable : mBoolVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
+			if (programVar instanceof AuxProgramVar) {
+				continue;
+			}
 			out.append("\n\t");
 			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mBoolVars.get(variable));
 		}
 		for (final T variable : mBVVars.keySet()) {
 			final IProgramVar programVar = variable.getProgramVar();
+			if (programVar instanceof AuxProgramVar) {
+				continue;
+			}
 			out.append("\n\t");
 			out.append(programVar.getGloballyUniqueId()).append(" = ").append(mBVVars.get(variable));
 		}
@@ -133,20 +154,20 @@ public class EnumState<T extends Enum<T> & IVariableName> {
 		return mArrayVars.get(var);
 	}
 
-	public void havocInt(final T var, final IntegerRestriction restriction) {
-		setInt(var, mNDC.havocInt(var.getProgramVar(), restriction));
+	public Long havocInt(final IntegerRestriction restriction) {
+		return mNDC.havocInt(restriction);
 	}
 
-	public void havocBool(final T var, final BooleanRestriction restriction) {
-		setBool(var, mNDC.havocBool(var.getProgramVar(), restriction));
+	public Boolean havocBool(final BooleanRestriction restriction) {
+		return mNDC.havocBool(restriction);
 	}
 
-	public void havocBitVec(final T var, final BitVectorRestriction restriction) {
-		setBitVec(var, mNDC.havocBitVector(var.getProgramVar(), restriction));
+	public BitVector havocBitVec(final int length, final BitVectorRestriction restriction) {
+		return mNDC.havocBitVector(length, restriction);
 	}
 
-	public void havocArray(final T var, final ArrayRestriction restriction) {
-		setArray(var, mNDC.newArray(var.getProgramVar(), restriction));
+	public SMTArray havocArray(final Sort sort, final ArrayRestriction restriction) {
+		return mNDC.newArray(sort, restriction);
 	}
 
 	public void setInt(final T var, final Long value) {

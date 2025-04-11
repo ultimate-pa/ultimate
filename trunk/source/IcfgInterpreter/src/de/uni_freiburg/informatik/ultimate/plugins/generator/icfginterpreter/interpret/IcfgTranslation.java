@@ -62,10 +62,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.integer.SubtractionTerm;
 
 public class IcfgTranslation {
-	public static OrTerm translateTerm(final UnmodifiableTransFormula transFormula, final ManagedScript script)
+	public static OrTerm translateTerm(final VariableSet variables, final UnmodifiableTransFormula transFormula)
 			throws Exception {
-		final VariableSet variables = getVariables(transFormula, script);
-
 		final ExecutionTerm term = parseTerm(transFormula.getFormula(), variables);
 
 		if (!(term instanceof BooleanTerm)) {
@@ -111,7 +109,9 @@ public class IcfgTranslation {
 		for (final TermVariable termVariable : formula.getAuxVars()) {
 			// final IProgramVar auxVar = getAuxReplacement(termVariable, formula.getFormula().getTheory(), script);
 			// out.addVariable(false, true, false, true, auxVar, auxVar.getTermVariable());
-			out.addVariable(false, false, true, true, null, termVariable);
+			// out.addVariable(false, false, true, true, null, termVariable);
+			final AuxProgramVar auxProgramVar = AuxProgramVar.makeAuxProgramVariable(termVariable, script);
+			out.addVariable(false, true, false, true, auxProgramVar, termVariable);
 		}
 
 		return out;
@@ -179,8 +179,8 @@ public class IcfgTranslation {
 		final UnmodifiableTransFormula guardFormula = TransFormulaUtils.computeGuard(transFormula, managedScript,
 				service);
 
-		final OrTerm term = translateTerm(transFormula, managedScript);
-		final OrTerm guardTerm = translateTerm(guardFormula, managedScript);
+		final OrTerm term = translateTerm(variables, transFormula);
+		final OrTerm guardTerm = translateTerm(variables, guardFormula);
 
 		if (falseGuard.equals(guardTerm)) {
 			return new ArrayList<>(); // edge can never be taken, no need to return it for execution

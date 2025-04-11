@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ExecutionTerm;
@@ -20,4 +21,6 @@ public interface Variable {
 	TermVariable toSMTTerm(final Theory theory);
 
 	Variable replaceTermVariable(TermVariable termVar);
+
+	Variable replaceIProgramVar(IProgramVar programVar);
 }

@@ -9,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.array.VariableArrayTerm;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bitvector.VariableBitVectorTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.bool.VariableBooleanTerm;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.VariableTerm;
@@ -54,7 +55,7 @@ public class VariableSet {
 			variable = new VariableArrayTerm(keyType, valueType, variableTerm);
 			break;
 		case BitVector:
-			// TODO
+			variable = new VariableBitVectorTerm(Util.getBitVecLength(sort), variableTerm);
 			break;
 		case Boolean:
 			variable = new VariableBooleanTerm(variableTerm);

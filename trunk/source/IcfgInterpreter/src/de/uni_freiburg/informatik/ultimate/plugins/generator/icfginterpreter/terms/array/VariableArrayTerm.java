@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.te
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -102,5 +103,10 @@ public class VariableArrayTerm extends ArrayTerm implements Variable {
 	@Override
 	public VariableArrayTerm replaceTermVariable(final TermVariable termVar) {
 		return new VariableArrayTerm(keyType, valueType, mVariableTerm.replaceTermVariable(termVar));
+	}
+
+	@Override
+	public VariableArrayTerm replaceIProgramVar(final IProgramVar programVar) {
+		return new VariableArrayTerm(keyType, valueType, mVariableTerm.replaceIProgramVar(programVar));
 	}
 }
