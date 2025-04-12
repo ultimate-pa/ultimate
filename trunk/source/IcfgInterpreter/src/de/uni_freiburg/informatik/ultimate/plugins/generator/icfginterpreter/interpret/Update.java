@@ -10,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
@@ -52,7 +51,7 @@ public abstract class Update {
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := " + mValueDefinition;
+			return mVariable.getVariableTerm().mTermVar.getName() + " := " + mValueDefinition;
 		}
 
 		@Override
@@ -93,20 +92,20 @@ public abstract class Update {
 		protected Object makeValue(final ProgramState currentState, final ProgramState nextState) {
 			switch (mReturnType) {
 			case Array:
-				return nextState.getNDC().newArray(mSort, null);
+				return nextState.havocArray(mSort, null);
 			case BitVector:
-				return nextState.getNDC().havocBitVector(Util.getBitVecLength(mSort), null);
+				return nextState.havocBitVec(Util.getBitVecLength(mSort), null);
 			case Boolean:
-				return nextState.getNDC().havocBool(null);
+				return nextState.havocBool(null);
 			case Int:
-				return nextState.getNDC().havocInt(null);
+				return nextState.havocInt(null);
 			}
 			return null;
 		}
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := havoc()";
+			return mVariable.getVariableTerm().mTermVar.getName() + " := havoc()";
 		}
 
 		@Override
@@ -144,7 +143,7 @@ public abstract class Update {
 	 * state, and can therefore be defined by a pre-calculated restriction.
 	 */
 	private static class HavocLimitedUpdate extends Update {
-		private final Function<NonDeterministicChoice, Object> func;
+		private final Function<ProgramState, Object> func;
 		private final Restriction<?> mRestriction;
 
 		protected HavocLimitedUpdate(final Variable variable, final Restriction<?> restriction) {
@@ -152,24 +151,24 @@ public abstract class Update {
 			final Sort sort = variable.getVariableTerm().mTermVar.getSort();
 			switch (restriction) {
 			case final ArrayRestriction ar:
-				func = (havoc) -> {
-					return havoc.newArray(sort, ar);
+				func = (state) -> {
+					return state.havocArray(sort, ar);
 				};
 				break;
 			case final BitVectorRestriction bvr:
 				final int length = Util.getBitVecLength(sort);
-				func = (havoc) -> {
-					return havoc.havocBitVector(length, bvr);
+				func = (state) -> {
+					return state.havocBitVec(length, bvr);
 				};
 				break;
 			case final BooleanRestriction br:
-				func = (havoc) -> {
-					return havoc.havocBool(br);
+				func = (state) -> {
+					return state.havocBool(br);
 				};
 				break;
 			case final IntegerRestriction ir:
-				func = (havoc) -> {
-					return havoc.havocInt(ir);
+				func = (state) -> {
+					return state.havocInt(ir);
 				};
 				break;
 			default:
@@ -181,12 +180,12 @@ public abstract class Update {
 
 		@Override
 		protected Object makeValue(final ProgramState currentState, final ProgramState nextState) {
-			return func.apply(nextState.getNDC());
+			return func.apply(nextState);
 		}
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := havoc(" + mRestriction + ")";
+			return mVariable.getVariableTerm().mTermVar.getName() + " := havoc(" + mRestriction + ")";
 		}
 
 		@Override
@@ -221,10 +220,18 @@ public abstract class Update {
 
 	private static class HavocDependentUpdate<T extends ExecutionTerm> extends Update {
 		private final BiFunction<ProgramState, ProgramState, Object> func;
+		private ArrayList<T> mInEqualTerms;
+		private ArrayList<T> mMaximumTerms;
+		private ArrayList<T> mMinimumTerms;
 
 		protected HavocDependentUpdate(final Variable variable, final HashSet<T> InEqualTerms,
-				final HashSet<T> lessThanTerms, final HashSet<T> greaterThanTerms) {
+				final HashSet<T> maximumTerms, final HashSet<T> minimumTerms) {
 			super(variable, variable.getVariableTerm().mProgramVar);
+			assert maximumTerms.size() > 0 && minimumTerms.size() > 0;
+
+			mInEqualTerms = new ArrayList<>(InEqualTerms);
+			mMaximumTerms = new ArrayList<>(maximumTerms);
+			mMinimumTerms = new ArrayList<>(minimumTerms);
 
 			final Sort sort = variable.getVariableTerm().mTermVar.getSort();
 
@@ -240,47 +247,45 @@ public abstract class Update {
 			case ReturnType.Boolean:
 				if (InEqualTerms.size() == 0) {
 					func = (current, next) -> {
-						return next.getNDC().havocBool(null);
+						return next.havocBool(null);
 					};
 					return;
 				}
 				final T inEuqalTo = InEqualTerms.iterator().next();
-				func = (current, next) -> {
+				func = (currentState, nextState) -> {
 					final HashSet<Boolean> inEqualBool = new HashSet<>();
-					inEqualBool.add((Boolean) inEuqalTo.evaluate(current, next));
-					return next.getNDC().havocBool(new BooleanRestriction(inEqualBool));
+					inEqualBool.add((Boolean) inEuqalTo.evaluate(currentState, nextState));
+					return nextState.havocBool(new BooleanRestriction(inEqualBool));
 				};
 
 				break;
 			case ReturnType.Int:
-				func = (current, next) -> {
-					final HashSet<Long> inEquals = new HashSet<>();
-					long lessThan = Long.MAX_VALUE;
-					long greaterThan = Long.MIN_VALUE;
+				func = (currentState, nextState) -> {
+					final Long[] minimums = new Long[mMinimumTerms.size()];
+					final Long[] maximums = new Long[mMaximumTerms.size()];
+					final Long[] inequals = new Long[mInEqualTerms.size()];
 
-					for (final T lessThanTerm : lessThanTerms) {
-						final Long newGreatestValue = (Long) lessThanTerm.evaluate(current, next);
-						if (newGreatestValue < lessThan) {
-							lessThan = newGreatestValue;
+					for (int i = 0; i < mMinimumTerms.size(); i++) {
+						if (mMinimumTerms.get(i) instanceof final IntegerTerm minInt) {
+							minimums[i] = minInt.evaluate(currentState, nextState);
 						}
 					}
 
-					for (final T greaterThanTerm : greaterThanTerms) {
-						final Long newLowestValue = (Long) greaterThanTerm.evaluate(current, next);
-						if (greaterThan < newLowestValue) {
-							greaterThan = newLowestValue;
+					for (int i = 0; i < mMaximumTerms.size(); i++) {
+						if (mMaximumTerms.get(i) instanceof final IntegerTerm maxInt) {
+							maximums[i] = maxInt.evaluate(currentState, nextState);
 						}
 					}
 
-					for (final T inequalTerm : InEqualTerms) {
-						final Long inEqual = (Long) inequalTerm.evaluate(current, next);
-						if (inEqual > lessThan || inEqual < greaterThan) {
-							continue;
+					for (int i = 0; i < mInEqualTerms.size(); i++) {
+						if (mInEqualTerms.get(i) instanceof final IntegerTerm neqInt) {
+							inequals[i] = neqInt.evaluate(currentState, nextState);
 						}
-						inEquals.add(inEqual);
 					}
 
-					return next.getNDC().havocInt(new IntegerRestriction(inEquals, lessThan, greaterThan));
+					return nextState
+							.havocInt(IntegerRestriction.makeRestriction(IntegerRestriction.findMinimum(minimums),
+									IntegerRestriction.findMaximum(maximums), inequals));
 				};
 				break;
 			default:
@@ -291,17 +296,65 @@ public abstract class Update {
 
 		@Override
 		protected Object makeValue(final ProgramState currentState, final ProgramState nextState) {
-
 			return func.apply(currentState, nextState);
 		}
 
 		@Override
 		public String toString() {
-			return mVariable.getVariableTerm().mProgramVar.getGloballyUniqueId() + " := havoc(TODO)"; // TODO
+			final StringBuilder out = new StringBuilder();
+			out.append(mVariable.getVariableTerm().mTermVar.getName());
+			out.append(" := havoc(");
+
+			String connector = "";
+			if (mMaximumTerms.size() > 0) {
+				out.append("n <= {");
+				for (final T maximum : mMaximumTerms) {
+					maximum.toString(out, 0);
+				}
+				out.append("}");
+				connector = ", ";
+			}
+
+			if (mMinimumTerms.size() > 0) {
+				out.append(connector);
+				out.append("n >= {");
+
+				for (final T minimum : mMinimumTerms) {
+					minimum.toString(out, 0);
+				}
+				out.append("}");
+
+				connector = ", ";
+			}
+
+			if (mInEqualTerms.size() > 0) {
+				out.append(connector);
+				out.append("n != {");
+
+				for (final T inEqual : mInEqualTerms) {
+					inEqual.toString(out, 0);
+				}
+				out.append("}");
+			}
+
+			return out.toString() + ")";
 		}
 
 		@Override
 		public String toCode() {
+			final ArrayList<String> maxCode = new ArrayList<>();
+			for (final T maximum : mMaximumTerms) {
+				maxCode.add(maximum.toCode());
+			}
+			final ArrayList<String> minCode = new ArrayList<>();
+			for (final T minimum : mMinimumTerms) {
+				minCode.add(minimum.toCode());
+			}
+			final ArrayList<String> inEqualCode = new ArrayList<>();
+			for (final T inEqualTerm : mInEqualTerms) {
+				inEqualCode.add(inEqualTerm.toCode());
+			}
+
 			final StringBuilder out = new StringBuilder("nextState.");
 			switch (mReturnType) {
 			case Array:
@@ -322,10 +375,33 @@ public abstract class Update {
 			case Int:
 				out.append("setInt(");
 				out.append(DynamicLoader.getVarLookup(mProgramVar));
-				out.append(", nextState.havocInt(");
-				break;
+				out.append(", nextState.havocInt(IntegerRestriction.makeRestriction(");
+
+				if (minCode.size() > 1) {
+					out.append("IntegerRestriction.findMinimum(");
+					out.append(String.join(", ", minCode));
+					out.append(")");
+				} else {
+					out.append(minCode.get(0));
+				}
+				out.append(", ");
+
+				if (maxCode.size() > 1) {
+					out.append("IntegerRestriction.findMaximum(");
+					out.append(String.join(", ", maxCode));
+					out.append(")");
+				} else {
+					out.append(maxCode.get(0));
+				}
+
+				if (inEqualCode.size() > 0) {
+					out.append(", ");
+					out.append(String.join(", ", inEqualCode));
+				}
+				out.append(")));");
+				return out.toString();
 			}
-			// TODO Restriction and its parts to code (like "new Restriction(\" + ...
+
 			out.append("").append("));");
 			return out.toString();
 		}
@@ -340,36 +416,36 @@ public abstract class Update {
 		HashSet<Long> inequals = new HashSet<>();
 		switch (variable.getTerm().returnType) {
 		case Int:
-			// Find the lowest constant value that the variable is bigger than, vice versa biggest constant
-			// As settings for min and max value are limited to int type, we can ignore any values that exceed ints.
-			Long lowestConst = (long) Integer.MIN_VALUE;
-			Long highestConst = (long) Integer.MAX_VALUE;
+			// Find the lowest constant max such that variable <= max, vice versa biggest constant
+			Long max = Long.MAX_VALUE;
+			Long min = Long.MIN_VALUE;
+
 			for (final Constraint constraint : constraints) {
 				Long value = (Long) constraint.getConstraint().evaluate(null, null);
 				switch (constraint.relation) {
 				case DISTINCT:
 					inequals.add(value);
 					break;
-				case GEQ:
-					// variable >= value
-					// -> variable > value - 1
-					value--;
-					//$FALL-THROUGH$
 				case GREATER:
-					if (lowestConst < value) {
-						// variable > value > lowestConst
-						lowestConst = value;
-					}
-					break;
-				case LEQ:
-					// variable <= value
-					// -> variable < value + 1
+					// variable > value
+					// -> variable >= value + 1
 					value++;
 					//$FALL-THROUGH$
+				case GEQ:
+					// variable >= value && value > min
+					if (value > min) {
+						min = value;
+					}
+					break;
 				case LESS:
-					if (highestConst > value) {
-						// variable < value < highestConst
-						highestConst = value;
+					// variable < value
+					// -> variable <= value - 1
+					value--;
+					//$FALL-THROUGH$
+				case LEQ:
+					// variable <= value && value < max
+					if (max > value) {
+						max = value;
 					}
 					break;
 				default:
@@ -377,47 +453,43 @@ public abstract class Update {
 				}
 			}
 
-			// combine restrictions like variable > 4 and variable != 5 to variable > 5
+			// combine restrictions like variable >= 4 and variable != 4 to variable >= 5
 			boolean changing = true;
 			while (changing) {
-				if (inequals.contains(lowestConst + 1)) {
-					lowestConst++;
-					inequals.remove(lowestConst);
+				if (inequals.contains(max)) {
+					inequals.remove(max);
+					max--;
 					changing = true;
 					continue;
 				}
-				if (inequals.contains(highestConst - 1)) {
-					highestConst--;
-					inequals.remove(highestConst);
+				if (inequals.contains(min)) {
+					inequals.remove(min);
+					min++;
 					changing = true;
 					continue;
 				}
 				changing = false;
 			}
 
-			final Long finalHighest = highestConst;
-			final Long finalLowest = lowestConst;
+			final Long finalMax = max;
+			final Long finalMin = min;
 			// remove any unequal values that are out of bounds anyways
 			inequals = Util.filter(inequals, (value) -> {
-				return finalHighest > value && value > finalLowest;
+				return finalMax >= value && value >= finalMin;
 			});
 
 			if (arcs.isEmpty()) {
 				// only constraints, we can do most of the work at creation, as we are unaffected by state.
-				return new HavocLimitedUpdate(variable, new IntegerRestriction(inequals, finalHighest, finalLowest));
+				return new HavocLimitedUpdate(variable, new IntegerRestriction(inequals, finalMin, finalMax));
 			}
-			// TODO make havoc Updates that depend on terms with variables
 
 			final HashSet<IntegerTerm> inequalTerms = new HashSet<>();
-			final HashSet<IntegerTerm> lessTerms = new HashSet<>();
-			final HashSet<IntegerTerm> greaterTerms = new HashSet<>();
+			final HashSet<IntegerTerm> minimums = new HashSet<>();
+			final HashSet<IntegerTerm> maximums = new HashSet<>();
 
 			for (final Long inequal : inequals) {
 				inequalTerms.add(new ConstIntegerTerm(inequal));
 			}
-
-			lessTerms.add(new ConstIntegerTerm(finalHighest));
-			greaterTerms.add(new ConstIntegerTerm(finalLowest));
 
 			for (final Arc arc : arcs) {
 				switch (arc.relation) {
@@ -426,29 +498,35 @@ public abstract class Update {
 					break;
 				case GEQ:
 					// variable >= value
-					// -> variable > value - 1
-					greaterTerms.add(new SubtractionTerm((IntegerTerm) arc.getConstraint(), new ConstIntegerTerm(1L)));
+					minimums.add((IntegerTerm) arc.getConstraint());
 					break;
 				case GREATER:
 					// variable > value
-					greaterTerms.add((IntegerTerm) arc.getConstraint());
+					// -> variable >= value + 1
+					minimums.add(new AdditionTerm((IntegerTerm) arc.getConstraint(), new ConstIntegerTerm(1L)));
 					break;
 				case LEQ:
 					// variable <= value
-					// -> variable < value + 1
-
-					lessTerms.add(new AdditionTerm((IntegerTerm) arc.getConstraint(), new ConstIntegerTerm(1L)));
+					maximums.add((IntegerTerm) arc.getConstraint());
 					break;
 				case LESS:
 					// variable < value
-					lessTerms.add((IntegerTerm) arc.getConstraint());
+					// -> variable <= value - 1
+					maximums.add(new SubtractionTerm((IntegerTerm) arc.getConstraint(), new ConstIntegerTerm(1L)));
 					break;
 				default:
 					break;
 				}
 			}
 
-			return new HavocDependentUpdate<>(variable, inequalTerms, lessTerms, greaterTerms);
+			if (minimums.size() == 0 || finalMin != Long.MIN_VALUE) {
+				minimums.add(new ConstIntegerTerm(finalMin));
+			}
+			if (maximums.size() == 0 || finalMax != Long.MAX_VALUE) {
+				maximums.add(new ConstIntegerTerm(finalMax));
+			}
+
+			return new HavocDependentUpdate<>(variable, inequalTerms, maximums, minimums);
 		default:
 			break;
 		}

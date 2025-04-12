@@ -5,9 +5,14 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.AuxProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ProgramState {
@@ -97,7 +102,7 @@ public class ProgramState {
 	@Override
 	public ProgramState clone() {
 		return new ProgramState(Util.copyMap(mArrayVars), Util.copyMap(mBoolVars), Util.copyMap(mBVVars),
-				Util.copyMap(mIntVars), mNDC);
+				Util.copyMap(mIntVars), mNDC.clone());
 	}
 
 	public void setValue(final IProgramVar variable, final boolean value) {
@@ -150,6 +155,22 @@ public class ProgramState {
 
 	public boolean isFinalized() {
 		return mFinal;
+	}
+
+	public Long havocInt(final IntegerRestriction restriction) {
+		return mNDC.havocInt(restriction);
+	}
+
+	public Boolean havocBool(final BooleanRestriction restriction) {
+		return mNDC.havocBool(restriction);
+	}
+
+	public BitVector havocBitVec(final int length, final BitVectorRestriction restriction) {
+		return mNDC.havocBitVector(length, restriction);
+	}
+
+	public SMTArray havocArray(final Sort sort, final ArrayRestriction restriction) {
+		return mNDC.newArray(sort, restriction);
 	}
 
 	public NonDeterministicChoice getNDC() {

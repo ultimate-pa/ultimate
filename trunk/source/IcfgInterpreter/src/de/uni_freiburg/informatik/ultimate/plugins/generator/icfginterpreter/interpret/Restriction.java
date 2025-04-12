@@ -4,18 +4,18 @@ import java.util.HashSet;
 
 public abstract class Restriction<T> {
 	protected final HashSet<T> mInequal;
-	protected final T mLess;
-	protected final T mGreater;
+	protected final T mMinimum;
+	protected final T mMaximum;
 
 	/**
-	 * @param inequal All specific values that the variable cannot take
-	 * @param less    The value that the variable has to be smaller than
-	 * @param greater The value that the variable has to be greater than
+	 * @param inequal  All specific values that the variable cannot take
+	 * @param minimum  The smallest value a variable can take
+	 * @param maximuum The biggest value a variable can take
 	 */
-	public Restriction(final HashSet<T> inequal, final T less, final T greater) {
+	public Restriction(final HashSet<T> inequal, final T minimum, final T maximum) {
 		mInequal = inequal;
-		mLess = less;
-		mGreater = greater;
+		mMinimum = minimum;
+		mMaximum = maximum;
 	}
 
 	public HashSet<T> getInequal() {

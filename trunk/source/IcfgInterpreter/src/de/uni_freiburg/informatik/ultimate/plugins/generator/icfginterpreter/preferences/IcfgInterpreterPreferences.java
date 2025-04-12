@@ -53,8 +53,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Directory),
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString(), 5, EXECUTIONS_PE_HINT,
 						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(SettingLabel.THREAD_COUNT.toString(), 1, THREAD_COUNT_HINT,
-						PreferenceType.Integer),
 				// ADD NEW SETTINGS HERE
 				new UltimatePreferenceItem<>(SettingLabel.NDC_IMLPEMENTATIONS.toString(), names[0],
 						NDC_IMLPEMENTATIONS_HINT, PreferenceType.Radio, names) };
@@ -75,7 +73,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	 * The labels used for each settings, to enable easy value retrieval.
 	 */
 	public enum SettingLabel {
-		PROJECT_DIRECTORY("Ultimate directory"), THREAD_COUNT("Thread count"),
+		PROJECT_DIRECTORY("Ultimate directory"),
 		NDC_IMLPEMENTATIONS(
 				"Non-Deterministic Interface (" + NonDeterministicChoice.class.getSimpleName() + ") implementations:"),
 		EXECUTIONS_PER_ENTRYPOINT("Number of executions to generate per program entry point");
@@ -93,7 +91,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	}
 
 	public static String PROJECT_DIRECTORY_HINT = "Path of directory which contains the /ultimate/ directory";
-	public static String THREAD_COUNT_HINT = "How many of the exectutions should run concurrently in threads";
 	public static String NDC_IMLPEMENTATIONS_HINT = "Class to use for methods like havoc.";
 	public static String EXECUTIONS_PE_HINT = "Should be at least 1";
 }

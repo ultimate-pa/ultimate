@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
@@ -18,23 +19,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 
 public class RNGChoice implements NonDeterministicChoice {
-	private int mSeed;
-	private int mMinHavocInt;
-	private int mHavocCapMap;
+	private long mSeed;
+	private IntegerRestriction mHavocStandard;
 
 	public RNGChoice() {
 		// non-instance constructor that will be used to create actual instances with specific seeds
 	}
 
-	public RNGChoice(final int seed) throws Exception {
+	public RNGChoice(final long seed) throws Exception {
 		mSeed = seed;
 
 		final RcpPreferenceProvider settings = IcfgInterpreterPreferences.getPreferences();
-		int mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
-		mMinHavocInt = settings.getInt(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE + 1);
+		long mMaxHavocInt = settings.getInt(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE);
+		long mMinHavocInt = settings.getInt(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE + 1);
 		if (mMaxHavocInt < mMinHavocInt) {
 			// Settings are the wrong way around
-			final int swap = mMaxHavocInt;
+			final long swap = mMaxHavocInt;
 			mMaxHavocInt = mMinHavocInt;
 			mMinHavocInt = swap;
 
@@ -43,20 +43,20 @@ public class RNGChoice implements NonDeterministicChoice {
 			throw new Exception("Wrong settings for " + IcfgInterpreter.class.getSimpleName()
 					+ ", maximum havoc value is less than the minimum havoc value");
 		}
-		mHavocCapMap = mMaxHavocInt - mMinHavocInt + 1;
+
+		mHavocStandard = new IntegerRestriction(new HashSet<>(), mMinHavocInt, mMaxHavocInt);
 	}
 
-	private RNGChoice(final int seed, final int minHavoc, final int havocCap) {
+	private RNGChoice(final long seed, final IntegerRestriction havocStandard) {
 		// constructor used for quick cloning
 		mSeed = seed;
-		mMinHavocInt = minHavoc;
-		mHavocCapMap = havocCap;
+		mHavocStandard = havocStandard;
 	}
 
 	@Override
 	public RNGChoice newInstance(final long seed) {
 		try {
-			return new RNGChoice((int) seed);
+			return new RNGChoice(seed);
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
@@ -69,20 +69,15 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public long havocInt(final IntegerRestriction values) {
+	public long havocInt(IntegerRestriction values) {
 		if (values == null) {
-			return (Math.abs(xorShift()) % mHavocCapMap) + mMinHavocInt;
+			values = mHavocStandard;
 		}
 
-		final int lowerMax = Math.min(mHavocCapMap, values.getValueCount());
-		final long higherMin = Math.max(values.getGreater(), mMinHavocInt);
-		final long index = (Math.abs(xorShift()) % lowerMax);
-		long value = higherMin + 1 + index;
-		while (values.getInequal().contains(value)) {
-			value++;
-		}
+		final long elementCount = values.getValueCount();
+		final long index = (Math.abs(xorShift()) % elementCount);
 
-		return value;
+		return values.getNthValue(index);
 	}
 
 	@Override
@@ -116,7 +111,7 @@ public class RNGChoice implements NonDeterministicChoice {
 		case SMTLIBConstants.BOOL:
 			return 0 < hash(hashKey);
 		case SMTLIBConstants.INT:
-			return (Math.abs(hash(hashKey)) % mHavocCapMap) + mMinHavocInt;
+			return (Math.abs(hash(hashKey)) % mHavocStandard.getValueCount()) + mHavocStandard.getMinimum();
 		}
 		return null;
 	}
@@ -126,32 +121,15 @@ public class RNGChoice implements NonDeterministicChoice {
 		return havocBool(null);
 	}
 
-	/** 0xbf58476d1ce4e5b9L */
-	private static final BigInteger par1 = BigInteger.valueOf(1378784879315654392L).multiply(BigInteger.valueOf(10))
-			.add(BigInteger.valueOf(9));
-	/** 0x94d049bb133111ebL */
-	private static final BigInteger par2 = BigInteger.valueOf(1072315178059884593L).multiply(BigInteger.valueOf(10))
-			.add(BigInteger.valueOf(1));
-	/** 0xffffffffffffffffL */
-	private static final BigInteger cap = BigInteger.valueOf(Long.MAX_VALUE).shiftLeft(1).add(BigInteger.ONE);
-
-	public static long hash(BigInteger seed) {
-		seed = seed.xor(seed.shiftRight(30)).multiply(par1).and(cap);
-		seed = seed.xor(seed.shiftRight(27)).multiply(par2).and(cap);
-		seed = seed.xor(seed.shiftRight(31));
-		return seed.longValue();
-	}
-
 	/** http://zimbry.blogspot.com/2011/09/better-bit-mixing-improving-on.html */
 	public static long hash(long seed) {
-		// return hashB(BigInteger.valueOf(seed));
 		seed = (seed ^ (seed >>> 30)) * 0xbf58476d1ce4e5b9L;
 		seed = (seed ^ (seed >>> 27)) * 0x94d049bb133111ebL;
 		seed ^= (seed >>> 31);
 		return seed;
 	}
 
-	public static int xorShift(int seed) {
+	public static long xorShift(long seed) {
 		seed ^= seed << 13;
 		seed ^= seed >> 17;
 		seed ^= seed << 5;
@@ -162,7 +140,7 @@ public class RNGChoice implements NonDeterministicChoice {
 		return Math.abs(xorShift()) % size;
 	}
 
-	private int xorShift() {
+	private long xorShift() {
 		mSeed = xorShift(mSeed);
 		return mSeed;
 	}
@@ -178,7 +156,7 @@ public class RNGChoice implements NonDeterministicChoice {
 
 	@Override
 	public RNGChoice clone() {
-		return new RNGChoice(mSeed, mMinHavocInt, mHavocCapMap);
+		return new RNGChoice(mSeed, mHavocStandard);
 	}
 
 	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";

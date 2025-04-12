@@ -8,8 +8,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Uti
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
 
 public class BitVectorRestriction extends Restriction<BitVector> {
-	public BitVectorRestriction(final HashSet<BitVector> inequal, final BitVector less, final BitVector greater) {
-		super(inequal, less, greater);
+	public BitVectorRestriction(final HashSet<BitVector> inequal, final BitVector minimum, final BitVector maximum) {
+		super(inequal, minimum, maximum);
 	}
 
 	@Override
@@ -17,7 +17,7 @@ public class BitVectorRestriction extends Restriction<BitVector> {
 		return "new " + this.getClass().getSimpleName() + "(Util.toHashSet("
 				+ String.join(", ", Util.map(mInequal, (inequal) -> {
 					return inequal.toString();
-				}, new ArrayList<>())) + "), " + mLess + ", " + mGreater + ")";
+				}, new ArrayList<>())) + "), " + mMinimum + ", " + mMaximum + ")";
 	}
 
 	@Override
@@ -32,6 +32,6 @@ public class BitVectorRestriction extends Restriction<BitVector> {
 			inEqual.append("}");
 		}
 
-		return mGreater.valueString() + " < bv < " + mLess.valueString() + inEqual.toString();
+		return mMinimum.valueString() + " <= bv <= " + mMaximum.valueString() + inEqual.toString();
 	}
 }

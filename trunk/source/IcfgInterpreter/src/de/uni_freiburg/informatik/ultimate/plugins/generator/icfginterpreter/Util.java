@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -288,23 +289,50 @@ public class Util {
 	}
 
 	public static String getIndent(final int depth) {
-		return "  ".repeat(depth);
+		return "\t".repeat(depth);
 	}
 
 	public static Long SMTDiv(final long m, final long n) {
-		final double div = ((double) m) / n;
-		// n > 0, (div m n) = floor(m/n)
+		final Rational div = Rational.valueOf(m, n);
 		if (n > 0) {
-			return (long) Math.floor(div);
+			// n > 0, (div m n) = floor(m/n)
+			final Rational floorExact = div.floor();
+			return floorExact.numerator().longValue() / floorExact.denominator().longValue();
 		}
 		// n < 0, (div m n) = ceil(m/n)
-		return (long) Math.ceil(div);
+		final Rational ceilExact = div.ceil();
+		return ceilExact.numerator().longValue() / ceilExact.denominator().longValue();
 	}
 
 	public static Long SMTMod(final Long m, final Long n) {
 		// i == ((i / j) * j) + (i % j)
 		// i % j == i - ((i / j) * j)
-		return m - ((Util.SMTDiv(m, n)) * n);
+		final Rational div = Rational.valueOf(Util.SMTDiv(m, n), 1L);
+		final Rational mSafe = Rational.valueOf(m, 1L);
+		final Rational nSafe = Rational.valueOf(n, 1L);
+		final Rational result = mSafe.sub(div.mul(nSafe));
+		return result.numerator().longValueExact(); // should be long because all used numbers are long
+	}
+
+	public static long addSafe(final long x, final long y) {
+		// adapted from Math.addExact(long, long)
+		final long r = x + y;
+		// HD 2-12 Overflow iff both arguments have the opposite sign of the result
+		if (((x ^ r) & (y ^ r)) < 0) {
+			return x < 0 ? Long.MIN_VALUE : Long.MAX_VALUE;
+		}
+		return r;
+	}
+
+	public static long subtractSafe(final long x, final long y) {
+		// adapted from Math.subtractExact(long, long)
+		final long r = x - y;
+		// HD 2-12 Overflow iff the arguments have different signs and
+		// the sign of the result is different from the sign of x
+		if (((x ^ y) & (x ^ r)) < 0) {
+			return x < 0 ? Long.MIN_VALUE : Long.MAX_VALUE;
+		}
+		return r;
 	}
 
 	public static String intToLetters(int numb) {

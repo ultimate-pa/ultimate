@@ -56,7 +56,7 @@ procedure main() {
             }
         }
         left := right + 1;
-        if(0 <= index) {
+        if(0 < index) {
             initialPass := true; // guarantee one more go should this be the last element
             index := index - 1;
             right := stack[index];

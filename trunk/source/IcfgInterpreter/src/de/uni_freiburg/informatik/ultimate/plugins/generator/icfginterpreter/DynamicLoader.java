@@ -553,7 +553,7 @@ public class DynamicLoader {
 		code.append("\t@Override\n");
 		code.append("\tpublic String toString() {\n");
 		code.append("\t\t return \"Edge \" + source.toString() + \" to \" + target.toString()")
-				.append(" + \" with \" + mFormula.getFormula().toStringDirect();");
+				.append(" + \" with \" + mFormula.getFormula().toStringDirect();\n");
 		code.append("\t}\n");
 
 		code.append("}").toString();
