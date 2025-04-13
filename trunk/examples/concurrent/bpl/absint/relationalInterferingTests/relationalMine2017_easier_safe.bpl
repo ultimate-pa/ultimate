@@ -16,6 +16,7 @@ modifies x, y;
     while (true) {
         if (x < y) {
             x := x + 1;
+	    assert x > 0;
             assert x <= y;
             assert x <= 4;
         }

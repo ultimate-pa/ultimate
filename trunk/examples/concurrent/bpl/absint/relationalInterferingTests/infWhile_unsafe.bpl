@@ -1,4 +1,4 @@
-//#Safe
+//#Unsafe
 /*
     We handle infinite forked thread correctly.
 */
@@ -14,6 +14,7 @@ modifies y;
     y := 1;
     while (*) {
         fork 1 one();
+	assert x < 10;
     }
 }
 
