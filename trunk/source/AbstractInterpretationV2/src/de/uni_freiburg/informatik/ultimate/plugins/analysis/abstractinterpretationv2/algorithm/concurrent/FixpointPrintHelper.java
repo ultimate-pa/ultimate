@@ -31,6 +31,9 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		entryLocs.keySet().stream().forEach(l -> logger.error("Thread " + l + " " + globMap.getAbstractEntryLoc(l)));
 		logger.error(" ");
 		printResultCfgAnnotations(resultSet, logger, entryLocs, script);
+		final String exampleThreadString = resultSet.keySet().iterator().next();
+		resultSet.get(exampleThreadString).getLoc2SingleStates().get(entryLocs.values().iterator().next());
+		logger.error("max size reached:" + GuardedInterferenceDomainStateDisj.maxSizeReached);
 	}
 
 	public void printResultCfgAnnotations(

@@ -32,12 +32,13 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final Map<String, ? extends LOC> mEntryLocs;
 	int locationCounter = 0;
 	private IIcfg<? extends LOC> mCfg;
-	private final int MAXSIZE = 10;
+	private final int MAXSIZE;
 
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
-			final ILogger logger, final String locationAbstraction) {
+			final ILogger logger, final String locationAbstraction, final int maxSize, final int maxItf) {
 		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
 		mInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
+		MAXSIZE = maxSize;
 
 		mUnderlyingDomain = underlying;
 		mEntryLocs = cfg.getProcedureEntryNodes();
@@ -58,10 +59,10 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		};
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
-				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences, mAbstractLocationMap);
+				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences, mAbstractLocationMap,
+				maxItf);
 		final var singleWidenOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
-		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying,
-				singleWidenOperator);
+		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying, singleWidenOperator);
 		mCfg = cfg;
 	}
 

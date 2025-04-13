@@ -77,7 +77,7 @@ public class AbstractLocationGlobalTracker {
 		return right.containsAll(left);
 	}
 
-	public boolean isEqual(final AbstractLocationGlobalTracker other) {
+	public boolean isEqualTo(final AbstractLocationGlobalTracker other) {
 		if (other == null) {
 			return false;
 		}
@@ -87,7 +87,10 @@ public class AbstractLocationGlobalTracker {
 		for (final String thread : mThreadLocationMap.keySet()) {
 			final Set<Integer> left = mThreadLocationMap.get(thread);
 			final Set<Integer> right = other.mThreadLocationMap.get(thread);
-			if (!Objects.equals(left, right)) {
+			if (!left.containsAll(right)) {
+				return false;
+			}
+			if (!right.containsAll(left)) {
 				return false;
 			}
 		}

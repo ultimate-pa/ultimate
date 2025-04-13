@@ -41,15 +41,15 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, GuardedInterferenceDomainState<STATE, ACTION, LOC>> mInterferenceCache = new HashMap<>();
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 
-	private final int MAXITF = 9;
 	private int mIterations;
 	private boolean mForked = false;
+	private final int mMaxItf;
 
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferenceState,
-			final AbstractLocationMap<LOC> globalMap) {
+			final AbstractLocationMap<LOC> globalMap, final int maxItf) {
 		mLogger = logger;
 		mToolkit = cfg.getCfgSmtToolkit();
 		mUnderlyingDomain = underlying;
@@ -59,6 +59,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		mInterferences = interferenceState;
 		mNewInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
 		mAbstractLocationMap = globalMap;
+		mMaxItf = maxItf;
 	}
 
 	public AbstractInterferenceState<STATE, ACTION, LOC> getInterferences() {
@@ -79,7 +80,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	@Override
 	public Collection<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>> apply(
 			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> oldstate, final ACTION transition) {
-		if (oldstate.isBottom()) {
+		if (oldstate.isStateBottom()) {
 			return List.of(oldstate);
 		}
 		mCurrentThreadName = transition.getPrecedingProcedure();
@@ -223,6 +224,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 //		mLogger.info("state after interferences: " + newState);
 		if (mForked) {
 			// TODO: we can solve this less costly probably (we just want to go again, with superset of interferenceset)
+			// TODO: could mean insane overhead
 			return newState.union(stateAfterInterferences(newState, ownerThread));
 		}
 		return newState;
@@ -247,18 +249,22 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			final var postState = applyInterferenceToDisjunctiveState(interference, newState, interferenceThreadName,
 					ownerThread);
 			// empty when we encountered bottomstate
-			if (postState.isEmpty()) {
+			// TODO: why newstate null
+			if (postState.isEmpty() || postState.getVariables().isEmpty()) {
 				continue;
 			}
 
-			if (mIterations < 10) {
+			// Interferences should not remove/add variables
+			assert postState.getVariables().equals(newState.getVariables());
+
+			if (mIterations < mMaxItf) {
 				newState = newState.union(postState);
 			} else {
 				newState = mGuardedInterferenceDomain.getWideningOperator().apply(newState, postState);
 				mLogger.error("DID POSTOPERATOR WIDENING: " + newState);
 				return newState;
 			}
-			if (newState.isBottom()) {
+			if (newState.isStateBottom()) {
 				return newState;
 			}
 		}
@@ -294,7 +300,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 					.getAbstractLocation(interference.action().getSource());
 			if ((!possibleInterferingLocations.contains(interferenceLocation)
 					|| !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 0))
-					&& !(ownerThread == interferenceThreadName)) {
+					&& !(ownerThread == interferenceThreadName)
+					&& !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 1)) {
 				continue;
 			}
 			final var pair = new InterferenceStatePair<>(interference, singleState);
@@ -311,15 +318,15 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				disjunction.add(interferedState);
 			}
 		}
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjunction, MAXITF);
+		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjunction, mMaxItf);
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyInterferenceToSTATE(
 			final Interference<STATE, ACTION, LOC> interference,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
 		// add variables to both states to be able to intersect
-		final STATE interferingState = interference.state();
-		final STATE stateState = singleState.state();
+		STATE interferingState = interference.state();
+		STATE stateState = singleState.state();
 		final var missingLocals = DataStructureUtils.difference(stateState.getVariables(),
 				interferingState.getVariables());
 		final var missingLocals2 = DataStructureUtils.difference(interferingState.getVariables(),
@@ -328,8 +335,13 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 //			return Collections.emptyList();
 			return null;
 		}
-		final STATE intersectionState = stateState.addVariables(missingLocals2)
-				.intersect(interferingState.addVariables(missingLocals));
+		if (!missingLocals2.isEmpty()) {
+			stateState = stateState.addVariables(missingLocals2);
+		}
+		if (!missingLocals.isEmpty()) {
+			interferingState = interferingState.addVariables(missingLocals);
+		}
+		final STATE intersectionState = stateState.intersect(interferingState);
 		if (intersectionState.isBottom()) {
 //			return Collections.emptyList();
 			return null;
@@ -340,7 +352,9 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		if (postState.isEmpty()) {
 			return singleState;
 		}
-		postState = postState.stream().map(s -> s.removeVariables(missingLocals2)).collect(Collectors.toList());
+		if (!missingLocals2.isEmpty()) {
+			postState = postState.stream().map(s -> s.removeVariables(missingLocals2)).collect(Collectors.toList());
+		}
 		STATE unionState = postState.iterator().next();
 		for (final STATE state : postState) {
 			if (state != unionState) {

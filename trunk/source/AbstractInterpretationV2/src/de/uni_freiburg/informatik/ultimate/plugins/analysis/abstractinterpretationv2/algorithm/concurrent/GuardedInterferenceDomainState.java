@@ -37,6 +37,11 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 		return mAbstractLocationState;
 	}
 
+	public boolean equalThreadTracking(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		return mAbstractLocationState.equalThreadTracking(other.mAbstractLocationState);
+
+	}
+
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initializeLocation(final LOC location,
 			final AbstractLocationMap<LOC> globalMap, final Set<String> threadNames) {
 		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
@@ -76,13 +81,13 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	}
 
 	public boolean isEqual(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-		if (!(other.state().isSubsetOf(this.state()) != SubsetResult.NONE)) {
+		if (!other.state().isEqualTo(this.state())) {
 			return false;
 		}
-		if (!other.threadCounter().isEqual(threadCounter())) {
+		if (!other.threadCounter().isEqualTo(this.threadCounter())) {
 			return false;
 		}
-		if (!other.abstractLocationState().isEqual(this.abstractLocationState())) {
+		if (!other.abstractLocationState().isEqualTo(this.abstractLocationState())) {
 			return false;
 		}
 		return true;
@@ -159,8 +164,14 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 		return mState.isEmpty();
 	}
 
+	// TODO: we gotta define unique bottom element, probably set loc and counter to bottom
+	// when state bottom too ?
 	@Override
 	public boolean isBottom() {
+		return false;
+	}
+
+	public boolean isStateBottom() {
 		return mState.isBottom();
 	}
 
@@ -169,10 +180,10 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 		if (!(other.state().isEqualTo(this.state()))) {
 			return false;
 		}
-		if (!other.threadCounter().isEqual(threadCounter())) {
+		if (!other.threadCounter().isEqualTo(threadCounter())) {
 			return false;
 		}
-		if (!other.abstractLocationState().isEqual(this.abstractLocationState())) {
+		if (!other.abstractLocationState().isEqualTo(this.abstractLocationState())) {
 			return false;
 		}
 		return true;
@@ -180,15 +191,13 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	@Override
 	public SubsetResult isSubsetOf(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-		SubsetResult result = other.state().isSubsetOf(this.state());
 		// TODO: maybe be less strict
-		if (!other.threadCounter().isEqual(threadCounter())) {
-			result = SubsetResult.NONE;
-		}
-		if (!other.abstractLocationState().isEqual(this.abstractLocationState())) {
-			result = SubsetResult.NONE;
-		}
-		return result;
+		final SubsetResult stateResult = state().isSubsetOf(other.state());
+		final var threadCounterResult = threadCounter().isSubsetOf(other.threadCounter());
+		final var locationRestul = abstractLocationState().isSubsetOf(other.abstractLocationState());
+		final var endResult = stateResult.min(threadCounterResult);
+
+		return endResult.min(locationRestul);
 	}
 
 	@Override
@@ -203,7 +212,13 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	}
 
 	@Override
+	public String toString() {
+		return state().toString() + " | " + threadCounter().toString() + " | " + abstractLocationState().toString();
+	}
+
+	@Override
 	public String toLogString() {
 		return state().toString() + " | " + threadCounter().toString() + " | " + abstractLocationState().toString();
 	}
+
 }

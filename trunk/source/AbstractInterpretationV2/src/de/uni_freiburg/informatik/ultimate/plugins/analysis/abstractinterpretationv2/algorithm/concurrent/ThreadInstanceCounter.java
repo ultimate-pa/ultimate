@@ -75,7 +75,7 @@ public class ThreadInstanceCounter {
 		return new ThreadInstanceCounter(newThreadMap);
 	}
 
-	public boolean isEqual(final ThreadInstanceCounter other) {
+	public boolean isEqualTo(final ThreadInstanceCounter other) {
 		for (final String thread : other.getThreadInstances().keySet()) {
 			final Integer count = mThreadInstances.get(thread);
 			final Integer otherCount = other.getThreadInstances().get(thread);

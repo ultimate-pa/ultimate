@@ -53,6 +53,10 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return mAbstractLocationMap;
 	}
 
+	public boolean equalThreadTracking(final AbstractLocationState<LOC> other) {
+		return mLocationTracker.isEqualTo(other.mLocationTracker);
+	}
+
 	public AbstractLocationState<LOC> union(final AbstractLocationState<LOC> other) {
 		if (other == null || other.getTracker() == null) {
 			return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker);
@@ -76,14 +80,14 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return sr;
 	}
 
-	public boolean isEqual(final AbstractLocationState<LOC> other) {
+	public boolean isEqualTo(final AbstractLocationState<LOC> other) {
 		if (other == null) {
 			return false;
 		}
 		if (other.mAbstractLocation != mAbstractLocation) {
 			return false;
 		}
-		return mLocationTracker.isEqual(other.mLocationTracker);
+		return mLocationTracker.isEqualTo(other.mLocationTracker);
 	}
 
 	public String printLocation() {
@@ -95,7 +99,7 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		final StringBuilder s = new StringBuilder();
 		mLocationTracker.threadLocationMap().keySet()
 				.forEach(k -> s.append(k + ":" + mLocationTracker.getLocationForThread(k).toString() + " "));
-//		s.append("\n My location: " + mAbstractLocation);
+		s.append(" My location: " + mAbstractLocation);
 		return s.toString();
 	}
 
