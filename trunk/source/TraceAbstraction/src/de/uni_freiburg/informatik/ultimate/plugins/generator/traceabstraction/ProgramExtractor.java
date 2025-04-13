@@ -31,13 +31,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -65,25 +65,25 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 	protected CfgSmtToolkit mCsToolkit;
 	protected TAPreferences mPref;
 
+	protected Set<String> mFunctionsToCheck;
 	protected Map<String, INestedWordAutomaton<L, IPredicate>> mFunctionAutomataRaw;
 	protected Map<String, INestedWordAutomaton<L, IPredicate>> mFunctionAutomata;
 	protected Map<String, UnmodifiableTransFormula> mPreconditionTransFormulas;
 	protected Map<String, UnmodifiableTransFormula> mPostconditionViolatedTransFormulas;
 
-	protected Map<String, Collection<IPredicate[]>> mFunctionContracts;
+	protected Map<String, Collection<IPredicate[]>> mFunctionContracts; // TODO remove
 
 	protected Map<String, Collection<Summary>> mFunctionSummaries;
+	protected Set<String> mFunctionsWithImplementation;
 
-	protected Map<IcfgLocation, UnmodifiableTransFormula> mCallTransitions; // TODO
-	protected Map<IcfgLocation, UnmodifiableTransFormula> mCallTransitionsReverse;
-	protected Map<IcfgLocation, UnmodifiableTransFormula> mReturnTransitions;
-	protected Map<IcfgLocation, UnmodifiableTransFormula> mReturnTransitionsReverse;
+	protected Map<Call, Summary> mCallSummaries;
+	protected Map<Return, Summary> mReturnSummaries;
 
-	protected Map<IcfgLocation, Map<IProgramVar, IProgramVar>> mCallVarMappings;
-	protected Map<IcfgLocation, Map<IProgramVar, IProgramVar>> mReturnVarMappings;
+	protected Map<Summary, UnmodifiableTransFormula> mCallTransitions;
+	protected Map<Summary, UnmodifiableTransFormula> mReturnTransitions;
 
-	protected Map<IcfgLocation, Set<IProgramVar>> mCallParams;
-	protected Map<IcfgLocation, Set<IProgramVar>> mReturnParams;
+	protected Map<Summary, Set<IProgramVar>> mCallParams;
+	protected Map<Summary, Set<IProgramVar>> mReturnParams;
 
 	protected Map<String, IcfgLocation> dummyPreLocations;
 	protected Map<String, IcfgLocation> dummyPostLocations;
@@ -112,20 +112,20 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 		initFunctionAutomata(nonInterproceduralAbstraction);
 
 		mFunctionContracts = null; // TODO remove
-		mFunctionSummaries = new HashMap<>();
+
 		dummyPreLocations = new HashMap<>();
 		dummyPostLocations = new HashMap<>();
 
+		mFunctionsWithImplementation = new HashSet<>();
 		for (final String function : mIcfg.getProcedureEntryNodes().keySet()) {
-			mFunctionSummaries.put(function, new ArrayList<>());
+			mFunctionsWithImplementation.add(function);
 			dummyPreLocations.put(function,
 					new IcfgLocation(new StringDebugIdentifier(function + ":dummyPreLoc"), function));
 			dummyPostLocations.put(function,
 					new IcfgLocation(new StringDebugIdentifier(function + ":dummyPostLoc"), function));
 		}
 
-		initCallReturnTransitions();
-		initCallReturnVarMappings();
+		extractCallReturnTransitions();
 
 		mCallParams = new HashMap<>();
 		mReturnParams = new HashMap<>();
@@ -141,11 +141,18 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	}
 
-	protected void initCallReturnTransitions() {
+	protected void extractCallReturnTransitions() {
+		mFunctionSummaries = new HashMap<>();
+
+		mCallSummaries = new HashMap<>();
+		mReturnSummaries = new HashMap<>();
+
 		mCallTransitions = new HashMap<>();
-		mCallTransitionsReverse = new HashMap<>();
 		mReturnTransitions = new HashMap<>();
-		mReturnTransitionsReverse = new HashMap<>();
+
+		final Set<Call> calls = new HashSet<>();
+		final Set<Return> returns = new HashSet<>();
+		final Set<Summary> summaries = new HashSet<>();
 
 		final Map<String, ? extends IcfgLocation> entryNodes = mIcfg.getProcedureEntryNodes();
 
@@ -162,31 +169,46 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 			for (final IcfgEdge edge : current.getOutgoingEdges()) {
 				final IcfgLocation target = edge.getTarget();
 				if (edge instanceof Call) {
-					final UnmodifiableTransFormula transFormula = edge.getTransformula();
-					mCallTransitions.put(current, transFormula);
-
-					final UnmodifiableTransFormula reversedTransFormula = reverseTransFormulaInOutVars(transFormula);
-					mCallTransitionsReverse.put(current, reversedTransFormula);
+					calls.add((Call) edge);
 				} else if (edge instanceof Return) {
-					final UnmodifiableTransFormula transFormula = edge.getTransformula();
-					mReturnTransitions.put(target, transFormula);
-
-					final UnmodifiableTransFormula reversedTransFormula = reverseTransFormulaInOutVars(transFormula);
-					mReturnTransitionsReverse.put(target, reversedTransFormula);
+					returns.add((Return) edge);
 				}
 
-				if (edge instanceof Summary) { // TODO use summary for everything
-					final String functionName = ((Summary) edge).getCallStatement().getMethodName();
-					final Collection<Summary> summaries = mFunctionSummaries.get(functionName);
+				if (edge instanceof Summary) {
 					summaries.add((Summary) edge);
 				}
 				queue.add(target);
 			}
-
 		}
 
+		for (final Summary summary : summaries) {
+			final String functionName = summary.getCallStatement().getMethodName();
+
+			mFunctionSummaries.putIfAbsent(functionName, new ArrayList<>());
+			final Collection<Summary> functionSummaries = mFunctionSummaries.get(functionName);
+			functionSummaries.add(summary);
+
+			final boolean hasImplementation = summary.calledProcedureHasImplementation();
+			if (hasImplementation) {
+				final Call callEdge = calls.stream()
+						.filter(c -> c.getCallStatement().equals(summary.getCallStatement())).findAny().get();
+
+				final Return returnEdge = returns.stream()
+						.filter(r -> r.getCallStatement().equals(summary.getCallStatement())).findAny().get();
+
+				mCallSummaries.put(callEdge, summary);
+				mReturnSummaries.put(returnEdge, summary);
+
+				final UnmodifiableTransFormula callTransFormula = callEdge.getTransformula();
+				mCallTransitions.put(summary, callTransFormula);
+
+				final UnmodifiableTransFormula returnTransFormula = returnEdge.getTransformula();
+				mReturnTransitions.put(summary, returnTransFormula);
+			}
+		}
 	}
 
+	@Deprecated
 	protected UnmodifiableTransFormula reverseTransFormulaInOutVars(final UnmodifiableTransFormula transFormula) {
 		final TransFormulaBuilder builder = new TransFormulaBuilder(transFormula.getOutVars(), transFormula.getInVars(),
 				transFormula.getNonTheoryConsts().isEmpty(), transFormula.getNonTheoryConsts(),
@@ -202,19 +224,15 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		// builder.addAuxVarsButRenameToFreshCopies(null, null);
 
-		return builder.finishConstruction(mCsToolkit.getManagedScript()); // TODO aux vars
+		return builder.finishConstruction(mCsToolkit.getManagedScript());
 	}
 
-	protected void initCallReturnVarMappings() {
-		mCallVarMappings = extractVarMappings(mCallTransitionsReverse);
-		mReturnVarMappings = extractVarMappings(mReturnTransitions);
-	}
-
-	protected static Map<IcfgLocation, Map<IProgramVar, IProgramVar>>
-			extractVarMappings(final Map<IcfgLocation, UnmodifiableTransFormula> transitions) {
-		final HashMap<IcfgLocation, Map<IProgramVar, IProgramVar>> mappings = new HashMap<>();
+	@Deprecated
+	protected static Map<Summary, Map<IProgramVar, IProgramVar>>
+			extractVarMappings(final Map<Summary, UnmodifiableTransFormula> transitions) {
+		final HashMap<Summary, Map<IProgramVar, IProgramVar>> mappings = new HashMap<>();
 		for (final var entry : transitions.entrySet()) {
-			final IcfgLocation location = entry.getKey();
+			final Summary summary = entry.getKey();
 			final UnmodifiableTransFormula transFormula = entry.getValue();
 
 			final Map<IProgramVar, IProgramVar> varMapping = new HashMap<>();
@@ -243,12 +261,13 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 				varMapping.put(programVar, mappedProgramVar);
 			}
 
-			mappings.put(location, varMapping);
+			mappings.put(summary, varMapping);
 		}
 
 		return mappings;
 	}
 
+	@Deprecated
 	protected static List<Set<TermVariable>> getEqualities(final UnmodifiableTransFormula equalityTransFormula) {
 		final List<Set<TermVariable>> equalities = new ArrayList<>();
 
@@ -269,20 +288,29 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 	}
 
 	public void initFunctionAutomata(final INestedWordAutomaton<L, IPredicate> abstraction) {
+		mFunctionsToCheck = new HashSet<>();
 		mFunctionAutomata = new HashMap<>();
 		mFunctionAutomataRaw = new HashMap<>();
 		mPreconditionTransFormulas = new HashMap<>();
 		mPostconditionViolatedTransFormulas = new HashMap<>();
 
-		for (final IPredicate initialState : abstraction.getInitialStates()) {
-			final String function = ((ISLPredicate) initialState).getProgramPoint().getProcedure();
+		final Set<ISLPredicate> functionAbstractionStartNodes =
+				abstraction.getStates().stream().filter(p -> !abstraction.internalPredecessors(p).iterator().hasNext())
+						.filter(ISLPredicate.class::isInstance).map(p -> (ISLPredicate) p).collect(Collectors.toSet());
+
+		for (final ISLPredicate startNode : functionAbstractionStartNodes) {
+			final String function = startNode.getProgramPoint().getProcedure();
+
+			if (abstraction.isInitial(startNode)) {
+				mFunctionsToCheck.add(function);
+			}
 
 			final INestedWordAutomaton<L, IPredicate> functionNwaRaw =
-					constructSingleFunctionAutomatonRaw(abstraction, (ISLPredicate) initialState);
+					constructSingleFunctionAutomatonRaw(abstraction, startNode);
 			mFunctionAutomataRaw.put(function, functionNwaRaw);
 
 			final SingleFunctionAutomatonWrapper<L> functionNwaWrapper =
-					constructSingleFunctionAutomaton(abstraction, (ISLPredicate) initialState);
+					constructSingleFunctionAutomaton(abstraction, startNode);
 			final INestedWordAutomaton<L, IPredicate> functionNwa = functionNwaWrapper.getAbstraction();
 			mFunctionAutomata.put(function, functionNwa);
 			mPreconditionTransFormulas.put(function, functionNwaWrapper.getPreconditionTransFormula());
@@ -556,26 +584,44 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 		return initializeFunctionAbstraction(functionName, preconditionTransition, postconditionViolatedTransition);
 	}
 
-	protected IPredicate transformPrecondition(final SPredicate predicate) {
-		final Set<TermVariable> callParams = mCallParams.get(predicate.getProgramPoint()).stream()
-				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		final UnmodifiableTransFormula callTransition = mCallTransitions.get(predicate.getProgramPoint());
-		return transformPredicate(predicate, callParams, callTransition);
+	protected IPredicate transformPrecondition(final Summary summary, final IPredicate predicate) {
+		final Set<TermVariable> callParams =
+				mCallParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		final IPredicate predicateQuantified = quantifyPredicate(predicate, callParams);
+
+		final Term transitionedTerm = callTransition(summary, predicateQuantified);
+		return mPredicateFactory.newPredicate(transitionedTerm);
+
 	}
 
-	protected IPredicate transformPostcondition(final SPredicate predicate) {
-		final Set<TermVariable> returnParams = mReturnParams.get(predicate.getProgramPoint()).stream()
-				.map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-		final UnmodifiableTransFormula returnTransitionReverse =
-				mReturnTransitionsReverse.get(predicate.getProgramPoint());
-		return transformPredicate(predicate, returnParams, returnTransitionReverse);
+	protected IPredicate transformPostcondition(final Summary summary, final IPredicate predicate,
+			final IPredicate prePredicate) {
+		final Set<TermVariable> returnParams =
+				mReturnParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		final IPredicate predicateQuantified = quantifyPredicate(predicate, returnParams);
+
+		final Term transitionedTerm = returnTransitionReverse(summary, predicateQuantified, prePredicate);
+		return mPredicateFactory.newPredicate(transitionedTerm);
 	}
 
-	protected IPredicate transformPredicate(final SPredicate predicate, final Set<TermVariable> params,
+	protected IPredicate quantifyPredicate(final IPredicate predicate, final Set<TermVariable> notToQuantify) {
+		final Set<TermVariable> toQuantify = new HashSet<>();
+		Collections.addAll(toQuantify, predicate.getFormula().getFreeVars());
+		toQuantify.removeAll(notToQuantify);
+
+		final Term quantifiedFormula = SmtUtils.quantifier(mCsToolkit.getManagedScript().getScript(),
+				QuantifiedFormula.EXISTS, toQuantify, predicate.getFormula());
+
+		return mPredicateFactory.newPredicate(quantifiedFormula);
+	}
+
+	@Deprecated
+	protected IPredicate transformPredicate(final IPredicate predicate, final Set<TermVariable> params,
 			final UnmodifiableTransFormula transition) {
 		final Set<TermVariable> toQuantify = new HashSet<>();
 		Collections.addAll(toQuantify, predicate.getFormula().getFreeVars());
 		toQuantify.removeAll(params);
+
 		final Term quantifiedFormula = SmtUtils.quantifier(mCsToolkit.getManagedScript().getScript(),
 				QuantifiedFormula.EXISTS, toQuantify, predicate.getFormula());
 
@@ -614,36 +660,90 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 				(ISLPredicate) abstraction.getInitialStates().iterator().next()); // copy the automaton
 	}
 
-	public Map<IProgramVar, IProgramVar> getCallVarMapping(final IcfgLocation source) {
-		return mCallVarMappings.get(source);
-	}
-
-	public Map<IProgramVar, IProgramVar> getReturnVarMapping(final IcfgLocation target) {
-		return mCallVarMappings.get(target);
-	}
-
 	public Collection<Summary> getFunctionSummaries(final String functionName) {
 		return mFunctionSummaries.get(functionName);
 	}
 
-	public Set<String> getFunctionNames() {
-		return mFunctionAutomata.keySet();
+	public Set<String> getFunctionsToCheck() {
+		return mFunctionsToCheck;
 	}
 
-	public UnmodifiableTransFormula getCallTransition(final IcfgLocation programPoint) {
-		return mCallTransitions.get(programPoint);
+	public UnmodifiableTransFormula getCallTransition(final Summary summary) {
+		return mCallTransitions.get(summary);
 	}
 
-	public UnmodifiableTransFormula getCallTransitionReverse(final IcfgLocation programPoint) {
-		return mCallTransitionsReverse.get(programPoint);
+	public UnmodifiableTransFormula getReturnTransition(final Summary summary) {
+		return mReturnTransitions.get(summary);
 	}
 
-	public UnmodifiableTransFormula getReturnTransition(final IcfgLocation programPoint) {
-		return mReturnTransitions.get(programPoint);
+	public Term callTransition(final Summary summary, final IPredicate callPredicate) {
+		final String functionName = summary.getCallStatement().getMethodName();
+
+		final TransFormula globalVarsAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(functionName);
+		final TransFormula oldVarAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(functionName);
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(functionName);
+
+		final UnmodifiableTransFormula callTransition = getCallTransition(summary);
+
+		return mPredicateTransformer.strongestPostconditionCall(callPredicate, callTransition, globalVarsAssignments,
+				oldVarAssignments, modifiableGlobals);
 	}
 
-	public UnmodifiableTransFormula getReturnTransitionReverse(final IcfgLocation programPoint) {
-		return mReturnTransitionsReverse.get(programPoint);
+	public Term callTransitionReverse(final Summary summary, final IPredicate callPredicate) {
+		final String functionName = summary.getCallStatement().getMethodName();
+
+		final TransFormula globalVarsAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(functionName);
+		final TransFormula oldVarAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(functionName);
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(functionName);
+
+		final UnmodifiableTransFormula callTransition = getCallTransition(summary);
+
+		return mPredicateTransformer.weakestPreconditionCall(callPredicate, callTransition, globalVarsAssignments,
+				oldVarAssignments, modifiableGlobals);
+	}
+
+	public Term returnTransition(final Summary summary, final IPredicate returnPredicate,
+			final IPredicate callPredicate) {
+		final String functionName = summary.getCallStatement().getMethodName();
+
+		final TransFormula globalVarsAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(functionName);
+		final TransFormula oldVarAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(functionName);
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(functionName);
+
+		final UnmodifiableTransFormula returnTransition = getReturnTransition(summary);
+
+		return mPredicateTransformer.strongestPostconditionReturn(returnPredicate, callPredicate, returnTransition,
+				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+	}
+
+	public Term returnTransitionReverse(final Summary summary, final IPredicate returnPredicate,
+			final IPredicate callPredicate) {
+		final String functionName = summary.getCallStatement().getMethodName();
+
+		final TransFormula globalVarsAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(functionName);
+		final TransFormula oldVarAssignments =
+				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(functionName);
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(functionName);
+
+		final UnmodifiableTransFormula returnTransition = getReturnTransition(summary);
+
+		return mPredicateTransformer.weakestPreconditionReturn(returnPredicate, callPredicate, returnTransition,
+				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+	}
+
+	public boolean functionHasImplementation(final String functionName) {
+		return mFunctionsWithImplementation.contains(functionName);
 	}
 
 }
