@@ -1,0 +1,140 @@
+// Simple test for computation of Owicki-Gries annotation
+// (Variant with a thread ID-based lock)
+// ------------------------------------------------------
+
+//@ variables (y Int) (x Int) (z1 Int) (z2 Int) (m Int)
+
+//@ semantics  [0] { }     (= m 0)
+//@ semantics  [1] {x,y}   (and (= x 1) (= y 1))
+//@ semantics  [2] {z1,z2} (and (= z1 x) (= z2 y))
+//@ semantics  [3] {m}     (and (= |old(m)| 0) (= m 1))
+//@ semantics  [4] {y}     (= y (+ |old(y)| 1))
+//@ semantics  [5] {y}     (= y (- |old(y)| 1))
+//@ semantics  [6] {m}     (= m 0)
+//@ semantics  [7] { }     (distinct z1 x)
+//@ semantics  [8] {m}     (and (= |old(m)| 0) (= m 2))
+//@ semantics  [9] {x}     (= x (+ |old(x)| 1))
+//@ semantics [10] {x}     (= x (- |old(x)| 1))
+//@ semantics [11] {m}     (= m 0)
+//@ semantics [12] { }     (distinct z2 y)
+
+PetriNet program = (
+  alphabet    = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" },
+  places      = { "main.l0" "main.l1" "main.l2" "t1.l1" "t1.l2" "t1.l3" "t1.l4" "t1.l5" "t1.e" "t2.l1" "t2.l2" "t2.l3" "t2.l4" "t2.l5" "t2.e" },
+  transitions = {
+    ({ "main.l0" } "[0]" { "main.l1" })
+    ({ "main.l1" } "[1]" { "main.l2" })
+    ({ "main.l2" } "[2]" { "t1.l1" "t2.l1" })
+    ({ "t1.l1" }  "[3]" { "t1.l2" })
+    ({ "t1.l2" }  "[4]" { "t1.l3" })
+    ({ "t1.l3" }  "[5]" { "t1.l4" })
+    ({ "t1.l4" }  "[6]" { "t1.l5" })
+    ({ "t1.l4" }  "[7]" { "t1.e" })
+    ({ "t2.l1" }  "[8]" { "t2.l2" })
+    ({ "t2.l2" }  "[9]" { "t2.l3" })
+    ({ "t2.l3" } "[10]" { "t2.l4" })
+    ({ "t2.l4" } "[11]" { "t2.l5"  })
+    ({ "t2.l4" } "[12]" { "t2.e"  })
+  },
+  initialMarking = { "main.l0" },
+  acceptingPlaces = { "t1.e" "t2.e" }
+);
+
+// Proof for all traces in which t1 reaches the error location, and the lock is not relevant.
+FiniteAutomaton proof1 = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" },
+     states        = { "true" "(= x z1)" "(= x (+ z1 1))" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[2]" "(= x z1)")
+
+       ("(= x z1)"  "[3]" "(= x z1)")
+       ("(= x z1)"  "[4]" "(= x z1)")
+       ("(= x z1)"  "[5]" "(= x z1)")
+       ("(= x z1)"  "[6]" "(= x z1)")
+       ("(= x z1)"  "[8]" "(= x z1)")
+       ("(= x z1)" "[11]" "(= x z1)")
+       ("(= x z1)" "[12]" "(= x z1)")
+
+       ("(= x z1)"        "[9]" "(= x (+ z1 1))")
+       ("(= x (+ z1 1))" "[10]" "(= x z1)")
+       ("(= x z1)"        "[7]" "false")
+
+       ("(= x (+ z1 1))" "[3]" "(= x (+ z1 1))")
+       ("(= x (+ z1 1))" "[4]" "(= x (+ z1 1))")
+       ("(= x (+ z1 1))" "[5]" "(= x (+ z1 1))")
+       ("(= x (+ z1 1))" "[6]" "(= x (+ z1 1))")
+       ("(= x (+ z1 1))" "[7]" "(= x (+ z1 1))")
+     }
+);
+
+// Proof for all traces in which t2 reaches the error location, and the lock is not relevant.
+FiniteAutomaton proof2 = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" },
+     states        = { "true" "(= y z2)" "(= y (+ z2 1))" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[2]" "(= y z2)")
+
+       ("(= y z2)"  "[8]" "(= y z2)")
+       ("(= y z2)"  "[9]" "(= y z2)")
+       ("(= y z2)" "[10]" "(= y z2)")
+       ("(= y z2)" "[11]" "(= y z2)")
+       ("(= y z2)"  "[3]" "(= y z2)")
+       ("(= y z2)"  "[6]" "(= y z2)")
+       ("(= y z2)"  "[7]" "(= y z2)")
+
+       ("(= y z2)"        "[4]" "(= y (+ z2 1))")
+       ("(= y (+ z2 1))"  "[5]" "(= y z2)")
+       ("(= y z2)"       "[12]" "false")
+
+       ("(= y (+ z2 1))"  "[7]" "(= y (+ z2 1))")
+       ("(= y (+ z2 1))"  "[8]" "(= y (+ z2 1))")
+       ("(= y (+ z2 1))"  "[9]" "(= y (+ z2 1))")
+       ("(= y (+ z2 1))" "[10]" "(= y (+ z2 1))")
+       ("(= y (+ z2 1))" "[12]" "(= y (+ z2 1))")
+     }
+);
+
+// Proof for all traces made them infeasible by the lock, and t1 takes it first
+FiniteAutomaton proof3 = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" },
+     states        = { "true" "(= m 1)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[3]" "(= m 1)")
+
+       ("(= m 1)"  "[4]" "(= m 1)")
+       ("(= m 1)"  "[5]" "(= m 1)")
+       ("(= m 1)"  "[7]" "(= m 1)")
+       ("(= m 1)"  "[9]" "(= m 1)")
+       ("(= m 1)" "[10]" "(= m 1)")
+       ("(= m 1)" "[12]" "(= m 1)")
+
+       ("(= m 1)" "[8]" "false")
+     }
+);
+
+// Proof for all traces made them infeasible by the lock, and t2 takes it first
+FiniteAutomaton proof4 = (
+     alphabet      = { "[0]" "[1]" "[2]" "[3]" "[4]" "[5]" "[6]" "[7]" "[8]" "[9]" "[10]" "[11]" "[12]" },
+     states        = { "true" "(= m 2)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+       ("true" "[8]" "(= m 2)")
+
+       ("(= m 2)"  "[4]" "(= m 2)")
+       ("(= m 2)"  "[5]" "(= m 2)")
+       ("(= m 2)"  "[7]" "(= m 2)")
+       ("(= m 2)"  "[9]" "(= m 2)")
+       ("(= m 2)" "[10]" "(= m 2)")
+       ("(= m 2)" "[12]" "(= m 2)")
+
+       ("(= m 2)" "[3]" "false")
+     }
+);
+
