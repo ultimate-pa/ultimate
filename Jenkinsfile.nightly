@@ -88,7 +88,9 @@ pipeline {
           withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true), junitPublisher(healthScaleFactor: 1.0, keepLongStdio: true, skipPublishingChecks: false)]) {
             sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install -Pcoverage -Dmaven.test.failure.ignore=true -DexcludedGroups=de.uni_freiburg.informatik.ultimate.test.junitextension.categories.NoRegression'
           }
-          recordCoverage(tools: [[parser: 'JACOCO', pattern: '**/target/site/jacoco-aggregate/jacoco.xml']])
+          withEnv(['JAVA_ARGS="-Xmx4g"']) {
+            recordCoverage(tools: [[parser: 'JACOCO', pattern: '**/target/site/jacoco-aggregate/jacoco.xml']])
+          }
       }
     }
     // stage('Report'){
