@@ -19,7 +19,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
@@ -57,20 +59,25 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final FixpointPrintHelper<UNDERLYINGSTATE, ACTION, LOC> mPrinter;
 	private final String mLocationAbstraction;
 	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
+	int locationCounter = 0;
 
 	public FixpointEngineGuardedConcurrent(final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<UNDERLYINGSTATE, ACTION, VARDECL, LOC> factory,
-			final IIcfg<? extends LOC> icfg, final String locationAbstractionType) {
+			final IIcfg<? extends LOC> icfg, final String locationAbstraction) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
 //		mMaxUnwindings = mParams.getMaxUnwindings();
 //		mMaxParallelStates = mParams.getMaxParallelStates();
-		mMaxUnwindings = 6;
-		mMaxInterferenceFixpointUnwindings = 6;
-		mMaxParallelStates = 100;
-		mDomain = new GuardedInterferenceDomain<>(icfg, params.getAbstractDomain(), params.getLogger(),
-				locationAbstractionType, mMaxParallelStates, mMaxInterferenceFixpointUnwindings);
+		mMaxUnwindings = 8;
+		mMaxInterferenceFixpointUnwindings = 16;
+		mMaxParallelStates = 1000;
+		GuardedInterferenceApplier.iterationsReached = 0;
+		GuardedInterferenceDomainStateDisj.maxSizeReached = 0;
+		mEntryLocs = icfg.getProcedureEntryNodes();
+		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction);
+		mDomain = new GuardedInterferenceDomain<>(icfg, params.getAbstractDomain(), params.getLogger(), absMap,
+				mMaxParallelStates, mMaxInterferenceFixpointUnwindings);
 		mUnderlyingDomain = params.getAbstractDomain();
 		// TODO: not sure this is sound
 		mParams = (FixpointEngineParameters<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) params
@@ -84,13 +91,46 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 		mFixpointEngineFactory = (IFixpointEngineFactory<GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) factory;
 
-		mEntryLocs = icfg.getProcedureEntryNodes();
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
 		mPrinter = new FixpointPrintHelper<>();
-		mLocationAbstraction = locationAbstractionType;
+		mLocationAbstraction = locationAbstraction;
 		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier();
 		mItfApplier = applier;
+	}
+
+	private AbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction) {
+		// TODO: enum for setting strings
+		// TODO: parametrize countervalues
+		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
+		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
+		case "Fully precise" -> new AbstractLocationMap<>((l -> locationCounter++), mEntryLocs);
+		case "Heuristic splitting" -> new AbstractLocationMap<>(l -> {
+			final var incoming = l.getIncomingEdges();
+			for (final IcfgEdge icfgEdge : incoming) {
+				if (shouldDifferentiate(icfgEdge.getTransformula())) {
+					return locationCounter++;
+				}
+			}
+			return locationCounter;
+		}, mEntryLocs);
+		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
+		};
+		return absMap;
+	}
+
+	private static boolean shouldDifferentiate(final UnmodifiableTransFormula tf) {
+		if (tf.isInfeasible() == UnmodifiableTransFormula.Infeasibility.INFEASIBLE) {
+			return false;
+		}
+		if (!tf.getBranchEncoders().isEmpty()) {
+			return true;
+		}
+		final Set<IProgramVar> assigned = tf.getAssignedVars();
+		if (assigned.isEmpty()) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override
@@ -198,6 +238,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				if (fix == 3) {
 					mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, iteration, resultSet,
 							mEntryLocs, mDomain.getAbstractLocationMap(), script);
+					mLogger.error("max ITF fixpoint iterations: " + GuardedInterferenceApplier.iterationsReached);
 					break;
 				}
 			} else {

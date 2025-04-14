@@ -1,8 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.Map;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
@@ -11,10 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Wrapper for an {@code IAbstractDomain} with a different post-operator to consider interferences, just like
@@ -29,55 +23,23 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 
 	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
-	private final Map<String, ? extends LOC> mEntryLocs;
+//	private final Map<String, ? extends LOC> mEntryLocs;
 	int locationCounter = 0;
-	private IIcfg<? extends LOC> mCfg;
+//	private final IIcfg<? extends LOC> mCfg;
 	private final int MAXSIZE;
 
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
-			final ILogger logger, final String locationAbstraction, final int maxSize, final int maxItf) {
+			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf) {
 		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
 		mInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
 		MAXSIZE = maxSize;
-
+		mAbstractLocationMap = locationMap;
 		mUnderlyingDomain = underlying;
-		mEntryLocs = cfg.getProcedureEntryNodes();
-		// TODO: enum for setting strings
-		// TODO: parametrize countervalues
-		mAbstractLocationMap = switch (locationAbstraction) {
-		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
-		case "Fully precise" -> new AbstractLocationMap<>((l -> locationCounter++), mEntryLocs);
-		case "Heuristic splitting" -> new AbstractLocationMap<>(l -> {
-			final var incoming = l.getIncomingEdges();
-			for (final IcfgEdge icfgEdge : incoming) {
-				if (shouldDifferentiate(icfgEdge.getTransformula())) {
-					return locationCounter++;
-				}
-			}
-			return locationCounter;
-		}, mEntryLocs);
-		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
-		};
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
 				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences, mAbstractLocationMap,
 				maxItf);
 		final var singleWidenOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
 		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying, singleWidenOperator);
-		mCfg = cfg;
-	}
-
-	private static boolean shouldDifferentiate(final UnmodifiableTransFormula tf) {
-		if (tf.isInfeasible() == UnmodifiableTransFormula.Infeasibility.INFEASIBLE) {
-			return false;
-		}
-		if (!tf.getBranchEncoders().isEmpty()) {
-			return true;
-		}
-		final Set<IProgramVar> assigned = tf.getAssignedVars();
-		if (assigned.isEmpty()) {
-			return true;
-		}
-		return false;
 	}
 
 	public AbstractLocationMap<LOC> getAbstractLocationMap() {

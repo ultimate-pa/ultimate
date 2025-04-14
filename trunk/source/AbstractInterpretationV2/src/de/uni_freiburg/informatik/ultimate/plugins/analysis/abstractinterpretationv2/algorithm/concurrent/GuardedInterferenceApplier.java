@@ -34,6 +34,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private int mIterations;
 	private boolean mForked = false;
 	private final int mMaxItf;
+	public static int iterationsReached = 0;
 
 	public GuardedInterferenceApplier(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
@@ -75,13 +76,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> stateAfterInterferences(
 			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> oldstate, final String ownerThread) {
 
-		// this check might cost more time than it saves, if we don't encounter a lot of top-states
-//		final var topstate = mUnderlyingDomain.createTopState();
-//		if (topstate.addVariables(DataStructureUtils.difference(oldstate.getVariables(), topstate.getVariables()))
-//				.isSubsetOf(oldstate.getUnderlyingState()) != SubsetResult.NONE) {
-//			return oldstate;
-//		}
-
 		// compute which threads can interfere in this state
 		final Set<String> threadNameSet = oldstate.getThreadInstanceState().getThreadNameSet();
 		final Set<String> possibleInterferenceSet = new HashSet<>();
@@ -93,7 +87,11 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 		}
 
-		return oldstate.union(interferenceFixpoint(possibleInterferenceSet, oldstate, ownerThread));
+		if (possibleInterferenceSet.isEmpty()) {
+			return oldstate;
+		}
+
+		return interferenceFixpoint(possibleInterferenceSet, oldstate, ownerThread);
 	}
 
 	private record InterferenceStatePair<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
@@ -108,6 +106,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mForked = false;
 		while (true) {
 			mIterations++;
+			if (mIterations > iterationsReached) {
+				iterationsReached = mIterations;
+			}
 			// state just to check if fixpoint reached after this iteration
 			final var beginLoopState = new GuardedInterferenceDomainStateDisj<>(newState);
 
@@ -116,15 +117,14 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				if (mInterferences.getInterferencesForThread(interferenceThreadName) == null) {
 					continue;
 				}
-				newState = newState
-						.union(applyInterferences(newState, interferences, ownerThread, interferenceThreadName));
+				newState = applyInterferences(newState, interferences, ownerThread, interferenceThreadName);
 			}
+
 			final boolean changed = newState.isSubsetOf(beginLoopState) != SubsetResult.NONE ? false : true;
 			if (!changed) {
 				break;
 			}
 		}
-//		mLogger.info("state after interferences: " + newState);
 		if (mForked) {
 			// TODO: we can solve this less costly probably (we just want to go again, with superset of interferenceset)
 			// TODO: could mean insane overhead
@@ -137,14 +137,12 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> newState,
 			final Set<Interference<STATE, ACTION, LOC>> interferences, final String ownerThread,
 			final String interferenceThreadName) {
+
 		for (final Interference<STATE, ACTION, LOC> interference : interferences) {
 			// 1. check threadcounter (is interfering thread alive in our state?)
 			if (interference.threadcounter().getThreadInstances().get(ownerThread) == 0) {
 				continue;
 			}
-//			mLogger.warn("Applying interference: " + interference.toString());
-//			mLogger.warn("to state: " + newState.getSingleState());
-
 			// in case of interfering fork, just update threadcounter and location
 			if (interference.action() instanceof final ForkThreadCurrent fork) {
 				newState = newState.union(handleFork(newState, fork));
@@ -152,10 +150,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 						mAbstractLocationMap.getAbstractLocation(interference.action().getTarget()));
 				continue;
 			}
-
 			final var postState = applyInterferenceToDisjunctiveState(interference, newState, interferenceThreadName,
 					ownerThread);
-			// empty when we encountered bottomstate
 			// TODO: why newstate null
 			if (postState.isEmpty() || postState.getVariables().isEmpty()) {
 				continue;
@@ -164,15 +160,11 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			// Interferences should not remove/add variables
 			assert postState.getVariables().equals(newState.getVariables());
 
-			if (mIterations < mMaxItf) {
-				newState = newState.union(postState);
-			} else {
+			if (mIterations > mMaxItf) {
 				newState = mGuardedInterferenceDomain.getWideningOperator().apply(newState, postState);
-				mLogger.error("DID POSTOPERATOR WIDENING: " + newState);
-				return newState;
-			}
-			if (newState.isStateBottom()) {
-				return newState;
+			} else {
+				newState = newState.union(postState);
+
 			}
 		}
 		return newState;
@@ -182,7 +174,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> newState, final ForkThreadCurrent fork) {
 		final int beforeFork = newState.getThreadInstanceState().getThreadInstances()
 				.get(fork.getNameOfForkedProcedure());
-		newState = newState.union(newState.setThreadsActive(Set.of(fork.getNameOfForkedProcedure())));
+		newState = newState.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()));
 		final int afterFork = newState.getThreadInstanceState().getThreadInstances()
 				.get(fork.getNameOfForkedProcedure());
 		if (beforeFork < afterFork) {
@@ -196,25 +188,16 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> newState, final String interferenceThreadName,
 			final String ownerThread) {
 
-//		final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> resultDisj = null;
 		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjunction = new HashSet<>();
 		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState : newState.getStates()) {
 			// 2. check abstract locations (is interfering thread in location where it matches the interference
 			// action)
-			final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()
-					.getLocationForThread(interferenceThreadName);
-			final int interferenceLocation = mAbstractLocationMap
-					.getAbstractLocation(interference.action().getSource());
-			if ((!possibleInterferingLocations.contains(interferenceLocation)
-					|| !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 0))
-					&& !(ownerThread == interferenceThreadName)
-					&& !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 1)) {
+			if (!matchesLocation(singleState, ownerThread, interferenceThreadName, interference)) {
 				continue;
 			}
 			final var pair = new InterferenceStatePair<>(interference, singleState);
 			// if in cache, return state with cached underlying state without applying postOp
 			if (mInterferenceCache.get(pair) != null) {
-//				mLogger.error("Using cached state computation");
 				disjunction.add(mInterferenceCache.get(pair));
 			} else {
 				final var interferedState = applyInterferenceToSTATE(interference, singleState);
@@ -228,10 +211,25 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjunction, mMaxItf);
 	}
 
+	private boolean matchesLocation(final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
+			final String ownerThread, final String interferenceThreadName,
+			final Interference<STATE, ACTION, LOC> interference) {
+		final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()
+				.getLocationForThread(interferenceThreadName);
+		final int interferenceLocation = mAbstractLocationMap.getAbstractLocation(interference.action().getSource());
+		if ((!possibleInterferingLocations.contains(interferenceLocation)
+				|| !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 0))
+				&& !(ownerThread == interferenceThreadName)
+				&& !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 1)) {
+			return false;
+		}
+		return true;
+	}
+
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyInterferenceToSTATE(
 			final Interference<STATE, ACTION, LOC> interference,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
-		// add variables to both states to be able to intersect
+		// Add variables to both states to be able to intersect
 		STATE interferingState = interference.state();
 		STATE stateState = singleState.state();
 		final var missingLocals = DataStructureUtils.difference(stateState.getVariables(),
@@ -255,7 +253,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		Collection<STATE> postState = mUnderlyingPostOp.apply(intersectionState, interference.action());
 		// TODO: sound?
 		if (postState.isEmpty()) {
-			return singleState;
+//			return singleState;
+			return null;
 		}
 		if (!missingLocals2.isEmpty()) {
 			postState = postState.stream().map(s -> s.removeVariables(missingLocals2)).collect(Collectors.toList());

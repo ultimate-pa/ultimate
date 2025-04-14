@@ -208,10 +208,11 @@ public final class GuardedInterferenceDomainStateDisj<STATE extends IAbstractSta
 	@Override
 	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> union(
 			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> other) {
-		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> rawUnion = mDisjState
-				.union(other.mDisjState);
-		final var newdisj = DisjunctiveAbstractState.createDisjunction(reduceBySameTracking(rawUnion.getStates()),
-				MAXSIZE);
+//		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> rawUnion = mDisjState
+//				.union(other.mDisjState);
+		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> rawUnion = new HashSet<>(this.getStates());
+		rawUnion.addAll(other.getStates());
+		final var newdisj = DisjunctiveAbstractState.createDisjunction(reduceBySameTracking(rawUnion), MAXSIZE);
 
 		return new GuardedInterferenceDomainStateDisj<>(mFactory, newdisj, MAXSIZE);
 	}
