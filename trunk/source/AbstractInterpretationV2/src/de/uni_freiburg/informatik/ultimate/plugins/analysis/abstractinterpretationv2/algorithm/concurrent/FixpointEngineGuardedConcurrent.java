@@ -56,6 +56,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final FixpointPrintHelper<UNDERLYINGSTATE, ACTION, LOC> mPrinter;
 	private final String mLocationAbstraction;
+	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
 
 	public FixpointEngineGuardedConcurrent(final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<UNDERLYINGSTATE, ACTION, VARDECL, LOC> factory,
@@ -87,6 +88,9 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
 		mPrinter = new FixpointPrintHelper<>();
 		mLocationAbstraction = locationAbstractionType;
+		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+				.getPostOperator()).getItfApplier();
+		mItfApplier = applier;
 	}
 
 	@Override
@@ -143,8 +147,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		while (true) {
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + iteration);
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-					.getPostOperator()).getInterferences();
+//			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+//					.getPostOperator()).getInterferences();
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = mItfApplier
+					.getInterferences();
 
 			mLogger.error("Interference Set we will use:");
 			for (final String termString : oldInterferenceState.interferenceStrings()) {
@@ -178,10 +184,13 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				}
 			}
 
-			((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
-					.updateInterferences();
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-					.getPostOperator()).getInterferences();
+//			((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
+//					.updateInterferences();
+			mItfApplier.updateInterferences();
+//			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+//					.getPostOperator()).getInterferences();
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState = mItfApplier
+					.getInterferences();
 
 			// interference fixpoint reached
 			if (newInterferenceState.isSubsetOf(oldInterferenceState)) {
@@ -195,8 +204,9 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				fix = 1;
 			}
 			if (iteration > mMaxUnwindings) {
-				((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
-						.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
+//				((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
+//						.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
+				mItfApplier.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
 				mLogger.error("DID WIDENING ON INTERFERENCES.");
 			}
 			iteration++;
@@ -347,8 +357,11 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		if (initialDisj.getSingleState() == null) {
 			return initialDisj;
 		}
-		final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> afterInterferences = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).stateAfterInterferences(initialDisj, procedure);
+//		final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> afterInterferences = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+//				.getPostOperator()).stateAfterInterferences(initialDisj, procedure);
+		final GuardedInterferenceDomainStateDisj<UNDERLYINGSTATE, ACTION, LOC> afterInterferences = mItfApplier
+				.stateAfterInterferences(initialDisj, procedure);
+
 		final var debugState2 = afterInterferences.getSingleState();
 		return afterInterferences;
 	}
