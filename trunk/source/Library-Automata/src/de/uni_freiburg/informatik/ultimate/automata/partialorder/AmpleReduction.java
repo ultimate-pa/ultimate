@@ -71,11 +71,17 @@ public class AmpleReduction<L, S> {
 	// Used to store the ample sets of the reduction state. Note that the trivial ample set (set of all outgoing edges)
 	// is represented by null.
 	private final HashMap<S, Set<L>> mAmpleSets;
-	// TODO: think about whether we need this
-	private final HashSet<S> mLoopNodes; // cache nodes from which a cycle was found
+	// TODO: think about whether to remove trivial nodes cache altogether
+	private final HashSet<S> mTrivialNodes; // cache nodes from with trivial ample set
 	private int mLoopNotLoopCount; // count number of incidents where upon fist discovery, a node was identified as a
 									// loop node and upon a subsequent discovery wasn't
-	private int mNonTrivialAmple; // count number of nodes with non-trivial ample set
+	private int mAssignedNonTrivialAmple; // count number of nodes that were assigned non-trivial ample set on first
+											// encounter
+	private int mPrunedTS = 0;
+	private int mPersistentTrivial;
+	private int mTargetAlreadyLN;
+	private int mSomeOtherNodeOnCycleAlreadyLN = 0;
+	private int mLoopCausedTrivial; // number of times a trivial set was assigned bc of node being a loop node
 	private int mIndentLevel = -1;
 
 	/**
@@ -110,13 +116,19 @@ public class AmpleReduction<L, S> {
 		mVisitor = visitor;
 		mPersistent = persistent;
 		mAmpleSets = new HashMap<>();
-		mLoopNodes = new HashSet<>();
+		mTrivialNodes = new HashSet<>();
 		mIsFinal = operand::isFinal;
 		mAmpleSets.put(mStartState, mPersistent.persistentSet(startingState));
 		mLogger.info("Starting ample reduction");
 		traverse();
+		mLogger.warn("Number of pruned transitions: " + mPrunedTS);
 		mLogger.warn("Loop nodes with \"changing loop node status\": %s ", mLoopNotLoopCount);
-		mLogger.warn("Number of non-trivial ample sets:" + mNonTrivialAmple);
+		mLogger.warn("Number of trivial sets caused by loops: " + mLoopCausedTrivial);
+		mLogger.warn("Number of not loop caused trivial ample sets:" + mPersistentTrivial);
+		mLogger.warn("Number of  initially assigned non-trivial ample sets:" + mAssignedNonTrivialAmple);
+		mLogger.warn("Times succ was already a loop node:" + mTargetAlreadyLN);
+		mLogger.warn(
+				"Times some other node on the cycle alrdy had a trivial ample set:" + mSomeOtherNodeOnCycleAlreadyLN);
 		mLogger.info("Finished ample reduction");
 	}
 
@@ -182,33 +194,59 @@ public class AmpleReduction<L, S> {
 			assert mAmpleSets.containsKey(currentState) : "Ample set for this state should have been already computed.";
 			assert mIsFinal.test(currentState) : "All states of the automaton should be final!";
 
-			final Set<L> currentAmple = mAmpleSets.get(current);
+			final Set<L> currentAmple = mAmpleSets.get(currentState);
 			final L letter = currentTransition.getLetter();
 			final boolean prune;
-			// count non-trivial ample sets for statistics
-			if (!Objects.isNull(currentAmple)) {
-				mNonTrivialAmple++;
-			}
 
 			// Prune outgoing edges not in the state's ample set
 			if (!Objects.isNull(currentAmple) && !currentAmple.contains(letter)) {
 				prune = true;
 			} else {
 				// compute ample set for next state
-				if (!mLoopNodes.contains(nextState)) {
-					// TODO: Finde den Denkfehler, wegen dem wir keine nicht-trivialen ample sets mehr haben
+				if (!mTrivialNodes.contains(nextState)) {
+					// TODO: Finde heraus, warum die Reduktionen soviel größer sind, als sie mit dem AmpleRedVisitor
+					// waren
 					// check for all outgoing transitions of next state if they'd close a cycle
 					for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
 						// it seems finding the stack index is rather time consuming
 						int stackIndex;
-						if (mDfs.isVisited(currentTS.getSucc())
+						// we're in theory only interested in loops in the reduction automaton. in practice there's
+						// hardly a difference
+						boolean inAmple = true;
+						if (mAmpleSets.containsKey(nextState)) {
+							final Set<L> oldNextAmple = mAmpleSets.get(nextState);
+							inAmple = !Objects.isNull(oldNextAmple) && oldNextAmple.contains(currentTS.getLetter());
+						}
+
+						if (inAmple && mDfs.isVisited(currentTS.getSucc())
 								&& (stackIndex = mDfs.stackIndexOf(currentTS.getSucc())) != -1) {
 							final var loop = mDfs.getStackSince(stackIndex);
-							// TODO maybe check if any node on loop is already in mLoopNodes
+							// TODO make this more readable
+							// Check if any node on loop already has a trivial ample set
+							boolean skip = false;
+							// it is so often the case that the target node already has a trivial ample set that it
+							// seemed worthwhile to measure separately
 
-							mLoopNodes.add(nextState);
+							if (Objects.isNull(mAmpleSets.get(currentTS.getSucc()))) {
+								// if (mTrivialNodes.contains(currentTransition.getSucc())) {
+								mTargetAlreadyLN++;
+								skip = true;
+							} else {
+								for (final S nodeOnCycle : loop) {
+									if (Objects.isNull(mAmpleSets.get(nodeOnCycle))) {
+										mSomeOtherNodeOnCycleAlreadyLN++;
+										skip = true;
+										break;
+									}
+								}
+							}
+							if (skip) {
+								continue;
+							}
+							mTrivialNodes.add(nextState);
 							final var oldAmple = mAmpleSets.put(nextState, null);
-							if (oldAmple != null) {
+							mLoopCausedTrivial++;
+							if (!Objects.isNull(oldAmple)) {
 								mLoopNotLoopCount++;
 								mLogger.warn("Non-loop node is now a loop node: " + nextState);
 							}
@@ -216,13 +254,17 @@ public class AmpleReduction<L, S> {
 						}
 					}
 				}
+				// compute ample set if that was not already done
 				if (!mAmpleSets.containsKey(nextState)) {
-					// TODO: remove next 3 lines
+					// counting for statistics
 					final var nextAmple = mPersistent.persistentSet(nextState);
 					if (!Objects.isNull(nextAmple)) {
-						final boolean deb = true;
+						mAssignedNonTrivialAmple++;
+					} else {
+						mPersistentTrivial++;
+						mTrivialNodes.add(nextState);
 					}
-					mAmpleSets.put(nextState, mPersistent.persistentSet(nextState));
+					mAmpleSets.put(nextState, nextAmple);
 				}
 				prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
 			}
@@ -234,6 +276,7 @@ public class AmpleReduction<L, S> {
 
 			final int stackIndex;
 			if (prune) {
+				mPrunedTS++;
 				debugIndent("-> transition was pruned");
 			} else if (!mDfs.isVisited(nextState)) {
 				final boolean abortNow = visitState(nextState);
