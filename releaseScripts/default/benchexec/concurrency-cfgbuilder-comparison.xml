@@ -49,4 +49,21 @@
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
+
+  <tasks name="SVCOMP-NoDataRace-Main">
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+
+    <!-- The following options are based on the diff of the ReachSafety default settings and the NoDataRace default settings. -->
+    <!-- 1. Options for both Automizer and GemCutter -->
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+    <option name="--rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
+    <!-- 2. GemCutter-specific options, ignored by Automizer -->
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="--traceabstraction.commutativity.condition.synthesis">NONE</option>
+  </tasks>
 </benchmark>
