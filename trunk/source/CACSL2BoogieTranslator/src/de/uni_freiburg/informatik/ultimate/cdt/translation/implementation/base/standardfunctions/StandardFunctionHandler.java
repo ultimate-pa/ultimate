@@ -37,6 +37,7 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -44,8 +45,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel.IFunctionModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel.ITypeModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -61,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class StandardFunctionHandler {
 	private final LocationFactory mLocationFactory;
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
+	private final Map<String, ITypeModelHandler> mTypeModels;
 	private final Map<String, IASTNode> mFunctionTable;
 	private final FlatSymbolTable mSymboltable;
 	private final TranslationSettings mSettings;
@@ -75,6 +79,7 @@ public class StandardFunctionHandler {
 		mSettings = settings;
 		mLocationFactory = locationFactory;
 		mFunctionModels = getFunctionModels(libraryModels);
+		mTypeModels = getTypeModels(libraryModels);
 	}
 
 	/**
@@ -113,6 +118,15 @@ public class StandardFunctionHandler {
 		return null;
 	}
 
+	public TypesResult translateType(final IASTNamedTypeSpecifier node) {
+		final String name = node.getName().toString();
+		final ITypeModelHandler model = mTypeModels.get(name);
+		if (model == null) {
+			return null;
+		}
+		return model.handleTypedefinition(node, mLocationFactory.createCLocation(node));
+	}
+
 	private static Map<String, IFunctionModelHandler> getFunctionModels(final List<ILibraryModel> libraryModels) {
 		final IFunctionModelHandler die = (main, node, loc, name) -> {
 			throw new UnsupportedSyntaxException(loc, "Unsupported function: " + name);
@@ -126,6 +140,17 @@ public class StandardFunctionHandler {
 				fill(map, unsupportedName, die);
 			}
 		}
+		return Collections.unmodifiableMap(map);
+	}
+
+	private static Map<String, ITypeModelHandler> getTypeModels(final List<ILibraryModel> libraryModels) {
+		final Map<String, ITypeModelHandler> map = new HashMap<>();
+		for (final var model : libraryModels) {
+			for (final var type : model.getTypeModels()) {
+				fill(map, type.typeName(), type.model());
+			}
+		}
+
 		return Collections.unmodifiableMap(map);
 	}
 
