@@ -198,7 +198,10 @@ public interface ITraceCheckPreferences {
 		}
 
 		/**
-		 * Builder for creating a new {@link AssertCodeBlockOrder}, e.g., for the {@link AssertionOrderModulation}.
+		 * Builder for constructing instances of {@link AssertCodeBlockOrder}.
+		 *
+		 * The builder allows a flexible configuration of various parameters including options for witness validation
+		 * and heuristic settings.
 		 *
 		 * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
 		 */
@@ -213,46 +216,110 @@ public interface ITraceCheckPreferences {
 			private int mSmtFeatureHeuristicNumPartitions = AssertCodeBlockOrder.DEF_NUM_PARTITIONS;
 			private double mSmtFeatureHeuristicThreshold = AssertCodeBlockOrder.DEF_SCORE_THRESHOLD;
 
+			/**
+			 * Enables witness validation assert order mode.
+			 *
+			 * The witness validation assert order mode enforces the creation of a default assert CodeBlock order
+			 * specifically for witness validation.
+			 *
+			 * @return The builder instance for method chaining.
+			 */
 			public Builder forWitnessValidation() {
 				mWitnessValidation = true;
 				return this;
 			}
 
+			/**
+			 * Enables hierarchical witness assert order mode.
+			 *
+			 * The hierarchical witness assert order mode enforces a hierarchical assert CodeBlock order specifically
+			 * for witness validation.
+			 *
+			 * @return The builder instance for method chaining.
+			 */
 			public Builder assertWitnessElementsHierarchical() {
 				mAssertWitnessElementsHierarchical = true;
 				return this;
 			}
 
+			/**
+			 * Sets the feature heuristic partitioning type for the
+			 * {@link AssertCodeBlockOrderType#SMT_FEATURE_HEURISTIC}.
+			 *
+			 * @param type
+			 *            The partitioning type to be used.
+			 * @return The builder instance for method chaining.
+			 */
 			public Builder setSmtFeatureHeuristicPartitioningType(final SmtFeatureHeuristicPartitioningType type) {
 				mSmtFeatureHeuristicPartitioningType = type;
 				return this;
 			}
 
+			/**
+			 * Sets the feature heuristic scoring method for the {@link AssertCodeBlockOrderType#SMT_FEATURE_HEURISTIC}.
+			 *
+			 * @param method
+			 *            The scoring method to be used.
+			 * @return The builder instance for method chaining.
+			 */
 			public Builder setSmtFeatureHeuristicScoringMethod(final ScoringMethod method) {
 				mSmtFeatureHeuristicScoringMethod = method;
 				return this;
 			}
 
+			/**
+			 * Sets the number of partitions for the {@link AssertCodeBlockOrderType#SMT_FEATURE_HEURISTIC}.
+			 *
+			 * @param numPartitions
+			 *            The number of partitions to be set.
+			 * @return The builder instance for method chaining.
+			 */
 			public Builder setSmtFeatureHeuristicNumPartitions(final int numPartitions) {
 				mSmtFeatureHeuristicNumPartitions = numPartitions;
 				return this;
 			}
 
+			/**
+			 * Sets the scoring threshold for the {@link AssertCodeBlockOrderType#SMT_FEATURE_HEURISTIC}.
+			 *
+			 * @param threshold
+			 *            The threshold value to be set.
+			 * @return The builder instance for method chaining.
+			 */
 			public Builder setSmtFeatureHeuristicThreshold(final double threshold) {
 				mSmtFeatureHeuristicThreshold = threshold;
 				return this;
 			}
 
+			/**
+			 * Builds an instance of {@link AssertCodeBlockOrder} with the specified type.
+			 *
+			 * @param type
+			 *            The type of {@link AssertCodeBlockOrder} to be created.
+			 * @return The new instance of {@link AssertCodeBlockOrder} created with the current configuration of the
+			 *         builder.
+			 */
 			public AssertCodeBlockOrder build(final AssertCodeBlockOrderType type) {
 				return new AssertCodeBlockOrder(type, mAssertWitnessElementsHierarchical,
 						mSmtFeatureHeuristicPartitioningType, mSmtFeatureHeuristicScoringMethod,
 						mSmtFeatureHeuristicNumPartitions, mSmtFeatureHeuristicThreshold);
 			}
 
+			/**
+			 * Builds the list of assert CodeBlock orders for the {@link AssertionOrderModulation} based on the current
+			 * configuration.
+			 *
+			 * @return List of {@link AssertCodeBlockOrder} for the {@link AssertionOrderModulation}.
+			 */
 			public AssertCodeBlockOrder[] build() {
 				return mWitnessValidation ? getDefaultWitnessValidationOrder() : getDefaultAssertOrder();
 			}
 
+			/**
+			 * Creates the default assert CodeBlock orders for the {@link AssertionOrderModulation}.
+			 *
+			 * @return List of default {@link AssertCodeBlockOrder} for the {@link AssertionOrderModulation}.
+			 */
 			private AssertCodeBlockOrder[] getDefaultAssertOrder() {
 
 				return new AssertCodeBlockOrder[] {
@@ -265,6 +332,12 @@ public interface ITraceCheckPreferences {
 						build(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE) };
 			}
 
+			/**
+			 * Creates the default witness validation assert CodeBlock orders for the {@link AssertionOrderModulation}.
+			 *
+			 * @return List of default witness validation {@link AssertCodeBlockOrder} for the
+			 *         {@link AssertionOrderModulation}.
+			 */
 			private AssertCodeBlockOrder[] getDefaultWitnessValidationOrder() {
 				return ArrayUtils.addAll(
 
