@@ -18,32 +18,25 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 	public void printCfgResults(final ILogger logger,
 			final AbstractInterferenceState<STATE, ACTION, LOC> newInterferenceState,
 			final AbstractInterferenceState<STATE, ACTION, LOC> newInterferenceState2, final int iteration,
-			final Map<String, AbsIntResult<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
+			final Map<String, AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
 			final Map<String, ? extends LOC> entryLocs, final AbstractLocationMap<LOC> globMap, final Script script) {
-		// logger.error("\n");
-		// logger.error("Fixpoint after " + iteration + " iterations found.");
-		// logger.error(newInterferenceState.interferenceStrings());
-		// logger.error("implies");
-		// logger.error(interferenceState.interferenceStrings());
-		// logger.error("\n");
-		// logger.error("\n");
 		logger.error(" ");
 		entryLocs.keySet().stream().forEach(l -> logger.error("Thread " + l + " " + globMap.getAbstractEntryLoc(l)));
 		logger.error(" ");
 		printResultCfgAnnotations(resultSet, logger, entryLocs, script);
 		final String exampleThreadString = resultSet.keySet().iterator().next();
 		resultSet.get(exampleThreadString).getLoc2SingleStates().get(entryLocs.values().iterator().next());
-		logger.error("max size reached:" + GuardedInterferenceDomainStateDisj.maxSizeReached);
+//		logger.error("max size reached:" + GuardedInterferenceDomainState.maxSizeReached);
 	}
 
 	public void printResultCfgAnnotations(
-			final Map<String, AbsIntResult<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
+			final Map<String, AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
 			final ILogger logger, final Map<String, ? extends LOC> entryLocs, final Script script) {
 		final Set<IcfgLocation> seenLocs = new HashSet<>();
 		for (final String thread : resultSet.keySet()) {
 			logger.error("\n");
 			logger.error("Annotated CFG for " + thread);
-			final AbsIntResult<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION, LOC> result = resultSet
+			final AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC> result = resultSet
 					.get(thread);
 			for (final LOC location : result.getLoc2Term().keySet()) {
 				if (entryLocs.containsValue(location)) {
@@ -61,11 +54,8 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		seenLocs.add(loc);
 		final var terms = result.getLoc2Term().get(loc);
 		if (terms != null) {
-//			logger.error("Unioned Term: " + result.getLoc2SingleStates().get(loc).getTerm(script));
-			logger.error("Unioned Term: " + terms);
-			logger.error("State: " + result.getLoc2SingleStates().get(loc));
-//			logger.error(
-//					((GuardedInterferenceDomainStateDisj<?, ?, ?>) result.getLoc2SingleStates().get(loc)).toString());
+			logger.error("State: " + result.getLoc2States().get(loc));
+			logger.error("Unioned State: " + result.getLoc2SingleStates().get(loc));
 			if (loc.getOutgoingEdges().size() != 0) {
 				logger.error("|");
 				logger.error(loc.getOutgoingEdges());

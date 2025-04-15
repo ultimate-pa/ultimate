@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -15,10 +14,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
  * {@code InterferingDomain}. Underlying domain is SIFA domain. Domain also inlcudes Threadinformation.
  */
 public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
-		implements IAbstractDomain<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION> {
+		implements IAbstractDomain<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
-	private final IAbstractPostOperator<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION> mGuardedInterferenceDomainPostOperator;
-	private final IAbstractStateBinaryOperator<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>> mWideningOperator;
+	private final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> mGuardedInterferenceDomainPostOperator;
+	private final IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> mWideningOperator;
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
 	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
@@ -37,9 +36,8 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 		mUnderlyingDomain = underlying;
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
 				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences, mAbstractLocationMap,
-				maxItf);
-		final var singleWidenOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
-		mWideningOperator = new GuardedInterferenceDomainWideningOperator<>(underlying, singleWidenOperator);
+				maxItf, maxSize);
+		mWideningOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
 	}
 
 	public AbstractLocationMap<LOC> getAbstractLocationMap() {
@@ -59,38 +57,33 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	}
 
 	@Override
-	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> createTopState() {
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> createTopState() {
 		final GuardedInterferenceDomainState<STATE, ACTION, LOC> topstate = new GuardedInterferenceDomainState<>(
 				mUnderlyingDomain.createTopState(), mThreadInstanceCounterFactory.createTopState(), null);
-		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState = new DisjunctiveAbstractState<>(
-				topstate);
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjState, MAXSIZE);
+		return topstate;
 	}
 
 	@Override
-	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> createBottomState() {
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> createBottomState() {
 		final GuardedInterferenceDomainState<STATE, ACTION, LOC> topstate = new GuardedInterferenceDomainState<>(
 				mUnderlyingDomain.createTopState(), mThreadInstanceCounterFactory.createBottomState(), null);
-		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState = new DisjunctiveAbstractState<>(
-				topstate);
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjState, MAXSIZE);
+		return topstate;
 	}
 
-	public GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> createBottomPreconditionState() {
-		final GuardedInterferenceDomainState<STATE, ACTION, LOC> topstate = new GuardedInterferenceDomainState<>(
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> createBottomPreconditionState() {
+		// the "bottomstate" of the main thread first entry location. the state is top
+		final GuardedInterferenceDomainState<STATE, ACTION, LOC> bottomState = new GuardedInterferenceDomainState<>(
 				mUnderlyingDomain.createTopState(), mThreadInstanceCounterFactory.createBottomState(), null);
-		final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState = new DisjunctiveAbstractState<>(
-				topstate);
-		return new GuardedInterferenceDomainStateDisj<>(mUnderlyingDomain, disjState, MAXSIZE);
+		return bottomState;
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> getWideningOperator() {
 		return mWideningOperator;
 	}
 
 	@Override
-	public IAbstractPostOperator<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION> getPostOperator() {
+	public IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> getPostOperator() {
 		return mGuardedInterferenceDomainPostOperator;
 	}
 

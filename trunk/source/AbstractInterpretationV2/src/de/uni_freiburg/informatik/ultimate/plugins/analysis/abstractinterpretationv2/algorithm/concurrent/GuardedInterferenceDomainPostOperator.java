@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -22,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.For
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
-		implements IAbstractPostOperator<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>, ACTION> {
+		implements IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> {
 	private String mCurrentThreadName;
 
 	private final ILogger mLogger;
@@ -34,12 +36,12 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferenceState,
-			final AbstractLocationMap<LOC> globalMap, final int maxItf) {
+			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates) {
 		mLogger = logger;
 		mGlobalVariables = cfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 		mUnderlyingPostOp = postOp;
 		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, underlying, postOp, relationalInterferingDomain,
-				interferenceState, globalMap, maxItf);
+				interferenceState, globalMap, maxItf, maxParallelStates);
 	}
 
 	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
@@ -47,8 +49,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	}
 
 	@Override
-	public Collection<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>> apply(
-			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> oldstate, final ACTION transition) {
+	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
 		if (oldstate.isStateBottom()) {
 			return List.of(oldstate);
 		}
@@ -60,8 +62,11 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		}
 
 		// 1. normal poststate
-		GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> postRelationalState = oldstate.apply(mUnderlyingPostOp,
-				transition);
+		final var states = mUnderlyingPostOp.apply(oldstate.state(), transition);
+		final var guardedStates = states.stream()
+				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, oldstate.threadCounter(),
+						oldstate.abstractLocationState().copyToNewState(transition.getTarget())))
+				.collect(Collectors.toSet());
 
 		// 2. Add new interference to global map
 		if (isInterferingTransition(transition) || true) {
@@ -69,11 +74,15 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		}
 
 		// 3. apply interferences
-		if (!postRelationalState.isBottom()) {
-			postRelationalState = mItfApplier.stateAfterInterferences(postRelationalState, mCurrentThreadName);
+		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> postRelationalStates = new LinkedHashSet<>();
+		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> postRelationalState : guardedStates) {
+			if (!postRelationalState.isBottom()) {
+				postRelationalStates
+						.addAll(mItfApplier.stateAfterInterferences(postRelationalState, mCurrentThreadName));
+			}
 		}
 
-		return List.of(postRelationalState);
+		return postRelationalStates;
 	}
 
 	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
@@ -93,25 +102,36 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		return false;
 	}
 
-	private Collection<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>> applyFork(
-			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> oldstate, final ACTION transition) {
+	private Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyFork(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
 
-		var newState = new GuardedInterferenceDomainStateDisj<>(oldstate);
+		var newState = oldstate;
 		if (transition instanceof final ForkThreadCurrent fork1) {
 			final boolean circular = isCircular(fork1, fork1.getSource().getIncomingEdges(), 0);
 			final var forked = fork1.getNameOfForkedProcedure();
 			newState = newState.setThreadsActive(List.of(forked));
-			if (circular || oldstate.getThreadInstanceState().getThreadInstances().get(forked) > 0) {
+			if (circular || oldstate.threadCounter().getThreadInstances().get(forked) > 0) {
 				newState = newState.setThreadsInf(List.of(forked));
 			}
 		} else {
 			throw new IllegalArgumentException("Unsupported fork transition type");
 		}
-		newState = newState.apply(mUnderlyingPostOp, transition);
+		final var newStates = mUnderlyingPostOp.apply(newState.state(), transition);
+		final var thrdCount = newState.threadCounter();
+		final var absLoc = newState.abstractLocationState().copyToNewState(transition.getTarget());
+		final var guardedStates = newStates.stream()
+				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, thrdCount, absLoc))
+				.collect(Collectors.toSet());
 		// apply interferences
-		newState = mItfApplier.stateAfterInterferences(newState, mCurrentThreadName);
+		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> postRelationalStates = new LinkedHashSet<>();
+		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> postRelationalState : guardedStates) {
+			if (!postRelationalState.isBottom()) {
+				postRelationalStates
+						.addAll(mItfApplier.stateAfterInterferences(postRelationalState, mCurrentThreadName));
+			}
+		}
 		mItfApplier.addItf(mCurrentThreadName, transition, oldstate);
-		return List.of(newState);
+		return postRelationalStates;
 	}
 
 	public boolean isCircular(final IcfgEdge fork1, final List<IcfgEdge> edges, final int depth) {
@@ -134,14 +154,14 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	}
 
 	@Override
-	public List<GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC>> apply(
-			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> stateBeforeLeaving,
-			final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> secondState, final ACTION transition) {
+	public List<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> stateBeforeLeaving,
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> secondState, final ACTION transition) {
 		throw new UnsupportedOperationException("Not implemented.");
 	}
 
 	@Override
-	public EvalResult evaluate(final GuardedInterferenceDomainStateDisj<STATE, ACTION, LOC> state, final Term formula,
+	public EvalResult evaluate(final GuardedInterferenceDomainState<STATE, ACTION, LOC> state, final Term formula,
 			final Script script) {
 		throw new UnsupportedOperationException("Not implemented.");
 	}
