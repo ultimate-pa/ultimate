@@ -180,7 +180,22 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AssertFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AtomicFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FloatFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.GccBuiltinFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LinuxFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.PthreadFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SetjmpFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SocketFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdioFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdlibFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StringFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SvcompFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.TimeFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.VariadicFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -459,10 +474,8 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mAuxVarInfoBuilder, mNameHandler,
-				mExpressionTranslation, mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSymbolTable,
-				mSettings, mExprResultTransformer, mLocationFactory, mTypeHandler, mCExpressionTranslator,
-				mDataRaceChecker);
+		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mSymbolTable, mSettings,
+				mLocationFactory, getFunctionModelProviders());
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -554,10 +567,8 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable,
-				mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler, mTypeSizeComputer,
-				procedureManager, mTypeSizes, mSymbolTable, mSettings, mExprResultTransformer, mLocationFactory,
-				mTypeHandler, mCExpressionTranslator, mDataRaceChecker);
+		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
+				mSettings, mLocationFactory, getFunctionModelProviders());
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
@@ -589,6 +600,52 @@ public class CHandler {
 			}
 			mSymbolTable.storeCSymbol(hook, id, stv);
 		}
+	}
+
+	private List<FunctionModelProvider> getFunctionModelProviders() {
+		return List.of(
+				new LinuxFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
+						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
+						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new PthreadFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSymbolTable, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new StdioFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
+						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
+						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new FloatFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
+						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
+						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new GccBuiltinFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new SvcompFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new AtomicFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new StringFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new StdlibFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new VariadicFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new AssertFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new TimeFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
+						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
+						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new SocketFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
+				new SetjmpFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
+						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
+						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker));
 	}
 
 	/**
