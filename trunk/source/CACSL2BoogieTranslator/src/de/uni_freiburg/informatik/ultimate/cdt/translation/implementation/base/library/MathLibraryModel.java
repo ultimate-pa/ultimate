@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -30,40 +29,32 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class FloatLibraryModel implements ILibraryModel {
+public class MathLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final ExpressionTranslation mExpressionTranslation;
-	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final CExpressionTranslator mCEpressionTranslator;
 	private final INameHandler mNameHandler;
 
-	public FloatLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
-			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final CExpressionTranslator cEpressionTranslator, final INameHandler nameHandler) {
+	public MathLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final ExpressionTranslation expressionTranslation, final CExpressionTranslator cEpressionTranslator,
+			final INameHandler nameHandler) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
-		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mCEpressionTranslator = cEpressionTranslator;
 		mNameHandler = nameHandler;
 	}
 
-	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS = {
-			// from math.h
-			"frexp", "ldexp", "pow", "hypot", "cbrt", "drem", "significand", "j0", "j1", "jn", "y0", "y1", "yn", "erfc",
-			"lgamma", "tgamma", "gamma", "lgamma_r", "nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo",
-			"lrint", "llrint", "fma", "scalb", "frexpf", "ldexpf", "powf", "hypotf", "cbrtf", "dremf", "significandf",
-			"j0f", "j1f", "jnf", "y0f", "y1f", "ynf", "erfcf", "lgammaf", "tgammaf", "gammaf", "lgammaf_r",
-			"nextafterf", "nexttowardf", "scalbnf", "ilogbf", "scalblnf", "remquof", "lrintf", "llrintf", "fmaf",
-			"scalbf", "frexpl", "ldexpl", "powl", "hypotl", "cbrtl", "dreml", "significandl", "j0l", "j1l", "jnl",
-			"y0l", "y1l", "ynl", "erfcl", "lgammal", "tgammal", "gammal", "lgammal_r", "nextafterl", "nexttowardl",
-			"scalbnl", "ilogbl", "scalblnl", "remquol", "lrintl", "llrintl", "fmal", "scalbl", "signgam;", "modf",
-			"modff", "modfl",
-
-			// from fenv.h
-			"feclearexcept", "fegetexceptflag", "feraiseexcept", "fesetexceptflag", "fetestexcept", "fegetenv",
-			"feholdexcept", "fesetenv", "feupdateenv", };
+	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS = { "frexp", "ldexp", "pow", "hypot", "cbrt", "drem",
+			"significand", "j0", "j1", "jn", "y0", "y1", "yn", "erfc", "lgamma", "tgamma", "gamma", "lgamma_r",
+			"nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo", "lrint", "llrint", "fma", "scalb",
+			"frexpf", "ldexpf", "powf", "hypotf", "cbrtf", "dremf", "significandf", "j0f", "j1f", "jnf", "y0f", "y1f",
+			"ynf", "erfcf", "lgammaf", "tgammaf", "gammaf", "lgammaf_r", "nextafterf", "nexttowardf", "scalbnf",
+			"ilogbf", "scalblnf", "remquof", "lrintf", "llrintf", "fmaf", "scalbf", "frexpl", "ldexpl", "powl",
+			"hypotl", "cbrtl", "dreml", "significandl", "j0l", "j1l", "jnl", "y0l", "y1l", "ynl", "erfcl", "lgammal",
+			"tgammal", "gammal", "lgammal_r", "nextafterl", "nexttowardl", "scalbnl", "ilogbl", "scalblnl", "remquol",
+			"lrintl", "llrintl", "fmal", "scalbl", "signgam;", "modf", "modff", "modfl" };
 
 	private static final List<String> UNARY_FUNCTIONS = List.of(
 			// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
@@ -314,10 +305,6 @@ public class FloatLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__builtin_isnan",
 				(main, node, loc, name) -> handleUnaryFloatFunction(main, node, loc, "isnan")));
 
-		/** from fenv.h */
-		result.add(new FunctionModel("fegetround", this::handleBuiltinFegetround));
-		result.add(new FunctionModel("fesetround", this::handleBuiltinFesetround));
-
 		return result;
 	}
 
@@ -484,30 +471,6 @@ public class FloatLibraryModel implements ILibraryModel {
 				new ExpressionResultBuilder().addAllExceptLrValue(lessThan, greaterThan).setLrValue(lrVal).build();
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
-	}
-
-	private Result handleBuiltinFegetround(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-
-		final IASTInitializerClause[] arguments = node.getArguments();
-		mHelper.checkArguments(loc, 0, name, arguments);
-		final RValue rvalue = mExpressionTranslation.constructBuiltinFegetround(loc);
-
-		return new ExpressionResultBuilder().setLrValue(rvalue).build();
-	}
-
-	private Result handleBuiltinFesetround(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-
-		final IASTInitializerClause[] arguments = node.getArguments();
-		mHelper.checkArguments(loc, 1, name, arguments);
-
-		final ExpressionResult decayedArgument =
-				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
-		final ExpressionResult convertedArgument =
-				mExprResultTransformer.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
-
-		return mExpressionTranslation.constructBuiltinFesetround(loc, convertedArgument, mAuxVarInfoBuilder);
 	}
 
 	@Override
