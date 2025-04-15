@@ -49,185 +49,21 @@ public class FloatLibraryModel implements ILibraryModel {
 		mNameHandler = nameHandler;
 	}
 
-	//@formatter:off
-	private final static String[] SUPPORTED_FLOAT_OPERATIONS = {
-			"sqrt",
-			"__isinf",
-			"__finite",
-			"isinf",
-			"finite",
-			"nan",
-			"__isnan",
-			"isnan",
-			"__fpclassify",
-			"sqrtf",
-			"__isinff",
-			"isinff",
-			"__finitef",
-			"finitef",
-			"nanf",
-			"__isnanf",
-			"isnanf",
-			"__fpclassifyf",
-			"sqrtl",
-			"__isinfl",
-			"__finitel",
-			"isinfl",
-			"finitel",
-			"nanl",
-			"__isnanl",
-			"isnanl",
-			"__fpclassifyl",
-			"fabs",
-			"fabsf",
-			"fabsl",
-			"fmax",
-			"fmin",
-			"fmaxf",
-			"fminf",
-			"fmaxl",
-			"fminl",
-			"trunc",
-			"truncf",
-			"truncl",
-			"round",
-			"lround",
-			"llround",
-			"roundf",
-			"lroundf",
-			"llroundf",
-			"roundl",
-			"lroundl",
-			"llroundl",
-			"floor",
-			"floorf",
-			"floorl",
-			"ceil",
-			"ceilf",
-			"ceill",
-			"remainder",
-			"remainderf",
-			"remainderl",
-			"fmod",
-			"fmodf",
-			"fmodl",
-			"copysign",
-			"copysignf",
-			"copysignl",
-			"fdim",
-			"fdimf",
-			"fdiml",
-			// math.h macros (incomplete)
-			"fpclassify",
-			"isnormal",
-
-			// from fenv.h
-			"fegetround",
-			"fesetround",
-	};
-
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS = {
 			// from math.h
-			"frexp",
-			"ldexp",
-			"pow",
-			"hypot",
-			"cbrt",
-			"drem",
-			"significand",
-			"j0",
-			"j1",
-			"jn",
-			"y0",
-			"y1",
-			"yn",
-			"erfc",
-			"lgamma",
-			"tgamma",
-			"gamma",
-			"lgamma_r",
-			"nextafter",
-			"nexttoward",
-			"scalbn",
-			"ilogb",
-			"scalbln",
-			"remquo",
-			"lrint",
-			"llrint",
-			"fma",
-			"scalb",
-			"frexpf",
-			"ldexpf",
-			"powf",
-			"hypotf",
-			"cbrtf",
-			"dremf",
-			"significandf",
-			"j0f",
-			"j1f",
-			"jnf",
-			"y0f",
-			"y1f",
-			"ynf",
-			"erfcf",
-			"lgammaf",
-			"tgammaf",
-			"gammaf",
-			"lgammaf_r",
-			"nextafterf",
-			"nexttowardf",
-			"scalbnf",
-			"ilogbf",
-			"scalblnf",
-			"remquof",
-			"lrintf",
-			"llrintf",
-			"fmaf",
-			"scalbf",
-			"frexpl",
-			"ldexpl",
-			"powl",
-			"hypotl",
-			"cbrtl",
-			"dreml",
-			"significandl",
-			"j0l",
-			"j1l",
-			"jnl",
-			"y0l",
-			"y1l",
-			"ynl",
-			"erfcl",
-			"lgammal",
-			"tgammal",
-			"gammal",
-			"lgammal_r",
-			"nextafterl",
-			"nexttowardl",
-			"scalbnl",
-			"ilogbl",
-			"scalblnl",
-			"remquol",
-			"lrintl",
-			"llrintl",
-			"fmal",
-			"scalbl",
-			"signgam;",
-			"modf",
-			"modff",
-			"modfl",
+			"frexp", "ldexp", "pow", "hypot", "cbrt", "drem", "significand", "j0", "j1", "jn", "y0", "y1", "yn", "erfc",
+			"lgamma", "tgamma", "gamma", "lgamma_r", "nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo",
+			"lrint", "llrint", "fma", "scalb", "frexpf", "ldexpf", "powf", "hypotf", "cbrtf", "dremf", "significandf",
+			"j0f", "j1f", "jnf", "y0f", "y1f", "ynf", "erfcf", "lgammaf", "tgammaf", "gammaf", "lgammaf_r",
+			"nextafterf", "nexttowardf", "scalbnf", "ilogbf", "scalblnf", "remquof", "lrintf", "llrintf", "fmaf",
+			"scalbf", "frexpl", "ldexpl", "powl", "hypotl", "cbrtl", "dreml", "significandl", "j0l", "j1l", "jnl",
+			"y0l", "y1l", "ynl", "erfcl", "lgammal", "tgammal", "gammal", "lgammal_r", "nextafterl", "nexttowardl",
+			"scalbnl", "ilogbl", "scalblnl", "remquol", "lrintl", "llrintl", "fmal", "scalbl", "signgam;", "modf",
+			"modff", "modfl",
 
 			// from fenv.h
-			"feclearexcept",
-			"fegetexceptflag",
-			"feraiseexcept",
-			"fesetexceptflag",
-			"fetestexcept",
-			"fegetenv",
-			"feholdexcept",
-			"fesetenv",
-			"feupdateenv",
-	};
+			"feclearexcept", "fegetexceptflag", "feraiseexcept", "fesetexceptflag", "fetestexcept", "fegetenv",
+			"feholdexcept", "fesetenv", "feupdateenv", };
 
 	private static final List<String> UNARY_FUNCTIONS = List.of(
 			// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
@@ -243,9 +79,8 @@ public class FloatLibraryModel implements ILibraryModel {
 			"isnan", "__isnan",
 
 			// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-			"finite", "__finite", "finitef", "__finitef", "finitel", "__finitel",
-			"isinff", "__isinff", "isinfl", "__isinfl",
-			"isnanf", "isnanl", "__isnanf", "__isnanl",
+			"finite", "__finite", "finitef", "__finitef", "finitel", "__finitel", "isinff", "__isinff", "isinfl",
+			"__isinfl", "isnanf", "isnanl", "__isnanf", "__isnanl",
 
 			// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 			"isnormal",
@@ -269,8 +104,7 @@ public class FloatLibraryModel implements ILibraryModel {
 			"floor", "floorf", "floorl",
 
 			// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
-			"ceil", "ceilf", "ceilr"
-			);
+			"ceil", "ceilf", "ceilr");
 
 	private static final List<String> BINARY_FUNCTIONS = List.of(
 			// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
@@ -286,9 +120,7 @@ public class FloatLibraryModel implements ILibraryModel {
 			"fmod", "fmodf", "fmodl",
 
 			// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
-			"fdim", "fdimf", "fdiml"
-			);
-	//@formatter:on
+			"fdim", "fdimf", "fdiml");
 
 	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
 		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
@@ -486,7 +318,6 @@ public class FloatLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("fegetround", this::handleBuiltinFegetround));
 		result.add(new FunctionModel("fesetround", this::handleBuiltinFesetround));
 
-		// TODO: Check in SUPPORTED_FLOAT_FUNCTIONS
 		return result;
 	}
 
