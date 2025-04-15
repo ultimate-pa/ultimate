@@ -186,11 +186,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.s
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.GccBuiltinLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LibraryModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LinuxLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.PthreadLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SetjmpLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SocketLibraryModel;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdioLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdlibLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StringLibraryModel;
@@ -307,7 +307,7 @@ public class CHandler {
 	private final ILogger mLogger;
 
 	private final List<LTLExpressionExtractor> mGlobAcslExtractors;
-	private final StandardFunctionHandler mStandardFunctionHandler;
+	private final LibraryModelHandler mLibraryModelHandler;
 
 	private final ITypeHandler mTypeHandler;
 
@@ -475,7 +475,7 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mSymbolTable, mSettings,
+		mLibraryModelHandler = new LibraryModelHandler(mLogger, functionTable, mSymbolTable, mSettings,
 				mLocationFactory, getLibraryModels());
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
@@ -568,8 +568,8 @@ public class CHandler {
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
-		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
-				mSettings, mLocationFactory, getLibraryModels());
+		mLibraryModelHandler = new LibraryModelHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable, mSettings,
+				mLocationFactory, getLibraryModels());
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
@@ -1695,7 +1695,7 @@ public class CHandler {
 				}
 			}
 			final Result standardFunction =
-					mStandardFunctionHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
+					mLibraryModelHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
 			if (standardFunction != null) {
 				return standardFunction;
 			}

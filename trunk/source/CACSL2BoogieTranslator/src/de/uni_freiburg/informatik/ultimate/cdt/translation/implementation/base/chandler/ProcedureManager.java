@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.BoogieGlobalLhsFinder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LibraryModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UndeclaredFunctionException;
@@ -87,7 +87,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * <ul>
  * <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
  * <li>helper procedures from the memory model ({@link MemoryHandler})
- * <li>when we provide a Boogie model for a standard C function ({@link StandardFunctionHandler})
+ * <li>when we provide a Boogie model for a standard C function ({@link LibraryModelHandler})
  * <li>Ultimate.start and Ultimate.init ({@link PostProcessor})
  * </ul>
  * Note that at the moment this manages procedure declarations. Procedure implementations are passed around elsewhere.

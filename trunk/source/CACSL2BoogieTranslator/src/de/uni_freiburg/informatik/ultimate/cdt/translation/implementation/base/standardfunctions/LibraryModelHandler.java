@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * The {@link StandardFunctionHandler} creates the translation for various functions where we have our own specification
+ * The {@link LibraryModelHandler} creates the translation for various functions where we have our own specification
  * or implementation. This is typically the case for functions defined in the C standard, but also for various standard
  * libraries or SV-COMP extensions.
  *
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Matthias Heizmann
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class StandardFunctionHandler {
+public class LibraryModelHandler {
 	private final LocationFactory mLocationFactory;
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
 	private final Map<String, ITypeModelHandler> mTypeModels;
@@ -70,7 +70,7 @@ public class StandardFunctionHandler {
 	private final TranslationSettings mSettings;
 	private final ILogger mLogger;
 
-	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
+	public LibraryModelHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
 			final FlatSymbolTable symboltable, final TranslationSettings settings,
 			final LocationFactory locationFactory, final List<ILibraryModel> libraryModels) {
 		mLogger = logger;
