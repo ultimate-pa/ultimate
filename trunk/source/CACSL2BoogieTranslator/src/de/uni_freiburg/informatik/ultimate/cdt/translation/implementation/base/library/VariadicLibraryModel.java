@@ -160,7 +160,7 @@ public class VariadicLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<TypeModel> getTypeModels() {
-		// TODO: Handle also types defined in stdarg.h here
+		// TODO: Handle also types defined in stdarg.h
 		return List.of(new TypeModel("__builtin_va_list",
 				(node, loc) -> new TypesResult(mTypeHandler.constructPointerType(loc), node.isConst(), false,
 						new CPointer(new CPrimitive(CPrimitives.CHAR)))));
