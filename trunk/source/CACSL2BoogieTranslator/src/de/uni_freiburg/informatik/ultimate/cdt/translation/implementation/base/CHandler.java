@@ -180,23 +180,23 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AssertFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AtomicFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FloatFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelProviderHelper;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.GccBuiltinFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.IFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LinuxFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.PthreadFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SetjmpFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SocketFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AssertLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AtomicLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FloatLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.GccBuiltinLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LinuxLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.PthreadLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SetjmpLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SocketLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdioFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdlibFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StringFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SvcompFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.TimeFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.VariadicFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdioLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StdlibLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StringLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SvcompLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.TimeLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.VariadicLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -476,7 +476,7 @@ public class CHandler {
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
 		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, functionTable, mSymbolTable, mSettings,
-				mLocationFactory, getFunctionModelProviders());
+				mLocationFactory, getLibraryModels());
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -569,7 +569,7 @@ public class CHandler {
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
 		mStandardFunctionHandler = new StandardFunctionHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
-				mSettings, mLocationFactory, getFunctionModelProviders());
+				mSettings, mLocationFactory, getLibraryModels());
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
@@ -603,34 +603,34 @@ public class CHandler {
 		}
 	}
 
-	private List<IFunctionModelProvider> getFunctionModelProviders() {
-		final FunctionModelProviderHelper helper =
-				new FunctionModelProviderHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
+	private List<ILibraryModel> getLibraryModels() {
+		final FunctionModelHelper helper =
+				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
 						mTypeHandler, mSettings.checkMemoryLeakInMain(), mSettings.isSvcompMemtrackCompatibilityMode());
-		return List.of(new AssertFunctionModelProvider(helper, mExprResultTransformer, mSettings.checkAssertions()),
-				new AtomicFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
+		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
+				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation,
 						mAuxVarInfoBuilder),
-				new FloatFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
+				new FloatLibraryModel(helper, mExprResultTransformer, mExpressionTranslation,
 						mAuxVarInfoBuilder, mCExpressionTranslator, mNameHandler),
-				new GccBuiltinFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
+				new GccBuiltinLibraryModel(helper, mExprResultTransformer, mExpressionTranslation,
 						mAuxVarInfoBuilder, mMemoryHandler, mTypeSizeComputer),
-				new LinuxFunctionModelProvider(helper, mAuxVarInfoBuilder, mExprResultTransformer, mTypeSizes,
+				new LinuxLibraryModel(helper, mAuxVarInfoBuilder, mExprResultTransformer, mTypeSizes,
 						mExpressionTranslation),
-				new PthreadFunctionModelProvider(helper, mSymbolTable, mAuxVarInfoBuilder, mExprResultTransformer,
+				new PthreadLibraryModel(helper, mSymbolTable, mAuxVarInfoBuilder, mExprResultTransformer,
 						mExpressionTranslation, mMemoryHandler, mTypeHandler, mTypeSizes, mProcedureManager),
-				new SetjmpFunctionModelProvider(helper, mExpressionTranslation),
-				new SocketFunctionModelProvider(helper),
-				new StdioFunctionModelProvider(helper, mExprResultTransformer, mAuxVarInfoBuilder,
+				new SetjmpLibraryModel(helper, mExpressionTranslation),
+				new SocketLibraryModel(helper),
+				new StdioLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder,
 						mExpressionTranslation, mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
-				new StdlibFunctionModelProvider(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
+				new StdlibLibraryModel(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
 						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
 						mSettings.checkSignedIntegerBounds()),
-				new StringFunctionModelProvider(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
+				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
 						mProcedureManager, mExpressionTranslation, mTypeSizeComputer),
-				new SvcompFunctionModelProvider(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
+				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
 						mSettings.checkErrorFunction(), mExprResultTransformer),
-				new TimeFunctionModelProvider(helper, mExpressionTranslation, mAuxVarInfoBuilder),
-				new VariadicFunctionModelProvider(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
+				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
+				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
 						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder));
 	}
 

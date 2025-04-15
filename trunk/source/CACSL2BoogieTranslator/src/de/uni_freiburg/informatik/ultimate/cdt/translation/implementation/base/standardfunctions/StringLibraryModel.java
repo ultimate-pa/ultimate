@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class StringFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class StringLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
@@ -46,7 +46,7 @@ public class StringFunctionModelProvider implements IFunctionModelProvider {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
-	public StringFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public StringLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final MemoryHandler memoryHandler, final ProcedureManager procedureManager,
 			final ExpressionTranslation expressionTranslation, final TypeSizeAndOffsetComputer typeSizeComputer) {

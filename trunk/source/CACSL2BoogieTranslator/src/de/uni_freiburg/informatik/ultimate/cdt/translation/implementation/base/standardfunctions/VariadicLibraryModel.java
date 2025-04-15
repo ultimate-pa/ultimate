@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class VariadicFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class VariadicLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final MemoryHandler mMemoryHandler;
 	private final ProcedureManager mProcedureManager;
 	private final ITypeHandler mTypeHandler;
@@ -46,7 +46,7 @@ public class VariadicFunctionModelProvider implements IFunctionModelProvider {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
-	public VariadicFunctionModelProvider(final FunctionModelProviderHelper helper, final MemoryHandler memoryHandler,
+	public VariadicLibraryModel(final FunctionModelHelper helper, final MemoryHandler memoryHandler,
 			final ProcedureManager procedureManager, final ITypeHandler typeHandler,
 			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {

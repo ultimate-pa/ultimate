@@ -22,12 +22,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class TimeFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class TimeLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
-	public TimeFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public TimeLibraryModel(final FunctionModelHelper helper,
 			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;
 		mExpressionTranslation = expressionTranslation;

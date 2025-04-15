@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public class FunctionModelProviderHelper {
+public class FunctionModelHelper {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final MemoryHandler mMemoryHandler;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -56,7 +56,7 @@ public class FunctionModelProviderHelper {
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mSvcompMemtrackCompatibilityMode;
 
-	public FunctionModelProviderHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
+	public FunctionModelHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
 			final boolean svcompMemtrackCompatibilityMode) {

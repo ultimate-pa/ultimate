@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class PthreadFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class PthreadLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final FlatSymbolTable mSymboltable;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ExpressionResultTransformer mExprResultTransformer;
@@ -62,7 +62,7 @@ public class PthreadFunctionModelProvider implements IFunctionModelProvider {
 	private final ProcedureManager mProcedureManager;
 	private final ThreadIdManager mThreadIdManager;
 
-	public PthreadFunctionModelProvider(final FunctionModelProviderHelper helper, final FlatSymbolTable symboltable,
+	public PthreadLibraryModel(final FunctionModelHelper helper, final FlatSymbolTable symboltable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final ITypeHandler typeHandler, final TypeSizes typeSizes, final ProcedureManager procedureManager) {

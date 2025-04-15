@@ -33,18 +33,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class AtomicFunctionModelProvider implements IFunctionModelProvider {
+public class AtomicLibraryModel implements ILibraryModel {
 	/**
 	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
 	 */
 	private static final int MEMORY_ORDER_SEQ_CST = 5;
 
-	private final FunctionModelProviderHelper mHelper;
+	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
-	public AtomicFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public AtomicLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
 			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;

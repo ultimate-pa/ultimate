@@ -7,10 +7,10 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
-public class SocketFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class SocketLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 
-	public SocketFunctionModelProvider(final FunctionModelProviderHelper helper) {
+	public SocketLibraryModel(final FunctionModelHelper helper) {
 		mHelper = helper;
 	}
 

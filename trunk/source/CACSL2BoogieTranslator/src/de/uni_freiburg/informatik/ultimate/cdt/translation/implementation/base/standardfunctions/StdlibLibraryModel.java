@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
-public class StdlibFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class StdlibLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final TypeSizes mTypeSizes;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
@@ -56,7 +56,7 @@ public class StdlibFunctionModelProvider implements IFunctionModelProvider {
 	private final INameHandler mNameHandler;
 	private final CheckMode mOverflowCheckMode;
 
-	public StdlibFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public StdlibLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeComputer, final ExpressionTranslation expressionTranslation,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public class SvcompFunctionModelProvider implements IFunctionModelProvider {
+public class SvcompLibraryModel implements ILibraryModel {
 	/**
 	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
 	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
@@ -49,14 +49,14 @@ public class SvcompFunctionModelProvider implements IFunctionModelProvider {
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
-	private final FunctionModelProviderHelper mHelper;
+	private final FunctionModelHelper mHelper;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final INameHandler mNameHandler;
 	private final boolean mCheckErrorFunction;
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-	public SvcompFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public SvcompLibraryModel(final FunctionModelHelper helper,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
 			final INameHandler nameHandler, final boolean checkErrorFunction,
 			final ExpressionResultTransformer exprResultTransformer) {

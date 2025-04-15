@@ -37,15 +37,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class GccBuiltinFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class GccBuiltinLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
-	public GccBuiltinFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public GccBuiltinLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final TypeSizeAndOffsetComputer typeSizeComputer) {

@@ -18,12 +18,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public class AssertFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class AssertLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final boolean mCheckAssertions;
 
-	public AssertFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public AssertLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final boolean checkAssertions) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;

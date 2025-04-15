@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class StdioFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class StdioLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ExpressionTranslation mExpressionTranslation;
@@ -53,7 +53,7 @@ public class StdioFunctionModelProvider implements IFunctionModelProvider {
 	private final DataRaceChecker mDataRaceChecker;
 	private final ITypeHandler mTypeHandler;
 
-	public StdioFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public StdioLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes,
 			final MemoryHandler memoryHandler, final DataRaceChecker dataRaceChecker, final ITypeHandler typeHandler) {

@@ -33,14 +33,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class LinuxFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class LinuxLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final TypeSizes mTypeSizes;
 	private final ExpressionTranslation mExpressionTranslation;
 
-	public LinuxFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public LinuxLibraryModel(final FunctionModelHelper helper,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
 			final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation) {
 		mHelper = helper;

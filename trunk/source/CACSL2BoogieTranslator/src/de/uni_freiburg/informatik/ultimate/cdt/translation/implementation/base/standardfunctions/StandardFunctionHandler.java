@@ -67,13 +67,13 @@ public class StandardFunctionHandler {
 
 	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
 			final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final LocationFactory locationFactory, final List<IFunctionModelProvider> functionModelProviders) {
+			final LocationFactory locationFactory, final List<ILibraryModel> libraryModels) {
 		mLogger = logger;
 		mFunctionTable = functionTable;
 		mSymboltable = symboltable;
 		mSettings = settings;
 		mLocationFactory = locationFactory;
-		mFunctionModels = getFunctionModels(functionModelProviders);
+		mFunctionModels = getFunctionModels(libraryModels);
 	}
 
 	/**
@@ -112,17 +112,16 @@ public class StandardFunctionHandler {
 		return null;
 	}
 
-	private static Map<String, IFunctionModelHandler>
-			getFunctionModels(final List<IFunctionModelProvider> functionHandlers) {
+	private static Map<String, IFunctionModelHandler> getFunctionModels(final List<ILibraryModel> libraryModels) {
 		final IFunctionModelHandler die = (main, node, loc, name) -> {
 			throw new UnsupportedSyntaxException(loc, "Unsupported function: " + name);
 		};
 		final Map<String, IFunctionModelHandler> map = new HashMap<>();
-		for (final var sfh : functionHandlers) {
-			for (final var model : sfh.getFunctionModels()) {
-				fill(map, model.functionName(), model.model());
+		for (final var model : libraryModels) {
+			for (final var fun : model.getFunctionModels()) {
+				fill(map, fun.functionName(), fun.model());
 			}
-			for (final var unsupportedName : sfh.getUnsupportedFunctions()) {
+			for (final var unsupportedName : model.getUnsupportedFunctions()) {
 				fill(map, unsupportedName, die);
 			}
 		}

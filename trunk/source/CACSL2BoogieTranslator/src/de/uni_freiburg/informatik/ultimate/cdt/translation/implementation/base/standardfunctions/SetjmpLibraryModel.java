@@ -16,11 +16,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class SetjmpFunctionModelProvider implements IFunctionModelProvider {
-	private final FunctionModelProviderHelper mHelper;
+public class SetjmpLibraryModel implements ILibraryModel {
+	private final FunctionModelHelper mHelper;
 	private final ExpressionTranslation mExpressionTranslation;
 
-	public SetjmpFunctionModelProvider(final FunctionModelProviderHelper helper,
+	public SetjmpLibraryModel(final FunctionModelHelper helper,
 			final ExpressionTranslation expressionTranslation) {
 		mHelper = helper;
 		mExpressionTranslation = expressionTranslation;
