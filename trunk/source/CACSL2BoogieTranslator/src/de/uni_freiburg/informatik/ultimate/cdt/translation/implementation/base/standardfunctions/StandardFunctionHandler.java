@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -133,14 +134,5 @@ public class StandardFunctionHandler {
 		if (old != null) {
 			throw new AssertionError("Accidentally overwrote definition for " + key);
 		}
-	}
-
-	/**
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 */
-	@FunctionalInterface
-	public interface IFunctionModelHandler {
-		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-				String methodName);
 	}
 }
