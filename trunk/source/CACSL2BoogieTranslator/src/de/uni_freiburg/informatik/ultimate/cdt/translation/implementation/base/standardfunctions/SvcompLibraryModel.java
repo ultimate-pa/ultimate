@@ -56,10 +56,9 @@ public class SvcompLibraryModel implements ILibraryModel {
 	private final boolean mCheckErrorFunction;
 	private final ExpressionResultTransformer mExprResultTransformer;
 
-	public SvcompLibraryModel(final FunctionModelHelper helper,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
-			final INameHandler nameHandler, final boolean checkErrorFunction,
-			final ExpressionResultTransformer exprResultTransformer) {
+	public SvcompLibraryModel(final FunctionModelHelper helper, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final ExpressionTranslation expressionTranslation, final INameHandler nameHandler,
+			final boolean checkErrorFunction, final ExpressionResultTransformer exprResultTransformer) {
 		mHelper = helper;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExpressionTranslation = expressionTranslation;
@@ -250,5 +249,10 @@ public class SvcompLibraryModel implements ILibraryModel {
 		final AssumeStatement assumeStmt = new AssumeStatement(loc, new NamedAttribute[] { ltlAttribute },
 				ExpressionFactory.createBooleanLiteral(loc, true));
 		return new ExpressionResult(Collections.singletonList(assumeStmt), null);
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

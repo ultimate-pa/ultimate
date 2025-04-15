@@ -38,10 +38,9 @@ public class FloatLibraryModel implements ILibraryModel {
 	private final CExpressionTranslator mCEpressionTranslator;
 	private final INameHandler mNameHandler;
 
-	public FloatLibraryModel(final FunctionModelHelper helper,
-			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final CExpressionTranslator cEpressionTranslator,
-			final INameHandler nameHandler) {
+	public FloatLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final CExpressionTranslator cEpressionTranslator, final INameHandler nameHandler) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
@@ -678,5 +677,10 @@ public class FloatLibraryModel implements ILibraryModel {
 				mExprResultTransformer.convertIfNecessary(loc, decayedArgument, new CPrimitive(CPrimitives.INT));
 
 		return mExpressionTranslation.constructBuiltinFesetround(loc, convertedArgument, mAuxVarInfoBuilder);
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

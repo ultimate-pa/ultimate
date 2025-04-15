@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -155,5 +156,13 @@ public class VariadicLibraryModel implements ILibraryModel {
 		final List<Statement> writes = makeVarargAssignment(loc, dst.getLrValue(), auxVarInfo.getExp());
 		writes.forEach(new Overapprox(name, loc)::annotate);
 		return builder.addStatements(writes).build();
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		// TODO: Handle also types defined in stdarg.h here
+		return List.of(new TypeModel("__builtin_va_list",
+				(node, loc) -> new TypesResult(mTypeHandler.constructPointerType(loc), node.isConst(), false,
+						new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 	}
 }

@@ -53,10 +53,10 @@ public class StdioLibraryModel implements ILibraryModel {
 	private final DataRaceChecker mDataRaceChecker;
 	private final ITypeHandler mTypeHandler;
 
-	public StdioLibraryModel(final FunctionModelHelper helper,
-			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes,
-			final MemoryHandler memoryHandler, final DataRaceChecker dataRaceChecker, final ITypeHandler typeHandler) {
+	public StdioLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
+			final TypeSizes typeSizes, final MemoryHandler memoryHandler, final DataRaceChecker dataRaceChecker,
+			final ITypeHandler typeHandler) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -427,5 +427,11 @@ public class StdioLibraryModel implements ILibraryModel {
 			final String name) {
 		mHelper.checkArguments(loc, 1, name, node.getArguments());
 		return handlePrintFunction(main, node, loc);
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		// TODO: Handle e.g., file types here
+		return List.of();
 	}
 }

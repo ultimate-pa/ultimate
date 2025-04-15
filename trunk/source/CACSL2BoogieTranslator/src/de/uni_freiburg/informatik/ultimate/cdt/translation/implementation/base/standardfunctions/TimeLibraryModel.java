@@ -27,8 +27,8 @@ public class TimeLibraryModel implements ILibraryModel {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
-	public TimeLibraryModel(final FunctionModelHelper helper,
-			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder) {
+	public TimeLibraryModel(final FunctionModelHelper helper, final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;
 		mExpressionTranslation = expressionTranslation;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -77,5 +77,10 @@ public class TimeLibraryModel implements ILibraryModel {
 		mExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(),
 				builder);
 		return builder.build();
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -32,7 +33,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -43,17 +46,19 @@ public class GccBuiltinLibraryModel implements ILibraryModel {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final MemoryHandler mMemoryHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+	private final ITypeHandler mTypeHandler;
 
 	public GccBuiltinLibraryModel(final FunctionModelHelper helper,
 			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeComputer) {
+			final TypeSizeAndOffsetComputer typeSizeComputer, final ITypeHandler typeHandler) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mMemoryHandler = memoryHandler;
 		mTypeSizeComputer = typeSizeComputer;
+		mTypeHandler = typeHandler;
 	}
 
 	@Override
@@ -292,5 +297,19 @@ public class GccBuiltinLibraryModel implements ILibraryModel {
 		// this, and free (triggered by the statement before) would fail.
 		erb.clearAuxVars();
 		return erb.build();
+	}
+
+	private TypesResult handleFloat128(final IASTNamedTypeSpecifier node, final ILocation loc) {
+		// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
+		// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
+		// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
+		final CPrimitive cType = new CPrimitive(CPrimitives.LONGDOUBLE);
+		final ASTType astType = mTypeHandler.cType2AstType(loc, cType);
+		return new TypesResult(astType, node.isConst(), false, cType);
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of(new TypeModel("__float128", this::handleFloat128));
 	}
 }

@@ -44,9 +44,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
-	public AtomicLibraryModel(final FunctionModelHelper helper,
-			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
-			final AuxVarInfoBuilder auxVarInfoBuilder) {
+	public AtomicLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
@@ -441,5 +440,11 @@ public class AtomicLibraryModel implements ILibraryModel {
 					new IfStatement(loc, atomicCond, new Statement[] { atomic }, new Statement[] { overapproxAssert });
 		}
 		return builder.addStatement(statement).build();
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		// TODO: Handle types like atomic_int etc. here
+		return List.of();
 	}
 }

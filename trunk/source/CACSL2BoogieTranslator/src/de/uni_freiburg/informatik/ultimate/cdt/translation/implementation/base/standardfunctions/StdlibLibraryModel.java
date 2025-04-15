@@ -9,6 +9,7 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -17,7 +18,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
@@ -39,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -56,11 +60,10 @@ public class StdlibLibraryModel implements ILibraryModel {
 	private final INameHandler mNameHandler;
 	private final CheckMode mOverflowCheckMode;
 
-	public StdlibLibraryModel(final FunctionModelHelper helper,
-			final ExpressionResultTransformer exprResultTransformer, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeComputer, final ExpressionTranslation expressionTranslation,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
-			final ProcedureManager procedureManager, final INameHandler nameHandler,
+	public StdlibLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeComputer,
+			final ExpressionTranslation expressionTranslation, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final MemoryHandler memoryHandler, final ProcedureManager procedureManager, final INameHandler nameHandler,
 			final CheckMode overflowCheckMode) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
@@ -448,5 +451,20 @@ public class StdlibLibraryModel implements ILibraryModel {
 				mExpressionTranslation.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, expr, resultType);
 		final Expression iteExpression = ExpressionFactory.constructIfThenElseExpression(loc, positive, expr, negated);
 		return builder.setLrValue(new RValue(iteExpression, resultType)).build();
+	}
+
+	private TypesResult handleSize_t(final IASTNamedTypeSpecifier node, final ILocation loc) {
+		return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+				mTypeSizes.getSizeT());
+	}
+
+	private TypesResult handleSsize_t(final IASTNamedTypeSpecifier node, final ILocation loc) {
+		return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
+				mTypeSizes.getSsizeT());
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of(new TypeModel("size_t", this::handleSize_t), new TypeModel("ssize_t", this::handleSsize_t));
 	}
 }

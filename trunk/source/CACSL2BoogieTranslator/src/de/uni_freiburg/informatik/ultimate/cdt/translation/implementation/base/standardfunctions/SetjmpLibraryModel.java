@@ -20,8 +20,7 @@ public class SetjmpLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionTranslation mExpressionTranslation;
 
-	public SetjmpLibraryModel(final FunctionModelHelper helper,
-			final ExpressionTranslation expressionTranslation) {
+	public SetjmpLibraryModel(final FunctionModelHelper helper, final ExpressionTranslation expressionTranslation) {
 		mHelper = helper;
 		mExpressionTranslation = expressionTranslation;
 	}
@@ -54,5 +53,10 @@ public class SetjmpLibraryModel implements ILibraryModel {
 		final CPrimitive returnType = new CPrimitive(CPrimitives.INT);
 		return new ExpressionResult(new RValue(
 				mExpressionTranslation.constructLiteralForIntegerType(loc, returnType, BigInteger.ZERO), returnType));
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

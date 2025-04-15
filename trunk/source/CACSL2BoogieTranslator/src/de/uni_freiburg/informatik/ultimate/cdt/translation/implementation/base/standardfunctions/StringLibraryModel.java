@@ -46,10 +46,10 @@ public class StringLibraryModel implements ILibraryModel {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
 
-	public StringLibraryModel(final FunctionModelHelper helper,
-			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final MemoryHandler memoryHandler, final ProcedureManager procedureManager,
-			final ExpressionTranslation expressionTranslation, final TypeSizeAndOffsetComputer typeSizeComputer) {
+	public StringLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
+			final ProcedureManager procedureManager, final ExpressionTranslation expressionTranslation,
+			final TypeSizeAndOffsetComputer typeSizeComputer) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -534,5 +534,10 @@ public class StringLibraryModel implements ILibraryModel {
 		// mProcedureManager.registerCall(mmDecl.getName());
 
 		return resultBuilder.build();
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

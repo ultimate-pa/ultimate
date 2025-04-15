@@ -40,9 +40,9 @@ public class LinuxLibraryModel implements ILibraryModel {
 	private final TypeSizes mTypeSizes;
 	private final ExpressionTranslation mExpressionTranslation;
 
-	public LinuxLibraryModel(final FunctionModelHelper helper,
-			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
-			final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation) {
+	public LinuxLibraryModel(final FunctionModelHelper helper, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final ExpressionResultTransformer exprResultTransformer, final TypeSizes typeSizes,
+			final ExpressionTranslation expressionTranslation) {
 		mHelper = helper;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mExprResultTransformer = exprResultTransformer;
@@ -209,5 +209,10 @@ public class LinuxLibraryModel implements ILibraryModel {
 		builder.setLrValue(new LocalLValue(resultInfo.getLhs(), resultType, null));
 
 		return builder.build();
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

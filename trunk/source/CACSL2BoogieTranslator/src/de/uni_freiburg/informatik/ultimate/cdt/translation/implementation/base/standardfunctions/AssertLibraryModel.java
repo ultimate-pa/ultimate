@@ -23,8 +23,8 @@ public class AssertLibraryModel implements ILibraryModel {
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final boolean mCheckAssertions;
 
-	public AssertLibraryModel(final FunctionModelHelper helper,
-			final ExpressionResultTransformer exprResultTransformer, final boolean checkAssertions) {
+	public AssertLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final boolean checkAssertions) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mCheckAssertions = checkAssertions;
@@ -126,5 +126,10 @@ public class AssertLibraryModel implements ILibraryModel {
 
 		/* handle as regular assertion */
 		return handleAssert(main, node, loc, name);
+	}
+
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
 	}
 }

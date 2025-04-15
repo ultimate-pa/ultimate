@@ -57,4 +57,8 @@ public class SocketLibraryModel implements ILibraryModel {
 		return List.of();
 	}
 
+	@Override
+	public Collection<TypeModel> getTypeModels() {
+		return List.of();
+	}
 }
