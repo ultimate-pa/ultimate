@@ -31,6 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
@@ -60,7 +61,8 @@ public class BearRefinementStrategy<L extends IIcfgTransition<?>> extends BasicR
 	@SuppressWarnings("unchecked")
 	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
 			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
-		final AssertCodeBlockOrder[] order = { AssertCodeBlockOrder.NOT_INCREMENTALLY };
+		final AssertCodeBlockOrder[] order =
+				{ new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY) };
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {

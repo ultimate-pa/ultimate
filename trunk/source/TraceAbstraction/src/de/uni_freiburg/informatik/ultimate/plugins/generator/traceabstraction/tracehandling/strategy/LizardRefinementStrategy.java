@@ -31,6 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.QualifiedTracePredicates;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
@@ -52,11 +53,11 @@ public class LizardRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 	@SuppressWarnings("unchecked")
 	public LizardRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
-		super(factory,
-				new IIpTcStrategyModule[] { factory.createIpTcStrategyModuleSmtInterpolCraig(
-						InterpolationTechnique.Craig_NestedInterpolation, AssertCodeBlockOrder.NOT_INCREMENTALLY),
-						factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
-								AssertCodeBlockOrder.NOT_INCREMENTALLY) },
+		super(factory, new IIpTcStrategyModule[] {
+				factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
+						new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)),
+				factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
+						new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)) },
 				factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
 

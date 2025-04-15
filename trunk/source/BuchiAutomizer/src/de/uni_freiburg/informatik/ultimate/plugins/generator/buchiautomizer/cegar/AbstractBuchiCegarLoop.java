@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
@@ -737,17 +738,19 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		case Craig_TreeInterpolation: {
 			return new InterpolatingTraceCheckCraig<>(precond, postcond, new TreeMap<>(),
 					new Counterexample<>(run.getWord()), mServices, mCsToolkitWithRankVars, mPredicateFactory,
-					predicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mInterpolation, true,
-					SIMPLIFICATION_TECHNIQUE);
+					predicateUnifier,
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), false, false,
+					mInterpolation, true, SIMPLIFICATION_TECHNIQUE);
 		}
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
 			return new TraceCheckSpWp<>(precond, postcond, new TreeMap<>(), new Counterexample<>(run.getWord()),
-					mCsToolkitWithRankVars, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, false, mPredicateFactory, predicateUnifier, mInterpolation,
-					mCsToolkitWithRankVars.getManagedScript(), SIMPLIFICATION_TECHNIQUE, false);
+					mCsToolkitWithRankVars,
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, predicateUnifier,
+					mInterpolation, mCsToolkitWithRankVars.getManagedScript(), SIMPLIFICATION_TECHNIQUE, false);
 		}
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

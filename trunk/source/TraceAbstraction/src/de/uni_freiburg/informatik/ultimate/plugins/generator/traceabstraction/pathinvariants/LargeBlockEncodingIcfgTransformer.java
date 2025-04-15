@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -234,8 +235,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 			disjuncts.add(post);
 		}
 		final Term disjunction = SmtUtils.or(mgdScript.getScript(), disjuncts);
-		final IPredicate invar = predicateUnifier.getOrConstructPredicate(disjunction);
-		return invar;
+		return predicateUnifier.getOrConstructPredicate(disjunction);
 	}
 
 	/**
@@ -263,9 +263,9 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		final var ctex = new Counterexample<>(run.getWord(), run.getStateSequence());
 		final TraceCheckSpWp<? extends IAction> tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts,
-				ctex, csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, unsatCores, useLiveVariables, mServices,
-				computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation, mgdScriptTc,
-				simplificationTechnique, false);
+				ctex, csToolkit, new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
+				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, mPredicateFactory,
+				predicateUnifier, interpolation, mgdScriptTc, simplificationTechnique, false);
 		return tc.getInterpolants();
 	}
 

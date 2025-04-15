@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
@@ -48,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public class CamelWitnessRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
-	private static final boolean USE_WITNESS_ASSERT_ORDER = true;
-
 	public CamelWitnessRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
@@ -61,9 +60,9 @@ public class CamelWitnessRefinementStrategy<L extends IIcfgTransition<?>> extend
 
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation,
-				USE_WITNESS_ASSERT_ORDER));
+				new AssertCodeBlockOrder.Builder().forWitnessValidation().build()));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
-				USE_WITNESS_ASSERT_ORDER));
+				new AssertCodeBlockOrder.Builder().forWitnessValidation().build()));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 

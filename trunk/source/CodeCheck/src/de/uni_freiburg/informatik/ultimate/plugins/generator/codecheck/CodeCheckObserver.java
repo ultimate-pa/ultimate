@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.PrePostConditionSpecification;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ProofAnnotation;
@@ -557,10 +558,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		case Craig_NestedInterpolation:
 			try {
 				final InterpolatingTraceCheck<IIcfgTransition<IcfgLocation>> tc = new InterpolatingTraceCheckCraig<>(
-						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(), new TreeMap<>(),
-						counterexample, mServices, mCsToolkit, mgdScriptTracechecks, mPredicateFactory,
-						mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, true,
-						mGlobalSettings.getInterpolationMode(), true, SIMPLIFICATION_TECHNIQUE, false);
+						mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
+						new TreeMap<>(), counterexample, mServices, mCsToolkit, mgdScriptTracechecks,
+						mPredicateFactory, mPredicateUnifier,
+						new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), true,
+						true, mGlobalSettings.getInterpolationMode(), true, SIMPLIFICATION_TECHNIQUE, false);
 				if (tc.getInterpolantComputationStatus().wasComputationSuccessful()) {
 					return tc;
 				}
@@ -577,7 +579,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			 * The fallback interpolation mode is hardcoded for now
 			 */
 			return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-					new TreeMap<>(), counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					new TreeMap<>(), counterexample, mCsToolkit,
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
 					UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateFactory, mPredicateUnifier,
 					InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE,
 					true);
@@ -588,7 +591,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// return LBool.UNSAT if trace is infeasible
 			try {
 				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<>(), counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+						new TreeMap<>(), counterexample, mCsToolkit,
+						new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
 						mGlobalSettings.getUseUnsatCores(), mGlobalSettings.isUseLiveVariables(), mServices, true,
 						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
 						mgdScriptTracechecks, SIMPLIFICATION_TECHNIQUE, true);
@@ -598,7 +602,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				}
 
 				return new TraceCheckSpWp<>(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<>(), counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+						new TreeMap<>(), counterexample, mCsToolkit,
+						new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateFactory, mPredicateUnifier,
 						mGlobalSettings.getInterpolationMode(), mCsToolkit.getManagedScript(), SIMPLIFICATION_TECHNIQUE,
 						true);

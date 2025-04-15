@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -449,9 +450,10 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	 */
 	private boolean stillInfeasible(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv) {
 		final TraceCheck<L> tc = new TraceCheck<>(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<>(), rv,
-				mServices, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, true, true);
-		final boolean result = tc.isCorrect() != LBool.SAT;
-		return result;
+				mServices, mCsToolkit,
+				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), false, true,
+				true);
+		return tc.isCorrect() != LBool.SAT;
 	}
 
 	/**
@@ -483,11 +485,9 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				// Call statement, otherwise it adds
 				// the statement
 				codeBlocksInUnsatCore.add(trace.getSymbol(i));
-			} else {
-				if (trace.getSymbol(i) instanceof ICallAction
-						&& unsatCoresAsSet.contains(mAAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
-					localVarAssignmentAtCallInUnsatCore[i] = true;
-				}
+			} else if (trace.getSymbol(i) instanceof ICallAction
+					&& unsatCoresAsSet.contains(mAAA.getAnnotatedSsa().getLocalVarAssignment(i))) {
+				localVarAssignmentAtCallInUnsatCore[i] = true;
 			}
 		}
 		return codeBlocksInUnsatCore;
@@ -548,8 +548,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
-			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(pred.getFormula());
-			return unified;
+			return mPredicateUnifier.getOrConstructPredicate(pred.getFormula());
 		}
 	}
 

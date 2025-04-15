@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016-2019 University of Freiburg
+ * Copyright (C) 2025 Manuel Bentele (bentele@informatik.uni-freiburg.de)
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
  *
@@ -31,26 +30,27 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 /**
- * {@link IRefinementStrategy} similar to {@link CamelRefinementStrategy}, except that it does not modulate the
- * assertion order.
+ * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceCheck} using
+ * {@link InterpolationTechnique#Craig_TreeInterpolation} and then {@link InterpolationTechnique#FPandBP}.
  *
  * The class uses a {@link StraightLineInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
  */
-public class CamelNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
+public class CamelWitnessHierarchicalRefinementStrategy<L extends IIcfgTransition<?>>
+		extends BasicRefinementStrategy<L> {
 
-	public CamelNoAmRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
+	public CamelWitnessHierarchicalRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final RefinementStrategyExceptionBlacklist exceptionBlacklist) {
 		super(factory, createModules(factory), factory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}
@@ -60,15 +60,15 @@ public class CamelNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends B
 			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
-				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)));
+		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation,
+				new AssertCodeBlockOrder.Builder().assertWitnessElementsHierarchical().build()));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
-				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)));
+				new AssertCodeBlockOrder.Builder().assertWitnessElementsHierarchical().build()));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.CAMEL_NO_AM.toString();
+		return RefinementStrategy.CAMEL_WITNESS_HIERARCHICAL.toString();
 	}
 }

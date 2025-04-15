@@ -32,6 +32,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementStrategy;
@@ -65,14 +66,14 @@ public class WarthogNoAmRefinementStrategy<L extends IIcfgTransition<?>> extends
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		if (!RefinementStrategyUtils.hasFloats(tc)) {
 			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.ForwardPredicates,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY));
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)));
 		} else if (RefinementStrategyUtils.hasNoQuantifiersNoBitvectorExtensions(tc)) {
 			// floats, but no quantifiers and no extensions
 			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.ForwardPredicates,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY));
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)));
 		}
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY));
+				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY)));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 

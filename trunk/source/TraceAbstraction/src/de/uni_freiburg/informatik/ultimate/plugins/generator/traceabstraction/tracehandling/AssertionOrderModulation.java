@@ -44,48 +44,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pa
  */
 public class AssertionOrderModulation<LETTER> {
 
-	private static final AssertCodeBlockOrder[] DEFAULT_ASSERTION_ORDER = {
-			// @formatter:off
-			AssertCodeBlockOrder.NOT_INCREMENTALLY,
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1),
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST),
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1),
-			new AssertCodeBlockOrder(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE)
-			// @formatter:on
-	};
-
-	private static final AssertCodeBlockOrder[] DEFAULT_WITNESS_ORDER = ArrayUtils.addAll(
-	// @formatter:off
-			new AssertCodeBlockOrder[] {
-					new AssertCodeBlockOrder(AssertCodeBlockOrderType.WITNESS_FIRST),
-					new AssertCodeBlockOrder(AssertCodeBlockOrderType.WITNESS_VARIABLE) },
-			AssertionOrderModulation.DEFAULT_ASSERTION_ORDER);
-	// @formatter:on
-
 	private final AssertCodeBlockOrder[] mOrder;
 	private final ILogger mLogger;
 	private final PathProgramCache<LETTER> mPathProgramCache;
 
-	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger) {
-		this(pathProgramCache, logger, false);
-	}
-
 	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger,
 			final AssertCodeBlockOrder... order) {
-		this(pathProgramCache, logger, false, order);
-	}
-
-	public AssertionOrderModulation(final PathProgramCache<LETTER> pathProgramCache, final ILogger logger,
-			final boolean validateWitness, final AssertCodeBlockOrder... order) {
 		mPathProgramCache = pathProgramCache;
 		mLogger = logger;
-
-		if (order == null || order.length == 0) {
-			mOrder = validateWitness ? DEFAULT_WITNESS_ORDER : DEFAULT_ASSERTION_ORDER;
-		} else {
-			mOrder = order;
-		}
+		mOrder = createOrderIfNecessary(order);
 	}
 
 	/**
@@ -116,6 +83,10 @@ public class AssertionOrderModulation<LETTER> {
 		return newOrder;
 	}
 
+	private static AssertCodeBlockOrder[] createOrderIfNecessary(final AssertCodeBlockOrder... order) {
+		return order != null && order.length > 0 ? order : new AssertCodeBlockOrder.Builder().build();
+	}
+
 	private int toIndex(final int count) {
 		if (count <= 0) {
 			return 0;
@@ -126,20 +97,22 @@ public class AssertionOrderModulation<LETTER> {
 	private AssertCodeBlockOrder getOrder(final InterpolationTechnique interpolationTechnique, final int index) {
 		if (interpolationTechnique == null) {
 			// if we do not compute interpolants, there is no need to assert incrementally
-			return AssertCodeBlockOrder.NOT_INCREMENTALLY;
+			return new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 		}
 
-		return switch (interpolationTechnique) {
+		switch (interpolationTechnique) {
 		case Craig_NestedInterpolation:
 		case PDR:
-			yield AssertCodeBlockOrder.NOT_INCREMENTALLY;
+			return new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 		case Craig_TreeInterpolation:
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
-			yield mOrder[index];
-		};
+			return mOrder[index];
+		default:
+			throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
+		}
 	}
 }

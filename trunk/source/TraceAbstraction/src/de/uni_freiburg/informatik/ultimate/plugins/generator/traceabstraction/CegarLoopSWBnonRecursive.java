@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolatingTraceCheckCraig;
@@ -580,8 +581,8 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckCraig<L> traceCheck = new InterpolatingTraceCheckCraig<>(pre, post,
 				pendingContexts, new Counterexample<>(word), getServices(), mCsToolkit, mPredicateFactory,
-				mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, mPref.interpolation(), false,
-				mSimplificationTechnique);
+				mPredicateUnifier, new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
+				false, false, mPref.interpolation(), false, mSimplificationTechnique);
 
 		mInterpolantGenerator = traceCheck;
 		if (traceCheck.isCorrect() == LBool.UNSAT) {

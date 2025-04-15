@@ -61,9 +61,9 @@ public class CamelSmtAmRefinementStrategy<L extends IIcfgTransition<?>> extends 
 
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
-				new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
+				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect,
-				new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
+				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
 		return rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
 	}
 

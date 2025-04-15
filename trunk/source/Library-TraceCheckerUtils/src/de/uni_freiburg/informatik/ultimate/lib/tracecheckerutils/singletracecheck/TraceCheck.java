@@ -269,7 +269,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		final NestedWord<IAction> nw = NestedWord.nestedWord(new Word<>(trace.toArray(new IAction[trace.size()])));
 		final NestedFormulas<IAction, UnmodifiableTransFormula, IPredicate> rv =
 				new DefaultTransFormulas<>(nw, pre, post, pendingContexts, toolkit.getOldVarsAssignmentCache(), false);
-		final AssertCodeBlockOrder acbo = new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
+		final AssertCodeBlockOrder acbo =
+				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY);
 		final boolean computeRcfgProgramExecution = true;
 		final boolean collectInterpolatSequenceStatistics = false;
 		final boolean unlockSmtSolverAlsoIfUnsat = true;
@@ -352,7 +353,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					mCsToolkit.getOldVarsAssignmentCache(), true);
 			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), true, false,
+					true);
 
 			switch (tc.isCorrect()) {
 			case SAT:

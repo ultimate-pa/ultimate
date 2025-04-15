@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -305,7 +306,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			tc = new InterpolatingTraceCheckCraig<>(precondition, postcondition, pendingContexts, ctex, mServices,
-					mCsToolkit, mPredicateFactory, mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false,
+					mCsToolkit, mPredicateFactory, mPredicateUnifier,
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), false,
 					mCollectInterpolantStatistics, mInterpolation, true, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
@@ -313,9 +315,10 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 			tc = new TraceCheckSpWp<>(precondition, postcondition, pendingContexts, ctex, mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
-					mSimplificationTechnique, mCollectInterpolantStatistics);
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier,
+					mInterpolation, mCsToolkit.getManagedScript(), mSimplificationTechnique,
+					mCollectInterpolantStatistics);
 			break;
 		case PathInvariants:
 		default:

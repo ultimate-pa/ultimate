@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
@@ -150,17 +151,17 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case Craig_TreeInterpolation:
 			traceCheck = new InterpolatingTraceCheckCraig<>(mRankEqAndSi, mHondaPredicate, new TreeMap<>(),
 					counterexample, mServices, mCsToolkit, mPredicateFactory, mPredicateUnifier,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
-					mSimplificationTechnique);
+					new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), false, false,
+					interpolation, true, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 			traceCheck = new TraceCheckSpWp<>(mRankEqAndSi, mHondaPredicate, new TreeMap<>(), counterexample,
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices,
-					false, mPredicateFactory, mPredicateUnifier, interpolation, mCsToolkit.getManagedScript(),
-					mSimplificationTechnique, false);
+					mCsToolkit, new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier,
+					interpolation, mCsToolkit.getManagedScript(), mSimplificationTechnique, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

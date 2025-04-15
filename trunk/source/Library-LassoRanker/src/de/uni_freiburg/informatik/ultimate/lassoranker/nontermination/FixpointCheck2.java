@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -86,7 +87,8 @@ public class FixpointCheck2<L extends IIcfgTransition<?>> {
 				constructNegatedLoopPredicate(services, csToolkit.getManagedScript(), pf, mLoop);
 		final SortedMap<Integer, IPredicate> pendingContexts = Collections.emptySortedMap();
 		final TraceCheck<L> tc = new TraceCheck<>(precondition, postcondition, pendingContexts,
-				new Counterexample<>(mStem), services, csToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false);
+				new Counterexample<>(mStem), services, csToolkit,
+				new AssertCodeBlockOrder.Builder().build(AssertCodeBlockOrderType.NOT_INCREMENTALLY), true, false);
 		switch (tc.isCorrect()) {
 		case SAT:
 			mResult = HasFixpoint.YES;
