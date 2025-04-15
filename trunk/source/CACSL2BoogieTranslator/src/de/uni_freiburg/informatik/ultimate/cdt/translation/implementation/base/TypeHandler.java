@@ -274,9 +274,9 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
-		final TypesResult libraryType = mLibraryHandler.translateType(node);
-		if (libraryType != null) {
-			return libraryType;
+		final Result libraryResult = mLibraryHandler.translateType(node);
+		if (libraryResult != null) {
+			return libraryResult;
 		}
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String cId = node.getName().toString();

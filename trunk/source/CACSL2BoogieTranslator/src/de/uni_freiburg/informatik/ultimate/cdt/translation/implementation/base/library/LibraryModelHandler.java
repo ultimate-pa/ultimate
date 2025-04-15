@@ -48,13 +48,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.l
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.ITypeModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * The {@link LibraryModelHandler} creates the translation for various functions where we have our own specification
- * or implementation. This is typically the case for functions defined in the C standard, but also for various standard
+ * The {@link LibraryModelHandler} creates the translation for various functions where we have our own specification or
+ * implementation. This is typically the case for functions defined in the C standard, but also for various standard
  * libraries or SV-COMP extensions.
  *
  * @author Markus Lindenmann,
@@ -118,7 +117,7 @@ public class LibraryModelHandler {
 		return null;
 	}
 
-	public TypesResult translateType(final IASTNamedTypeSpecifier node) {
+	public Result translateType(final IASTNamedTypeSpecifier node) {
 		final String name = node.getName().toString();
 		final ITypeModelHandler model = mTypeModels.get(name);
 		if (model == null) {
