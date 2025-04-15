@@ -27,7 +27,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel.IFunctionModelHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.ILibraryModel.ITypeModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IFunctionModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.ITypeModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
