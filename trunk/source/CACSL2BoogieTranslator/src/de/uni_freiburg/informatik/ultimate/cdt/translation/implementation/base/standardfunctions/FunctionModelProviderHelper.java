@@ -21,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -53,18 +52,21 @@ public class FunctionModelProviderHelper {
 	private final MemoryHandler mMemoryHandler;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TypeSizes mTypeSizes;
-	private final TranslationSettings mSettings;
 	private final ITypeHandler mTypeHandler;
+	private final boolean mCheckMemoryLeakInMain;
+	private final boolean mSvcompMemtrackCompatibilityMode;
 
 	public FunctionModelProviderHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizes typeSizes, final TranslationSettings settings, final ITypeHandler typeHandler) {
+			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
+			final boolean svcompMemtrackCompatibilityMode) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mTypeSizes = typeSizes;
-		mSettings = settings;
 		mTypeHandler = typeHandler;
+		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
+		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
 	}
 
 	public void checkArguments(final ILocation loc, final int expectedArgs, final String name,
@@ -210,7 +212,7 @@ public class FunctionModelProviderHelper {
 	 */
 	public Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
-		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
+		final boolean checkMemoryleakInMain = mCheckMemoryLeakInMain
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
 		if (!checkProperty && !checkMemoryleakInMain) {
 			return new AssumeStatement(loc, expr);
@@ -245,7 +247,7 @@ public class FunctionModelProviderHelper {
 				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
 				expr);
 		check.annotate(st);
-		if (checkMemoryleakInMain && mSettings.isSvcompMemtrackCompatibilityMode()) {
+		if (checkMemoryleakInMain && mSvcompMemtrackCompatibilityMode) {
 			new Overapprox("memtrack", loc).annotate(st);
 		}
 		return st;

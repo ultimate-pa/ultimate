@@ -183,9 +183,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AssertFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AtomicFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FloatFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.IFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelProviderHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.GccBuiltinFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.IFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LinuxFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.PthreadFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.SetjmpFunctionModelProvider;
@@ -604,8 +604,9 @@ public class CHandler {
 	}
 
 	private List<IFunctionModelProvider> getFunctionModelProviders() {
-		final FunctionModelProviderHelper helper = new FunctionModelProviderHelper(mAuxVarInfoBuilder,
-				mExpressionTranslation, mMemoryHandler, mTypeSizes, mSettings, mTypeHandler);
+		final FunctionModelProviderHelper helper =
+				new FunctionModelProviderHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
+						mTypeHandler, mSettings.checkMemoryLeakInMain(), mSettings.isSvcompMemtrackCompatibilityMode());
 		return List.of(new AssertFunctionModelProvider(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
 						mAuxVarInfoBuilder),
