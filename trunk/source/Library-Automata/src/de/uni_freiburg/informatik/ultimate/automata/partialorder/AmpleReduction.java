@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -60,28 +61,41 @@ public class AmpleReduction<L, S> {
 
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
+
 	private final INwaOutgoingLetterAndTransitionProvider<L, S> mOperand;
 	private final S mStartState;
 	private final IDfsOrder<L, S> mOrder;
 	private final IDfsVisitor<L, S> mVisitor;
+	private final IPersistentSetChoice<L, S> mPersistent;
+
 	private final Deque<Pair<S, OutgoingInternalTransition<L, S>>> mWorklist = new ArrayDeque<>();
 	private final DfsBookkeeping<S> mDfs = new DfsBookkeeping<>();
-	private final Predicate<S> mIsFinal; // to check if input automaton only has final states
-	private final IPersistentSetChoice<L, S> mPersistent;
+
+	// to check if input automaton only has final states
+	// TODO Why introduce a separate field for this? We could just call mOperand.isFinal(...) directly.
+	private final Predicate<S> mIsFinal;
+
 	// Used to store the ample sets of the reduction state. Note that the trivial ample set (set of all outgoing edges)
 	// is represented by null.
-	private final HashMap<S, Set<L>> mAmpleSets;
+	private final Map<S, Set<L>> mAmpleSets = new HashMap<>();
+
+	// cache nodes from with trivial ample set
 	// TODO: think about whether to remove trivial nodes cache altogether
-	private final HashSet<S> mTrivialNodes; // cache nodes from with trivial ample set
-	private int mLoopNotLoopCount; // count number of incidents where upon fist discovery, a node was identified as a
-									// loop node and upon a subsequent discovery wasn't
-	private int mAssignedNonTrivialAmple; // count number of nodes that were assigned non-trivial ample set on first
-											// encounter
-	private int mPrunedTS = 0;
+	private final Set<S> mTrivialNodes = new HashSet<>();
+
+	// TODO Move statistics-related field into a statistics class
+	// count number of incidents where upon fist discovery, a node was identified as a loop node and upon a subsequent
+	// discovery wasn't
+	private int mLoopNotLoopCount;
+	// count number of nodes that were assigned non-trivial ample set on first encounter
+	private int mAssignedNonTrivialAmple;
+	private int mPrunedTS;
 	private int mPersistentTrivial;
 	private int mTargetAlreadyLN;
-	private int mSomeOtherNodeOnCycleAlreadyLN = 0;
-	private int mLoopCausedTrivial; // number of times a trivial set was assigned bc of node being a loop node
+	private int mSomeOtherNodeOnCycleAlreadyLN;
+	// number of times a trivial set was assigned bc of node being a loop node
+	private int mLoopCausedTrivial;
+
 	private int mIndentLevel = -1;
 
 	/**
@@ -110,17 +124,19 @@ public class AmpleReduction<L, S> {
 		assert NestedWordAutomataUtils.isFiniteAutomaton(operand) : "DFS supports only finite automata";
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(AmpleReduction.class);
+
 		mOperand = operand;
 		mStartState = startingState;
 		mOrder = order;
 		mVisitor = visitor;
 		mPersistent = persistent;
-		mAmpleSets = new HashMap<>();
-		mTrivialNodes = new HashSet<>();
 		mIsFinal = operand::isFinal;
-		mAmpleSets.put(mStartState, mPersistent.persistentSet(startingState));
+
 		mLogger.info("Starting ample reduction");
+		mAmpleSets.put(mStartState, mPersistent.persistentSet(startingState));
 		traverse();
+
+		// TODO move statistics fields into a Statistics class & print it here, but also return from #getStatistics()
 		mLogger.warn("Number of pruned transitions: " + mPrunedTS);
 		mLogger.warn("Loop nodes with \"changing loop node status\": %s ", mLoopNotLoopCount);
 		mLogger.warn("Number of trivial sets caused by loops: " + mLoopCausedTrivial);
@@ -129,6 +145,7 @@ public class AmpleReduction<L, S> {
 		mLogger.warn("Times succ was already a loop node:" + mTargetAlreadyLN);
 		mLogger.warn(
 				"Times some other node on the cycle alrdy had a trivial ample set:" + mSomeOtherNodeOnCycleAlreadyLN);
+
 		mLogger.info("Finished ample reduction");
 	}
 
@@ -190,7 +207,7 @@ public class AmpleReduction<L, S> {
 			debugIndent("Now exploring transition %s --> %s (label: %s)", currentState, nextState,
 					currentTransition.getLetter());
 
-			// ------------------------------------------ample red stuff -----------------------------------------------
+			// ------------------------------------------ ample red stuff ----------------------------------------------
 			assert mAmpleSets.containsKey(currentState) : "Ample set for this state should have been already computed.";
 			assert mIsFinal.test(currentState) : "All states of the automaton should be final!";
 
@@ -199,54 +216,61 @@ public class AmpleReduction<L, S> {
 			final boolean prune;
 
 			// Prune outgoing edges not in the state's ample set
-			if (!Objects.isNull(currentAmple) && !currentAmple.contains(letter)) {
+			if (currentAmple != null && !currentAmple.contains(letter)) {
 				prune = true;
 			} else {
 				// compute ample set for next state
+				// TODO refactor this into one or probably more separate methods
 				if (!mTrivialNodes.contains(nextState)) {
-					// TODO: Finde heraus, warum die Reduktionen soviel größer sind, als sie mit dem AmpleRedVisitor
+					// TODO Finde heraus, warum die Reduktionen soviel größer sind, als sie mit dem AmpleRedVisitor
 					// waren
 					// check for all outgoing transitions of next state if they'd close a cycle
 					for (final OutgoingInternalTransition<L, S> currentTS : mOperand.internalSuccessors(nextState)) {
-						// it seems finding the stack index is rather time consuming
-						int stackIndex;
+						// TODO Dominik: It is still very confusing to me that we look already look at the outgoing
+						// transitions of nextState here (i.e., we look 2 states ahead of the current state).
+						// Intuitively, it would make more sense to me if the computation of the ample set for nextState
+						// would happen inside the visitState() method (when and if it is called with parameter
+						// nextState below).
+						// TODO If there are reasons why it has to be done here, please explain them in comments.
+
 						// we're in theory only interested in loops in the reduction automaton. in practice there's
 						// hardly a difference
+						// TODO Dominik: Elaborate this comment more: difference compared with what? What does the code
+						// implement, the "theoretical" or the "practical version"?
 						boolean inAmple = true;
 						if (mAmpleSets.containsKey(nextState)) {
 							final Set<L> oldNextAmple = mAmpleSets.get(nextState);
 							inAmple = !Objects.isNull(oldNextAmple) && oldNextAmple.contains(currentTS.getLetter());
 						}
 
+						// it seems finding the stack index is rather time consuming
+						// TODO If this overhead is significant, we should discuss using an improved data structure.
+						final int stackIndex;
 						if (inAmple && mDfs.isVisited(currentTS.getSucc())
 								&& (stackIndex = mDfs.stackIndexOf(currentTS.getSucc())) != -1) {
 							final var loop = mDfs.getStackSince(stackIndex);
+
 							// TODO make this more readable
 							// Check if any node on loop already has a trivial ample set
-							boolean skip = false;
-							// it is so often the case that the target node already has a trivial ample set that it
-							// seemed worthwhile to measure separately
-
-							if (Objects.isNull(mAmpleSets.get(currentTS.getSucc()))) {
-								// if (mTrivialNodes.contains(currentTransition.getSucc())) {
+							if (mAmpleSets.get(currentTS.getSucc()) == null) {
+								// it is so often the case that the target node already has a trivial ample set that it
+								// seemed worthwhile to measure separately
 								mTargetAlreadyLN++;
-								skip = true;
-							} else {
-								for (final S nodeOnCycle : loop) {
-									if (Objects.isNull(mAmpleSets.get(nodeOnCycle))) {
-										mSomeOtherNodeOnCycleAlreadyLN++;
-										skip = true;
-										break;
-									}
-								}
-							}
-							if (skip) {
+								assert mAmpleSets.containsKey(currentTS.getSucc())
+										: "missing ample set for successor node on stack";
 								continue;
 							}
+							if (loop.stream().anyMatch(nodeOnCycle -> mAmpleSets.get(nodeOnCycle) == null)) {
+								assert loop.stream().allMatch(mAmpleSets::containsKey)
+										: "missing ample set for node on stack";
+								mSomeOtherNodeOnCycleAlreadyLN++;
+								continue;
+							}
+
 							mTrivialNodes.add(nextState);
 							final var oldAmple = mAmpleSets.put(nextState, null);
 							mLoopCausedTrivial++;
-							if (!Objects.isNull(oldAmple)) {
+							if (oldAmple != null) {
 								mLoopNotLoopCount++;
 								mLogger.warn("Non-loop node is now a loop node: " + nextState);
 							}
@@ -258,7 +282,7 @@ public class AmpleReduction<L, S> {
 				if (!mAmpleSets.containsKey(nextState)) {
 					// counting for statistics
 					final var nextAmple = mPersistent.persistentSet(nextState);
-					if (!Objects.isNull(nextAmple)) {
+					if (nextAmple != null) {
 						mAssignedNonTrivialAmple++;
 					} else {
 						mPersistentTrivial++;
@@ -269,6 +293,7 @@ public class AmpleReduction<L, S> {
 				prune = mVisitor.discoverTransition(currentState, currentTransition.getLetter(), nextState);
 			}
 			// ---------------------------------------- end of ample red stuff -----------------------------------------
+
 			if (mVisitor.isFinished()) {
 				mLogger.debug(ABORT_MSG);
 				return;
@@ -346,7 +371,7 @@ public class AmpleReduction<L, S> {
 		if (pruneSuccessors) {
 			debugIndent("-> visitor pruned all outgoing edges");
 		} else {
-			// TODO: check action determinism here?
+			// TODO check action determinism here?
 			final Comparator<OutgoingInternalTransition<L, S>> comp =
 					Comparator.<OutgoingInternalTransition<L, S>, L> comparing(OutgoingInternalTransition::getLetter,
 							mOrder.getOrder(state)).reversed();
