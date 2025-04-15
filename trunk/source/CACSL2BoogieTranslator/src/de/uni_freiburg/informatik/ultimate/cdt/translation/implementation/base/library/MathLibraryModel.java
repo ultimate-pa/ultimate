@@ -30,22 +30,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class MathLibraryModel implements ILibraryModel {
-	private final FunctionModelHelper mHelper;
-	private final ExpressionResultTransformer mExprResultTransformer;
-	private final ExpressionTranslation mExpressionTranslation;
-	private final CExpressionTranslator mCEpressionTranslator;
-	private final INameHandler mNameHandler;
-
-	public MathLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
-			final ExpressionTranslation expressionTranslation, final CExpressionTranslator cEpressionTranslator,
-			final INameHandler nameHandler) {
-		mHelper = helper;
-		mExprResultTransformer = exprResultTransformer;
-		mExpressionTranslation = expressionTranslation;
-		mCEpressionTranslator = cEpressionTranslator;
-		mNameHandler = nameHandler;
-	}
-
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS = { "frexp", "ldexp", "pow", "hypot", "cbrt", "drem",
 			"significand", "j0", "j1", "jn", "y0", "y1", "yn", "erfc", "lgamma", "tgamma", "gamma", "lgamma_r",
 			"nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo", "lrint", "llrint", "fma", "scalb",
@@ -112,6 +96,22 @@ public class MathLibraryModel implements ILibraryModel {
 
 			// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
 			"fdim", "fdimf", "fdiml");
+
+	private final FunctionModelHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final CExpressionTranslator mCEpressionTranslator;
+	private final INameHandler mNameHandler;
+
+	public MathLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
+			final ExpressionTranslation expressionTranslation, final CExpressionTranslator cEpressionTranslator,
+			final INameHandler nameHandler) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mExpressionTranslation = expressionTranslation;
+		mCEpressionTranslator = cEpressionTranslator;
+		mNameHandler = nameHandler;
+	}
 
 	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
 		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
