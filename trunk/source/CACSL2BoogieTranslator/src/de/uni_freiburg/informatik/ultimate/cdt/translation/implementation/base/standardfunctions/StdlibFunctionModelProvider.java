@@ -18,11 +18,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
@@ -44,20 +41,37 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
-public class StdlibFunctionModelProvider extends FunctionModelProvider {
-	public StdlibFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class StdlibFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final TypeSizes mTypeSizes;
+	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final MemoryHandler mMemoryHandler;
+	private final ProcedureManager mProcedureManager;
+	private final INameHandler mNameHandler;
+	private final CheckMode mOverflowCheckMode;
+
+	public StdlibFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final TypeSizes typeSizes,
+			final TypeSizeAndOffsetComputer typeSizeComputer, final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
+			final ProcedureManager procedureManager, final INameHandler nameHandler,
+			final CheckMode overflowCheckMode) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mTypeSizes = typeSizes;
+		mTypeSizeComputer = typeSizeComputer;
+		mExpressionTranslation = expressionTranslation;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mMemoryHandler = memoryHandler;
+		mProcedureManager = procedureManager;
+		mNameHandler = nameHandler;
+		mOverflowCheckMode = overflowCheckMode;
 	}
 
 	@Override
@@ -98,14 +112,14 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		 *
 		 * We handle this by overapproximation and do not check for undefined behavior.
 		 */
-		result.add(new FunctionModel("atof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
-				1, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("atoi", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
-				1, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("atol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
-				1, new CPrimitive(CPrimitives.LONG))));
-		result.add(new FunctionModel("atoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 1, new CPrimitive(CPrimitives.LONGLONG))));
+		result.add(new FunctionModel("atof", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("atoi", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("atol", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.LONG))));
+		result.add(new FunctionModel("atoll", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.LONGLONG))));
 
 		/**
 		 * @formatter:off
@@ -129,8 +143,8 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		 * void qsort( void *ptr, size_t count, size_t size, int (*comp)(const void *, const void *) ));
 		 * @formatter:on
 		 */
-		result.add(new FunctionModel("qsort", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 4, CPointer.voidPointer())));
+		result.add(new FunctionModel("qsort", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 4, CPointer.voidPointer())));
 
 		/**
 		 * 7.22.2.1 The rand function
@@ -157,7 +171,7 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		 * We can safely skip this function.
 		 */
 		result.add(new FunctionModel("srand",
-				(main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)));
+				(main, node, loc, name) -> mHelper.handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)));
 
 		/**
 		 * 7.22.1.3 The strtod, strtof, and strtold functions
@@ -174,12 +188,12 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		 * We handle this by overapproximation and do not check of range errors.
 		 *
 		 */
-		result.add(new FunctionModel("strtof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("strtod", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("strtold", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
+		result.add(new FunctionModel("strtof", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("strtod", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("strtold", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
 		/**
 		 * 7.22.1.4 The strtol, strtoll, strtoul, and strtoull functions
@@ -191,14 +205,14 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		 * We handle this by overapproximation and do not check of range errors.
 		 *
 		 */
-		result.add(new FunctionModel("strtol", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.LONG))));
-		result.add(new FunctionModel("strtoll", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.LONGLONG))));
-		result.add(new FunctionModel("strtoul", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.ULONG))));
-		result.add(new FunctionModel("strtoull", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.ULONGLONG))));
+		result.add(new FunctionModel("strtol", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 3, new CPrimitive(CPrimitives.LONG))));
+		result.add(new FunctionModel("strtoll", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 3, new CPrimitive(CPrimitives.LONGLONG))));
+		result.add(new FunctionModel("strtoul", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 3, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("strtoull", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
+				node, loc, name, 3, new CPrimitive(CPrimitives.ULONGLONG))));
 
 		/**
 		 * @formatter:off
@@ -232,12 +246,12 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		// dispatch the argument (unless it's a string literal, then we don't need it)
 		assert node.getArguments().length == 1 : "unexpected number of arguments to getenv";
 		final var arg = node.getArguments()[0];
-		if (!isStringLiteral(arg)) {
+		if (!mHelper.isStringLiteral(arg)) {
 			final var argRes = (ExpressionResult) main.dispatch(arg);
 			builder.addAllExceptLrValue(argRes);
 		}
 
-		final var nondetString = getNondetStringOrNull(loc);
+		final var nondetString = mHelper.getNondetStringOrNull(loc);
 		builder.addAllExceptLrValue(nondetString).setLrValue(nondetString.getLrValue());
 
 		return builder.build();
@@ -256,7 +270,7 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		 * array of nmemb objects, each of whose size is size. The space is initialized to all bits zero.
 		 */
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		final ExpressionResult nmemb = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
 				arguments[0], mTypeSizeComputer.getSizeT());
@@ -285,7 +299,7 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 	private Result handleFree(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult pRex =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -324,7 +338,7 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 		final MemoryModelDeclarations reallocMmDecl = MemoryModelDeclarations.C_REALLOC;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, methodName, arguments);
+		mHelper.checkArguments(loc, 2, methodName, arguments);
 
 		final ICType voidPointerType = CPointer.voidPointer();
 		final ExpressionResult ptr = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
@@ -360,7 +374,7 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 	private Result handleMalloc(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String methodName) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, methodName, arguments);
+		mHelper.checkArguments(loc, 1, methodName, arguments);
 
 		final ExpressionResult exprRes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -380,7 +394,7 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 
 	private Result handleRand(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		checkArguments(loc, 0, name, node.getArguments());
+		mHelper.checkArguments(loc, 0, name, node.getArguments());
 
 		final CPrimitive cType = new CPrimitive(CPrimitives.INT);
 		final ExpressionResultBuilder resultBuilder = new ExpressionResultBuilder();
@@ -411,14 +425,14 @@ public class StdlibFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAbs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final CPrimitive resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult argResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		builder.addAllExceptLrValue(argResult);
 		final Expression expr = argResult.getLrValue().getValue();
 		// abs(MIN_INT) does overflow, so add an assertion for overflow checking
-		if (mSettings.checkSignedIntegerBounds() != CheckMode.IGNORE && resultType.isIntegerType()
+		if (mOverflowCheckMode != CheckMode.IGNORE && resultType.isIntegerType()
 				&& !mTypeSizes.isUnsigned(resultType)) {
 			final Expression minInt = mTypeSizes.constructLiteralForIntegerType(loc, resultType,
 					mTypeSizes.getMinValueOfPrimitiveType(resultType));

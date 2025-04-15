@@ -14,13 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -33,11 +27,29 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class FloatFunctionModelProvider extends FunctionModelProvider {
+public class FloatFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final CExpressionTranslator mCEpressionTranslator;
+	private final INameHandler mNameHandler;
+
+	public FloatFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final CExpressionTranslator cEpressionTranslator,
+			final INameHandler nameHandler) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mExpressionTranslation = expressionTranslation;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mCEpressionTranslator = cEpressionTranslator;
+		mNameHandler = nameHandler;
+	}
+
 	//@formatter:off
 	private final static String[] SUPPORTED_FLOAT_OPERATIONS = {
 			"sqrt",
@@ -279,17 +291,6 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 			);
 	//@formatter:on
 
-	public FloatFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
-	}
-
 	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
 		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
 
@@ -442,14 +443,12 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 	public Collection<FunctionModel> getFunctionModels() {
 		final List<FunctionModel> result = new ArrayList<>();
 		for (final var overapprox : getOverapproximatedUnaryFunctions()) {
-			result.add(
-					new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> handleByOverapproximation(main,
-							node, loc, name, 1, new CPrimitive(overapprox.getSecond()))));
+			result.add(new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> mHelper
+					.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(overapprox.getSecond()))));
 		}
 		for (final var overapprox : getOverapproximatedBinaryFunctions()) {
-			result.add(
-					new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> handleByOverapproximation(main,
-							node, loc, name, 2, new CPrimitive(overapprox.getSecond()))));
+			result.add(new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> mHelper
+					.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(overapprox.getSecond()))));
 		}
 		for (final String unary : UNARY_FUNCTIONS) {
 			result.add(new FunctionModel(unary, this::handleUnaryFloatFunction));
@@ -522,7 +521,7 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int numberOfArgs, final FloatFunction floatFunction) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, numberOfArgs, name, arguments);
+		mHelper.checkArguments(loc, numberOfArgs, name, arguments);
 		if (floatFunction == null) {
 			throw new IllegalArgumentException(
 					"Ultimate declared float handling for " + name + ", but is not known float function");
@@ -562,7 +561,7 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 		 *
 		 */
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		final ExpressionResult rl =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -590,7 +589,7 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 	private Result handleFloatBuiltinIsUnordered(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		final ExpressionResult leftRvaluedResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -632,7 +631,7 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 		 */
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		ExpressionResult leftOp =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -661,7 +660,7 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 			final ILocation loc, final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 0, name, arguments);
+		mHelper.checkArguments(loc, 0, name, arguments);
 		final RValue rvalue = mExpressionTranslation.constructBuiltinFegetround(loc);
 
 		return new ExpressionResultBuilder().setLrValue(rvalue).build();
@@ -671,7 +670,7 @@ public class FloatFunctionModelProvider extends FunctionModelProvider {
 			final ILocation loc, final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult decayedArgument =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);

@@ -16,15 +16,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -38,21 +34,29 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class StringFunctionModelProvider extends FunctionModelProvider {
-	public StringFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class StringFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final MemoryHandler mMemoryHandler;
+	private final ProcedureManager mProcedureManager;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+
+	public StringFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final MemoryHandler memoryHandler, final ProcedureManager procedureManager,
+			final ExpressionTranslation expressionTranslation, final TypeSizeAndOffsetComputer typeSizeComputer) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mMemoryHandler = memoryHandler;
+		mProcedureManager = procedureManager;
+		mExpressionTranslation = expressionTranslation;
+		mTypeSizeComputer = typeSizeComputer;
 	}
 
 	@Override
@@ -78,31 +82,31 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("strcmp", this::handleStrCmp));
 		result.add(new FunctionModel("strncmp", this::handleStrnCmp));
 		result.add(new FunctionModel("strcpy", this::handleStrCpy));
-		result.add(new FunctionModel("strncpy", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+		result.add(new FunctionModel("strncpy", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 3, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 		// https://en.cppreference.com/w/c/string/byte/toupper
 		result.add(new FunctionModel("toupper", this::handleToUpper));
 
 		// https://en.cppreference.com/w/c/string/byte/strtok
-		result.add(new FunctionModel("strtok", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+		result.add(new FunctionModel("strtok", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 
 		// https://en.cppreference.com/w/c/string/byte/strcat
 		result.add(new FunctionModel("strcat",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				(main, node, loc, name) -> mHelper.handleUnsupportedFunctionByOverapproximation(main, loc, name,
 						new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 		// https://en.cppreference.com/w/c/string/byte/strncat
 		result.add(new FunctionModel("strncat",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
+				(main, node, loc, name) -> mHelper.handleUnsupportedFunctionByOverapproximation(main, loc, name,
 						new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 
 		// https://en.cppreference.com/w/c/string/byte/strcspn
-		result.add(new FunctionModel("strcspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("strcspn", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.ULONG))));
 
 		// https://en.cppreference.com/w/c/string/byte/strpbrk
-		result.add(new FunctionModel("strpbrk", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+		result.add(new FunctionModel("strpbrk", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 
 		// https://en.cppreference.com/w/c/string/byte/memchr
 		result.add(
@@ -118,12 +122,12 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("strerror", this::handleStrerror));
 
 		// https://en.cppreference.com/w/c/string/byte/strspn
-		result.add(new FunctionModel("strspn", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, new CPrimitive(CPrimitives.ULONGLONG))));
+		result.add(new FunctionModel("strspn", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.ULONGLONG))));
 
 		// https://en.cppreference.com/w/c/string/wide/iswxdigit
-		result.add(new FunctionModel("iswxdigit", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("iswxdigit", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
+				node, loc, name, 1, new CPrimitive(CPrimitives.INT))));
 
 		return result;
 	}
@@ -142,37 +146,37 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 	private Result handleStringSearch(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int numberOfArguments) {
 		final var builder = new ExpressionResultBuilder();
-		checkArguments(loc, numberOfArguments, name, node.getArguments());
+		mHelper.checkArguments(loc, numberOfArguments, name, node.getArguments());
 		for (final var arg : node.getArguments()) {
-			if (!isStringLiteral(arg)) {
+			if (!mHelper.isStringLiteral(arg)) {
 				final var argRes = (ExpressionResult) main.dispatch(arg);
 				builder.addAllExceptLrValue(argRes);
 			}
 		}
 		builder.addOverapprox(new Overapprox(name, loc));
-		return builder.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
+		return builder.addAllIncludingLrValue(mHelper.getNondetStringOrNull(loc)).build();
 	}
 
 	private Result handleStrerror(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		checkArguments(loc, 1, name, node.getArguments());
+		mHelper.checkArguments(loc, 1, name, node.getArguments());
 		// Just dispatch the argument and return a non-deterministic string
 		return new ExpressionResultBuilder()
 				.addAllExceptLrValue((ExpressionResult) main.dispatch(node.getArguments()[0]))
-				.addAllIncludingLrValue(getNondetStringOrNull(loc)).build();
+				.addAllIncludingLrValue(mHelper.getNondetStringOrNull(loc)).build();
 	}
 
 	private ExpressionResult handleStrCmp(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		return handleMemoryComparison(main, loc, name, arguments[0], arguments[1]);
 	}
 
 	private ExpressionResult handleStrnCmp(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[2]));
 		builder.addAllIncludingLrValue(handleMemoryComparison(main, loc, name, arguments[0], arguments[1]));
@@ -195,7 +199,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_STRCPY;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final CPointer charPointerType = new CPointer(new CPrimitive(CPrimitives.CHAR));
 		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
 				arguments[0], charPointerType);
@@ -232,7 +236,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 	private Result handleStrLen(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String methodName) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, methodName, arguments);
+		mHelper.checkArguments(loc, 1, methodName, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
 		final ExpressionResult arg =
@@ -277,7 +281,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		 * or a pointer into the area where the argument pointer is valid.
 		 */
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		// dispatch first argument -- we need its value for the assume
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -341,8 +345,8 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 			// res.offset >= 0
 			final Expression offsetNonNegative = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
 					IASTBinaryExpression.op_lessEqual,
-					mTypeSizes.constructLiteralForIntegerType(loc, mExpressionTranslation.getCTypeOfPointerComponents(),
-							new BigInteger("0")),
+					mExpressionTranslation.constructLiteralForIntegerType(loc,
+							mExpressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
 					mExpressionTranslation.getCTypeOfPointerComponents(), MemoryHandler.getPointerOffset(tmpExpr, loc),
 					mExpressionTranslation.getCTypeOfPointerComponents());
 			// res.offset < length(arg_s.base)
@@ -380,7 +384,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		// Translate toupper(x) to x >= 'a' && x <= 'z' ? x - 32 : x
 		// (with 'a' = 97 and 'z' = 122)
 		// This function might translate more lower-case chars (depending on the C locale), but we ignore that for now.
-		checkArguments(loc, 1, name, node.getArguments());
+		mHelper.checkArguments(loc, 1, name, node.getArguments());
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult argRes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, node.getArguments()[0]);
@@ -404,7 +408,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 	private ExpressionResult handleMemCmp(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[2]));
 		builder.addAllIncludingLrValue(handleMemoryComparison(main, loc, name, arguments[0], arguments[1]));
@@ -456,7 +460,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 		 * (converted to an unsigned char) into each of the first n characters of the object pointed to by s.
 		 */
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 
 		final ExpressionResult dispatchedArgS =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -499,7 +503,7 @@ public class StringFunctionModelProvider extends FunctionModelProvider {
 	private Result handleMemCopyOrMove(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryModelDeclarations mmDecl) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final CPointer voidType = CPointer.voidPointer();
 		final ExpressionResult dest = mExprResultTransformer.transformDispatchDecaySwitchImplicitConversion(main, loc,
 				arguments[0], voidType);

@@ -19,14 +19,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -37,26 +30,27 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class AtomicFunctionModelProvider extends FunctionModelProvider {
+public class AtomicFunctionModelProvider implements IFunctionModelProvider {
 	/**
 	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
 	 */
 	private static final int MEMORY_ORDER_SEQ_CST = 5;
 
-	public AtomicFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+
+	public AtomicFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mExpressionTranslation = expressionTranslation;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
 	}
 
 	@Override
@@ -90,16 +84,14 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("__atomic_test_and_set", this::handleAtomicTestAndSet));
 		result.add(new FunctionModel("__atomic_clear", this::handleAtomicClear));
 
-		result.add(new FunctionModel("__atomic_thread_fence",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID))));
-		result.add(new FunctionModel("__atomic_signal_fence",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID))));
-		result.add(new FunctionModel("__atomic_always_lock_free", (main, node, loc,
-				name) -> handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
-		result.add(new FunctionModel("__atomic_is_lock_free", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
+		result.add(new FunctionModel("__atomic_thread_fence", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
+		result.add(new FunctionModel("__atomic_signal_fence", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
+		result.add(new FunctionModel("__atomic_always_lock_free", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
+		result.add(new FunctionModel("__atomic_is_lock_free", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
 
 		return result;
 	}
@@ -112,7 +104,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult memoryOrder =
@@ -127,7 +119,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResultBuilder atomicBuilder =
 				new ExpressionResultBuilder(mExprResultTransformer.readPointerValue(loc, pointer.getLrValue()));
@@ -146,7 +138,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult pointer1 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult pointer2 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
@@ -164,7 +156,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult pointer1 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult pointer2 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
@@ -183,7 +175,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 4, name, arguments);
+		mHelper.checkArguments(loc, 4, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult pointer1 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult pointer2 = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[1]);
@@ -208,7 +200,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 6, name, arguments);
+		mHelper.checkArguments(loc, 6, name, arguments);
 
 		// In this function, the desired value is passed via a pointer.
 		final ExpressionResult desiredResult = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[2]);
@@ -222,7 +214,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicCompareExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 6, name, arguments);
+		mHelper.checkArguments(loc, 6, name, arguments);
 
 		// In this function, the desired value is passed directly. We create a small dummy ExpressionResult for the
 		// helper function and store only the desired LRValue.
@@ -328,7 +320,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicLoadN(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult read = mExprResultTransformer.readPointerValue(loc, pointer.getLrValue());
 		final ExpressionResult memoryOrder =
@@ -340,7 +332,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicStoreN(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult valueResult =
@@ -357,7 +349,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult valueResult =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);
@@ -376,7 +368,7 @@ public class AtomicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final int operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
 		final ExpressionResult operand =
 				mExprResultTransformer.transformDecaySwitch((ExpressionResult) main.dispatch(arguments[1]), loc, node);

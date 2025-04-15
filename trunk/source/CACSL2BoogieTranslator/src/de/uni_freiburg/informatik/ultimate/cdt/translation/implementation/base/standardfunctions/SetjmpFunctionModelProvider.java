@@ -7,36 +7,23 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class SetjmpFunctionModelProvider extends FunctionModelProvider {
-	public SetjmpFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class SetjmpFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionTranslation mExpressionTranslation;
+
+	public SetjmpFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionTranslation expressionTranslation) {
+		mHelper = helper;
+		mExpressionTranslation = expressionTranslation;
 	}
 
 	@Override
@@ -46,9 +33,8 @@ public class SetjmpFunctionModelProvider extends FunctionModelProvider {
 		// longjmp https://en.cppreference.com/w/c/program/longjmp
 		// We cannot handle restoring the environment, so we just check if the function is reachable and create an
 		// overraproximation for that case
-		result.add(new FunctionModel("longjmp",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID))));
+		result.add(new FunctionModel("longjmp", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
 
 		// setjmp https://en.cppreference.com/w/c/program/setjmp
 		result.add(new FunctionModel("_setjmp", this::handleSetjmp));

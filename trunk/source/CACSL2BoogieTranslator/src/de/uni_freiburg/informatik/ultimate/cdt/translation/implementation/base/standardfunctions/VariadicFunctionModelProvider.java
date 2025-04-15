@@ -14,14 +14,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -38,21 +33,30 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class VariadicFunctionModelProvider extends FunctionModelProvider {
-	public VariadicFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class VariadicFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final MemoryHandler mMemoryHandler;
+	private final ProcedureManager mProcedureManager;
+	private final ITypeHandler mTypeHandler;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+
+	public VariadicFunctionModelProvider(final FunctionModelProviderHelper helper, final MemoryHandler memoryHandler,
+			final ProcedureManager procedureManager, final ITypeHandler typeHandler,
+			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder auxVarInfoBuilder) {
+		mHelper = helper;
+		mMemoryHandler = memoryHandler;
+		mProcedureManager = procedureManager;
+		mTypeHandler = typeHandler;
+		mExprResultTransformer = exprResultTransformer;
+		mExpressionTranslation = expressionTranslation;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
 	}
 
 	@Override
@@ -87,7 +91,7 @@ public class VariadicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleVaStart(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult arg0 = (ExpressionResult) main.dispatch(arguments[0]);
 		builder.addAllExceptLrValue(arg0);
@@ -103,7 +107,7 @@ public class VariadicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleVaEnd(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult pRex =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -140,7 +144,7 @@ public class VariadicFunctionModelProvider extends FunctionModelProvider {
 	private Result handleVaCopy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult dst = (ExpressionResult) main.dispatch(arguments[0]);
 		builder.addAllExceptLrValue(dst);

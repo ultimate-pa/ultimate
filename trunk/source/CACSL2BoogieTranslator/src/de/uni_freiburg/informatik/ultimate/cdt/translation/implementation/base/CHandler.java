@@ -183,7 +183,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AssertFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.AtomicFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FloatFunctionModelProvider;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.IFunctionModelProvider;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.FunctionModelProviderHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.GccBuiltinFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.LinuxFunctionModelProvider;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.PthreadFunctionModelProvider;
@@ -602,50 +603,34 @@ public class CHandler {
 		}
 	}
 
-	private List<FunctionModelProvider> getFunctionModelProviders() {
-		return List.of(
-				new LinuxFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
-						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
-						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new PthreadFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSymbolTable, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new StdioFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
-						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
-						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new FloatFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
-						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
-						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new GccBuiltinFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new SvcompFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new AtomicFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new StringFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new StdlibFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new VariadicFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new AssertFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new TimeFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation, mMemoryHandler,
-						mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings, mExprResultTransformer,
-						mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new SocketFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker),
-				new SetjmpFunctionModelProvider(mAuxVarInfoBuilder, mNameHandler, mExpressionTranslation,
-						mMemoryHandler, mTypeSizeComputer, mProcedureManager, mTypeSizes, mSettings,
-						mExprResultTransformer, mTypeHandler, mCExpressionTranslator, mDataRaceChecker));
+	private List<IFunctionModelProvider> getFunctionModelProviders() {
+		final FunctionModelProviderHelper helper = new FunctionModelProviderHelper(mAuxVarInfoBuilder,
+				mExpressionTranslation, mMemoryHandler, mTypeSizes, mSettings, mTypeHandler);
+		return List.of(new AssertFunctionModelProvider(helper, mExprResultTransformer, mSettings.checkAssertions()),
+				new AtomicFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
+						mAuxVarInfoBuilder),
+				new FloatFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
+						mAuxVarInfoBuilder, mCExpressionTranslator, mNameHandler),
+				new GccBuiltinFunctionModelProvider(helper, mExprResultTransformer, mExpressionTranslation,
+						mAuxVarInfoBuilder, mMemoryHandler, mTypeSizeComputer),
+				new LinuxFunctionModelProvider(helper, mAuxVarInfoBuilder, mExprResultTransformer, mTypeSizes,
+						mExpressionTranslation),
+				new PthreadFunctionModelProvider(helper, mSymbolTable, mAuxVarInfoBuilder, mExprResultTransformer,
+						mExpressionTranslation, mMemoryHandler, mTypeHandler, mTypeSizes, mProcedureManager),
+				new SetjmpFunctionModelProvider(helper, mExpressionTranslation),
+				new SocketFunctionModelProvider(helper),
+				new StdioFunctionModelProvider(helper, mExprResultTransformer, mAuxVarInfoBuilder,
+						mExpressionTranslation, mTypeSizes, mMemoryHandler, mDataRaceChecker, mTypeHandler),
+				new StdlibFunctionModelProvider(helper, mExprResultTransformer, mTypeSizes, mTypeSizeComputer,
+						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
+						mSettings.checkSignedIntegerBounds()),
+				new StringFunctionModelProvider(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
+						mProcedureManager, mExpressionTranslation, mTypeSizeComputer),
+				new SvcompFunctionModelProvider(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
+						mSettings.checkErrorFunction(), mExprResultTransformer),
+				new TimeFunctionModelProvider(helper, mExpressionTranslation, mAuxVarInfoBuilder),
+				new VariadicFunctionModelProvider(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
+						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder));
 	}
 
 	/**

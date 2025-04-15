@@ -19,13 +19,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -43,21 +39,32 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class StdioFunctionModelProvider extends FunctionModelProvider {
-	public StdioFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class StdioFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final TypeSizes mTypeSizes;
+	private final MemoryHandler mMemoryHandler;
+	private final DataRaceChecker mDataRaceChecker;
+	private final ITypeHandler mTypeHandler;
+
+	public StdioFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final AuxVarInfoBuilder auxVarInfoBuilder,
+			final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes,
+			final MemoryHandler memoryHandler, final DataRaceChecker dataRaceChecker, final ITypeHandler typeHandler) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mExpressionTranslation = expressionTranslation;
+		mTypeSizes = typeSizes;
+		mMemoryHandler = memoryHandler;
+		mDataRaceChecker = dataRaceChecker;
+		mTypeHandler = typeHandler;
 	}
 
 	@Override
@@ -67,12 +74,12 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 		result.add(new FunctionModel("printf", (main, node, loc, name) -> handlePrintF(main, node, loc)));
 
 		// https://en.cppreference.com/w/c/io/fgets
-		result.add(new FunctionModel("fgets", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
+		result.add(new FunctionModel("fgets", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 3, new CPointer(new CPrimitive(CPrimitives.CHAR)))));
 
 		// https://en.cppreference.com/w/c/io/fgetc
-		result.add(new FunctionModel("fgetc", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fgetc", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.INT))));
 
 		// TODO 20211105 Matthias: Unsound because our implementation of printf is
 		// unsound and because we consider wchars as chars.
@@ -107,34 +114,30 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 		 * We cannot handle files properly, therefore we just overapproximate. For functions that modify the files, we
 		 * use the "assert false" overapproximation, otherwise we just overapproximate the return value.
 		 */
-		result.add(new FunctionModel("fflush",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("fopen", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 2, CPointer.voidPointer())));
-		result.add(new FunctionModel("fclose", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 1, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("feof", (main, node, loc, name) -> handleByOverapproximation(main, node, loc, name,
-				1, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("fseek", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 3, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("fread", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 4, new CPrimitive(CPrimitives.ULONG))));
-		result.add(new FunctionModel("ferror", (main, node, loc, name) -> handleByOverapproximation(main, node, loc,
-				name, 1, new CPrimitive(CPrimitives.INT))));
-		result.add(
-				new FunctionModel("fputs", (main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main,
-						loc, name, new CPrimitive(CPrimitives.INT))));
-		result.add(new FunctionModel("fwrite",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.ULONGLONG))));
-		result.add(new FunctionModel("setbuf",
-				(main, node, loc, name) -> handleUnsupportedFunctionByOverapproximation(main, loc, name,
-						new CPrimitive(CPrimitives.VOID))));
+		result.add(new FunctionModel("fflush", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fopen", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, CPointer.voidPointer())));
+		result.add(new FunctionModel("fclose", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("feof", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fseek", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 3, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fread", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 4, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("ferror", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fputs", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("fwrite", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.ULONGLONG))));
+		result.add(new FunctionModel("setbuf", (main, node, loc, name) -> mHelper
+				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
 		// https://en.cppreference.com/w/c/io/clearerr
 		// We don't handle the error flags anyway, so we just dispatch the argument.
 		result.add(new FunctionModel("clearerr",
-				(main, node, loc, name) -> handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)));
+				(main, node, loc, name) -> mHelper.handleVoidFunctionBySkipAndDispatch(main, node, loc, name, 1)));
 
 		return result;
 
@@ -161,7 +164,7 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 
 		// dispatch remaining arguments (except for string literals)
 		for (int i = 1; i < arguments.length; ++i) {
-			if (isStringLiteral(arguments[i])) {
+			if (mHelper.isStringLiteral(arguments[i])) {
 				continue;
 			}
 			final ExpressionResult argRes =
@@ -252,7 +255,7 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 
 		// dispatch remaining arguments (except for string literals)
 		for (int i = 2; i < arguments.length; ++i) {
-			if (isStringLiteral(arguments[i])) {
+			if (mHelper.isStringLiteral(arguments[i])) {
 				continue;
 			}
 			final ExpressionResult argRes =
@@ -345,7 +348,7 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 		for (int i = 0; i < arguments.length; i++) {
 			if (i < firstArgumentToWrite) {
 				// Don't dispatch string literals
-				if (!isStringLiteral(arguments[i])) {
+				if (!mHelper.isStringLiteral(arguments[i])) {
 					builder.addAllExceptLrValue(
 							mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[i]));
 				}
@@ -405,7 +408,7 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 
 		// dispatch all arguments
 		for (final IASTInitializerClause arg : node.getArguments()) {
-			if (isStringLiteral(arg)) {
+			if (mHelper.isStringLiteral(arg)) {
 				continue;
 			}
 			final ExpressionResult argRes =
@@ -422,7 +425,7 @@ public class StdioFunctionModelProvider extends FunctionModelProvider {
 
 	private Result handlePuts(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		checkArguments(loc, 1, name, node.getArguments());
+		mHelper.checkArguments(loc, 1, name, node.getArguments());
 		return handlePrintFunction(main, node, loc);
 	}
 }

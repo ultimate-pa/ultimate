@@ -15,13 +15,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -36,22 +30,24 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class LinuxFunctionModelProvider extends FunctionModelProvider {
+public class LinuxFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final TypeSizes mTypeSizes;
+	private final ExpressionTranslation mExpressionTranslation;
 
-	public LinuxFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+	public LinuxFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
+			final TypeSizes typeSizes, final ExpressionTranslation expressionTranslation) {
+		mHelper = helper;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mExprResultTransformer = exprResultTransformer;
+		mTypeSizes = typeSizes;
+		mExpressionTranslation = expressionTranslation;
 	}
 
 	@Override
@@ -66,16 +62,16 @@ public class LinuxFunctionModelProvider extends FunctionModelProvider {
 				 * We simply overapproximate those functions.
 				 */
 				new FunctionModel("htonl",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+						(main, node, loc, name) -> mHelper.handleByOverapproximation(main, node, loc, name, 1,
 								new CPrimitive(CPrimitives.UINT))),
 				new FunctionModel("htons",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+						(main, node, loc, name) -> mHelper.handleByOverapproximation(main, node, loc, name, 1,
 								new CPrimitive(CPrimitives.USHORT))),
 				new FunctionModel("ntohl",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+						(main, node, loc, name) -> mHelper.handleByOverapproximation(main, node, loc, name, 1,
 								new CPrimitive(CPrimitives.UINT))),
 				new FunctionModel("ntohs",
-						(main, node, loc, name) -> handleByOverapproximation(main, node, loc, name, 1,
+						(main, node, loc, name) -> mHelper.handleByOverapproximation(main, node, loc, name, 1,
 								new CPrimitive(CPrimitives.USHORT))),
 				/** https://www.man7.org/linux/man-pages/man3/ffs.3.html **/
 				new FunctionModel("ffs", (main, node, loc, name) -> handleFfs(main, node, loc, name, CPrimitives.INT)),
@@ -93,7 +89,7 @@ public class LinuxFunctionModelProvider extends FunctionModelProvider {
 	private Result handleSleep(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAllExceptLrValue((ExpressionResult) main.dispatch(arguments[0]));
 		// Return a non-deterministic aux-var as an overapproximation
@@ -107,7 +103,7 @@ public class LinuxFunctionModelProvider extends FunctionModelProvider {
 	private Result handleFfs(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final CPrimitives argPrimitive) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 		final ExpressionResult argResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 

@@ -22,14 +22,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -50,27 +46,37 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public class PthreadFunctionModelProvider extends FunctionModelProvider {
-	private final ThreadIdManager mThreadIdManager;
+public class PthreadFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
 	private final FlatSymbolTable mSymboltable;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final MemoryHandler mMemoryHandler;
+	private final ITypeHandler mTypeHandler;
+	private final TypeSizes mTypeSizes;
+	private final ProcedureManager mProcedureManager;
+	private final ThreadIdManager mThreadIdManager;
 
-	public PthreadFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+	public PthreadFunctionModelProvider(final FunctionModelProviderHelper helper, final FlatSymbolTable symboltable,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+			final ITypeHandler typeHandler, final TypeSizes typeSizes, final ProcedureManager procedureManager) {
+		mHelper = helper;
+		mSymboltable = symboltable;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mExprResultTransformer = exprResultTransformer;
+		mExpressionTranslation = expressionTranslation;
+		mMemoryHandler = memoryHandler;
+		mTypeHandler = typeHandler;
+		mTypeSizes = typeSizes;
+		mProcedureManager = procedureManager;
 		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
 				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
-		mSymboltable = symboltable;
 	}
 
 	@Override
@@ -103,7 +109,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 	private Result handlePthread_create(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 4, name, arguments);
+		mHelper.checkArguments(loc, 4, name, arguments);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -214,7 +220,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 
 		// get arguments
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		// Object that will build our result
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -264,7 +270,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult arg =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
@@ -294,7 +300,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 		// to join with the terminated thread."
 		// "On success, pthread_detach() returns 0; on error, it returns an error number."
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// The function just releases resources, without any other effect.
 		// Therefore we just dispatch the argument and return a non-deterministic value (indicating success)
@@ -315,7 +321,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 			final ILocation loc, final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 
@@ -385,7 +391,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 	private ExpressionResult handleLockCall(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final ILockCallFactory callFactory) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 		final IASTInitializerClause lock = arguments[0];
 
 		return handleLockCall(main, loc, name, lock, callFactory);
@@ -418,7 +424,7 @@ public class PthreadFunctionModelProvider extends FunctionModelProvider {
 		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 
 		final ExpressionResult arg1 =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);

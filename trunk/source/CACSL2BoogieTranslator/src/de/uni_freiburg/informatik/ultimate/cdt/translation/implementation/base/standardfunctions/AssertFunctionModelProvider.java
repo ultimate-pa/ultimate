@@ -9,36 +9,25 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public class AssertFunctionModelProvider extends FunctionModelProvider {
-	public AssertFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class AssertFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final boolean mCheckAssertions;
+
+	public AssertFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final boolean checkAssertions) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mCheckAssertions = checkAssertions;
 	}
 
 	@Override
@@ -67,7 +56,7 @@ public class AssertFunctionModelProvider extends FunctionModelProvider {
 			final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 4, name, arguments);
+		mHelper.checkArguments(loc, 4, name, arguments);
 
 		final List<ExpressionResult> argDispatchResults = new ArrayList<>();
 		for (final IASTInitializerClause argument : arguments) {
@@ -75,7 +64,7 @@ public class AssertFunctionModelProvider extends FunctionModelProvider {
 		}
 
 		final ExpressionResultBuilder erb = new ExpressionResultBuilder().addAllExceptLrValue(argDispatchResults);
-		return erb.addStatement(createAnnotatedAssertOrAssume(loc, name, mSettings.checkAssertions(), Spec.ASSERT,
+		return erb.addStatement(mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckAssertions, Spec.ASSERT,
 				ExpressionFactory.createBooleanLiteral(loc, false))).build();
 	}
 
@@ -83,12 +72,14 @@ public class AssertFunctionModelProvider extends FunctionModelProvider {
 			final String name) {
 
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 
 		final ExpressionResult result = mExprResultTransformer
 				.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-		return new ExpressionResultBuilder().addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc,
-				name, mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue())).build();
+		return new ExpressionResultBuilder().addAllExceptLrValue(result)
+				.addStatement(mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckAssertions, Spec.ASSERT,
+						result.getLrValue().getValue()))
+				.build();
 	}
 
 	/**
@@ -114,24 +105,24 @@ public class AssertFunctionModelProvider extends FunctionModelProvider {
 		/* check if signature of assertion is of form 'static_assert(expr)' or 'static_assert(expr, msg)' */
 		if (numAssertArgs == 2) {
 			/* static C11 or C23 assertion with two arguments (expr and msg) */
-			checkArguments(loc, 2, name, arguments);
+			mHelper.checkArguments(loc, 2, name, arguments);
 
-			if (isStringLiteral(arguments[1])) {
+			if (mHelper.isStringLiteral(arguments[1])) {
 				/* extract string literal value for custom error message */
 				final String errorMsg = String.valueOf(((IASTLiteralExpression) arguments[1]).getValue());
 
 				final ExpressionResult result = mExprResultTransformer
 						.transformSwitchRexIntToBool((ExpressionResult) main.dispatch(arguments[0]), loc, node);
-				return new ExpressionResultBuilder()
-						.addAllExceptLrValue(result).addStatement(createAnnotatedAssertOrAssume(loc, name,
-								mSettings.checkAssertions(), Spec.ASSERT, result.getLrValue().getValue(), errorMsg))
+				return new ExpressionResultBuilder().addAllExceptLrValue(result)
+						.addStatement(mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckAssertions, Spec.ASSERT,
+								result.getLrValue().getValue(), errorMsg))
 						.build();
 			}
 			/* WARNING: this case should be never reached since the msg should be always a string literal */
 			throw new IncorrectSyntaxException(loc, "Message parameter of static assert is not a string literal");
 		}
 		/* static C11 or C23 assertion with one argument (expr) */
-		checkArguments(loc, 1, name, arguments);
+		mHelper.checkArguments(loc, 1, name, arguments);
 
 		/* handle as regular assertion */
 		return handleAssert(main, node, loc, name);

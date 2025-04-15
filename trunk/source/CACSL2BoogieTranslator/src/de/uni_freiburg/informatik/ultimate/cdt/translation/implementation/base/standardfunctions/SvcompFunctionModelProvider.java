@@ -18,15 +18,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -44,11 +37,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public class SvcompFunctionModelProvider extends FunctionModelProvider {
+public class SvcompFunctionModelProvider implements IFunctionModelProvider {
 	/**
 	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we
 	 * get a new nondeterministic value even if the variable occurs in a loop. If this constant is set, we havoc the
@@ -57,15 +49,23 @@ public class SvcompFunctionModelProvider extends FunctionModelProvider {
 	 */
 	private static final boolean HAVOC_NONDET_AUXVARS_ALSO_BEFORE = true;
 
-	public SvcompFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+	private final FunctionModelProviderHelper mHelper;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final INameHandler mNameHandler;
+	private final boolean mCheckErrorFunction;
+	private final ExpressionResultTransformer mExprResultTransformer;
+
+	public SvcompFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionTranslation expressionTranslation,
+			final INameHandler nameHandler, final boolean checkErrorFunction,
+			final ExpressionResultTransformer exprResultTransformer) {
+		mHelper = helper;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mExpressionTranslation = expressionTranslation;
+		mNameHandler = nameHandler;
+		mCheckErrorFunction = checkErrorFunction;
+		mExprResultTransformer = exprResultTransformer;
 	}
 
 	@Override
@@ -190,8 +190,8 @@ public class SvcompFunctionModelProvider extends FunctionModelProvider {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		final Statement st = createAnnotatedAssertOrAssume(loc, name, mSettings.checkErrorFunction(),
-				Spec.ERROR_FUNCTION, falseLiteral);
+		final Statement st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.ERROR_FUNCTION,
+				falseLiteral);
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
@@ -220,7 +220,7 @@ public class SvcompFunctionModelProvider extends FunctionModelProvider {
 	private Result handleVerifierAssume(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		// according to SV-Comp specification assume takes only one argument, but the code allows more than one
-		checkArguments(loc, 1, name, node.getArguments());
+		mHelper.checkArguments(loc, 1, name, node.getArguments());
 
 		final List<Expression> args = new ArrayList<>();
 		final List<ExpressionResult> results = new ArrayList<>();

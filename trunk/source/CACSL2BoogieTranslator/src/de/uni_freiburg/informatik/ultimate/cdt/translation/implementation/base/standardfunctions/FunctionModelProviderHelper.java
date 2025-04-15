@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -21,17 +20,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -41,14 +35,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultTransformer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
@@ -56,45 +48,26 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
-public abstract class FunctionModelProvider {
-	protected final ExpressionTranslation mExpressionTranslation;
-	protected final MemoryHandler mMemoryHandler;
-	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
-	protected final ProcedureManager mProcedureManager;
-	protected final AuxVarInfoBuilder mAuxVarInfoBuilder;
-	protected final INameHandler mNameHandler;
-	protected final TypeSizes mTypeSizes;
-	protected final TranslationSettings mSettings;
-	protected final ExpressionResultTransformer mExprResultTransformer;
-	protected final ITypeHandler mTypeHandler;
-	protected final CExpressionTranslator mCEpressionTranslator;
-	protected final DataRaceChecker mDataRaceChecker;
+public class FunctionModelProviderHelper {
+	private final ExpressionTranslation mExpressionTranslation;
+	private final MemoryHandler mMemoryHandler;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final TypeSizes mTypeSizes;
+	private final TranslationSettings mSettings;
+	private final ITypeHandler mTypeHandler;
 
-	public FunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
+	public FunctionModelProviderHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
+			final TypeSizes typeSizes, final TranslationSettings settings, final ITypeHandler typeHandler) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
-		mTypeSizeComputer = typeSizeAndOffsetComputer;
-		mProcedureManager = procedureManager;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
-		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mSettings = settings;
-		mExprResultTransformer = expressionResultTransformer;
 		mTypeHandler = typeHandler;
-		mCEpressionTranslator = cEpressionTranslator;
-		mDataRaceChecker = dataRaceChecker;
 	}
 
-	public record FunctionModel(String functionName, IFunctionModelHandler model) {
-		// empty
-	}
-
-	protected static final void checkArguments(final ILocation loc, final int expectedArgs, final String name,
+	public void checkArguments(final ILocation loc, final int expectedArgs, final String name,
 			final IASTInitializerClause[] arguments) {
 		if (arguments.length != expectedArgs) {
 			throw new IncorrectSyntaxException(loc, name + " is expected to have " + expectedArgs
@@ -121,7 +94,7 @@ public abstract class FunctionModelProvider {
 	 *            the return type
 	 * @return An {@link ExpressionResult} representing the effect of the call
 	 */
-	protected final Result handleByOverapproximation(final IDispatcher main, final IASTFunctionCallExpression node,
+	public Result handleByOverapproximation(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String methodName, final int numberOfArgs, final ICType resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
@@ -147,7 +120,7 @@ public abstract class FunctionModelProvider {
 	 * @param resultType
 	 *            CType that determinies the type of the auxiliary variable
 	 */
-	protected ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
+	public ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
 			final ICType resultType) {
 		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
 	}
@@ -164,7 +137,7 @@ public abstract class FunctionModelProvider {
 	 * Overapproximate the reachability of unsupported functions by translating them to while(true) assert false; where
 	 * the assert is labeled with an overapproximation
 	 */
-	protected final Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
+	public Result handleUnsupportedFunctionByOverapproximation(final IDispatcher main, final ILocation loc,
 			final String name, final ICType returnType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addStatement(ExpressionTranslation.modelUnsupportedFeature(loc, name));
@@ -181,9 +154,8 @@ public abstract class FunctionModelProvider {
 	 *
 	 * Useful for void functions that do nothing.
 	 */
-	protected static final Result handleVoidFunctionBySkipAndDispatch(final IDispatcher main,
-			final IASTFunctionCallExpression node, final ILocation loc, final String methodName,
-			final int numberOfArgs) {
+	public Result handleVoidFunctionBySkipAndDispatch(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String methodName, final int numberOfArgs) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		checkArguments(loc, numberOfArgs, methodName, arguments);
 		final List<ExpressionResult> results = new ArrayList<>();
@@ -209,7 +181,7 @@ public abstract class FunctionModelProvider {
 	 *
 	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
-	protected Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
+	public Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr) {
 		return createAnnotatedAssertOrAssume(loc, functionName, checkProperty, spec, expr, null);
 	}
@@ -236,7 +208,7 @@ public abstract class FunctionModelProvider {
 	 *
 	 * @return {@link Statement} annotated with a {@link Check} annotation.
 	 */
-	protected Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
+	public Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
 		final boolean checkMemoryleakInMain = mSettings.checkMemoryLeakInMain()
 				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
@@ -279,12 +251,12 @@ public abstract class FunctionModelProvider {
 		return st;
 	}
 
-	protected static boolean isStringLiteral(final IASTInitializerClause expr) {
+	public boolean isStringLiteral(final IASTInitializerClause expr) {
 		return expr instanceof IASTLiteralExpression
 				&& ((IASTLiteralExpression) expr).getKind() == IASTLiteralExpression.lk_string_literal;
 	}
 
-	protected ExpressionResult getNondetStringOrNull(final ILocation loc) {
+	public ExpressionResult getNondetStringOrNull(final ILocation loc) {
 		final var charType = new CPrimitive(CPrimitives.CHAR);
 		final var sizeT = mTypeSizes.getSizeT();
 		final var resultType = new CPointer(charType);
@@ -325,8 +297,4 @@ public abstract class FunctionModelProvider {
 
 		return builder.build();
 	}
-
-	public abstract Collection<FunctionModel> getFunctionModels();
-
-	public abstract Collection<String> getUnsupportedFunctions();
 }

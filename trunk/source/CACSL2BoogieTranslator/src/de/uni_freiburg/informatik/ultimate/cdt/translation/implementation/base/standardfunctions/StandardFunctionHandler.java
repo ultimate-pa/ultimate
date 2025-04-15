@@ -67,7 +67,7 @@ public class StandardFunctionHandler {
 
 	public StandardFunctionHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
 			final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final LocationFactory locationFactory, final List<FunctionModelProvider> functionModelProviders) {
+			final LocationFactory locationFactory, final List<IFunctionModelProvider> functionModelProviders) {
 		mLogger = logger;
 		mFunctionTable = functionTable;
 		mSymboltable = symboltable;
@@ -113,7 +113,7 @@ public class StandardFunctionHandler {
 	}
 
 	private static Map<String, IFunctionModelHandler>
-			getFunctionModels(final List<FunctionModelProvider> functionHandlers) {
+			getFunctionModels(final List<IFunctionModelProvider> functionHandlers) {
 		final IFunctionModelHandler die = (main, node, loc, name) -> {
 			throw new UnsupportedSyntaxException(loc, "Unsupported function: " + name);
 		};

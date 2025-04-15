@@ -14,16 +14,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions.StandardFunctionHandler.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -39,21 +34,27 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class GccBuiltinFunctionModelProvider extends FunctionModelProvider {
-	public GccBuiltinFunctionModelProvider(final AuxVarInfoBuilder auxVarInfoBuilder, final INameHandler nameHandler,
-			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final ProcedureManager procedureManager,
-			final TypeSizes typeSizes, final TranslationSettings settings,
-			final ExpressionResultTransformer expressionResultTransformer, final ITypeHandler typeHandler,
-			final CExpressionTranslator cEpressionTranslator, final DataRaceChecker dataRaceChecker) {
-		super(auxVarInfoBuilder, nameHandler, expressionTranslation, memoryHandler, typeSizeAndOffsetComputer,
-				procedureManager, typeSizes, settings, expressionResultTransformer, typeHandler, cEpressionTranslator,
-				dataRaceChecker);
+public class GccBuiltinFunctionModelProvider implements IFunctionModelProvider {
+	private final FunctionModelProviderHelper mHelper;
+	private final ExpressionResultTransformer mExprResultTransformer;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final MemoryHandler mMemoryHandler;
+	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+
+	public GccBuiltinFunctionModelProvider(final FunctionModelProviderHelper helper,
+			final ExpressionResultTransformer exprResultTransformer, final ExpressionTranslation expressionTranslation,
+			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
+			final TypeSizeAndOffsetComputer typeSizeComputer) {
+		mHelper = helper;
+		mExprResultTransformer = exprResultTransformer;
+		mExpressionTranslation = expressionTranslation;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mMemoryHandler = memoryHandler;
+		mTypeSizeComputer = typeSizeComputer;
 	}
 
 	@Override
@@ -83,27 +84,27 @@ public class GccBuiltinFunctionModelProvider extends FunctionModelProvider {
 		 *
 		 * Current solution: replace call by a havoced aux variable.
 		 */
-		result.add(new FunctionModel("__builtin_return_address", (main, node, loc,
-				name) -> handleByOverapproximation(main, node, loc, name, 1, CPointer.voidPointer())));
+		result.add(new FunctionModel("__builtin_return_address", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 1, CPointer.voidPointer())));
 
-		result.add(new FunctionModel("__builtin_bswap16", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.USHORT))));
-		result.add(new FunctionModel("__builtin_bswap32", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.UINT))));
-		result.add(new FunctionModel("__builtin_bswap64", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.ULONG))));
+		result.add(new FunctionModel("__builtin_bswap16", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.USHORT))));
+		result.add(new FunctionModel("__builtin_bswap32", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.UINT))));
+		result.add(new FunctionModel("__builtin_bswap64", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.ULONG))));
 
-		result.add(new FunctionModel("__builtin_constant_p", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.BOOL))));
-		result.add(new FunctionModel("__builtin_isinf_sign", (main, node, loc, name) -> handleByOverapproximation(main,
-				node, loc, name, 1, new CPrimitive(CPrimitives.INT))));
+		result.add(new FunctionModel("__builtin_constant_p", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.BOOL))));
+		result.add(new FunctionModel("__builtin_isinf_sign", (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(CPrimitives.INT))));
 
 		/*
 		 * 6.56 Built-in Functions to Perform Arithmetic with Overflow Checking
 		 * https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
 		 */
-		final IFunctionModelHandler overapproximateGccOverflowCheck = (main, node, loc,
-				name) -> handleByOverapproximation(main, node, loc, name, 3, new CPrimitive(CPrimitives.BOOL));
+		final IFunctionModelHandler overapproximateGccOverflowCheck = (main, node, loc, name) -> mHelper
+				.handleByOverapproximation(main, node, loc, name, 3, new CPrimitive(CPrimitives.BOOL));
 		result.add(new FunctionModel("__builtin_sadd_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main,
 				node, loc, name, IASTBinaryExpression.op_plus, new CPrimitive(CPrimitives.INT))));
 		result.add(new FunctionModel("__builtin_saddl_overflow", (main, node, loc, name) -> handleBuiltinOverflow(main,
@@ -211,7 +212,7 @@ public class GccBuiltinFunctionModelProvider extends FunctionModelProvider {
 		 * when testing pointer or floating-point values.
 		 */
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
+		mHelper.checkArguments(loc, 2, name, arguments);
 		final ExpressionResult arg1 =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult arg2 =
@@ -225,7 +226,7 @@ public class GccBuiltinFunctionModelProvider extends FunctionModelProvider {
 	private Result handleBuiltinOverflow(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final int operator, final CPrimitive resultType) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 3, name, arguments);
+		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final ExpressionResult left = mExprResultTransformer.convertIfNecessary(loc,
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]), resultType);
@@ -261,14 +262,14 @@ public class GccBuiltinFunctionModelProvider extends FunctionModelProvider {
 		// For testing, overapproximate and do not dispatch arguments (I understand the spec as this is whats happening,
 		// but I am not sure)
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 2, name, arguments);
-		return constructOverapproximationForFunctionCall(loc, name, new CPrimitive(CPrimitives.INT));
+		mHelper.checkArguments(loc, 2, name, arguments);
+		return mHelper.constructOverapproximationForFunctionCall(loc, name, new CPrimitive(CPrimitives.INT));
 	}
 
 	private Result handleAlloc(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String methodName) {
 		final IASTInitializerClause[] arguments = node.getArguments();
-		checkArguments(loc, 1, methodName, arguments);
+		mHelper.checkArguments(loc, 1, methodName, arguments);
 
 		final ExpressionResult exprRes =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
