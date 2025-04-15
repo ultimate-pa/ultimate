@@ -151,8 +151,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		return switch (automatonType) {
 		case BUCHI_AUTOMATON -> productProvider;
 		// TODO: Statistics, Check if input automaton meets requirements?
-		case PARTIAL_ORDER_BA -> new AmpleRedAbstractionProvider<>(productProvider, mServices,
-				stateFactoryForRefinement, mPrefs.getDfsOrderSeed());
+		case PARTIAL_ORDER_BA ->
+				new AmpleRedAbstractionProvider<>(productProvider, mServices, stateFactoryForRefinement);
 		case BUCHI_PETRI_NET, RABIN_PETRI_NET ->
 				throw new AssertionError("Petri nets should be handled elsewhere: " + automatonType);
 		};

@@ -65,7 +65,6 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	private final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mUnderlying;
 	private final IUltimateServiceProvider mServices;
 	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
-	private final long mDfsOrderSeed;
 	private final AutomataLibraryServices mAutomataServices;
 	private final AmpleRedStatistics mStatistics;
 
@@ -83,13 +82,11 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	 */
 	public AmpleRedAbstractionProvider(
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
-			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
-			final long seed) {
+			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory) {
 		mUnderlying = underlying;
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mStateFactory = stateFactory;
-		mDfsOrderSeed = seed;
 		mStatistics = new AmpleRedStatistics();
 	}
 
