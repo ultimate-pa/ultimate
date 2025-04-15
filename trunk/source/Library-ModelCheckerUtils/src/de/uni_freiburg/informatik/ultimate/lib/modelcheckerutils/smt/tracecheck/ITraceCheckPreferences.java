@@ -250,68 +250,30 @@ public interface ITraceCheckPreferences {
 			}
 
 			public AssertCodeBlockOrder[] build() {
-				if (mWitnessValidation) {
-					return getDefaultWitnessValidationOrder(mAssertWitnessElementsHierarchical,
-							mSmtFeatureHeuristicPartitioningType, mSmtFeatureHeuristicScoringMethod,
-							mSmtFeatureHeuristicNumPartitions, mSmtFeatureHeuristicThreshold);
-				}
-
-				return getDefaultAssertOrder(mAssertWitnessElementsHierarchical, mSmtFeatureHeuristicPartitioningType,
-						mSmtFeatureHeuristicScoringMethod, mSmtFeatureHeuristicNumPartitions,
-						mSmtFeatureHeuristicThreshold);
+				return mWitnessValidation ? getDefaultWitnessValidationOrder() : getDefaultAssertOrder();
 			}
 
-			private static AssertCodeBlockOrder[] getDefaultAssertOrder(final boolean assertWitnessElementsHierarchical,
-					final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,
-					final ScoringMethod smtFeatureHeuristicScoringMethod, final int smtFeatureHeuristicNumPartitions,
-					final double smtFeatureHeuristicThreshold) {
+			private AssertCodeBlockOrder[] getDefaultAssertOrder() {
 
 				return new AssertCodeBlockOrder[] {
 
-						new AssertCodeBlockOrder(AssertCodeBlockOrderType.NOT_INCREMENTALLY,
-								assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold),
-						new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1,
-								assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold),
-						new AssertCodeBlockOrder(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2,
-								assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold),
-						new AssertCodeBlockOrder(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST,
-								assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold),
-						new AssertCodeBlockOrder(AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1,
-								assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold),
-						new AssertCodeBlockOrder(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE,
-								assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold) };
+						build(AssertCodeBlockOrderType.NOT_INCREMENTALLY),
+						build(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST1),
+						build(AssertCodeBlockOrderType.OUTSIDE_LOOP_FIRST2),
+						build(AssertCodeBlockOrderType.TERMS_WITH_SMALL_CONSTANTS_FIRST),
+						build(AssertCodeBlockOrderType.INSIDE_LOOP_FIRST1),
+						build(AssertCodeBlockOrderType.MIX_INSIDE_OUTSIDE) };
 			}
 
-			private static AssertCodeBlockOrder[] getDefaultWitnessValidationOrder(
-					final boolean assertWitnessElementsHierarchical,
-					final SmtFeatureHeuristicPartitioningType smtFeatureHeuristicPartitioningType,
-					final ScoringMethod smtFeatureHeuristicScoringMethod, final int smtFeatureHeuristicNumPartitions,
-					final double smtFeatureHeuristicThreshold) {
+			private AssertCodeBlockOrder[] getDefaultWitnessValidationOrder() {
 				return ArrayUtils.addAll(
+
 						new AssertCodeBlockOrder[] {
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.WITNESS_FIRST,
-										assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-										smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-										smtFeatureHeuristicThreshold),
-								new AssertCodeBlockOrder(AssertCodeBlockOrderType.WITNESS_VARIABLE,
-										assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-										smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-										smtFeatureHeuristicThreshold) },
-						getDefaultAssertOrder(assertWitnessElementsHierarchical, smtFeatureHeuristicPartitioningType,
-								smtFeatureHeuristicScoringMethod, smtFeatureHeuristicNumPartitions,
-								smtFeatureHeuristicThreshold));
+
+								build(AssertCodeBlockOrderType.WITNESS_FIRST),
+								build(AssertCodeBlockOrderType.WITNESS_VARIABLE) },
+
+						getDefaultAssertOrder());
 			}
 		}
 
