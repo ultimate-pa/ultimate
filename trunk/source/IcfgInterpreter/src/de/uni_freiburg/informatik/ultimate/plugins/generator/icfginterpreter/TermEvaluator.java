@@ -5,15 +5,11 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class TermEvaluator {
-	private IIcfgSymbolTable mSymbolTable;
-
 	public interface Value {
 
 	}
@@ -34,18 +30,18 @@ public class TermEvaluator {
 
 	}
 
-	public Value evaluate(final Map<IProgramVar, Value> state, final Term term) {
+	public Value evaluate(final Map<Term, Value> state, final Term term) {
 		switch (term) {
 		case final ApplicationTerm a:
 			return evaluateApplicationTerm(state, a);
 		case final TermVariable tv:
-			return state.get(mSymbolTable.getProgramVar(tv));
+			return state.get(tv);
 		default:
 			throw new AssertionError();
 		}
 	}
 
-	private Value evaluateApplicationTerm(final Map<IProgramVar, Value> state, final ApplicationTerm a) {
+	private Value evaluateApplicationTerm(final Map<Term, Value> state, final ApplicationTerm a) {
 		final Stream<Value> params = Arrays.stream(a.getParameters()).map(x -> evaluate(state, x));
 		switch (a.getFunction().getName()) {
 		case "+":
