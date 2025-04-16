@@ -37,7 +37,6 @@ import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTUnaryExpression;
@@ -76,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValueFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -483,19 +481,10 @@ public class PthreadLibraryModel implements ILibraryModel {
 		return erb.build();
 	}
 
-	private TypesResult handlePthread_t(final IASTNamedTypeSpecifier node, final ILocation loc) {
-		final var cType = mTypeHandler.getThreadIdType();
-		return new TypesResult(mTypeHandler.cType2AstType(loc, cType), node.isConst(), false, cType);
-	}
-
-	private TypesResult handlePthread_list_t(final IASTNamedTypeSpecifier node, final ILocation loc) {
-		return new TypesResult(mTypeHandler.constructPointerType(loc), node.isConst(), false, CPointer.voidPointer());
-	}
-
 	@Override
 	public Collection<TypeModel> getTypeModels() {
 		// TODO: Handle more types here that are declared in pthread.h
-		return List.of(new TypeModel("pthread_t", this::handlePthread_t),
-				new TypeModel("__pthread_list_t", this::handlePthread_list_t));
+		return List.of(new TypeModel("pthread_t", mTypeHandler.getThreadIdType()),
+				new TypeModel("__pthread_list_t", CPointer.voidPointer()));
 	}
 }

@@ -29,9 +29,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.Collection;
 
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -45,16 +45,11 @@ public interface ILibraryModel {
 				String methodName);
 	}
 
-	@FunctionalInterface
-	interface ITypeModelHandler {
-		Result handleTypedefinition(IASTNamedTypeSpecifier node, ILocation loc);
-	}
-
 	public record FunctionModel(String functionName, IFunctionModelHandler model) {
 		// empty
 	}
 
-	public record TypeModel(String typeName, ITypeModelHandler model) {
+	public record TypeModel(String typeName, ICType cType) {
 		// empty
 	}
 

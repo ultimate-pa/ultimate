@@ -274,11 +274,11 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
-		final Result libraryResult = mLibraryHandler.translateType(node);
-		if (libraryResult != null) {
-			return libraryResult;
-		}
 		final ILocation loc = mLocationFactory.createCLocation(node);
+		final ICType libraryType = mLibraryHandler.translateType(node);
+		if (libraryType != null) {
+			return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), false, libraryType);
+		}
 		final String cId = node.getName().toString();
 		final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);

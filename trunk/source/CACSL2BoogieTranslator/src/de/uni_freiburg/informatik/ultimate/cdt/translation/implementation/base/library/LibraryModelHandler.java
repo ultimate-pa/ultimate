@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IFunctionModelHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.ITypeModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class LibraryModelHandler {
 	private final LocationFactory mLocationFactory;
 	private final Map<String, IFunctionModelHandler> mFunctionModels;
-	private final Map<String, ITypeModelHandler> mTypeModels;
+	private final Map<String, ICType> mTypeModels;
 	private final Map<String, IASTNode> mFunctionTable;
 	private final FlatSymbolTable mSymboltable;
 	private final TranslationSettings mSettings;
@@ -120,13 +120,9 @@ public class LibraryModelHandler {
 		return null;
 	}
 
-	public Result translateType(final IASTNamedTypeSpecifier node) {
+	public ICType translateType(final IASTNamedTypeSpecifier node) {
 		final String name = node.getName().toString();
-		final ITypeModelHandler model = mTypeModels.get(name);
-		if (model == null) {
-			return null;
-		}
-		return model.handleTypedefinition(node, mLocationFactory.createCLocation(node));
+		return mTypeModels.get(name);
 	}
 
 	private static Map<String, IFunctionModelHandler> getFunctionModels(final List<ILibraryModel> libraryModels) {
@@ -145,11 +141,11 @@ public class LibraryModelHandler {
 		return Collections.unmodifiableMap(map);
 	}
 
-	private static Map<String, ITypeModelHandler> getTypeModels(final List<ILibraryModel> libraryModels) {
-		final Map<String, ITypeModelHandler> map = new HashMap<>();
+	private static Map<String, ICType> getTypeModels(final List<ILibraryModel> libraryModels) {
+		final Map<String, ICType> map = new HashMap<>();
 		for (final var model : libraryModels) {
 			for (final var type : model.getTypeModels()) {
-				fill(map, type.typeName(), type.model());
+				fill(map, type.typeName(), type.cType());
 			}
 		}
 
