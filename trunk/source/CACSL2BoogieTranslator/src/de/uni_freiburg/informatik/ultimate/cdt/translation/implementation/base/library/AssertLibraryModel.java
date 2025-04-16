@@ -1,9 +1,11 @@
 /*
  * Copyright (C) 2013-2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2021-2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022-2025 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * Copyright (C) 2023 Manuel Bentele (bentele@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2025 University of Freiburg
  *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.

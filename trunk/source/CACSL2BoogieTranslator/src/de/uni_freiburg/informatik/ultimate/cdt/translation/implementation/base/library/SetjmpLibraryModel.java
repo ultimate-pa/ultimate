@@ -1,25 +1,8 @@
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-
 /*
  * Copyright (C) 2013-2017 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2020 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2013-2022 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2021-2024 Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  * Copyright (C) 2022-2025 Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2025 University of Freiburg
@@ -45,7 +28,26 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * containing parts covered by the terms of the Eclipse Public License, the
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
- */public class SetjmpLibraryModel implements ILibraryModel {
+ */
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
+
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+
+public class SetjmpLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionTranslation mExpressionTranslation;
 
