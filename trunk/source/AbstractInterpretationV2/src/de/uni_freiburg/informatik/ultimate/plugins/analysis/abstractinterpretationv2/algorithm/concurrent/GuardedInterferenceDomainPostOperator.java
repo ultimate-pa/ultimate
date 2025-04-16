@@ -63,6 +63,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 		// 1. normal poststate
 		final var states = mUnderlyingPostOp.apply(oldstate.state(), transition);
+		// adjust abstract location according to new location
 		final var guardedStates = states.stream()
 				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, oldstate.threadCounter(),
 						oldstate.abstractLocationState().copyToNewState(transition.getTarget())))

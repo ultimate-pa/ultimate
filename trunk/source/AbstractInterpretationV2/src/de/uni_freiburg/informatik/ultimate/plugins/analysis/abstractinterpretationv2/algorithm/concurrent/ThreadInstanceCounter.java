@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
@@ -126,11 +125,11 @@ public class ThreadInstanceCounter {
 		if (!(o instanceof final ThreadInstanceCounter other)) {
 			return false;
 		}
-		return Objects.equals(mThreadInstances, other.mThreadInstances);
+		return mThreadInstances.equals(other.mThreadInstances);
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(mThreadInstances);
+		return mThreadInstances.hashCode();
 	}
 }

@@ -166,9 +166,10 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	// TODO: we gotta define unique bottom element, probably set loc and counter to bottom
 	// when state bottom too ?
+	// For now we are just saying any states with state().isBottom are the same. so "unique" bottom element this way
 	@Override
 	public boolean isBottom() {
-		return false;
+		return state().isBottom();
 	}
 
 	public boolean isStateBottom() {
@@ -177,6 +178,9 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	@Override
 	public boolean isEqualTo(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		if (mState.isBottom() && other.mState.isBottom()) {
+			return true;
+		}
 		if (!(other.state().isEqualTo(this.state()))) {
 			return false;
 		}
@@ -191,6 +195,9 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	@Override
 	public SubsetResult isSubsetOf(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		if (mState.isBottom() && other.mState.isBottom()) {
+			return SubsetResult.EQUAL;
+		}
 		// TODO: maybe be less strict
 		final SubsetResult stateResult = state().isSubsetOf(other.state());
 		final var threadCounterResult = threadCounter().isSubsetOf(other.threadCounter());

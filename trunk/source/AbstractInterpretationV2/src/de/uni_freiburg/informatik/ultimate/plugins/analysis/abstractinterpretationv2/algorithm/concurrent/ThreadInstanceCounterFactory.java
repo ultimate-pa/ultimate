@@ -4,20 +4,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 
 public class ThreadInstanceCounterFactory {
-	private final CfgSmtToolkit mCfgSmtToolkit;
+	private final Set<String> mThreadNameSet;
 
 	public ThreadInstanceCounterFactory(final IIcfg<?> cfg) {
-		mCfgSmtToolkit = cfg.getCfgSmtToolkit();
+		mThreadNameSet = cfg.getCfgSmtToolkit().getProcedures();
 	}
 
 	public ThreadInstanceCounter createBottomState() {
 		final Map<String, Integer> bottomStateMap = new HashMap<>();
-		final Set<String> threadNameSet = mCfgSmtToolkit.getProcedures();
-		for (final String threadName : threadNameSet) {
+		for (final String threadName : mThreadNameSet) {
 			bottomStateMap.put(threadName, 0);
 		}
 		return new ThreadInstanceCounter(bottomStateMap);
@@ -25,8 +23,7 @@ public class ThreadInstanceCounterFactory {
 
 	public ThreadInstanceCounter createTopState() {
 		final Map<String, Integer> topStateMap = new HashMap<>();
-		final Set<String> threadNameSet = mCfgSmtToolkit.getProcedures();
-		for (final String threadName : threadNameSet) {
+		for (final String threadName : mThreadNameSet) {
 			topStateMap.put(threadName, 2);
 		}
 		return new ThreadInstanceCounter(topStateMap);

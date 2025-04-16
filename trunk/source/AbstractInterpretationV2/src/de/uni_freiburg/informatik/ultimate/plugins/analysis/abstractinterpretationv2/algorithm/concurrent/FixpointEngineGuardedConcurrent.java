@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.For
 
 // TODO: fix nondeterminism caused by random union orders and/or widening!
 public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
-		implements IFixpointEngine<UNDERLYINGSTATE, ACTION, VARDECL, LOC> {
+		implements IFixpointEngine<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> {
 
 	private final int mMaxUnwindings;
 	private final int mMaxInterferenceFixpointUnwindings;
