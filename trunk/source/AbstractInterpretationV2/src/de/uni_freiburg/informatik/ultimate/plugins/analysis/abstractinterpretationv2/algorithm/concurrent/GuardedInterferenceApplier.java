@@ -55,6 +55,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mAbstractLocationMap = globalMap;
 		mMaxItf = maxItf;
 		mMaxParallelStates = maxParallelStates;
+		iterationsReached = 0;
 	}
 
 	public AbstractInterferenceState<STATE, ACTION, LOC> getInterferences() {
@@ -114,6 +115,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			mIterations++;
 			if (mIterations > iterationsReached) {
 				iterationsReached = mIterations;
+				mLogger.warn(mIterations);
 			}
 			// state just to check if fixpoint reached after this iteration
 			final var oldDisj = newDisj;
@@ -132,6 +134,12 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 			newDisj = DisjunctiveAbstractState.createDisjunction(possibleGuardedInterferenceDomainStates,
 					mMaxParallelStates);
+			if (mIterations < mMaxItf) {
+				newDisj = newDisj.union(oldDisj);
+			} else {
+				newDisj = newDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), oldDisj);
+			}
+
 			final boolean changed = newDisj.isSubsetOf(oldDisj) != SubsetResult.NONE ? false : true;
 			if (!changed) {
 				break;
@@ -176,13 +184,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 
 			// Interferences should not remove/add variables
 			assert postState.getVariables().equals(blankState.getVariables());
-
-			// TODO: actually not do union ?
-			if (mIterations > mMaxItf) {
-				blankState = mGuardedInterferenceDomain.getWideningOperator().apply(blankState, postState);
-			} else {
-				blankState = blankState.union(postState);
-			}
 
 			allPossibleOutcomes.add(postState);
 		}

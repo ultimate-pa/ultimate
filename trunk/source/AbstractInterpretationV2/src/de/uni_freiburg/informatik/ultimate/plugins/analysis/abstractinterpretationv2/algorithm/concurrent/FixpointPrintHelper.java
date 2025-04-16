@@ -54,8 +54,17 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		seenLocs.add(loc);
 		final var terms = result.getLoc2Term().get(loc);
 		if (terms != null) {
-			logger.error("State: " + result.getLoc2States().get(loc));
-			logger.error("Unioned State: " + result.getLoc2SingleStates().get(loc));
+//			logger.error("State: " + result.getLoc2States().get(loc));
+			logger.error("Amount of parallel states: " + result.getLoc2States().get(loc).size());
+			logger.error("Unioned State: "
+					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
+							.state());
+			logger.error("Unioned ThreadCounter: "
+					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
+							.threadCounter());
+			logger.error("Unioned AbstractLocation: "
+					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
+							.abstractLocationState());
 			if (loc.getOutgoingEdges().size() != 0) {
 				logger.error("|");
 				logger.error(loc.getOutgoingEdges());

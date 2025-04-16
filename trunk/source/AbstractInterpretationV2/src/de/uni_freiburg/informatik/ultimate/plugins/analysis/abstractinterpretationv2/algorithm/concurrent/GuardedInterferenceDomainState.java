@@ -213,12 +213,14 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	@Override
 	public String toString() {
-		return state().toString() + " | " + threadCounter().toString() + " | " + abstractLocationState().toString();
+		return "- STATE:" + state().toString() + " COUNTER:" + threadCounter().toString() + " LOCATIONS:"
+				+ abstractLocationState().toString();
 	}
 
 	@Override
 	public String toLogString() {
-		return state().toString() + " | " + threadCounter().toString() + " | " + abstractLocationState().toString();
+		return "STATE:" + state().toString() + " | COUNTER:" + threadCounter().toString() + " | LOCATIONS:"
+				+ abstractLocationState().toString();
 	}
 
 }

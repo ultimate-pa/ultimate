@@ -107,7 +107,13 @@ public class ThreadInstanceCounter {
 	public String toString() {
 		final StringBuilder resulString = new StringBuilder();
 		for (final String thread : mThreadNameSet) {
-			resulString.append(", ").append(thread).append("=").append(mThreadInstances.get(thread));
+			if (resulString.isEmpty()) {
+				resulString.append(thread).append("=").append(mThreadInstances.get(thread));
+
+			} else {
+				resulString.append(" ").append(thread).append("=").append(mThreadInstances.get(thread));
+
+			}
 		}
 		return resulString.toString();
 	}
