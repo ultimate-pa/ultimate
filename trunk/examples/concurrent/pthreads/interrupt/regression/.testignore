@@ -1,0 +1,8 @@
+# Timeout with Automizer and GemCutter
+TIMEOUT:
+- task: program-3dfs-sb17-skeleton-3.i
+  settings: ReachSafety-32bit-Automizer.epf
+  toolchain: ReachSafety.xml
+- task: program-3dfs-sb17-skeleton-3.i
+  settings: ReachSafety-32bit-GemCutter.epf
+  toolchain: ReachSafety.xml
