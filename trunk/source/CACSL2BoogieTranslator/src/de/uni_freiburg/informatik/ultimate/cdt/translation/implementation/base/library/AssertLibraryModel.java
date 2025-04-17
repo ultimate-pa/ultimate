@@ -50,6 +50,15 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
+/**
+ * This class contains the handling of assert macros from the header assert.h (C11 7.2.1.1) and static asserts (C11
+ * 6.7.10, incl. the version from C23). This includes also the functions __assert_fail and __assert_func from
+ * preprocessing with GCC. See also https://en.cppreference.com/w/c/error/assert and
+ * https://en.cppreference.com/w/c/language/_Static_assert
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Manuel Bentele (bentele@informatik.uni-freiburg.de)
+ */
 public class AssertLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;

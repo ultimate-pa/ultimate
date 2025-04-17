@@ -53,6 +53,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Model of time.h (C11 7.27, https://en.cppreference.com/w/c/header/time)
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class TimeLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionTranslation mExpressionTranslation;

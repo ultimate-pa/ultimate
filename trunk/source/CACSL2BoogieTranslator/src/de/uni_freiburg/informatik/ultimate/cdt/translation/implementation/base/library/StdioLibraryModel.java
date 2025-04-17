@@ -74,6 +74,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Model of functions performing input and output from stdio.h (C11 7.21, https://en.cppreference.com/w/c/header/stdio).
+ * We cannot translate input and output properly in Boogie, therefore we either abstract or overapproximate most of
+ * these functions.
+ */
 public class StdioLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;

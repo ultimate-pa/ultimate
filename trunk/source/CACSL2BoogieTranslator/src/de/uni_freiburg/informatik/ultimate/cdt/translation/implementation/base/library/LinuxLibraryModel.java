@@ -64,6 +64,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Modelling of various C functions form Linux, see https://man7.org/linux/man-pages/
+ */
 public class LinuxLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
@@ -87,8 +90,8 @@ public class LinuxLibraryModel implements ILibraryModel {
 				/** https://www.man7.org/linux/man-pages/man3/sleep.3.html **/
 				new FunctionModel("sleep", this::handleSleep),
 				/**
-				 * https://linux.die.net/man/3/ntohs "htonl, htons, ntohl, ntohs - convert values between host and
-				 * network byte order"
+				 * https://man7.org/linux/man-pages/man3/htons.3p.html "htonl, htons, ntohl, ntohs - convert values
+				 * between host and network byte order"
 				 *
 				 * We simply overapproximate those functions.
 				 */

@@ -64,6 +64,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
+/**
+ * This class handles functions and types that are defined in stdatomic.h (C11 7.17,
+ * https://en.cppreference.com/w/c/atomic), including the GCC atomic functions that are used after preprocessing
+ * (https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html).
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
+ */
 public class AtomicLibraryModel implements ILibraryModel {
 	/**
 	 * See MEMORY_ORDER_SEQ_CST in stdatomic.h
@@ -86,9 +94,6 @@ public class AtomicLibraryModel implements ILibraryModel {
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
 		final List<FunctionModel> result = new ArrayList<>();
-
-		// Atomic operations https://en.cppreference.com/w/c/atomic
-		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
 
 		result.add(new FunctionModel("__atomic_load", this::handleAtomicLoad));
 		result.add(new FunctionModel("__atomic_store", this::handleAtomicStore));

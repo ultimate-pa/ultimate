@@ -68,6 +68,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Model of functions from string.h (C11 7.24, https://en.cppreference.com/w/c/header/string).
+ */
 public class StringLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;

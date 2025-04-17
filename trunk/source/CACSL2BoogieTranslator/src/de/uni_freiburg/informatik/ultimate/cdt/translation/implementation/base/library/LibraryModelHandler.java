@@ -53,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * The {@link LibraryModelHandler} creates the translation for various functions where we have our own specification or
- * implementation. This is typically the case for functions defined in the C standard, but also for various standard
- * libraries or SV-COMP extensions.
+ * The {@link LibraryModelHandler} creates the translation for various functions and types where we have our own
+ * specification or implementation. This is typically the case for functions defined in the C standard, but also for
+ * various standard libraries or SV-COMP extensions.
  *
  * @author Markus Lindenmann,
  * @author Matthias Heizmann

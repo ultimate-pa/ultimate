@@ -47,6 +47,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * C11 7.13 Nonlocal jumps <setjmp.h> (https://en.cppreference.com/w/c/header/setjmp)
+ */
 public class SetjmpLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final ExpressionTranslation mExpressionTranslation;

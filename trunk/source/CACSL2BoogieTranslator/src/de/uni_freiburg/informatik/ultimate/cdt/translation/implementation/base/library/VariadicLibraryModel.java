@@ -68,6 +68,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Model of functions to handle variadic arguments from stdarg.h (C11 7.1, https://en.cppreference.com/w/c/variadic),
+ * incl. the GCC builtins for this purpose.
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class VariadicLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final MemoryHandler mMemoryHandler;
@@ -92,7 +98,6 @@ public class VariadicLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
-		// 7.16 Variable arguments https://en.cppreference.com/w/c/variadic
 		return List.of(new FunctionModel("va_start", this::handleVaStart),
 				new FunctionModel("__builtin_va_start", this::handleVaStart),
 				new FunctionModel("va_end", this::handleVaEnd),

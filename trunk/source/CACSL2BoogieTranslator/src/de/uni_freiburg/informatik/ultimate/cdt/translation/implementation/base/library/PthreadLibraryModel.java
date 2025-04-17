@@ -81,6 +81,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * Model of functions and types from pthread.h (https://pubs.opengroup.org/onlinepubs/7908799/xsh/pthread.h.html) to use
+ * concurrency in C
+ */
 public class PthreadLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 	private final FlatSymbolTable mSymboltable;

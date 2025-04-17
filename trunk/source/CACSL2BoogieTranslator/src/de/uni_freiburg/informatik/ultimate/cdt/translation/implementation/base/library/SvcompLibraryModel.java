@@ -71,6 +71,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IN
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
+/**
+ * Model of SV-COMP specific functions, see https://sv-comp.sosy-lab.org/2025/rules.php under Benchmark Verification
+ * Tasks. This includes functions to receive non-deterministic values (__VERIFIER_nondet_X) and functions for atomic
+ * blocks (__VERIFIER_atomic_*). Note: These functions do not occur in the C standard or any of the libraries!
+ */
 public class SvcompLibraryModel implements ILibraryModel {
 	/**
 	 * If we construct an auxvar that models a nondeterministic input, we havoc that auxvar afterwards to ensure that we

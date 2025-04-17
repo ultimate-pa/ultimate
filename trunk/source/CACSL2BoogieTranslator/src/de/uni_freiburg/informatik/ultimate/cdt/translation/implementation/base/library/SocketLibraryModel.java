@@ -38,6 +38,12 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
+/**
+ * Functions from socket.h (see https://pubs.opengroup.org/onlinepubs/009604499/basedefs/sys/socket.h.html). We simply
+ * overapproximate the return values of these functions.
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public class SocketLibraryModel implements ILibraryModel {
 	private final FunctionModelHelper mHelper;
 
@@ -49,10 +55,6 @@ public class SocketLibraryModel implements ILibraryModel {
 	public Collection<FunctionModel> getFunctionModels() {
 		final List<FunctionModel> result = new ArrayList<>();
 
-		/**
-		 * Function from socket.h (see https://pubs.opengroup.org/onlinepubs/009604499/basedefs/sys/socket.h.html). We
-		 * simply overapproximate the return values of these functions
-		 */
 		// https://pubs.opengroup.org/onlinepubs/009604499/functions/accept.html
 		result.add(new FunctionModel("accept", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
 				loc, name, 3, new CPrimitive(CPrimitives.INT))));
