@@ -28,34 +28,48 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.Collection;
 
-import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
+/**
+ * An interface to abstract the model of libraries (mostly libraries from the C standard) in Boogie.
+ *
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
 public interface ILibraryModel {
 	/**
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 * Model of a translated function, consisting of the name of the function and our translated model (represented as a
+	 * {@link IFunctionModelHandler}).
 	 */
-	@FunctionalInterface
-	interface IFunctionModelHandler {
-		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-				String methodName);
-	}
-
-	public record FunctionModel(String functionName, IFunctionModelHandler model) {
+	public record FunctionModel(String functionName, IFunctionModelHandler functionModel) {
 		// empty
 	}
 
+	/**
+	 * Model of a predefined type, consisting of the name of the type and our translated model (as a {@code ICType}).
+	 */
 	public record TypeModel(String typeName, ICType cType) {
 		// empty
 	}
 
+	/**
+	 * Gets the model of the supported functions.
+	 *
+	 * @return a collection of {@link FunctionModel} of the functions that can be handled.
+	 */
 	Collection<FunctionModel> getFunctionModels();
 
+	/**
+	 * Gets the functions that are not supported.
+	 *
+	 * @return names of the unsupported functions, i.e., where we expect to cancel the translation on encounter.
+	 */
 	Collection<String> getUnsupportedFunctions();
 
+	/**
+	 * Gets the model of the predefined types.
+	 *
+	 * @return a collection of {@link TypeModel} of the types that are defined.
+	 */
 	Collection<TypeModel> getTypeModels();
 }

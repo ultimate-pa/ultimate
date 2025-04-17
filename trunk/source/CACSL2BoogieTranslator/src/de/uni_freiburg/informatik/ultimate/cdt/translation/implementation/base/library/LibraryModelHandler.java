@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -130,7 +129,7 @@ public class LibraryModelHandler {
 		final Map<String, IFunctionModelHandler> map = new HashMap<>();
 		for (final var model : libraryModels) {
 			for (final var fun : model.getFunctionModels()) {
-				fill(map, fun.functionName(), fun.model());
+				fill(map, fun.functionName(), fun.functionModel());
 			}
 			for (final var unsupportedName : model.getUnsupportedFunctions()) {
 				fill(map, unsupportedName, die);
@@ -155,5 +154,14 @@ public class LibraryModelHandler {
 		if (old != null) {
 			throw new AssertionError("Accidentally overwrote definition for " + key);
 		}
+	}
+
+	/**
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 */
+	@FunctionalInterface
+	interface IFunctionModelHandler {
+		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+				String methodName);
 	}
 }
