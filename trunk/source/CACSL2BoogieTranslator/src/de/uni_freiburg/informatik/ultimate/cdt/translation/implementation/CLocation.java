@@ -26,12 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
-import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.LineOffsetComputer;
@@ -42,16 +46,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CLocation extends CACSLLocation {
-
 	private static final long serialVersionUID = -7497131349540138810L;
-	private final IASTNode mNode;
+	private final List<IASTNode> mNodes;
 	private final LineDirectiveMapping mLineDirectiveMapping;
 	private final LineOffsetComputer mLineOffsetComputer;
 
 	protected CLocation(final IASTNode node, final boolean ignoreDuringBacktranslation,
 			final LineDirectiveMapping lineDirectiveMapping, final LineOffsetComputer lineOffsetComputer) {
+		this(node == null ? List.of() : List.of(node), ignoreDuringBacktranslation, lineDirectiveMapping,
+				lineOffsetComputer);
+	}
+
+	private CLocation(final List<IASTNode> nodes, final boolean ignoreDuringBacktranslation,
+			final LineDirectiveMapping lineDirectiveMapping, final LineOffsetComputer lineOffsetComputer) {
 		super(ignoreDuringBacktranslation);
-		mNode = node;
+		mNodes = nodes;
 		mLineDirectiveMapping = lineDirectiveMapping;
 		mLineOffsetComputer = lineOffsetComputer;
 	}
@@ -63,38 +72,40 @@ public class CLocation extends CACSLLocation {
 		return mLineDirectiveMapping.getOriginal(lineInTu, filename);
 	}
 
+	private Stream<IASTFileLocation> getValidFileLocations() {
+		return mNodes.stream().map(IASTNode::getFileLocation).filter(Objects::nonNull);
+	}
+
+	private static <T> T getUniqueElementOrNull(final Stream<T> stream) {
+		return stream.collect(
+				Collectors.collectingAndThen(Collectors.toSet(), x -> x.size() == 1 ? x.iterator().next() : null));
+	}
+
 	@Override
 	public String getFileName() {
-		if (mNode != null) {
-			return getOriginalLocation(mNode.getFileLocation().getStartingLineNumber(),
-					mNode.getFileLocation().getFileName()).getSecond();
-		}
-		return null;
+		return getUniqueElementOrNull(getValidFileLocations()
+				.map(x -> getOriginalLocation(x.getStartingLineNumber(), x.getFileName()).getSecond()));
 	}
 
 	@Override
 	public int getStartLine() {
-		if (mNode != null && mNode.getFileLocation() != null) {
-			return getOriginalLocation(mNode.getFileLocation().getStartingLineNumber(),
-					mNode.getFileLocation().getFileName()).getFirst();
-		}
-		return -1;
+		return getValidFileLocations()
+				.mapToInt(x -> getOriginalLocation(x.getStartingLineNumber(), x.getFileName()).getFirst()).min()
+				.orElse(-1);
 	}
 
 	@Override
 	public int getEndLine() {
-		if (mNode != null && mNode.getFileLocation() != null) {
-			return getOriginalLocation(mNode.getFileLocation().getEndingLineNumber(),
-					mNode.getFileLocation().getFileName()).getFirst();
-		}
-		return -1;
+		return getValidFileLocations()
+				.mapToInt(x -> getOriginalLocation(x.getEndingLineNumber(), x.getFileName()).getFirst()).max()
+				.orElse(-1);
 	}
 
 	@Override
 	public int getStartColumn() {
 		final int startLine = getStartLine();
 		if (mLineOffsetComputer == null || startLine == -1
-				|| startLine != mNode.getFileLocation().getStartingLineNumber()) {
+				|| startLine != getValidFileLocations().mapToInt(x -> x.getStartingLineNumber()).min().getAsInt()) {
 			// If the start line differs from the "actual" start line (i.e., there is a line directive at this
 			// location), we don't return a column, since columns with line directives are not reliable.
 			// The same holds, if we cannot compute the column (if there is no start line or no LineOffsetComputer).
@@ -102,13 +113,14 @@ public class CLocation extends CACSLLocation {
 		}
 		final int lineOffset = mLineOffsetComputer.getOffset(startLine);
 		// The offset starts with 0, but the column start with 1 (as specified by the SV-COMP)
-		return mNode.getFileLocation().getNodeOffset() - lineOffset + 1;
+		return getValidFileLocations().mapToInt(IASTFileLocation::getNodeOffset).min().getAsInt() - lineOffset + 1;
 	}
 
 	@Override
 	public int getEndColumn() {
 		final int endLine = getEndLine();
-		if (mLineOffsetComputer == null || endLine == -1 || endLine != mNode.getFileLocation().getEndingLineNumber()) {
+		if (mLineOffsetComputer == null || endLine == -1
+				|| endLine != getValidFileLocations().mapToInt(x -> x.getEndingLineNumber()).max().getAsInt()) {
 			// If the end line differs from the "actual" end line (i.e., there is a line directive at this
 			// location), we don't return a column, since columns with line directives are not reliable.
 			// The same holds, if we cannot compute the column (if there is no end line or no LineOffsetComputer).
@@ -116,11 +128,13 @@ public class CLocation extends CACSLLocation {
 		}
 		final int lineOffset = mLineOffsetComputer.getOffset(endLine);
 		// The offset starts with 0, but the column start with 1 (as specified by the SV-COMP)
-		return mNode.getFileLocation().getNodeOffset() + mNode.getFileLocation().getNodeLength() - lineOffset + 1;
+		final var lastLoc = getValidFileLocations().max((Comparator.comparing(IASTFileLocation::getNodeOffset))).get();
+		return lastLoc.getNodeOffset() + lastLoc.getNodeLength() - lineOffset + 1;
 	}
 
+	@Deprecated
 	public IASTNode getNode() {
-		return mNode;
+		return mNodes.isEmpty() ? null : mNodes.getFirst();
 	}
 
 	public LineDirectiveMapping getLineDirectiveMapping() {
@@ -133,34 +147,33 @@ public class CLocation extends CACSLLocation {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		if (mNode != null) {
-			sb.append("C: ");
-			sb.append(mNode.getRawSignature());
-			sb.append(" [");
-			if (getStartLine() == getEndLine()) {
-				sb.append(getStartLine());
-			} else {
-				sb.append(getStartLine());
-				sb.append("-");
-				sb.append(getEndLine());
-			}
-			sb.append("]");
+		if (mNodes.isEmpty()) {
+			return "";
 		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append("C: ").append(mNodes.stream().map(IASTNode::getRawSignature).toList());
+		sb.append(" [");
+		if (getStartLine() == getEndLine()) {
+			sb.append(getStartLine());
+		} else {
+			sb.append(getStartLine());
+			sb.append("-");
+			sb.append(getEndLine());
+		}
+		sb.append("]");
 
 		return sb.toString();
 	}
 
 	@Override
 	public IAnnotations merge(final IAnnotations other) {
-		if (other == null) {
+		if (other == null || this == other) {
 			return this;
 		}
 		if (other instanceof CLocation) {
 			final CLocation otherCloc = (CLocation) other;
 			final boolean ignoreDuringBacktranslation =
 					ignoreDuringBacktranslation() && otherCloc.ignoreDuringBacktranslation();
-			final IASTNode node = getMergedNode(otherCloc);
 			LineDirectiveMapping resultLineDirectiveMapping;
 			if (mLineDirectiveMapping == null) {
 				resultLineDirectiveMapping = otherCloc.getLineDirectiveMapping();
@@ -173,7 +186,8 @@ public class CLocation extends CACSLLocation {
 			} else {
 				resultLineOffsetComputer = mLineOffsetComputer;
 			}
-			return new CLocation(node, ignoreDuringBacktranslation, resultLineDirectiveMapping,
+			final List<IASTNode> resultNodes = concatNodes(mNodes, otherCloc.mNodes);
+			return new CLocation(resultNodes, ignoreDuringBacktranslation, resultLineDirectiveMapping,
 					resultLineOffsetComputer);
 		} else if (other instanceof ILocation) {
 			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
@@ -181,46 +195,51 @@ public class CLocation extends CACSLLocation {
 		throw new UnmergeableAnnotationsException(this, other);
 	}
 
-	private IASTNode getMergedNode(final CLocation otherCloc) {
-		final IASTNode otherNode = otherCloc.getNode();
-		final IASTNode myNode = getNode();
-		if (myNode == null && otherNode == null) {
-			return null;
+	private static List<IASTNode> concatNodes(final List<IASTNode> nodes1, final List<IASTNode> nodes2) {
+		if (nodes2.isEmpty()) {
+			return nodes1;
 		}
-		if (myNode == null) {
-			return otherNode;
-		} else if (otherNode == null) {
-			return myNode;
-		} else {
-			// we have two nodes and want to merge them; if one of both is a translation unit, we take the other
-			// one. If both are not translation units, we try to find a common parent
-			if (myNode instanceof IASTTranslationUnit) {
-				return otherNode;
-			} else if (otherNode instanceof IASTTranslationUnit) {
-				return myNode;
-			} else {
-				final Collection<IASTNode> nodes = new HashSet<>();
-				nodes.add(myNode);
-				nodes.add(otherNode);
-				return CdtASTUtils.findCommonParent(nodes);
+		if (nodes1.isEmpty()) {
+			return nodes2;
+		}
+		final Set<IASTNode> nodeSet1 = new HashSet<>(nodes1);
+		final Set<IASTNode> nodeSet2 = new HashSet<>(nodes2);
+		// Keep those nodes that are not duplicates and don't have any parent in the other list
+		return Stream.concat(nodes1.stream().filter(x -> !hasParent(x, nodeSet2)),
+				nodes2.stream().filter(x -> !nodeSet1.contains(x) && !hasParent(x, nodeSet1))).toList();
+	}
+
+	private static boolean hasParent(final IASTNode node, final Set<IASTNode> otherNodes) {
+		for (IASTNode current = node.getParent(); current != null; current = current.getParent()) {
+			if (otherNodes.contains(current)) {
+				return true;
 			}
 		}
+		return false;
 	}
 
 	@Override
 	public String getFunction() {
-		final IASTFunctionDefinition scope = CdtASTUtils.findScope(mNode);
-		if (scope == null) {
-			return null;
-		}
-		return scope.getDeclarator().getName().toString();
+		return getUniqueElementOrNull(
+				mNodes.stream().map(x -> CdtASTUtils.findScope(x).getDeclarator().getName().toString()));
 	}
 
 	/**
 	 * Returns a location for the parent node of this.
 	 */
 	public CLocation getParent() {
-		return new CLocation(mNode.getParent(), ignoreDuringBacktranslation(), mLineDirectiveMapping,
-				mLineOffsetComputer);
+		final IASTNode uniqueParent = getUniqueElementOrNull(mNodes.stream().map(IASTNode::getParent));
+		if (uniqueParent == null) {
+			return null;
+		}
+		return new CLocation(uniqueParent, ignoreDuringBacktranslation(), mLineDirectiveMapping, mLineOffsetComputer);
+	}
+
+	public CLocation createIgnoreCopy() {
+		return new CLocation(mNodes, true, mLineDirectiveMapping, mLineOffsetComputer);
+	}
+
+	public CLocation copy() {
+		return new CLocation(mNodes, ignoreDuringBacktranslation(), mLineDirectiveMapping, mLineOffsetComputer);
 	}
 }
