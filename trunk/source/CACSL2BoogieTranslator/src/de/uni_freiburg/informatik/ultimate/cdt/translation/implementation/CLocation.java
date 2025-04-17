@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.C
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class CLocation extends CACSLLocation {
 
@@ -55,15 +56,18 @@ public class CLocation extends CACSLLocation {
 		mLineOffsetComputer = lineOffsetComputer;
 	}
 
+	private Pair<Integer, String> getOriginalLocation(final int lineInTu, final String filename) {
+		if (mLineDirectiveMapping == null) {
+			return new Pair<>(lineInTu, filename);
+		}
+		return mLineDirectiveMapping.getOriginal(lineInTu, filename);
+	}
+
 	@Override
 	public String getFileName() {
 		if (mNode != null) {
-			if (mLineDirectiveMapping == null) {
-				return mNode.getFileLocation().getFileName();
-			}
-			final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
-			final String currentFilename = mNode.getFileLocation().getFileName();
-			return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getSecond();
+			return getOriginalLocation(mNode.getFileLocation().getStartingLineNumber(),
+					mNode.getFileLocation().getFileName()).getSecond();
 		}
 		return null;
 	}
@@ -71,12 +75,8 @@ public class CLocation extends CACSLLocation {
 	@Override
 	public int getStartLine() {
 		if (mNode != null && mNode.getFileLocation() != null) {
-			if (mLineDirectiveMapping == null) {
-				return mNode.getFileLocation().getStartingLineNumber();
-			}
-			final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
-			final String currentFilename = mNode.getFileLocation().getFileName();
-			return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
+			return getOriginalLocation(mNode.getFileLocation().getStartingLineNumber(),
+					mNode.getFileLocation().getFileName()).getFirst();
 		}
 		return -1;
 	}
@@ -84,12 +84,8 @@ public class CLocation extends CACSLLocation {
 	@Override
 	public int getEndLine() {
 		if (mNode != null && mNode.getFileLocation() != null) {
-			if (mLineDirectiveMapping == null) {
-				return mNode.getFileLocation().getEndingLineNumber();
-			}
-			final int currentLineNumber = mNode.getFileLocation().getEndingLineNumber();
-			final String currentFilename = mNode.getFileLocation().getFileName();
-			return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
+			return getOriginalLocation(mNode.getFileLocation().getEndingLineNumber(),
+					mNode.getFileLocation().getFileName()).getFirst();
 		}
 		return -1;
 	}
@@ -97,7 +93,11 @@ public class CLocation extends CACSLLocation {
 	@Override
 	public int getStartColumn() {
 		final int startLine = getStartLine();
-		if (mLineOffsetComputer == null || startLine == -1) {
+		if (mLineOffsetComputer == null || startLine == -1
+				|| startLine != mNode.getFileLocation().getStartingLineNumber()) {
+			// If the start line differs from the "actual" start line (i.e., there is a line directive at this
+			// location), we don't return a column, since columns with line directives are not reliable.
+			// The same holds, if we cannot compute the column (if there is no start line or no LineOffsetComputer).
 			return -1;
 		}
 		final int lineOffset = mLineOffsetComputer.getOffset(startLine);
@@ -108,7 +108,10 @@ public class CLocation extends CACSLLocation {
 	@Override
 	public int getEndColumn() {
 		final int endLine = getEndLine();
-		if (mLineOffsetComputer == null || endLine == -1) {
+		if (mLineOffsetComputer == null || endLine == -1 || endLine != mNode.getFileLocation().getEndingLineNumber()) {
+			// If the end line differs from the "actual" end line (i.e., there is a line directive at this
+			// location), we don't return a column, since columns with line directives are not reliable.
+			// The same holds, if we cannot compute the column (if there is no end line or no LineOffsetComputer).
 			return -1;
 		}
 		final int lineOffset = mLineOffsetComputer.getOffset(endLine);
