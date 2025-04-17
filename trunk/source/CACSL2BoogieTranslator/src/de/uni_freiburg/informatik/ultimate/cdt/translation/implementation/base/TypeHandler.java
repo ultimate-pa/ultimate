@@ -78,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -160,7 +159,7 @@ public class TypeHandler implements ITypeHandler {
 	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
-	private LibraryModelHandler mLibraryHandler;
+	private Map<String, ICType> mLibraryTypes;
 
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
@@ -275,11 +274,11 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		final ICType libraryType = mLibraryHandler.translateType(node);
+		final String cId = node.getName().toString();
+		final ICType libraryType = mLibraryTypes.get(cId);
 		if (libraryType != null) {
 			return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), false, libraryType);
 		}
-		final String cId = node.getName().toString();
 		final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
 		if (stv == null) {
@@ -1069,7 +1068,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public void setLibraryModelHandler(final LibraryModelHandler handler) {
-		mLibraryHandler = handler;
+	public void setLibraryTypes(final Map<String, ICType> libraryTypes) {
+		mLibraryTypes = libraryTypes;
 	}
 }

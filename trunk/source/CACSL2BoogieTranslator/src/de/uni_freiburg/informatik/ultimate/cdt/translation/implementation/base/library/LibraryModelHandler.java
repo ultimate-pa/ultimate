@@ -39,7 +39,6 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
-import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
@@ -120,9 +119,8 @@ public class LibraryModelHandler {
 		return null;
 	}
 
-	public ICType translateType(final IASTNamedTypeSpecifier node) {
-		final String name = node.getName().toString();
-		return mTypeModels.get(name);
+	public Map<String, ICType> getTypeModels() {
+		return mTypeModels;
 	}
 
 	private static Map<String, IFunctionModelHandler> getFunctionModels(final List<ILibraryModel> libraryModels) {
