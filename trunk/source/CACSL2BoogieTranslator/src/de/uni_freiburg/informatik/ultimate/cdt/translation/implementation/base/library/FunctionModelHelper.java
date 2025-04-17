@@ -78,6 +78,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
+/**
+ * Helper class for implementations of {@link ILibraryModel}
+ */
 public class FunctionModelHelper {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final MemoryHandler mMemoryHandler;
@@ -100,6 +103,10 @@ public class FunctionModelHelper {
 		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
 	}
 
+	/**
+	 * Check if the expected number of arguments matches the actual size of {@code arguments} and throws an exception
+	 * otherwise.
+	 */
 	public void checkArguments(final ILocation loc, final int expectedArgs, final String name,
 			final IASTInitializerClause[] arguments) {
 		if (arguments.length != expectedArgs) {
@@ -148,10 +155,13 @@ public class FunctionModelHelper {
 	 * as an overapproximation. If you overapproximate a function call, don't forget to dispatch the function call's
 	 * arguments: the arguments may have side effects.
 	 *
+	 * @param loc
+	 *            a location
 	 * @param functionName
 	 *            the named of the function will be annotated to the overapproximation
 	 * @param resultType
 	 *            CType that determinies the type of the auxiliary variable
+	 * @return An ExpressionResult that contains an overapproximated function call with the name functionName.
 	 */
 	public ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
 			final ICType resultType) {
@@ -211,6 +221,7 @@ public class FunctionModelHelper {
 	 *            type of {@link Check} for assertion or assumption statement annotation.
 	 * @param expr
 	 *            expression for assertion or assumption statement.
+	 * @return {@link Statement} annotated with a {@link Check} annotation.
 	 *
 	 * @see {@link #createAnnotatedAssertOrAssume(ILocation, String, boolean, Spec, Expression, String)}
 	 */
@@ -284,11 +295,25 @@ public class FunctionModelHelper {
 		return st;
 	}
 
+	/**
+	 * Checks if the given expression is a string literal.
+	 *
+	 * @param expr
+	 *            An expression
+	 * @return true iff expr is a string literal
+	 */
 	public boolean isStringLiteral(final IASTInitializerClause expr) {
 		return expr instanceof IASTLiteralExpression
 				&& ((IASTLiteralExpression) expr).getKind() == IASTLiteralExpression.lk_string_literal;
 	}
 
+	/**
+	 * Get a non-deterministic string.
+	 *
+	 * @param loc
+	 *            A location
+	 * @return A model of a non-deterministic string or null (at the given location).
+	 */
 	public ExpressionResult getNondetStringOrNull(final ILocation loc) {
 		final var charType = new CPrimitive(CPrimitives.CHAR);
 		final var sizeT = mTypeSizes.getSizeT();
