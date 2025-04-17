@@ -56,7 +56,6 @@
 			<unit id="org.eclipse.orbit.maven.junit.feature.group" version="4.32.0"/>
 			<unit id="org.eclipse.orbit.maven.lucene.feature.group" version="4.32.0"/>
 		</location>
-		<location path="${workspace_loc}/../p2-dependencies" type="Directory" includeSource="true"/>
 		<location includeDependencyDepth="none" includeDependencyScopes="compile" includeSource="true" missingManifest="generate" type="Maven">
 			<dependencies>
 				<dependency>
@@ -117,6 +116,12 @@
 					<groupId>xerces</groupId>
 					<artifactId>xercesImpl</artifactId>
 					<version>2.12.2</version>
+					<type>jar</type>
+				</dependency>
+				<dependency>
+					<groupId>de.uni-freiburg.informatik.ultimate</groupId>
+					<artifactId>smtinterpol</artifactId>
+					<version>2.5-1388-ga5a4ab0c</version>
 					<type>jar</type>
 				</dependency>
 			</dependencies>
