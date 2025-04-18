@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.SmtFunctionsAndAxioms;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -302,10 +301,11 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final boolean isProcEntry = oldLoc.equals(mOriginalIcfg.getProcedureEntryNodes().get(proc));
 		final boolean isProcExit = oldLoc.equals(mOriginalIcfg.getProcedureExitNodes().get(proc));
 		final boolean isLoopLocation = mOriginalIcfg.getLoopLocations().contains(oldLoc);
-		final boolean isLabel = IcfgUtils.isLabelNode(mOriginalIcfg, oldLoc);
+		final boolean isLocationOfInterest = mOriginalIcfg.getLocationsOfInterest().contains(oldLoc);
 
 		// add fresh location to resultIcfg
-		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLabel);
+		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
+				isLocationOfInterest);
 
 		// cache created IcfgLocation
 		mOldLoc2NewLoc.put(oldLoc, freshLoc);

@@ -77,6 +77,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Set<BoogieIcfgLocation> mLoopLocations;
+	private final Set<BoogieIcfgLocation> mLocationsOfInterest;
 	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
 	private final NestedMap2<String, String, BoogieIcfgLocation> mLabelNodes;
 	private final Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> mLocNodes;
@@ -108,6 +109,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		mLocNodes = new LinkedHashMap<>();
 		mErrorNodes = new LinkedHashMap<>();
 		mLoopLocations = new LinkedHashSet<>();
+		mLocationsOfInterest = new LinkedHashSet<>();
 		mInitialNodes = new LinkedHashSet<>();
 		mLabelNodes = new NestedMap2<>();
 
@@ -159,11 +161,6 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		return mErrorNodes;
 	}
 
-	@Override
-	public NestedMap2<String, String, BoogieIcfgLocation> getProcedureLabelNodes() {
-		return mLabelNodes;
-	}
-
 	public int getNumberOfErrorNodes() {
 		int result = 0;
 		for (final String proc : getProcedureErrorNodes().keySet()) {
@@ -180,6 +177,12 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	@Visualizable
 	public Set<BoogieIcfgLocation> getLoopLocations() {
 		return mLoopLocations;
+	}
+
+	@Override
+	@Visualizable
+	public Set<BoogieIcfgLocation> getLocationsOfInterest() {
+		return mLocationsOfInterest;
 	}
 
 	public BoogieDeclarations getBoogieDeclarations() {

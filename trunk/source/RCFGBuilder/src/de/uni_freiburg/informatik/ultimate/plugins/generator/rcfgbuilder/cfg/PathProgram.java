@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * An {@link IIcfg} representing an explicitly constructed path program that results from the projection of a given
@@ -78,7 +77,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	private final Map<String, Set<IcfgLocation>> mProcError;
 	private final Set<IcfgLocation> mInitialNodes;
 	private final Set<IcfgLocation> mLoopLocations;
-	private final NestedMap2<String, String, IcfgLocation> mLabelNodes;
+	private final Set<IcfgLocation> mLocationsOfInterest;
 
 	private final transient CfgSmtToolkit mCfgSmtToolkit;
 
@@ -86,7 +85,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final Map<String, Map<DebugIdentifier, IcfgLocation>> programPoints,
 			final Map<String, IcfgLocation> procedureEntries, final Map<String, IcfgLocation> procedureExits,
 			final Map<String, Set<IcfgLocation>> procedureErrors, final Set<IcfgLocation> initialNodes,
-			final Set<IcfgLocation> loopLocations, final NestedMap2<String, String, IcfgLocation> labelNodes) {
+			final Set<IcfgLocation> loopLocations, final Set<IcfgLocation> LocationsOfInterest) {
 		mIdentifier = Objects.requireNonNull(identifier);
 		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
 		mProgramPoints = Objects.requireNonNull(programPoints);
@@ -95,7 +94,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		mProcError = Objects.requireNonNull(procedureErrors);
 		mInitialNodes = Objects.requireNonNull(initialNodes);
 		mLoopLocations = Objects.requireNonNull(loopLocations);
-		mLabelNodes = Objects.requireNonNull(labelNodes);
+		mLocationsOfInterest = Objects.requireNonNull(LocationsOfInterest);
+
 	}
 
 	/**
@@ -163,8 +163,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	}
 
 	@Override
-	public NestedMap2<String, String, IcfgLocation> getProcedureLabelNodes() {
-		return mLabelNodes;
+	public Set<IcfgLocation> getLocationsOfInterest() {
+		return mLocationsOfInterest;
 	}
 
 	@Override
@@ -224,7 +224,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final Map<String, Set<IcfgLocation>> mProcError;
 		private final Set<IcfgLocation> mInitialNodes;
 		private final Set<IcfgLocation> mLoopLocations;
-		private final NestedMap2<String, String, IcfgLocation> mLabelNodes;
+		private final Set<IcfgLocation> mLocationsOfInterest;
 		private final Predicate<IcfgLocation> mLoopLocationFilter;
 		private final PathProgramConstructionResult mResult;
 
@@ -255,7 +255,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			mProcError = new LinkedHashMap<>();
 			mInitialNodes = new LinkedHashSet<>();
 			mLoopLocations = new LinkedHashSet<>();
-			mLabelNodes = new NestedMap2<>();
+			mLocationsOfInterest = new LinkedHashSet<>();
 
 			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
 			nonNullTransitions.stream().filter(onlyReturn.negate()).forEach(this::createPathProgramTransition);
@@ -275,7 +275,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 							oldCfgSmtToolkit.getIcfgEdgeFactory(), null, oldCfgSmtToolkit.getSmtFunctionsAndAxioms());
 
 			final PathProgram pp = new PathProgram(nonNullIdentifier, newCfgSmtToolkit, mProgramPoints, mProcEntries,
-					mProcExits, mProcError, mInitialNodes, mLoopLocations, mLabelNodes);
+					mProcExits, mProcError, mInitialNodes, mLoopLocations, mLocationsOfInterest);
 
 			ModelUtils.copyAnnotations(originalIcfg, pp);
 
@@ -390,8 +390,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 				mLoopLocations.add(ppLoc);
 			}
 
-			if (IcfgUtils.isLabelNode(mOriginalIcfg, loc)) {
-				mLabelNodes.put(procedure, ppLoc.getDebugIdentifier().toString(), ppLoc);
+			if (mOriginalIcfg.getLocationsOfInterest().contains(loc)) {
+				mLocationsOfInterest.add(ppLoc);
 			}
 
 			return ppLoc;
