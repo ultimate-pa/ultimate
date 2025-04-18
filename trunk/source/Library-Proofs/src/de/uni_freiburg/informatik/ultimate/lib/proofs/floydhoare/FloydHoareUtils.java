@@ -110,7 +110,7 @@ public final class FloydHoareUtils {
 
 		// IcfgLocations for which we report loop invariants if available
 		final Set<IcfgLocation> invariantLocations = new HashSet<>(icfg.getLoopLocations());
-		invariantLocations.addAll(IcfgUtils.getLabelNodes(icfg));
+		invariantLocations.addAll(icfg.getLocationsOfInterest());
 
 		for (final IcfgLocation locNode : invariantLocations) {
 			final IPredicate hoare = annotation.getAnnotation(locNode);
