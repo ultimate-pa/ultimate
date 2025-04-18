@@ -127,7 +127,7 @@ public final class AbstractInterpreter {
 
 				@SuppressWarnings("unchecked")
 				final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine = new FixpointEngineGuardedConcurrent<>(
-						(FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
+						services, (FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
 						selectedLocationAbstraction);
 				return engine;
 

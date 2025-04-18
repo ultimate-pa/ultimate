@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractInterpretationResult;
@@ -61,7 +62,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
 	int locationCounter = 0;
 
-	public FixpointEngineGuardedConcurrent(final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
+	public FixpointEngineGuardedConcurrent(final IUltimateServiceProvider services,
+			final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<UNDERLYINGSTATE, ACTION, VARDECL, LOC> factory,
 			final IIcfg<? extends LOC> icfg, final String locationAbstraction) {
 		if (params == null || !params.isValid()) {
@@ -72,7 +74,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mMaxInterferenceFixpointUnwindings = 8;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction);
+		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction, services, icfg);
 		mUnderlyingDomain = params.getAbstractDomain();
 		mDomain = new GuardedInterferenceDomain<>(icfg, mUnderlyingDomain, params.getLogger(), absMap,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings);
@@ -88,6 +90,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 		mFixpointEngineFactory = (IFixpointEngineFactory<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) factory;
 
+		final HeuristicLocationAbstraction heuristic = new HeuristicLocationAbstraction(services, icfg);
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
 		mPrinter = new FixpointPrintHelper<>();
 		mLocationAbstraction = locationAbstraction;
@@ -96,24 +99,20 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mItfApplier = applier;
 	}
 
-	private AbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction) {
+	private AbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction,
+			final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		// TODO: enum for setting strings
 		// TODO: parametrize countervalues
+		final HeuristicLocationAbstraction<LOC> heuristicsAbstraction = new HeuristicLocationAbstraction<>(services,
+				icfg);
 		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
 		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		case "Fully precise" -> new AbstractLocationMap<>((l -> locationCounter++), mEntryLocs);
-		case "Heuristic splitting" -> new AbstractLocationMap<>(l -> {
-			final var incoming = l.getIncomingEdges();
-			for (final IcfgEdge icfgEdge : incoming) {
-				if (shouldDifferentiate(icfgEdge.getTransformula())) {
-					return locationCounter++;
-				}
-			}
-			return locationCounter;
-		}, mEntryLocs);
+		case "Heuristic splitting" -> heuristicsAbstraction.computeLocationAbstraction();
 		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		};
 		return absMap;
+
 	}
 
 	private static boolean shouldDifferentiate(final UnmodifiableTransFormula tf) {
