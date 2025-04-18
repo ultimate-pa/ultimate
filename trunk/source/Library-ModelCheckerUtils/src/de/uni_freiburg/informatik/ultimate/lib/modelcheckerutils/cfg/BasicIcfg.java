@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  *
@@ -57,7 +56,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	private final Map<String, LOC> mEntryNodes;
 	private final Map<String, LOC> mExitNodes;
 	private final Map<String, Set<LOC>> mErrorNodes;
-	private final NestedMap2<String, String, LOC> mLabelNodes;
+	private final Set<LOC> mLocationsOfInterest;
 	private final Set<LOC> mLoopLocations;
 	private CfgSmtToolkit mCfgSmtToolkit;
 	private final Set<LOC> mInitialNodes;
@@ -84,7 +83,7 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		mEntryNodes = new LinkedHashMap<>();
 		mExitNodes = new LinkedHashMap<>();
 		mErrorNodes = new LinkedHashMap<>();
-		mLabelNodes = new NestedMap2<>();
+		mLocationsOfInterest = new LinkedHashSet<>();
 
 		// initialize all maps with the known procedures
 		for (final String proc : mCfgSmtToolkit.getProcedures()) {
@@ -120,11 +119,11 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	 *            locations).
 	 * @param isLoopLocation
 	 *            true if it is a loop head.
-	 * @param isLabel
-	 *            true if this is a label node.
+	 * @param isLocationOfInterest
+	 *            true if this is a location of interest (LOI)
 	 */
 	public void addLocation(final LOC loc, final boolean isInitial, final boolean isError, final boolean isProcEntry,
-			final boolean isProcExit, final boolean isLoopLocation, final boolean isLabel) {
+			final boolean isProcExit, final boolean isLoopLocation, final boolean isLocationOfInterest) {
 		if (loc == null) {
 			throw new IllegalArgumentException("Cannot add null location");
 		}
@@ -162,11 +161,8 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		if (isLoopLocation) {
 			mLoopLocations.add(loc);
 		}
-		if (isLabel) {
-			final LOC oldEntry = mLabelNodes.put(proc, loc.getDebugIdentifier().toString(), loc);
-			if (oldEntry != null) {
-				throw new AssertionError(String.format("Procedure %s already has a node for label %s", proc, isLabel));
-			}
+		if (isLocationOfInterest) {
+			mLocationsOfInterest.add(loc);
 		}
 	}
 
@@ -257,8 +253,8 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 	}
 
 	@Override
-	public NestedMap2<String, String, LOC> getProcedureLabelNodes() {
-		return mLabelNodes;
+	public Set<LOC> getLocationsOfInterest() {
+		return Collections.unmodifiableSet(mLocationsOfInterest);
 	}
 
 	@Override

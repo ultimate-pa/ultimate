@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -275,10 +274,10 @@ public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 		final boolean isProcExit = oldLoc.equals(icfg.getProcedureExitNodes().get(proc));
 		final boolean isLoopLocation = icfg.getLoopLocations().contains(oldLoc);
 		final boolean isInitial = icfg.getInitialNodes().contains(oldLoc);
-		final boolean isLabel = IcfgUtils.isLabelNode(icfg, oldLoc);
+		final boolean isLocationsOfInterest = icfg.getLocationsOfInterest().contains(oldLoc);
 
 		// add fresh location to resultIcfg
-		icfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLabel);
+		icfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLocationsOfInterest);
 
 		return freshLoc;
 	}

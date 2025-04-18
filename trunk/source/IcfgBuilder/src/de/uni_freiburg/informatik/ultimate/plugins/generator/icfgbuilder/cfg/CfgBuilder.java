@@ -1089,8 +1089,7 @@ public class CfgBuilder {
 				resultLoc = newLoc;
 			}
 			if (!isAuxiliaryLabel(st)) {
-				mIcfg.getProcedureLabelNodes().put(resultLoc.getProcedure(), resultLoc.getDebugIdentifier().toString(),
-						resultLoc);
+				mIcfg.getLocationsOfInterest().add(resultLoc);
 			}
 			return resultLoc;
 		}
@@ -1442,13 +1441,13 @@ public class CfgBuilder {
 				}
 
 				final boolean childMustBeKept =
-						mIcfg.getLoopLocations().contains(child) || IcfgUtils.isLabelNode(mIcfg, child);
+						mIcfg.getLoopLocations().contains(child) || mIcfg.getLocationsOfInterest().contains(child);
 				if (childMustBeKept) {
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
 				} else {
-					final boolean motherMustBeKept =
-							mIcfg.getLoopLocations().contains(mother) || IcfgUtils.isLabelNode(mIcfg, mother);
+					final boolean motherMustBeKept = mIcfg.getLoopLocations().contains(mother)
+							|| mIcfg.getLocationsOfInterest().contains(mother);
 					if (motherMustBeKept) {
 						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
 					}
@@ -1693,8 +1692,12 @@ public class CfgBuilder {
 				mIcfg.getProcedureEntryNodes().put(mCurrentProcedureName, newLocNode);
 			}
 			if (mIcfg.getLoopLocations().remove(oldLocNode)) {
-				// if the old location was a loop location, the new one is also
+				// if the old location was a loop location, the new one is also a loop location
 				mIcfg.getLoopLocations().add(newLocNode);
+			}
+			if (mIcfg.getLocationsOfInterest().remove(oldLocNode)) {
+				// if the old location was a LOI, the new one is also a LOI
+				mIcfg.getLocationsOfInterest().add(newLocNode);
 			}
 			if (copyAllAnnotations) {
 				ModelUtils.copyAnnotations(oldLocNode, newLocNode);

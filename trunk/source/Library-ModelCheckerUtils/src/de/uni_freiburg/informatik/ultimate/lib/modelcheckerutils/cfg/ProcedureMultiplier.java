@@ -347,8 +347,8 @@ public class ProcedureMultiplier {
 		final boolean isProcEntry = mIcfg.getProcedureEntryNodes().get(originalProc).equals(originalLocation);
 		final boolean isProcExit = mIcfg.getProcedureExitNodes().get(originalProc).equals(originalLocation);
 		final boolean isLoopLocation = mIcfg.getLoopLocations().contains(originalLocation);
-		final boolean isLabel = IcfgUtils.isLabelNode(mIcfg, originalLocation);
-		mIcfg.addLocation(newLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLabel);
+		final boolean isLocationOfInterest = mIcfg.getLocationsOfInterest().contains(originalLocation);
+		mIcfg.addLocation(newLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLocationOfInterest);
 
 		return newLoc;
 	}

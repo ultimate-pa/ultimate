@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeFactory;
@@ -113,9 +112,9 @@ public final class BranchUnfoldIcfgTransformer {
 						final boolean isProcEntry = initial;
 						final boolean isProcExit = false;
 						final boolean isLoopLocation = mInputIcfg.getLoopLocations().contains(inputLoc);
-						final boolean isLabel = IcfgUtils.isLabelNode(mInputIcfg, inputLoc);
+						final boolean isLocationOfInterest = mInputIcfg.getLocationsOfInterest().contains(inputLoc);
 						mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
-								isLabel);
+								isLocationOfInterest);
 						mOldLoc2NewLoc.addPair(inputLoc, resultLoc);
 						// if (!mVisited.contains(pair)) {
 						// mVisited.add(pair);

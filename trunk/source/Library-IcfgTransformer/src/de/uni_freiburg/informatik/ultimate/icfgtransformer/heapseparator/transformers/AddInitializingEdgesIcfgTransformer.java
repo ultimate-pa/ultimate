@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilde
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgCallTransition;
@@ -240,21 +239,21 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 	}
 
 	private Pair<OUTLOC, OUTLOC> splitLocation(final INLOC oldInitTarget, final String containingprocedure) {
-		final boolean isLabel = IcfgUtils.isLabelNode(mInputIcfg, oldInitTarget);
+		final boolean isLocationOfInterest = mInputIcfg.getLocationsOfInterest().contains(oldInitTarget);
 		Pair<OUTLOC, OUTLOC> p;
 		{
 			final boolean wasProcedureEntryNode = !mInputIcfg.getProcedureEntryNodes().isEmpty()
 					&& mInputIcfg.getProcedureEntryNodes().get(containingprocedure).equals(oldInitTarget);
 			final OUTLOC s1 = createAndAddNewLocation(oldInitTarget,
 					mInputIcfg.getInitialNodes().contains(oldInitTarget), false, wasProcedureEntryNode, false, false,
-					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"), isLabel);
+					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-1"), isLocationOfInterest);
 
 			final boolean wasProcedureExitNode = !mInputIcfg.getProcedureExitNodes().isEmpty()
 					&& mInputIcfg.getProcedureExitNodes().get(containingprocedure).equals(oldInitTarget);
 			final OUTLOC s2 = createAndAddNewLocation(oldInitTarget, false,
 					mInputIcfg.getProcedureErrorNodes().get(containingprocedure).contains(oldInitTarget), false,
 					wasProcedureExitNode, mInputIcfg.getLoopLocations().contains(oldInitTarget),
-					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"), isLabel);
+					new SuffixedDebugIdentifier(oldInitTarget.getDebugIdentifier(), "_split-2"), isLocationOfInterest);
 			p = new Pair<>(s1, s2);
 		}
 		return p;

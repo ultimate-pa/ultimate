@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ActionUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IActionWithBranchEncoders;
@@ -118,7 +117,7 @@ public class IcfgDuplicator {
 					oldLoc.equals(originalIcfg.getProcedureEntryNodes().get(proc)),
 					oldLoc.equals(originalIcfg.getProcedureExitNodes().get(proc)),
 					originalIcfg.getLoopLocations().contains(oldLoc),
-					IcfgUtils.isLabelNode(originalIcfg, oldLoc));
+					originalIcfg.getLocationsOfInterest().contains(oldLoc));
 			mOld2NewLocationMap.put(oldLoc, newLoc);
 		}
 

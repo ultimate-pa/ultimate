@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  *
@@ -222,17 +221,24 @@ public class IcfgUtils {
 		return true;
 	}
 
-	public static <LOC extends IcfgLocation> boolean areLabelNodesRegistered(final IIcfg<LOC> icfg) {
+	public static <LOC extends IcfgLocation> boolean areLocationsOfInterestRegistered(final IIcfg<LOC> icfg) {
 		final Set<LOC> registeredProgramPoints =
 				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
-		final Set<LOC> diff = new HashSet<>();
-		for (final Triple<String, String, LOC> triple : icfg.getProcedureLabelNodes().entrySet()) {
-			if (!registeredProgramPoints.contains(triple.getThird())) {
-				diff.add(triple.getThird());
-			}
-		}
+		final Set<LOC> diff = new HashSet<>(icfg.getLocationsOfInterest());
+		diff.removeAll(registeredProgramPoints);
 		if (!diff.isEmpty()) {
-			throw new AssertionError("Unregistered label nodes: " + diff);
+			throw new AssertionError("Unregistered location of interest (LOI): " + diff);
+		}
+		return true;
+	}
+
+	public static <LOC extends IcfgLocation> boolean areLoopLocationsRegistered(final IIcfg<LOC> icfg) {
+		final Set<LOC> registeredProgramPoints =
+				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
+		final Set<LOC> diff = new HashSet<>(icfg.getLoopLocations());
+		diff.removeAll(registeredProgramPoints);
+		if (!diff.isEmpty()) {
+			throw new AssertionError("Unregistered loop location: " + diff);
 		}
 		return true;
 	}
@@ -497,26 +503,6 @@ public class IcfgUtils {
 					}
 				}
 			}
-		}
-		return result;
-	}
-
-	/**
-	 * Find out whether an {@link IcfgLocation} is a label node of that {@code IIcfg}.
-	 */
-	public static <LOC extends IcfgLocation> boolean isLabelNode(final IIcfg<?> icfg, final LOC node) {
-		final IcfgLocation labelNode =
-				icfg.getProcedureLabelNodes().get(node.getProcedure(), node.getDebugIdentifier().toString());
-		return labelNode != null;
-	}
-
-	/**
-	 * Return a set of all {@link IcfgLocation} that are label nodes.
-	 */
-	public static <LOC extends IcfgLocation> Set<LOC> getLabelNodes(final IIcfg<LOC> icfg) {
-		final Set<LOC> result = new HashSet<>();
-		for (final Triple<String, String, LOC> triple : icfg.getProcedureLabelNodes().entrySet()) {
-			result.add(triple.getThird());
 		}
 		return result;
 	}
