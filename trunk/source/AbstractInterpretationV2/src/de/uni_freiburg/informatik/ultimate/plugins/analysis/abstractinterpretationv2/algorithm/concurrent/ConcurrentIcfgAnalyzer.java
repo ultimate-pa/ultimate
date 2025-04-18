@@ -82,9 +82,7 @@ public class ConcurrentIcfgAnalyzer<ACTION, LOC extends IcfgLocation> {
 			final String forking = fork.getPrecedingProcedure();
 			final String forked = fork.getNameOfForkedProcedure();
 			mThreadsToForks.addPair(forking, fork);
-			// TODO: needed anywhere else ? need target not source for thread-modular
-//			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
-			mProceduresToForkLocations.addPair(forked, (LOC) fork.getTarget());
+			mProceduresToForkLocations.addPair(forked, (LOC) fork.getSource());
 			forkRelation.addPair(forking, forked);
 		}
 		mThreadsToWrites = new HashRelation<>();
