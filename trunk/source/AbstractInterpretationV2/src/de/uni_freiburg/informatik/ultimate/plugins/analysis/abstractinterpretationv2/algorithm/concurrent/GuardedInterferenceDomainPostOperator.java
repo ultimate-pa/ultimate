@@ -12,9 +12,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -32,6 +33,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final GuardedInterferenceApplier<STATE, ACTION, LOC> mItfApplier;
 
+	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
+
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
@@ -42,6 +45,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		mUnderlyingPostOp = postOp;
 		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, underlying, postOp, relationalInterferingDomain,
 				interferenceState, globalMap, maxItf, maxParallelStates);
+		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 	}
 
 	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
@@ -108,7 +112,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 		var newState = oldstate;
 		if (transition instanceof final ForkThreadCurrent fork1) {
-			final boolean circular = isCircular(fork1, fork1.getSource().getIncomingEdges(), 0);
+			final boolean circular = isCircular(fork1);
 			final var forked = fork1.getNameOfForkedProcedure();
 			newState = newState.setThreadsActive(List.of(forked));
 			if (circular || oldstate.threadCounter().getThreadInstances().get(forked) > 0) {
@@ -135,23 +139,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		return postRelationalStates;
 	}
 
-	public boolean isCircular(final IcfgEdge fork1, final List<IcfgEdge> edges, final int depth) {
-		// TODO: replace by caching all statements seen, breaking when any seen again
-		if (depth > 100) {
-			return false;
-		}
-		if (edges.isEmpty()) {
-			return false;
-		}
-		if (edges.contains(fork1)) {
-			return true;
-		}
-		for (final IcfgEdge icfgEdge : edges) {
-			if (isCircular(fork1, icfgEdge.getSource().getIncomingEdges(), depth + 1)) {
-				return true;
-			}
-		}
-		return false;
+	public boolean isCircular(final ForkThreadCurrent fork1) {
+		return mforksInLoop.contains(fork1);
 	}
 
 	@Override

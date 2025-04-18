@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineGuardedConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
@@ -112,20 +113,25 @@ public final class AbstractInterpreter {
 			final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> params,
 			final IUltimateServiceProvider services) {
 		if (IcfgUtils.isConcurrent(root)) {
-//			return new FixpointEngineConcurrent<>(params, FixpointEngine::new, root);
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
-			final String selectedLocationAbstraction = prefs
-					.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
-			@SuppressWarnings("unchecked")
-			final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> factory = (
-					final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> p) -> new FixpointEngine<>(
-							p);
+			final String method = prefs.getString(AbsIntPrefInitializer.LABEL_THREAD_MODULAR_METHOD);
+			if (method == "Old") {
+				return new FixpointEngineConcurrent<>(params, FixpointEngine::new, root);
+			} else if (method == "New") {
+				final String selectedLocationAbstraction = prefs
+						.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
+				@SuppressWarnings("unchecked")
+				final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> factory = (
+						final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> p) -> new FixpointEngine<>(
+								p);
 
-			@SuppressWarnings("unchecked")
-			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine = new FixpointEngineGuardedConcurrent<>(
-					(FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
-					selectedLocationAbstraction);
-			return engine;
+				@SuppressWarnings("unchecked")
+				final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine = new FixpointEngineGuardedConcurrent<>(
+						(FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
+						selectedLocationAbstraction);
+				return engine;
+
+			}
 		}
 
 		return new FixpointEngine<>(params);

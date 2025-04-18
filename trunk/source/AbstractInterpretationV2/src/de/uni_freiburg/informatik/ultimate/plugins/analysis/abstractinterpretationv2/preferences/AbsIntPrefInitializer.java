@@ -81,6 +81,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			PoormanAbstractDomain.class.getSimpleName() };
 
 	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Fully precise", "Heuristic splitting" };
+	public static final String[] THREAD_MODULAR_METHOD = { "Old", "New" };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -108,6 +109,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	private static final Boolean DEF_USE_FUTURE_RCFG = false;
 	private static final String TOOLTIP_USE_FUTURE_RCFG = "Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction Method";
+	public static final String LABEL_THREAD_MODULAR_METHOD = "Implemented method";
 
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -154,6 +156,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				"Concurrency settings");
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
 				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
+		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_THREAD_MODULAR_METHOD, THREAD_MODULAR_METHOD[0],
+				PreferenceType.Combo, THREAD_MODULAR_METHOD));
 
 		rtr.add(concurrencyContainer);
 

@@ -69,7 +69,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
-		mMaxInterferenceFixpointUnwindings = 16;
+		mMaxInterferenceFixpointUnwindings = 8;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction);
@@ -334,7 +334,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				for (final IcfgEdge forkEdge : forkLoc.getOutgoingEdges()) {
 					if (forkEdge instanceof final ForkThreadCurrent fork1) {
 						final boolean circular = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-								.getPostOperator()).isCircular(fork1, fork1.getSource().getIncomingEdges(), 0);
+								.getPostOperator()).isCircular(fork1);
 						if (circular) {
 							isCircular = true;
 						}
