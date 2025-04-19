@@ -41,6 +41,14 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		mLocationTracker = track.movedTo(mLocation.getProcedure(), mAbstractLocation);
 	}
 
+	public AbstractLocationState(final LOC loc, final AbstractLocationState<LOC> other) {
+		mLocation = loc;
+		mAbstractLocationMap = other.mAbstractLocationMap;
+		mAbstractLocation = other.mAbstractLocation;
+		final var track = new AbstractLocationGlobalTracker(other.mLocationTracker);
+		mLocationTracker = track.movedTo(mLocation.getProcedure(), mAbstractLocation);
+	}
+
 	public AbstractLocationState<LOC> copyToNewState(final LOC newLoc) {
 		return new AbstractLocationState<>(newLoc, mAbstractLocationMap, mLocationTracker);
 	}
@@ -70,6 +78,15 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 	}
 
 	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocation) {
+		if (threadName == mLocation.getProcedure()) {
+			if (mAbstractLocationMap
+					.getAbstractLocation((LOC) mLocation.getOutgoingNodes().getFirst()) != newLocation) {
+				throw new AssertionError("trying to move more than one transition at once");
+			}
+			return new AbstractLocationState<>((LOC) mLocation.getOutgoingNodes().getFirst(), mAbstractLocationMap,
+					mLocationTracker.movedTo(threadName, newLocation));
+
+		}
 		return new AbstractLocationState<>(mLocation, mAbstractLocationMap,
 				mLocationTracker.movedTo(threadName, newLocation));
 

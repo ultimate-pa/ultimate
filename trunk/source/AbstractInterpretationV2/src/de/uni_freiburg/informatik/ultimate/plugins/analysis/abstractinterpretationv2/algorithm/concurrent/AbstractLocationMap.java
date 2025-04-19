@@ -19,6 +19,10 @@ public final class AbstractLocationMap<LOC> {
 		return getAbstractLocation(mEntryLocs.get(threadName));
 	}
 
+	public LOC getEntryLoc(final String threadName) {
+		return mEntryLocs.get(threadName);
+	}
+
 	public int getAbstractLocation(final LOC loc) {
 		return mMap.computeIfAbsent(loc, mMappingFunction);
 	}

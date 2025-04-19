@@ -86,17 +86,15 @@ public class ThreadInstanceCounter {
 	}
 
 	public SubsetResult isSubsetOf(final ThreadInstanceCounter other) {
-		SubsetResult result = SubsetResult.EQUAL;
+		final SubsetResult result = SubsetResult.EQUAL;
 		for (final String thread : mThreadNameSet) {
 			final int leftCount = mThreadInstances.get(thread);
 			final int rightCount = other.getThreadInstances().get(thread);
 			// We say anything above 0 is equal for now, since seeing another thread as being forked 1 or 2 times
 			// does not change anything for our current model.
 			// TODO:
-			if (leftCount < rightCount) {
+			if (!(leftCount == rightCount)) {
 				return SubsetResult.NONE;
-			} else if (leftCount < rightCount) {
-				result = result.min(SubsetResult.STRICT);
 			}
 		}
 		return result;

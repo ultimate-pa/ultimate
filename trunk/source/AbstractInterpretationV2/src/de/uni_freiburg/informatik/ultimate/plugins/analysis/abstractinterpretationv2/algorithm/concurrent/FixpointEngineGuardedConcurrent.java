@@ -21,9 +21,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
@@ -71,7 +69,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
-		mMaxInterferenceFixpointUnwindings = 8;
+		mMaxInterferenceFixpointUnwindings = 32;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction, services, icfg);
@@ -90,7 +88,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 		mFixpointEngineFactory = (IFixpointEngineFactory<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) factory;
 
-		final HeuristicLocationAbstraction heuristic = new HeuristicLocationAbstraction(services, icfg);
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
 		mPrinter = new FixpointPrintHelper<>();
 		mLocationAbstraction = locationAbstraction;
@@ -113,20 +110,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		};
 		return absMap;
 
-	}
-
-	private static boolean shouldDifferentiate(final UnmodifiableTransFormula tf) {
-		if (tf.isInfeasible() == UnmodifiableTransFormula.Infeasibility.INFEASIBLE) {
-			return false;
-		}
-		if (!tf.getBranchEncoders().isEmpty()) {
-			return true;
-		}
-		final Set<IProgramVar> assigned = tf.getAssignedVars();
-		if (assigned.isEmpty()) {
-			return true;
-		}
-		return false;
 	}
 
 	@Override
@@ -182,8 +165,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		while (true) {
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + iteration);
-//			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-//					.getPostOperator()).getInterferences();
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = mItfApplier
 					.getInterferences();
 
@@ -219,11 +200,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				}
 			}
 
-//			((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
-//					.updateInterferences();
 			mItfApplier.updateInterferences();
-//			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-//					.getPostOperator()).getInterferences();
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState = mItfApplier
 					.getInterferences();
 
@@ -240,8 +217,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				fix = 1;
 			}
 			if (iteration > mMaxUnwindings) {
-//				((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
-//						.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
 				mItfApplier.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
 				mLogger.error("DID WIDENING ON INTERFERENCES.");
 			}
@@ -310,8 +285,25 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
 			final String procedure) {
-		DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = null;
 		final var allForkLocs = new HashSet<LOC>();
+		var result = combineForkingStates(procedure, allForkLocs);
+		if (result != null) {
+			final boolean multipleThreads = wasForkedMultipleTimes(allForkLocs);
+			if (multipleThreads) {
+				result = GuardedStateTransformer.setThreadsInf(List.of(procedure), result);
+			} else {
+				result = GuardedStateTransformer.setThreadsActive(List.of(procedure), result);
+			}
+			final var forkedInitialState = constructForkedInitialState(result, procedure, multipleThreads);
+			return forkedInitialState;
+		}
+		// no forking threads, construct fresh state (must be main/start-thread)
+		return mainThreadEntryState(procedure);
+	}
+
+	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> combineForkingStates(
+			final String procedure, final HashSet<LOC> allForkLocs) {
+		DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = null;
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> state = mStateStorage
 					.getAbstractState(loc);
@@ -319,44 +311,60 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				result = null;
 				break;
 			}
+			// TODO:
+			final var movedState = translateForkLocIntoInitialState(loc, state, procedure);
 			allForkLocs.add(loc);
-			final var clearedState = removeLocalVars(state);
+			final var clearedState = removeLocalVars(movedState);
 			result = (result == null) ? clearedState : result.union(clearedState);
 		}
-		// combine forking states
-		if (result != null) {
-			int forks = 0;
-			boolean isCircular = false;
-			boolean multipleThreads = false;
-			for (final LOC forkLoc : allForkLocs) {
-				forks++;
-				for (final IcfgEdge forkEdge : forkLoc.getOutgoingEdges()) {
-					if (forkEdge instanceof final ForkThreadCurrent fork1) {
-						final boolean circular = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-								.getPostOperator()).isCircular(fork1);
-						if (circular) {
-							isCircular = true;
-						}
+		return result;
+	}
+
+	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> translateForkLocIntoInitialState(
+			final LOC loc,
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> inputState,
+			final String procedure) {
+		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> translateDomainStates = new HashSet<>();
+		final var globalImmutableMap = inputState.getStates().iterator().next().abstractLocationState()
+				.getLocationMap();
+		final var proceduresEntryLoc = globalImmutableMap.getEntryLoc(procedure);
+		for (final var singleState : inputState.getStates()) {
+			final var afterForkLocation = globalImmutableMap
+					.getAbstractLocation((LOC) loc.getOutgoingNodes().getFirst());
+			final var executedFork = singleState.movedTo(loc.getProcedure(), afterForkLocation);
+			final var movedOwnershipLocation = new AbstractLocationState<>(proceduresEntryLoc,
+					executedFork.abstractLocationState());
+			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedOwnership = new GuardedInterferenceDomainState<>(
+					executedFork.state(), executedFork.threadCounter(), movedOwnershipLocation);
+			translateDomainStates.add(movedOwnership);
+		}
+		return DisjunctiveAbstractState.createDisjunction(translateDomainStates, mMaxParallelStates);
+	}
+
+	private boolean wasForkedMultipleTimes(final HashSet<LOC> allForkLocs) {
+		int forks = 0;
+		boolean isCircular = false;
+		for (final LOC forkLoc : allForkLocs) {
+			forks++;
+			for (final IcfgEdge forkEdge : forkLoc.getOutgoingEdges()) {
+				if (forkEdge instanceof final ForkThreadCurrent fork1) {
+					final boolean circular = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+							.getPostOperator()).isCircular(fork1);
+					if (circular) {
+						isCircular = true;
 					}
 				}
+			}
 
-			}
-			if (forks > 1 || isCircular) {
-				multipleThreads = true;
-			}
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkedInitialState = constructForkedInitialState(
-					result, procedure, multipleThreads);
-			DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> initialState = null;
-			if (multipleThreads) {
-				initialState = GuardedStateTransformer.setThreadsInf(List.of(procedure), forkedInitialState);
-			} else {
-				initialState = GuardedStateTransformer.setThreadsActive(List.of(procedure), forkedInitialState);
-			}
-			// TODO:
-			return initialState;
 		}
+		if (forks > 1 || isCircular) {
+			return true;
+		}
+		return false;
+	}
 
-		// no forking threads, construct fresh state (must be main/start-thread)
+	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> mainThreadEntryState(
+			final String procedure) {
 		var bottomState = mDomain.createBottomPreconditionState();
 		bottomState = bottomState.setThreadsActive(List.of(procedure));
 		final var locMap = mDomain.getAbstractLocationMap();

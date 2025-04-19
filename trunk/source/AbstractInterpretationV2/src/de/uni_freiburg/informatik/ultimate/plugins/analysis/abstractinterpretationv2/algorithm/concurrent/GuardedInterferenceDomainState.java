@@ -48,6 +48,12 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 				new AbstractLocationState<>(location, globalMap, threadNames));
 	}
 
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initWithGiven(final LOC location,
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+		return new GuardedInterferenceDomainState<>(other.state(), other.threadCounter(),
+				new AbstractLocationState<>(location, other.mAbstractLocationState));
+	}
+
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initializeLocation(final LOC location,
 			final AbstractLocationMap<LOC> globalMap, final Set<String> threadNames, final Set<LOC> forkLocs) {
 		GuardedInterferenceDomainState<STATE, ACTION, LOC> newState = new GuardedInterferenceDomainState<>(this.state(),
@@ -154,6 +160,9 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	@Override
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> union(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
+//		if (!mAbstractLocationState.isEqualTo(other.abstractLocationState())) {
+//			assert false;
+//		}
 		return new GuardedInterferenceDomainState<>(mState.union(other.state()),
 				mThreadCounter.union(other.threadCounter()),
 				mAbstractLocationState.union(other.abstractLocationState()));

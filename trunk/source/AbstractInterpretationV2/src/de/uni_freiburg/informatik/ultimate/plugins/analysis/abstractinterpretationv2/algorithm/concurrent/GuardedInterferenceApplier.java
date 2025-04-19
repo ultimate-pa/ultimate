@@ -229,11 +229,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		if (!matchesLocation(newState, ownerThread, interferenceThreadName, interference)) {
 			return newState;
 		}
-		// in case of interfering fork, just update threadcounter and location
-		if (interference.action() instanceof final ForkThreadCurrent fork) {
-			final var blankState = handleFork(newState, fork, interference);
-			return blankState;
-		}
 		final var pair = new InterferenceStatePair<>(interference, newState.state());
 		// if in cache, return state with cached underlying state without applying postOp
 		if (mInterferenceCache.get(pair) != null) {
@@ -247,6 +242,11 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			if (interferedState != null) {
 				mInterferenceCache.put(pair, interferedState.state());
 			}
+		}
+
+		// in case of interfering fork, just update threadcounter and location
+		if (interferedState != null && interference.action() instanceof final ForkThreadCurrent fork) {
+			interferedState = interferedState.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()));
 		}
 		return interferedState;
 	}
