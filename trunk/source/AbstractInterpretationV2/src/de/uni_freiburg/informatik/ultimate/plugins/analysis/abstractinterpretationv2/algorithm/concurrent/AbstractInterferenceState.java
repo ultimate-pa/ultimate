@@ -20,7 +20,7 @@ record Interference<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTra
 // adding interferences
 public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private Map<String, Set<Interference<STATE, ACTION, LOC>>> mThreadInterferenceMap;
-	private final Map<ACTION, Interference<STATE, ACTION, LOC>> mIdentifyMap;
+	private final Map<ACTION, Set<Interference<STATE, ACTION, LOC>>> mIdentifyMap;
 
 	public AbstractInterferenceState(final Set<String> threadNames) {
 		mIdentifyMap = new HashMap<>();
@@ -35,7 +35,7 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 				t -> mThreadInterferenceMap.put(t, new HashSet<>(other.getInterferenceMapHashRelation().get(t))));
 	}
 
-	public Map<ACTION, Interference<STATE, ACTION, LOC>> getIdentifyMap() {
+	public Map<ACTION, Set<Interference<STATE, ACTION, LOC>>> getIdentifyMap() {
 		return mIdentifyMap;
 	}
 
@@ -47,34 +47,28 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		return mThreadInterferenceMap.get(threadName);
 	}
 
+	public void addInterference(final Interference<STATE, ACTION, LOC> itf) {
+		addInterference(itf.action().getSource().getProcedure(), itf.action(), itf.state(), itf.threadcounter());
+	}
+
 	public void addInterference(final String threadName, final ACTION transition, final STATE state,
 			final ThreadInstanceCounter threadcounter) {
-		if (mIdentifyMap.get(transition) != null) {
-			final var existingInterf = mIdentifyMap.get(transition);
-			final var interference = new Interference<>(transition, state.union(existingInterf.state()),
-					new ThreadInstanceCounter(threadcounter.union(existingInterf.threadcounter())));
-			mIdentifyMap.put(interference.action(), interference);
-			mThreadInterferenceMap.get(threadName).add(interference);
-		} else {
-			final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
-			mIdentifyMap.put(interference.action(), interference);
-			mThreadInterferenceMap.get(threadName).add(interference);
+		if (mIdentifyMap.get(transition) == null) {
+			mIdentifyMap.put(transition, new HashSet<>());
 		}
+		final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
+		mIdentifyMap.get(transition).add(interference);
+		mThreadInterferenceMap.get(threadName).add(interference);
 	}
 
 	public void addForkInterference(final String threadName, final ACTION transition, final STATE state,
 			final ThreadInstanceCounter threadcounter) {
-		if (mIdentifyMap.get(transition) != null) {
-			final var existingInterf = mIdentifyMap.get(transition);
-			final var interference = new Interference<>(transition, state.union(existingInterf.state()),
-					new ThreadInstanceCounter(threadcounter.union(existingInterf.threadcounter())));
-			mIdentifyMap.put(interference.action(), interference);
-			mThreadInterferenceMap.get(threadName).add(interference);
-		} else {
-			final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
-			mIdentifyMap.put(interference.action(), interference);
-			mThreadInterferenceMap.get(threadName).add(interference);
+		if (mIdentifyMap.get(transition) == null) {
+			mIdentifyMap.put(transition, new HashSet<>());
 		}
+		final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
+		mIdentifyMap.get(transition).add(interference);
+		mThreadInterferenceMap.get(threadName).add(interference);
 	}
 
 	public Map<String, Set<Interference<STATE, ACTION, LOC>>> getInterferenceMapHashRelation() {
@@ -82,17 +76,20 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 	}
 
 	public boolean isSubsetOf(final AbstractInterferenceState<STATE, ACTION, LOC> other) {
-		for (final ACTION action : mIdentifyMap.keySet()) {
-			final var thisInterference = mIdentifyMap.get(action);
-			final var otherInterference = other.getIdentifyMap().get(action);
-
-			if (thisInterference == null && otherInterference == null) {
-				continue;
-			}
-			if (thisInterference == null || otherInterference == null) {
+		for (final Map.Entry<ACTION, Set<Interference<STATE, ACTION, LOC>>> entry : mIdentifyMap.entrySet()) {
+			final ACTION action = entry.getKey();
+			final Set<Interference<STATE, ACTION, LOC>> thisSet = entry.getValue();
+			final Set<Interference<STATE, ACTION, LOC>> otherSet = other.getIdentifyMap().get(action);
+			if (otherSet == null) {
 				return false;
 			}
-			if (thisInterference.state().isSubsetOf(otherInterference.state()) == SubsetResult.NONE) {
+			outer: for (final Interference<STATE, ACTION, LOC> thisInt : thisSet) {
+
+				for (final Interference<STATE, ACTION, LOC> otherInt : otherSet) {
+					if (thisInt.state().isSubsetOf(otherInt.state()) != SubsetResult.NONE) {
+						continue outer;
+					}
+				}
 				return false;
 			}
 		}
@@ -115,24 +112,17 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		allActions.addAll(other.mIdentifyMap.keySet());
 
 		for (final ACTION action : allActions) {
-			final Interference<STATE, ACTION, LOC> itfThis = mIdentifyMap.get(action);
-			final Interference<STATE, ACTION, LOC> itfOther = other.mIdentifyMap.get(action);
+			final Set<Interference<STATE, ACTION, LOC>> itfThis = mIdentifyMap.get(action);
+			final Set<Interference<STATE, ACTION, LOC>> itfOther = other.mIdentifyMap.get(action);
 
-			Interference<STATE, ACTION, LOC> mergedInterf = null;
-			if (itfThis != null && itfOther != null) {
-				final STATE mergedState = itfThis.state().union(itfOther.state());
-				final ThreadInstanceCounter mergedCounter = itfThis.threadcounter().union(itfOther.threadcounter());
-				mergedInterf = new Interference<>(action, mergedState, mergedCounter);
-
-			} else if (itfThis != null) {
-				mergedInterf = itfThis;
+			if (itfThis != null) {
+				for (final Interference<STATE, ACTION, LOC> singleItf : itfThis) {
+					result.addInterference(singleItf);
+				}
 			} else if (itfOther != null) {
-				mergedInterf = itfOther;
-			}
-
-			if (mergedInterf != null) {
-				result.addInterference(mergedInterf.action().getSource().getProcedure(), mergedInterf.action(),
-						mergedInterf.state(), mergedInterf.threadcounter());
+				for (final Interference<STATE, ACTION, LOC> singleItf : itfOther) {
+					result.addInterference(singleItf);
+				}
 			}
 		}
 

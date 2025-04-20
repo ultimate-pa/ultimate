@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -70,7 +71,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
-		mMaxInterferenceFixpointUnwindings = 32;
+		mMaxInterferenceFixpointUnwindings = 16;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction, services, icfg);
@@ -169,7 +170,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private void calculateFixpoint(final Script script) {
 		int iteration = 1;
 		final Set<LOC> reachableErrorLocations = new HashSet<>();
-		int fix = 0;
+		final int fix = 0;
 		while (true) {
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + iteration);
@@ -214,15 +215,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 			// interference fixpoint reached
 			if (newInterferenceState.isSubsetOf(oldInterferenceState)) {
-				fix++;
-				if (fix == 3) {
-					mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, iteration, resultSet,
-							mEntryLocs, mDomain.getAbstractLocationMap(), script);
-					mLogger.error("max ITF fixpoint iterations: " + GuardedInterferenceApplier.iterationsReached);
-					break;
-				}
-			} else {
-				fix = 1;
+				mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, iteration, resultSet,
+						mEntryLocs, mDomain.getAbstractLocationMap(), script);
+				mLogger.error("max ITF fixpoint iterations: " + GuardedInterferenceApplier.iterationsReached);
+				break;
 			}
 			if (iteration > mMaxUnwindings) {
 				mItfApplier.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
@@ -233,49 +229,69 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	}
 
 	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> calcWidenedInterferences(
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterference,
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterference) {
-		// 1) union of all threadNames
-		final Set<String> allThreads = new HashSet<>(oldInterference.getInterferenceMapHashRelation().keySet());
-		allThreads.addAll(newInterference.getInterferenceMapHashRelation().keySet());
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldI,
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newI) {
 
-		// 2) union of all actions
-		final Map<ACTION, Interference<UNDERLYINGSTATE, ACTION, LOC>> oldMap = oldInterference.getIdentifyMap();
-		final Map<ACTION, Interference<UNDERLYINGSTATE, ACTION, LOC>> newMap = newInterference.getIdentifyMap();
+		final Set<String> allThreads = new HashSet<>(oldI.getInterferenceMapHashRelation().keySet());
+		allThreads.addAll(newI.getInterferenceMapHashRelation().keySet());
+		final Map<ACTION, Set<Interference<UNDERLYINGSTATE, ACTION, LOC>>> oldMap = oldI.getIdentifyMap();
+		final Map<ACTION, Set<Interference<UNDERLYINGSTATE, ACTION, LOC>>> newMap = newI.getIdentifyMap();
+
 		final Set<ACTION> allActions = new HashSet<>(oldMap.keySet());
 		allActions.addAll(newMap.keySet());
-
-		// 3) new result
-		final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> resultInterferenceState = new AbstractInterferenceState<>(
+		final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> result = new AbstractInterferenceState<>(
 				allThreads);
+		for (final ACTION act : allActions) {
 
-		// 4) for each action in union
-		for (final ACTION action : allActions) {
-			final Interference<UNDERLYINGSTATE, ACTION, LOC> oldI = oldMap.get(action);
-			final Interference<UNDERLYINGSTATE, ACTION, LOC> newI = newMap.get(action);
-
-			UNDERLYINGSTATE widened = null;
-			ThreadInstanceCounter combinedThreads = null;
-			if (oldI == null && newI != null) {
-				widened = newI.state();
-				combinedThreads = newI.threadcounter();
-			} else if (oldI != null && newI == null) {
-				widened = oldI.state();
-				combinedThreads = oldI.threadcounter();
-			} else if (oldI != null && newI != null) {
-				widened = combineStates(oldI.state(), newI.state());
-				combinedThreads = oldI.threadcounter().union(newI.threadcounter());
-			}
-
-			if (widened == null) {
+			final Set<Interference<UNDERLYINGSTATE, ACTION, LOC>> oldSet = oldMap.getOrDefault(act,
+					Collections.emptySet());
+			final Set<Interference<UNDERLYINGSTATE, ACTION, LOC>> newSet = newMap.getOrDefault(act,
+					Collections.emptySet());
+			if (oldSet.isEmpty() && newSet.isEmpty()) {
 				continue;
 			}
+			final UNDERLYINGSTATE oldAggState = joinAllStates(oldSet);
+			final UNDERLYINGSTATE newAggState = joinAllStates(newSet);
 
-			resultInterferenceState.addInterference(action.getSource().getProcedure(), action, widened,
-					combinedThreads);
+			final ThreadInstanceCounter oldAggCnt = joinAllCounters(oldSet);
+			final ThreadInstanceCounter newAggCnt = joinAllCounters(newSet);
+
+			UNDERLYINGSTATE widenedState;
+			ThreadInstanceCounter widenedCnt;
+
+			if (oldSet.isEmpty()) {
+				widenedState = newAggState;
+				widenedCnt = newAggCnt;
+
+			} else if (newSet.isEmpty()) {
+				widenedState = oldAggState;
+				widenedCnt = oldAggCnt;
+
+			} else {
+				widenedState = combineStates(oldAggState, newAggState);
+				widenedCnt = oldAggCnt.union(newAggCnt);
+			}
+
+			result.addInterference(act.getSource().getProcedure(), act, widenedState, widenedCnt);
 		}
 
-		return resultInterferenceState;
+		return result;
+	}
+
+	private UNDERLYINGSTATE joinAllStates(final Set<Interference<UNDERLYINGSTATE, ACTION, LOC>> set) {
+		UNDERLYINGSTATE acc = null;
+		for (final Interference<UNDERLYINGSTATE, ACTION, LOC> it : set) {
+			acc = (acc == null) ? it.state() : acc.union(it.state());
+		}
+		return acc;
+	}
+
+	private ThreadInstanceCounter joinAllCounters(final Set<Interference<UNDERLYINGSTATE, ACTION, LOC>> set) {
+		ThreadInstanceCounter acc = null;
+		for (final Interference<UNDERLYINGSTATE, ACTION, LOC> it : set) {
+			acc = (acc == null) ? it.threadcounter() : acc.union(it.threadcounter());
+		}
+		return acc;
 	}
 
 	private UNDERLYINGSTATE combineStates(final UNDERLYINGSTATE state1, final UNDERLYINGSTATE state2) {

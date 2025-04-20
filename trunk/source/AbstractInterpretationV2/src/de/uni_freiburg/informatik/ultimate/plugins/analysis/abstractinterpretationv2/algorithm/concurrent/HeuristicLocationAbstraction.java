@@ -133,7 +133,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		final LBool checkSatResult = mManagedScript.checkSat(this);
 		mManagedScript.pop(this, 1);
 		mManagedScript.unlock(this);
-		if (checkSatResult == LBool.UNSAT) {
+		if (checkSatResult.equals(LBool.UNSAT)) {
 			return true;
 		}
 		return false;

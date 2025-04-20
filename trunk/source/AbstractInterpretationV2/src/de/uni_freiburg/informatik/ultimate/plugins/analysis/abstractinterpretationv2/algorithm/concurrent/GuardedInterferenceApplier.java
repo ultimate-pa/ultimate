@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -151,7 +148,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				}
 			}
 			oldStates.clear();
-			newDisj = DisjunctiveAbstractState.createDisjunction(reduceBySameTracking(newStates), mMaxParallelStates);
+			newDisj = DisjunctiveAbstractState.createDisjunction(newStates, mMaxParallelStates);
 			final boolean changed = newDisj.isSubsetOf(allDisj) != SubsetResult.NONE ? false : true;
 			if (mIterations <= mMaxItf) {
 				allDisj = allDisj.union(newDisj);
@@ -168,29 +165,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			oldStates.addAll(newDisj.getStates());
 			allDisj = allDisj.union(newDisj);
 		}
-		return reduceBySameTracking(allDisj.getStates());
-	}
-
-	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> reduceBySameTracking(
-			final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states) {
-		if (states.size() <= 1) {
-			return states;
-		}
-		final List<GuardedInterferenceDomainState<STATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
-		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result = new HashSet<>();
-		while (!toProcess.isEmpty()) {
-			GuardedInterferenceDomainState<STATE, ACTION, LOC> base = toProcess.remove(toProcess.size() - 1);
-			final ListIterator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> it = toProcess.listIterator();
-			while (it.hasNext()) {
-				final GuardedInterferenceDomainState<STATE, ACTION, LOC> candidate = it.next();
-				if (base.equalThreadTracking(candidate)) {
-					base = base.union(candidate);
-					it.remove();
-				}
-			}
-			result.add(base);
-		}
-		return result;
+		return allDisj.getStates();
 	}
 
 	private Set<InterferenceWithParentThread<STATE, ACTION, LOC>> getValidInterferences(
@@ -254,7 +229,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		final int interferenceLocation = mAbstractLocationMap.getAbstractLocation(interference.action().getSource());
 		if ((!possibleInterferingLocations.contains(interferenceLocation)
 				|| !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 0))
-				&& !(ownerThread == interferenceThreadName)
+				&& !(ownerThread.equals(interferenceThreadName))
 				&& !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 1)) {
 			return false;
 		}
