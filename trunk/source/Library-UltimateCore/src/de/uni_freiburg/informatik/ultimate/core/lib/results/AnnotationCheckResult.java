@@ -236,6 +236,18 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		}
 	}
 
+	public static class Label extends CategorizedProgramPoint {
+
+		public Label(final ILocation location) {
+			super(location);
+		}
+
+		@Override
+		public String toString() {
+			return "label at line " + getLocation().getStartLine();
+		}
+	}
+
 	public static class ProcedureEntry extends CategorizedProgramPoint {
 
 		final String mProcedureName;
