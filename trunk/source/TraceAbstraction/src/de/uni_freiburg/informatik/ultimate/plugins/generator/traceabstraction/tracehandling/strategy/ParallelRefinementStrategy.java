@@ -47,7 +47,7 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	}
 
 	/*
-	 * Not used yet, maybe we want to submit to executor in this class such that we can set the prio here
+	 * Future Work, enable different priorities for different strategy modules
 	 */
 	public void setPriorities(final Integer[] priorities) {
 		assert priorities.length == mThreadLimitForPP;
@@ -58,104 +58,57 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		mImperfectSequencesSoFar += 1;
 	}
 
+	/*
+	 * default always generalize since we dont have the union yet
+	 */
 	public boolean generalize() {
-		final boolean condition = mImperfectSequencesSoFar > 1;
+		final boolean condition = mImperfectSequencesSoFar >= 1;
 		mImperfectSequencesSoFar = 0;
 		return condition;
 	}
-	// public int getPriorityForCurrentModule(final IIpTcStrategyModule<?, L> module) {
-	// assert mModules != null;
-	// for (int i = 0; i < mModules.length; i++) {
-	// if (mModules[i].equals(module)) {
-	// return mPriorities[i];
-	// }
-	// }
-	// throw new AssertionError("Unknown Module, no Priority");
-	// }
 
 	/*
-	 * returns the single module and strategy that is next in line for the next free worker TODO we can also support a
-	 * subset of modules here
+	 * returns one module for one worker TODO: For SV-Comp settings / evlautions 1 size thread pool, queue (craig,
+	 * forward backward) then(craig, acceleration)
+	 *
+	 * Craig is basically our quick check?
+	 *
+	 * Still we want to kill all threads if one sequence is perfect
 	 */
-	//
-	// public IIpTcStrategyModule<?, L>[] getStrategyForWorker(final ITraceCheckStrategyModule<L, ?>[]
-	// traceCheckModules) {
-	// mModules = (IIpTcStrategyModule<?, L>[]) traceCheckModules;
-	// mThreadLimitForPP = traceCheckModules.length;
-	// assert mRunningThreadForPP < mThreadLimitForPP;
-	// assert mActiveModules.length >= traceCheckModules.length;
-	// // richtiges gezwonkel!
-	// for (int i = 0; i < mThreadLimitForPP; i++) {
-	// if (!mActiveModules[i]) {
-	// final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-	// rtr.add((IIpTcStrategyModule<?, L>) traceCheckModules[i]);
-	// final IIpTcStrategyModule<?, L>[] singelModule = rtr.toArray(new IIpTcStrategyModule[rtr.size()]);
-	// mRunningThreadForPP += 1;
-	// mLogger.info("Running Strategy: " + ((ThreadGroup) singelModule[0]).getName());
-	// mActiveModules[i] = true;
-	// return singelModule;
-	// }
-	// }
-	// throw new AssertionError(
-	// "Caller needs to ensure there are enough modules and not all are running, Is done in startWorker()");
-	// }
-
-	/*
-	 * returns one module for one worker
-	 */
-	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory,
-			final int module) {
+	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory, int module) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-
-		// Idee currentModule just counts up, and we do modulo and we take the new assertion order
-		// example 1 then non-inc, 5 then module 1 with new assertio order
-		// TODO track active
-		// if (!mActiveModules[module]) {
-		// mActiveModules[module] = true;
-		// }
-
+		module = module % 4;
 		switch (module) {
 		case 0:
 			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
 			break;
 		case 1:
-			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.ForwardPredicates));
+			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 			break;
 		case 2:
 			// rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-			if (!mLoopAccelerationWasTried) {
-				rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
-				mLoopAccelerationWasTried = true;
-			}
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
 			// rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation));
 			break;
 		case 3:
+			if (!mLoopAccelerationWasTried) {
+				rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
+				mLoopAccelerationWasTried = true;
+			} else {
+				rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			}
 			// rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 			// rtr.add(factory.createIpTcStrategyModuleAbstractInterpretation());
-			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.BackwardPredicates));
+			// rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.BackwardPredicates));
 			break;
 		default:
 			throw new AssertionError("Unknown Module");
 		}
 		assert rtr.size() == 1;
-
+		mRunningThreadForPP += 1;
 		return rtr.toArray(new IIpTcStrategyModule[1]);
 	}
 
-	// public void freeStrategyFromDoneWorker(final IIpTcStrategyModule<?, L> module) {
-	// for (int i = 0; i < mModules.size(); i++) {
-	// if (mModules.get(i).equals(module)) {
-	// assert mActiveModules[i];
-	// mActiveModules[i] = false;
-	// mRunningThreadForPP -= 1;
-	// }
-	// }
-	// }
-
-	/*
-	 * returns the global executor if we dont care or the executor we have for a pathprogram if we see a new pathprogram
-	 * we return a new executor
-	 */
 	private ExecutorService createExecutorForPathProgram(final int traceHash, final int threadLimitPerPathProgram) {
 		final ThreadFactory factory = new GroupedThreadFactory("PP-" + traceHash + "-");
 		// Executor Services for different thread groups
@@ -168,14 +121,12 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		return mExecutor;
 	}
 
-	public boolean isAtThreadLimit() {
-		return mRunningThreadForPP >= mThreadLimitForPP;
+	public int getRunningThreadsOfPP() {
+		return mRunningThreadForPP;
 	}
 
+	// not used atm
 	public boolean isActiveModule(final int module) {
-		if (module == 2) {
-			return false;
-		}
 		return true;
 	}
 

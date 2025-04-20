@@ -98,18 +98,11 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	// Strategies
 	private final HashMap<Integer, NestedRun<L, ?>> mAllCounterexamples = new HashMap<>();
 	private final HashMap<Set<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
-	// private final HashMap<Set<L>, boolean[]> mPpStrageyTrackerMap = new HashMap<>();
-	// final RefinementStrategy[] mStrategyForWorker;
 
 	// Testing Strategies
 	private final boolean useGoalSetForIsEmpty;
 	private final Set<IPredicate> mActiveErrorLocs = new HashSet<>();
 	private final HashMap<Integer, Integer> mInActiveErrorLocs = new HashMap<>();
-
-	// shared read only inital abstraction for automata generalization in threads
-	// TODO option to use inital abstraction instead of current to save memory
-	// (costs cpu time since generalization becomes more expensive)
-	// private final INestedWordAutomaton<L, IPredicate> mInitialAbstraction;
 
 	// Addtional Statistiks for Evaluation
 	private Integer mCounterexamplesChecked = 0;
@@ -134,6 +127,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	 *
 	 * Search a mCounterexample in Abstraction - Inital Abstraction returns true if counterexample -
 	 * isAbstractionEmpty()
+	 *
+	 * TODO option to save memory, measure heap, then dont copy the abstracion on the worker
 	 *
 	 * @param name
 	 * @param initialAbstraction
@@ -171,10 +166,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
 		// mParallelSearchSrategy = mPref.parallelSearchSrategy;
-		// mInitialAbstraction = initialAbstraction;
 
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
+
 	}
 
 	/*
@@ -441,17 +436,20 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final Set<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asList());
 
 		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
-			mPpStrategyMap.put(ppRepresentative, new ParallelRefinementStrategy<>(mLogger, ppRepresentative, 3));
+			mPpStrategyMap.put(ppRepresentative, new ParallelRefinementStrategy<>(mLogger, ppRepresentative, 1));
 		}
-		assert (!mPpStrategyMap.get(ppRepresentative).isAtThreadLimit());
-		executor = mPpStrategyMap.get(ppRepresentative).getExecutor();
+		final ParallelRefinementStrategy<L> pathProgramStrategy = mPpStrategyMap.get(ppRepresentative);
+		executor = pathProgramStrategy.getExecutor();
 
 		if (!executor.isTerminated()) {
 
-			for (int module = 0; module < 4; module++) {
-				if (mPpStrategyMap.get(ppRepresentative).isActiveModule(module)) {
+			// setting how many thread we want to start per counterexample.
+			// Plan 2 threads one is always craig on interpol as quickecheckr
+			for (int module = 0; module < 2; module++) {
+				if (pathProgramStrategy.isActiveModule(module)) {
 					// strategies
-					final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc, module);
+					final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc,
+							pathProgramStrategy.getRunningThreadsOfPP());
 					mWorkerResultQueue.add(executor.submit(worker));
 					mRunningThreads += 1;
 				}
