@@ -79,9 +79,9 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 
 	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocation) {
 		if (threadName == mLocation.getProcedure()) {
-			if (mAbstractLocationMap
-					.getAbstractLocation((LOC) mLocation.getOutgoingNodes().getFirst()) != newLocation) {
-				throw new AssertionError("trying to move more than one transition at once");
+			if (mLocation.getOutgoingNodes().size() == 0) {
+				return new AbstractLocationState<>(mLocation, mAbstractLocationMap,
+						mLocationTracker.movedTo(threadName, newLocation));
 			}
 			return new AbstractLocationState<>((LOC) mLocation.getOutgoingNodes().getFirst(), mAbstractLocationMap,
 					mLocationTracker.movedTo(threadName, newLocation));

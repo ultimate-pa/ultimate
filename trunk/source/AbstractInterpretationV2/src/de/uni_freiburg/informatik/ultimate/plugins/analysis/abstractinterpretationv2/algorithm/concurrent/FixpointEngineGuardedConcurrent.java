@@ -59,6 +59,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final String mLocationAbstraction;
 	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
 	int locationCounter = 0;
+	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
 
 	public FixpointEngineGuardedConcurrent(final IUltimateServiceProvider services,
 			final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
@@ -96,6 +97,12 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mItfApplier = applier;
 	}
 
+	private int getAndIncrementThreadLocationCounter(final String thread) {
+		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
+		mPerThreadLocationCounterMap.put(thread, counter + 1);
+		return counter;
+	}
+
 	private AbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction,
 			final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		// TODO: enum for setting strings
@@ -104,7 +111,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				icfg);
 		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
 		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
-		case "Fully precise" -> new AbstractLocationMap<>((l -> locationCounter++), mEntryLocs);
+		case "Fully precise" ->
+			new AbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
 		case "Heuristic splitting" -> heuristicsAbstraction.computeLocationAbstraction();
 		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		};
@@ -303,21 +311,22 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> combineForkingStates(
 			final String procedure, final HashSet<LOC> allForkLocs) {
-		DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = null;
+		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkStates = new HashSet<>();
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> state = mStateStorage
 					.getAbstractState(loc);
 			if (state == null) {
-				result = null;
-				break;
+				return null;
 			}
-			// TODO:
-			final var movedState = translateForkLocIntoInitialState(loc, state, procedure);
 			allForkLocs.add(loc);
+			final var movedState = translateForkLocIntoInitialState(loc, state, procedure);
 			final var clearedState = removeLocalVars(movedState);
-			result = (result == null) ? clearedState : result.union(clearedState);
+			forkStates.addAll(clearedState.getStates());
 		}
-		return result;
+		if (forkStates.isEmpty()) {
+			return null;
+		}
+		return DisjunctiveAbstractState.createDisjunction(forkStates, mMaxParallelStates);
 	}
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> translateForkLocIntoInitialState(
@@ -390,14 +399,18 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				initialStates.add(removeLocalVars(forkState));
 			}
 		}
-//		if (GuardedStateTransformer.getSingleState(result) == null) {
-//			return result;
-//		}
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> interferenceDomainStates = new LinkedHashSet<>();
 		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : result
 				.getStates()) {
 			interferenceDomainStates
 					.addAll(mItfApplier.stateAfterInterferences(guardedInterferenceDomainState, procedure));
+			interferenceDomainStates.add(guardedInterferenceDomainState);
+		}
+		final var statesCopy = new HashSet<>(interferenceDomainStates);
+		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : statesCopy) {
+			interferenceDomainStates
+					.addAll(mItfApplier.stateAfterInterferences(guardedInterferenceDomainState, procedure));
+			interferenceDomainStates.add(guardedInterferenceDomainState);
 		}
 		return DisjunctiveAbstractState.createDisjunction(interferenceDomainStates, mMaxParallelStates);
 	}

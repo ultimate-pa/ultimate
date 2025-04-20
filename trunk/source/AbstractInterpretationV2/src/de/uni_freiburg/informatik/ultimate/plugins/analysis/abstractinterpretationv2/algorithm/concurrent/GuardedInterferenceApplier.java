@@ -36,10 +36,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, STATE> mInterferenceCache = new HashMap<>();
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 	private int mIterations;
-	private int mMaxItf;
+	private final int mMaxItf;
 	private final int mMaxParallelStates;
 
-	private final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> mCachedStates = new HashSet<>();
 	public static int iterationsReached = 0;
 
 	public GuardedInterferenceApplier(final IIcfg<?> cfg, final ILogger logger,
@@ -99,7 +98,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 
 	private void initialize() {
 		mIterations = 0;
-		mCachedStates.clear();
 	}
 
 	private Set<String> getThreadsThatCanInterfere(final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate,
@@ -129,9 +127,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		var newDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
 
 		final var allInterferences = getValidInterferences(interferingThreads, ownerThread, state);
-		if (allInterferences.size() > 20) {
-			mMaxItf = 2;
-		}
 
 		while (true) {
 			mIterations++;
@@ -244,7 +239,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 		}
 
-		// in case of interfering fork, just update threadcounter and location
+		// in case of interfering fork, update threadcounter and location
 		if (interferedState != null && interference.action() instanceof final ForkThreadCurrent fork) {
 			interferedState = interferedState.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()));
 		}
@@ -264,15 +259,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			return false;
 		}
 		return true;
-	}
-
-	private GuardedInterferenceDomainState<STATE, ACTION, LOC> handleFork(
-			GuardedInterferenceDomainState<STATE, ACTION, LOC> newState, final ForkThreadCurrent fork,
-			final Interference<STATE, ACTION, LOC> interference) {
-		newState = newState.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()));
-		newState = newState.movedTo(interference.action().getPrecedingProcedure(),
-				mAbstractLocationMap.getAbstractLocation(interference.action().getTarget()));
-		return newState;
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyInterferenceToSTATE(
