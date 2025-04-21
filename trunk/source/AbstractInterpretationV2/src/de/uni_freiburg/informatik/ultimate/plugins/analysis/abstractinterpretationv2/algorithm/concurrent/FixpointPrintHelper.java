@@ -12,6 +12,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
 
 public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
+	public int mMaxStatesReached = 0;
+
 	public FixpointPrintHelper() {
 	}
 
@@ -26,7 +28,6 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		printResultCfgAnnotations(resultSet, logger, entryLocs, script);
 		final String exampleThreadString = resultSet.keySet().iterator().next();
 		resultSet.get(exampleThreadString).getLoc2SingleStates().get(entryLocs.values().iterator().next());
-//		logger.error("max size reached:" + GuardedInterferenceDomainState.maxSizeReached);
 	}
 
 	public void printResultCfgAnnotations(
@@ -55,7 +56,11 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		final var terms = result.getLoc2Term().get(loc);
 		if (terms != null) {
 			logger.error("State: " + result.getLoc2States().get(loc));
-			logger.error("Amount of parallel states: " + result.getLoc2States().get(loc).size());
+			final int parallelStateAmount = result.getLoc2States().get(loc).size();
+			if (parallelStateAmount > mMaxStatesReached) {
+				mMaxStatesReached = parallelStateAmount;
+			}
+			logger.error("Amount of parallel states: " + parallelStateAmount);
 			logger.error("Unioned State: "
 					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
 							.state());

@@ -59,8 +59,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final FixpointPrintHelper<UNDERLYINGSTATE, ACTION, LOC> mPrinter;
 	private final String mLocationAbstraction;
 	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
-	int locationCounter = 0;
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
+	private int mIteration = 0;
 
 	public FixpointEngineGuardedConcurrent(final IUltimateServiceProvider services,
 			final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
@@ -71,7 +71,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
-		mMaxInterferenceFixpointUnwindings = 16;
+		mMaxInterferenceFixpointUnwindings = 32;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		final AbstractLocationMap<LOC> absMap = computeLocationAbstraction(locationAbstraction, services, icfg);
@@ -138,7 +138,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				(IAbstractInterpretationResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>) mResult);
 
 		// TODO: to weak right now, make stronger
-		// assert areStatesInterferenceFree();
+		assert areStatesInterferenceFree();
 		return mResult;
 	}
 
@@ -168,12 +168,11 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	}
 
 	private void calculateFixpoint(final Script script) {
-		int iteration = 1;
+		mIteration = 1;
 		final Set<LOC> reachableErrorLocations = new HashSet<>();
-		final int fix = 0;
 		while (true) {
 			mLogger.error("\n");
-			mLogger.error("Starting thread modular fixpoint engine iteration " + iteration);
+			mLogger.error("Starting thread modular fixpoint engine iteration " + mIteration);
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = mItfApplier
 					.getInterferences();
 
@@ -215,16 +214,30 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 			// interference fixpoint reached
 			if (newInterferenceState.isSubsetOf(oldInterferenceState)) {
-				mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, iteration, resultSet,
+				mPrinter.printCfgResults(mLogger, newInterferenceState, newInterferenceState, mIteration, resultSet,
 						mEntryLocs, mDomain.getAbstractLocationMap(), script);
-				mLogger.error("max ITF fixpoint iterations: " + GuardedInterferenceApplier.iterationsReached);
+				// debug info for precision losses
+				if (GuardedInterferenceApplier.iterationsReached > mMaxInterferenceFixpointUnwindings) {
+					mLogger.warn(
+							"Possible precision loss, widened during one or more interference fixpoint(s). Iterations: "
+									+ GuardedInterferenceApplier.iterationsReached + ", with max being: "
+									+ mMaxInterferenceFixpointUnwindings);
+				}
+				if (mIteration > mMaxUnwindings) {
+					mLogger.warn("Possible precision loss, widened interferences because iterations were: " + mIteration
+							+ " with max being: " + mMaxUnwindings);
+				}
+				if (mPrinter.mMaxStatesReached > mMaxParallelStates) {
+					mLogger.warn("Used more states than max parallel allowed: " + mPrinter.mMaxStatesReached
+							+ " with max being: " + mMaxParallelStates);
+				}
 				break;
 			}
-			if (iteration > mMaxUnwindings) {
+			if (mIteration > mMaxUnwindings) {
 				mItfApplier.setInterferences(calcWidenedInterferences(oldInterferenceState, newInterferenceState));
 				mLogger.error("DID WIDENING ON INTERFERENCES.");
 			}
-			iteration++;
+			mIteration++;
 		}
 	}
 
