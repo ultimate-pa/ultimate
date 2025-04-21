@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -20,20 +19,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 
 public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
-	private final int locationCounter = 0;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
 	private final IIcfg<? extends LOC> mIcfg;
-	private final IUltimateServiceProvider mServices;
-	private final Term mTrueTerm;
 	private final Set<IProgramNonOldVar> mGlobals;
 
 	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		mScript = mManagedScript.getScript();
 		mIcfg = icfg;
-		mServices = services;
-		mTrueTerm = mManagedScript.term(this, "false");
 		mGlobals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 	}
 
@@ -67,7 +61,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		if (isSkipStatement(outgoing)) {
 			return false;
 		}
-		// (?) must be assert statement?
+		// (?) must be assert statement? (we want to ignore asserts)
 		if (outgoing.stream().anyMatch(s -> ((BoogieIcfgLocation) s.getTarget()).isErrorLocation())) {
 			return false;
 		}
@@ -80,7 +74,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return false;
 	}
 
-	private boolean isSkipStatement(final List<IcfgEdge> outgoing) {
+	private static boolean isSkipStatement(final List<IcfgEdge> outgoing) {
 		return outgoing.stream().anyMatch(
 				s -> s.getTransformula().getInVars().size() == 0 && s.getTransformula().getOutVars().size() == 0);
 	}
@@ -95,28 +89,13 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return false;
 	}
 
-	private boolean containsAssume(final List<IcfgEdge> outgoing) {
+	private static boolean containsAssume(final List<IcfgEdge> outgoing) {
 		for (final IcfgEdge icfgEdge : outgoing) {
-			if (!hasGuard(icfgEdge.getTransformula())) {
-				return false;
+			if ((icfgEdge.getTransformula().getAssignedVars().isEmpty())) {
+				return true;
 			}
 		}
-		return true;
-	}
-
-	private boolean hasGuard(final UnmodifiableTransFormula tf) {
-		final boolean hasAssignments = !tf.getAssignedVars().isEmpty();
-		if (hasAssignments) {
-			return false;
-		}
-//		final Term guard = TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, tf, false);
-//		final boolean hasGuard = termIsTrue(guard);
-//
-//		if (hasGuard) {
-//			return true;
-//		}
-//		return false;
-		return true;
+		return false;
 	}
 
 	private boolean isEdgeUnionTop(final List<IcfgEdge> outgoing) {

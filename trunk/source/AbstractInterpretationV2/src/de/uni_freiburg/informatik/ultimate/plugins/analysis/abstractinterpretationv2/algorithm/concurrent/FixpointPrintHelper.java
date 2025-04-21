@@ -13,11 +13,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	public int mMaxStatesReached = 0;
+	private final int mMaxUnwindings;
+	private final int mMaxInterferenceFixpointUnwindings;
+	private final int mMaxParallelStates;
+	private final ILogger mLogger;
 
-	public FixpointPrintHelper() {
+	public FixpointPrintHelper(final int outUndwinding, final int innerUnwindings, final int maxstates,
+			final ILogger logger) {
+		mMaxUnwindings = outUndwinding;
+		mMaxInterferenceFixpointUnwindings = innerUnwindings;
+		mMaxParallelStates = maxstates;
+		mLogger = logger;
 	}
 
-	public void printCfgResults(final ILogger logger,
+	public void printResults(final ILogger logger,
 			final AbstractInterferenceState<STATE, ACTION, LOC> newInterferenceState,
 			final AbstractInterferenceState<STATE, ACTION, LOC> newInterferenceState2, final int iteration,
 			final Map<String, AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
@@ -28,6 +37,24 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		printResultCfgAnnotations(resultSet, logger, entryLocs, script);
 		final String exampleThreadString = resultSet.keySet().iterator().next();
 		resultSet.get(exampleThreadString).getLoc2SingleStates().get(entryLocs.values().iterator().next());
+		printPrecisionLosses(iteration);
+	}
+
+	private void printPrecisionLosses(final int iteration) {
+		// debug info for precision losses
+		if (GuardedInterferenceApplier.iterationsReached > mMaxInterferenceFixpointUnwindings) {
+			mLogger.warn("Possible precision loss, widened during one or more interference fixpoint(s). Iterations: "
+					+ GuardedInterferenceApplier.iterationsReached + ", with max being: "
+					+ mMaxInterferenceFixpointUnwindings);
+		}
+		if (iteration > mMaxUnwindings) {
+			mLogger.warn("Possible precision loss, widened interferences because iterations were: " + iteration
+					+ " with max being: " + mMaxUnwindings);
+		}
+		if (mMaxStatesReached > mMaxParallelStates) {
+			mLogger.warn("Used more states than max parallel allowed: " + mMaxStatesReached + " with max being: "
+					+ mMaxParallelStates);
+		}
 	}
 
 	public void printResultCfgAnnotations(

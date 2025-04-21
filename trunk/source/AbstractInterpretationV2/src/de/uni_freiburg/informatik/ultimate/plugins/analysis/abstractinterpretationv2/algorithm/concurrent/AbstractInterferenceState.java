@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
@@ -104,25 +105,21 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 
 	public AbstractInterferenceState<STATE, ACTION, LOC> union(
 			final AbstractInterferenceState<STATE, ACTION, LOC> other) {
+
 		final Set<String> unionThreads = new HashSet<>(mThreadInterferenceMap.keySet());
 		unionThreads.addAll(other.mThreadInterferenceMap.keySet());
 		final AbstractInterferenceState<STATE, ACTION, LOC> result = new AbstractInterferenceState<>(unionThreads);
 
-		final Set<ACTION> allActions = new HashSet<>(mIdentifyMap.keySet());
-		allActions.addAll(other.mIdentifyMap.keySet());
+		final Map<ACTION, Set<Interference<STATE, ACTION, LOC>>> mergedMap = Stream
+				.concat(mIdentifyMap.entrySet().stream(), other.mIdentifyMap.entrySet().stream())
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> new HashSet<>(e.getValue()), (set1, set2) -> {
+					set1.addAll(set2);
+					return set1;
+				}));
 
-		for (final ACTION action : allActions) {
-			final Set<Interference<STATE, ACTION, LOC>> itfThis = mIdentifyMap.get(action);
-			final Set<Interference<STATE, ACTION, LOC>> itfOther = other.mIdentifyMap.get(action);
-
-			if (itfThis != null) {
-				for (final Interference<STATE, ACTION, LOC> singleItf : itfThis) {
-					result.addInterference(singleItf);
-				}
-			} else if (itfOther != null) {
-				for (final Interference<STATE, ACTION, LOC> singleItf : itfOther) {
-					result.addInterference(singleItf);
-				}
+		for (final Map.Entry<ACTION, Set<Interference<STATE, ACTION, LOC>>> entry : mergedMap.entrySet()) {
+			for (final Interference<STATE, ACTION, LOC> interference : entry.getValue()) {
+				result.addInterference(interference);
 			}
 		}
 

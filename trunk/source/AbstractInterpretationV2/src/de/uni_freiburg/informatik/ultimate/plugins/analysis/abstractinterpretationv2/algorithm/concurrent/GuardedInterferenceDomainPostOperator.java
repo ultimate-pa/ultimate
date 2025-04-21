@@ -43,7 +43,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		mLogger = logger;
 		mGlobalVariables = cfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 		mUnderlyingPostOp = postOp;
-		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, underlying, postOp, relationalInterferingDomain,
+		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, postOp, relationalInterferingDomain,
 				interferenceState, globalMap, maxItf, maxParallelStates);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 	}

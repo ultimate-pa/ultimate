@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
@@ -39,7 +38,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	public static int iterationsReached = 0;
 
 	public GuardedInterferenceApplier(final IIcfg<?> cfg, final ILogger logger,
-			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
+			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferenceState,
 			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates) {
@@ -80,7 +79,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	public void updateInterferences() {
 		mInterferences = mInterferences.union(mNewInterferences);
 		mNewInterferences = new AbstractInterferenceState<>(mToolkit.getProcedures());
-
 	}
 
 	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
@@ -115,7 +113,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			final Set<String> interferingThreads, final GuardedInterferenceDomainState<STATE, ACTION, LOC> state,
 			final String ownerThread) {
 
-		// Collect all starting, intermediate and final states as possibilities of real outcome
+		// Collect all starting, intermediate and final states as possibilities of all possible thread interleavings
 		Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> newStates = new LinkedHashSet<>();
 		newStates.add(state);
 		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> oldStates = new LinkedHashSet<>();
@@ -123,7 +121,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		var allDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
 		var newDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
 
-		final var allInterferences = getValidInterferences(interferingThreads, ownerThread, state);
+		final var allInterferences = getValidInterferences(interferingThreads, ownerThread);
 
 		while (true) {
 			mIterations++;
@@ -169,8 +167,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	}
 
 	private Set<InterferenceWithParentThread<STATE, ACTION, LOC>> getValidInterferences(
-			final Set<String> interferingThreads, final String ownerThread,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state) {
+			final Set<String> interferingThreads, final String ownerThread) {
 		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		for (final String interferenceThreadName : interferingThreads) {
