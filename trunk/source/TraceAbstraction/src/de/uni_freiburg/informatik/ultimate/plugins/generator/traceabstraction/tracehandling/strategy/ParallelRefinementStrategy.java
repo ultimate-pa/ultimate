@@ -1,12 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -20,10 +21,9 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	boolean[] mActiveModules; // if mActiveModules[3] = true than a thread uses mModules[3]
 	Integer[] mPriorities;
 	ThreadGroup mThreadGroup;
-	ExecutorService mExecutor;
+	ThreadPoolExecutor mExecutor;
 	Set<L> mPathProgramRepresentative; // Needs to be a Set of words
 	int mRunningThreadForPP = 0;
-	int mThreadLimitForPP;
 	protected final ILogger mLogger;
 	boolean mLoopAccelerationWasTried = false;
 	int mImperfectSequencesSoFar = 0;
@@ -33,25 +33,17 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	 * parallel strategy. We can give any array of tracechecks and make it a parallel strategy
 	 */
 	public ParallelRefinementStrategy(final ILogger logger, final Set<L> pathProgramRepresentative,
-			final int threadLimitForThisPP) {
-
-		mThreadLimitForPP = threadLimitForThisPP;
+			final int threadLimit) {
 		mLogger = logger;
 		mPathProgramRepresentative = pathProgramRepresentative;
-		mExecutor = createExecutorForPathProgram(mPathProgramRepresentative.hashCode(), mThreadLimitForPP);
-		mActiveModules = new boolean[mThreadLimitForPP];
-		// Default priority is from current thread
-		mPriorities =
-				Collections.nCopies(mThreadLimitForPP, Thread.currentThread().getPriority()).toArray(new Integer[0]);
-
+		mExecutor = createExecutorForPathProgram(mPathProgramRepresentative.hashCode(), threadLimit);
 	}
 
 	/*
 	 * Future Work, enable different priorities for different strategy modules
 	 */
 	public void setPriorities(final Integer[] priorities) {
-		assert priorities.length == mThreadLimitForPP;
-		mPriorities = priorities;
+
 	}
 
 	public void reportImperfectSequence() {
@@ -109,10 +101,13 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		return rtr.toArray(new IIpTcStrategyModule[1]);
 	}
 
-	private ExecutorService createExecutorForPathProgram(final int traceHash, final int threadLimitPerPathProgram) {
+	private ThreadPoolExecutor createExecutorForPathProgram(final int traceHash, final int threadLimit) {
 		final ThreadFactory factory = new GroupedThreadFactory("PP-" + traceHash + "-");
 		// Executor Services for different thread groups
-		final ExecutorService executor = Executors.newFixedThreadPool(threadLimitPerPathProgram, factory);
+		final long keepAliveTime = 15L; // We want to keep them alive for ever
+		final TimeUnit timeUnit = TimeUnit.MINUTES;
+		final ThreadPoolExecutor executor =
+				new ThreadPoolExecutor(1, threadLimit, keepAliveTime, timeUnit, new LinkedBlockingQueue<>());
 		return executor;
 
 	}
@@ -128,6 +123,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	// not used atm
 	public boolean isActiveModule(final int module) {
 		return true;
+	}
+
+	public void updateExecutorSizes(final int newSize) {
+		mExecutor.setCorePoolSize(newSize);
 	}
 
 }
