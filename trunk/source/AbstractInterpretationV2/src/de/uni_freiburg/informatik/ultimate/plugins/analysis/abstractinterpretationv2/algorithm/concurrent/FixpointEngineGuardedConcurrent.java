@@ -29,31 +29,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, VARDECL, LOC extends IcfgLocation>
 		implements IFixpointEngine<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> {
 
+	private final ILogger mLogger;
 	private final int mMaxUnwindings;
 	private final int mMaxInterferenceFixpointUnwindings;
 	private final int mMaxParallelStates;
 	private int mIteration = 0;
-	Integer aInteger = 0;
 
+	private final String mLocationAbstraction;
+	private final Map<String, ? extends LOC> mEntryLocs;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
 	private final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage;
 	private final GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> mDomain;
 	private final IAbstractDomain<UNDERLYINGSTATE, ACTION> mUnderlyingDomain;
 	private final IVariableProvider<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION> mVarProvider;
-	private final ILogger mLogger;
-
-	private AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mResult;
-	private final SummaryMap<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mSummaryMap;
-
 	private final IFixpointEngineFactory<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> mFixpointEngineFactory;
-	private final Map<String, ? extends LOC> mEntryLocs;
 	private final FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final FixpointPrintHelper<UNDERLYINGSTATE, ACTION, LOC> mPrinter;
-	private final String mLocationAbstraction;
 	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
 	private final InterferenceWideningOperator<UNDERLYINGSTATE, ACTION, LOC> mInterferenceWideningOperator;
 	private final DisjunctiveGuardedStateFactory<UNDERLYINGSTATE, ACTION, LOC> mDisjFactory;
+	private AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mResult;
+	private final SummaryMap<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mSummaryMap;
 
 	public FixpointEngineGuardedConcurrent(final IUltimateServiceProvider services,
 			final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
@@ -65,26 +62,22 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
 		mMaxInterferenceFixpointUnwindings = 32;
-		GuardedInterferenceApplier.iterationsReached = 0;
 		mEntryLocs = icfg.getProcedureEntryNodes();
+		mUnderlyingDomain = params.getAbstractDomain();
 		final var absLoc = new LocationAbstraction<LOC>(mEntryLocs);
 		final AbstractLocationMap<LOC> absMap = absLoc.computeLocationAbstraction(locationAbstraction, services, icfg);
-		mUnderlyingDomain = params.getAbstractDomain();
 		mDomain = new GuardedInterferenceDomain<>(icfg, mUnderlyingDomain, params.getLogger(), absMap,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings);
 		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mDomain);
 		// TODO: not sure this is sound
 		mParams = (FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) params
 				.setDomain((IAbstractDomain<UNDERLYINGSTATE, ACTION>) mDomain);
-
 		mLogger = mParams.getLogger();
 		mTransitionProvider = mParams.getTransitionProvider();
 		mStateStorage = mParams.getStorage();
 		mVarProvider = mParams.getVariableProvider();
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
-
 		mFixpointEngineFactory = (IFixpointEngineFactory<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) factory;
-
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
 		mPrinter = new FixpointPrintHelper<>(mMaxUnwindings, mMaxInterferenceFixpointUnwindings, mMaxParallelStates,
 				mLogger);
@@ -94,6 +87,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mItfApplier = applier;
 		mDisjFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates, mDomain,
 				mItfApplier, mEntryLocs);
+		GuardedInterferenceApplier.iterationsReached = 0;
 	}
 
 	@Override
@@ -120,25 +114,19 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private void calculateFixpoint(final Script script) {
 		mIteration = 1;
-		final int unchangedRounds = 0;
 		final Set<LOC> reachableErrorLocations = new HashSet<>();
 		while (true) {
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + mIteration);
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState = mItfApplier
-					.getInterferences();
+			final var oldInterferenceState = mItfApplier.getInterferences();
 
 			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new HashMap<>();
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
-				final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> initialState = mDisjFactory
-						.getInitialState(procedure);
-				final FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> paramsWithInterferences = mParams
-						.setStorage(mStateStorage.copy())
+				final var initialState = mDisjFactory.getInitialState(procedure);
+				final var paramsWithInterferences = mParams.setStorage(mStateStorage.copy())
 						.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState));
-				final IFixpointEngine<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> fixpointEngine = mFixpointEngineFactory
-						.constructFixpointEngine(paramsWithInterferences);
-				final AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> threadResult = fixpointEngine
-						.run(Set.of(mEntryLocs.get(procedure)), script);
+				final var fixpointEngine = mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
+				final var threadResult = fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
 
 				// TODO: for debugging, remove later
 				resultSet.put(procedure, threadResult);
@@ -156,31 +144,39 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				}
 			}
 
-			mItfApplier.updateInterferences();
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState = mItfApplier
-					.getInterferences();
+			final var newInterferenceState = mItfApplier.getNewInterferences();
+			printInterferenceLog(oldInterferenceState, newInterferenceState);
 
-			// interference fixpoint reached
-			mLogger.error("Interference Set we used:");
-			for (final String termString : oldInterferenceState.interferenceStrings()) {
-				mLogger.error(termString);
-			}
-			mLogger.error("new Interference Set");
-			for (final String termString : oldInterferenceState.interferenceStrings()) {
-				mLogger.error(termString);
-			}
 			final boolean changed = !newInterferenceState.isSubsetOf(oldInterferenceState);
 			if (!changed) {
+				// interference fixpoint reached
 				mPrinter.printResults(mLogger, newInterferenceState, newInterferenceState, mIteration, resultSet,
 						mEntryLocs, mDomain.getAbstractLocationMap(), script);
 				break;
 			}
-			if (mIteration > mMaxUnwindings && changed) {
-				mItfApplier.setInterferences(mInterferenceWideningOperator
-						.calcWidenedInterferences(oldInterferenceState, newInterferenceState));
-				mLogger.error("DID WIDENING ON INTERFERENCES.");
+
+			if (mIteration > mMaxUnwindings) {
+				final var widened = mItfApplier.wideningWithUpdateItfs();
+				mItfApplier.updateInterferences(widened);
+			} else {
+				final var unioned = mItfApplier.unionWithUpdateItfs();
+				mItfApplier.updateInterferences(unioned);
 			}
 			mIteration++;
 		}
+	}
+
+	private void printInterferenceLog(
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState,
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState) {
+		mLogger.error("Interference Set we used:");
+		for (final String termString : oldInterferenceState.interferenceStrings()) {
+			mLogger.error(termString);
+		}
+		mLogger.error("new Interference Set");
+		for (final String termString : newInterferenceState.interferenceStrings()) {
+			mLogger.error(termString);
+		}
+
 	}
 }

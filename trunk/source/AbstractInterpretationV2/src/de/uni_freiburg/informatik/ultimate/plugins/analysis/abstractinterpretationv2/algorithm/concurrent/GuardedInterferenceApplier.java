@@ -28,6 +28,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private final CfgSmtToolkit mToolkit;
 
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
+	private final InterferenceWideningOperator<STATE, ACTION, LOC> mInterferenceWideningOperator;
 	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mGuardedInterferenceDomain;
 	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, STATE> mInterferenceCache = new HashMap<>();
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
@@ -46,6 +47,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mLogger = logger;
 		mUnderlyingPostOp = postOp;
 		mGuardedInterferenceDomain = relationalInterferingDomain;
+		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mGuardedInterferenceDomain);
 		mInterferences = interferenceState;
 		mNewInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
 		mAbstractLocationMap = globalMap;
@@ -66,18 +68,25 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		return mInterferences;
 	}
 
+	public AbstractInterferenceState<STATE, ACTION, LOC> getNewInterferences() {
+		return mNewInterferences;
+	}
+
 	public void addItf(final String mCurrentThreadName, final ACTION transition,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate) {
 		mNewInterferences.addInterference(mCurrentThreadName, transition, oldstate.state(), oldstate.threadCounter());
 	}
 
-	public void setInterferences(final AbstractInterferenceState<STATE, ACTION, LOC> newState) {
-		mInterferences = new AbstractInterferenceState<>(newState);
-		mNewInterferences = new AbstractInterferenceState<>(mToolkit.getProcedures());
+	public AbstractInterferenceState<STATE, ACTION, LOC> unionWithUpdateItfs() {
+		return mInterferences.union(mNewInterferences);
 	}
 
-	public void updateInterferences() {
-		mInterferences = mInterferences.union(mNewInterferences);
+	public AbstractInterferenceState<STATE, ACTION, LOC> wideningWithUpdateItfs() {
+		return mInterferenceWideningOperator.calcWidenedInterferences(mInterferences, mNewInterferences);
+	}
+
+	public void updateInterferences(final AbstractInterferenceState<STATE, ACTION, LOC> newState) {
+		mInterferences = new AbstractInterferenceState<>(newState);
 		mNewInterferences = new AbstractInterferenceState<>(mToolkit.getProcedures());
 	}
 
