@@ -187,5 +187,5 @@ public interface ITypeHandler {
 
 	void registerNamedIncompleteType(String incompleteType, String named);
 
-	void setLibraryTypes(Map<String, ICType> libraryTypes);
+	void addLibraryTypes(Map<String, ICType> libraryTypes);
 }

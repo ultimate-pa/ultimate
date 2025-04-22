@@ -478,7 +478,7 @@ public class CHandler {
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, functionTable, mSymbolTable, mSettings,
 				mLocationFactory, getLibraryModels());
-		mTypeHandler.setLibraryTypes(mLibraryModelHandler.getTypeModels());
+		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
 
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, mProcedureManager,
@@ -572,7 +572,7 @@ public class CHandler {
 				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable, mSettings,
 				mLocationFactory, getLibraryModels());
-		mTypeHandler.setLibraryTypes(mLibraryModelHandler.getTypeModels());
+		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
 		mPostProcessor = new PostProcessor(mLogger, mExpressionTranslation, mTypeHandler, mReporter, mAuxVarInfoBuilder,
 				mFunctions, mTypeSizes, mSymbolTable, mStaticObjectsHandler, mSettings, procedureManager,
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);

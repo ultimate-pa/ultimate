@@ -159,7 +159,7 @@ public class TypeHandler implements ITypeHandler {
 	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
-	private Map<String, ICType> mLibraryTypes;
+	private final Map<String, ICType> mLibraryTypes = new HashMap<>();
 
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
@@ -1068,7 +1068,7 @@ public class TypeHandler implements ITypeHandler {
 	}
 
 	@Override
-	public void setLibraryTypes(final Map<String, ICType> libraryTypes) {
-		mLibraryTypes = libraryTypes;
+	public void addLibraryTypes(final Map<String, ICType> libraryTypes) {
+		mLibraryTypes.putAll(libraryTypes);
 	}
 }
