@@ -277,7 +277,8 @@ public class TypeHandler implements ITypeHandler {
 		final String cId = node.getName().toString();
 		final ICType libraryType = mLibraryTypes.get(cId);
 		if (libraryType != null) {
-			return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), false, libraryType);
+			return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
+					libraryType);
 		}
 		final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
