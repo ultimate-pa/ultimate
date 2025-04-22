@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -973,8 +974,24 @@ public class ExecutionProducer {
 				IcfgInterpreterObserver.getLogger()
 						.error("Execution successfully ended at error location " + finalLocation.toString());
 			}
+			// TODO: Store for each Edge the edge in the CFG
+			// TODO: Call createExecution then (requires matching types for the states)
 			return null;
 		}
 
+		private static <L extends IAction> IcfgProgramExecution<L> createExecution(final List<L> trace,
+				final List<Map<Term, Term>> states) {
+			// TODO: Don't define our own ProgramState in this plugin, then we can just use a normal import here.
+			final Map<Integer, de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState<Term>> stateMapping =
+					new HashMap<>();
+			for (int i = 0; i < states.size(); i++) {
+				stateMapping.put(i,
+						new de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState<>(
+								states.get(i).entrySet().stream().collect(
+										Collectors.toMap(x -> x.getKey(), x -> List.of(x.getValue()))),
+								Term.class));
+			}
+			return IcfgProgramExecution.create(trace, stateMapping);
+		}
 	}
 }
