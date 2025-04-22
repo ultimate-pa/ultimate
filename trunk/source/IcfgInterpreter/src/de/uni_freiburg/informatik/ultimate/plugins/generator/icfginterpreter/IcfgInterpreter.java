@@ -90,7 +90,7 @@ public class IcfgInterpreter implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return mObserver.getRootOfNewModel();
+		return mObserver.getExecutions();
 	}
 
 	@Override

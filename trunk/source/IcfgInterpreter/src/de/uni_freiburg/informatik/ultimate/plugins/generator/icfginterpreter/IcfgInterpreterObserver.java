@@ -93,9 +93,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		return seenICFGs.indexOf(mIcfg);
 	}
 
-	public IElement getRootOfNewModel() {
-		// TODO: We want to return executions instead (for now we can also just log them, but e.g., to give the
-		// execution to other plugins)
-		return mIcfg;
+	public IElement getExecutions() {
+		// TODO: Actually return the calculcated executions
+		return new ProgramExecutions<>(List.of());
 	}
 }
