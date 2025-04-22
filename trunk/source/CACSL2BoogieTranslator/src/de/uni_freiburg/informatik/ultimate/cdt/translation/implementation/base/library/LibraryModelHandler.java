@@ -44,6 +44,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -66,14 +67,16 @@ public class LibraryModelHandler {
 	private final Map<String, ICType> mTypeModels;
 	private final Map<String, IASTNode> mFunctionTable;
 	private final FlatSymbolTable mSymboltable;
+	private final TranslationSettings mSettings;
 	private final ILogger mLogger;
 
 	public LibraryModelHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
-			final FlatSymbolTable symboltable, final LocationFactory locationFactory,
-			final List<ILibraryModel> libraryModels) {
+			final FlatSymbolTable symboltable, final TranslationSettings settings,
+			final LocationFactory locationFactory, final List<ILibraryModel> libraryModels) {
 		mLogger = logger;
 		mFunctionTable = functionTable;
 		mSymboltable = symboltable;
+		mSettings = settings;
 		mLocationFactory = locationFactory;
 		mFunctionModels = getFunctionModels(libraryModels);
 		mTypeModels = getTypeModels(libraryModels);
@@ -104,8 +107,17 @@ public class LibraryModelHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				mLogger.warn("Function %s is already implemented but we override the implementation for the call at %s",
-						transformedName, node.getFileLocation());
+				if (mSettings.checkErrorFunction() && "reach_error".equals(transformedName)) {
+					// Workaround for reach_error: It is redefined in many tasks of SV-COMP, but we don't care about the
+					// implementation and just want to check if it is reachable or not (for unreach-call). Therefore we
+					// use our model and show a warning.
+					mLogger.warn(
+							"Function %s is already implemented but we override the implementation for the call at %s",
+							transformedName, node.getFileLocation());
+				} else {
+					// Otherwise return null, i.e., use the actual implementation rather than our model.
+					return null;
+				}
 			}
 			final ILocation loc = mLocationFactory.createCLocation(node);
 			return functionModel.handleFunction(main, node, loc, name);
