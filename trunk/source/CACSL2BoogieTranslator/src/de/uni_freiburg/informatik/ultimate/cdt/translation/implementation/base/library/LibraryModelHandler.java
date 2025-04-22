@@ -105,12 +105,8 @@ public class LibraryModelHandler {
 			final IASTNode funDecl = mFunctionTable.get(transformedName);
 			if (funDecl instanceof IASTFunctionDefinition) {
 				// it is a function that already has a body
-				if (!mSettings.checkErrorFunction() || !"reach_error".equals(transformedName)) {
-					return null;
-				}
-				mLogger.warn(String.format(
-						"Function %s is already implemented but we override the implementation for the call at %s",
-						transformedName, node.getFileLocation()));
+				mLogger.warn("Function %s is already implemented but we override the implementation for the call at %s",
+						transformedName, node.getFileLocation());
 			}
 			final ILocation loc = mLocationFactory.createCLocation(node);
 			return functionModel.handleFunction(main, node, loc, name);
