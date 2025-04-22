@@ -44,7 +44,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -67,16 +66,14 @@ public class LibraryModelHandler {
 	private final Map<String, ICType> mTypeModels;
 	private final Map<String, IASTNode> mFunctionTable;
 	private final FlatSymbolTable mSymboltable;
-	private final TranslationSettings mSettings;
 	private final ILogger mLogger;
 
 	public LibraryModelHandler(final ILogger logger, final Map<String, IASTNode> functionTable,
-			final FlatSymbolTable symboltable, final TranslationSettings settings,
-			final LocationFactory locationFactory, final List<ILibraryModel> libraryModels) {
+			final FlatSymbolTable symboltable, final LocationFactory locationFactory,
+			final List<ILibraryModel> libraryModels) {
 		mLogger = logger;
 		mFunctionTable = functionTable;
 		mSymboltable = symboltable;
-		mSettings = settings;
 		mLocationFactory = locationFactory;
 		mFunctionModels = getFunctionModels(libraryModels);
 		mTypeModels = getTypeModels(libraryModels);
