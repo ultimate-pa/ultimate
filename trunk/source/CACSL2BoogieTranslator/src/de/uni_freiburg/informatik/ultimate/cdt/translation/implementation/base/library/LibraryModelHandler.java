@@ -90,14 +90,13 @@ public class LibraryModelHandler {
 	 *
 	 * @param main
 	 * @param node
-	 * @param astIdExpression
 	 * @return
 	 */
-	public Result translateStandardFunction(final IDispatcher main, final IASTFunctionCallExpression node,
-			final IASTIdExpression astIdExpression) {
-		assert node.getFunctionNameExpression() == astIdExpression
-				: "astIdExpression is not the name of the called function";
-		final String name = astIdExpression.getName().toString();
+	public Result translateStandardFunction(final IDispatcher main, final IASTFunctionCallExpression node) {
+		if (!(node.getFunctionNameExpression() instanceof final IASTIdExpression id)) {
+			return null;
+		}
+		final String name = id.getName().toString();
 
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
 		if (functionModel != null) {

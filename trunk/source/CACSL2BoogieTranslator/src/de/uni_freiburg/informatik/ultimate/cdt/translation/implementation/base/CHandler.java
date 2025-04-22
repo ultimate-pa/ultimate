@@ -1698,8 +1698,7 @@ public class CHandler {
 					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
 				}
 			}
-			final Result standardFunction =
-					mLibraryModelHandler.translateStandardFunction(main, node, (IASTIdExpression) functionName);
+			final Result standardFunction = mLibraryModelHandler.translateStandardFunction(main, node);
 			if (standardFunction != null) {
 				return standardFunction;
 			}
