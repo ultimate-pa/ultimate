@@ -288,7 +288,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 						try {
 							final WorkerThreadResult<L, A> workerResult = doneFuture.get();
 							mLogger.info("Main: A Thread is Done");
-							mRunningThreads -= 1;
 
 							// If Error automaton terminate immediately
 							if (mPref.stopAfterFirstViolation()
@@ -438,6 +437,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mPpStrategyMap.put(ppRepresentative,
 					new ParallelRefinementStrategy<>(mLogger, ppRepresentative, mThreadLimit));
 			updateExecutorSizes();
+			mRunningThreads += 1;
 		}
 		final ParallelRefinementStrategy<L> pathProgramStrategy = mPpStrategyMap.get(ppRepresentative);
 		executor = pathProgramStrategy.getExecutor();
@@ -446,13 +446,14 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		// setting how many thread we want to start per counterexample.
 		// Plan 2 threads one is always craig on interpol as quickecheckr
+
 		for (int module = 0; module < 2; module++) {
 			if (pathProgramStrategy.isActiveModule(module)) {
 				// strategies
 				final CegarWorkerThread<L, A> worker =
 						setUpWorker(iterationServices, currentErrorLoc, pathProgramStrategy.getRunningThreadsOfPP());
 				mWorkerResultQueue.add(executor.submit(worker));
-				mRunningThreads += 1;
+
 			}
 		}
 		// } else {
@@ -542,6 +543,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mPpStrategyMap.get(pathProgramRepresentative).getExecutor().shutdown();
 			mPpStrategyMap.remove(pathProgramRepresentative);
 			updateExecutorSizes();
+			mRunningThreads -= 1;
 		} else if (mPpStrategyMap.containsKey(pathProgramRepresentative)) {
 			mPpStrategyMap.get(pathProgramRepresentative).reportImperfectSequence();
 		}

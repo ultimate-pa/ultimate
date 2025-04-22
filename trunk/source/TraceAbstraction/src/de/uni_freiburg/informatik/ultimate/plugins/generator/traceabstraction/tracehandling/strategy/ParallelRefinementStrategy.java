@@ -27,6 +27,7 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	protected final ILogger mLogger;
 	boolean mLoopAccelerationWasTried = false;
 	int mImperfectSequencesSoFar = 0;
+	int mExecutorSize = 0;
 
 	/*
 	 * call getStrategyForWorker() to get the strategy that we want to execute. This class maintains the overview of our
@@ -69,29 +70,18 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	 */
 	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory, int module) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		module = module % 4;
+		module = module % 2;
 		switch (module) {
 		case 0:
 			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
 			break;
 		case 1:
-			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-			break;
-		case 2:
-			// rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
-			// rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation));
-			break;
-		case 3:
 			if (!mLoopAccelerationWasTried) {
 				rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
 				mLoopAccelerationWasTried = true;
 			} else {
 				rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 			}
-			// rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
-			// rtr.add(factory.createIpTcStrategyModuleAbstractInterpretation());
-			// rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.BackwardPredicates));
 			break;
 		default:
 			throw new AssertionError("Unknown Module");
@@ -106,6 +96,7 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		// Executor Services for different thread groups
 		final long keepAliveTime = 15L; // We want to keep them alive for ever
 		final TimeUnit timeUnit = TimeUnit.MINUTES;
+		mExecutorSize = 1;
 		final ThreadPoolExecutor executor =
 				new ThreadPoolExecutor(1, threadLimit, keepAliveTime, timeUnit, new LinkedBlockingQueue<>());
 		return executor;
@@ -126,9 +117,13 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	}
 
 	public void updateExecutorSizes(final int newSize) {
+		mExecutorSize = newSize;
 		mExecutor.setCorePoolSize(newSize);
 	}
 
+	public int getExecutorSize() {
+		return mExecutorSize;
+	}
 }
 
 class GroupedThreadFactory implements ThreadFactory {
