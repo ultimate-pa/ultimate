@@ -165,15 +165,11 @@ public class FunctionModelHelper {
 	 */
 	public ExpressionResult constructOverapproximationForFunctionCall(final ILocation loc, final String functionName,
 			final ICType resultType) {
-		return buildFunctionCall(loc, resultType).addOverapprox(new Overapprox(functionName, loc)).build();
-	}
-
-	private ExpressionResultBuilder buildFunctionCall(final ILocation loc, final ICType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(auxvar);
 		builder.setLrValue(new RValue(auxvar.getExp(), resultType));
-		return builder;
+		return builder.addOverapprox(new Overapprox(functionName, loc)).build();
 	}
 
 	/**
