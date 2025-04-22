@@ -116,9 +116,8 @@ public class FunctionModelHelper {
 	}
 
 	/**
-	 * Handle a function call by dispatching all arguments and then calling a function with no arguments that has the
-	 * name of the function and is marked with the {@link Overapprox} annotation. Additionally it is assumed that the
-	 * result is in range of the given type.
+	 * Handle a function call by dispatching all arguments with a non-deterministic return value (assumed to be in range
+	 * of {@code resultType}) which is marked with the {@link Overapprox} annotation.
 	 *
 	 * @param main
 	 *            the current dispatcher
