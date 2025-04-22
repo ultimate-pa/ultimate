@@ -89,8 +89,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	// Parallel Setup
 	private final ExecutorService mExec;
 	private int mThreadLimit;
-	private final int mThreadLimitPerPathProgram = 2;
+	private final int mThreadLimitPerPathProgram = 1;
+	private int mThreadGroupsForPPLimit = 1;
 	private int mRunningThreads = 0;
+	private int mRunningThreadGroupsForPP = 0;
 
 	// private final CompletionService<WorkerThreadResult<L, A>> mECS;
 	BlockingQueue<Future<WorkerThreadResult<L, A>>> mWorkerResultQueue = new LinkedBlockingQueue<>();
@@ -161,6 +163,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mThreadLimit = Runtime.getRuntime().availableProcessors();
 			mThreadLimit -= 1; // one for main thread
 		}
+		mThreadGroupsForPPLimit = mThreadLimit;
+		mThreadLimit = mThreadLimitPerPathProgram * mThreadGroupsForPPLimit;
 		mExec = Executors.newFixedThreadPool(mThreadLimit);
 		// mECS = new ExecutorCompletionService<>(mExec);
 
@@ -436,7 +440,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final Set<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asList());
 
 		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
-			mPpStrategyMap.put(ppRepresentative, new ParallelRefinementStrategy<>(mLogger, ppRepresentative, 1));
+			mRunningThreadGroupsForPP += 1;
+			mPpStrategyMap.put(ppRepresentative,
+					new ParallelRefinementStrategy<>(mLogger, ppRepresentative, mThreadLimitPerPathProgram));
 		}
 		final ParallelRefinementStrategy<L> pathProgramStrategy = mPpStrategyMap.get(ppRepresentative);
 		executor = pathProgramStrategy.getExecutor();
@@ -473,7 +479,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private Future<WorkerThreadResult<L, A>> getWorkerResult(final boolean didntFindCexLastIteration)
 			throws InterruptedException {
 		Future<WorkerThreadResult<L, A>> doneFuture = null;
-		if (mRunningThreads == mThreadLimit || didntFindCexLastIteration) {
+		if (mRunningThreads == mThreadLimit || didntFindCexLastIteration
+				|| mRunningThreadGroupsForPP == mThreadGroupsForPPLimit) {
 			assert mRunningThreads > 0;
 			mLogger.info("All threads busy, going to sleep.");
 			// No busy waiting via BlockingQueue
@@ -535,6 +542,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		// If perfect terminate ThreadGroup (executor) else free the module
 		if (threadResult.wasPerfect()) {
+			mRunningThreadGroupsForPP -= 1;
 			final Set<L> pathProgramRepresentative = new HashSet<>(threadResult.getCounterexample().getWord().asList());
 			mPpStrategyMap.get(pathProgramRepresentative).getExecutor().shutdown();
 		} else {
