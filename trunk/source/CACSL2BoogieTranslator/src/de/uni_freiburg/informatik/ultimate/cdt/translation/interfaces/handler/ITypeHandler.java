@@ -35,6 +35,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
@@ -185,4 +186,6 @@ public interface ITypeHandler {
 	boolean areFloatingTypesNeeded();
 
 	void registerNamedIncompleteType(String incompleteType, String named);
+
+	void addLibraryTypes(Map<String, ICType> libraryTypes);
 }

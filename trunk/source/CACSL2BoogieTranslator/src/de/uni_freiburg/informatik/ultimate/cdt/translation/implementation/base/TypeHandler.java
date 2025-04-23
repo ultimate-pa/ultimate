@@ -50,7 +50,6 @@ import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier.IASTEnumerator;
 import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
-import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -160,6 +159,7 @@ public class TypeHandler implements ITypeHandler {
 	 * <code>typedef X Y</code>, then the pair (X,Y) is in this relation.
 	 */
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
+	private final Map<String, ICType> mLibraryTypes = new HashMap<>();
 
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
@@ -274,50 +274,26 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (node instanceof CASTTypedefNameSpecifier) {
-			final String cId = node.getName().toString();
-			// quick solution --> TODO: maybe make this dependent on includes,
-			// maybe be more elegant (make an entry to symboltable, make a typedef in boogie file??)
-			if (cId.equals("size_t")) {
-				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTypeSizes.getSizeT());
-			} else if (cId.equals("ssize_t")) {
-				return new TypesResult(new PrimitiveType(loc, BoogieType.TYPE_REAL, SFO.REAL), node.isConst(), false,
-						mTypeSizes.getSsizeT());
-			} else if (cId.equals("__builtin_va_list")) {
-				return new TypesResult(constructPointerType(loc), node.isConst(), false,
-						new CPointer(new CPrimitive(CPrimitives.CHAR)));
-			} else if (cId.equals("__pthread_list_t")) {
-				return new TypesResult(constructPointerType(loc), node.isConst(), false, CPointer.voidPointer());
-			} else if (cId.equals("pthread_t")) {
-				final var cType = getThreadIdType();
-				return new TypesResult(cPrimitive2AstType(loc, cType), node.isConst(), false, cType);
-			} else if (cId.equals("__float128")) {
-				// DD 2020-12-02: Not entirely accurate, because it is actually architecture dependent.
-				// see https://en.wikipedia.org/wiki/Quadruple-precision_floating-point_format and
-				// https://gcc.gnu.org/onlinedocs/gcc/Floating-Types.html
-				final CPrimitive cType = new CPrimitive(CPrimitives.LONGDOUBLE);
-				final ASTType astType = cType2AstType(loc, cType);
-				return new TypesResult(astType, node.isConst(), false, cType);
-			} else {
-				final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
-				final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
-				if (stv == null) {
-					final String msg = "Undefined type " + cId;
-					throw new UnsupportedSyntaxException(loc, msg);
-				}
-				final ICType cType = stv.getCType();
-				final BoogieType boogieType = getBoogieTypeForCType(cType);
-				final String bId = stv.getBoogieName();
-				// TODO: replace constants "false, false"
-				final boolean isConstant = false;
-				final boolean isVoid = false;
-				return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
-						new CNamed(bId, cType));
-			}
+		final String cId = node.getName().toString();
+		final ICType libraryType = mLibraryTypes.get(cId);
+		if (libraryType != null) {
+			return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
+					libraryType);
 		}
-		final String msg = "Unknown or unsupported type! " + node.getClass();
-		throw new UnsupportedSyntaxException(loc, msg);
+		final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
+		final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
+		if (stv == null) {
+			final String msg = "Undefined type " + cId;
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		final ICType cType = stv.getCType();
+		final BoogieType boogieType = getBoogieTypeForCType(cType);
+		final String bId = stv.getBoogieName();
+		// TODO: replace constants "false, false"
+		final boolean isConstant = false;
+		final boolean isVoid = false;
+		return new TypesResult(new NamedType(loc, boogieType, bId, new ASTType[0]), isConstant, isVoid,
+				new CNamed(bId, cType));
 	}
 
 	@Override
@@ -1090,5 +1066,10 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public CPrimitive getThreadIdType() {
 		return new CPrimitive(CPrimitives.ULONG);
+	}
+
+	@Override
+	public void addLibraryTypes(final Map<String, ICType> libraryTypes) {
+		mLibraryTypes.putAll(libraryTypes);
 	}
 }
