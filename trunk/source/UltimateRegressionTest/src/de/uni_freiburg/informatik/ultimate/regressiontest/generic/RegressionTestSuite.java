@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static final long DEFAULT_TIMEOUT = 25 * 1000L;
-	private static final List<String> EXCLUDED_DIRS =
-			List.of("CToBoogieTranslation", "Backtranslation", "lassos", "termination", "SignedIntegerOverflow",
-					"abstractInterpretation", "Automata", "LTL", "DataRace", "witness-checking");
+	private static final List<String> EXCLUDED_DIRS = List.of("CToBoogieTranslation", "Backtranslation", "lassos",
+			"termination", "SignedIntegerOverflow", "abstractInterpretation", "Automata", "LTL", "DataRace",
+			"witness-checking", "witness-generation-validation");
 
 	public RegressionTestSuite() {
 		mTimeout = DEFAULT_TIMEOUT;
