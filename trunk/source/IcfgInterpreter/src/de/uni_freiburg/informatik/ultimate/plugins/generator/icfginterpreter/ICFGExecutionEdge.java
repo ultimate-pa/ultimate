@@ -28,10 +28,13 @@ public class ICFGExecutionEdge {
 	private final OrTerm mGuardTerm;
 	private final String mIndentifier;
 
-	public ICFGExecutionEdge(final UnmodifiableTransFormula transFormula, final IcfgLocation source,
-			final IcfgLocation target, final VariableSet variables, final ArcSolver arcSolver, final OrTerm guardTerm,
-			final String identifier) {
+	public final UnmodifiableTransFormula mGuardFormula;
+
+	public ICFGExecutionEdge(final UnmodifiableTransFormula transFormula, final UnmodifiableTransFormula guardFormula,
+			final IcfgLocation source, final IcfgLocation target, final VariableSet variables,
+			final ArcSolver arcSolver, final OrTerm guardTerm, final String identifier) {
 		mTransFormula = transFormula;
+		mGuardFormula = guardFormula;
 		mSource = source;
 		mTarget = target;
 		mVariables = variables;

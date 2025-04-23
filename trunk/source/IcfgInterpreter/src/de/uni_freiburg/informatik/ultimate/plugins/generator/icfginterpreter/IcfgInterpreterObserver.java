@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.CompiledEnumExecutionProducer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LessCodeExecutionProducer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LiteralExecutionProducer;
 
 public class IcfgInterpreterObserver extends BaseObserver {
@@ -57,6 +58,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			try {
 				final Random random = new Random();
 				final long seed = random.nextLong();
+				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LessCodeExecutionProducer(),
+						new Random(seed));
 				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LiteralExecutionProducer(),
 						new Random(seed));
 				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new CompiledEnumExecutionProducer<>(),

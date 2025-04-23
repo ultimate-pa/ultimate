@@ -11,7 +11,7 @@ procedure main() returns (gdc : int) {
     originalB := b;
 
 
-    while(a > 0 && b > 0) {
+    while(a != 0 && b != 0) {
         if(a > b) {
             a := a % b;
         } else {
@@ -19,9 +19,9 @@ procedure main() returns (gdc : int) {
         }
     }
 
-    if(a > 0) {
+    if(b == 0) {
         gdc := a;
-    } else {
+    } else if (a == 0) {
         gdc := b;
     }
 

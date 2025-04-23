@@ -203,7 +203,8 @@ public class IcfgTranslation {
 			// all ways to the next state have no updates, make trivial arc with the guard of the whole term
 			final ArcSolver trivialArc = new ArcSolver(new AndTerm(new TrueTerm()), managedScript, variables,
 					formulaTheory);
-			edges.add(new ICFGExecutionEdge(transFormula, source, target, variables, trivialArc, guardTerm, "A"));
+			edges.add(new ICFGExecutionEdge(transFormula, guardFormula, source, target, variables, trivialArc,
+					guardTerm, "A"));
 
 			return edges;
 		}
@@ -225,8 +226,8 @@ public class IcfgTranslation {
 			final String edgeID = Util.intToLetters(i);
 			i++;
 
-			final ICFGExecutionEdge newEdge = new ICFGExecutionEdge(transFormula, source, target, variables,
-					entry.getKey(), arcGuardTerm, edgeID);
+			final ICFGExecutionEdge newEdge = new ICFGExecutionEdge(transFormula, arcGuardFormula, source, target,
+					variables, entry.getKey(), arcGuardTerm, edgeID);
 			edges.add(newEdge);
 		}
 		return edges;
