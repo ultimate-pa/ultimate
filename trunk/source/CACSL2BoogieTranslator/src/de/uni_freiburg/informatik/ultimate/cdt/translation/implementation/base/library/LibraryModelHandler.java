@@ -99,29 +99,27 @@ public class LibraryModelHandler {
 			return null;
 		}
 		final String name = id.getName().toString();
-
 		final IFunctionModelHandler functionModel = mFunctionModels.get(name);
-		if (functionModel != null) {
-			final String transformedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), name);
-			final IASTNode funDecl = mFunctionTable.get(transformedName);
-			if (funDecl instanceof IASTFunctionDefinition) {
-				// it is a function that already has a body
-				if (mCheckErrorFunction && "reach_error".equals(transformedName)) {
-					// Workaround for reach_error: It is redefined in many tasks of SV-COMP, but we don't care about the
-					// implementation and just want to check if it is reachable or not (for unreach-call). Therefore we
-					// use our model and show a warning.
-					mLogger.warn(
-							"Function %s is already implemented but we override the implementation for the call at %s",
-							transformedName, node.getFileLocation());
-				} else {
-					// Otherwise return null, i.e., use the actual implementation rather than our model.
-					return null;
-				}
-			}
-			final ILocation loc = mLocationFactory.createCLocation(node);
-			return functionModel.handleFunction(main, node, loc, name);
+		if (functionModel == null) {
+			return null;
 		}
-		return null;
+		final String transformedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), name);
+		final IASTNode funDecl = mFunctionTable.get(transformedName);
+		if (funDecl instanceof IASTFunctionDefinition) {
+			// it is a function that already has a body
+			if (mCheckErrorFunction && "reach_error".equals(transformedName)) {
+				// Workaround for reach_error: It is redefined in many tasks of SV-COMP, but we don't care about the
+				// implementation and just want to check if it is reachable or not (for unreach-call). Therefore we
+				// use our model and show a warning.
+				mLogger.warn("Function %s is already implemented but we override the implementation for the call at %s",
+						transformedName, node.getFileLocation());
+			} else {
+				// Otherwise return null, i.e., use the actual implementation rather than our model.
+				return null;
+			}
+		}
+		final ILocation loc = mLocationFactory.createCLocation(node);
+		return functionModel.handleFunction(main, node, loc, name);
 	}
 
 	public Map<String, ICType> getTypeModels() {
