@@ -1,21 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
@@ -23,12 +26,14 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Script mScript;
 	private final IIcfg<? extends LOC> mIcfg;
 	private final Set<IProgramNonOldVar> mGlobals;
+	private final IUltimateServiceProvider mServices;
 
 	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		mScript = mManagedScript.getScript();
 		mIcfg = icfg;
 		mGlobals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
+		mServices = services;
 	}
 
 	public AbstractLocationMap<LOC> computeLocationAbstraction() {
@@ -53,25 +58,34 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return counter;
 	}
 
+//	private boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
+//		if (outgoing.isEmpty()) {
+//			return false;
+//		}
+//		// forks, "assume true", ...
+//		if (isSkipStatement(outgoing)) {
+//			return false;
+//		}
+//		// (?) must be assert statement? (we want to ignore asserts)
+//		if (outgoing.stream().anyMatch(s -> ((BoogieIcfgLocation) s.getTarget()).isErrorLocation())) {
+//			return false;
+//		}
+//		final boolean containsAssume = containsAssume(outgoing);
+//		final boolean edgeUnionTop = isEdgeUnionTop(outgoing);
+//		if (containsAssume
+//				&& ((!edgeUnionTop || outgoing.size() == 1) || (edgeUnionTop && assumeContainsGlobal(outgoing)))) {
+//			return true;
+//		}
+//		return false;
+//	}
 	private boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
-		if (outgoing.isEmpty()) {
-			return false;
-		}
-		// forks, "assume true", ...
-		if (isSkipStatement(outgoing)) {
-			return false;
-		}
-		// (?) must be assert statement? (we want to ignore asserts)
-		if (outgoing.stream().anyMatch(s -> ((BoogieIcfgLocation) s.getTarget()).isErrorLocation())) {
-			return false;
-		}
-		final boolean containsAssume = containsAssume(outgoing);
-		final boolean edgeUnionTop = isEdgeUnionTop(outgoing);
-		if (containsAssume
-				&& ((!edgeUnionTop || outgoing.size() == 1) || (edgeUnionTop && assumeContainsGlobal(outgoing)))) {
-			return true;
-		}
-		return false;
+		final var guards = outgoing.stream()
+				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
+				.toList();
+		final var term = SmtUtils.simplify(mManagedScript, SmtUtils.or(mScript, guards), mServices,
+				SimplificationTechnique.POLY_PAC);
+		final var globals = mGlobals.stream().map(v -> v.getTermVariable()).collect(Collectors.toSet());
+		return Arrays.stream(term.getFreeVars()).anyMatch(globals::contains);
 	}
 
 	private static boolean isSkipStatement(final List<IcfgEdge> outgoing) {
@@ -104,6 +118,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return termIsTrue(union);
 	}
 
+	// checksat
 	private boolean termIsTrue(final Term term) {
 		mManagedScript.lock(this);
 		mManagedScript.push(this, 1);
