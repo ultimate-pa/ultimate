@@ -20,7 +20,6 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> mWideningOperator;
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
-	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 //	private final Map<String, ? extends LOC> mEntryLocs;
 	int locationCounter = 0;
@@ -30,13 +29,11 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
 			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf) {
 		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
-		mInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
 		MAXSIZE = maxSize;
 		mAbstractLocationMap = locationMap;
 		mUnderlyingDomain = underlying;
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
-				mUnderlyingDomain, mUnderlyingDomain.getPostOperator(), this, mInterferences, mAbstractLocationMap,
-				maxItf, maxSize);
+				mUnderlyingDomain.getPostOperator(), this, mAbstractLocationMap, maxItf, maxSize);
 		mWideningOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
 	}
 
@@ -50,10 +47,6 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 
 	public ThreadInstanceCounterFactory threadInstanceCounterFactory() {
 		return mThreadInstanceCounterFactory;
-	}
-
-	public AbstractInterferenceState<STATE, ACTION, LOC> interferenceState() {
-		return mInterferences;
 	}
 
 	@Override

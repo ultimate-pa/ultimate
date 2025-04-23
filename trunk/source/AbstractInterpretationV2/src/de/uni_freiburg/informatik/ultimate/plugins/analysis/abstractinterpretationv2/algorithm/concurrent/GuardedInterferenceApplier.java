@@ -28,7 +28,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private final CfgSmtToolkit mToolkit;
 
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
-	private final InterferenceWideningOperator<STATE, ACTION, LOC> mInterferenceWideningOperator;
 	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mGuardedInterferenceDomain;
 	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, STATE> mInterferenceCache = new HashMap<>();
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
@@ -41,15 +40,15 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	public GuardedInterferenceApplier(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
-			final AbstractInterferenceState<STATE, ACTION, LOC> interferenceState,
 			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates) {
 		mToolkit = cfg.getCfgSmtToolkit();
 		mLogger = logger;
 		mUnderlyingPostOp = postOp;
 		mGuardedInterferenceDomain = relationalInterferingDomain;
-		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mGuardedInterferenceDomain);
-		mInterferences = interferenceState;
-		mNewInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures());
+		mInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures(),
+				mGuardedInterferenceDomain);
+		mNewInterferences = new AbstractInterferenceState<>(cfg.getCfgSmtToolkit().getProcedures(),
+				mGuardedInterferenceDomain);
 		mAbstractLocationMap = globalMap;
 		mMaxItf = maxItf;
 		mMaxParallelStates = maxParallelStates;
@@ -77,17 +76,13 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mNewInterferences.addInterference(mCurrentThreadName, transition, oldstate.state(), oldstate.threadCounter());
 	}
 
-	public AbstractInterferenceState<STATE, ACTION, LOC> unionWithUpdateItfs() {
-		return mInterferences.union(mNewInterferences);
-	}
-
-	public AbstractInterferenceState<STATE, ACTION, LOC> wideningWithUpdateItfs() {
-		return mInterferenceWideningOperator.calcWidenedInterferences(mInterferences, mNewInterferences);
-	}
-
-	public void updateInterferences(final AbstractInterferenceState<STATE, ACTION, LOC> newState) {
-		mInterferences = new AbstractInterferenceState<>(newState);
-		mNewInterferences = new AbstractInterferenceState<>(mToolkit.getProcedures());
+	public void updateInterferences(final boolean widen) {
+		mInterferences = new AbstractInterferenceState<>(mNewInterferences);
+		mNewInterferences = new AbstractInterferenceState<>(mToolkit.getProcedures(), mInterferences.getDomain());
+		if (widen) {
+			mInterferences.setWidening();
+			mNewInterferences.setWidening();
+		}
 	}
 
 	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
@@ -161,9 +156,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				allDisj = allDisj.union(newDisj);
 			} else {
 				allDisj = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
-				if (mIterations > mMaxItf + 2) {
-					break;
-				}
+//				if (mIterations > mMaxItf) {
+//					break;
+//				}
 			}
 
 			if (!changed) {
@@ -180,7 +175,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		for (final String interferenceThreadName : interferingThreads) {
-			final var interferences = mInterferences.getInterferenceMapHashRelation().get(interferenceThreadName);
+			final var interferences = mInterferences.getInterferencesForThread(interferenceThreadName);
 			if (interferences == null) {
 				continue;
 			}

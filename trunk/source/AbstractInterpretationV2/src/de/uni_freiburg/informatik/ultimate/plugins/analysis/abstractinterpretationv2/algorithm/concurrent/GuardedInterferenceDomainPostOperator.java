@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -36,15 +35,14 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
 
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
-			final IAbstractDomain<STATE, ACTION> underlying, final IAbstractPostOperator<STATE, ACTION> postOp,
+			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
-			final AbstractInterferenceState<STATE, ACTION, LOC> interferenceState,
 			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates) {
 		mLogger = logger;
 		mGlobalVariables = cfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 		mUnderlyingPostOp = postOp;
-		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, postOp, relationalInterferingDomain,
-				interferenceState, globalMap, maxItf, maxParallelStates);
+		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, postOp, relationalInterferingDomain, globalMap,
+				maxItf, maxParallelStates);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 	}
 
