@@ -14,11 +14,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 record Interference<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
 		ACTION action, STATE state, ThreadInstanceCounter threadcounter) {
+
+	boolean isEqualTo(final Interference<STATE, ACTION, LOC> other) {
+		if (state().isEqualTo(other.state()) && threadcounter().isEqualTo(other.threadcounter())) {
+			return true;
+		}
+		return false;
+	}
 }
 
-// TODO: we assume that an action has a unique hash, throughout all threads (and within one).
-// if this is untrue, this is unsound. Then somehow get unique location from ACTION if possible when
-// adding interferences
 public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private Map<String, Set<Interference<STATE, ACTION, LOC>>> mThreadInterferenceMap;
 	private final Map<ACTION, Set<Interference<STATE, ACTION, LOC>>> mIdentifyMap;
@@ -26,13 +30,13 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 	public AbstractInterferenceState(final Set<String> threadNames) {
 		mIdentifyMap = new HashMap<>();
 		mThreadInterferenceMap = new HashMap<>();
-		threadNames.stream().forEach(t -> mThreadInterferenceMap.put(t, new HashSet<>()));
+		threadNames.forEach(t -> mThreadInterferenceMap.put(t, new HashSet<>()));
 	}
 
 	public AbstractInterferenceState(final AbstractInterferenceState<STATE, ACTION, LOC> other) {
 		mIdentifyMap = new HashMap<>(other.getIdentifyMap());
 		mThreadInterferenceMap = new HashMap<>();
-		other.getInterferenceMapHashRelation().keySet().stream().forEach(
+		other.getInterferenceMapHashRelation().keySet().forEach(
 				t -> mThreadInterferenceMap.put(t, new HashSet<>(other.getInterferenceMapHashRelation().get(t))));
 	}
 
@@ -54,22 +58,32 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 
 	public void addInterference(final String threadName, final ACTION transition, final STATE state,
 			final ThreadInstanceCounter threadcounter) {
-		if (mIdentifyMap.get(transition) == null) {
-			mIdentifyMap.put(transition, new HashSet<>());
+
+		final Set<Interference<STATE, ACTION, LOC>> identifySet = mIdentifyMap.computeIfAbsent(transition,
+				k -> new HashSet<>());
+		final Set<Interference<STATE, ACTION, LOC>> threadSet = mThreadInterferenceMap.computeIfAbsent(threadName,
+				k -> new HashSet<>());
+
+		var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
+		if (!identifySet.isEmpty()) {
+			final var existing = identifySet.iterator().next();
+			interference = new Interference<>(transition, state.union(existing.state()),
+					new ThreadInstanceCounter(threadcounter));
+			threadSet.remove(existing);
 		}
-		final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
-		mIdentifyMap.get(transition).add(interference);
-		mThreadInterferenceMap.get(threadName).add(interference);
+		identifySet.clear();
+		identifySet.add(interference);
+		threadSet.add(interference);
+//		threadSet.clear();
+//		for (final Interference<STATE, ACTION, LOC> existing : threadSet) {
+//			if (interference.isEqualTo(existing)) {
+//				return;
+//			}
+//		}
 	}
 
-	public void addForkInterference(final String threadName, final ACTION transition, final STATE state,
-			final ThreadInstanceCounter threadcounter) {
-		if (mIdentifyMap.get(transition) == null) {
-			mIdentifyMap.put(transition, new HashSet<>());
-		}
-		final var interference = new Interference<>(transition, state, new ThreadInstanceCounter(threadcounter));
-		mIdentifyMap.get(transition).add(interference);
-		mThreadInterferenceMap.get(threadName).add(interference);
+	public void clear() {
+		mThreadInterferenceMap.clear();
 	}
 
 	public Map<String, Set<Interference<STATE, ACTION, LOC>>> getInterferenceMapHashRelation() {

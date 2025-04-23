@@ -114,6 +114,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private void calculateFixpoint(final Script script) {
 		mIteration = 1;
+		int unchanged = 0;
 		final Set<LOC> reachableErrorLocations = new HashSet<>();
 		while (true) {
 			mLogger.error("\n");
@@ -148,7 +149,12 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			printInterferenceLog(oldInterferenceState, newInterferenceState);
 
 			final boolean changed = !newInterferenceState.isSubsetOf(oldInterferenceState);
-			if (!changed) {
+			if (changed) {
+				unchanged = 0;
+			} else {
+				unchanged += 1;
+			}
+			if (!changed && unchanged > 2) {
 				// interference fixpoint reached
 				mPrinter.printResults(mLogger, newInterferenceState, newInterferenceState, mIteration, resultSet,
 						mEntryLocs, mDomain.getAbstractLocationMap(), script);
@@ -169,10 +175,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private void printInterferenceLog(
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferenceState,
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferenceState) {
-		mLogger.error("Interference Set we used:");
-		for (final String termString : oldInterferenceState.interferenceStrings()) {
-			mLogger.error(termString);
-		}
+//		mLogger.error("Interference Set we used:");
+//		for (final String termString : oldInterferenceState.interferenceStrings()) {
+//			mLogger.error(termString);
+//		}
 		mLogger.error("new Interference Set");
 		for (final String termString : newInterferenceState.interferenceStrings()) {
 			mLogger.error(termString);
