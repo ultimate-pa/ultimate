@@ -1688,20 +1688,18 @@ public class CHandler {
 	public Result visit(final IDispatcher main, final IASTFunctionCallExpression node) {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		final ILocation loc = mLocationFactory.createCLocation(node);
-		if (functionName instanceof IASTIdExpression) {
-			// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
-			// program
-			if ("pthread_create".equals(((IASTIdExpression) functionName).getName().toString())) {
-				mIsConcurrent = true;
-				// Only crash for thread local variable in concurrent programs
-				if (mHasThreadLocalVars) {
-					throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
-				}
+		// TODO: This is just a workaround for now to crash when thread local variables are used in a concurrent
+		// program
+		if (functionName instanceof final IASTIdExpression id && "pthread_create".equals(id.getName().toString())) {
+			// Only crash for thread local variable in concurrent programs
+			mIsConcurrent = true;
+			if (mHasThreadLocalVars) {
+				throw new UnsupportedSyntaxException(loc, "Thread local variables are not supported yet.");
 			}
-			final Result standardFunction = mLibraryModelHandler.translateStandardFunction(main, node);
-			if (standardFunction != null) {
-				return standardFunction;
-			}
+		}
+		final Result standardFunction = mLibraryModelHandler.translateStandardFunction(main, node);
+		if (standardFunction != null) {
+			return standardFunction;
 		}
 		return mFunctionHandler.handleFunctionCallExpression(main, loc, functionName, node.getArguments(),
 				mMemoryHandler);
