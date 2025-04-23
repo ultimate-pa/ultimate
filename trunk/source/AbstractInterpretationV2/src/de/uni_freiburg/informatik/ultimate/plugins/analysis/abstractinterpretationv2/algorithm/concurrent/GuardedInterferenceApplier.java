@@ -155,10 +155,22 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			if (mIterations <= mMaxItf) {
 				allDisj = allDisj.union(newDisj);
 			} else {
-				allDisj = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
-//				if (mIterations > mMaxItf) {
-//					break;
-//				}
+				var oldState = allDisj;
+				var widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
+
+				int innerIterations = 0;
+				while (!widenedState.isEqualTo(oldState)) {
+					oldState = widenedState;
+					widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), oldState);
+					innerIterations++;
+					if (innerIterations > mMaxItf) {
+						break;
+					}
+				}
+				allDisj = widenedState;
+			}
+			if (mIterations > mMaxItf + 2) {
+				break;
 			}
 
 			if (!changed) {

@@ -59,21 +59,21 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		mCurrentThreadName = transition.getPrecedingProcedure();
 
 		// handle fork differently
-		if (transition instanceof ForkThreadCurrent || transition instanceof ForkThreadOther) {
-			return applyFork(oldstate, transition);
-		}
+		final var newState = (transition instanceof ForkThreadCurrent || transition instanceof ForkThreadOther)
+				? applyFork(oldstate, transition)
+				: oldstate;
 
 		// 1. normal poststate
-		final var states = mUnderlyingPostOp.apply(oldstate.state(), transition);
+		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
 		// adjust abstract location according to new location
 		final var guardedStates = states.stream()
-				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, oldstate.threadCounter(),
-						oldstate.abstractLocationState().copyToNewState(transition.getTarget())))
+				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newState.threadCounter(),
+						newState.abstractLocationState().copyToNewState(transition.getTarget())))
 				.collect(Collectors.toSet());
 
 		// 2. Add new interference to global map
-		if (isInterferingTransition(transition) || true) {
-			mItfApplier.addItf(mCurrentThreadName, transition, oldstate);
+		if (true || isInterferingTransition(transition)) {
+			mItfApplier.addItf(mCurrentThreadName, transition, newState);
 		}
 
 		// 3. apply interferences
@@ -105,7 +105,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		return false;
 	}
 
-	private Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyFork(
+	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
 
 		var newState = oldstate;
@@ -119,22 +119,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		} else {
 			throw new IllegalArgumentException("Unsupported fork transition type");
 		}
-		final var newStates = mUnderlyingPostOp.apply(newState.state(), transition);
-		final var thrdCount = newState.threadCounter();
-		final var absLoc = newState.abstractLocationState().copyToNewState(transition.getTarget());
-		final var guardedStates = newStates.stream()
-				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, thrdCount, absLoc))
-				.collect(Collectors.toSet());
-		// apply interferences
-		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> postRelationalStates = new LinkedHashSet<>();
-		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> postRelationalState : guardedStates) {
-			if (!postRelationalState.isBottom()) {
-				postRelationalStates
-						.addAll(mItfApplier.stateAfterInterferences(postRelationalState, mCurrentThreadName));
-			}
-		}
-		mItfApplier.addItf(mCurrentThreadName, transition, oldstate);
-		return postRelationalStates;
+		return newState;
 	}
 
 	public boolean isCircular(final ForkThreadCurrent fork1) {

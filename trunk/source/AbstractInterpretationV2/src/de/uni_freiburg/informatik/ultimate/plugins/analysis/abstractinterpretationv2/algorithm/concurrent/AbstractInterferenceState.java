@@ -53,26 +53,28 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		return inner == null ? Set.of() : new HashSet<>(inner.values());
 	}
 
-	public void addInterference(final Interference<STATE, ACTION, LOC> itf) {
-		addInterference(itf.action().getSource().getProcedure(), itf.action(), itf.state(), itf.threadcounter());
-	}
-
 	public void addInterference(final String threadName, final ACTION action, final STATE state,
 			final ThreadInstanceCounter counter) {
 		final var threadMap = mInterferenceMap.computeIfAbsent(threadName, k -> new HashMap<>());
 		final var existing = threadMap.get(action);
+
 		Interference<STATE, ACTION, LOC> newItf;
-		if (existing != null) {
-			if (!mWiden) {
-				newItf = new Interference<>(action, state.union(existing.state()), new ThreadInstanceCounter(counter));
-			} else {
-				newItf = new Interference<>(action,
-						mDomain.getUnderlyingDomain().getWideningOperator().apply(state, existing.state()),
-						new ThreadInstanceCounter(counter));
-			}
-		} else {
+
+		if (existing == null) {
 			newItf = new Interference<>(action, state, new ThreadInstanceCounter(counter));
+		} else if (!mWiden) {
+			newItf = new Interference<>(action, state.union(existing.state()), existing.threadcounter().union(counter));
+		} else {
+			var oldState = existing.state();
+			var widenedState = mDomain.getUnderlyingDomain().getWideningOperator().apply(oldState, state);
+
+			while (!widenedState.isEqualTo(oldState)) {
+				oldState = widenedState;
+				widenedState = mDomain.getUnderlyingDomain().getWideningOperator().apply(oldState, state);
+			}
+			newItf = new Interference<>(action, widenedState, existing.threadcounter().union(counter));
 		}
+
 		threadMap.put(action, newItf);
 	}
 

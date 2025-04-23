@@ -60,7 +60,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
-		mMaxInterferenceFixpointUnwindings = 8;
+		mMaxInterferenceFixpointUnwindings = 80;
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		mUnderlyingDomain = params.getAbstractDomain();
 		final var absLoc = new LocationAbstraction<LOC>(mEntryLocs);
