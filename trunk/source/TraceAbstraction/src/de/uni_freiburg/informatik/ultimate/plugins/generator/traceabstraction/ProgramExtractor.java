@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
@@ -130,13 +131,26 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 		mCallParams = new HashMap<>();
 		mReturnParams = new HashMap<>();
 		for (final var callTransition : mCallTransitions.entrySet()) {
-			final Set<IProgramVar> params = Collections.unmodifiableSet(callTransition.getValue().getInVars().keySet());
+			final Summary summary = callTransition.getKey();
+
+			final Set<IProgramVar> params = new HashSet<>(callTransition.getValue().getInVars().keySet());
+			final Set<IProgramNonOldVar> modifiableGlobalVars = mCsToolkit.getModifiableGlobalsTable()
+					.getModifiedBoogieVars(summary.getCallStatement().getMethodName());
+
+			params.addAll(modifiableGlobalVars);
+			// params.addAll(modifiableGlobalVars.stream().map(IProgramNonOldVar::getOldVar).toList());
 			mCallParams.put(callTransition.getKey(), params);
 		}
 		for (final var returnTransition : mReturnTransitions.entrySet()) {
-			final Set<IProgramVar> params =
-					Collections.unmodifiableSet(returnTransition.getValue().getOutVars().keySet());
-			mReturnParams.put(returnTransition.getKey(), params);
+			final Summary summary = returnTransition.getKey();
+
+			final Set<IProgramVar> params = new HashSet<>(returnTransition.getValue().getOutVars().keySet());
+			final Set<IProgramNonOldVar> modifiableGlobalVars = mCsToolkit.getModifiableGlobalsTable()
+					.getModifiedBoogieVars(summary.getCallStatement().getMethodName());
+
+			params.addAll(modifiableGlobalVars);
+			// params.addAll(modifiableGlobalVars.stream().map(IProgramNonOldVar::getOldVar).toList());
+			mReturnParams.put(summary, params);
 		}
 
 	}
@@ -585,8 +599,17 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 	}
 
 	protected IPredicate transformPrecondition(final Summary summary, final IPredicate predicate) {
-		final Set<TermVariable> callParams =
-				mCallParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		// final Set<TermVariable> callParams =
+		// mCallParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+
+		final Set<TermVariable> callParams = new HashSet<>();
+		for (final IProgramVar programVariable : mCallParams.get(summary)) {
+			callParams.add(programVariable.getTermVariable());
+			if (programVariable instanceof ProgramNonOldVar) {
+				callParams.add(((ProgramNonOldVar) programVariable).getOldVar().getTermVariable());
+			}
+		}
+
 		final IPredicate predicateQuantified = quantifyPredicate(predicate, callParams);
 
 		final Term transitionedTerm = callTransition(summary, predicateQuantified);
@@ -596,11 +619,23 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	protected IPredicate transformPostcondition(final Summary summary, final IPredicate predicate,
 			final IPredicate prePredicate) {
-		final Set<TermVariable> returnParams =
-				mReturnParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+		// final Set<TermVariable> returnParams =
+		// mReturnParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
+
+		final Set<TermVariable> returnParams = new HashSet<>();
+		for (final IProgramVar programVariable : mReturnParams.get(summary)) {
+			returnParams.add(programVariable.getTermVariable());
+			if (programVariable instanceof ProgramNonOldVar) {
+				returnParams.add(((ProgramNonOldVar) programVariable).getOldVar().getTermVariable());
+			}
+		}
+
 		final IPredicate predicateQuantified = quantifyPredicate(predicate, returnParams);
 
-		final Term transitionedTerm = returnTransitionReverse(summary, predicateQuantified, prePredicate);
+		// TODO do we actually need to quantify this?
+		final IPredicate prePredicateQuantified = quantifyPredicate(prePredicate, returnParams);
+
+		final Term transitionedTerm = returnTransitionReverse(summary, predicateQuantified, prePredicateQuantified);
 		return mPredicateFactory.newPredicate(transitionedTerm);
 	}
 
@@ -690,6 +725,8 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.strongestPostconditionCall(callPredicate, callTransition, globalVarsAssignments,
 				oldVarAssignments, modifiableGlobals);
+
+		// return mPredicateTransformer.strongestPostcondition(callPredicate, callTransition);
 	}
 
 	public Term callTransitionReverse(final Summary summary, final IPredicate callPredicate) {
@@ -706,6 +743,8 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.weakestPreconditionCall(callPredicate, callTransition, globalVarsAssignments,
 				oldVarAssignments, modifiableGlobals);
+
+		// return mPredicateTransformer.weakestPrecondition(callPredicate, callTransition);
 	}
 
 	public Term returnTransition(final Summary summary, final IPredicate returnPredicate,
@@ -723,6 +762,8 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.strongestPostconditionReturn(returnPredicate, callPredicate, returnTransition,
 				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+
+		// return mPredicateTransformer.strongestPostcondition(returnPredicate, returnTransition);
 	}
 
 	public Term returnTransitionReverse(final Summary summary, final IPredicate returnPredicate,
@@ -738,12 +779,36 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		final UnmodifiableTransFormula returnTransition = getReturnTransition(summary);
 
+		// TODO do we need wpReturn here? Correct parameter for callPredicate?
 		return mPredicateTransformer.weakestPreconditionReturn(returnPredicate, callPredicate, returnTransition,
 				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+
+		// return mPredicateTransformer.weakestPrecondition(returnPredicate, returnTransition);
+	}
+
+	public Set<IProgramVar> getCallParams(final Summary summary) {
+		return mCallParams.get(summary);
+	}
+
+	public Set<IProgramVar> getReturnParams(final Summary summary) {
+		return mReturnParams.get(summary);
 	}
 
 	public boolean functionHasImplementation(final String functionName) {
 		return mFunctionsWithImplementation.contains(functionName);
 	}
 
+	public Map<Summary, Collection<FunctionContract>> newContractMap() {
+		final Map<Summary, Collection<FunctionContract>> map = new HashMap<>();
+		mFunctionSummaries.values().stream().flatMap(Collection::stream).forEach(c -> map.put(c, new HashSet<>()));
+		return map;
+	}
+
+	public UnmodifiableTransFormula getPreconditionTransition(final String function) {
+		return mPreconditionTransFormulas.get(function);
+	}
+
+	public UnmodifiableTransFormula getPostconditionViolatedTransition(final String function) {
+		return mPostconditionViolatedTransFormulas.get(function);
+	}
 }
