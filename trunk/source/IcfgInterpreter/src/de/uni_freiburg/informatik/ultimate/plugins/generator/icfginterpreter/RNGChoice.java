@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
@@ -64,7 +64,7 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public <T> T chooseEdge(final ArrayList<T> edges) {
+	public <T> T chooseEdge(final List<T> edges) {
 		return edges.get((int) chooseElement(edges.size()));
 	}
 
@@ -160,9 +160,9 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";
-	public static String MAX_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
-			+ "\nHas to be more than the minimum option.";
+	public static String MAX_INT_HAVOC_HINT =
+			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be more than the minimum option.";
 	public static String MIN_INT_HAVOC_LABEL = "Minimum havoc integer value";
-	public static String MIN_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
-			+ "\nHas to be less than the maximum option.";
+	public static String MIN_INT_HAVOC_HINT =
+			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be less than the maximum option.";
 }

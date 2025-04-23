@@ -132,11 +132,11 @@ public class ICFGExecutionEdge {
 	}
 
 	public ArrayList<ICFGExecutionEdge> getParents() {
-		return Util.copyList(parents);
+		return new ArrayList<>(parents);
 	}
 
 	public ArrayList<ICFGExecutionEdge> getChildren() {
-		return Util.copyList(children);
+		return new ArrayList<>(children);
 	}
 
 	public HashSet<ICFGExecutionEdge> getAncestors() {

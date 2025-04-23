@@ -24,11 +24,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.ReturnType;
 
 public class Util {
-	public static <T> ArrayList<T> copyList(final Collection<T> map) {
-		final ArrayList<T> clone = new ArrayList<>(map);
-		return clone;
-	}
-
 	public static <T, D> HashMap<T, D> copyMap(final Map<T, D> map) {
 		final HashMap<T, D> clone = new HashMap<>(map);
 		return clone;
@@ -59,13 +54,19 @@ public class Util {
 	/**
 	 * Maps each object from some collection to a different object and stores it in the provided collection.
 	 *
-	 * @param <T>      The type of object that is stored in the given input collection
-	 * @param <R>      The type of object that is stored in the given output collection
-	 * @param <S>      The type of the output collection
-	 * @param elements A {@link Collection}<strong>&lt;T&gt;</strong>
-	 * @param mapping  A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an element of
-	 *                 type <strong>&lt;R&gt;</strong>
-	 * @param out      A {@link Collection}<strong>&lt;R&gt;</strong>. Previous contents are removed.
+	 * @param <T>
+	 *            The type of object that is stored in the given input collection
+	 * @param <R>
+	 *            The type of object that is stored in the given output collection
+	 * @param <S>
+	 *            The type of the output collection
+	 * @param elements
+	 *            A {@link Collection}<strong>&lt;T&gt;</strong>
+	 * @param mapping
+	 *            A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an element of type
+	 *            <strong>&lt;R&gt;</strong>
+	 * @param out
+	 *            A {@link Collection}<strong>&lt;R&gt;</strong>. Previous contents are removed.
 	 * @return The same {@link Collection}<strong>&lt;R&gt;</strong> that was given as the <strong>out</strong>
 	 *         parameter
 	 */
@@ -84,15 +85,22 @@ public class Util {
 	/**
 	 * Maps each object from some collection to a pair of objects and stores them in the provided map.
 	 *
-	 * @param <T>      The type of object that is stored in the given input collection
-	 * @param <R>      The type of object that is used as a key in the output map
-	 * @param <S>      The type of object that is used as a value in the output map
-	 * @param <U>      The type of map that will be returned
-	 * @param elements A {@link Collection} of elements of type <strong>&lt;T&gt;</strong>
-	 * @param mapping  A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an
-	 *                 {@link Entry}<strong>&lt;R,S&gt;</strong>
-	 * @param out      A {@link Map}<strong>&lt;R,S&gt;</strong> that the mappings are stored in. Previous contents are
-	 *                 removed.
+	 * @param <T>
+	 *            The type of object that is stored in the given input collection
+	 * @param <R>
+	 *            The type of object that is used as a key in the output map
+	 * @param <S>
+	 *            The type of object that is used as a value in the output map
+	 * @param <U>
+	 *            The type of map that will be returned
+	 * @param elements
+	 *            A {@link Collection} of elements of type <strong>&lt;T&gt;</strong>
+	 * @param mapping
+	 *            A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an
+	 *            {@link Entry}<strong>&lt;R,S&gt;</strong>
+	 * @param out
+	 *            A {@link Map}<strong>&lt;R,S&gt;</strong> that the mappings are stored in. Previous contents are
+	 *            removed.
 	 * @return The same {@link Map}<strong>&lt;R,S&gt;</strong> that was given as the <strong>out</strong> parameter
 	 */
 	public static <T, R, S, U extends Map<R, S>> U map(final Collection<T> elements,
@@ -111,15 +119,22 @@ public class Util {
 	/**
 	 * Maps each object from some array to a pair of objects and stores them in the provided map.
 	 *
-	 * @param <T>      The type of object that is stored in the given input array
-	 * @param <R>      The type of object that is used as a key in the output map
-	 * @param <S>      The type of object that is used as a value in the output map
-	 * @param <U>      The type of map that will be returned
-	 * @param elements A {@link Collection} of elements of type <strong>&lt;T&gt;</strong>
-	 * @param mapping  A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an
-	 *                 {@link Entry}<strong>&lt;R,S&gt;</strong>
-	 * @param out      A {@link Map}<strong>&lt;R,S&gt;</strong> that the mappings are stored in. Previous contents are
-	 *                 removed.
+	 * @param <T>
+	 *            The type of object that is stored in the given input array
+	 * @param <R>
+	 *            The type of object that is used as a key in the output map
+	 * @param <S>
+	 *            The type of object that is used as a value in the output map
+	 * @param <U>
+	 *            The type of map that will be returned
+	 * @param elements
+	 *            A {@link Collection} of elements of type <strong>&lt;T&gt;</strong>
+	 * @param mapping
+	 *            A function that takes an element of type <strong>&lt;T&gt;</strong> and returns an
+	 *            {@link Entry}<strong>&lt;R,S&gt;</strong>
+	 * @param out
+	 *            A {@link Map}<strong>&lt;R,S&gt;</strong> that the mappings are stored in. Previous contents are
+	 *            removed.
 	 * @return The same {@link Map}<strong>&lt;R,S&gt;</strong> that was given as the <strong>out</strong> parameter
 	 */
 	public static <T, R, S, U extends Map<R, S>> U map(final T[] elements, final Function<T, Entry<R, S>> mapping,
@@ -129,19 +144,6 @@ public class Util {
 		for (final T element : elements) {
 			final Entry<R, S> entry = mapping.apply(element);
 			out.put(entry.getKey(), entry.getValue());
-		}
-
-		return out;
-	}
-
-	public static <T> ArrayList<T> filter(final List<T> elements, final Predicate<T> isIncluded) {
-		final ArrayList<T> out = new ArrayList<>();
-
-		for (final T element : elements) {
-			if (!isIncluded.test(element)) {
-				continue;
-			}
-			out.add(element);
 		}
 
 		return out;

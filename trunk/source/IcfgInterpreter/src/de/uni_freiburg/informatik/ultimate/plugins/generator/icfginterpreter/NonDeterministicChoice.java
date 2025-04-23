@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -22,7 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ter
 public interface NonDeterministicChoice {
 	NonDeterministicChoice newInstance(long seed);
 
-	<T> T chooseEdge(ArrayList<T> edges);
+	<T> T chooseEdge(List<T> edges);
 
 	/**
 	 * Select a non-deterministic value in the range defined by the domain for the given variable.

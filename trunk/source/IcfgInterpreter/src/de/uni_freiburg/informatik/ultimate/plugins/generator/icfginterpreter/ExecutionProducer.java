@@ -101,8 +101,8 @@ public class ExecutionProducer {
 		logger.info(producer.getClass().getSimpleName() + " used " + (executionTime / 1000000.0) + "ms for execution.");
 	}
 
-	private static <LOC extends IcfgLocation> HashMap<String, Set<IcfgLocation>> getErrorLocations(
-			final IIcfg<LOC> icfg) {
+	private static <LOC extends IcfgLocation> HashMap<String, Set<IcfgLocation>>
+			getErrorLocations(final IIcfg<LOC> icfg) {
 		final HashMap<String, Set<IcfgLocation>> out = new HashMap<>();
 
 		for (final Entry<String, Set<LOC>> entry : icfg.getProcedureErrorNodes().entrySet()) {
@@ -144,9 +144,9 @@ public class ExecutionProducer {
 
 			while (nextEdges.size() > 0) {
 				final EnumState<T> stateReference = state;
-				final ArrayList<JavaCodeEdge<T>> availableEdges = Util.filter(nextEdges, (edge) -> {
+				final List<JavaCodeEdge<T>> availableEdges = nextEdges.stream().filter((edge) -> {
 					return edge.guard(stateReference);
-				});
+				}).toList();
 
 				JavaCodeEdge<T> nextEdge;
 				if (availableEdges.size() > 1) {
@@ -209,9 +209,9 @@ public class ExecutionProducer {
 
 			while (!nextEdges.isEmpty()) {
 				final ProgramState stateRefernce = state;
-				final ArrayList<ICFGExecutionEdge> availableEdges = Util.filter(nextEdges, (nextEdge) -> {
+				final List<ICFGExecutionEdge> availableEdges = nextEdges.stream().filter((nextEdge) -> {
 					return nextEdge.canBeTaken(stateRefernce);
-				});
+				}).toList();
 
 				ICFGExecutionEdge nextEdge;
 				if (availableEdges.size() > 1) {
@@ -348,8 +348,8 @@ public class ExecutionProducer {
 			if (!hasUpdate) {
 				final ArrayList<Edge> outList = new ArrayList<>();
 				final Theory theory = mngScript.getScript().getTheory();
-				final ArrayList<Update> havocUpdates = getHavocUpdates(theory.constant(true, theory.getBooleanSort()),
-						formula);
+				final ArrayList<Update> havocUpdates =
+						getHavocUpdates(theory.constant(true, theory.getBooleanSort()), formula);
 				outList.add(new Edge(substituteProgramVars(formula.getFormula(), formula, mngScript),
 						havocUpdates.toArray(new Update[havocUpdates.size()]), source, target));
 				return outList;
@@ -509,8 +509,8 @@ public class ExecutionProducer {
 				final SolvedEquation equation = equationList.get(0);
 				TermVariable definedVar = equation.getLhs();
 
-				final List<SolvedEquation> definitions = equationList.stream()
-						.filter((eq) -> eq.getLhs().equals(equation.getLhs())).toList();
+				final List<SolvedEquation> definitions =
+						equationList.stream().filter((eq) -> eq.getLhs().equals(equation.getLhs())).toList();
 
 				// Remove all equations that define this variable
 				equationList.removeAll(definitions);
@@ -701,8 +701,8 @@ public class ExecutionProducer {
 				final ManagedScript script) {
 			final HashSet<Entry<IProgramVar, TermVariable>> vars = new HashSet<>(formula.getInVars().entrySet());
 			vars.addAll(formula.getOutVars().entrySet());
-			final var subst = vars.stream()
-					.collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey().getTermVariable()));
+			final var subst =
+					vars.stream().collect(Collectors.toMap(e -> e.getValue(), e -> e.getKey().getTermVariable()));
 
 			return Substitution.apply(script, subst, term);
 		}
@@ -937,9 +937,9 @@ public class ExecutionProducer {
 
 			while (!nextEdges.isEmpty()) {
 				final HashMap<TermVariable, Value> stateReference = state;
-				final ArrayList<Edge> availableEdges = Util.filter(nextEdges, (nextEdge) -> {
+				final List<Edge> availableEdges = nextEdges.stream().filter((nextEdge) -> {
 					return nextEdge.guard(stateReference, ndc);
-				});
+				}).toList();
 
 				Edge nextEdge;
 				if (availableEdges.size() > 1) {
