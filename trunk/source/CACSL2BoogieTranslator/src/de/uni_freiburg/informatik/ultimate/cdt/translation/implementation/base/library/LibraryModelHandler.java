@@ -106,15 +106,16 @@ public class LibraryModelHandler {
 		final String transformedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), name);
 		final IASTNode funDecl = mFunctionTable.get(transformedName);
 		if (funDecl instanceof IASTFunctionDefinition) {
-			// it is a function that already has a body
+			// If the function is defined in some library that we can model, but is redefined in the file (i.e., there
+			// exists a function definition in the symbol table), we want to use the implementation instead of the
+			// model (i.e., return null).
 			if (mCheckErrorFunction && "reach_error".equals(transformedName)) {
-				// Workaround for reach_error: It is redefined in many tasks of SV-COMP, but we don't care about the
-				// implementation and just want to check if it is reachable or not (for unreach-call). Therefore we
-				// use our model and show a warning.
+				// Exception for reach_error: It is redefined in many tasks of SV-COMP, but we don't care about the
+				// implementation and just want to check if it is reachable or not (for unreach-call). Therefore we use
+				// our model and show a warning.
 				mLogger.warn("Function %s is already implemented but we override the implementation for the call at %s",
 						transformedName, node.getFileLocation());
 			} else {
-				// Otherwise return null, i.e., use the actual implementation rather than our model.
 				return null;
 			}
 		}
