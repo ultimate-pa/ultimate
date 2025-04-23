@@ -1,7 +1,7 @@
 //#Safe
 /*
-    Peterson's mutual exclusion algorithm, needs precise abstraction to prove.
-    Mine(2017) solves this with location abstraction.
+   Peterson's mutual exclusion algorithm, needs precise abstraction to prove.
+   Mine(2017) solves this with location abstraction (in combination with relational interferences).
 */
 
 var b1, b2, turn: bool;
@@ -22,12 +22,8 @@ modifies b1, turn, crit;
 {  
     b1 := true;
     turn := false;
-    while (b2 && !turn) {
-        // Busy wait
-        assume true;
-    }
+    assume (!b2 || turn);
     // critical section
-    //assert crit == 0;
     crit := 1;
     assert crit == 1;
     crit := 0;
@@ -39,12 +35,8 @@ modifies b2, turn, crit;
 {  
     b2 := true;
     turn := true;
-    while (b1 && turn) {
-        // Busy wait
-        assume true;
-    }
+    assume (!b1 || turn);
     // critical section
-    //assert crit == 0;
     crit := 2;
     assert crit == 2;
     crit := 0;
