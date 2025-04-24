@@ -95,4 +95,9 @@ public class SetjmpLibraryModel implements ILibraryModel {
 		// Model jmp_buf just with some arbitrary type, we cannot handle it properly anyways.
 		return List.of(new TypeModel("jmp_buf", CPointer.voidPointer()));
 	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of();
+	}
 }

@@ -495,4 +495,17 @@ public class PthreadLibraryModel implements ILibraryModel {
 				new TypeModel("pthread_rwlock_t", new CPrimitive(CPrimitives.INT)),
 				new TypeModel("pthread_cond_t", new CPrimitive(CPrimitives.INT)));
 	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		// TODO: Add more constants?
+		// TODO: Model initializers properly?
+		return List.of(
+				new ConstantModel("PTHREAD_MUTEX_INITIALIZER",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
+				new ConstantModel("PTHREAD_RWLOCK_INITIALIZER",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))),
+				new ConstantModel("PTHREAD_COND_INITIALIZER",
+						loc -> mHelper.constructIntegerLiteral(loc, BigInteger.ZERO, new CPrimitive(CPrimitives.INT))));
+	}
 }

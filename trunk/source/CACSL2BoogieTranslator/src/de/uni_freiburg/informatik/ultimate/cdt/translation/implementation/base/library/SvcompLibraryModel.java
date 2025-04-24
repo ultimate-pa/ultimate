@@ -291,4 +291,9 @@ public class SvcompLibraryModel implements ILibraryModel {
 	public Collection<TypeModel> getTypeModels() {
 		return List.of();
 	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of();
+	}
 }

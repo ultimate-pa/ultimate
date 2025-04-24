@@ -199,4 +199,9 @@ public class VariadicLibraryModel implements ILibraryModel {
 		final ICType charPointer = new CPointer(new CPrimitive(CPrimitives.CHAR));
 		return List.of(new TypeModel("__builtin_va_list", charPointer), new TypeModel("va_list", charPointer));
 	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of();
+	}
 }
