@@ -32,8 +32,7 @@ modifies flag, x;
   var b : bool;
   var t : int;
   b := flag;
-  if (b) {
-    t := x;
-    assert t == 5;
-  }
+  assume b;
+  t := x;
+  assert t == 5;
 }

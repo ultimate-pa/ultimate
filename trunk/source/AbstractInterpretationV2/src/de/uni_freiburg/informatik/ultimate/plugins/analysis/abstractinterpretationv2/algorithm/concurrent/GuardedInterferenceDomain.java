@@ -21,19 +21,16 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
-//	private final Map<String, ? extends LOC> mEntryLocs;
 	int locationCounter = 0;
-//	private final IIcfg<? extends LOC> mCfg;
-	private final int MAXSIZE;
 
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
-			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf) {
+			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf,
+			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
 		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
-		MAXSIZE = maxSize;
 		mAbstractLocationMap = locationMap;
 		mUnderlyingDomain = underlying;
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
-				mUnderlyingDomain.getPostOperator(), this, mAbstractLocationMap, maxItf, maxSize);
+				mUnderlyingDomain.getPostOperator(), this, mAbstractLocationMap, maxItf, maxSize, interferences);
 		mWideningOperator = new GuardedStateWideningOperator<>(underlying, mThreadInstanceCounterFactory);
 	}
 
@@ -82,7 +79,7 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 
 	@Override
 	public String domainDescription() {
-		return "SIFA - " + mUnderlyingDomain.toString() + " with interferences";
+		return mUnderlyingDomain.toString() + " with interferences";
 	}
 
 	@Override

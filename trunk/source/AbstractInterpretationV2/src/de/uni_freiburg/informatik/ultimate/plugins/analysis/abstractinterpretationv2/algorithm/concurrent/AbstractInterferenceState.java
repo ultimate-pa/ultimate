@@ -6,28 +6,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 record Interference<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
-		ACTION action, STATE state, ThreadInstanceCounter threadcounter) {
+		ACTION action, DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState) {
 	boolean isEqualTo(final Interference<STATE, ACTION, LOC> other) {
-		return state().isEqualTo(other.state()) && threadcounter().isEqualTo(other.threadcounter());
+		return disjState().isEqualTo(other.disjState());
 	}
+
 }
 
 public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
-	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mDomain;
 	private final Map<String, Map<ACTION, Interference<STATE, ACTION, LOC>>> mInterferenceMap;
-	private boolean mWiden = false;
 
-	public AbstractInterferenceState(final Set<String> threadNames,
-			final GuardedInterferenceDomain<STATE, ACTION, LOC> domain) {
+	public AbstractInterferenceState(final Set<String> threadNames) {
 		mInterferenceMap = new HashMap<>();
 		threadNames.forEach(t -> mInterferenceMap.put(t, new HashMap<>()));
-		mDomain = domain;
 	}
 
 	public AbstractInterferenceState(final AbstractInterferenceState<STATE, ACTION, LOC> other) {
@@ -37,15 +35,6 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 			map.forEach(copy::put);
 			mInterferenceMap.put(thread, copy);
 		});
-		mDomain = other.mDomain;
-	}
-
-	public GuardedInterferenceDomain<STATE, ACTION, LOC> getDomain() {
-		return mDomain;
-	}
-
-	public void setWidening() {
-		mWiden = true;
 	}
 
 	public Set<Interference<STATE, ACTION, LOC>> getInterferencesForThread(final String threadName) {
@@ -53,28 +42,31 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		return inner == null ? Set.of() : new HashSet<>(inner.values());
 	}
 
-	public void addInterference(final String threadName, final ACTION action, final STATE state,
-			final ThreadInstanceCounter counter) {
+	public Interference<STATE, ACTION, LOC> getInterferencesForThreadAction(final String threadName,
+			final ACTION edge) {
+		final var itf = mInterferenceMap.get(threadName).get(edge);
+		return itf;
+	}
+
+	public void addInterference(final String procedure, final Interference<STATE, ACTION, LOC> itf) {
+		addInterference(procedure, itf.action(), itf.disjState());
+	}
+
+	public void addInterference(final String threadName, final ACTION action,
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> state) {
+		if (state == null) {
+			return;
+		}
 		final var threadMap = mInterferenceMap.computeIfAbsent(threadName, k -> new HashMap<>());
 		final var existing = threadMap.get(action);
 
 		Interference<STATE, ACTION, LOC> newItf;
 
 		if (existing == null) {
-			newItf = new Interference<>(action, state, new ThreadInstanceCounter(counter));
-		} else if (!mWiden) {
-			newItf = new Interference<>(action, state.union(existing.state()), existing.threadcounter().union(counter));
+			newItf = new Interference<>(action, state);
 		} else {
-			var oldState = existing.state();
-			var widenedState = mDomain.getUnderlyingDomain().getWideningOperator().apply(oldState, state);
-
-			while (!widenedState.isEqualTo(oldState)) {
-				oldState = widenedState;
-				widenedState = mDomain.getUnderlyingDomain().getWideningOperator().apply(oldState, state);
-			}
-			newItf = new Interference<>(action, widenedState, existing.threadcounter().union(counter));
+			newItf = new Interference<>(action, state.union(existing.disjState()));
 		}
-
 		threadMap.put(action, newItf);
 	}
 
@@ -90,10 +82,14 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 			}
 			for (final var actionItfPair : pair.getValue().entrySet()) {
 				final var otherItf = otherThreadMap.get(actionItfPair.getKey());
-				if (otherItf == null) {
+				if (otherItf == null || actionItfPair.getValue().disjState() == null) {
 					return false;
 				}
-				if (actionItfPair.getValue().state().isSubsetOf(otherItf.state()) == SubsetResult.NONE) {
+//				final var unioned = GuardedStateTransformer.getSingleState(actionItfPair.getValue().disjState());
+//				final var unionedOther = GuardedStateTransformer.getSingleState(otherItf.disjState());
+				final var first = (actionItfPair.getValue().disjState());
+				final var second = (otherItf.disjState());
+				if (first.isSubsetOf(second) == SubsetResult.NONE) {
 					return false;
 				}
 			}
@@ -103,7 +99,9 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 
 	public Set<String> interferenceStrings() {
 		return mInterferenceMap.entrySet().stream()
-				.flatMap(e -> e.getValue().values().stream().map(i -> "Thread " + e.getKey() + ": " + i))
+				.flatMap(e -> e.getValue().values().stream()
+						.map(i -> "Thread " + e.getKey() + ": " + i.action()
+								+ GuardedStateTransformer.getSingleState(i.disjState()).state()))
 				.collect(Collectors.toSet());
 	}
 }

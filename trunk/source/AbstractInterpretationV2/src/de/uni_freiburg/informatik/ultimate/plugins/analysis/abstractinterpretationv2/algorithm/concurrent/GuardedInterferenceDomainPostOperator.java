@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -16,33 +14,30 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
 		implements IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> {
-	private String mCurrentThreadName;
 
 	private final ILogger mLogger;
-	private final Set<IProgramNonOldVar> mGlobalVariables;
+
+	private String mCurrentThreadName;
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final GuardedInterferenceApplier<STATE, ACTION, LOC> mItfApplier;
-
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
 
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
-			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates) {
+			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
+			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
 		mLogger = logger;
-		mGlobalVariables = cfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 		mUnderlyingPostOp = postOp;
-		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, postOp, relationalInterferingDomain, globalMap,
-				maxItf, maxParallelStates);
+		mItfApplier = new GuardedInterferenceApplier<>(logger, postOp, relationalInterferingDomain, globalMap, maxItf,
+				maxParallelStates, interferences);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 	}
 
@@ -71,12 +66,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 						newState.abstractLocationState().copyToNewState(transition.getTarget())))
 				.collect(Collectors.toSet());
 
-		// 2. Add new interference to global map
-		if (true || isInterferingTransition(transition)) {
-			mItfApplier.addItf(mCurrentThreadName, transition, newState);
-		}
-
-		// 3. apply interferences
+		// 2. apply interferences
 		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> postRelationalStates = new LinkedHashSet<>();
 		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> postRelationalState : guardedStates) {
 			if (!postRelationalState.isBottom()) {
@@ -86,23 +76,6 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		}
 
 		return postRelationalStates;
-	}
-
-	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
-	private boolean isInterferingTransition(final ACTION transition) {
-		if (!transition.getTransformula().getAssignedVars().stream()
-				.anyMatch(assignedVar -> mGlobalVariables.contains(assignedVar))) {
-			return false;
-		}
-		if (!(transition instanceof final StatementSequence statementSequence)) {
-			return true;
-		}
-		for (final Statement statement : statementSequence.getStatements()) {
-			if (!(statement instanceof AssumeStatement)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(

@@ -120,14 +120,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 	}
 
 	private boolean areStatesInterferenceFree() {
-		final Map<LOC, DisjunctiveAbstractState<STATE>> loc2States =
-				mResult.getLoc2States().entrySet().stream().collect(Collectors.toMap(x -> x.getKey(),
+		final Map<LOC, DisjunctiveAbstractState<STATE>> loc2States = mResult.getLoc2States().entrySet().stream()
+				.collect(Collectors.toMap(x -> x.getKey(),
 						x -> DisjunctiveAbstractState.createDisjunction(x.getValue())));
 		for (final Entry<LOC, DisjunctiveAbstractState<STATE>> entry : loc2States.entrySet()) {
 			final DisjunctiveAbstractState<STATE> state = removeLocalVars(entry.getValue());
 			for (final ACTION interfering : mAnalyzer.getInterferingWrites(entry.getKey())) {
-				final DisjunctiveAbstractState<STATE> preInterfering =
-						loc2States.get(mTransitionProvider.getSource(interfering));
+				final DisjunctiveAbstractState<STATE> preInterfering = loc2States
+						.get(mTransitionProvider.getSource(interfering));
 				if (preInterfering == null) {
 					continue;
 				}
@@ -147,14 +147,14 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			mLogger.info("Starting thread modular fixpoint engine iteration " + iteration);
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
 				final DisjunctiveAbstractState<STATE> initialState = getInitialState(procedure);
-				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences =
-						mParams.setStorage(mStateStorage.copy())
-								.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState))
-								.setDomain(new InterferingDomain<>(mDomain, mTransitionProvider, interferences));
-				final IFixpointEngine<STATE, ACTION, VARDECL, LOC> fixpointEngine =
-						mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
-				final AbsIntResult<STATE, ACTION, LOC> threadResult =
-						fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
+				final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> paramsWithInterferences = mParams
+						.setStorage(mStateStorage.copy())
+						.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState))
+						.setDomain(new InterferingDomain<>(mDomain, mTransitionProvider, interferences));
+				final IFixpointEngine<STATE, ACTION, VARDECL, LOC> fixpointEngine = mFixpointEngineFactory
+						.constructFixpointEngine(paramsWithInterferences);
+				final AbsIntResult<STATE, ACTION, LOC> threadResult = fixpointEngine
+						.run(Set.of(mEntryLocs.get(procedure)), script);
 
 				// Merge mStateStorage and result.getLoc2States
 				threadResult.getLoc2States().forEach(
@@ -169,8 +169,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 				}
 			}
 
-			final Map<LOC, DisjunctiveAbstractState<STATE>> newInterferences =
-					computeNewInterferences(getPostStatesOnSharedVariables());
+			final Map<LOC, DisjunctiveAbstractState<STATE>> newInterferences = computeNewInterferences(
+					getPostStatesOnSharedVariables());
 
 			if (interferencesReachedFixpoint(interferences, newInterferences)) {
 				mLogger.info("Fixpoint after " + iteration + " iterations found.");
@@ -180,7 +180,7 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 			if (iteration < mMaxUnwindings) {
 				interferences = newInterferences;
 			} else {
-				mLogger.info("Applying widenning to the interferences.");
+				mLogger.error("Applying widenning to the interferences.");
 				interferences = widenInterferences(interferences, newInterferences);
 			}
 			iteration++;
@@ -227,13 +227,13 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 		return result != null ? result : new DisjunctiveAbstractState<>(mMaxParallelStates, mDomain.createTopState());
 	}
 
-	private Map<LOC, DisjunctiveAbstractState<STATE>>
-			computeNewInterferences(final Map<ACTION, DisjunctiveAbstractState<STATE>> postStatesOnSharedVariables) {
+	private Map<LOC, DisjunctiveAbstractState<STATE>> computeNewInterferences(
+			final Map<ACTION, DisjunctiveAbstractState<STATE>> postStatesOnSharedVariables) {
 		final Map<LOC, DisjunctiveAbstractState<STATE>> result = new HashMap<>();
 		for (final LOC entryLoc : mEntryLocs.values()) {
 			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
-				final DisjunctiveAbstractState<STATE> interferingState =
-						getInterferingState(loc, postStatesOnSharedVariables);
+				final DisjunctiveAbstractState<STATE> interferingState = getInterferingState(loc,
+						postStatesOnSharedVariables);
 				if (interferingState != null) {
 					result.put(loc, interferingState);
 				}
@@ -256,8 +256,8 @@ public class FixpointEngineConcurrent<STATE extends IAbstractState<STATE>, ACTIO
 
 	private DisjunctiveAbstractState<STATE> getStateAfterWrite(final ACTION write,
 			final Set<IProgramVarOrConst> variables) {
-		final DisjunctiveAbstractState<STATE> preState =
-				mStateStorage.getAbstractState(mTransitionProvider.getSource(write));
+		final DisjunctiveAbstractState<STATE> preState = mStateStorage
+				.getAbstractState(mTransitionProvider.getSource(write));
 		final DisjunctiveAbstractState<STATE> postState;
 		if (preState == null) {
 			// If the source is not present in mStateStorage, fall back to the target

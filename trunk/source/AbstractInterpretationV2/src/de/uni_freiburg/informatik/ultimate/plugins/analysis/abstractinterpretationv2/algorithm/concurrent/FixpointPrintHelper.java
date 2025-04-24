@@ -26,9 +26,7 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 		mLogger = logger;
 	}
 
-	public void printResults(final ILogger logger,
-			final AbstractInterferenceState<STATE, ACTION, LOC> newInterferenceState,
-			final AbstractInterferenceState<STATE, ACTION, LOC> newInterferenceState2, final int iteration,
+	public void printResults(final ILogger logger, final int iteration,
 			final Map<String, AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
 			final Map<String, ? extends LOC> entryLocs, final AbstractLocationMap<LOC> globMap, final Script script) {
 		logger.error(" ");

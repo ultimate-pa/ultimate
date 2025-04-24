@@ -17,8 +17,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
@@ -58,6 +56,16 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return counter;
 	}
 
+	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
+		final var guards = outgoing.stream()
+				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
+				.toList();
+		final var term = SmtUtils.simplify(mManagedScript, SmtUtils.or(mScript, guards), mServices,
+				SimplificationTechnique.POLY_PAC);
+		final var globals = mGlobals.stream().map(v -> v.getTermVariable()).collect(Collectors.toSet());
+		return Arrays.stream(term.getFreeVars()).anyMatch(globals::contains);
+	}
+
 //	private boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
 //		if (outgoing.isEmpty()) {
 //			return false;
@@ -78,59 +86,34 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 //		}
 //		return false;
 //	}
-	private boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
-		final var guards = outgoing.stream()
-				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
-				.toList();
-		final var term = SmtUtils.simplify(mManagedScript, SmtUtils.or(mScript, guards), mServices,
-				SimplificationTechnique.POLY_PAC);
-		final var globals = mGlobals.stream().map(v -> v.getTermVariable()).collect(Collectors.toSet());
-		return Arrays.stream(term.getFreeVars()).anyMatch(globals::contains);
-	}
 
-	private static boolean isSkipStatement(final List<IcfgEdge> outgoing) {
-		return outgoing.stream().anyMatch(
-				s -> s.getTransformula().getInVars().size() == 0 && s.getTransformula().getOutVars().size() == 0);
-	}
-
-	private boolean assumeContainsGlobal(final List<IcfgEdge> outgoing) {
-		for (final IcfgEdge icfgEdge : outgoing) {
-			final var invars = icfgEdge.getTransformula().getInVars();
-			if (mGlobals.stream().anyMatch(invars.keySet()::contains)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean containsAssume(final List<IcfgEdge> outgoing) {
-		for (final IcfgEdge icfgEdge : outgoing) {
-			if ((icfgEdge.getTransformula().getAssignedVars().isEmpty())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private boolean isEdgeUnionTop(final List<IcfgEdge> outgoing) {
-		final var terms = outgoing.stream().map(e -> e.getTransformula().getClosedFormula()).toList();
-		final var union = SmtUtils.or(mScript, terms);
-		return termIsTrue(union);
-	}
-
-	// checksat
-	private boolean termIsTrue(final Term term) {
-		mManagedScript.lock(this);
-		mManagedScript.push(this, 1);
-		mManagedScript.assertTerm(this, term);
-		mManagedScript.assertTerm(this, SmtUtils.not(mScript, term));
-		final LBool checkSatResult = mManagedScript.checkSat(this);
-		mManagedScript.pop(this, 1);
-		mManagedScript.unlock(this);
-		if (checkSatResult.equals(LBool.UNSAT)) {
-			return true;
-		}
-		return false;
-	}
-
+//	private static boolean isSkipStatement(final List<IcfgEdge> outgoing) {
+//		return outgoing.stream().anyMatch(
+//				s -> s.getTransformula().getInVars().size() == 0 && s.getTransformula().getOutVars().size() == 0);
+//	}
+//
+//	private boolean assumeContainsGlobal(final List<IcfgEdge> outgoing) {
+//		for (final IcfgEdge icfgEdge : outgoing) {
+//			final var invars = icfgEdge.getTransformula().getInVars();
+//			if (mGlobals.stream().anyMatch(invars.keySet()::contains)) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
+//
+//	private static boolean containsAssume(final List<IcfgEdge> outgoing) {
+//		for (final IcfgEdge icfgEdge : outgoing) {
+//			if ((icfgEdge.getTransformula().getAssignedVars().isEmpty())) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
+//
+//	private boolean isEdgeUnionTop(final List<IcfgEdge> outgoing) {
+//		final var terms = outgoing.stream().map(e -> e.getTransformula().getClosedFormula()).toList();
+//		final var union = SmtUtils.or(mScript, terms);
+//		return termIsTrue(union);
+//	}
 }
