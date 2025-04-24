@@ -479,14 +479,6 @@ public abstract class ExpressionTranslation {
 	}
 
 	/**
-	 * Check if id is number classification macro according to 7.12.6 of C11.
-	 */
-	public boolean isNumberClassificationMacro(final String cId) {
-		return cId.equals("FP_NAN") || cId.equals("FP_INFINITE") || cId.equals("FP_ZERO") || cId.equals("FP_SUBNORMAL")
-				|| cId.equals("FP_NORMAL");
-	}
-
-	/**
 	 * Translate number classification macros according to 7.12.6 of C11. Although the standard allows any distinct
 	 * integers, we take 0,1,2,3,4 because gcc on Matthias' Linux system uses these numbers.
 	 */

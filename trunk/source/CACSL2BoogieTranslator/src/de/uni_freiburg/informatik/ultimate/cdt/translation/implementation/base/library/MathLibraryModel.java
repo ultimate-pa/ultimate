@@ -515,4 +515,20 @@ public class MathLibraryModel implements ILibraryModel {
 				// most efficient floating-point type at least as wide as double -> We choose double
 				new TypeModel("double_t", new CPrimitive(CPrimitives.DOUBLE)));
 	}
+
+	private ConstantModel modelNumberClassificationMacro(final String name) {
+		return new ConstantModel(name,
+				loc -> new ExpressionResult(mExpressionTranslation.handleNumberClassificationMacro(loc, name)));
+	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of(new ConstantModel("NAN", loc -> mExpressionTranslation.createNanOrInfinity(loc, "NAN")),
+				new ConstantModel("INFINITY", loc -> mExpressionTranslation.createNanOrInfinity(loc, "INFINITY")),
+				new ConstantModel("inf", loc -> mExpressionTranslation.createNanOrInfinity(loc, "inf")),
+				// Check if id is number classification macro according to 7.12.6 of C11.
+				modelNumberClassificationMacro("FP_NAN"), modelNumberClassificationMacro("FP_INFINITE"),
+				modelNumberClassificationMacro("FP_ZERO"), modelNumberClassificationMacro("FP_SUBNORMAL"),
+				modelNumberClassificationMacro("FP_NORMAL"));
+	}
 }

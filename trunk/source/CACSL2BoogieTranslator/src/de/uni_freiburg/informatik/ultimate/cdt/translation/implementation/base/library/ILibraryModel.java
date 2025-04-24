@@ -30,6 +30,8 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
  * An interface to abstract the model of libraries (mostly libraries from the C standard) in Boogie.
@@ -37,6 +39,23 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public interface ILibraryModel {
+	/**
+	 * An interface to represent the model of a constant macro.
+	 *
+	 * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+	 */
+	@FunctionalInterface
+	interface IConstantModelHandler {
+		/**
+		 * Models the constant as an {@link ExpressionResult}.
+		 *
+		 * @param loc
+		 *            A location.
+		 * @return An {@link ExpressionResult} as a model of the constant.
+		 */
+		ExpressionResult handleConstant(ILocation loc);
+	}
+
 	/**
 	 * Model of a translated function, consisting of the name of the function and our translated model (represented as a
 	 * {@link IFunctionModelHandler}).
@@ -49,6 +68,14 @@ public interface ILibraryModel {
 	 * Model of a predefined type, consisting of the name of the type and our translated model (as a {@code ICType}).
 	 */
 	public record TypeModel(String typeName, ICType cType) {
+		// empty
+	}
+
+	/**
+	 * Model of a predefined constant, consisting of the name of the type and our translated model (represented as a
+	 * {@link IConstantModelHandler}).
+	 */
+	public record ConstantModel(String name, IConstantModelHandler model) {
 		// empty
 	}
 
@@ -72,4 +99,11 @@ public interface ILibraryModel {
 	 * @return a collection of {@link TypeModel} of the types that are defined.
 	 */
 	Collection<TypeModel> getTypeModels();
+
+	/**
+	 * Get the model of the predefined constants
+	 *
+	 * @return a collection of {@link ConstantModel} of the constants that are defined.
+	 */
+	Collection<ConstantModel> getConstantModels();
 }

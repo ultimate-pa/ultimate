@@ -481,4 +481,9 @@ public class StdioLibraryModel implements ILibraryModel {
 	public Collection<TypeModel> getTypeModels() {
 		return List.of(new TypeModel("FILE", getFileType()));
 	}
+
+	@Override
+	public Collection<ConstantModel> getConstantModels() {
+		return List.of();
+	}
 }
