@@ -192,6 +192,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.l
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.PthreadLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.SetjmpLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.SocketLibraryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdintLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdioLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StdlibLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.StringLibraryModel;
@@ -633,7 +634,8 @@ public class CHandler {
 						mSettings.checkErrorFunction(), mExprResultTransformer),
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
-						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder));
+						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
+				new StdintLibraryModel());
 	}
 
 	/**
