@@ -87,11 +87,6 @@ public class AssertLibraryModel implements ILibraryModel {
 		return result;
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	private Result handleAssertFail(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
@@ -166,15 +161,5 @@ public class AssertLibraryModel implements ILibraryModel {
 
 		/* handle as regular assertion */
 		return handleAssert(main, node, loc, name);
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
-	}
-
-	@Override
-	public Collection<ConstantModel> getConstantModels() {
-		return List.of();
 	}
 }

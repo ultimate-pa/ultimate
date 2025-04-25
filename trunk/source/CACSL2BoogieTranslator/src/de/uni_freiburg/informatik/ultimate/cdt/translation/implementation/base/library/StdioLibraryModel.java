@@ -181,11 +181,6 @@ public class StdioLibraryModel implements ILibraryModel {
 
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	// Overapproximates sprintf as follows:
 	// ctr:=0; while (*) { havoc aux; *(ptr+ctr) := aux; ctr := ctr + 1; }
 	private Result handleSPrintF(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc) {
@@ -480,10 +475,5 @@ public class StdioLibraryModel implements ILibraryModel {
 	@Override
 	public Collection<TypeModel> getTypeModels() {
 		return List.of(new TypeModel("FILE", getFileType()));
-	}
-
-	@Override
-	public Collection<ConstantModel> getConstantModels() {
-		return List.of();
 	}
 }

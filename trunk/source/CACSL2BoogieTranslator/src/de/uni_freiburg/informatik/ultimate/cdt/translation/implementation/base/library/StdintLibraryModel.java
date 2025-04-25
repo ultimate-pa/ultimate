@@ -39,16 +39,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 public class StdintLibraryModel implements ILibraryModel {
 
 	@Override
-	public Collection<FunctionModel> getFunctionModels() {
-		return List.of();
-	}
-
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
-	@Override
 	public Collection<TypeModel> getTypeModels() {
 		// TODO: These types depend on the settings, but they should have always the specified bits
 		final var int8 = new CPrimitive(CPrimitives.SCHAR);

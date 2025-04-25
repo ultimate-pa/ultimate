@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
 import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -84,26 +85,34 @@ public interface ILibraryModel {
 	 *
 	 * @return a collection of {@link FunctionModel} of the functions that can be handled.
 	 */
-	Collection<FunctionModel> getFunctionModels();
+	default Collection<FunctionModel> getFunctionModels() {
+		return List.of();
+	}
 
 	/**
 	 * Gets the functions that are not supported.
 	 *
 	 * @return names of the unsupported functions, i.e., where we expect to cancel the translation on encounter.
 	 */
-	Collection<String> getUnsupportedFunctions();
+	default Collection<String> getUnsupportedFunctions() {
+		return List.of();
+	}
 
 	/**
 	 * Gets the model of the predefined types.
 	 *
 	 * @return a collection of {@link TypeModel} of the types that are defined.
 	 */
-	Collection<TypeModel> getTypeModels();
+	default Collection<TypeModel> getTypeModels() {
+		return List.of();
+	}
 
 	/**
 	 * Get the model of the predefined constants
 	 *
 	 * @return a collection of {@link ConstantModel} of the constants that are defined.
 	 */
-	Collection<ConstantModel> getConstantModels();
+	default Collection<ConstantModel> getConstantModels() {
+		return List.of();
+	}
 }

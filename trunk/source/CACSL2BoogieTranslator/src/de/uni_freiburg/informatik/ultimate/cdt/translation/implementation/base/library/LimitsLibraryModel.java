@@ -49,21 +49,6 @@ public class LimitsLibraryModel implements ILibraryModel {
 		mHelper = helper;
 	}
 
-	@Override
-	public Collection<FunctionModel> getFunctionModels() {
-		return List.of();
-	}
-
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
-	}
-
 	private ExpressionResult getMinValue(final ILocation loc, final CPrimitives type) {
 		final var cType = new CPrimitive(type);
 		final BigInteger value = mTypeSizes.getMinValueOfPrimitiveType(cType);

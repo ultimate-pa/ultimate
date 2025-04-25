@@ -107,11 +107,6 @@ public class VariadicLibraryModel implements ILibraryModel {
 				new FunctionModel("__builtin_va_copy", this::handleVaCopy));
 	}
 
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
 	private List<Statement> makeVarargAssignment(final ILocation loc, final LRValue lhs, final Expression rhs) {
 		if (lhs instanceof LocalLValue) {
 			return List.of(StatementFactory.constructSingleAssignmentStatement(loc, ((LocalLValue) lhs).getLhs(), rhs));
@@ -198,10 +193,5 @@ public class VariadicLibraryModel implements ILibraryModel {
 	public Collection<TypeModel> getTypeModels() {
 		final ICType charPointer = new CPointer(new CPrimitive(CPrimitives.CHAR));
 		return List.of(new TypeModel("__builtin_va_list", charPointer), new TypeModel("va_list", charPointer));
-	}
-
-	@Override
-	public Collection<ConstantModel> getConstantModels() {
-		return List.of();
 	}
 }
