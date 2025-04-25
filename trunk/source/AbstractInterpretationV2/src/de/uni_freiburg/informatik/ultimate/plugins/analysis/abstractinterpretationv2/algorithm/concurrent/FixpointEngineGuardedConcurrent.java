@@ -15,9 +15,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
@@ -157,7 +155,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				}
 			}
 
-			final var newInterferences = computeNewInterferences(interferences);
+			final var newInterferences = computeNewInterferences();
 			printInterferenceLog(interferences, newInterferences);
 
 			final boolean fixpointReached = newInterferences.isSubsetOf(interferences);
@@ -167,7 +165,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				break;
 			}
 
-			if (mIteration > 10000) {
+			if (mIteration > mMaxUnwindings) {
 				mLogger.info("Applying widenning to the interferences.");
 				interferences = mInterferenceWideningOperator.calcWidenedInterferences(interferences, newInterferences,
 						mIfcg.getCfgSmtToolkit().getProcedures());
@@ -178,38 +176,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		}
 	}
 
-	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeNewInterferences(
-			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
-//		final var result = new AbstractInterferenceState<>(interferences);
-		final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> result = new AbstractInterferenceState<>(
-				mIfcg.getCfgSmtToolkit().getProcedures());
-		for (final LOC entryLoc : mEntryLocs.values()) {
-			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
-				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					if (!isInterferingTransition((ACTION) edge)) {
-						continue;
-					}
-					final var preState = mStateStorage.getAbstractState(mTransitionProvider.getSource((ACTION) edge));
-					final var interference = new Interference<>((ACTION) edge, preState);
-					result.addInterference(entryLoc.getProcedure(), interference);
-				}
-			});
-		}
-		return result;
-	}
-
-	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
-	private boolean isInterferingTransition(final ACTION transition) {
-		// TODO: check abstract location pre post, if different, return yes
-		if (mLocationAbstraction.getAbstractLocation(transition.getSource()) != mLocationAbstraction
-				.getAbstractLocation(transition.getTarget())) {
-			return true;
-		}
-		if (!transition.getTransformula().getAssignedVars().stream().anyMatch(
-				assignedVar -> mIfcg.getCfgSmtToolkit().getSymbolTable().getGlobals().contains(assignedVar))) {
-			return true;
-		}
-		return false;
+	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeNewInterferences() {
+		final var newInterferences = InterferenceCreator.computeInterferences(mEntryLocs, mIfcg, mStateStorage,
+				mTransitionProvider, mMaxParallelStates, mLocationAbstraction);
+		return newInterferences;
 	}
 
 	private void printInterferenceLog(
