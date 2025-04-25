@@ -187,6 +187,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.l
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.GccBuiltinLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LibraryModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LimitsLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.LinuxLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.MathLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.PthreadLibraryModel;
@@ -635,7 +636,7 @@ public class CHandler {
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
 				new VariadicLibraryModel(helper, mMemoryHandler, mProcedureManager, mTypeHandler,
 						mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
-				new StdintLibraryModel());
+				new StdintLibraryModel(), new LimitsLibraryModel(mTypeSizes, helper));
 	}
 
 	/**
