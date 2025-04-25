@@ -87,8 +87,8 @@ public class OctagonRelation {
 
 	private static OctagonRelation from1Var(final AffineTerm affineTerm, final RelationSymbol relationSymbol) {
 		checkNumberOfVariables(1, affineTerm.getAbstractVariable2Coefficient().size());
-		final Map.Entry<Term, Rational> var2coeff = affineTerm.getAbstractVariable2Coefficient()
-				.entrySet().iterator().next();
+		final Map.Entry<Term, Rational> var2coeff =
+				affineTerm.getAbstractVariable2Coefficient().entrySet().iterator().next();
 		final Term var = var2coeff.getKey();
 		final Rational absCoeff = var2coeff.getValue().abs();
 		final boolean negVar = var2coeff.getValue().isNegative();

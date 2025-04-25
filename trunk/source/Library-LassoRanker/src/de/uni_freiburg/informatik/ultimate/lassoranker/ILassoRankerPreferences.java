@@ -48,72 +48,72 @@ public interface ILassoRankerPreferences {
 	/**
 	 * Should the polyhedra for stem and loop be made integral for integer programs? (Not yet implemented.)
 	 */
-	public boolean isComputeIntegralHull();
+	boolean isComputeIntegralHull();
 
 	/**
 	 * Enable the LassoPartitioneer that splits lassos into multiple independent components?
 	 */
-	public boolean isEnablePartitioneer();
+	boolean isEnablePartitioneer();
 
 	/**
 	 * Add annotations to terms for debugging purposes
 	 */
-	public boolean isAnnotateTerms();
+	boolean isAnnotateTerms();
 
 	/**
 	 * If true, we use an external tool to solve the constraints. If false, we use SMTInterpol to solve the constraints.
 	 */
-	public boolean isExternalSolver();
+	boolean isExternalSolver();
 
 	/**
 	 * What shell command should be used to call the external smt solver?
 	 */
-	public String getExternalSolverCommand();
+	String getExternalSolverCommand();
 
 	/**
 	 * Write SMT solver script to file.
 	 */
-	public boolean isDumpSmtSolverScript();
+	boolean isDumpSmtSolverScript();
 
 	/**
 	 * Path to which the SMT solver script is written.
 	 */
-	public String getPathOfDumpedScript();
+	String getPathOfDumpedScript();
 
 	/**
 	 * Base name (without path) of the file to which the SMT solver script is written.
 	 */
-	public String getBaseNameOfDumpedScript();
+	String getBaseNameOfDumpedScript();
 
 	/**
 	 * Overapproximate the result of RewriteArrays by dropping all conjuncts that are not-equals relations of indices.
 	 * If the lasso does not contain arrays, this option has no effect. Otherwise setting this to true is unsound for
 	 * nontermination analysis.
 	 */
-	public boolean isOverapproximateArrayIndexConnection();
+	boolean isOverapproximateArrayIndexConnection();
 
 	/**
 	 * Defines what the {@link InequalityConverter} does while processing a (Sub-) Term that is nonlinear.
 	 */
-	public NlaHandling getNlaHandling();
+	NlaHandling getNlaHandling();
 
 	/**
 	 * Use Matthias' (true) or Franks (false) map elimination implementation
 	 */
-	public boolean isUseOldMapElimination();
+	boolean isUseOldMapElimination();
 
-	public boolean isMapElimAddInequalities();
+	boolean isMapElimAddInequalities();
 
-	public boolean isMapElimOnlyTrivialImplicationsIndexAssignment();
+	boolean isMapElimOnlyTrivialImplicationsIndexAssignment();
 
-	public boolean isMapElimOnlyTrivialImplicationsArrayWrite();
+	boolean isMapElimOnlyTrivialImplicationsArrayWrite();
 
-	public boolean isMapElimOnlyIndicesInFormula();
+	boolean isMapElimOnlyIndicesInFormula();
 
 	/**
 	 * Emulate push/pop using reset and re-asserting and re-declaring.
 	 */
-	public boolean isFakeNonIncrementalScript();
+	boolean isFakeNonIncrementalScript();
 
 	/**
 	 * Calls the {@link Consumer#accept(Object)} method for each setting with a string describing this settings' value.

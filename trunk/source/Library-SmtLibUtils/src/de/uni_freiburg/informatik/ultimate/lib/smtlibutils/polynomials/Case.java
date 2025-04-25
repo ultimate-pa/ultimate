@@ -55,18 +55,15 @@ public class Case implements ITermProvider {
 	/**
 	 *
 	 * @param solvedBinaryRelation
-	 *            The {@link SolvedBinaryRelation} of this case. Can be null it
-	 *            this {@link Case} of a {@link MultiCaseSolvedBinaryRelation}
-	 *            consists only of {@link SupportingTerm}s.
+	 *            The {@link SolvedBinaryRelation} of this case. Can be null it this {@link Case} of a
+	 *            {@link MultiCaseSolvedBinaryRelation} consists only of {@link SupportingTerm}s.
 	 * @param xnf
-	 *            Defines if the {@link MultiCaseSolvedBinaryRelation} is given
-	 *            in CNF or DNF. If the {@link MultiCaseSolvedBinaryRelation} is
-	 *            given in CNF, this {@link Case} represents a disjunction,
+	 *            Defines if the {@link MultiCaseSolvedBinaryRelation} is given in CNF or DNF. If the
+	 *            {@link MultiCaseSolvedBinaryRelation} is given in CNF, this {@link Case} represents a disjunction,
 	 *            otherwise this {@link Case} represents a conjunction.
 	 */
 	public Case(final SolvedBinaryRelation solvedBinaryRelation, final Set<SupportingTerm> supportingTerms,
 			final Xnf xnf) {
-		super();
 		mSolvedBinaryRelation = solvedBinaryRelation;
 		mSupportingTerms = supportingTerms;
 		mXnf = xnf;
@@ -103,43 +100,29 @@ public class Case implements ITermProvider {
 		if (mSolvedBinaryRelation != null) {
 			params.add(mSolvedBinaryRelation.toTerm(script));
 		}
-		final Term result;
-		switch (mXnf) {
-		case CNF:
-			result = SmtUtils.or(script, params);
-			break;
-		case DNF:
-			result = SmtUtils.and(script, params);
-			break;
-		default:
-			throw new AssertionError("unknown case " + mXnf);
-		}
-		return result;
+		return switch (mXnf) {
+		case CNF -> SmtUtils.or(script, params);
+		case DNF -> SmtUtils.and(script, params);
+		};
 	}
 
 	@Override
 	public String toString() {
-		String junctor;
+		final String junctor = switch (mXnf) {
+		case CNF -> " \\/ ";
+		case DNF -> " /\\ ";
+		};
+
 		String result;
-		switch (mXnf) {
-		case CNF:
-			junctor = " \\/ ";
-			break;
-		case DNF:
-			junctor = " /\\ ";
-			break;
-		default:
-			throw new AssertionError("unknown case " + mXnf);
-		}
 		if (mSolvedBinaryRelation == null) {
 			result = "{";
-		}else {
+		} else {
 			result = "{" + mSolvedBinaryRelation.toString();
 		}
 		for (final SupportingTerm supp : mSupportingTerms) {
 			if (result == "{") {
 				result = result + supp.toString();
-			}else {
+			} else {
 				result = result + junctor + supp.toString();
 			}
 		}

@@ -22,8 +22,7 @@ public class EquivalenceFinder {
 
 	public EquivalenceFinder(final Term term, final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mScript = mgdScript.getScript();
-		final Term cnf =
-				SmtUtils.toCnf(services, mgdScript, term);
+		final Term cnf = SmtUtils.toCnf(services, mgdScript, term);
 		mRelations = getEquivalenceRelations(cnf);
 	}
 
@@ -49,7 +48,8 @@ public class EquivalenceFinder {
 		final Set<PolynomialRelation> result = new HashSet<>();
 		final Set<AffineTerm> leqTerms = new HashSet<>();
 		for (final Term conjunct : SmtUtils.getConjuncts(term)) {
-			final PolynomialRelation polyRel = PolynomialRelation.of(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
+			final PolynomialRelation polyRel =
+					PolynomialRelation.of(mScript, conjunct, TransformInequality.STRICT2NONSTRICT);
 			if (polyRel == null) {
 				continue;
 			}

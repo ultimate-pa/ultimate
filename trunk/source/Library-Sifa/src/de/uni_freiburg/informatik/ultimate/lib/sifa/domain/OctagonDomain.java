@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa.domain;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -91,7 +92,7 @@ public class OctagonDomain extends StateBasedDomain<OctagonState> {
 			}
 			boolean allVarsAreInt = true;
 			final Map<Term, Integer> varToIndex = new HashMap<>();
-			vars.stream().sorted((x, y) -> x.toString().compareTo(y.toString()))
+			vars.stream().sorted(Comparator.comparing(Term::toString))
 					.forEach(x -> varToIndex.put(x, varToIndex.size()));
 			final OctagonMatrix resultMatrix = new OctagonMatrix(varToIndex.size());
 			for (final OctagonRelation octRel : octRelations) {

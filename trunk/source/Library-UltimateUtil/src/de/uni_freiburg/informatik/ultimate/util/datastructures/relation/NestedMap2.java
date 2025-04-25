@@ -50,22 +50,12 @@ import java.util.stream.Stream;
  * @param <V>
  */
 public class NestedMap2<K1, K2, V> {
-
 	private final Map<K1, Map<K2, V>> mK1ToK2ToV = new HashMap<>();
 
 	/**
 	 * Construct an empty NestedMap2
 	 */
 	public NestedMap2() {
-	}
-
-	/**
-	 * Returns a stream to all values of the nested map. The values are backed by the map.
-	 *
-	 * @return A backed stream to all values of the nested map
-	 */
-	public Stream<V> values() {
-		return this.mK1ToK2ToV.values().stream().map(Map::values).flatMap(Collection::stream);
 	}
 
 	/**
@@ -77,12 +67,17 @@ public class NestedMap2<K1, K2, V> {
 		}
 	}
 
+	/**
+	 * Returns a stream to all values of the nested map. The values are backed by the map.
+	 *
+	 * @return A backed stream to all values of the nested map
+	 */
+	public Stream<V> values() {
+		return mK1ToK2ToV.values().stream().map(Map::values).flatMap(Collection::stream);
+	}
+
 	public V put(final K1 key1, final K2 key2, final V value) {
-		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
-		if (k2toV == null) {
-			k2toV = new HashMap<>();
-			mK1ToK2ToV.put(key1, k2toV);
-		}
+		final Map<K2, V> k2toV = mK1ToK2ToV.computeIfAbsent(key1, x -> new HashMap<>());
 		return k2toV.put(key2, value);
 	}
 
@@ -234,11 +229,6 @@ public class NestedMap2<K1, K2, V> {
 		return k2toV.computeIfAbsent(key2, func2);
 	}
 
-	@Override
-	public String toString() {
-		return mK1ToK2ToV.toString();
-	}
-
 	public void clear() {
 		mK1ToK2ToV.clear();
 	}
@@ -251,12 +241,18 @@ public class NestedMap2<K1, K2, V> {
 		return result;
 	}
 
+	public boolean isEmpty() {
+		return mK1ToK2ToV.isEmpty();
+	}
+
+	@Override
+	public String toString() {
+		return mK1ToK2ToV.toString();
+	}
+
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mK1ToK2ToV == null ? 0 : mK1ToK2ToV.hashCode());
-		return result;
+		return mK1ToK2ToV.hashCode();
 	}
 
 	@Override
@@ -271,19 +267,6 @@ public class NestedMap2<K1, K2, V> {
 			return false;
 		}
 		final NestedMap2 other = (NestedMap2) obj;
-		if (mK1ToK2ToV == null) {
-			if (other.mK1ToK2ToV != null) {
-				return false;
-			}
-		} else if (!mK1ToK2ToV.equals(other.mK1ToK2ToV)) {
-			return false;
-		}
-		return true;
+		return mK1ToK2ToV.equals(other.mK1ToK2ToV);
 	}
-
-	public boolean isEmpty() {
-		return mK1ToK2ToV.isEmpty();
-	}
-
-
 }

@@ -50,7 +50,6 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 	Map<VPStatistics, Integer> mLocationAggregateStatistics = new HashMap<>();
 	Map<VPStatistics, Integer> mTransitionAggregateStatistics = new HashMap<>();
 
-
 	@Override
 	public ICsvProvider<Integer> createCsvProvider() {
 		generateColumnTitlesAndResults();
@@ -79,7 +78,6 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 			mColumnTitles.add("TransStat_" + stat.toString());
 			mResults.add(mTransitionAggregateStatistics.get(stat));
 		}
-
 
 		mAlreadyGeneratedColumnTitlesAndResults = true;
 	}
@@ -132,4 +130,3 @@ public class VPDomainBenchmark implements ICsvProviderProvider<Integer> {
 		}
 	}
 }
-

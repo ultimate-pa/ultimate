@@ -32,10 +32,13 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Rule of a TreeAutomaton. F(q1, ..., qn) -> p
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <LETTER> Letters of the automaton.
- * @param <STATE> States of the automaton.
+ * @param <LETTER>
+ *            Letters of the automaton.
+ * @param <STATE>
+ *            States of the automaton.
  */
 public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 	private final LETTER mLetter;
@@ -44,26 +47,30 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 
 	/**
 	 * Construct a rule: letter(src) -> dest
+	 *
 	 * @param letter
 	 * @param src
 	 * @param dest
 	 */
 	public TreeAutomatonRule(final LETTER letter, final List<STATE> src, final STATE dest) {
-		 assert letter.getRank() == src.size();
-		this.mLetter = letter;
-		this.mSrc = src;
-		this.mDest = dest;
+		assert letter.getRank() == src.size();
+		mLetter = letter;
+		mSrc = src;
+		mDest = dest;
 	}
 
 	public List<STATE> getSource() {
 		return mSrc;
 	}
+
 	public LETTER getLetter() {
 		return mLetter;
 	}
+
 	public STATE getDest() {
 		return mDest;
 	}
+
 	public int getArity() {
 		return mLetter.getRank();
 	}
@@ -75,7 +82,7 @@ public class TreeAutomatonRule<LETTER extends IRankedLetter, STATE> {
 
 	@Override
 	public boolean equals(final Object x) {
-		if (!(x instanceof TreeAutomatonRule)) {
+		if (x == null || getClass() != x.getClass()) {
 			return false;
 		}
 		@SuppressWarnings("unchecked")

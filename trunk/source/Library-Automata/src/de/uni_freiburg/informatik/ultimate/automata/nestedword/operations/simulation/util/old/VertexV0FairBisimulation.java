@@ -3,22 +3,22 @@
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,20 +37,22 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * @date 16.12.2011
  */
 public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LETTER, STATE> {
-	/*_______________________________________________________________________*\
-	\* FIELDS / ATTRIBUTES                                                   */
+	/*
+	 * _______________________________________________________________________*\ \* FIELDS / ATTRIBUTES
+	 */
 
 	/**
 	 * The extra bit b2.
 	 */
 	private boolean b2;
 
-	/*_______________________________________________________________________*\
-	\* CONSTRUCTORS                                                          */
+	/*
+	 * _______________________________________________________________________*\ \* CONSTRUCTORS
+	 */
 
 	/**
 	 * Vertex constructor.
-	 * 
+	 *
 	 * @param priority
 	 *            the priority of this vertex
 	 * @param b1
@@ -72,7 +74,7 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 
 	/**
 	 * Vertex constructor.
-	 * 
+	 *
 	 * @param copy
 	 *            the Vertex to copy
 	 */
@@ -80,11 +82,13 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 		this(copy.getPriority(), copy.isB1(), copy.isB2(), copy.getQ0(), copy.getQ1(), copy.getA());
 	}
 
-	/*_______________________________________________________________________*\
-	\* METHODS                                                               */
+	/*
+	 * _______________________________________________________________________*\ \* METHODS
+	 */
 
-	/*_______________________________________________________________________*\
-	\* OVERRIDDEN METHODS                                                    */
+	/*
+	 * _______________________________________________________________________*\ \* OVERRIDDEN METHODS
+	 */
 
 	@Override
 	public String toString() {
@@ -96,12 +100,13 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 		return sb.toString();
 	}
 
-	/*_______________________________________________________________________*\
-	\* GETTERS AND SETTERS                                                   */
+	/*
+	 * _______________________________________________________________________*\ \* GETTERS AND SETTERS
+	 */
 
 	/**
 	 * Getter for the extra bit b1.
-	 * 
+	 *
 	 * @return the b1
 	 */
 	public boolean isB1() {
@@ -111,7 +116,7 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 
 	/**
 	 * Getter for the extra bit b2.
-	 * 
+	 *
 	 * @return the b2
 	 */
 	public boolean isB2() {
@@ -120,7 +125,7 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 
 	/**
 	 * Setter for the extra bit b2.
-	 * 
+	 *
 	 * @param b2
 	 *            the b2 to set
 	 */

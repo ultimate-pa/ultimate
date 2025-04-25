@@ -109,8 +109,7 @@ public final class FloydHoareUtils {
 		final var checks = getCheckedSpecifications(icfg, annotation);
 
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
-		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
+		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
 
 		for (final IcfgLocation locNode : locsForLoopLocations) {

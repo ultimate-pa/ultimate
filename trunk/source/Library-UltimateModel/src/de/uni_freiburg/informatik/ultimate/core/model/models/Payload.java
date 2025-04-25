@@ -51,7 +51,7 @@ public final class Payload implements IPayload {
 
 	/**
 	 * Create a new {@link Payload} instance that contains the same annotations as the given {@link IPayload} instance.
-	 * 
+	 *
 	 * @param otherPayload
 	 *            the other payload.
 	 */

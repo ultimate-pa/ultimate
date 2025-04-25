@@ -666,8 +666,8 @@ public class SetConstraintManager<ELEM extends ICongruenceClosureElement<ELEM>> 
 	 * @return
 	 */
 	public Set<ELEM> getLiteralSet(final Set<SetConstraint<ELEM>> scs) {
-		assert scs.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList())
-				.size() <= 1 : "not normalized?";
+		assert scs.stream().filter(SetConstraint::hasOnlyLiterals).collect(Collectors.toList()).size() <= 1
+				: "not normalized?";
 		for (final SetConstraint<ELEM> sc : scs) {
 			if (sc.hasOnlyLiterals()) {
 				return sc.getLiterals();

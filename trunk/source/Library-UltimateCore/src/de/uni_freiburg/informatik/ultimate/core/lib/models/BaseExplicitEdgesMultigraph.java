@@ -142,7 +142,7 @@ public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultig
 		mIncomingEdges = new ArrayList<>();
 		if (predecessor != null) {
 			@SuppressWarnings("unchecked")
-			final E e = (E) new BaseMultigraphEdge<V, E, VL, EL>(predecessor, (V) this, payload) {
+			final E e = (E) new BaseMultigraphEdge<>(predecessor, (V) this, payload) {
 				private static final long serialVersionUID = 1L;
 
 				@Override

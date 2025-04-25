@@ -48,17 +48,17 @@ public class PSTACSLComment extends PSTComment implements IPSTACSLComment {
 	public PSTACSLComment(final ISourceDocument source, final ISourceRange location, final IASTComment comment) {
 		super(source, location, comment);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-	
+
 	@Override
 	public String toString() {
 		final String text = getSourceText().replace("\n", "\\n").replace("\r", "");

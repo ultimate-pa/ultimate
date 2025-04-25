@@ -103,7 +103,7 @@ public class NonterminationArgumentStatistics implements ICsvProviderProvider<St
 
 	@Override
 	public ICsvProvider<String> createCsvProvider() {
-		return new SimpleCsvProvider<>(Arrays.asList(new String[] { "nta" }));
+		return new SimpleCsvProvider<>(Arrays.asList("nta"));
 	}
 
 	@Override

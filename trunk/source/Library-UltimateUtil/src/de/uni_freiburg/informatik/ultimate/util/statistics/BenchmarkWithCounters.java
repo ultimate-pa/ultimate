@@ -100,7 +100,7 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 			return;
 		}
 		final TimeUnit timeUnit = TimeUnit.MILLISECONDS;
-//		final TimeUnit timeUnit = TimeUnit.SECONDS;
+		// final TimeUnit timeUnit = TimeUnit.SECONDS;
 		for (final String watchName : mWatchBenchmark.getTitles()) {
 			mColumnTitles.add(watchName + "(" + timeUnit + ")");
 			mResults.add(mWatchBenchmark.getElapsedTime(watchName, timeUnit));
@@ -119,14 +119,12 @@ public class BenchmarkWithCounters implements ICsvProviderProvider<Number> {
 
 		sb.append("\n");
 
-
-
 		for (int i = 0; i < mColumnTitles.size(); i++) {
 			final Number result = mResults.get(i);
 			final String formatString;
 			if (result instanceof Double) {
 				formatString = "%-50s : %15.2f %n";
-//				formatString = "%-40s : %s %n";
+				// formatString = "%-40s : %s %n";
 			} else if (result instanceof Integer) {
 				formatString = "%-50s : %15d %n";
 			} else {

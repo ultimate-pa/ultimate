@@ -9,13 +9,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 public class RankedAlphabetEntryListAST extends AtsASTNode {
 
 	List<RankedAlphabetEntryAST> mList;
-	
-	public RankedAlphabetEntryListAST(ILocation loc) {
+
+	public RankedAlphabetEntryListAST(final ILocation loc) {
 		super(loc);
 		mList = new ArrayList<>();
 	}
 
-	public void addEntry(RankedAlphabetEntryAST rae) {
+	public void addEntry(final RankedAlphabetEntryAST rae) {
 		mList.add(rae);
 	}
 

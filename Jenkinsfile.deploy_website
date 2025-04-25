@@ -32,7 +32,7 @@ pipeline {
     }
     stage('Build products') {
       steps {
-        withMaven(mavenOpts: '-Xmx4g -Xss4m', publisherStrategy: 'EXPLICIT') {
+        withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', publisherStrategy: 'EXPLICIT') {
             sh 'cd releaseScripts/default && ./makeFresh.sh'
         }
       }

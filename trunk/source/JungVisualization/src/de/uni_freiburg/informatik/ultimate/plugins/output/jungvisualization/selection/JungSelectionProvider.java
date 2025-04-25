@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Jelena Barth
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2010-2015 pashko
- * 
+ *
  * This file is part of the ULTIMATE JungVisualization plug-in.
- * 
+ *
  * The ULTIMATE JungVisualization plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE JungVisualization plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE JungVisualization plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JungVisualization plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.selection;
@@ -36,17 +36,18 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 
 /**
  * Local ISelectionProvider, provides access to the actual JungSelection for the workbench.
+ *
  * @see {@link ISelectionProvider}
  * @author lena
  *
  */
 public class JungSelectionProvider implements ISelectionProvider {
 
-	private final ArrayList<ISelectionChangedListener> listeners = new ArrayList<ISelectionChangedListener>();;
+	private final ArrayList<ISelectionChangedListener> listeners = new ArrayList<>();
 	private JungSelection jungSelection;
-	
+
 	@Override
-	public void addSelectionChangedListener(ISelectionChangedListener listener) {
+	public void addSelectionChangedListener(final ISelectionChangedListener listener) {
 		listeners.add(listener);
 	}
 
@@ -56,18 +57,18 @@ public class JungSelectionProvider implements ISelectionProvider {
 	}
 
 	@Override
-	public void removeSelectionChangedListener(ISelectionChangedListener listener) {
-			listeners.remove(listener);
+	public void removeSelectionChangedListener(final ISelectionChangedListener listener) {
+		listeners.remove(listener);
 	}
 
 	@Override
-	public void setSelection(ISelection selection) {
+	public void setSelection(final ISelection selection) {
 		if (selection instanceof JungSelection) {
 			jungSelection = (JungSelection) selection;
 		}
-		
+
 	}
-	
+
 	/**
 	 * fires an Selection Event
 	 */
@@ -76,7 +77,7 @@ public class JungSelectionProvider implements ISelectionProvider {
 
 			for (final ISelectionChangedListener listener : listeners) {
 
-				listener.selectionChanged(new SelectionChangedEvent(this,jungSelection));
+				listener.selectionChanged(new SelectionChangedEvent(this, jungSelection));
 			}
 		}
 	}

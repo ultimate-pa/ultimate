@@ -5,9 +5,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
 /**
  * Convention: Stronger constraints are "smaller"
  *
- * note that this is sublty different from the CongruenceClosureComparator,
- * because here we want to keep the strongest, not the weakest elements when
- * filtering..
+ * note that this is sublty different from the CongruenceClosureComparator, because here we want to keep the strongest,
+ * not the weakest elements when filtering..
  *
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -18,6 +17,7 @@ public class SetConstraintComparator<ELEM extends ICongruenceClosureElement<ELEM
 		implements IPartialComparator<SetConstraint<ELEM>> {
 
 	private final SetConstraintManager<ELEM> mSetConstraintManager;
+
 	public SetConstraintComparator(final SetConstraintManager<ELEM> setConstraintManager) {
 		mSetConstraintManager = setConstraintManager;
 	}

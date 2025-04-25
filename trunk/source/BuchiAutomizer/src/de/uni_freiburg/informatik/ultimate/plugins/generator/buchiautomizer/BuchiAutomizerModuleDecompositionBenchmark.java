@@ -271,7 +271,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		return rtr;
 	}
 
-	private class MinAvgMax {
+	private static class MinAvgMax {
 		int min = Integer.MAX_VALUE;
 		double avg = 0;
 		int max = Integer.MIN_VALUE;

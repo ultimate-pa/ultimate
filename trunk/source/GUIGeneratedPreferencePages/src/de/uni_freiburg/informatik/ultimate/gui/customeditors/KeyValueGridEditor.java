@@ -220,7 +220,7 @@ public final class KeyValueGridEditor extends FieldEditor {
 
 	private static final class MapContentProvider implements IStructuredContentProvider {
 
-		private static final Object[] EMPTY = new Object[0];
+		private static final Object[] EMPTY = {};
 
 		@Override
 		public Object[] getElements(final Object inputElement) {

@@ -122,7 +122,7 @@ public abstract class GeneralAutomatonPrinter {
 	}
 
 	private static String replaceBackslashes(final Object input) {
-		return input.toString().replaceAll("\"", "\\\"");
+		return input.toString().replace('"', '"');
 	}
 
 	public static final String quoteAndReplaceBackslashes(final Object input) {

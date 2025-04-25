@@ -9,7 +9,7 @@ modifies;
 {
   var x : int;
   assume x == 0;
-  MyLabel  { :keyA "valueA1", "valueA2"} { :auxiliary_label true} { :keyB "valueB"} :
+  MyLabel  { :keyA "valueA1", "valueA2"} { :auxiliary_label } { :keyB "valueB"} :
   assert(x == 0);
 
 }

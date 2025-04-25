@@ -2,22 +2,22 @@
  * Copyright (C) 2017      Yong Li  (liyong@ios.ac.cn)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,15 +44,16 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 
 /**
  * Class that provides the Generalized Buchi acceptance check.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @author Yong Li 
+ * @author Yong Li
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
  * @param <STATE>
  *            Content. Type of the labels ("the content") of the automata states.
  */
-public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>>{
+public final class GeneralizedBuchiAccepts<LETTER, STATE>
+		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	/**
 	 * Stem of the nested lasso word whose acceptance is checked.
 	 */
@@ -62,9 +63,9 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 	 * Loop of the nested lasso word whose acceptance is checked.
 	 */
 	private final NestedWord<LETTER> mLoop;
-	
+
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
-	
+
 	private final Boolean mIsAccepted;
 
 	/**
@@ -72,7 +73,7 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 	 * <p>
 	 * Returns true iff nlw is accepted by nwa. Note that here a nested lasso word is always rejected if its loop
 	 * contains pending returns.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param nlw
@@ -82,7 +83,8 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 	 * @throws AutomataLibraryException
 	 *             if accept fails
 	 */
-	public GeneralizedBuchiAccepts(final AutomataLibraryServices services, final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+	public GeneralizedBuchiAccepts(final AutomataLibraryServices services,
+			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final NestedLassoWord<LETTER> nlw) throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
@@ -134,8 +136,8 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 	}
 
 	private boolean buchiAccepts() throws AutomataLibraryException {
-		Ascc ascc = new Ascc(); 
-		return ! ascc.mIsEmpty;
+		final Ascc ascc = new Ascc();
+		return !ascc.mIsEmpty;
 	}
 
 	@Override
@@ -147,39 +149,42 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 	protected IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
-	private class StackElement<LETTER, STATE> {
+
+	private static class StackElement<LETTER, STATE> {
 		final STATE mState;
 		final int mIndex;
-		
-		StackElement(STATE state, int index) {
+
+		StackElement(final STATE state, final int index) {
 			mState = state;
 			mIndex = index;
 		}
-		
+
 		@Override
 		public String toString() {
-			return "[" + mState + ", " + mIndex + "]"; 
+			return "[" + mState + ", " + mIndex + "]";
 		}
-		
+
 		@Override
-		public boolean equals(Object obj) {
-			if(this == obj) return true;
-			if(! (obj instanceof StackElement)) {
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")
-			StackElement<LETTER, STATE> other = (StackElement<LETTER, STATE>)obj;
-			return mState.equals(other.mState)
-				&& mIndex == other.mIndex;
+			final StackElement<LETTER, STATE> other = (StackElement<LETTER, STATE>) obj;
+			return mState.equals(other.mState) && mIndex == other.mIndex;
 		}
-		
+
 		private boolean hasCode = false;
-		int hashCode ;
-		
+		int hashCode;
+
 		@Override
 		public int hashCode() {
-			if(hasCode) return hashCode;
+			if (hasCode) {
+				return hashCode;
+			}
 			hasCode = true;
 			hashCode = 1;
 			hashCode = hashCode * 31 + mState.hashCode();
@@ -187,130 +192,133 @@ public final class GeneralizedBuchiAccepts<LETTER, STATE> extends UnaryNwaOperat
 			return hashCode;
 		}
 	}
-	
+
 	// -------- use following like we have an automaton
 	// 0->st[1]->1->...->st[m]->m -> lp[1] -> m+1 -> ... -> lp[n] -> m+n -> lp[1] -> m+1
-	private int getNextState(int index) {
-		if(index < mStem.length() + mLoop.length()) {
+	private int getNextState(final int index) {
+		if (index < mStem.length() + mLoop.length()) {
 			return index + 1;
 		}
 		assert index == mStem.length() + mLoop.length();
 		return mStem.length() + 1;
 	}
-	
-	private LETTER getNextLetter(int state) {
+
+	private LETTER getNextLetter(final int state) {
 		assert state <= mStem.length() + mLoop.length();
-		if(state < mStem.length()) {
+		if (state < mStem.length()) {
 			return mStem.getSymbol(state);
 		}
-		if(state < mStem.length() + mLoop.length()) {
+		if (state < mStem.length() + mLoop.length()) {
 			return mLoop.getSymbol(state - mStem.length());
 		}
 		assert state == mStem.length() + mLoop.length();
 		return mLoop.getSymbol(0);
 	}
-	
-	private boolean isFinalState(int state) {
+
+	private boolean isFinalState(final int state) {
 		return state > mStem.length();
 	}
-	
+
 	private class AsccPair {
 		StackElement<LETTER, STATE> mElem;
 		Set<Integer> mLabels;
-		AsccPair(StackElement<LETTER, STATE> elem, Set<Integer> labels) {
+
+		AsccPair(final StackElement<LETTER, STATE> elem, final Set<Integer> labels) {
 			mElem = elem;
 			mLabels = labels;
 		}
 	}
-	
-	private Set<Integer> getAcceptanceLabels(StackElement<LETTER, STATE> prod) {
-		Set<Integer> labels = new HashSet<>();
-		labels.addAll(mOperand.getAcceptanceLabels(prod.mState));
-		if(isFinalState(prod.mIndex)) {
+
+	private Set<Integer> getAcceptanceLabels(final StackElement<LETTER, STATE> prod) {
+		final Set<Integer> labels = new HashSet<>(mOperand.getAcceptanceLabels(prod.mState));
+		if (isFinalState(prod.mIndex)) {
 			labels.add(mOperand.getAcceptanceSize());
 		}
 		return labels;
 	}
-	
-    private class Ascc {
-        
-        private int mDepth;
-        private final Stack<AsccPair> mRootsStack;             // C99 's root stack
-        private final Stack<StackElement<LETTER, STATE>> mActiveStack;            // tarjan's stack
-        private final TObjectIntMap<StackElement<LETTER, STATE>> mDfsNum;
-        private final Set<StackElement<LETTER, STATE>> mCurrent;
-        
-        private Boolean mIsEmpty = null;
-                
-        public Ascc() throws AutomataOperationCanceledException {
-            
-            this.mRootsStack = new Stack<>();
-            this.mActiveStack = new Stack<>();
-            this.mDfsNum = new TObjectIntHashMap<>();
-            this.mCurrent = new HashSet<>();
-            
-            for(STATE state : mOperand.getInitialStates()) {
-            	StackElement<LETTER, STATE> prod = new StackElement<>(state, 0);
-                if(! mDfsNum.containsKey(prod)){
-                    strongConnect(prod);
-                }
-            }
-            
-            if(mIsEmpty == null) {
-                mIsEmpty = true;
-            }
-        }
-        
-        void strongConnect(StackElement<LETTER, STATE> prod) throws AutomataOperationCanceledException {
-            
-            ++ mDepth;
-            mDfsNum.put(prod, mDepth);
-            mRootsStack.push(new AsccPair(prod, getAcceptanceLabels(prod)));
-            mActiveStack.push(prod);
-            mCurrent.add(prod);
-            
-            for(OutgoingInternalTransition<LETTER, STATE> trans 
-            		: mOperand.internalSuccessors(prod.mState, getNextLetter(prod.mIndex))) {
-    			if (mServices.getProgressAwareTimer() != null && !mServices.getProgressAwareTimer().continueProcessing()) {
-    				throw new AutomataOperationCanceledException(this.getClass());
-    			}
-            	StackElement<LETTER, STATE> prodSucc = 
-            			new StackElement<LETTER, STATE>(trans.getSucc(), getNextState(prod.mIndex));
-            	if(! mDfsNum.containsKey(prodSucc)) {
-                    strongConnect(prodSucc);
-                }else if(mCurrent.contains(prodSucc)) {
-                    // we have already seen it before, there is a loop
-                    Set<Integer> labels = new HashSet<>();
-                    while(true) {
-                        //pop element u
-                    	AsccPair pair = mRootsStack.pop();
-                    	StackElement<LETTER, STATE> stackTop = pair.mElem;
-                    	labels.addAll(pair.mLabels);
-                        // found one accepting scc
-                        if(labels.size() == mOperand.getAcceptanceSize() + 1) {
-                            mIsEmpty = false;
-                        }
-                        if(mDfsNum.get(stackTop) <= mDfsNum.get(prodSucc)) {
-                            mRootsStack.push(new AsccPair(stackTop, labels)); // push back
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // if current state is done, 
-            // then we should remove all 
-            // active states in the same scc
-            if(mRootsStack.peek().mElem.equals(prod)) {
-                mRootsStack.pop();
-                while(true) {
-                    StackElement<LETTER, STATE> stackTop = mActiveStack.pop(); // Tarjan' Stack
-                    mCurrent.remove(stackTop);
-                    if(stackTop.equals(prod)) break;
-                }
-            }
-        }
-        
-    }
+
+	private class Ascc {
+
+		private int mDepth;
+		private final Stack<AsccPair> mRootsStack; // C99 's root stack
+		private final Stack<StackElement<LETTER, STATE>> mActiveStack; // tarjan's stack
+		private final TObjectIntMap<StackElement<LETTER, STATE>> mDfsNum;
+		private final Set<StackElement<LETTER, STATE>> mCurrent;
+
+		private Boolean mIsEmpty = null;
+
+		public Ascc() throws AutomataOperationCanceledException {
+
+			mRootsStack = new Stack<>();
+			mActiveStack = new Stack<>();
+			mDfsNum = new TObjectIntHashMap<>();
+			mCurrent = new HashSet<>();
+
+			for (final STATE state : mOperand.getInitialStates()) {
+				final StackElement<LETTER, STATE> prod = new StackElement<>(state, 0);
+				if (!mDfsNum.containsKey(prod)) {
+					strongConnect(prod);
+				}
+			}
+
+			if (mIsEmpty == null) {
+				mIsEmpty = true;
+			}
+		}
+
+		void strongConnect(final StackElement<LETTER, STATE> prod) throws AutomataOperationCanceledException {
+
+			++mDepth;
+			mDfsNum.put(prod, mDepth);
+			mRootsStack.push(new AsccPair(prod, getAcceptanceLabels(prod)));
+			mActiveStack.push(prod);
+			mCurrent.add(prod);
+
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(prod.mState,
+					getNextLetter(prod.mIndex))) {
+				if (mServices.getProgressAwareTimer() != null
+						&& !mServices.getProgressAwareTimer().continueProcessing()) {
+					throw new AutomataOperationCanceledException(this.getClass());
+				}
+				final StackElement<LETTER, STATE> prodSucc =
+						new StackElement<>(trans.getSucc(), getNextState(prod.mIndex));
+				if (!mDfsNum.containsKey(prodSucc)) {
+					strongConnect(prodSucc);
+				} else if (mCurrent.contains(prodSucc)) {
+					// we have already seen it before, there is a loop
+					final Set<Integer> labels = new HashSet<>();
+					while (true) {
+						// pop element u
+						final AsccPair pair = mRootsStack.pop();
+						final StackElement<LETTER, STATE> stackTop = pair.mElem;
+						labels.addAll(pair.mLabels);
+						// found one accepting scc
+						if (labels.size() == mOperand.getAcceptanceSize() + 1) {
+							mIsEmpty = false;
+						}
+						if (mDfsNum.get(stackTop) <= mDfsNum.get(prodSucc)) {
+							mRootsStack.push(new AsccPair(stackTop, labels)); // push back
+							break;
+						}
+					}
+				}
+			}
+
+			// if current state is done,
+			// then we should remove all
+			// active states in the same scc
+			if (mRootsStack.peek().mElem.equals(prod)) {
+				mRootsStack.pop();
+				while (true) {
+					final StackElement<LETTER, STATE> stackTop = mActiveStack.pop(); // Tarjan' Stack
+					mCurrent.remove(stackTop);
+					if (stackTop.equals(prod)) {
+						break;
+					}
+				}
+			}
+		}
+
+	}
 
 }

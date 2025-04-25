@@ -30,12 +30,12 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Overlay mimicking the original DAG.
- * Use this class when you have to use an overlay but don't want to.
+ * Overlay mimicking the original DAG. Use this class when you have to use an overlay but don't want to.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals inside RegexDagNodes
+ * @param <L>
+ *            Type of letters that are used inside regex literals inside RegexDagNodes
  */
 public class FullOverlay<L> implements IDagOverlay<L> {
 

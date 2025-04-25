@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  * Provides GlobalVarsAssignment and OldVarsAssignment.
+ *
  * @author Matthias Heizmann
  */
 public class OldVarsAssignmentCache {
-
 
 	protected final ManagedScript mMgdScript;
 
@@ -56,7 +56,6 @@ public class OldVarsAssignmentCache {
 	private final Map<String, UnmodifiableTransFormula> mProc2OldVarsAssignment;
 	private final Map<String, UnmodifiableTransFormula> mProc2GlobalVarsAssignment;
 
-
 	public OldVarsAssignmentCache(final ManagedScript mgdScript, final ModifiableGlobalsTable modifiableGlobalsTable) {
 		mMgdScript = mgdScript;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
@@ -64,12 +63,9 @@ public class OldVarsAssignmentCache {
 		mProc2GlobalVarsAssignment = new HashMap<>();
 	}
 
-
 	/**
-	 * Returns a TransFormula that represents an assignment
-	 * gOld_1,...,gOld_n :=g_1,...,g_n
-	 * where g_1,...,g_n are the global variables that can be modified by
-	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
+	 * Returns a TransFormula that represents an assignment gOld_1,...,gOld_n :=g_1,...,g_n where g_1,...,g_n are the
+	 * global variables that can be modified by procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
 	 */
 	public UnmodifiableTransFormula getOldVarsAssignment(final String proc) {
 		UnmodifiableTransFormula oldVarsAssignment = mProc2OldVarsAssignment.get(proc);
@@ -80,12 +76,9 @@ public class OldVarsAssignmentCache {
 		return mProc2OldVarsAssignment.get(proc);
 	}
 
-
 	/**
-	 * Returns a TransFormula that represents an assignment
-	 * g_1,...,g_n :=gOld_1,...,gOld_n
-	 * where g_1,...,g_n are the global variables that can be modified by
-	 * procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
+	 * Returns a TransFormula that represents an assignment g_1,...,g_n :=gOld_1,...,gOld_n where g_1,...,g_n are the
+	 * global variables that can be modified by procedure proc and gOld_1,...,gOld_n are the corresponding oldvars.
 	 */
 	public UnmodifiableTransFormula getGlobalVarsAssignment(final String proc) {
 		UnmodifiableTransFormula globalVarsAssignment = mProc2GlobalVarsAssignment.get(proc);
@@ -96,12 +89,10 @@ public class OldVarsAssignmentCache {
 		return mProc2GlobalVarsAssignment.get(proc);
 	}
 
-
-
 	private UnmodifiableTransFormula constructOldVarsAssignment(final String proc) {
 		Set<IProgramNonOldVar> vars = mModifiableGlobalsTable.getModifiedBoogieVars(proc);
 		if (vars == null) {
-			//no global var modified
+			// no global var modified
 			vars = Collections.emptySet();
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -125,12 +116,10 @@ public class OldVarsAssignmentCache {
 		return tfb.finishConstruction(mMgdScript);
 	}
 
-
-
 	private UnmodifiableTransFormula constructGlobalVarsAssignment(final String proc) {
 		Set<IProgramNonOldVar> vars = mModifiableGlobalsTable.getModifiedBoogieVars(proc);
 		if (vars == null) {
-			//no global var modified
+			// no global var modified
 			vars = Collections.emptySet();
 		}
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
@@ -154,6 +143,5 @@ public class OldVarsAssignmentCache {
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(mMgdScript);
 	}
-
 
 }

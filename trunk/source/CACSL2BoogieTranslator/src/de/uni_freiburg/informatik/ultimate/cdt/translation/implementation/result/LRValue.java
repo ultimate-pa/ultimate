@@ -32,7 +32,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
 /**
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
  */
 public abstract class LRValue {
 
-	private final CType mCType;
+	private final ICType mCType;
 
 	/**
 	 * This flag is supposed to be true iff the value-expression of this LRValue is of boolean type in boogie. For
@@ -58,7 +58,7 @@ public abstract class LRValue {
 	 *
 	 * @param mValue
 	 */
-	public LRValue(final CType cType, final boolean isBoogieBool, final boolean isIntFromPointer) {
+	public LRValue(final ICType cType, final boolean isBoogieBool, final boolean isIntFromPointer) {
 		mCType = cType;
 		mIsBoogieBool = isBoogieBool;
 		mIsIntFromPointer = isIntFromPointer;
@@ -66,11 +66,11 @@ public abstract class LRValue {
 
 	public abstract Expression getValue();
 
-	public CType getCType() {
+	public ICType getCType() {
 		return mCType;
 	}
 
-	public CType getUnderlyingType() {
+	public ICType getUnderlyingType() {
 		return mCType.getUnderlyingType();
 	}
 
@@ -120,10 +120,10 @@ public abstract class LRValue {
 
 		if (value instanceof StructConstructor) {
 			final StructConstructor sc = (StructConstructor) value;
-			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE) &&
-					sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET) &&
-					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0])) &&
-					BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
+			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
+					&& sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET)
+					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))
+					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
 				return true;
 			}
 		}

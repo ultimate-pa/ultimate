@@ -45,8 +45,8 @@ public class AutomizerChcTestResultDecider extends SafetyCheckTestResultDecider 
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		return new SMTLibExpectedResultFinder<>(SafetyCheckerOverallResult.UNKNOWN,
-				SafetyCheckerOverallResult.SAFE, SafetyCheckerOverallResult.UNSAFE);
+		return new SMTLibExpectedResultFinder<>(SafetyCheckerOverallResult.UNKNOWN, SafetyCheckerOverallResult.SAFE,
+				SafetyCheckerOverallResult.UNSAFE);
 	}
 
 }

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 
 public abstract class SrParseScope<T extends SrParseScope<?>> {
@@ -46,11 +48,7 @@ public abstract class SrParseScope<T extends SrParseScope<?>> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mCdd1 == null) ? 0 : mCdd1.hashCode());
-		result = prime * result + ((mCdd2 == null) ? 0 : mCdd2.hashCode());
-		return result;
+		return Objects.hash(mCdd1, mCdd2);
 	}
 
 	@Override

@@ -32,11 +32,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Wrapper for named terms. Allows us to access name and subterm directly. Named
- * terms are defined in 3.6.6 of the SMT-LIB 2.6 standard
- * http://smtlib.cs.uiowa.edu/language.shtml This class has a shortcoming, it
- * does not work for terms with several attributes. We however presume that such
- * terms will not occur in our applications.
+ * Wrapper for named terms. Allows us to access name and subterm directly. Named terms are defined in 3.6.6 of the
+ * SMT-LIB 2.6 standard http://smtlib.cs.uiowa.edu/language.shtml This class has a shortcoming, it does not work for
+ * terms with several attributes. We however presume that such terms will not occur in our applications.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -47,7 +45,6 @@ public final class NamedTermWrapper implements ITermWrapper {
 	final String mName;
 
 	public NamedTermWrapper(final Term originalTerm, final Term subTerm, final String name) {
-		super();
 		mOriginalTerm = originalTerm;
 		mSubTerm = subTerm;
 		mName = name;
@@ -70,19 +67,15 @@ public final class NamedTermWrapper implements ITermWrapper {
 		if (term instanceof AnnotatedTerm) {
 			final AnnotatedTerm annotTerm = (AnnotatedTerm) term;
 			final Annotation[] annot = annotTerm.getAnnotations();
-			if (annot.length == 1) {
-				if (annot[0].getKey().equals(":named")) {
-					final Object value = annot[0].getValue();
-					if (value instanceof String) {
-						final String name = (String) value;
-						return new NamedTermWrapper(term, annotTerm.getSubterm(), name);
-					}
+			if ((annot.length == 1) && annot[0].getKey().equals(":named")) {
+				final Object value = annot[0].getValue();
+				if (value instanceof String) {
+					final String name = (String) value;
+					return new NamedTermWrapper(term, annotTerm.getSubterm(), name);
 				}
 			}
 		}
 		return null;
 	}
-
-
 
 }

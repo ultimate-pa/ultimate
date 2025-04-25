@@ -40,24 +40,21 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Auxiliary class that we use in our quantifier elimination. Objects of this
- * class define which quantified variables we will try to eliminate in the next
- * of the elimination algorithm. (We call quantified variables that we try to
- * eliminate <em> eliminatees </em>.) Note that this class can be see as
- * {@link QuantifiedFormula} that additionally has a {@link Context}. Our
- * quantifier elimination algorithms consider a formula as a tree and traverse
- * that tree. If such an algorithm processes a node in the tree, the
- * {@link Context} provides information about ancestors, siblings of ancestors,
- * and descendants of siblings of ancestors.
- * 
+ * Auxiliary class that we use in our quantifier elimination. Objects of this class define which quantified variables we
+ * will try to eliminate in the next of the elimination algorithm. (We call quantified variables that we try to
+ * eliminate <em> eliminatees </em>.) Note that this class can be see as {@link QuantifiedFormula} that additionally has
+ * a {@link Context}. Our quantifier elimination algorithms consider a formula as a tree and traverse that tree. If such
+ * an algorithm processes a node in the tree, the {@link Context} provides information about ancestors, siblings of
+ * ancestors, and descendants of siblings of ancestors.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -95,18 +92,17 @@ public class EliminationTask {
 	}
 
 	/**
-	 * @return The term in which we are going to eliminate quantifiers. Note that
-	 *         this NOT the term that this {@link EliminationTask} represents.
+	 * @return The term in which we are going to eliminate quantifiers. Note that this NOT the term that this
+	 *         {@link EliminationTask} represents.
 	 */
 	public Term getTerm() {
 		return mTerm;
 	}
 
 	/**
-	 * @return The term represented by this {@link EliminationTask}. I.e., the
-	 *         {@link QuantifiedFormula} whose variable are the eliminatees and
-	 *         whose subformula is the formula in which we want to try to eliminate
-	 *         the quantified variables.
+	 * @return The term represented by this {@link EliminationTask}. I.e., the {@link QuantifiedFormula} whose variable
+	 *         are the eliminatees and whose subformula is the formula in which we want to try to eliminate the
+	 *         quantified variables.
 	 */
 	public Term toTerm(final Script script) {
 		if (mEliminatees.isEmpty()) {
@@ -121,13 +117,13 @@ public class EliminationTask {
 	}
 
 	/**
-	 * @return An {@link EliminationTask} with additional eliminatees. Ignore all
-	 *         additional eliminatees that do not occur in the subformula.
+	 * @return An {@link EliminationTask} with additional eliminatees. Ignore all additional eliminatees that do not
+	 *         occur in the subformula.
 	 */
 	public EliminationTask integrateNewEliminatees(final Collection<TermVariable> additionalEliminatees) {
-		final Set<TermVariable> additionalOccuringEliminatees = QuantifierUtils.projectToFreeVars(additionalEliminatees,
-				getTerm());
-		final Set<TermVariable> resultEliminatees = new HashSet<TermVariable>(getEliminatees());
+		final Set<TermVariable> additionalOccuringEliminatees =
+				QuantifierUtils.projectToFreeVars(additionalEliminatees, getTerm());
+		final Set<TermVariable> resultEliminatees = new HashSet<>(getEliminatees());
 		final boolean modified = resultEliminatees.addAll(additionalOccuringEliminatees);
 		if (modified) {
 			return new EliminationTask(getQuantifier(), resultEliminatees, getTerm(), mContext);
@@ -181,8 +177,7 @@ public class EliminationTask {
 	}
 
 	/**
-	 * Check if the terms of two {@link EliminationTasks} can be disjoint. Return
-	 * sat if disjoint, unsat if equivalent.
+	 * Check if the terms of two {@link EliminationTasks} can be disjoint. Return sat if disjoint, unsat if equivalent.
 	 */
 	public static LBool areDistinct(final Script script, final EliminationTask et1, final EliminationTask et2) {
 		final Term espTerm = et1.toTerm(script);

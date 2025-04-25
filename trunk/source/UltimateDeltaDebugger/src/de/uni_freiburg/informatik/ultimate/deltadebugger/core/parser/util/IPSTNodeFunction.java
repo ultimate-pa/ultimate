@@ -55,7 +55,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTComment comment) {
 		return on((IPSTPreprocessorNode) comment);
 	}
-	
+
 	/**
 	 * @param acslComment
 	 *            PST ACSL comment.
@@ -64,7 +64,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTACSLComment acslComment) {
 		return on((IPSTComment) acslComment);
 	}
-	
+
 	/**
 	 * @param acslNode
 	 *            PST ACSL node.
@@ -73,7 +73,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTACSLNode acslNode) {
 		return on((IPSTNode) acslNode);
 	}
-	
+
 	/**
 	 * @param conditionalBlock
 	 *            PST conditional block.
@@ -82,7 +82,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTConditionalBlock conditionalBlock) {
 		return on((IPSTNode) conditionalBlock);
 	}
-	
+
 	/**
 	 * @param directive
 	 *            PST directive.
@@ -91,7 +91,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTDirective directive) {
 		return on((IPSTPreprocessorNode) directive);
 	}
-	
+
 	/**
 	 * @param includeDirective
 	 *            PST include directive.
@@ -100,7 +100,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTIncludeDirective includeDirective) {
 		return on((IPSTDirective) includeDirective);
 	}
-	
+
 	/**
 	 * @param literalRegion
 	 *            PST literal region.
@@ -109,7 +109,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTLiteralRegion literalRegion) {
 		return on((IPSTNode) literalRegion);
 	}
-	
+
 	/**
 	 * @param macroExpansion
 	 *            PST macro expansion.
@@ -118,14 +118,14 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTMacroExpansion macroExpansion) {
 		return on((IPSTPreprocessorNode) macroExpansion);
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
 	 * @return result
 	 */
 	T on(IPSTNode node);
-	
+
 	/**
 	 * @param preprocessorNode
 	 *            PST preprocessor node.
@@ -134,7 +134,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTPreprocessorNode preprocessorNode) {
 		return on((IPSTNode) preprocessorNode);
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST regular node.
@@ -143,7 +143,7 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTRegularNode node) {
 		return on((IPSTNode) node);
 	}
-	
+
 	/**
 	 * @param translationUnit
 	 *            PST translation unit.

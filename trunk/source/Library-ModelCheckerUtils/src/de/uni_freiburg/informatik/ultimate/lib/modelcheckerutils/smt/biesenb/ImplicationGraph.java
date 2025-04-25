@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
@@ -47,21 +47,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *
  * @author Ben Biesenbach (ben.biesenbach@neptun.uni-freiburg.de)
  */
-public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph<T>{
+public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph<T> {
 	private final ManagedScript mMgdScript;
 	private final BPredicateUnifier mUnifier;
 	private final Set<ImplicationVertex<T>> mVertices;
 	private final Map<T, ImplicationVertex<T>> mPredicateMap;
-	private ImplicationVertex<T> mTrueVertex;
-	private ImplicationVertex<T> mFalseVertex;
+	private final ImplicationVertex<T> mTrueVertex;
+	private final ImplicationVertex<T> mFalseVertex;
 
-	protected ImplicationGraph(final ManagedScript script, BPredicateUnifier unifier, final T predicateFalse, final T predicateTrue) {
+	protected ImplicationGraph(final ManagedScript script, final BPredicateUnifier unifier, final T predicateFalse,
+			final T predicateTrue) {
 		mMgdScript = script;
 		mUnifier = unifier;
 		mVertices = new HashSet<>();
 		mPredicateMap = new HashMap<>();
 		mFalseVertex = new ImplicationVertex<>(predicateFalse, new HashSet<>(), new HashSet<>());
-		Set<ImplicationVertex<T>> parent = new HashSet<>();
+		final Set<ImplicationVertex<T>> parent = new HashSet<>();
 		parent.add(mFalseVertex);
 		mTrueVertex = new ImplicationVertex<>(predicateTrue, new HashSet<>(), parent);
 		mFalseVertex.addChild(mTrueVertex);
@@ -71,16 +72,16 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 		mPredicateMap.put(predicateTrue, mTrueVertex);
 		mPredicateMap.put(predicateFalse, mFalseVertex);
 	}
-	
-	public Set<ImplicationVertex<T>> getVertices(){
+
+	public Set<ImplicationVertex<T>> getVertices() {
 		return mVertices;
 	}
-	
-	public ImplicationVertex<T> getFalseVertex(){
+
+	public ImplicationVertex<T> getFalseVertex() {
 		return mFalseVertex;
 	}
-	
-	public ImplicationVertex<T> getTrueVertex(){
+
+	public ImplicationVertex<T> getTrueVertex() {
 		return mTrueVertex;
 	}
 
@@ -92,25 +93,25 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 		}
 		return bld.toString();
 	}
-	
+
 	@Override
 	public Set<IPredicate> getCoveredPredicates(final IPredicate pred) {
-		Set<ImplicationVertex<T>> ancestors = mPredicateMap.get(pred).getAncestors();
-		Set<IPredicate> covered = new HashSet<>();
+		final Set<ImplicationVertex<T>> ancestors = mPredicateMap.get(pred).getAncestors();
+		final Set<IPredicate> covered = new HashSet<>();
 		ancestors.forEach(a -> covered.add(a.getPredicate()));
 		covered.add(pred);
 		return covered;
 	}
-	
+
 	@Override
 	public Set<IPredicate> getCoveringPredicates(final IPredicate pred) {
-		Set<ImplicationVertex<T>> descendants = mPredicateMap.get(pred).getDescendants();
-		Set<IPredicate> covering = new HashSet<>();
+		final Set<ImplicationVertex<T>> descendants = mPredicateMap.get(pred).getDescendants();
+		final Set<IPredicate> covering = new HashSet<>();
 		descendants.forEach(a -> covering.add(a.getPredicate()));
 		covering.add(pred);
 		return covering;
 	}
-	
+
 	@Override
 	public IPartialComparator<IPredicate> getPartialComparator() {
 		return (o1, o2) -> {
@@ -142,11 +143,11 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 		// find the predicates that imply the given predicate
 		while (!marked.containsAll(transitiveClosure.getVertices())) {
 			// find predicate with highest count
-			ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, true);
+			final ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, true);
 			if (internImplication(maxVertex.getPredicate(), predicate)) {
 				marked.add(maxVertex);
 				transitiveClosure.removeAncestorsFromTC(maxVertex);
-			}else {
+			} else {
 				transitiveClosure.removeDescendantsFromTC(maxVertex, null);
 				transitiveClosure.removeVertex(maxVertex);
 			}
@@ -157,7 +158,7 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 		transitiveClosure = new TransitiveClosureIG<>(this, parents);
 		marked.clear();
 		while (!marked.containsAll(transitiveClosure.getVertices())) {
-			ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, false);
+			final ImplicationVertex<T> maxVertex = transitiveClosure.getMaxTransitiveClosureCount(marked, false);
 			if (internImplication(predicate, maxVertex.getPredicate())) {
 				marked.add(maxVertex);
 				transitiveClosure.removeDescendantsFromTC(maxVertex, null);
@@ -175,12 +176,12 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 
 	@Override
 	public Collection<T> removeImpliedVerticesFromCollection(final Collection<T> collection) {
-		HashSet<ImplicationVertex<T>> vertexCollection = new HashSet<>();
+		final HashSet<ImplicationVertex<T>> vertexCollection = new HashSet<>();
 		collection.forEach(c -> vertexCollection.add(mPredicateMap.get(c)));
-		Collection<T> result = new HashSet<>(collection);
-		for(ImplicationVertex<T> c1 : vertexCollection) {
-			for(ImplicationVertex<T> c2 : vertexCollection) {
-				if(c1.getAncestors().contains(c2)) {
+		final Collection<T> result = new HashSet<>(collection);
+		for (final ImplicationVertex<T> c1 : vertexCollection) {
+			for (final ImplicationVertex<T> c2 : vertexCollection) {
+				if (c1.getAncestors().contains(c2)) {
 					result.remove(c1.getPredicate());
 					break;
 				}
@@ -188,15 +189,15 @@ public class ImplicationGraph<T extends IPredicate> implements IImplicationGraph
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Collection<T> removeImplyingVerticesFromCollection(final Collection<T> collection) {
-		HashSet<ImplicationVertex<T>> vertexCollection = new HashSet<>();
+		final HashSet<ImplicationVertex<T>> vertexCollection = new HashSet<>();
 		collection.forEach(c -> vertexCollection.add(mPredicateMap.get(c)));
-		Collection<T> result = new HashSet<>(collection);
-		for(ImplicationVertex<T> c1 : vertexCollection) {
-			for(ImplicationVertex<T> c2 : vertexCollection) {
-				if(c1.getDescendants().contains(c2)) {
+		final Collection<T> result = new HashSet<>(collection);
+		for (final ImplicationVertex<T> c1 : vertexCollection) {
+			for (final ImplicationVertex<T> c2 : vertexCollection) {
+				if (c1.getDescendants().contains(c2)) {
 					result.remove(c1.getPredicate());
 					break;
 				}

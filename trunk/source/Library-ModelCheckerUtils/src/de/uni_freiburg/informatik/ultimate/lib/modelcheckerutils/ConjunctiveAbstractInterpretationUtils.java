@@ -61,9 +61,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * This class provides an implementation of abstract interpretation whose focus
- * is not speed and precision but simplicity. The fixpoint iteration will never
- * split nodes hence invariants are typically conjunctions. <br />
+ * This class provides an implementation of abstract interpretation whose focus is not speed and precision but
+ * simplicity. The fixpoint iteration will never split nodes hence invariants are typically conjunctions. <br />
  * Warning: The interface of this class will change.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -71,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 public class ConjunctiveAbstractInterpretationUtils {
 
-	public static enum Widening {
+	public enum Widening {
 		INTERSECTION, SMT_SOLVER, POLY_PAC,
 	}
 
@@ -79,8 +78,8 @@ public class ConjunctiveAbstractInterpretationUtils {
 		// do not instantiate
 	}
 
-	public static <LOC extends IcfgLocation> Map<IcfgLocation, IPredicate> computeInvariants(
-			final IUltimateServiceProvider services, final IIcfg<LOC> icfg, final Widening widening) {
+	public static <LOC extends IcfgLocation> Map<IcfgLocation, IPredicate>
+			computeInvariants(final IUltimateServiceProvider services, final IIcfg<LOC> icfg, final Widening widening) {
 		final BasicPredicateFactory predFac = new BasicPredicateFactory(services,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable());
 		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
@@ -155,8 +154,8 @@ public class ConjunctiveAbstractInterpretationUtils {
 			final IIcfg<LOC> icfg, final BasicPredicateFactory predFac, final Widening widening,
 			final ArrayDeque<LOC> worklist, final Map<IcfgLocation, IPredicate> result) {
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
-		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<>(mgdScript,
-				new TermDomainOperationProvider(services, mgdScript));
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
+				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		long iterations = 0;
 		while (!worklist.isEmpty()) {
 			final LOC src = worklist.removeFirst();
@@ -176,21 +175,21 @@ public class ConjunctiveAbstractInterpretationUtils {
 				} else if (edge instanceof IIcfgCallTransition) {
 					final String callee = edge.getSucceedingProcedure();
 					final TransFormula localVarAssignment = edge.getTransformula();
-					final TransFormula globalVarAssignments = icfg.getCfgSmtToolkit().getOldVarsAssignmentCache()
-							.getGlobalVarsAssignment(callee);
-					final TransFormula oldVarAssignments = icfg.getCfgSmtToolkit().getOldVarsAssignmentCache()
-							.getGlobalVarsAssignment(callee);
-					final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure = icfg.getCfgSmtToolkit()
-							.getModifiableGlobalsTable().getModifiedBoogieVars(callee);
+					final TransFormula globalVarAssignments =
+							icfg.getCfgSmtToolkit().getOldVarsAssignmentCache().getGlobalVarsAssignment(callee);
+					final TransFormula oldVarAssignments =
+							icfg.getCfgSmtToolkit().getOldVarsAssignmentCache().getGlobalVarsAssignment(callee);
+					final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure =
+							icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(callee);
 					postcondition = pt.strongestPostconditionCall(srcPred, localVarAssignment, globalVarAssignments,
 							oldVarAssignments, modifiableGlobalsOfCalledProcedure);
 				} else if (edge instanceof IIcfgReturnTransition) {
 					final String callee = edge.getPrecedingProcedure();
 					final IIcfgCallTransition call = ((IIcfgReturnTransition) edge).getCorrespondingCall();
-					final TransFormula oldVarAssignments = icfg.getCfgSmtToolkit().getOldVarsAssignmentCache()
-							.getGlobalVarsAssignment(callee);
-					final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure = icfg.getCfgSmtToolkit()
-							.getModifiableGlobalsTable().getModifiedBoogieVars(callee);
+					final TransFormula oldVarAssignments =
+							icfg.getCfgSmtToolkit().getOldVarsAssignmentCache().getGlobalVarsAssignment(callee);
+					final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure =
+							icfg.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(callee);
 					final IPredicate callerPred = result.get(((IIcfgReturnTransition) edge).getCallerProgramPoint());
 					postcondition = pt.strongestPostconditionReturn(srcPred, callerPred, edge.getTransformula(),
 							call.getLocalVarsAssignment(), oldVarAssignments, modifiableGlobalsOfCalledProcedure);
@@ -199,8 +198,8 @@ public class ConjunctiveAbstractInterpretationUtils {
 				}
 				final LOC target = (LOC) edge.getTarget();
 				final IPredicate oldTargetPredicate = result.get(target);
-				final IPredicate newTargetPredicate = widen(services, icfg, predFac, widening, oldTargetPredicate,
-						postcondition);
+				final IPredicate newTargetPredicate =
+						widen(services, icfg, predFac, widening, oldTargetPredicate, postcondition);
 				if (newTargetPredicate != null) {
 					result.put(target, newTargetPredicate);
 					worklist.add(target);
@@ -214,27 +213,19 @@ public class ConjunctiveAbstractInterpretationUtils {
 	private static <LOC extends IcfgLocation> IPredicate widen(final IUltimateServiceProvider services,
 			final IIcfg<LOC> icfg, final BasicPredicateFactory predFac, final Widening widen,
 			final IPredicate oldTargetPredicate, final Term postcondition) {
-		final Set<Term> oldConjuncts = new HashSet<>(
-				Arrays.asList(SmtUtils.getConjuncts(oldTargetPredicate.getFormula())));
+		final Set<Term> oldConjuncts =
+				new HashSet<>(Arrays.asList(SmtUtils.getConjuncts(oldTargetPredicate.getFormula())));
 		final Set<Term> postconditionConjuncts = new HashSet<>(Arrays.asList(SmtUtils.getConjuncts(postcondition)));
 		final Term newConjunction;
 		if (isFalse(oldConjuncts)) {
 			newConjunction = postcondition;
 		} else {
-			final Set<Term> newConjuncts;
-			switch (widen) {
-			case INTERSECTION:
-				newConjuncts = widenNaively(oldConjuncts, postconditionConjuncts);
-				break;
-			case POLY_PAC:
-				throw new AssertionError("Not yet implemented.");
-			case SMT_SOLVER:
-				newConjuncts = widenBySolver(services, icfg.getCfgSmtToolkit().getManagedScript(), predFac,
-						oldTargetPredicate, postcondition, oldConjuncts, postconditionConjuncts);
-				break;
-			default:
-				throw new AssertionError("Unknown value");
-			}
+			final Set<Term> newConjuncts = switch (widen) {
+			case INTERSECTION -> widenNaively(oldConjuncts, postconditionConjuncts);
+			case POLY_PAC -> throw new AssertionError("Not yet implemented.");
+			case SMT_SOLVER -> widenBySolver(services, icfg.getCfgSmtToolkit().getManagedScript(), predFac,
+					oldTargetPredicate, postcondition, oldConjuncts, postconditionConjuncts);
+			};
 			newConjunction = SmtUtils.and(icfg.getCfgSmtToolkit().getManagedScript().getScript(), newConjuncts);
 		}
 		if (newConjunction.equals(oldTargetPredicate.getFormula())) {

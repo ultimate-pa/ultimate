@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IRSDependencies plug-in.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IRSDependencies plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
@@ -71,7 +70,7 @@ public class DebugFileWriterNutz {
 				if (first instanceof RootEdge) {
 					final RootEdge r = (RootEdge) first;
 					if (!tmp.containsKey(r)) {
-						tmp.put(r, new ArrayList<ArrayList<CodeBlock>>());
+						tmp.put(r, new ArrayList<>());
 					}
 					final ArrayList<CodeBlock> cb = new ArrayList<>();
 					for (int i = 1; i < path.size(); ++i) {
@@ -102,7 +101,7 @@ public class DebugFileWriterNutz {
 			for (final Entry<RootEdge, TreeSet<String>> en : procToTraceStrings.entrySet()) {
 				final String currentFileName = Paths.get(ILocation.getAnnotation(en.getKey().getTarget()).getFileName())
 						.getFileName().toString();
-				final String currentMethodName = ((BoogieIcfgLocation) en.getKey().getTarget()).getProcedure();
+				final String currentMethodName = en.getKey().getTarget().getProcedure();
 				final String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_"
 						+ "_n_is_" + unrollingDepth + "_" + ".txt";
 

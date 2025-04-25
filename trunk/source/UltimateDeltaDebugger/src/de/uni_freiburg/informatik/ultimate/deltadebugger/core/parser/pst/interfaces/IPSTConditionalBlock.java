@@ -40,17 +40,17 @@ public interface IPSTConditionalBlock extends IPSTNode {
 	 * @return Active branch location.
 	 */
 	ISourceRange getActiveBranchLocation();
-	
+
 	@Override
 	default IASTNode getAstNode() {
 		return null;
 	}
-	
+
 	/**
 	 * @return List of conditional directives.
 	 */
 	List<IPSTDirective> getConditionalDirectives();
-	
+
 	/**
 	 * @return {@code true} iff the conditional block has an active branch.
 	 */

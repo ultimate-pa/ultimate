@@ -40,7 +40,7 @@ import org.eclipse.core.resources.IResource;
 /**
  * A {@link ILanguageSettingsProvider} that provides the builtin results detected by
  * org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector from a GCC 8.3.0.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvider {

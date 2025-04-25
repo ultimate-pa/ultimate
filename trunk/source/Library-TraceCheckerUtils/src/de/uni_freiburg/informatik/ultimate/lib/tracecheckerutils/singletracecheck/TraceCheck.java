@@ -537,10 +537,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
 				final boolean solverCrashed) {
-			assert lBool != LBool.UNKNOWN
-					|| reasonUnknown != null : "if result is unknown you have to specify a reason";
-			assert lBool == LBool.UNKNOWN
-					|| reasonUnknown == null : "if result sat/unsat you cannot specify reason for unknown";
+			assert lBool != LBool.UNKNOWN || reasonUnknown != null
+					: "if result is unknown you have to specify a reason";
+			assert lBool == LBool.UNKNOWN || reasonUnknown == null
+					: "if result sat/unsat you cannot specify reason for unknown";
 			mLBool = lBool;
 			mReasonUnknown = reasonUnknown;
 			mSolverCrashed = solverCrashed;

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,11 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Nested word automaton where not only the states but also the letters of the 
- * alphabet are constructed on-demand. Supports all methods that are required 
- * by {@link NestedWordAutomatonReachableStates} which is able to transform 
+ * Nested word automaton where not only the states but also the letters of the alphabet are constructed on-demand.
+ * Supports all methods that are required by {@link NestedWordAutomatonReachableStates} which is able to transform
  * objects of this class into an {@link IDoubleDeckerAutomaton}.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -72,7 +71,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -148,7 +147,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 	public Set<LETTER> lettersCall(final STATE state) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		throw new UnsupportedOperationException();

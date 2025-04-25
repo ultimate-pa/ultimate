@@ -388,8 +388,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Synchronized calculated post: " + calculatedPost.toLogString());
 		}
-		assert synchronizedCalculatedPost.isBottom() || postState.getVariables()
-				.equals(synchronizedCalculatedPost.getVariables()) : MSG_TRACKED_VARIABLES_DIFFER;
+		assert synchronizedCalculatedPost.isBottom()
+				|| postState.getVariables().equals(synchronizedCalculatedPost.getVariables())
+				: MSG_TRACKED_VARIABLES_DIFFER;
 		final SubsetResult included = synchronizedCalculatedPost.isSubsetOf(postState);
 		assert assertIsSubsetOf(synchronizedCalculatedPost, postState, included) : MSG_IS_SUBSET_OF_IS_UNSOUND;
 		if (mLogger.isDebugEnabled()) {
@@ -490,8 +491,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE>, ACTIO
 		final DisjunctiveAbstractState<STATE> rtr =
 				unifiedPreState.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState);
 
-		assert assertBottomRetained(preState, preHierState, rtr, () -> unifiedPreState
-				.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState)) : MSG_BOTTOM_WAS_LOST;
+		assert assertBottomRetained(preState, preHierState, rtr,
+				() -> unifiedPreState.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState))
+				: MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 

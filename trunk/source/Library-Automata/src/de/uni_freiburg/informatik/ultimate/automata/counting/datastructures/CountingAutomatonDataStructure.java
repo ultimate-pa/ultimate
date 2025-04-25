@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Data structure for counting automata that uses mainly unmodifiable data
- * structures to avoid unintended modifications.
+ * Data structure for counting automata that uses mainly unmodifiable data structures to avoid unintended modifications.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -54,8 +53,8 @@ public class CountingAutomatonDataStructure<LETTER, STATE> implements IAutomaton
 	private final Set<LETTER> mAlphabet;
 	private final LinkedHashSet<STATE> mStates;
 	private final Set<String> mCounters;
-	private final Map<STATE, Set<ConjunctiveCounterFormula>> mInitialConditions = new HashMap<STATE, Set<ConjunctiveCounterFormula>>();
-	private final Map<STATE, Set<ConjunctiveCounterFormula>> mAcceptingConditions = new HashMap<STATE, Set<ConjunctiveCounterFormula>>();
+	private final Map<STATE, Set<ConjunctiveCounterFormula>> mInitialConditions = new HashMap<>();
+	private final Map<STATE, Set<ConjunctiveCounterFormula>> mAcceptingConditions = new HashMap<>();
 	private final Map<STATE, List<ConjunctiveTransition<LETTER, STATE>>> mOutgoingTransitions = new HashMap<>();
 
 	public CountingAutomatonDataStructure(final AutomataLibraryServices services, final Set<LETTER> alphabet,
@@ -97,7 +96,7 @@ public class CountingAutomatonDataStructure<LETTER, STATE> implements IAutomaton
 	public void addOutgoingTransition(final ConjunctiveTransition<LETTER, STATE> trans) {
 		List<ConjunctiveTransition<LETTER, STATE>> existing = mOutgoingTransitions.get(trans.getPredecessor());
 		if (existing == null) {
-			existing = new ArrayList<ConjunctiveTransition<LETTER, STATE>>();
+			existing = new ArrayList<>();
 			mOutgoingTransitions.put(trans.getPredecessor(), existing);
 		}
 		existing.add(trans);

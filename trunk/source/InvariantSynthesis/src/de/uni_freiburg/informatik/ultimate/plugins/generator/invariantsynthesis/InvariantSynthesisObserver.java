@@ -85,7 +85,7 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 				} catch (final Exception e) {
 					e.printStackTrace(System.out);
 				}
-			
+
 				System.out.println("test main finished, exiting..");
 				System.exit(0);
 			}

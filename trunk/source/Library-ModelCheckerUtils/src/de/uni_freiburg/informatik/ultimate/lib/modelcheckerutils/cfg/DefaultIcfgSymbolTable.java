@@ -23,7 +23,8 @@
  * containing parts covered by the terms of the Eclipse Public License, the
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
- */package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
+ */
+package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -143,9 +144,8 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 				mGlobals.add(nonOldVar);
 				final IProgramOldVar oldVar = nonOldVar.getOldVar();
 				mTermVariable2ProgramVar.put(oldVar.getTermVariable(), oldVar);
-				assert Objects.equals(oldVar.getNonOldVar(),
-						var) : "getNonOldVar() and getOldVar() should match, but do not! Oldvar: " + oldVar + " Var: "
-								+ var;
+				assert Objects.equals(oldVar.getNonOldVar(), var)
+						: "getNonOldVar() and getOldVar() should match, but do not! Oldvar: " + oldVar + " Var: " + var;
 			} else {
 				throw new AssertionError("unknown kind of variable");
 			}

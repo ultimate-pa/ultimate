@@ -62,10 +62,11 @@ public final class StoreSelectEqualityCollector extends TermTransformer {
 				// It's a select term
 				boolean localMult = false;
 				final Term[] params = aterm.getParameters();
-				for (int i = 0; i < params.length; ++i) {
-					if (params[i] instanceof ApplicationTerm) {
+				for (final Term param : params) {
+					if (param instanceof ApplicationTerm) {
 						mMultDim = true;
 						localMult = true;
+						break;
 					}
 				}
 				if (!localMult) {
@@ -80,8 +81,7 @@ public final class StoreSelectEqualityCollector extends TermTransformer {
 
 	private boolean checkAndAddIfParamIsStoreTerm(final ApplicationTerm aterm) {
 		final Term[] params = aterm.getParameters();
-		for (int i = 0; i < params.length; ++i) {
-			final Term param = params[i];
+		for (final Term param : params) {
 			if (param instanceof ApplicationTerm) {
 				final ApplicationTerm appParam = (ApplicationTerm) param;
 				if (isStore(appParam)) {

@@ -346,7 +346,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			return new TripleListIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 
-		private final TripleListReverseIterator<P, LETTER> getReverseIterator() {
+		private TripleListReverseIterator<P, LETTER> getReverseIterator() {
 			return new TripleListReverseIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 

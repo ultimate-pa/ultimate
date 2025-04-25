@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.core.model.translation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -135,7 +134,7 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 
 	@Override
 	default Iterator<AtomicTraceElement<TE>> iterator() {
-		return new Iterator<AtomicTraceElement<TE>>() {
+		return new Iterator<>() {
 
 			private final int max = getLength();
 			private int current = 0;
@@ -163,9 +162,9 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 	 * @param <TE>
 	 *            Type of the elements whose sequence are the trace.
 	 */
-	public static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass,
+	static <TE, E> IProgramExecution<TE, E> emptyExecution(final Class<E> exprClass,
 			final Class<? extends TE> teClass) {
-		return new IProgramExecution<TE, E>() {
+		return new IProgramExecution<>() {
 
 			@Override
 			public int getLength() {
@@ -222,7 +221,6 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 		private final Map<E, Collection<E>> mVariable2Values;
 
 		public ProgramState(final Map<E, Collection<E>> variable2Values, final Class<E> classOfExpression) {
-			super();
 			mClassOfExpression = classOfExpression;
 			mVariable2Values = variable2Values;
 		}
@@ -272,12 +270,8 @@ public interface IProgramExecution<TE, E> extends Iterable<AtomicTraceElement<TE
 		private static <E> List<Entry<E, Collection<E>>>
 				constructSortedListOfEntries(final Map<E, Collection<E>> variable2values) {
 			final List<Entry<E, Collection<E>>> toSort = new ArrayList<>(variable2values.entrySet());
-			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
-				@Override
-				public int compare(final Entry<E, Collection<E>> arg0, final Entry<E, Collection<E>> arg1) {
-					return arg0.getKey().toString().compareToIgnoreCase(arg1.getKey().toString());
-				}
-			});
+			Collections.sort(toSort,
+					(arg0, arg1) -> arg0.getKey().toString().compareToIgnoreCase(arg1.getKey().toString()));
 			return toSort;
 		}
 

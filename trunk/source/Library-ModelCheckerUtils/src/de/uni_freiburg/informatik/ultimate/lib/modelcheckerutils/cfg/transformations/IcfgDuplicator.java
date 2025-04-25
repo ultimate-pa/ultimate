@@ -132,10 +132,9 @@ public class IcfgDuplicator {
 					openReturns.add(new Pair<>(newSource, oldEdge));
 					continue;
 				}
-				if (ignoreSummariesWithImplementation && oldEdge instanceof IIcfgSummaryTransition) {
-					if (((IIcfgSummaryTransition<?>) oldEdge).calledProcedureHasImplementation()) {
-						continue;
-					}
+				if ((ignoreSummariesWithImplementation && oldEdge instanceof IIcfgSummaryTransition)
+						&& ((IIcfgSummaryTransition<?>) oldEdge).calledProcedureHasImplementation()) {
+					continue;
 				}
 				createEdgeCopy(newSource, oldEdge, edgeFactory);
 			}

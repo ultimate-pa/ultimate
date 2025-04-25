@@ -310,7 +310,7 @@ public final class Term2Expression implements Serializable {
 	}
 
 	private Expression translateBitvectorConcat(final IBoogieType type, final ApplicationTerm term) {
-		assert "concat".equals(term.getFunction().getName()) : "no extract";
+		assert "concat".equals(term.getFunction().getName()) : "no concat";
 		assert term.getParameters().length == 2;
 		final Expression op1 = translate(term.getParameters()[0]);
 		final Expression op2 = translate(term.getParameters()[1]);

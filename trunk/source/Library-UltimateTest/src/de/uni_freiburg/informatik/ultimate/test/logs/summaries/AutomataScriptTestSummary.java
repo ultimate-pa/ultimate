@@ -84,14 +84,13 @@ public class AutomataScriptTestSummary extends BaseTestLogfile implements ITestS
 
 	}
 
-	private class SummaryEntry {
+	private static class SummaryEntry {
 		private final TestResult mTestResult;
 		private final String mMessage;
 		private final double mTime;
 		private final File mAtsFile;
 
 		public SummaryEntry(final TestResult testResult, final String message, final double time, final File atsFile) {
-			super();
 			mTestResult = testResult;
 			mMessage = message;
 			mTime = time;

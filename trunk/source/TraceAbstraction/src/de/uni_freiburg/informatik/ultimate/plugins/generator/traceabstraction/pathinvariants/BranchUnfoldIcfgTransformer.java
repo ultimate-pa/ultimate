@@ -85,7 +85,7 @@ public final class BranchUnfoldIcfgTransformer {
 	public IIcfg<IcfgLocation> transform(final IIcfg<IcfgLocation> inputIcfg) {
 		mInputIcfg = inputIcfg;
 
-		final IValueConstruction<IcfgEdge, Integer> edgeNumberVc = new IValueConstruction<IcfgEdge, Integer>() {
+		final IValueConstruction<IcfgEdge, Integer> edgeNumberVc = new IValueConstruction<>() {
 			int mCounter = 0;
 
 			@Override
@@ -97,7 +97,7 @@ public final class BranchUnfoldIcfgTransformer {
 		final ConstructionCache<IcfgEdge, Integer> edgeNumberConstructor = new ConstructionCache<>(edgeNumberVc);
 
 		final IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationVc =
-				new IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation>() {
+				new IValueConstruction<>() {
 
 					@Override
 					public IcfgLocation constructValue(final Pair<IcfgLocation, Integer> pair) {

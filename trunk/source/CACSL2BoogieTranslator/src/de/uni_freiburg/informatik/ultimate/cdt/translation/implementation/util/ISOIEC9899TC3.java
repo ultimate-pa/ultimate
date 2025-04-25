@@ -296,22 +296,15 @@ public final class ISOIEC9899TC3 {
 	 */
 	public static BigInteger convertNumericalValueToByteValue(final Signedness signednessOfChar,
 			final BigInteger numericalValue) throws AssertionError {
-		BigInteger byteValue;
-		switch (signednessOfChar) {
+		return switch (signednessOfChar) {
 		case SIGNED:
 			if (numericalValue.compareTo(BigInteger.valueOf(127)) <= 0) {
-				byteValue = numericalValue;
-			} else {
-				byteValue = numericalValue.subtract(BigInteger.valueOf(256));
+				yield numericalValue;
 			}
-			break;
+			yield numericalValue.subtract(BigInteger.valueOf(256));
 		case UNSIGNED:
-			byteValue = numericalValue;
-			break;
-		default:
-			throw new AssertionError("unknown value " + signednessOfChar);
-		}
-		return byteValue;
+			yield numericalValue;
+		};
 	}
 
 	/**

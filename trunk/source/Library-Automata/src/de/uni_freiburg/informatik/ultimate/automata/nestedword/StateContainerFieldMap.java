@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -59,7 +59,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 */
@@ -100,7 +100,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		assert mOut1 != null && !(mOut1 instanceof Map);
 		assert mOut2 != null && !(mOut2 instanceof Map);
 		assert mOut3 != null && !(mOut3 instanceof Map);
-		final Object[] outgoings = new Object[] { mOut1, mOut2, mOut3 };
+		final Object[] outgoings = { mOut1, mOut2, mOut3 };
 		mOut1 = new HashMap<LETTER, Set<STATE>>();
 		mOut2 = new HashMap<LETTER, Set<STATE>>();
 		mOut3 = new HashMap<Map<LETTER, STATE>, Set<STATE>>();
@@ -161,7 +161,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	 * <p>
 	 * Implementation detail: It iterates over all outgoing internal letters and uses the iterators returned by
 	 * internalSuccessors(state, letter).
-	 * 
+	 *
 	 * @param letter2succ
 	 *            map (letter -> successors)
 	 * @return All internal outgoing transitions for a given map.
@@ -173,7 +173,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 
 	/**
 	 * Iterator for field mode.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
@@ -201,17 +201,17 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		public OutgoingInternalTransition<LETTER, STATE> next() {
 			final Object result;
 			switch (mPosition) {
-				case ONE:
-					result = getOut1();
-					break;
-				case TWO:
-					result = getOut2();
-					break;
-				case THREE:
-					result = getOut3();
-					break;
-				default:
-					throw new NoSuchElementException();
+			case ONE:
+				result = getOut1();
+				break;
+			case TWO:
+				result = getOut2();
+				break;
+			case THREE:
+				result = getOut3();
+				break;
+			default:
+				throw new NoSuchElementException();
 			}
 			if (!(result instanceof OutgoingInternalTransition)) {
 				throw new AssertionError();
@@ -228,7 +228,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 
 	/**
 	 * Iterator for map mode and a given letter.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
@@ -237,7 +237,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		private Iterator<STATE> mIterator;
 
 		protected MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
-			this.mLetter = letter;
+			mLetter = letter;
 			if (letter2succ != null) {
 				if (letter2succ.get(letter) != null) {
 					mIterator = letter2succ.get(letter).iterator();
@@ -271,7 +271,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 
 	/**
 	 * Iterator for map mode and no given letter.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */

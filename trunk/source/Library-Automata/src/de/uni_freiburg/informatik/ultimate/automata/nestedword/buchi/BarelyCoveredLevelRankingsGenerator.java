@@ -54,14 +54,18 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		extends LevelRankingGenerator<LETTER, STATE, LevelRankingConstraintDrdCheck<LETTER, STATE>> {
 
 	/**
-	 * Thanks to our optimizations we sometimes end on a path that is not worth to
-	 * be followed any more (e.g., because of an annihilation of an even rank). In
-	 * that case our methods us an special non-accepting sink state (which does not
-	 * correspond to any level ranking) to pass this information.
-	 * If this boolean variable is set we do not add the non-accepting state to the resulting automaton.
-	 * Pros: save one state, save transitions. Cons: slightly more complicated to debug
+	 * Thanks to our optimizations we sometimes end on a path that is not worth to be followed any more (e.g., because
+	 * of an annihilation of an even rank). In that case our methods us an special non-accepting sink state (which does
+	 * not correspond to any level ranking) to pass this information. If this boolean variable is set we do not add the
+	 * non-accepting state to the resulting automaton. Pros: save one state, save transitions. Cons: slightly more
+	 * complicated to debug
 	 */
 	private static final boolean OMIT_NON_ACCEPTING_SINK = true;
+
+	/**
+	 * Possible optimization that has not yet been investigated very well.
+	 */
+	private static final boolean DEBUG_ENABLE_SUCCESS_GUIDE_OPTIMIZATION = false;
 	private final boolean mAllowEmptyLevelRanking;
 	private final boolean mAllowRankZero;
 	private final boolean mRestrictToElasticLevelRankings;
@@ -92,7 +96,8 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 			return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 		}
 		final List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<>();
-		final List<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease = new ArrayList<>();
+		final List<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersEligibleForVoluntaryDecrease =
+				new ArrayList<>();
 		for (final StateWithRankInfo<STATE> down : constraint.getDownStates()) {
 			for (final StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
 				final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker = new DoubleDecker<>(down, up);
@@ -110,9 +115,11 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O)) {
 						isEligible |= LevelRankingConstraint.predecessorHasEmptyO(doubleDecker, constraint);
 					}
-					if (mVoluntaryRankDecrease.contains(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING)) {
+					if (mVoluntaryRankDecrease
+							.contains(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING)) {
 						isEligible |= (LevelRankingConstraint.allowsOEscape(doubleDecker, constraint)
-								&& constraint.allEvenPredecessorsAreAcceptingOrNotInO(doubleDecker.getDown(), doubleDecker.getUp().getState()));
+								&& constraint.allEvenPredecessorsAreAcceptingOrNotInO(doubleDecker.getDown(),
+										doubleDecker.getUp().getState()));
 					}
 					if (isEligible) {
 						doubleDeckersEligibleForVoluntaryDecrease.add(doubleDecker);
@@ -126,6 +133,9 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 				new PowersetIterator<>(doubleDeckersEligibleForVoluntaryDecrease);
 		while (it.hasNext()) {
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
+			if (DEBUG_ENABLE_SUCCESS_GUIDE_OPTIMIZATION && !isSuccessGuided(constraint, subset)) {
+				continue;
+			}
 			final LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
 			if ((succCandidate != null) && (!mRestrictToElasticLevelRankings || succCandidate.isElastic())) {
 				succLvls.add(succCandidate);
@@ -134,13 +144,27 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		return succLvls;
 	}
 
+	private boolean isSuccessGuided(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
+			final Set<DoubleDecker<StateWithRankInfo<STATE>>> subset) {
+		if (subset.isEmpty()) {
+			return true;
+		}
+		for (final StateWithRankInfo<STATE> downState : constraint.getDownStates()) {
+			for (final StateWithRankInfo<STATE> upState : constraint.getUpStates(downState)) {
+				if (upState.isInO() && !mOperand.isFinal(upState.getState())
+						&& !subset.contains(new DoubleDecker<>(downState, upState))) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
 
 	private boolean evenRankAndNotFinal(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
 		return LevelRankingState.isEven(constraint.getRank(doubleDecker.getDown(), doubleDecker.getUp().getState()))
 				&& !mOperand.isFinal(doubleDecker.getUp().getState());
 	}
-
 
 	private LevelRankingState<LETTER, STATE> computeLevelRanking(
 			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
@@ -168,35 +192,12 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		final boolean inO;
 		final int rank;
 		/*
-		switch (rank) {
-		case 3:
-			if (mOperand.isFinal(up.getState())) {
-				rank = 2;
-				inO = oCandidate;
-			} else {
-				inO = false;
-			}
-			break;
-		case 2:
-			if (doubleDeckersWithVoluntaryDecrease.contains(
-					new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
-				rank = 1;
-				inO = false;
-			} else {
-				inO = oCandidate;
-			}
-			break;
-		case 1:
-			if (mOperand.isFinal(up.getState())) {
-				return null;
-			} else {
-				inO = false;
-			}
-			break;
-		default:
-			throw new AssertionError("no other ranks allowed");
-		}
-		*/
+		 * switch (rank) { case 3: if (mOperand.isFinal(up.getState())) { rank = 2; inO = oCandidate; } else { inO =
+		 * false; } break; case 2: if (doubleDeckersWithVoluntaryDecrease.contains( new
+		 * DoubleDecker<StateWithRankInfo<STATE>>(down, up))) { rank = 1; inO = false; } else { inO = oCandidate; }
+		 * break; case 1: if (mOperand.isFinal(up.getState())) { return null; } else { inO = false; } break; default:
+		 * throw new AssertionError("no other ranks allowed"); }
+		 */
 		Pair<Integer, Boolean> rankInOPair;
 		if (LevelRankingState.isOdd(rankConstraint)) {
 			if (mOperand.isFinal(upState.getState())) {

@@ -215,8 +215,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			final IPredicate resHier) {
 		Set<IPredicate> succCands;
 		if (resHier != null) {
-			succCands = new HashSet<>();
-			succCands.addAll(mResPred2InputPreds.getImage(resPred));
+			succCands = new HashSet<>(mResPred2InputPreds.getImage(resPred));
 			succCands.addAll(mResPred2InputPreds.getImage(resHier));
 		} else {
 			succCands = mResPred2InputPreds.getImage(resPred);

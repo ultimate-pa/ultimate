@@ -34,9 +34,9 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * 
+ *
  * Wrapper for {@link TracePredicates} together with their origin and their quality, i.e., if they are perfect or not.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

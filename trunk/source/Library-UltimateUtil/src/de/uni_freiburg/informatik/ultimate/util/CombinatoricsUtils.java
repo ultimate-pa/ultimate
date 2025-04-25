@@ -35,21 +35,24 @@ import java.util.Set;
 
 /**
  * Class containing a variety of combinatorial utility functions.
+ *
  * @author mostafa.amin93@gmail.com
  *
  */
 public class CombinatoricsUtils {
 
-	private CombinatoricsUtils() {}
+	private CombinatoricsUtils() {
+	}
 
 	/***
 	 * Transform an iterator to a set.
+	 *
 	 * @param iter
 	 * @return
 	 */
 	public static <T> Set<T> iterateAll(final Iterator<T> iter) {
 		final Set<T> res = new HashSet<>();
-		while(iter.hasNext()) {
+		while (iter.hasNext()) {
 			res.add(iter.next());
 		}
 		return res;
@@ -57,6 +60,7 @@ public class CombinatoricsUtils {
 
 	/***
 	 * Transform an iterator to a set.
+	 *
 	 * @param iter
 	 * @return
 	 */
@@ -70,6 +74,7 @@ public class CombinatoricsUtils {
 
 	/***
 	 * Get all possible r-tuples combined by a set of different values for each field.
+	 *
 	 * @param values
 	 * @return
 	 */
@@ -88,8 +93,7 @@ public class CombinatoricsUtils {
 		final Set<List<T>> res = new HashSet<>();
 		for (final T newValue : values.get(idx - 1)) {
 			for (final List<T> oldCombination : oldCombinations) {
-				final List<T> combination = new ArrayList<>();
-				combination.addAll(oldCombination);
+				final List<T> combination = new ArrayList<>(oldCombination);
 				combination.add(newValue);
 				res.add(combination);
 			}

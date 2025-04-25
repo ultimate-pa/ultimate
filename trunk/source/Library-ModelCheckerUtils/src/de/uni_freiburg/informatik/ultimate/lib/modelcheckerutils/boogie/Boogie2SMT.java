@@ -88,18 +88,18 @@ public class Boogie2SMT {
 		mExpression2Term = new Expression2Term(mServices, script, mTypeSortTranslator, mBoogie2SmtSymbolTable,
 				mOperationTranslator, mScript);
 
-		final List<Term> axiomList = declareAxioms(boogieDeclarations, script, mExpression2Term,
-				mBoogie2SmtSymbolTable);
-		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(SmtUtils.and(script, axiomList), mScript,
-				mBoogie2SmtSymbolTable);
+		final List<Term> axiomList =
+				declareAxioms(boogieDeclarations, script, mExpression2Term, mBoogie2SmtSymbolTable);
+		final TermVarsFuns tvp =
+				TermVarsFuns.computeTermVarsFuns(SmtUtils.and(script, axiomList), mScript, mBoogie2SmtSymbolTable);
 		assert tvp.getVars().isEmpty() : "axioms must not have variables";
 		if (!(script instanceof HistoryRecordingScript)) {
 			throw new AssertionError("need HistoryRecordingScript");
 		}
 		mSmtFunctionsAndAxioms = new SmtFunctionsAndAxioms(tvp.getClosedFormula(), tvp.getFuns(), mScript);
 
-		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term,
-				simplePartialSkolemization);
+		mStatements2TransFormula =
+				new Statements2TransFormula(this, mServices, mExpression2Term, simplePartialSkolemization);
 		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, mScript);
 	}
 
@@ -109,8 +109,8 @@ public class Boogie2SMT {
 		script.echo(new QuotedObject("Start declaration of axioms"));
 		for (final Axiom decl : boogieDeclarations.getAxioms()) {
 			final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator(boogie2SmtSymbolTable);
-			final IIdentifierTranslator[] its = new IIdentifierTranslator[] { coit };
-			final Term closedTerm = expression2Term.translateToTerm(its, decl.getFormula()).getTerm();
+			final IIdentifierTranslator[] its = { coit };
+			final Term closedTerm = expression2Term.translateToTerm(its, decl.getFormula()).term();
 			script.assertTerm(closedTerm);
 			final Term term = closedTerm;
 			axiomList.add(term);

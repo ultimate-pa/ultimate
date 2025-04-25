@@ -339,7 +339,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 		public Iterator<Pair<STATE, STATE>> iterator() {
 			final Iterator<Pair<STATE, STATE>> oldIterator = super.iterator();
 			final Iterator<STATE> reflexiveIterator = mStates.iterator();
-			return new Iterator<Pair<STATE, STATE>>() {
+			return new Iterator<>() {
 				private boolean reflexiveMode = true;
 
 				@Override

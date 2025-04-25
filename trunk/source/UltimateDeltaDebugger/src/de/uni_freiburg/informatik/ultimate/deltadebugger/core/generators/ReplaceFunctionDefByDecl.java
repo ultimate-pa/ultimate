@@ -45,31 +45,31 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 /**
  * Replaces a function by its declaration. Replaces a function definition by a prototype. Currently this only replaces a
  * function body compount statement by a null statement.
- * 
+ *
  * TODO: Remove an existing inline specifier from the function definition and all already existing prototypes of that
  * function.
  */
 public final class ReplaceFunctionDefByDecl implements IVariantGenerator {
 	private final ISourceDocument mSource;
 	private final List<MyChange> mChanges;
-	
+
 	private ReplaceFunctionDefByDecl(final ISourceDocument source, final List<MyChange> changes) {
 		mSource = source;
 		mChanges = changes;
 	}
-	
+
 	@Override
 	public String apply(final List<IChangeHandle> activeChanges) {
 		final SourceRewriter rewriter = new SourceRewriter(mSource);
 		activeChanges.stream().forEach(c -> ((MyChange) c).apply(rewriter));
 		return rewriter.apply();
 	}
-	
+
 	@Override
 	public List<IChangeHandle> getChanges() {
 		return Collections.unmodifiableList(mChanges);
 	}
-	
+
 	/**
 	 * @param context
 	 *            Pass context.
@@ -77,11 +77,10 @@ public final class ReplaceFunctionDefByDecl implements IVariantGenerator {
 	 */
 	public static Optional<IVariantGenerator> analyze(final IPassContext context) {
 		final List<MyChange> changes = collectChanges(context.getSharedPst());
-		return changes.isEmpty()
-				? Optional.empty()
+		return changes.isEmpty() ? Optional.empty()
 				: Optional.of(new ReplaceFunctionDefByDecl(context.getInput(), changes));
 	}
-	
+
 	private static List<MyChange> collectChanges(final IPSTTranslationUnit translationUnit) {
 		final List<MyChange> changes = new ArrayList<>();
 		translationUnit.accept(new IPSTVisitor() {
@@ -95,30 +94,30 @@ public final class ReplaceFunctionDefByDecl implements IVariantGenerator {
 					}
 					return PROCESS_SKIP;
 				}
-				
+
 				return PROCESS_CONTINUE;
 			}
 		});
-		
+
 		return changes;
 	}
-	
+
 	/**
 	 * A change handle.
 	 */
 	private static class MyChange implements IChangeHandle {
 		private final int mIndex;
 		private final IPSTRegularNode mNode;
-		
+
 		public MyChange(final int index, final IPSTRegularNode node) {
 			mIndex = index;
 			mNode = node;
 		}
-		
+
 		void apply(final SourceRewriter rewriter) {
 			rewriter.replace(mNode, ";");
 		}
-		
+
 		@Override
 		public int getSequenceIndex() {
 			return mIndex;

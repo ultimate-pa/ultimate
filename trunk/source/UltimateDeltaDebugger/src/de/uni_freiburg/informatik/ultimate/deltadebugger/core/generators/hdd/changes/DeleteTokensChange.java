@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
  */
 public class DeleteTokensChange extends HddChange {
 	private final List<Token> mTokens;
-	
+
 	/**
 	 * @param node
 	 *            Node.
@@ -50,14 +50,14 @@ public class DeleteTokensChange extends HddChange {
 		super(node);
 		mTokens = tokens;
 	}
-	
+
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		for (final ISourceRange location : mTokens) {
 			RewriteUtils.replaceByWhitespace(rewriter, location);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Delete tokens from " + getNode() + ": " + mTokens;

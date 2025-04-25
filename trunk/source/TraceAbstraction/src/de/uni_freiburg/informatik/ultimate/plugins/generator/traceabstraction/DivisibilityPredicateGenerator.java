@@ -57,7 +57,6 @@ public class DivisibilityPredicateGenerator {
 	private final IPredicateUnifier mPredicateUnifier;
 
 	public DivisibilityPredicateGenerator(final ManagedScript mgdScript, final IPredicateUnifier predicateUnifier) {
-		super();
 		mScript = mgdScript.getScript();
 		mPredicateUnifier = predicateUnifier;
 	}
@@ -73,11 +72,10 @@ public class DivisibilityPredicateGenerator {
 					assert oldValue == null || oldValue == size;
 				}
 			}
-			final List<MultiDimensionalSelect> mdsList =
-					MultiDimensionalSelect.extractSelectDeep(pred.getFormula());
+			final List<MultiDimensionalSelect> mdsList = MultiDimensionalSelect.extractSelectDeep(pred.getFormula());
 			for (final MultiDimensionalSelect mds : mdsList) {
 				if (isLengthArray(mds.getArray())) {
-					final Term term = getDivisibilityTerm(mds.toTerm(mScript), Integer.valueOf(4));
+					final Term term = getDivisibilityTerm(mds.toTerm(mScript), 4);
 					final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(term);
 					result.add(unified);
 				}

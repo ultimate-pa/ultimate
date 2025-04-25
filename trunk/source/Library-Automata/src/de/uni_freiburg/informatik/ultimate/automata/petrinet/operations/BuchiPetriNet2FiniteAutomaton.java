@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            symbols type
  * @param <PLACE>
  *            place content type
- * 
+ *
  * @author Daniel Küchler (kuechlerdaniel33@gmail.com)
  */
 public final class BuchiPetriNet2FiniteAutomaton<LETTER, PLACE>

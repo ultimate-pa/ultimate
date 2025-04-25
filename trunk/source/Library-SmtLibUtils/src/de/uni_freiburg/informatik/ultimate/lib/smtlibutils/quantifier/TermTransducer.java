@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * TODO 2020025 Matthias: Revise and add documentation.
- * Because of the SMT-COMP deadline, I committed this without documentation or code review.
+ * TODO 2020025 Matthias: Revise and add documentation. Because of the SMT-COMP deadline, I committed this without
+ * documentation or code review.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -51,8 +51,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public abstract class TermTransducer<E> {
 
 	private Map<Term, E> mSubtermResult;
-
-
 
 	public E transduce(final Term term) {
 		mSubtermResult = new HashMap<>();
@@ -66,8 +64,6 @@ public abstract class TermTransducer<E> {
 	protected abstract E transduceImmediately(Term term);
 
 	protected abstract E transduce(ApplicationTerm appTerm, List<E> transducedArguments);
-
-
 
 	private class TermTransducerHelper extends TermTransformer {
 
@@ -84,13 +80,12 @@ public abstract class TermTransducer<E> {
 
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final List<E> transducedArguments = Arrays.stream(appTerm.getParameters()).map(mSubtermResult::get)
-					.collect(Collectors.toList());
+			final List<E> transducedArguments =
+					Arrays.stream(appTerm.getParameters()).map(mSubtermResult::get).collect(Collectors.toList());
 			final E result = transduce(appTerm, transducedArguments);
 			mSubtermResult.put(appTerm, result);
 			super.convertApplicationTerm(appTerm, newArgs);
 		}
-
 
 		@Override
 		public void preConvertLet(final LetTerm oldLet, final Term[] newValues) {

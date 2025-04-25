@@ -51,14 +51,12 @@ public class EqualityAnalysisResult {
 
 	public EqualityAnalysisResult(final Set<Doubleton<Term>> equalDoubletons,
 			final Set<Doubleton<Term>> distinctDoubletons, final Set<Doubleton<Term>> unknownDoubletons) {
-		super();
 		mEqualDoubletons = equalDoubletons;
 		mDistinctDoubletons = distinctDoubletons;
 		mUnknownDoubletons = unknownDoubletons;
 	}
 
 	public EqualityAnalysisResult(final Set<Doubleton<Term>> doubletons) {
-		super();
 		final Set<Doubleton<Term>> emptySet = Collections.emptySet();
 		mEqualDoubletons = emptySet;
 		mDistinctDoubletons = emptySet;

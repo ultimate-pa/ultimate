@@ -468,6 +468,7 @@ def call_desperate(call_args):
             stderr=subprocess.STDOUT,
             shell=False,
             preexec_fn=None if is_windows() else _init_child_process,
+            env={**os.environ, 'PATH': ultimatedir + os.pathsep + os.environ['PATH']}
         )
     except:
         print("Error trying to open subprocess " + str(call_args))

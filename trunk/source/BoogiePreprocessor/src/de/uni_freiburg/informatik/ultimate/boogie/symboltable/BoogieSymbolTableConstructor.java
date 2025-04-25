@@ -59,13 +59,14 @@ public class BoogieSymbolTableConstructor extends BoogieOnceVisitor implements I
 	private Declaration mCurrentDeclaration;
 	private String mCurrentScopeName;
 
-	public BoogieSymbolTableConstructor(final ILogger logger){
+	public BoogieSymbolTableConstructor(final ILogger logger) {
 		mLogger = logger;
 		mSymbolTable = new BoogieSymbolTable();
 	}
 
 	@Override
-	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) throws Throwable {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
+			throws Throwable {
 		mCurrentScope = StorageClass.GLOBAL;
 		mCurrentDeclaration = null;
 		mCurrentScopeName = null;
@@ -188,8 +189,8 @@ public class BoogieSymbolTableConstructor extends BoogieOnceVisitor implements I
 		case PROC_FUNC:
 			break;
 		default:
-			throw new UnsupportedOperationException(String.format("Extend this method for the new scope %s",
-					mCurrentScope));
+			throw new UnsupportedOperationException(
+					String.format("Extend this method for the new scope %s", mCurrentScope));
 		}
 		return super.processVarList(vl);
 	}
@@ -201,7 +202,5 @@ public class BoogieSymbolTableConstructor extends BoogieOnceVisitor implements I
 		}
 		return super.processExpression(expr);
 	}
-
-
 
 }

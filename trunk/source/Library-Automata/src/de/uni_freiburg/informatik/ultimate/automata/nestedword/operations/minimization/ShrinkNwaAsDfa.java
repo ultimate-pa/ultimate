@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it
  * and/or modify it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be
  * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automata Library, or any covered work, by linking or combining it
  * with Eclipse RCP (or a modified version of Eclipse RCP), containing parts
@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -57,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * It is based on Hopcroft's minimization for deterministic finite automata. All nested edges (calls and returns) are
  * seen as fresh symbols consisting of the tuple <code>(symbol, hierarchical state)</code>
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -77,7 +76,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 	/**
 	 * This constructor creates a copy of the operand.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -94,7 +93,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 	/**
 	 * This constructor creates a copy of the operand with an initial partition.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -143,7 +142,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 	/**
 	 * This is the main method that merges states not distinguishable (based on Hopcroft's algorithm).
-	 * 
+	 *
 	 * @param isFiniteAutomaton
 	 *            true iff automaton is a finite automaton
 	 * @param modules
@@ -199,7 +198,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	/**
 	 * The partition object is initialized. Final states are separated from non-final states. For the passed modules
 	 * this is assumed.
-	 * 
+	 *
 	 * @param modulesWrapped
 	 *            modules that must be split
 	 */
@@ -226,8 +225,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		} else {
 			final Collection<Set<STATE>> modules = modulesWrapped.getRelation();
 			// predefined modules are already split with respect to final states
-			assert assertStatesSeparation(modules) : "The states in the initial modules are not separated with "
-					+ "respect to their final status.";
+			assert assertStatesSeparation(modules)
+					: "The states in the initial modules are not separated with " + "respect to their final status.";
 			for (final Set<STATE> module : modules) {
 				mPartition.addEcInitialization(module);
 			}
@@ -239,7 +238,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * <p>
 	 * First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
 	 * split from their equivalence classes.
-	 * 
+	 *
 	 * @param block
 	 *            the splitter equivalence class
 	 * @param iterator
@@ -274,17 +273,17 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		// remember that this equivalence class has no incoming transitions
 		if (letter2states.isEmpty()) {
 			switch (type) {
-				case INTERNAL:
-					block.mIncomingInt = IncomingStatus.NONE;
-					break;
-				case CALL:
-					block.mIncomingCall = IncomingStatus.NONE;
-					break;
-				case RETURN:
-					block.mIncomingRet = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case INTERNAL:
+				block.mIncomingInt = IncomingStatus.NONE;
+				break;
+			case CALL:
+				block.mIncomingCall = IncomingStatus.NONE;
+				break;
+			case RETURN:
+				block.mIncomingRet = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 		} else {
 			// split each map value (set of predecessor states)
@@ -294,15 +293,15 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 					letter = null;
 				} else {
 					switch (type) {
-						case INTERNAL:
-						case CALL:
-							letter = null;
-							break;
-						case RETURN:
-							letter = entry.getKey();
-							break;
-						default:
-							throw new IllegalArgumentException("Illegal type.");
+					case INTERNAL:
+					case CALL:
+						letter = null;
+						break;
+					case RETURN:
+						letter = entry.getKey();
+						break;
+					default:
+						throw new IllegalArgumentException("Illegal type.");
 					}
 				}
 				final HashSet<STATE> predecessorSet = entry.getValue();
@@ -314,7 +313,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 	/**
 	 * For each remaining equivalence class create a new state. Also remove all other objects references.
-	 * 
+	 *
 	 * @param addMapping
 	 *            true iff mapping old to new state is needed
 	 * @throws AutomataOperationCanceledException
@@ -364,9 +363,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * Type of a transition/symbol.
 	 */
 	private enum TransitionType {
-		INTERNAL,
-		CALL,
-		RETURN
+		INTERNAL, CALL, RETURN
 	}
 
 	/**
@@ -407,7 +404,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		/**
 		 * The iterator is told to consider the next transition.
-		 * 
+		 *
 		 * @return a tuple with letter and hierarchical state of next transition
 		 */
 		Pair<LETTER, STATE> nextAndLetter();
@@ -579,7 +576,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		/**
 		 * This method splits a state from its equivalence class during the internal and call split. The equivalence
 		 * class is remembered.
-		 * 
+		 *
 		 * @param state
 		 *            the state
 		 * @param splitEcs
@@ -601,7 +598,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		/**
 		 * This method splits a state for a given equivalence class without any further considerations.
-		 * 
+		 *
 		 * @param state
 		 *            state
 		 * @param block
@@ -619,7 +616,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		 * This method finally splits the marked equivalence classes into two (for the internal and call split). The
 		 * states have already been split in the equivalence class before. Only if there are states remaining the split
 		 * is executed, otherwise the old equivalence class is restored.
-		 * 
+		 *
 		 * @param states
 		 *            set of states to split
 		 * @param letter
@@ -695,7 +692,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		@Override
 		public Iterator<IBlock<STATE>> blocksIterator() {
-			return new Iterator<IBlock<STATE>>() {
+			return new Iterator<>() {
 				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
 
 				@Override
@@ -712,7 +709,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		@Override
 		public Iterator<Set<STATE>> iterator() {
-			return new Iterator<Set<STATE>>() {
+			return new Iterator<>() {
 				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
 
 				@Override
@@ -749,7 +746,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		/**
 		 * This is a partial constructor which is used for both initialization and splitting.
-		 * 
+		 *
 		 * @param states
 		 *            the set of states for the equivalence class
 		 * @param fromSplit
@@ -764,7 +761,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		/**
 		 * This constructor is used for the initialization.
-		 * 
+		 *
 		 * @param states
 		 *            the set of states for the equivalence class
 		 */
@@ -778,7 +775,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		/**
 		 * This constructor is used during a split.
-		 * 
+		 *
 		 * @param states
 		 *            the set of states for the equivalence class
 		 * @param parent
@@ -788,40 +785,40 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			this(states, true);
 			boolean add = false;
 			switch (parent.mIncomingInt) {
-				case UNKNOWN:
-				case IN_WL:
-					mIncomingInt = IncomingStatus.IN_WL;
-					add = true;
-					break;
-				case NONE:
-					mIncomingInt = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case UNKNOWN:
+			case IN_WL:
+				mIncomingInt = IncomingStatus.IN_WL;
+				add = true;
+				break;
+			case NONE:
+				mIncomingInt = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 			switch (parent.mIncomingCall) {
-				case UNKNOWN:
-				case IN_WL:
-					mIncomingCall = IncomingStatus.IN_WL;
-					add = true;
-					break;
-				case NONE:
-					mIncomingCall = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case UNKNOWN:
+			case IN_WL:
+				mIncomingCall = IncomingStatus.IN_WL;
+				add = true;
+				break;
+			case NONE:
+				mIncomingCall = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 			switch (parent.mIncomingRet) {
-				case UNKNOWN:
-				case IN_WL:
-					mIncomingRet = IncomingStatus.IN_WL;
-					add = true;
-					break;
-				case NONE:
-					mIncomingRet = IncomingStatus.NONE;
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case UNKNOWN:
+			case IN_WL:
+				mIncomingRet = IncomingStatus.IN_WL;
+				add = true;
+				break;
+			case NONE:
+				mIncomingRet = IncomingStatus.NONE;
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 			if (add) {
 				mWorkList.add(this);
@@ -954,12 +951,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		protected final PriorityQueue<EquivalenceClass> mQueue;
 
 		public AWorkList() {
-			mQueue = new PriorityQueue<>(Math.max(mOperand.size(), 1), new Comparator<EquivalenceClass>() {
-				@Override
-				public int compare(final EquivalenceClass ec1, final EquivalenceClass ec2) {
-					return ec1.mStates.size() - ec2.mStates.size();
-				}
-			});
+			mQueue = new PriorityQueue<>(Math.max(mOperand.size(), 1),
+					(ec1, ec2) -> ec1.mStates.size() - ec2.mStates.size());
 		}
 
 		/**

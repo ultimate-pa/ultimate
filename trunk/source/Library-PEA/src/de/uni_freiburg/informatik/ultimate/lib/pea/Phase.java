@@ -24,6 +24,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -143,7 +144,7 @@ public class Phase implements Comparable<Phase> {
 		while (it.hasNext()) {
 			final Transition t = it.next();
 
-			if (t.getDest() == dest && t.getResets().equals(resets)) {
+			if (t.getDest() == dest && Arrays.equals(t.getResets(), resets)) {
 				t.setGuard(t.getGuard().or(guard));
 
 				return t;

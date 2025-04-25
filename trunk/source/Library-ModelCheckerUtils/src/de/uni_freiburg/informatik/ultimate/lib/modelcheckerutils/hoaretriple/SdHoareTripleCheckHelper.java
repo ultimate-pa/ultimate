@@ -53,6 +53,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  *            The type of actions for which Hoare triples are checked.
  */
 public abstract class SdHoareTripleCheckHelper<L extends IAction> {
+	private static final String ERROR_UNCHECKED = "unchecked predicate";
+	private static final String ERROR_FILTERED_CASE = "this case should have been filtered out before";
+
 	protected final IPredicateCoverageChecker mCoverage;
 	protected final IPredicate mFalsePredicate;
 	protected final IPredicate mTruePredicate;
@@ -115,23 +118,16 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		}
 		if (SmtUtils.isFalseLiteral(succ.getFormula())) {
 			final Validity toFalse = sdecToFalse(preLin, preHier, act);
-			if (toFalse == null) {
+			return switch (toFalse) {
+			case null -> {
 				// we are unable to determine validity with SD checks
 				assert sdec(preLin, preHier, act, succ) == null : "inconsistent check results";
-				return Validity.UNKNOWN;
+				yield Validity.UNKNOWN;
 			}
-			switch (toFalse) {
-			case INVALID:
-				return Validity.INVALID;
-			case NOT_CHECKED:
-				throw new AssertionError("unchecked predicate");
-			case UNKNOWN:
-				throw new AssertionError("this case should have been filtered out before");
-			case VALID:
-				throw new AssertionError("this case should have been filtered out before");
-			default:
-				throw new AssertionError("unknown case");
-			}
+			case INVALID -> Validity.INVALID;
+			case NOT_CHECKED -> throw new AssertionError(ERROR_UNCHECKED);
+			case UNKNOWN, VALID -> throw new AssertionError(ERROR_FILTERED_CASE);
+			};
 		}
 		final Validity general;
 		if (SdHoareTripleChecker.LAZY_CHECKS) {
@@ -139,36 +135,22 @@ public abstract class SdHoareTripleCheckHelper<L extends IAction> {
 		} else {
 			general = sdec(preLin, preHier, act, succ);
 		}
-		if (general != null) {
-			switch (general) {
-			case INVALID:
-				return Validity.INVALID;
-			case NOT_CHECKED:
-				throw new AssertionError("unchecked predicate");
-			case UNKNOWN:
-				throw new AssertionError("this case should have been filtered out before");
-			case VALID:
-				return Validity.VALID;
-			default:
-				throw new AssertionError("unknown case");
-			}
-		}
-		return Validity.UNKNOWN;
+		return switch (general) {
+		case null -> Validity.UNKNOWN;
+		case INVALID -> Validity.INVALID;
+		case NOT_CHECKED -> throw new AssertionError(ERROR_UNCHECKED);
+		case UNKNOWN -> throw new AssertionError(ERROR_FILTERED_CASE);
+		case VALID -> Validity.VALID;
+		};
 	}
 
 	private Boolean isCovered(final IPredicate lhs, final IPredicate rhs) {
-		switch (mCoverage.isCovered(lhs, rhs)) {
-		case INVALID:
-			return false;
-		case NOT_CHECKED:
-			throw new AssertionError("unchecked predicate");
-		case UNKNOWN:
-			return null;
-		case VALID:
-			return true;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		return switch (mCoverage.isCovered(lhs, rhs)) {
+		case INVALID -> false;
+		case NOT_CHECKED -> throw new AssertionError(ERROR_UNCHECKED);
+		case UNKNOWN -> null;
+		case VALID -> true;
+		};
 	}
 
 	public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, L act);

@@ -276,8 +276,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			}
 
 			mIsEmpty = !is_nemp;
-			final Set<STATE> states = new HashSet<>();
-			states.addAll(mStates.keySet());
+			final Set<STATE> states = new HashSet<>(mStates.keySet());
 			// System.err.println
 			// System.err.println(mEmp);
 			// for(STATE st : mStates.keySet()) {
@@ -321,11 +320,11 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			// }
 			for (final STATE st : states) {
 				if (mQPrime.contains(st)) {
-					assert !mEmp.covers(mStates.get(st).mProdState) : "Wrong Coverage: "
-							+ mStates.get(st).mProdState.mFst + ", "
-							+ mSndOperand.getNCSB(mStates.get(st).mProdState.mSnd) + "\n"
-							+ mEmp.coveringProductState(mStates.get(st).mProdState).mFst + ", "
-							+ mSndOperand.getNCSB(mEmp.coveringProductState(mStates.get(st).mProdState).mSnd);
+					assert !mEmp.covers(mStates.get(st).mProdState)
+							: "Wrong Coverage: " + mStates.get(st).mProdState.mFst + ", "
+									+ mSndOperand.getNCSB(mStates.get(st).mProdState.mSnd) + "\n"
+									+ mEmp.coveringProductState(mStates.get(st).mProdState).mFst + ", "
+									+ mSndOperand.getNCSB(mEmp.coveringProductState(mStates.get(st).mProdState).mSnd);
 					continue;
 				}
 				// System.err.println(mStates.get(st).mProdState.mFst + ", " +
@@ -470,32 +469,30 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 					u = mAct.pop();
 					scc.add(u);
 					if (is_nemp) {
-						assert !mEmp.covers(mStates.get(u).mProdState) : "Add wrong states" + mEmp.toString() + "\n "
-								+ mStates.get(u).mProdState.mFst + ", "
-								+ mSndOperand.getNCSB(mStates.get(u).mProdState.mSnd);
+						assert !mEmp.covers(mStates.get(u).mProdState)
+								: "Add wrong states" + mEmp.toString() + "\n " + mStates.get(u).mProdState.mFst + ", "
+										+ mSndOperand.getNCSB(mStates.get(u).mProdState.mSnd);
 						mQPrime.add(u);
 					} else {
 						mEmp.addState(mStates.get(u).mProdState);
 					}
 				} while (!u.equals(state));
 				// whether there is accepting loop
-				if (pair.mLabels.size() == getAcceptanceSize()) {
-					if (scc.size() > 1 || prodStateCont.hashSelfloop()) {
-						mSccList.add(scc);
-					}
+				if ((pair.mLabels.size() == getAcceptanceSize()) && (scc.size() > 1 || prodStateCont.hashSelfloop())) {
+					mSccList.add(scc);
 				}
 			}
 			return is_nemp;
 		}
 	}
 
-	private class AsccPair<LETTER, STATE> {
+	private static class AsccPair<LETTER, STATE> {
 		final STATE mState;
 		final Set<Integer> mLabels;
 
 		AsccPair(final STATE state, final Set<Integer> labels) {
-			this.mState = state;
-			this.mLabels = labels;
+			mState = state;
+			mLabels = labels;
 		}
 
 		@Override
@@ -503,7 +500,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof AsccPair)) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")
@@ -722,8 +719,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			if (sndElem == null) {
 				return false;
 			}
-			for (int i = 0; i < sndElem.size(); i++) {
-				final ProductState elem = sndElem.get(i);
+			for (final GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STATE>.ProductState elem : sndElem) {
 				if (state.coveredBy(elem)) { // no need to add it
 					return true;
 				}
@@ -736,8 +732,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STAT
 			if (sndElem == null) {
 				return null;
 			}
-			for (int i = 0; i < sndElem.size(); i++) {
-				final ProductState elem = sndElem.get(i);
+			for (final GeneralizedNestedWordAutomatonReachableStatesAntichain<LETTER, STATE>.ProductState elem : sndElem) {
 				if (state.coveredBy(elem)) { // no need to add it
 					return elem;
 				}

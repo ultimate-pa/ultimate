@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  * Note: This summary is work in progress and not complete! Do not use it until this message vanishes.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class LatexPlotSummary extends LatexSummary {
 
@@ -239,20 +239,20 @@ public class LatexPlotSummary extends LatexSummary {
 
 	private static final class PlotStyleProvider {
 		// # Those are the presets s1 to s9 and all the remaining dvips colors of xcolor
-		private static final String[] LATEX_COLORS = new String[] { "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8",
-				"s9", "Black", "OliveGreen", "Apricot", "Aquamarine", "Bittersweet", "Blue", "BlueGreen", "BlueViolet",
-				"BrickRed", "Brown", "BurntOrange", "CadetBlue", "CarnationPink", "Cerulean", "CornflowerBlue", "Cyan",
-				"Dandelion", "DarkOrchid", "Emerald", "ForestGreen", "Fuchsia", "Goldenrod", "Gray", "Green",
-				"GreenYellow", "JungleGreen", "Lavender", "LimeGreen", "Magenta", "Mahogany", "Maroon", "Melon",
-				"MidnightBlue", "Mulberry", "NavyBlue", "Orange", "OrangeRed", "Orchid", "Peach", "Periwinkle",
-				"PineGreen", "Plum", "ProcessBlue", "Purple", "RawSienna", "Red", "RedOrange", "RedViolet", "Rhodamine",
-				"RoyalBlue", "RoyalPurple", "RubineRed", "Salmon", "SeaGreen", "Sepia", "SkyBlue", "SpringGreen", "Tan",
-				"TealBlue", "Thistle", "Turquoise", "Violet", "VioletRed", "White", "WildStrawberry", "Yellow",
-				"YellowGreen", "YellowOrange" };
+		private static final String[] LATEX_COLORS = { "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "Black",
+				"OliveGreen", "Apricot", "Aquamarine", "Bittersweet", "Blue", "BlueGreen", "BlueViolet", "BrickRed",
+				"Brown", "BurntOrange", "CadetBlue", "CarnationPink", "Cerulean", "CornflowerBlue", "Cyan", "Dandelion",
+				"DarkOrchid", "Emerald", "ForestGreen", "Fuchsia", "Goldenrod", "Gray", "Green", "GreenYellow",
+				"JungleGreen", "Lavender", "LimeGreen", "Magenta", "Mahogany", "Maroon", "Melon", "MidnightBlue",
+				"Mulberry", "NavyBlue", "Orange", "OrangeRed", "Orchid", "Peach", "Periwinkle", "PineGreen", "Plum",
+				"ProcessBlue", "Purple", "RawSienna", "Red", "RedOrange", "RedViolet", "Rhodamine", "RoyalBlue",
+				"RoyalPurple", "RubineRed", "Salmon", "SeaGreen", "Sepia", "SkyBlue", "SpringGreen", "Tan", "TealBlue",
+				"Thistle", "Turquoise", "Violet", "VioletRed", "White", "WildStrawberry", "Yellow", "YellowGreen",
+				"YellowOrange" };
 
 		private static final String[] LATEX_MARKS =
-				new String[] { null, "star", "triangle", "diamond", "x", "|", "10-pointed-star", "pentagon", "o" };
-		private static final String[] LATEX_LINES = new String[] { "solid", "dotted", "dashed" };
+				{ null, "star", "triangle", "diamond", "x", "|", "10-pointed-star", "pentagon", "o" };
+		private static final String[] LATEX_LINES = { "solid", "dotted", "dashed" };
 
 		private static final int LATEX_PLOT_MARK_REPEAT = 10;
 

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.standardfunctions;
+package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -131,8 +131,10 @@ public class ThreadIdManager {
 
 		final Expression threadId = getOldForkCounterAsTemp(loc, erb);
 		incrementForkCounter(loc, erb);
-		final ExpressionResult pointerLValue = mExpressionResultTransformer.dispatchPointerLValue(dispatcher, loc, argument);
-		erb.addAllExceptLrValue(pointerLValue, mExpressionResultTransformer.makePointerAssignment(loc, pointerLValue.getLrValue(), threadId));
+		final ExpressionResult pointerLValue =
+				mExpressionResultTransformer.dispatchPointerLValue(dispatcher, loc, argument);
+		erb.addAllExceptLrValue(pointerLValue,
+				mExpressionResultTransformer.makePointerAssignment(loc, pointerLValue.getLrValue(), threadId));
 
 		if (UNAMBIGUOUS_THREAD_ID_OPTIMIZATION) {
 			final Integer unambiguousId = getUnambiguousThreadIdCounter(argument);

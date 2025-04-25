@@ -101,10 +101,8 @@ public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
 				final boolean alsoInit = DataStructureUtils
 						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
-				final boolean alsoUncheckedRead = DataStructureUtils
-						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedReadRequired(), primitives);
-				result.add(new ReadWriteDefinition(procedureName, bytesize, astType, primitives, alsoUncheckedWrite,
-						alsoInit, alsoUncheckedRead));
+				result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
+						alsoUncheckedWrite, alsoInit));
 			}
 		}
 		return result;

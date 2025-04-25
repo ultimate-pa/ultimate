@@ -95,9 +95,8 @@ public interface ITransformulaTransformer {
 
 	/**
 	 *
-	 * @return
-	 * 		Modified globals of the result CFG. Does not have to be transitively closed. Can be obtained only after the
-	 * 		 translation.
+	 * @return Modified globals of the result CFG. Does not have to be transitively closed. Can be obtained only after
+	 *         the translation.
 	 */
 	HashRelation<String, IProgramNonOldVar> getNewModifiedGlobals();
 

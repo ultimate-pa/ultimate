@@ -61,7 +61,6 @@ public class ManagedScript {
 	private Object mLockOwner;
 
 	public ManagedScript(final IUltimateServiceProvider services, final Script script) {
-		super();
 		mServices = services;
 		mScript = script;
 		mLogger = mServices.getLoggingService().getLogger(SmtLibUtils.PLUGIN_ID);
@@ -349,7 +348,7 @@ public class ManagedScript {
 		}
 	}
 
-	private class SkolemFunctionManager {
+	private static class SkolemFunctionManager {
 
 		private static final String SKOLEM_PREFIX = "skolem";
 

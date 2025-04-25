@@ -42,7 +42,8 @@ final class TestPredicate implements IPredicate {
 	private final Term mClosedFormula;
 	private final Term mFormula;
 
-	public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final ManagedScript mgdScript) {
+	public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
+			final ManagedScript mgdScript) {
 		mVars = vars;
 		mFuns = funs;
 		mFormula = formula;

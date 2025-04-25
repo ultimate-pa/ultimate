@@ -214,9 +214,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 			final Map<Integer, Map<Integer, Set<IcfgEdge>>> informationFromCfg,
 			final NestedRun<L, IPredicate> counterexample) {
 		final Map<Integer, Set<IcfgEdge>> result = new HashMap<>();
-		final Set<IcfgEdge> subgraphEdges = new HashSet<>();
-		// Add the edges of the trace
-		subgraphEdges.addAll(computePathEdges(counterexample, startLocation, endLocation));
+		final Set<IcfgEdge> subgraphEdges = new HashSet<>(computePathEdges(counterexample, startLocation, endLocation));
 		Integer branchOut = startLocation;
 		for (int i = endLocation; i >= startLocation; i--) {
 			final Map<Integer, Set<IcfgEdge>> branchIn = informationFromCfg.get(i);
@@ -486,23 +484,22 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP and SP List
-		final IterativePredicateTransformer<L> iptWp = new IterativePredicateTransformer<>(mPredicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
-				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
-				mSymbolTable);
-		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
-				truePredicate, null, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
-				mSymbolTable);
+		final IterativePredicateTransformer<L> iptWp =
+				new IterativePredicateTransformer<>(mPredicateFactory, csToolkit.getManagedScript(),
+						csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord, null, falsePredicate,
+						null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique, mSymbolTable);
+		final IterativePredicateTransformer<L> iptSp =
+				new IterativePredicateTransformer<>(mPredicateFactory, csToolkit.getManagedScript(),
+						csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord, truePredicate, null, null,
+						mPredicateFactory.not(falsePredicate), mSimplificationTechnique, mSymbolTable);
 
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexampleWord, truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
-			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
-							mSimplificationTechnique);
+			final QuantifierEliminationPostprocessor qePostproc = new QuantifierEliminationPostprocessor(mServices,
+					csToolkit.getManagedScript(), mPredicateFactory, mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -776,7 +773,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		Term result = pt.weakestPrecondition(successor, tf);
 		if (applyQuantifierElimination) {
 			final Term term = result;
-			result = PartialQuantifierElimination.eliminateCompat(mServices, freshTermVariableConstructor, mSimplificationTechnique, term);
+			result = PartialQuantifierElimination.eliminateCompat(mServices, freshTermVariableConstructor,
+					mSimplificationTechnique, term);
 		}
 		return result;
 	}
@@ -798,7 +796,7 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		int numberOfBranches = 0;
 		final Collection<Map<Integer, Set<IcfgEdge>>> listOfValues = postProcessedResults.values();
 		for (final Map<Integer, Set<IcfgEdge>> onelist : listOfValues) {
-			numberOfBranches += onelist.values().size();
+			numberOfBranches += onelist.size();
 		}
 		mErrorLocalizationStatisticsGenerator.reportNumberOfBranches(numberOfBranches);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the
@@ -812,19 +810,18 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 				mPredicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false"));
 
 		// Calculating the SP List
-		final IterativePredicateTransformer<L> iptSp = new IterativePredicateTransformer<>(mPredicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices,
-				counterexample.getWord(), truePredicate, null, null, mPredicateFactory.not(falsePredicate),
-				mSimplificationTechnique, mSymbolTable);
+		final IterativePredicateTransformer<L> iptSp =
+				new IterativePredicateTransformer<>(mPredicateFactory, csToolkit.getManagedScript(),
+						csToolkit.getModifiableGlobalsTable(), mServices, counterexample.getWord(), truePredicate, null,
+						null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique, mSymbolTable);
 
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(counterexample.getWord(), truePredicate,
 				falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 
 		final List<IPredicatePostprocessor> postprocessors;
 		if (mApplyQuantifierElimination) {
-			final QuantifierEliminationPostprocessor qePostproc =
-					new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(), mPredicateFactory,
-							mSimplificationTechnique);
+			final QuantifierEliminationPostprocessor qePostproc = new QuantifierEliminationPostprocessor(mServices,
+					csToolkit.getManagedScript(), mPredicateFactory, mSimplificationTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -861,9 +858,8 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 	public List<IRelevanceInformation> getRelevanceInformation() {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("- - - - - - - -");
-			for (int i = 0; i < mRelevanceOfTrace.length; i++) {
-				mLogger.debug(((RelevanceInformation) mRelevanceOfTrace[i]).getActions() + " | "
-						+ mRelevanceOfTrace[i].getShortString());
+			for (final IRelevanceInformation element : mRelevanceOfTrace) {
+				mLogger.debug(((RelevanceInformation) element).getActions() + " | " + element.getShortString());
 			}
 		}
 		return Arrays.asList(mRelevanceOfTrace);
@@ -887,12 +883,12 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		// only error-admitting.
 		// Return false even if a single trace element is error enforcing.
 
-		Boolean angelicStatus = false;
-		for (int i = 0; i < mRelevanceOfTrace.length; i++) {
-			if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC()) {
+		boolean angelicStatus = false;
+		for (final IRelevanceInformation element : mRelevanceOfTrace) {
+			if (((RelevanceInformation) element).getCriterion2UC()) {
 				return false;
 			}
-			angelicStatus |= ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF();
+			angelicStatus |= ((RelevanceInformation) element).getCriterion2GF();
 		}
 		return angelicStatus;
 	}
@@ -910,13 +906,13 @@ public class FlowSensitiveFaultLocalizer<L extends IIcfgTransition<?>> {
 		double angelicScore = 0;
 		int numberOfAberrantStatements = 0;
 		int totalNumberofAberrantStatements = 0;
-		for (int i = 0; i < mRelevanceOfTrace.length; i++) {
-			if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2UC()
-					|| ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion1UC()) {
+		for (final IRelevanceInformation element : mRelevanceOfTrace) {
+			if (((RelevanceInformation) element).getCriterion2UC()
+					|| ((RelevanceInformation) element).getCriterion1UC()) {
 				numberOfAberrantStatements++;
 				totalNumberofAberrantStatements++;
-			} else if (((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion2GF()
-					|| ((RelevanceInformation) mRelevanceOfTrace[i]).getCriterion1GF()) {
+			} else if (((RelevanceInformation) element).getCriterion2GF()
+					|| ((RelevanceInformation) element).getCriterion1GF()) {
 				totalNumberofAberrantStatements++;
 			}
 		}

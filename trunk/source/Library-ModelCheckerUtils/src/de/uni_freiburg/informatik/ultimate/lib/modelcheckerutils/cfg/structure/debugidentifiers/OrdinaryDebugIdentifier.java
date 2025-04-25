@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers;
 
+import java.util.Objects;
+
 /**
  * A {@link OrdinaryDebugIdentifier} is a {@link DebugIdentifier} that represents an ordinary location (i.e., L1, L2,
  * etc.).
@@ -72,11 +74,7 @@ public class OrdinaryDebugIdentifier extends DebugIdentifier {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + mLinenumber;
-		result = prime * result + mOccurence;
-		return result;
+		return Objects.hash(mLinenumber, mOccurence);
 	}
 
 	@Override

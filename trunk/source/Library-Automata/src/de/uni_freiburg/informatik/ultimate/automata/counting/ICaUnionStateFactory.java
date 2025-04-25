@@ -34,6 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public interface ICaUnionStateFactory<STATE> extends IStateFactory<STATE> {
 
-	public STATE constructInitialState();
+	STATE constructInitialState();
 
 }

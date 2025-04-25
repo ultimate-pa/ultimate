@@ -292,9 +292,7 @@ public class PossibleExtensions<LETTER, PLACE> implements IPossibleExtensions<LE
 				(IPetriNetTransitionProvider<LETTER, PLACE>) mBranchingProcess.getNet();
 		final Set<Transition<LETTER, PLACE>> transitions = new HashSet<>();
 		for (final Condition<LETTER, PLACE> cond : event.getSuccessorConditions()) {
-			for (final Transition<LETTER, PLACE> t : fullPetriNet.getSuccessors(cond.getPlace())) {
-				transitions.add(t);
-			}
+			transitions.addAll(fullPetriNet.getSuccessors(cond.getPlace()));
 		}
 		final List<Candidate<LETTER, PLACE>> candidates = new ArrayList<>();
 		for (final Transition<LETTER, PLACE> transition : transitions) {

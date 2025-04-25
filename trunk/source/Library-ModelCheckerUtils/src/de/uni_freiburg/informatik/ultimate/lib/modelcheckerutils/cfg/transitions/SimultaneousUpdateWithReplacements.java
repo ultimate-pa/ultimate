@@ -47,17 +47,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * @deprecated The idea of this class was to introduce auxiliary variables for
- *             array indices. These auxiliary variables were part of the Jordan
- *             matrix. My hope was that these auxiliary variables simplify the
- *             construction and help us to deal with special cases where indices
- *             are array reads itself. It seems however that the algorithm that
- *             uses auxiliary variables is too complicated (one problem: it
- *             seems natural that variables are updated atomically at the end of
- *             the loop body whereas it seems natural that the index variables
- *             are assigned before the array cell is updated). Now I hope that
- *             I can avoid auxiliary variables and then this class can be
- *             delted eventually.
+ * @deprecated The idea of this class was to introduce auxiliary variables for array indices. These auxiliary variables
+ *             were part of the Jordan matrix. My hope was that these auxiliary variables simplify the construction and
+ *             help us to deal with special cases where indices are array reads itself. It seems however that the
+ *             algorithm that uses auxiliary variables is too complicated (one problem: it seems natural that variables
+ *             are updated atomically at the end of the loop body whereas it seems natural that the index variables are
+ *             assigned before the array cell is updated). Now I hope that I can avoid auxiliary variables and then this
+ *             class can be delted eventually.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
@@ -88,25 +84,27 @@ public class SimultaneousUpdateWithReplacements extends SimultaneousUpdate {
 		final Map<TermVariable, Term> idxRepAssignments = new LinkedHashMap<>();
 
 		for (final Entry<IProgramVar, Term> entry : su.getDeterministicAssignment().entrySet()) {
-			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars,
-					entry.getValue());
+			final Pair<Term, Map<TermVariable, Term>> tmp2 =
+					replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars, entry.getValue());
 			idxRepAssignments.putAll(tmp2.getSecond());
 			newDeterministicAssignments.put(entry.getKey(), tmp2.getFirst());
 		}
-		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites().entrySet()) {
+		for (final Entry<IProgramVar, MultiDimensionalNestedStore> entry : su.getDeterministicArrayWrites()
+				.entrySet()) {
 			if (entry.getValue().getIndices().size() != 1) {
 				throw new AssertionError("Nested stores!");
 			}
-			final Pair<ArrayIndex, Map<TermVariable, Term>> tmp1 = replaceIndex(mgdScript, entry.getValue().getIndices().get(0));
+			final Pair<ArrayIndex, Map<TermVariable, Term>> tmp1 =
+					replaceIndex(mgdScript, entry.getValue().getIndices().get(0));
 			idxRepAssignments.putAll(tmp1.getSecond());
-			final Pair<Term, Map<TermVariable, Term>> tmp2 = replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars,
-					entry.getValue().getValues().get(0));
+			final Pair<Term, Map<TermVariable, Term>> tmp2 =
+					replaceArrayIndices(mgdScript, defaultVarsOfAssignedVars, entry.getValue().getValues().get(0));
 			idxRepAssignments.putAll(tmp2.getSecond());
 			newDeterministicArrayWrites.put(entry.getKey(), tmp1.getFirst(), tmp2.getFirst());
 		}
 		// FIXME Matthias 2023-06-04: Second argument is null. Was not willing to support this class further.
-		return new SimultaneousUpdateWithReplacements(newDeterministicAssignments, null,
-				su.getHavocedVars(), su.getReadonlyVars(), newDeterministicArrayWrites, idxRepAssignments);
+		return new SimultaneousUpdateWithReplacements(newDeterministicAssignments, null, su.getHavocedVars(),
+				su.getReadonlyVars(), newDeterministicArrayWrites, idxRepAssignments);
 	}
 
 	private static Pair<ArrayIndex, Map<TermVariable, Term>> replaceIndex(final ManagedScript mgdScript,

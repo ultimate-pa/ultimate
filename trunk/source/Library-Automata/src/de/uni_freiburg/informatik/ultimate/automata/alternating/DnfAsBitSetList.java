@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,7 +36,7 @@ import java.util.Map;
  * Salomaa style representation of a DNF as a list of conjunctions. Each conjunction is stored as two {@code int}s.
  * alpha says which state variables appear in the conjunction. beta says whether the appearing ones appear positive or
  * negative.
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
 public class DnfAsBitSetList {
@@ -46,7 +46,7 @@ public class DnfAsBitSetList {
 
 	/**
 	 * Standard constructor.
-	 * 
+	 *
 	 * @param alpha
 	 *            which state variables appear in the conjunction
 	 * @param beta
@@ -62,7 +62,7 @@ public class DnfAsBitSetList {
 
 	/**
 	 * Copy constructor ("deep copy").
-	 * 
+	 *
 	 * @param obj
 	 *            object to copy
 	 */
@@ -70,7 +70,7 @@ public class DnfAsBitSetList {
 		this((BitSet) obj.mAlpha.clone(), (BitSet) obj.mBeta.clone(), null);
 		/*
 		 * TODO Christian 2016-08-20: I fixed this, the pointer of the object should be used, this.mNext was set to
-		 *      'null'. Remove this comment and the following commented line after testing/agreeing.
+		 * 'null'. Remove this comment and the following commented line after testing/agreeing.
 		 */
 		// DNFAsBitSetList nextEl = mNext;
 		DnfAsBitSetList nextEl = obj.mNext;
@@ -95,7 +95,7 @@ public class DnfAsBitSetList {
 	/**
 	 * "this" is a DNF where the indices refer to the entries of oldStateList. This method yields a DNF whose indices
 	 * refer to the predicates as given by newStateToIndex.
-	 * 
+	 *
 	 * @param oldStateList
 	 *            List indicating the old (predicate -> index) mapping
 	 * @param newStateToIndex
@@ -130,7 +130,7 @@ public class DnfAsBitSetList {
 
 	/**
 	 * Pretty printer to a provided {@link StringBuilder}.
-	 * 
+	 *
 	 * @param builder
 	 *            string builder
 	 * @param stateList
@@ -176,7 +176,7 @@ public class DnfAsBitSetList {
 	 * <p>
 	 * The idea (Salomaa 2010) is as follows:<br>
 	 * <tt>f(u) = 1 <-> (alpha & u) xor beta == 0</tt>
-	 * 
+	 *
 	 * @param argumentU
 	 *            bit set to apply to
 	 * @return result of function application

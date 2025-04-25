@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+  <resultfiles></resultfiles>
+  <option name="--force-no-wrapper" />
+
+  <rundefinition name="AutomizerFA-RCFG">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">FINITE_AUTOMATA</option>
+  </rundefinition>
+
+  <rundefinition name="AutomizerPN-RCFG">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">PETRI_NET</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter-RCFG">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/gemcutter/svcomp-Reach-32bit-GemCutter_Default.epf</option>
+  </rundefinition>
+
+  <rundefinition name="AutomizerFA-ICFG">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline_IcfgBuilder.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">FINITE_AUTOMATA</option>
+    <option name="--preprocessor.replace.while.statements.and.if-then-else.statements">false</option>
+  </rundefinition>
+
+  <rundefinition name="AutomizerPN-ICFG">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline_IcfgBuilder.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+    <option name="--traceabstraction.automaton.type.used.in.concurrency.analysis">PETRI_NET</option>
+    <option name="--preprocessor.replace.while.statements.and.if-then-else.statements">false</option>
+  </rundefinition>
+
+  <rundefinition name="GemCutter-ICFG">
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline_IcfgBuilder.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/gemcutter/svcomp-Reach-32bit-GemCutter_Default.epf</option>
+    <option name="--preprocessor.replace.while.statements.and.if-then-else.statements">false</option>
+  </rundefinition>
+
+  <tasks name="canary">
+    <include>${benchmark_path}/../../../trunk/examples/svcomp/weaver/parallel-misc-2-unrolled-atomic.wvr.yml</include>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-NoDataRace-Main">
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/no-data-race.prp</propertyfile>
+
+    <!-- The following options are based on the diff of the ReachSafety default settings and the NoDataRace default settings. -->
+    <!-- 1. Options for both Automizer and GemCutter -->
+    <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
+    <option name="--cacsl2boogietranslator.check.absence.of.data.races.in.concurrent.programs">true</option>
+    <option name="--icfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+    <option name="--rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
+    <!-- 2. GemCutter-specific options, ignored by Automizer -->
+    <option name="--traceabstraction.dfs.order.used.in.por">BY_SERIAL_NUMBER</option>
+    <option name="--traceabstraction.abstraction.used.for.commutativity.in.por">VARIABLES_GLOBAL</option>
+    <option name="--traceabstraction.commutativity.condition.synthesis">NONE</option>
+  </tasks>
+</benchmark>

@@ -42,7 +42,8 @@ public class StatisticsResult<T> extends AbstractResult {
 	private final String mShortDescrption;
 	private final ICsvProviderProvider<T> mStatistics;
 
-	public StatisticsResult(final String plugin, final String shortDescrption, final ICsvProviderProvider<T> statistics) {
+	public StatisticsResult(final String plugin, final String shortDescrption,
+			final ICsvProviderProvider<T> statistics) {
 		super(plugin);
 		mShortDescrption = shortDescrption;
 		mStatistics = statistics;

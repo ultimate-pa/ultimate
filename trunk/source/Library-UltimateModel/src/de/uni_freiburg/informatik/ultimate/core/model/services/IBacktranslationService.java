@@ -87,21 +87,7 @@ public interface IBacktranslationService {
 	 */
 	IBacktranslationService getTranslationServiceCopy();
 
-	public final class Lasso<X extends IProgramExecution<?, ?>> {
-		private final X mStem;
-		private final X mLoop;
-
-		public Lasso(final X stem, final X loop) {
-			mStem = stem;
-			mLoop = loop;
-		}
-
-		public X getStem() {
-			return mStem;
-		}
-
-		public X getLoop() {
-			return mLoop;
-		}
+	record Lasso<X extends IProgramExecution<?, ?>>(X stem, X loop) {
+		// simple record
 	}
 }

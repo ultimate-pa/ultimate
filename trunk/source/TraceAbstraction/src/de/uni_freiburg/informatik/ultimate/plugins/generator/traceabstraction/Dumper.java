@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
-public final class Dumper {
+public final class Dumper implements AutoCloseable {
 	private final PrintWriter mIterationPW;
 	private final ILogger mLogger;
 
@@ -66,7 +66,7 @@ public final class Dumper {
 	}
 
 	@Override
-	protected void finalize() throws Throwable {
+	public void close() {
 		if (mIterationPW != null) {
 			mIterationPW.close();
 		}

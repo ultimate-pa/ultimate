@@ -80,7 +80,6 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -149,19 +148,19 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		switch (interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			traceCheck = new InterpolatingTraceCheckCraig<>(mRankEqAndSi, mHondaPredicate,
-					new TreeMap<Integer, IPredicate>(), counterexample, mServices, mCsToolkit, mPredicateFactory,
-					mPredicateUnifier, AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
+			traceCheck = new InterpolatingTraceCheckCraig<>(mRankEqAndSi, mHondaPredicate, new TreeMap<>(),
+					counterexample, mServices, mCsToolkit, mPredicateFactory, mPredicateUnifier,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, false, false, interpolation, true,
 					mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
-			traceCheck = new TraceCheckSpWp<>(mRankEqAndSi, mHondaPredicate, new TreeMap<Integer, IPredicate>(),
-					counterexample, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
-					mCsToolkit.getManagedScript(), mSimplificationTechnique, false);
+			traceCheck = new TraceCheckSpWp<>(mRankEqAndSi, mHondaPredicate, new TreeMap<>(), counterexample,
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices,
+					false, mPredicateFactory, mPredicateUnifier, interpolation, mCsToolkit.getManagedScript(),
+					mSimplificationTechnique, false);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -181,10 +180,8 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 			assert !mLoop.isPendingReturn(i) : "not yet supported";
 			return true;
 		}
-		if (mLoop.isCallPosition(i + 1)) {
-			if (!mLoop.isPendingCall(i + 1)) {
-				return true;
-			}
+		if (mLoop.isCallPosition(i + 1) && !mLoop.isPendingCall(i + 1)) {
+			return true;
 		}
 		return false;
 	}

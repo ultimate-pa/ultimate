@@ -6,7 +6,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 
-
 public class TestMain {
 	public static void main(final String[] args) {
 		System.out.println("test");
@@ -19,11 +18,12 @@ public class TestMain {
 		final boolean mAnnotateTerms = true;
 		final Script mScript = (Script) mgdScript;
 
-//		final MotzkinTransformation motzkin =
-//				new MotzkinTransformation(mServices, mScript, AnalysisType.LINEAR, mAnnotateTerms);
+		// final MotzkinTransformation motzkin =
+		// new MotzkinTransformation(mServices, mScript, AnalysisType.LINEAR, mAnnotateTerms);
 
 		// Strategy strategy = new Strategy(icfg);
-		// DisjunctionTemplate dt = new DisjunctionTemplate(2, new int[] {1,2}, new int[][] {{1}, {1, 1}}, new HashSet<TermVariable>(), "name");
+		// DisjunctionTemplate dt = new DisjunctionTemplate(2, new int[] {1,2}, new int[][] {{1}, {1, 1}}, new
+		// HashSet<TermVariable>(), "name");
 		// System.out.println("formula");
 	}
 }

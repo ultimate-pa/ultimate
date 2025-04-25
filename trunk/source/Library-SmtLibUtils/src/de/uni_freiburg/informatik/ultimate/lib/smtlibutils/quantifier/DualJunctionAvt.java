@@ -47,10 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * Replace term of the form `∃x. a' = (store a k x) ∧ ϕ[x]` by `a'= (store a k
- * (select a' k)) ∧ ϕ[(select a' k)]` <br />
- * TODO Use {@link ArrayIndexEqualityManager} to simplify index equalities
- * immediately.
+ * Replace term of the form `∃x. a' = (store a k x) ∧ ϕ[x]` by `a'= (store a k (select a' k)) ∧ ϕ[(select a' k)]` <br />
+ * TODO Use {@link ArrayIndexEqualityManager} to simplify index equalities immediately.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -83,10 +81,9 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 
 		for (final TermVariable eliminatee : inputEt.getEliminatees()) {
 			final AvtReplacementInformation replacementInfo = findReplacement(inputEt, eliminatee);
-			if (replacementInfo != null) {
-				if (replacementInfo.getIndicesOfSubsequentArrayWrites().isEmpty() || mAllowCaseDistinctions) {
-					return doElimination(inputEt, eliminatee, replacementInfo);
-				}
+			if ((replacementInfo != null)
+					&& (replacementInfo.getIndicesOfSubsequentArrayWrites().isEmpty() || mAllowCaseDistinctions)) {
+				return doElimination(inputEt, eliminatee, replacementInfo);
 			}
 		}
 		return null;
@@ -114,25 +111,23 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(mScript, inputEt.getQuantifier(),
 				correspondingFiniteJunction);
-		final EliminationTask resultEt = new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(), result,
-				inputEt.getContext());
+		final EliminationTask resultEt =
+				new EliminationTask(inputEt.getQuantifier(), inputEt.getEliminatees(), result, inputEt.getContext());
 		return new EliminationResult(resultEt, Collections.emptySet());
 	}
 
 	/**
-	 * It may be costly to always iterate over all eliminatees and dualFiniteJuncts.
-	 * In many cases there will be no MultiIndexArrayUpdate. In order to save these
-	 * costs we use this methods to check in advance of some eliminatee occurs in
-	 * the value of some MultiIndexArrayUpdate. <br />
-	 * It seems to make sense to let this method return more information and use
-	 * this later. However, this would make the code significantly more complex and
-	 * we can only save some time in the rare cases where this preinvestigation
+	 * It may be costly to always iterate over all eliminatees and dualFiniteJuncts. In many cases there will be no
+	 * MultiIndexArrayUpdate. In order to save these costs we use this methods to check in advance of some eliminatee
+	 * occurs in the value of some MultiIndexArrayUpdate. <br />
+	 * It seems to make sense to let this method return more information and use this later. However, this would make
+	 * the code significantly more complex and we can only save some time in the rare cases where this preinvestigation
 	 * returns true.
 	 */
 	private boolean inexpensivePreinvestigation(final EliminationTask inputEt) {
 		final Term[] dualFiniteJuncts = QuantifierUtils.getDualFiniteJuncts(inputEt.getQuantifier(), inputEt.getTerm());
-		for (int j = 0; j < dualFiniteJuncts.length; j++) {
-			final MultiIndexArrayUpdate miau = MultiIndexArrayUpdate.of(mScript, dualFiniteJuncts[j]);
+		for (final Term dualFiniteJunct : dualFiniteJuncts) {
+			final MultiIndexArrayUpdate miau = MultiIndexArrayUpdate.of(mScript, dualFiniteJunct);
 			if (miau == null) {
 				continue;
 			}
@@ -151,10 +146,9 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Construct term for case where the index of some subsequent write is
-	 * equivalent ("different" for universal quantification) to the index where the
-	 * eliminatee is written. In this case, we can just drop the array write at the
-	 * position where the index is written.
+	 * Construct term for case where the index of some subsequent write is equivalent ("different" for universal
+	 * quantification) to the index where the eliminatee is written. In this case, we can just drop the array write at
+	 * the position where the index is written.
 	 */
 	private Term constructDualFiniteJunctionForCoincidingIndexCase(final int quantifier,
 			final MultiIndexArrayUpdate asMiau, final ArrayIndex indexOfEliminateeWrite, final ArrayIndex idx,
@@ -168,10 +162,9 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 	}
 
 	/**
-	 * Construct term where the eliminatee is substituted by the replacement term
-	 * and we assume that the index of each subsequent write is different
-	 * ("equivalent" for universal quantification) from the index at which the
-	 * eliminatee is written.
+	 * Construct term where the eliminatee is substituted by the replacement term and we assume that the index of each
+	 * subsequent write is different ("equivalent" for universal quantification) from the index at which the eliminatee
+	 * is written.
 	 */
 	private Term constructDualFiniteJunctionForCaseForDefaultCase(final int quantifier, final Term inputTerm,
 			final TermVariable eliminatee, final Term replacement, final ArrayIndex indexOfEliminateeWrite,
@@ -210,14 +203,10 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 
 	/**
 	 * @return Triple such that
-	 *         <li>the first entry is the index of the dualJunct in which we can
-	 *         eliminate the eliminatee
-	 *         <li>the second entry is the number of the write of the
-	 *         {@link MultiIndexArrayUpdate} is written
-	 *         <li>the third entry is a term that is logically equivalent to the
-	 *         eliminatee in case subsequent writes to the array were done at
-	 *         indices that are different from the index where the eliminatee is
-	 *         written
+	 *         <li>the first entry is the index of the dualJunct in which we can eliminate the eliminatee
+	 *         <li>the second entry is the number of the write of the {@link MultiIndexArrayUpdate} is written
+	 *         <li>the third entry is a term that is logically equivalent to the eliminatee in case subsequent writes to
+	 *         the array were done at indices that are different from the index where the eliminatee is written
 	 */
 	private AvtReplacementInformation findReplacement(final EliminationTask inputEt, final TermVariable eliminatee) {
 
@@ -237,13 +226,13 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 					final Term selectFromNewArray = new MultiDimensionalSelect(miau.getNewArray(), idx).toTerm(mScript);
 					final Term derRelation = QuantifierUtils.applyDerOperator(mScript, inputEt.getQuantifier(),
 							valueAtI, selectFromNewArray);
-					final SolvedBinaryRelation sbr = new DualJunctionDer.DerHelperSbr().solveForSubject(mMgdScript,
-							inputEt.getQuantifier(), eliminatee, derRelation,
-							inputEt.getContext().getBoundByAncestors());
+					final SolvedBinaryRelation sbr =
+							new DualJunctionDer.DerHelperSbr().solveForSubject(mMgdScript, inputEt.getQuantifier(),
+									eliminatee, derRelation, inputEt.getContext().getBoundByAncestors());
 					if (sbr != null) {
 						assert sbr.getLeftHandSide() == eliminatee;
-						final List<Term> otherDualFiniteJuncts = DataStructureUtils
-								.copyAllButOne(Arrays.asList(dualFiniteJuncts), j);
+						final List<Term> otherDualFiniteJuncts =
+								DataStructureUtils.copyAllButOne(Arrays.asList(dualFiniteJuncts), j);
 						return new AvtReplacementInformation(miau, i, otherDualFiniteJuncts, sbr.getRightHandSide());
 					}
 				}
@@ -252,7 +241,7 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 		return null;
 	}
 
-	private class AvtReplacementInformation {
+	private static class AvtReplacementInformation {
 		private final MultiIndexArrayUpdate mMiau;
 		private final int mPositionOfWriteWhereEliminateeIsWritten;
 		private final List<ArrayIndex> mIndicesOfSubsequentArrayWrites;
@@ -264,8 +253,8 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 				final Term replacement) {
 			mMiau = miau;
 			mPositionOfWriteWhereEliminateeIsWritten = positionOfWriteWhereEliminateeIsWritten;
-			mIndicesOfSubsequentArrayWrites = indicesOfSubsequentArrayWrites(positionOfWriteWhereEliminateeIsWritten,
-					miau);
+			mIndicesOfSubsequentArrayWrites =
+					indicesOfSubsequentArrayWrites(positionOfWriteWhereEliminateeIsWritten, miau);
 			mOtherDualFiniteJuncts = otherDualFiniteJuncts;
 			mReplacement = replacement;
 		}
@@ -273,8 +262,8 @@ public class DualJunctionAvt extends DualJunctionQuantifierElimination {
 		private List<ArrayIndex> indicesOfSubsequentArrayWrites(final int positionOfWriteWhereEliminateeIsWritten,
 				final MultiIndexArrayUpdate miau) {
 			final List<ArrayIndex> indicesOfSubsequentWrites = new ArrayList<>();
-			for (int i = positionOfWriteWhereEliminateeIsWritten + 1; i < miau.getMultiDimensionalNestedStore()
-					.getIndices().size(); i++) {
+			for (int i = positionOfWriteWhereEliminateeIsWritten + 1;
+					i < miau.getMultiDimensionalNestedStore().getIndices().size(); i++) {
 				final ArrayIndex idx = miau.getMultiDimensionalNestedStore().getIndices().get(i);
 				indicesOfSubsequentWrites.add(idx);
 			}

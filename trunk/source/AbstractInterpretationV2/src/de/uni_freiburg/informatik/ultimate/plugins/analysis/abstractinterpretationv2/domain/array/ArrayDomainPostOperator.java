@@ -94,7 +94,8 @@ public class ArrayDomainPostOperator<STATE extends IAbstractState<STATE>>
 		final IcfgEdge transitionLabel = transition.getLabel();
 
 		assert transitionLabel instanceof Call || transitionLabel instanceof Return
-				|| transitionLabel instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
+				|| transitionLabel instanceof Summary
+				: "Cannot calculate hierachical post for non-hierachical transition";
 
 		if (transitionLabel instanceof Call) {
 			final Call call = (Call) transitionLabel;

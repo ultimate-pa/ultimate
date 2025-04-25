@@ -72,7 +72,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	 *             if timeout exceeds
 	 */
 	public RemoveNonLiveStates(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services, operand);
 
 		mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);

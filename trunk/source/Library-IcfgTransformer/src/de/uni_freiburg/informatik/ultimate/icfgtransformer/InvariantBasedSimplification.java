@@ -134,12 +134,18 @@ public class InvariantBasedSimplification extends CopyingTransformulaTransformer
 		final Set<Term> freeVarsInOldTerm = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		final Set<Term> freeVarsInNewTerm = new HashSet<>(Arrays.asList(newTerm.getFreeVars()));
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
+		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		{
+			// Remove invars that do not occur any more
 			final Iterator<Entry<IProgramVar, TermVariable>> it = newInVars.entrySet().iterator();
 			while (it.hasNext()) {
 				final Entry<IProgramVar, TermVariable> entry = it.next();
 				if (freeVarsInOldTerm.contains(entry.getValue()) && !freeVarsInNewTerm.contains(entry.getValue())) {
 					it.remove();
+					if (newOutVars.get(entry.getKey()) == entry.getValue()) {
+						// Remove similar outvar, otherwise the variable would be considered havoced
+						newOutVars.remove(entry.getKey());
+					}
 				}
 			}
 		}
@@ -148,8 +154,8 @@ public class InvariantBasedSimplification extends CopyingTransformulaTransformer
 			programConsts = tf.getNonTheoryConsts();
 		} else {
 			programConsts = new HashSet<>(tf.getNonTheoryConsts());
-			final Predicate<Term> p = (x -> (x instanceof ApplicationTerm)
-					&& (!((ApplicationTerm) x).getFunction().isIntern()));
+			final Predicate<Term> p =
+					(x -> (x instanceof ApplicationTerm) && (!((ApplicationTerm) x).getFunction().isIntern()));
 			final Set<Term> applicationTerms = SubTermFinder.find(newTerm, p, false);
 			final Iterator<IProgramConst> it = programConsts.iterator();
 			while (it.hasNext()) {
@@ -159,7 +165,7 @@ public class InvariantBasedSimplification extends CopyingTransformulaTransformer
 				}
 			}
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, tf.getOutVars(), programConsts.isEmpty(),
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars, programConsts.isEmpty(),
 				programConsts.isEmpty() ? null : tf.getNonTheoryConsts(), tf.getBranchEncoders().isEmpty(),
 				tf.getBranchEncoders().isEmpty() ? null : tf.getBranchEncoders(), tf.getAuxVars().isEmpty());
 		tfb.setFormula(newTerm);

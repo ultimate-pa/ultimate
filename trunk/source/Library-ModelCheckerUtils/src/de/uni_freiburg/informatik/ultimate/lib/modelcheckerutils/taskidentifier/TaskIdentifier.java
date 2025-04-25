@@ -27,43 +27,34 @@
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier;
 
 /**
- * Objects of this type (and its subclasses) are only used to generate strings.
- * In several parts of Ultimate we would like to have unique identifiers for
- * dumping things (e.g., SMT scripts, automata, pathprograms) to files.
- * Using local information for generating the strings was not sufficient.
- * E.g., a TrackCheck can be done 
+ * Objects of this type (and its subclasses) are only used to generate strings. In several parts of Ultimate we would
+ * like to have unique identifiers for dumping things (e.g., SMT scripts, automata, pathprograms) to files. Using local
+ * information for generating the strings was not sufficient. E.g., a TrackCheck can be done
  * <ul>
- * <li> while checking if a MapElimination was an overapproximation 
- * <li> while checking termination, 
- * <li> while checking for the existance of a danger invariant in a path program
- * <li> in iteration 42 of a CEGAR loop
- * <li> while verifying the 23rd specification of
- * <li> an input program whose filename is x.
+ * <li>while checking if a MapElimination was an overapproximation
+ * <li>while checking termination,
+ * <li>while checking for the existance of a danger invariant in a path program
+ * <li>in iteration 42 of a CEGAR loop
+ * <li>while verifying the 23rd specification of
+ * <li>an input program whose filename is x.
  * </ul>
- * Each {@link TaskIdentifier} takes the {@link TaskIdentifier} of its parent
- * task (null if topmost) and can generate a stings that identifies the current
- * subtask (e.g., Iteration42). The generation of the subtask string is defined
- * by the subclasses of this class.
- * These {@link TaskIdentifier} form a singly linked list and strings are 
- * constructed each time anew, but performance is irrelevant here.
- * 
+ * Each {@link TaskIdentifier} takes the {@link TaskIdentifier} of its parent task (null if topmost) and can generate a
+ * stings that identifies the current subtask (e.g., Iteration42). The generation of the subtask string is defined by
+ * the subclasses of this class. These {@link TaskIdentifier} form a singly linked list and strings are constructed each
+ * time anew, but performance is irrelevant here.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public abstract class TaskIdentifier {
-	
+
 	private final TaskIdentifier mParentTaskIdentifier;
-	
+
 	protected abstract String getSubtaskIdentifier();
-	
-	
-	
+
 	public TaskIdentifier(final TaskIdentifier parentTaskIdentifier) {
-		super();
 		mParentTaskIdentifier = parentTaskIdentifier;
 	}
-
-
 
 	@Override
 	public String toString() {

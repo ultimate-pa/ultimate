@@ -57,14 +57,9 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Destructive equality resolution (DER) for terms in XNF.
- * <br>
- * DER transforms terms of the form
- * <code>∃x. x=t /\ φ(x)</code>
- * into
- * <code>φ[x-->t]</code>
- * where [x-->t] denotes that all occurrences of x have been replaced.
- * (Applies the dual transformation for universal quantification.)
+ * Destructive equality resolution (DER) for terms in XNF. <br>
+ * DER transforms terms of the form <code>∃x. x=t /\ φ(x)</code> into <code>φ[x-->t]</code> where [x-->t] denotes that
+ * all occurrences of x have been replaced. (Applies the dual transformation for universal quantification.)
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -97,13 +92,13 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		if (EXTENDED_DEBUG_OUTPUT) {
 			eliminateesBefore = new ArrayList<>(eliminatees);
 		}
-//		final HashSet<TermVariable> copyOfeliminatees = new HashSet<>(eliminatees);
-//		final Term[] resultAtoms = tryToEliminate_EqInfoBased(quantifier, dualJuncts, copyOfeliminatees);
+		// final HashSet<TermVariable> copyOfeliminatees = new HashSet<>(eliminatees);
+		// final Term[] resultAtoms = tryToEliminate_EqInfoBased(quantifier, dualJuncts, copyOfeliminatees);
 		final Term[] resultAtomsSbr_Based = tryToEliminate_SbrBased(quantifier, dualJuncts, eliminatees);
-//		assert (eliminatees.equals(copyOfeliminatees)) : "old " + eliminatees + " new " + copyOfeliminatees;
+		// assert (eliminatees.equals(copyOfeliminatees)) : "old " + eliminatees + " new " + copyOfeliminatees;
 		if (EXTENDED_DEBUG_OUTPUT) {
-			final List<TermVariable> eliminateesAfter = eliminateesBefore.stream().filter(x -> !eliminatees.contains(x))
-					.collect(Collectors.toList());
+			final List<TermVariable> eliminateesAfter =
+					eliminateesBefore.stream().filter(x -> !eliminatees.contains(x)).collect(Collectors.toList());
 			final String message = "Applied " + getAcronym() + " to " + dualJuncts.length + " "
 					+ QuantifierUtils.getNameOfDualJuncts(quantifier) + " and " + eliminateesBefore.size()
 					+ "eliminatees: " + eliminateesBefore + " removed "
@@ -183,14 +178,14 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				}
 			}
 		} while (someVariableWasEliminated);
-		return term2relation.keySet().toArray(new Term[term2relation.keySet().size()]);
+		return term2relation.keySet().toArray(new Term[term2relation.size()]);
 	}
 
 	private LinkedHashMap<Term, PolynomialRelation> tryToEliminateOneVar(final Script script, final int quantifier,
 			final LinkedHashMap<Term, PolynomialRelation> term2relation, final TermVariable tv) {
 		// returns probably map in the future
-		final Pair<Term, SolvedBinaryRelation> solution = tryToSolveWithoutAssumptionsAndUpdateEntries(script,
-				quantifier, term2relation, tv);
+		final Pair<Term, SolvedBinaryRelation> solution =
+				tryToSolveWithoutAssumptionsAndUpdateEntries(script, quantifier, term2relation, tv);
 		if (solution == null) {
 			return null;
 		} else {
@@ -205,19 +200,18 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 				SolvedBinaryRelation sbr;
 				sbr = tryToSolveAndUpdateEntry(script, quantifier, tv, entry);
 				if (sbr != null) {
-					return new Pair<Term, SolvedBinaryRelation>(entry.getKey(), sbr);
+					return new Pair<>(entry.getKey(), sbr);
 				}
 			}
 		}
 		return null;
 	}
 
-
 	private LinkedHashMap<Term, PolynomialRelation> replace(final Script script,
 			final LinkedHashMap<Term, PolynomialRelation> term2relation, final SolvedBinaryRelation sbr,
 			final Term termOfSbr) {
-		final Map<Term, Term> substitutionMapping = Collections.singletonMap(sbr.getLeftHandSide(),
-				sbr.getRightHandSide());
+		final Map<Term, Term> substitutionMapping =
+				Collections.singletonMap(sbr.getLeftHandSide(), sbr.getRightHandSide());
 		final LinkedHashMap<Term, PolynomialRelation> result = new LinkedHashMap<>();
 		for (final Entry<Term, PolynomialRelation> entry : term2relation.entrySet()) {
 			if (entry.getKey() == termOfSbr) {
@@ -318,13 +312,13 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 					Collections.singletonMap(eqInfo.getGivenTerm(), eqInfo.getRelatedTerm());
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitutionMapping, inputAtoms[i]);
-				assert UltimateNormalFormUtils
-						.respectsUltimateNormalForm(resultAtoms[i]) : "Term not in UltimateNormalForm";
+				assert UltimateNormalFormUtils.respectsUltimateNormalForm(resultAtoms[i])
+						: "Term not in UltimateNormalForm";
 			}
 			for (int i = eqInfo.getIndex() + 1; i < inputAtoms.length; i++) {
 				resultAtoms[i - 1] = substituteAndNormalize(substitutionMapping, inputAtoms[i]);
-				assert UltimateNormalFormUtils
-						.respectsUltimateNormalForm(resultAtoms[i - 1]) : "Term not in UltimateNormalForm";
+				assert UltimateNormalFormUtils.respectsUltimateNormalForm(resultAtoms[i - 1])
+						: "Term not in UltimateNormalForm";
 			}
 		}
 		return resultAtoms;

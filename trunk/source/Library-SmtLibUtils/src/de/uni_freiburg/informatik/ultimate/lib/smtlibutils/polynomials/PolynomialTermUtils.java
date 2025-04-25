@@ -42,8 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.ArithmeticUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.SparseMapBuilder;
 
 /**
- * Provides static auxiliary methods for {@link AffineTerm}s and
- * {@link PolynomialTerm}s
+ * Provides static auxiliary methods for {@link AffineTerm}s and {@link PolynomialTerm}s
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -80,9 +79,8 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * It may occur, that the PolynomialTerm-class is used to represent a term, that
-	 * could be represented by the AffineTerm-class. Hence, this method checks,
-	 * whether the term given by the map could be represented by the
+	 * It may occur, that the PolynomialTerm-class is used to represent a term, that could be represented by the
+	 * AffineTerm-class. Hence, this method checks, whether the term given by the map could be represented by the
 	 * AffineTerm-class.
 	 */
 	public static boolean isAffineMap(final Map<Monomial, Rational> map) {
@@ -95,8 +93,7 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * Convert a map in <Monomial, Rational> Form to an equivalent map in <Term,
-	 * Rational> Form if possible.
+	 * Convert a map in <Monomial, Rational> Form to an equivalent map in <Term, Rational> Form if possible.
 	 */
 	public static Map<Term, Rational> convertToAffineMap(final Map<Monomial, Rational> map) {
 		final SparseMapBuilder<Term, Rational> mapBuilder = new SparseMapBuilder<>();
@@ -110,15 +107,12 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * Generalized builder for sums of {@link AffineTerm}s and
-	 * {@link PolynomialTerm}s. The type parameter T refers either to
-	 * {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL is a
-	 * {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
-	 * {@link PolynomialTerm}s.
+	 * Generalized builder for sums of {@link AffineTerm}s and {@link PolynomialTerm}s. The type parameter T refers
+	 * either to {@link AffineTerm} or {@link PolynomialTerm}. The type parameter MNL is a {@link Term} for
+	 * {@link AffineTerm}s and a {@link Monomial} for {@link PolynomialTerm}s.
 	 *
 	 * @param term2map
-	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
-	 *            map.
+	 *            {@link Function} that returns for a given T the Map<MNL,Rational> map.
 	 * @param wrapper
 	 *            {
 	 * @param constructor
@@ -152,15 +146,12 @@ public class PolynomialTermUtils {
 	}
 
 	/**
-	 * Generalized builder for multiplication of a constant and either an
-	 * {@link AffineTerm}s or a {@link PolynomialTerm}s. The type parameter T refers
-	 * either to {@link AffineTerm} or {@link PolynomialTerm}. The type parameter
-	 * MNL is a {@link Term} for {@link AffineTerm}s and a {@link Monomial} for
-	 * {@link PolynomialTerm}s.
+	 * Generalized builder for multiplication of a constant and either an {@link AffineTerm}s or a
+	 * {@link PolynomialTerm}s. The type parameter T refers either to {@link AffineTerm} or {@link PolynomialTerm}. The
+	 * type parameter MNL is a {@link Term} for {@link AffineTerm}s and a {@link Monomial} for {@link PolynomialTerm}s.
 	 *
 	 * @param term2map
-	 *            {@link Function} that returns for a given T the Map<MNL,Rational>
-	 *            map.
+	 *            {@link Function} that returns for a given T the Map<MNL,Rational> map.
 	 * @param constructor
 	 *            Methods that constructs the term of type T.
 	 */
@@ -182,8 +173,8 @@ public class PolynomialTermUtils {
 			sort = term.getSort();
 			constant = PolynomialTermUtils.bringValueInRange(term.getConstant().mul(multiplier), sort);
 			for (final Map.Entry<MNL, Rational> summand : term2map.apply(term).entrySet()) {
-				final Rational newCoefficient = PolynomialTermUtils
-						.bringValueInRange(summand.getValue().mul(multiplier), sort);
+				final Rational newCoefficient =
+						PolynomialTermUtils.bringValueInRange(summand.getValue().mul(multiplier), sort);
 				variable2Coefficient.put(summand.getKey(), newCoefficient);
 			}
 		}
@@ -192,22 +183,19 @@ public class PolynomialTermUtils {
 
 	@FunctionalInterface
 	public interface GeneralizedConstructor<V, T> {
-		public T apply(Sort sort, Rational constant, Map<V, Rational> map);
+		T apply(Sort sort, Rational constant, Map<V, Rational> map);
 	}
 
 	@FunctionalInterface
 	public interface TriFunction<T, U, R, S> {
-		public S apply(T script, U sort, R term);
+		S apply(T script, U sort, R term);
 	}
 
-
 	/**
-	 * Divide the given divident by the given divisor. Return the result only if for
-	 * the given sort there is some "inverse" element invrs such that a
-	 * multiplication of the result with invrs is equivalent to the divident. Return
-	 * null if no such inverse element exists. We assume that for reals the division
-	 * is "/" for ints the division is "div" and for bitvectors the division is
-	 * "bvudiv".
+	 * Divide the given divident by the given divisor. Return the result only if for the given sort there is some
+	 * "inverse" element invrs such that a multiplication of the result with invrs is equivalent to the divident. Return
+	 * null if no such inverse element exists. We assume that for reals the division is "/" for ints the division is
+	 * "div" and for bitvectors the division is "bvudiv".
 	 */
 	public static Rational divInvertible(final Sort sort, final Rational divident, final Rational divisor) {
 		final Rational result;

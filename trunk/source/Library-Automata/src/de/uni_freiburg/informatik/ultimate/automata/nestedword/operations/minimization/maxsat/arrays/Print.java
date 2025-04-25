@@ -46,10 +46,10 @@ final class Print {
 	static void printPartition(final Writer writer, final Partition partition) {
 		assert Partition.checkConsistency(partition);
 
-		final ArrayList<ArrayList<Integer>> classes = new ArrayList<ArrayList<Integer>>();
+		final ArrayList<ArrayList<Integer>> classes = new ArrayList<>();
 
 		for (int i = 0; i < partition.mNumClasses; i++) {
-			classes.add(new ArrayList<Integer>());
+			classes.add(new ArrayList<>());
 		}
 
 		for (int i = 0; i < partition.mClassOf.length; i++) {

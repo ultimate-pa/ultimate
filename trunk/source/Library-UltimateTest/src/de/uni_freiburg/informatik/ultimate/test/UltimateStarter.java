@@ -31,8 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.eclipse.core.runtime.IStatus;
 import org.xml.sax.SAXException;
 
@@ -49,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import jakarta.xml.bind.JAXBException;
 
 /**
  *

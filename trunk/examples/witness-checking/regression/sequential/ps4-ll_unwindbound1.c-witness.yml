@@ -1,0 +1,83 @@
+#Unsafe
+- entry_type: "violation_sequence"
+  metadata:
+    format_version: "2.0"
+    uuid: "8e974e5b-949f-3b01-8e20-c799a59d7178"
+    creation_time: "2024-12-04T07:02:40+01:00"
+    producer:
+      name: "CPAchecker"
+      version: "3.1-svn-b24a086398+"
+      configuration: "nacpa--svcomp25--singleLoop-symbolicExecution"
+    task:
+      input_files:
+      - "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+      input_file_hashes:
+        "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c": "5a7fa473b022aa2e23bff7f5f7b8857d51e8b48cb53169d649271e1a03b0ebc0"
+      specification: "CHECK( init(main()), LTL(G ! call(reach_error())) )"
+      data_model: "ILP32"
+      language: "C"
+  content:
+  - segment:
+    - waypoint:
+        type: "branching"
+        action: "follow"
+        constraint:
+          value: "true"
+        location:
+          file_name: "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+          line: 27
+          column: 5
+          function: "main"
+  - segment:
+    - waypoint:
+        type: "branching"
+        action: "follow"
+        constraint:
+          value: "false"
+        location:
+          file_name: "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+          line: 10
+          column: 5
+          function: "__VERIFIER_assert"
+  - segment:
+    - waypoint:
+        type: "branching"
+        action: "follow"
+        constraint:
+          value: "false"
+        location:
+          file_name: "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+          line: 30
+          column: 9
+          function: "main"
+  - segment:
+    - waypoint:
+        type: "branching"
+        action: "follow"
+        constraint:
+          value: "false"
+        location:
+          file_name: "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+          line: 27
+          column: 5
+          function: "main"
+  - segment:
+    - waypoint:
+        type: "branching"
+        action: "follow"
+        constraint:
+          value: "true"
+        location:
+          file_name: "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+          line: 10
+          column: 5
+          function: "__VERIFIER_assert"
+  - segment:
+    - waypoint:
+        type: "target"
+        action: "follow"
+        location:
+          file_name: "../../sv-benchmarks/c/nla-digbench-scaling/ps4-ll_unwindbound1.c"
+          line: 12
+          column: 10
+          function: "__VERIFIER_assert"

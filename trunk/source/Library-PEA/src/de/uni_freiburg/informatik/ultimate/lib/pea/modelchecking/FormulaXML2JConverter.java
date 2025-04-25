@@ -380,7 +380,7 @@ public class FormulaXML2JConverter {
 		final int operator = getOperator(operatorString);
 
 		final String boundString = rangeExpressionNode.getAttribute(XMLTags.BOUND_TAG);
-		final double bound = (new Double(boundString)).doubleValue();
+		final double bound = Double.parseDouble(boundString);
 
 		return RangeDecision.create(variable, operator, (int) bound);
 	}

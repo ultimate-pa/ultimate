@@ -1,31 +1,31 @@
 /*
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.model;
 
@@ -46,13 +46,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 
 /**
  * Wrapper class for a normal edge, which exists in the RCFG.
- * 
+ *
  * @author Stefan Wissert
- * 
+ *
  */
-public class BasicEdge extends
-		ModifiableMultigraphEdge<MinimizedNode, IMinimizedEdge,MinimizedNode, IMinimizedEdge> implements
-		IBasicEdge {
+public class BasicEdge extends ModifiableMultigraphEdge<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge>
+		implements IBasicEdge {
 
 	/**
 	 * Serial number, do not really use it.
@@ -70,7 +69,7 @@ public class BasicEdge extends
 	private final IRating rating;
 
 	/**
-	 * 
+	 *
 	 */
 	private HashSet<IProgramVar> usedVariables;
 
@@ -79,26 +78,20 @@ public class BasicEdge extends
 	 * @param source
 	 * @param target
 	 */
-	public BasicEdge(CodeBlock originalEdge, MinimizedNode source,
-			MinimizedNode target) {
+	public BasicEdge(final CodeBlock originalEdge, final MinimizedNode source, final MinimizedNode target) {
 		super(source, target);
 		this.originalEdge = originalEdge;
-		if (originalEdge.getTransformula() != null
-				&& !(originalEdge instanceof Summary)) {
-			usedVariables = new HashSet<IProgramVar>();
-			usedVariables.addAll(originalEdge.getTransformula()
-					.getAssignedVars());
-			usedVariables.addAll(originalEdge.getTransformula()
-					.getInVars().keySet());
-			usedVariables.addAll(originalEdge.getTransformula()
-					.getOutVars().keySet());
+		if (originalEdge.getTransformula() != null && !(originalEdge instanceof Summary)) {
+			usedVariables = new HashSet<>();
+			usedVariables.addAll(originalEdge.getTransformula().getAssignedVars());
+			usedVariables.addAll(originalEdge.getTransformula().getInVars().keySet());
+			usedVariables.addAll(originalEdge.getTransformula().getOutVars().keySet());
 		} else {
-			usedVariables = new HashSet<IProgramVar>();
+			usedVariables = new HashSet<>();
 		}
 		rating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfBasicEdges();
-		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(usedVariables
-				.size());
+		EncodingStatistics.setMaxMinDiffVariablesInOneEdge(usedVariables.size());
 	}
 
 	@Override
@@ -137,12 +130,12 @@ public class BasicEdge extends
 
 	/**
 	 * This method checks a Set of BoogieVars, if there is a OldVar contained.
-	 * 
+	 *
 	 * @param vars
 	 *            a Set of BoogieVars
 	 * @return true if there is an OldVar
 	 */
-	private boolean checkBoogieVarSetForOldVar(Set<IProgramVar> vars) {
+	private boolean checkBoogieVarSetForOldVar(final Set<IProgramVar> vars) {
 		for (final IProgramVar boogieVar : vars) {
 			if (boogieVar.isOldvar()) {
 				return true;

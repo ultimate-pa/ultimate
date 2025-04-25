@@ -36,17 +36,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Generalized version of {@link TransFormula} where the constraint is
- * not necessarily given as a Term.
- * TODO: documentation
+ * Generalized version of {@link TransFormula} where the constraint is not necessarily given as a Term. TODO:
+ * documentation
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public interface ITransitionRelation {
 
 	/**
-	 * @return Set of {@link IProgramVar}s with the property that every variable
-	 *         that is not in the set does not change its value.
+	 * @return Set of {@link IProgramVar}s with the property that every variable that is not in the set does not change
+	 *         its value.
 	 */
 	Set<IProgramVar> getAssignedVars();
 
@@ -61,22 +61,19 @@ public interface ITransitionRelation {
 	}
 
 	/**
-	 * If this method returns true, there are no restrictions on `pv`'s outVar. This
-	 * means that after executing an {@link IAction} labeled with this
-	 * {@link ITransitionRelation}, the variable `pv` may have any value.
-	 * Nonetheless, there may be constraints on the inVar, which may prevent the
-	 * execution of the {@link IAction} for some values of `pv`.
+	 * If this method returns true, there are no restrictions on `pv`'s outVar. This means that after executing an
+	 * {@link IAction} labeled with this {@link ITransitionRelation}, the variable `pv` may have any value. Nonetheless,
+	 * there may be constraints on the inVar, which may prevent the execution of the {@link IAction} for some values of
+	 * `pv`.
 	 *
 	 */
 	boolean isHavocedOut(IProgramVar pv);
 
 	/**
-	 * If this method returns true, there are no restrictions on `pv`'s inVar. This
-	 * means that the executability of an {@link IAction} labeled with this
-	 * {@link ITransitionRelation}, does not depend on the value of `pv`.
-	 * Nonetheless, there may be constraints on the outVar. E.g., if `x` does not
-	 * occur in `t`, the assignment `x := t` leads to an {ITransitionRelation} in
-	 * which `x` is havoced-in.
+	 * If this method returns true, there are no restrictions on `pv`'s inVar. This means that the executability of an
+	 * {@link IAction} labeled with this {@link ITransitionRelation}, does not depend on the value of `pv`. Nonetheless,
+	 * there may be constraints on the outVar. E.g., if `x` does not occur in `t`, the assignment `x := t` leads to an
+	 * {ITransitionRelation} in which `x` is havoced-in.
 	 */
 	boolean isHavocedIn(IProgramVar pv);
 

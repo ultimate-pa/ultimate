@@ -62,6 +62,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  */
 public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>>
 		extends LevelRankingGenerator<LETTER, STATE, CONSTRAINT> {
+	/**
+	 * Possible optimization that has not yet been investigated very well.
+	 */
+	private static final boolean DEBUG_CHECK_MORE_THAN_ONLY_O_ESCAPE = false;
 	private final FkvOptimization mOptimization;
 
 	/**
@@ -70,12 +74,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum FkvOptimization {
-		HEIMAT1,
-		HEIMAT2,
-		TIGHT_LEVEL_RANKINGS,
-		HIGH_EVEN,
-		SCHEWE,
-		ELASTIC,
+		HEIMAT1, HEIMAT2, TIGHT_LEVEL_RANKINGS, HIGH_EVEN, SCHEWE, ELASTIC,
 	}
 
 	/**
@@ -101,20 +100,20 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	public Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(final CONSTRAINT constraint,
 			final boolean predecessorIsSubsetComponent) {
 		switch (mOptimization) {
-			case HEIMAT1:
-				return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
-			case HEIMAT2:
-				return new HeiMatTightLevelRankingStateGenerator(constraint, true).computeResult();
-			case HIGH_EVEN:
-				return new HighEvenTightLevelRankingStateGenerator(constraint).computeResult();
-			case SCHEWE:
-				return generateLevelRankingsSchewe(constraint, predecessorIsSubsetComponent);
-			case ELASTIC:
-				return generateLevelRankingsElastic(constraint, predecessorIsSubsetComponent);
-			case TIGHT_LEVEL_RANKINGS:
-				return new TightLevelRankingStateGenerator(constraint).computeResult();
-			default:
-				throw new UnsupportedOperationException();
+		case HEIMAT1:
+			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
+		case HEIMAT2:
+			return new HeiMatTightLevelRankingStateGenerator(constraint, true).computeResult();
+		case HIGH_EVEN:
+			return new HighEvenTightLevelRankingStateGenerator(constraint).computeResult();
+		case SCHEWE:
+			return generateLevelRankingsSchewe(constraint, predecessorIsSubsetComponent);
+		case ELASTIC:
+			return generateLevelRankingsElastic(constraint, predecessorIsSubsetComponent);
+		case TIGHT_LEVEL_RANKINGS:
+			return new TightLevelRankingStateGenerator(constraint).computeResult();
+		default:
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -131,7 +130,14 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		if (predecessorIsSubsetComponent) {
 			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
 		}
-		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE);
+		final EnumSet<VoluntaryRankDecrease> voluntaryRankDecrease;
+		if (DEBUG_CHECK_MORE_THAN_ONLY_O_ESCAPE) {
+			voluntaryRankDecrease =
+					EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
+							VoluntaryRankDecrease.PREDECESSOR_HAS_EMPTY_O);
+		} else {
+			voluntaryRankDecrease = EnumSet.of(VoluntaryRankDecrease.ALLOWS_O_ESCAPE);
+		}
 		return new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, mUserDefinedMaxRank, true, false, true,
 				voluntaryRankDecrease).generateLevelRankings((LevelRankingConstraintDrdCheck<LETTER, STATE>) constraint,
 						false);
@@ -164,7 +170,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 
 		Collection<LevelRankingState<LETTER, STATE>> computeResult() {
 			// mLogger.debug("Constructing LevelRankings for" + mUnrestrictedDoubleDeckerWithRankInfo.toString()
-			//		+ mRestrictedDoubleDeckerWithRankInfo.toString());
+			// + mRestrictedDoubleDeckerWithRankInfo.toString());
 
 			if (mUnrestrictedRank.length == 0 && mRestrictedRank.length == 0) {
 				return Collections.emptySet();
@@ -238,9 +244,9 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		 */
 		private int getMaxNatOrZero(final int[] array) {
 			int max = 0;
-			for (int i = 0; i < array.length; i++) {
-				if (array[i] > max) {
-					max = array[i];
+			for (final int element : array) {
+				if (element > max) {
+					max = element;
 				}
 			}
 			return max;
@@ -372,7 +378,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		private static final int THOUSAND = 1000;
 		private final TreeHashRelation<Integer, DoubleDecker<StateWithRankInfo<STATE>>> mUnrestrictedMaxRank2DoubleDeckerWithRankInfo;
 		private final boolean mSuccessorsOfFinalsWantToLeaveO;
-		//		private final int numberOfDoubleDeckerWithRankInfos;
+		// private final int numberOfDoubleDeckerWithRankInfos;
 
 		public HeiMatTightLevelRankingStateGenerator(final LevelRankingConstraint<LETTER, STATE> constraint,
 				final boolean successorsOfFinalsWantToLeaveO) {
@@ -380,7 +386,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			mSuccessorsOfFinalsWantToLeaveO = successorsOfFinalsWantToLeaveO;
 			mUnrestrictedMaxRank2DoubleDeckerWithRankInfo = new TreeHashRelation<>();
 			// numberOfDoubleDeckerWithRankInfos =
-			//		super.mUnrestrictedDoubleDeckerWithRankInfo.size();
+			// super.mUnrestrictedDoubleDeckerWithRankInfo.size();
 			for (final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker : super.mUnrestrictedDoubleDeckerWithRankInfo) {
 				final Integer rank =
 						constraint.mLevelRanking.get(doubleDecker.getDown()).get(doubleDecker.getUp().getState());
@@ -450,14 +456,13 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			}
 
 			/*
-			 * Unrestricted DDs that we have to assign to rk + 1 because our
-			 * constraints do not allow a higher rank.
+			 * Unrestricted DDs that we have to assign to rk + 1 because our constraints do not allow a higher rank.
 			 */
 			final DoubleDecker<StateWithRankInfo<STATE>>[] constraintToRankPlusOne =
 					getUnrestrictedWithMaxRank(rank + 1);
 
 			// List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO =
-			//		new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
+			// new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
 			/**
 			 * States for which we definitely construct a copy in which they give up their even rank for the lower odd
 			 * rank.
@@ -477,7 +482,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 					} else {
 						constraintToRankInO_WantStay.add(doubleDecker);
 					}
-					//					constraintToRankInO.add(dd);
+					// constraintToRankInO.add(dd);
 				} else {
 					constraintToRankNotInO.add(doubleDecker);
 				}
@@ -492,15 +497,12 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				numberOfCopies = 1;
 			}
 
-			/* Example: Assume we have not yet assigned any rank and the maximal
-			 * ranks are (5 4 4 2). The level ranking (5 4 4 2) is not stuffed,
-			 * because rank 1 and rank 3 are not satisfied. But the following
-			 * five level rankings are a maximal set of level rankings that
-			 * fulfill the constraints.
-			 * (5 3 3 2) (5 3 1 2) (5 1 3 2) (5 4 3 1) (5 3 4 1)
-			 * We want to construct them. Therefore we have to give some
-			 * candidates for the even rank rk, the odd rank rk - 1 instead.
-			 * E.g., two DoubleDeckerWithRankInfos in this example.
+			/*
+			 * Example: Assume we have not yet assigned any rank and the maximal ranks are (5 4 4 2). The level ranking
+			 * (5 4 4 2) is not stuffed, because rank 1 and rank 3 are not satisfied. But the following five level
+			 * rankings are a maximal set of level rankings that fulfill the constraints. (5 3 3 2) (5 3 1 2) (5 1 3 2)
+			 * (5 4 3 1) (5 3 4 1) We want to construct them. Therefore we have to give some candidates for the even
+			 * rank rk, the odd rank rk - 1 instead. E.g., two DoubleDeckerWithRankInfos in this example.
 			 */
 
 			// number of odd ranks that we have to assign with even-candidates
@@ -525,14 +527,14 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			}
 
 			// assert constraintToRank.length - maxNumberOfEvenRanksWeMayAssign
-			//		== numberOfOddRanksThatWeHaveToAssignAdditionally;
+			// == numberOfOddRanksThatWeHaveToAssignAdditionally;
 
 			final int inO_leavemultiplier = (int) Math.pow(2, constraintToRankInO_WantLeave.size());
 			final int inO_staymultiplier = (int) Math.pow(2, constraintToRankInO_WantStay.size());
 
-			//			int inOmultiplier = (int) Math.pow(2, constraintToRankInO.size());
+			// int inOmultiplier = (int) Math.pow(2, constraintToRankInO.size());
 			final int notInOmultiplier = (int) Math.pow(2, constraintToRankNotInO.size());
-			//			assert (numberOfCopies == inOmultiplier * notInOmultiplier);
+			// assert (numberOfCopies == inOmultiplier * notInOmultiplier);
 			assert numberOfCopies == inO_leavemultiplier * inO_staymultiplier * notInOmultiplier;
 
 			outerLoop(rank, lrwsi, constraintToRankPlusOne, constraintToRankInO_WantLeave, constraintToRankInO_WantStay,
@@ -770,7 +772,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			 * smaller than or equal to (mCurrentRank - rk + 1).
 			 */
 			private final TreeSet<Integer> mUnSatisfiedOddRanks;
-			//			private final Map<DoubleDecker<StateWithRankInfo<STATE>>, Integer> mSacrificable;
+			// private final Map<DoubleDecker<StateWithRankInfo<STATE>>, Integer> mSacrificable;
 			/**
 			 * DoubleDeckerWithRankInfos that we assigned the odd rank rk although its constraints would have allows the
 			 * even rank rk + 1.
@@ -778,7 +780,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			private final List<DoubleDecker<StateWithRankInfo<STATE>>> mSacrificedDoubleDeckerWithRankInfos;
 
 			public LevelRankingWithSacrificeInformation(final LevelRankingWithSacrificeInformation copy) {
-				this.mLrs = new LevelRankingState<>(copy.mLrs);
+				mLrs = new LevelRankingState<>(copy.mLrs);
 				mCurrentRank = copy.mCurrentRank;
 				mUnSatisfiedOddRanks = new TreeSet<>(copy.mUnSatisfiedOddRanks);
 				mSacrificedDoubleDeckerWithRankInfos = new ArrayList<>(copy.mSacrificedDoubleDeckerWithRankInfos);
@@ -813,9 +815,9 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				if (isSacrifice) {
 					mSacrificedDoubleDeckerWithRankInfos.add(doubleDecker);
 				}
-				//				if (removed != null) {
-				//					updateSacrificable(removed);
-				//				}
+				// if (removed != null) {
+				// updateSacrificable(removed);
+				// }
 			}
 
 			void addOddRanks(final DoubleDecker<StateWithRankInfo<STATE>>[] dds, final int rank) {
@@ -825,22 +827,12 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			}
 
 			/*
-			private void updateSacrificable(Integer removed) {
-				Iterator<Entry<DoubleDecker<StateWithRankInfo<STATE>>, Integer>> it =
-						mSacrificable.entrySet().iterator();
-				while (it.hasNext()) {
-					Entry<DoubleDecker<StateWithRankInfo<STATE>>, Integer> entry = it.next();
-					if (entry.getValue().equals(removed)) {
-						Integer nextHighest = mUnassignedOddRanks.floor(removed);
-						if (nextHighest == null) {
-							it.remove();
-						} else {
-							entry.setValue(nextHighest);
-						}
-					}
-				}
-			}
-			*/
+			 * private void updateSacrificable(Integer removed) { Iterator<Entry<DoubleDecker<StateWithRankInfo<STATE>>,
+			 * Integer>> it = mSacrificable.entrySet().iterator(); while (it.hasNext()) {
+			 * Entry<DoubleDecker<StateWithRankInfo<STATE>>, Integer> entry = it.next(); if
+			 * (entry.getValue().equals(removed)) { Integer nextHighest = mUnassignedOddRanks.floor(removed); if
+			 * (nextHighest == null) { it.remove(); } else { entry.setValue(nextHighest); } } } }
+			 */
 
 			void addEvenRank(final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker, final int rank) {
 				assert rank % 2 == 0;

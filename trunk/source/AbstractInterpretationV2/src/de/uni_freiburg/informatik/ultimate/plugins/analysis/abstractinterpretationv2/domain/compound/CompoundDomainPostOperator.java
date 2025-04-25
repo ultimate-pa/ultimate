@@ -238,9 +238,9 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<Statement> stmtLists = new ArrayList<>();
 		stmtLists.add(assumeStmt);
 		stmtLists.addAll(mStatementExtractor.process(transition));
-		final CodeBlock result =
-				mCodeBlockFactory.constructStatementSequence(null, null, stmtLists);
-		mTransformulaBuilder.addTransitionFormulas(result, transition.getPrecedingProcedure(), mSimplificationTechnique);
+		final CodeBlock result = mCodeBlockFactory.constructStatementSequence(null, null, stmtLists);
+		mTransformulaBuilder.addTransitionFormulas(result, transition.getPrecedingProcedure(),
+				mSimplificationTechnique);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.INDENT + " Created new transition for domain " + index);
@@ -317,8 +317,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final IAbstractPostOperator postOperator = state.getDomainList().get(i).getPostOperator();
 			final EvalResult result = postOperator.evaluate(states.get(i), formula, script);
 			if (result != EvalResult.UNKNOWN) {
-				assert result == slowEvaluate(state, formula,
-						script) : "CompoundDomain substates contradict each other during evaluate";
+				assert result == slowEvaluate(state, formula, script)
+						: "CompoundDomain substates contradict each other during evaluate";
 				return result;
 			}
 		}

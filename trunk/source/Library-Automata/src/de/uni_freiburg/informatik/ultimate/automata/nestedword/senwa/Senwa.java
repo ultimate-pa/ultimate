@@ -54,7 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  * @param <STATE>
  *            state type
  */
-public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE>
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	private final Map<STATE, STATE> mState2Entry = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mEntry2Module = new HashMap<>();
 
@@ -78,11 +79,11 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public Senwa(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet, final IEmptyStackStateFactory<STATE> stateFactory) {
+	public Senwa(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet,
+			final IEmptyStackStateFactory<STATE> stateFactory) {
 		super(services, vpAlphabet, stateFactory);
 		assert isModuleInformationConsistent();
 	}
-
 
 	/**
 	 * @param state

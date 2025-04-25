@@ -90,7 +90,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private static final String BLANK_STRING = " ";
 	private static final CharSequence SOFT_CLAUSE_WEIGHT = "1 ";
 
-	private static final Object[] EMPTY_ARRAY = new Object[0];
+	private static final Object[] EMPTY_ARRAY = {};
 
 	private final String mFilename;
 	private final Appendable mWriter;
@@ -361,11 +361,9 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 					+ "c Jochen Hoenicke, Yong Li, Alexander Nutz, Betim Musa, Christian Schilling,\n"
 					+ "c Tanja Schindler, Andreas Podelski:\n"
 					+ "c Ultimate Automizer and the Search for Perfect Interpolants - (Competition\n"
-					+ "c Contribution).\n"
-					+ "c TACAS (II) 2018: 447-451\n"
+					+ "c Contribution).\n" + "c TACAS (II) 2018: 447-451\n"
 					+ "c [6] Dirk Beyer: Reliable and Reproducible Competition Results with \n"
-					+ "c BenchExec and Witnesses (Report on SV-COMP 2016).\n" + "c TACAS 2016: 887-904\n"
-					+ "p wcnf ";
+					+ "c BenchExec and Witnesses (Report on SV-COMP 2016).\n" + "c TACAS 2016: 887-904\n" + "p wcnf ";
 		} else {
 			header = "p wcnf ";
 		}

@@ -170,6 +170,7 @@ public class LassoAnalysis {
 	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
 	 *
 	 * If the stem is null, the stem has to be added separately by calling addStem().
+	 *
 	 * @param modifiableGlobalsAtHonda
 	 *            global BoogieVars that are modifiable in the procedure where the honda of the lasso lies.
 	 * @param smtSymbols
@@ -195,7 +196,8 @@ public class LassoAnalysis {
 	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
 			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final SmtFunctionsAndAxioms smtSymbols, final ILassoRankerPreferences preferences,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) throws TermException {
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique)
+			throws TermException {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -508,7 +510,6 @@ public class LassoAnalysis {
 		private final List<Float> mMaxDagSizeLassosRelative = new ArrayList<>();
 
 		public PreprocessingBenchmark(final long l) {
-			super();
 			mIntialMaxDagSizeLassos = Math.toIntExact(l);
 		}
 

@@ -124,7 +124,8 @@ public class QvasrSummarizer {
 
 		for (final Term disjunct : disjuncts) {
 			final UnmodifiableTransFormula disjunctTf = QvasrUtils.buildFormula(transitionFormula, disjunct, mScript);
-			final QvasrAbstraction qvasrAbstraction = QvasrAbstractor.computeAbstraction(mServices, mScript, disjunctTf);
+			final QvasrAbstraction qvasrAbstraction =
+					QvasrAbstractor.computeAbstraction(mServices, mScript, disjunctTf);
 			bestAbstraction = QvasrAbstractionJoin.join(mScript, bestAbstraction, qvasrAbstraction).getThird();
 		}
 

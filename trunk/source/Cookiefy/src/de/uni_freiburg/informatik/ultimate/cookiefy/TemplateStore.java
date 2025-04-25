@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.cookiefy;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -243,15 +244,15 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private Statement[] andTemplate(final String contextPath, final Procedure p, final int currentLine) {
-		final VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
+		final VariableLHS[] ret = { new VariableLHS(LocationProvider.getLocation(), "ret") };
 		// left branch call
-		final Statement[] lcallL = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
+		final Statement[] lcallL = { new CallStatement(LocationProvider.getLocation(), false, ret,
 				methodeNameGen(p, contextPath, "L"), this.concatToEncArgs(p)) };
 		// right branch call
-		final Statement[] lcallR = new Statement[] { new CallStatement(LocationProvider.getLocation(), false, ret,
+		final Statement[] lcallR = { new CallStatement(LocationProvider.getLocation(), false, ret,
 				methodeNameGen(p, contextPath, "R"), this.concatToEncArgs(p)) };
 
-		final Statement[] andAST = new Statement[] { new IfStatement(LocationProvider.getLocation(),
+		final Statement[] andAST = { new IfStatement(LocationProvider.getLocation(),
 				new WildcardExpression(LocationProvider.getLocation()), lcallL, lcallR) };
 
 		return andAST;
@@ -283,8 +284,8 @@ public class TemplateStore {
 		// left call first
 		orAST[0] = this.lcall(contextPath, p, currentLine, "L");
 		// right call
-		final Statement[] lcallR = new Statement[] { this.lcall(contextPath, p, currentLine, "R"),
-				new ReturnStatement(LocationProvider.getLocation()) };
+		final Statement[] lcallR =
+				{ this.lcall(contextPath, p, currentLine, "R"), new ReturnStatement(LocationProvider.getLocation()) };
 		// if left then right
 		orAST[1] = new IfStatement(LocationProvider.getLocation(),
 				new IdentifierExpression(LocationProvider.getLocation(), "ret"),
@@ -393,7 +394,7 @@ public class TemplateStore {
 	 */
 	private Statement lcall(final String contextPath, final Procedure p, final int currentLine, final String branch,
 			final Expression pp) {
-		final VariableLHS[] ret = new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") };
+		final VariableLHS[] ret = { new VariableLHS(LocationProvider.getLocation(), "ret") };
 		return new CallStatement(LocationProvider.getLocation(), false, ret, methodeNameGen(p, contextPath, branch),
 				this.concatToEncArgs(p, pp));
 	}
@@ -413,7 +414,7 @@ public class TemplateStore {
 	 * @param branch
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * if (*) {ret:= true; return;}
 	 * </code>
 	 */
@@ -441,7 +442,7 @@ public class TemplateStore {
 	 * </code>
 	 */
 	private static Statement[] atomicPropositionTemplate(final Expression expr) {
-		final Statement[] assign = new Statement[] { new AssignmentStatement(LocationProvider.getLocation(),
+		final Statement[] assign = { new AssignmentStatement(LocationProvider.getLocation(),
 				new VariableLHS[] { new VariableLHS(LocationProvider.getLocation(), "ret") },
 				new Expression[] { expr }), new ReturnStatement(LocationProvider.getLocation()) };
 		return assign;
@@ -454,7 +455,7 @@ public class TemplateStore {
 	 *            Name of the entry point procedure of the input program (e.g. 'main')
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * procedure main() returns ()
 	 * modifies retVal_int;
 	 * {
@@ -489,9 +490,7 @@ public class TemplateStore {
 		// globals (from input program)
 		for (final VarList v : mGlobalStateVars) {
 			// must get modifies specification, because of the havoc
-			for (final String id : v.getIdentifiers()) {
-				modifiesIdentifiers.add(id);
-			}
+			Collections.addAll(modifiesIdentifiers, v.getIdentifiers());
 			Helper.addVarListToIdentifierList(parameters, v);
 			// havoc this global variable
 			statements.add(new HavocStatement(LocationProvider.getLocation(), makeVariableLHS(v.getIdentifiers())));
@@ -582,7 +581,7 @@ public class TemplateStore {
 	 * @param p
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * varname, *
 	 * </code>
 	 */
@@ -638,7 +637,7 @@ public class TemplateStore {
 	 * @param p
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * intStack := cookiefy_args_intStack;
 	 * boolStack := cookiefy_args_boolStack;
 	 * idStack := cookiefy_args_idStack;
@@ -684,7 +683,7 @@ public class TemplateStore {
 	 * @param p
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * var bla : int;
 	 * var intStack : iStack, boolStack : bStack, idStack : iArray, ppStack : iArray, sp : int;
 	 * var foo : bool;
@@ -733,7 +732,7 @@ public class TemplateStore {
 	 * @param p
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * cookiefy_args_bla:int, cookiefy_args_foo:bool, cookiefy_args_intStack:iStack, cookiefy_args_boolStack:bStack, ...
 	 * </code>
 	 */
@@ -779,7 +778,7 @@ public class TemplateStore {
 	 * @param p
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 *  intStack, boolStack, idStack, ppStack, sp, ...
 	 * </code>
 	 */
@@ -843,7 +842,7 @@ public class TemplateStore {
 	 * @param prefix
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * bla := cookiefy_args_bla;
 	 * </code>
 	 */
@@ -866,7 +865,7 @@ public class TemplateStore {
 	 *            context path
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * procedure enc_havoc_main_T(foo:bool, intStack:iStack, boolStack:bStack, idStack:iArray, ppStack:iArray, sp:int, pp:int) returns (ret:bool)
 	 * {
 	 *  var bla : int;
@@ -1098,9 +1097,7 @@ public class TemplateStore {
 	public List<Statement> stackPush(final Procedure p, final int pp) {
 		mIntStackFrameCounter = 0;
 		mBoolStackFrameCounter = 0;
-		final ArrayList<Statement> statements = new ArrayList<>();
-		// in parameters of p
-		statements.addAll(pushVarListToStack(p.getInParams()));
+		final ArrayList<Statement> statements = new ArrayList<>(pushVarListToStack(p.getInParams()));
 		// out parameters of p
 		statements.addAll(pushVarListToStack(p.getOutParams()));
 		// local variables of p
@@ -1139,7 +1136,7 @@ public class TemplateStore {
 	 *            for sp (only used by main entry point to set this to zero)
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * call ret := enc_havoc_recursive_T(0, ..., intStack, boolStack, idStack, ppStack, sp + 1, 0);
 	 * </code>
 	 */
@@ -1147,9 +1144,7 @@ public class TemplateStore {
 			final Expression sp) {
 
 		final ArrayList<Expression> params = new ArrayList<>();
-		for (final Expression e : args) {
-			params.add(e);
-		}
+		Collections.addAll(params, args);
 
 		// globals
 		for (final VarList v : mGlobalStateVars) {
@@ -1188,7 +1183,7 @@ public class TemplateStore {
 	 * @param path
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * call ret := preturn_T(..., intStack, boolStack, idStack, ppStack, sp);
 	 * </code>
 	 */
@@ -1218,7 +1213,7 @@ public class TemplateStore {
 	 * @param path
 	 * @return
 	 *
-	 * 		<code>
+	 *         <code>
 	 * procedure preturn_T(foo:bool, intStack:iStack, boolStack:bStack, idStack:iArray, ppStack:iArray, sp:int) returns (ret:bool)
 	 * 	modifies retVal_int;
 	 * 	{

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * <p>
  * This operation can be run in a dynamic mode. In that case we use the complete test if the automaton is small or
  * deterministic, guarded by a small timeout. Otherwise we use the incomplete test.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -80,7 +80,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 
 	/**
 	 * Mode of the test.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum TestMode {
@@ -101,7 +101,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 
 	/**
 	 * Constructor which dynamically chooses which test to use in the interest of performance.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -122,7 +122,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 
 	/**
 	 * General constructor with the option to perform an expensive but complete test.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -208,14 +208,14 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private boolean run(final IBuchiNwaInclusionStateFactory<STATE> stateFactory, final TestMode mode)
 			throws AutomataLibraryException {
 		switch (mode) {
-			case COMPLETE:
-				return checkEquivalencePrecisely(mServices, stateFactory);
-			case DYNAMIC:
-				return checkEquivalenceDynamically(stateFactory);
-			case INCOMPLETE:
-				return checkEquivalenceImprecisely();
-			default:
-				throw new IllegalArgumentException("Unknown test mode: " + mode);
+		case COMPLETE:
+			return checkEquivalencePrecisely(mServices, stateFactory);
+		case DYNAMIC:
+			return checkEquivalenceDynamically(stateFactory);
+		case INCOMPLETE:
+			return checkEquivalenceImprecisely();
+		default:
+			throw new IllegalArgumentException("Unknown test mode: " + mode);
 		}
 	}
 
@@ -293,9 +293,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private boolean extractAndCheckLassoWords(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> source,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> target) throws AutomataLibraryException {
 		// extract lasso words from the source automaton
-		final List<NestedLassoWord<LETTER>> nestedLassoWords = new ArrayList<>();
-		nestedLassoWords.addAll((new LassoExtractor<>(mServices, source)).getResult());
-
+		final List<NestedLassoWord<LETTER>> nestedLassoWords =
+				new ArrayList<>((new LassoExtractor<>(mServices, source)).getResult());
 		// check on the target automaton
 		return checkLassoWords(target, nestedLassoWords);
 	}

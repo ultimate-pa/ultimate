@@ -34,13 +34,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -115,7 +116,6 @@ public abstract class BaseMemoryModel {
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + hda.getName();
 	}
 
-
 	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
 
 	public final HeapDataArray getPointerHeapArray() {
@@ -140,11 +140,9 @@ public abstract class BaseMemoryModel {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(
 						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
-								getPointerHeapArray().getASTType(), Collections.emptySet(),
+								getPointerHeapArray().getASTType(), new CPointer(new CPrimitive(CPrimitives.INT)),
 								requiredMemoryModelFeatures.isPointerUncheckedWriteRequired(),
-								requiredMemoryModelFeatures.isPointerInitRequired(),
-								requiredMemoryModelFeatures.isPointerUncheckedReadRequired()
-								));
+								requiredMemoryModelFeatures.isPointerInitRequired()));
 			}
 			return Collections.emptyList();
 		}
@@ -162,34 +160,23 @@ public abstract class BaseMemoryModel {
 		private final String mProcedureSuffix;
 		private final int mBytesize;
 		private final ASTType mASTType;
-		private final Set<CPrimitives> mPrimitives;
-		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
 		private final boolean mAlsoUncheckedWrite;
 		private final boolean mAlsoInit;
-		private final boolean mAlsoUncheckedRead;
+		private final ICType mRepresentativeType;
 
 		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType astType,
-				final Set<CPrimitives> primitives, final boolean alsoUncheckedWrite, final boolean alsoInit,
-				final boolean alsoUncheckedRead) {
+				final ICType representativeType, final boolean alsoUncheckedWrite, final boolean alsoInit) {
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
 			mASTType = astType;
-			mPrimitives = primitives;
-			mCPrimitiveCategory =
-					primitives.stream().map(CPrimitives::getPrimitiveCategory).collect(Collectors.toSet());
+			mRepresentativeType = representativeType;
 			mAlsoUncheckedWrite = alsoUncheckedWrite;
 			mAlsoInit = alsoInit;
-			mAlsoUncheckedRead = alsoUncheckedRead;
 		}
 
 		public String getReadProcedureName() {
 			return READ_PROCEDURE_PREFIX + mProcedureSuffix;
 		}
-
-		public String getUncheckedReadProcedureName() {
-			return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + mProcedureSuffix;
-		}
-
 
 		public String getWriteProcedureName() {
 			return WRITE_PROCEDURE_PREFIX + mProcedureSuffix;
@@ -217,13 +204,6 @@ public abstract class BaseMemoryModel {
 			return mAlsoInit;
 		}
 
-		/**
-		 * @return if true, we also need the unchecked variant of the read definition.
-		 */
-		public boolean alsoUncheckedRead() {
-			return mAlsoUncheckedRead;
-		}
-
 		public int getBytesize() {
 			return mBytesize;
 		}
@@ -232,20 +212,15 @@ public abstract class BaseMemoryModel {
 			return mASTType;
 		}
 
-		public Set<CPrimitives> getPrimitives() {
-			return mPrimitives;
-		}
-
-		public Set<CPrimitiveCategory> getCPrimitiveCategory() {
-			return mCPrimitiveCategory;
+		public ICType getRepresentativeType() {
+			return mRepresentativeType;
 		}
 
 		@Override
 		public String toString() {
 			return "ReadWriteDefinition [mProcedureSuffix=" + mProcedureSuffix + ", mBytesize=" + mBytesize
-					+ ", mASTType=" + mASTType + ", mPrimitives=" + mPrimitives + ", mCPrimitiveCategory="
-					+ mCPrimitiveCategory + ", mAlsoUncheckedWrite=" + mAlsoUncheckedWrite + ", mAlsoInit=" + mAlsoInit
-					+ ", mAlsoUncheckedRead=" + mAlsoUncheckedRead + "]";
+					+ ", mASTType=" + mASTType + ", mRepresentativeType=" + mRepresentativeType
+					+ ", mAlsoUncheckedWrite=" + mAlsoUncheckedWrite + ", mAlsoInit=" + mAlsoInit + "]";
 		}
 	}
 

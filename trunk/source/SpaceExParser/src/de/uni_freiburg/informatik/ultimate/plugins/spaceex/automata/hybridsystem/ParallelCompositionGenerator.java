@@ -43,8 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Generator that creates a parallel composition from {@link HybridAutomaton}
- * instances.
+ * Generator that creates a parallel composition from {@link HybridAutomaton} instances.
  *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
@@ -170,8 +169,8 @@ public class ParallelCompositionGenerator {
 				final List<Transition> synchronizations = getSynchronizations(allOutgoing);
 				if (!synchronizations.isEmpty()) {
 					// transitions
-					final Map<Location, Triple<String, String, String>> targetLocs = calculateTargetsForSync(
-							synchronizations, currentLocs);
+					final Map<Location, Triple<String, String, String>> targetLocs =
+							calculateTargetsForSync(synchronizations, currentLocs);
 					for (final Entry<Location, Triple<String, String, String>> target : targetLocs.entrySet()) {
 						final Location targetLoc = target.getKey();
 						final String label = target.getValue().getFirst();
@@ -196,8 +195,8 @@ public class ParallelCompositionGenerator {
 					// Create N target locations
 					// if the locations exists, get it, else create a new one
 					// from the location pairs
-					final Map<Location, Triple<String, String, String>> targetLocs = calculateTargetsForNonSync(
-							allOutgoing, currentLocs);
+					final Map<Location, Triple<String, String, String>> targetLocs =
+							calculateTargetsForNonSync(allOutgoing, currentLocs);
 					for (final Entry<Location, Triple<String, String, String>> target : targetLocs.entrySet()) {
 						final Location targetLoc = target.getKey();
 						final String label = target.getValue().getFirst();
@@ -290,8 +289,8 @@ public class ParallelCompositionGenerator {
 	}
 
 	// function that returns the target locations of a synchronization.
-	private Map<Location, Triple<String, String, String>> calculateTargetsForSync(
-			final List<Transition> synchronizations, final List<Location> currentLocs) {
+	private Map<Location, Triple<String, String, String>>
+			calculateTargetsForSync(final List<Transition> synchronizations, final List<Location> currentLocs) {
 		final List<Location> mergeList = new ArrayList<>();
 		final List<Location> forbiddenSources = new ArrayList<>();
 		final Map<Location, Triple<String, String, String>> targets = new HashMap<>();
@@ -351,7 +350,7 @@ public class ParallelCompositionGenerator {
 
 	// function that merges N locations and returns the merged one.
 	private Location mergeLocationsNWay(final int incrementAndGet, final List<Location> mergeList) {
-		String name = "loc_";
+		final StringBuilder name = new StringBuilder("loc_");
 		String invariant = "";
 		String flow = "";
 		String forbiddenConstraint = "";
@@ -359,7 +358,7 @@ public class ParallelCompositionGenerator {
 		mergeList.sort(Comparator.comparing(Location::getInvariant));
 		// merge each locations invariant,flow and name
 		for (final Location loc : mergeList) {
-			name += loc.getName() + "_";
+			name.append(loc.getName()).append("_");
 			invariant = intersectStrings(invariant, loc.getInvariant());
 			flow = intersectStrings(flow, loc.getFlow());
 			if (!forbiddenConstraint.contains(loc.getForbiddenConstraint())) {
@@ -375,7 +374,7 @@ public class ParallelCompositionGenerator {
 			}
 		}
 		// create locations
-		final Location merged = new Location(incrementAndGet, name);
+		final Location merged = new Location(incrementAndGet, name.toString());
 		merged.setInvariant(invariant);
 		merged.setFlow(flow);
 		merged.setForbiddenConstraint(forbiddenConstraint);
@@ -452,9 +451,8 @@ public class ParallelCompositionGenerator {
 	}
 
 	/*
-	 * Helper function to merge two strings into a string of the form
-	 * "str1 && str2" Used for intersecting guards and updates of transitions in
-	 * this class.
+	 * Helper function to merge two strings into a string of the form "str1 && str2" Used for intersecting guards and
+	 * updates of transitions in this class.
 	 */
 	private String intersectStrings(final String str1, final String str2) {
 		String intersection;

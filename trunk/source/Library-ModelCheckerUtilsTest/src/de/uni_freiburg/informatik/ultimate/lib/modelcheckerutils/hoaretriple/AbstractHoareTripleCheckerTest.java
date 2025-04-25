@@ -360,8 +360,8 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void nonModifiableOldVar() {
-		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
-				PROCEDURE) : "Test requires y to be non-modifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, PROCEDURE)
+				: "Test requires y to be non-modifiable";
 
 		final var tf = assumeTrue();
 
@@ -389,10 +389,10 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void differentNonModifiableOldVars() {
-		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
-				PROCEDURE) : "Test requires y to be non-modifiable";
-		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(z,
-				PROCEDURE) : "Test requires z to be non-modifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, PROCEDURE)
+				: "Test requires y to be non-modifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(z, PROCEDURE)
+				: "Test requires z to be non-modifiable";
 
 		final var tf = assumeTrue();
 		testInternal(Validity.INVALID, differentNonModifiableOldVarsVerdict(), "(= y 42)", tf, "(= |old(z)| 42)");
@@ -487,8 +487,8 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void pseudoTautologicalPostInternal() {
-		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
-				PROCEDURE) : "Test requires y to be unmodifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, PROCEDURE)
+				: "Test requires y to be unmodifiable";
 
 		final var tf = assumeTrue();
 		testInternal(Validity.VALID, pseudoTautologicalPostInternalVerdict(), "true", tf, "(= y |old(y)|)");
@@ -536,8 +536,8 @@ public abstract class AbstractHoareTripleCheckerTest {
 
 	@Test
 	public void pseudoInconsistentPreInternal() {
-		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y,
-				PROCEDURE) : "Test requires y to be unmodifiable";
+		assert !mCsToolkit.getModifiableGlobalsTable().isModifiable(y, PROCEDURE)
+				: "Test requires y to be unmodifiable";
 
 		final var tf = assumeTrue();
 		testInternal(Validity.VALID, pseudoInconsistentPreInternalVerdict(), "(distinct y |old(y)|)", tf, "false");

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -108,20 +109,18 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) {
 
-		if (root instanceof WrapperNode) {
-			if (((WrapperNode) root).getBacking() instanceof Unit) {
-				final Unit inputProgramUnit = (Unit) ((WrapperNode) root).getBacking();
+		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof Unit)) {
+			final Unit inputProgramUnit = (Unit) ((WrapperNode) root).getBacking();
 
-				InputProgram = new Program(inputProgramUnit, mLogger);
-				TemplateStore = new TemplateStore(InputProgram, mLogger);
+			InputProgram = new Program(inputProgramUnit, mLogger);
+			TemplateStore = new TemplateStore(InputProgram, mLogger);
 
-				final Program EncodedProgram = Cookiefy(inputProgramUnit);
-				if (EncodedProgram != null) {
-					this.root = new WrapperNode(null, EncodedProgram.toUnit());
-				}
-				// do not traverse anymore
-				return false;
+			final Program EncodedProgram = Cookiefy(inputProgramUnit);
+			if (EncodedProgram != null) {
+				this.root = new WrapperNode(null, EncodedProgram.toUnit());
 			}
+			// do not traverse anymore
+			return false;
 		}
 
 		// traverse to next
@@ -162,7 +161,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 			for (final Procedure p : InputProgram.mProcedures.values()) {
 				// Alg: create procedure header (here postponed to end of loop)
 
-				VarList[] newArg = new VarList[] {};
+				VarList[] newArg = {};
 				if (cp.isAtom()) {
 					newArg = TemplateStore.concatToEncParamsAtom(p);
 				} else {
@@ -172,7 +171,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				final VarList returnVar = new VarList(LocationProvider.getLocation(), new String[] { "ret" },
 						new PrimitiveType(LocationProvider.getLocation(), "bool"));
 
-				Statement[] statements = new Statement[0];
+				Statement[] statements = {};
 				if (cp.isTemporal()) {
 					// OPTIMIZATION DONE:
 					// At the beginning of the procedure: copy all parameters to
@@ -256,15 +255,14 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				// label
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// template
-				for (final Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
-					statements.add(st);
-				}
+				Collections.addAll(statements, TemplateStore.programFragmentTemplate(cp, p, pp));
 				// pcall
 				statements.addAll(TemplateStore.stackPush(p, pp + 1));
 				statements.add(TemplateStore.getHavocCallStatement(call.getArguments(),
 						InputProgram.mProcedures.get(((CallStatement) s).getMethodName()), cp.getPath()));
 				statements.add(new ReturnStatement(LocationProvider.getLocation()));
-				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", ++pp)));
+				pp++;
+				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// TODO catch value from preturn if more than one
 				// catch return values
 				if (call.getLhs().length > 1) {
@@ -289,9 +287,7 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				pp++;
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// Program Fragment Template
-				for (final Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
-					statements.add(st);
-				}
+				Collections.addAll(statements, TemplateStore.programFragmentTemplate(cp, p, pp));
 				// (1) store return value into global variable retVal
 				if (p.getOutParams().length > 0) {
 					if (p.getOutParams()[0].getType() instanceof PrimitiveType) {
@@ -329,15 +325,14 @@ public class CookiefyAlgorithm implements IUnmanagedObserver {
 				// label
 				statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 				// template
-				for (final Statement st : TemplateStore.programFragmentTemplate(cp, p, pp)) {
-					statements.add(st);
-				}
+				Collections.addAll(statements, TemplateStore.programFragmentTemplate(cp, p, pp));
 				// code
 				statements.add(s);
 			}
 			// pp += 1; //increase procedure point (counter)
 		}
-		statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", ++pp)));
+		pp++;
+		statements.add(new Label(LocationProvider.getLocation(), String.format("$Cookiefy##%d", pp)));
 
 		// Insert gotos
 		for (int i = 2; i <= pp; ++i) {

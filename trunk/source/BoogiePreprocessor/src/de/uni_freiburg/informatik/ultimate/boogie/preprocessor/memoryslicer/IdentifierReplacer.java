@@ -51,7 +51,6 @@ public class IdentifierReplacer extends BoogieTransformer {
 	private final String mSuffix;
 
 	public IdentifierReplacer(final Map<String, String> oldIdToNewId, final String oldProcId, final String suffix) {
-		super();
 		mOldIdToNewId = oldIdToNewId;
 		mOldProcId = oldProcId;
 		mSuffix = suffix;
@@ -67,37 +66,37 @@ public class IdentifierReplacer extends BoogieTransformer {
 		return super.processSpecifications(specs);
 	}
 
-//	@Override
-//	protected Specification processSpecification(final Specification spec) {
-//		if (spec instanceof ModifiesSpecification) {
-//			final ModifiesSpecification ms = (ModifiesSpecification) spec;
-//			ms.getIdentifiers();
-//		}
-//		// TODO Auto-generated method stub
-//		return super.processSpecification(spec);
-//	}
+	// @Override
+	// protected Specification processSpecification(final Specification spec) {
+	// if (spec instanceof ModifiesSpecification) {
+	// final ModifiesSpecification ms = (ModifiesSpecification) spec;
+	// ms.getIdentifiers();
+	// }
+	// // TODO Auto-generated method stub
+	// return super.processSpecification(spec);
+	// }
 
-//	@Override
-//	protected VarList processVarList(final VarList vl) {
-//		final String[] oldIds = vl.getIdentifiers();
-//		final String[] newIds = new String[vl.getIdentifiers().length];
-//		boolean someModification = false;
-//		for (int i = 0; i < vl.getIdentifiers().length; i++) {
-//			if (oldIds[i].equals(mOldId)) {
-//				someModification = true;
-//				newIds[i] = mNewId;
-//			} else {
-//				newIds[i] = oldIds[i];
-//			}
-//		}
-//		if (someModification) {
-//			final VarList result = new VarList(vl.getLoc(), newIds, vl.getType(), vl.getWhereClause());
-//			ModelUtils.copyAnnotations(vl, result);
-//			return result;
-//		} else {
-//			return super.processVarList(vl);
-//		}
-//	}
+	// @Override
+	// protected VarList processVarList(final VarList vl) {
+	// final String[] oldIds = vl.getIdentifiers();
+	// final String[] newIds = new String[vl.getIdentifiers().length];
+	// boolean someModification = false;
+	// for (int i = 0; i < vl.getIdentifiers().length; i++) {
+	// if (oldIds[i].equals(mOldId)) {
+	// someModification = true;
+	// newIds[i] = mNewId;
+	// } else {
+	// newIds[i] = oldIds[i];
+	// }
+	// }
+	// if (someModification) {
+	// final VarList result = new VarList(vl.getLoc(), newIds, vl.getType(), vl.getWhereClause());
+	// ModelUtils.copyAnnotations(vl, result);
+	// return result;
+	// } else {
+	// return super.processVarList(vl);
+	// }
+	// }
 
 	@Override
 	protected Specification processSpecification(final Specification spec) {
@@ -106,8 +105,7 @@ public class IdentifierReplacer extends BoogieTransformer {
 
 	@Override
 	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
-		final VariableLHS replacement = MemorySliceUtils.replaceLeftHandSide(lhs, mOldIdToNewId, mOldProcId,
-				mSuffix);
+		final VariableLHS replacement = MemorySliceUtils.replaceLeftHandSide(lhs, mOldIdToNewId, mOldProcId, mSuffix);
 		if (replacement != null) {
 			return replacement;
 		}
@@ -116,8 +114,8 @@ public class IdentifierReplacer extends BoogieTransformer {
 
 	@Override
 	protected Expression processExpression(final Expression expr) {
-		final IdentifierExpression replacement = MemorySliceUtils.replaceIdentifierExpression(expr, mOldIdToNewId,
-				mOldProcId, mSuffix);
+		final IdentifierExpression replacement =
+				MemorySliceUtils.replaceIdentifierExpression(expr, mOldIdToNewId, mOldProcId, mSuffix);
 		if (replacement != null) {
 			return replacement;
 		}

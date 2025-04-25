@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -52,36 +51,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Preprocessor for array partial quantifier elimination that handles the
- * following DER-like cases.
+ * Preprocessor for array partial quantifier elimination that handles the following DER-like cases.
  *
  * Let's assume that arr is the variable that we want to eliminate.
  *
- * The term (= arr (store b k v)) is replaced by (= (select arr k') v') if
- * arr==b and replaced by (= arr (store b k' v') if arr!=b. The term (= arr
- * (select b k) is replaced by (= arr (select b k'). In all cases k'==k (resp.
- * v'==v) if arr is not a subterm of arr. In case arr is a subterm of k, we k'
- * is a fresh variable and we set mIntroducedDerPossibility to true.
+ * The term (= arr (store b k v)) is replaced by (= (select arr k') v') if arr==b and replaced by (= arr (store b k' v')
+ * if arr!=b. The term (= arr (select b k) is replaced by (= arr (select b k'). In all cases k'==k (resp. v'==v) if arr
+ * is not a subterm of arr. In case arr is a subterm of k, we k' is a fresh variable and we set
+ * mIntroducedDerPossibility to true.
  *
- * The result should be used as follows. If mIntroducedDerPossibility == false
- * the result can be used directly. The variable might still be there but the
- * annoying DER term is gone (sef-update case only)> If
- * mIntroducedDerPossibility == false we introduced a equality (resp.
- * disequality for universal quantification) that allow us the eliminate arr via
- * the DER quantifier elimination technique. (Apply DER for the variable arr
- * only!). However, we also introduced auxiliary variables that have to be
- * quantified and we introduced additional conjuncts (resp. disjuncts for
- * universal quantification) of the form k'=k that have to be merged to the
- * operand term of the quantifier elimination.
+ * The result should be used as follows. If mIntroducedDerPossibility == false the result can be used directly. The
+ * variable might still be there but the annoying DER term is gone (sef-update case only)> If mIntroducedDerPossibility
+ * == false we introduced a equality (resp. disequality for universal quantification) that allow us the eliminate arr
+ * via the DER quantifier elimination technique. (Apply DER for the variable arr only!). However, we also introduced
+ * auxiliary variables that have to be quantified and we introduced additional conjuncts (resp. disjuncts for universal
+ * quantification) of the form k'=k that have to be merged to the operand term of the quantifier elimination.
  *
- * TODO 20220210 Matthias: Take also care of cases like
- * {@link QuantifierEliminationTodos#selfUpdateAraucariaSimplified}
- * Idea: Introduce auxiliary variable for subterm, use subterm of dimension
- * lower than arr to avoid nontermination.
+ * TODO 20220210 Matthias: Take also care of cases like {@link QuantifierEliminationTodos#selfUpdateAraucariaSimplified}
+ * Idea: Introduce auxiliary variable for subterm, use subterm of dimension lower than arr to avoid nontermination.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -92,7 +82,7 @@ public class DerPreprocessor extends TermTransformer {
 
 	private enum DerCase {
 		SELF_UPDATE, EQ_STORE, EQ_SELECT, CLASSICAL_DER
-	};
+	}
 
 	private final List<TermVariable> mNewAuxVars;
 	private final Term mResult;
@@ -101,13 +91,13 @@ public class DerPreprocessor extends TermTransformer {
 	public DerPreprocessor(final IUltimateServiceProvider services, final ManagedScript mgdScript, final int quantifier,
 			final TermVariable eliminatee, final Term input, final List<BinaryEqualityRelation> bers,
 			final ArrayIndexEqualityManager aiem) throws ElimStorePlainException {
-		final HashRelation<DerCase, BinaryEqualityRelation> classification = classify(mgdScript.getScript(), bers,
-				eliminatee);
+		final HashRelation<DerCase, BinaryEqualityRelation> classification =
+				classify(mgdScript.getScript(), bers, eliminatee);
 		boolean existsEqualityThatIsNotOnTopLevel = false;
 		BinaryEqualityRelation someTopLevelEquality = null;
 		DerCase derCase = null;
-		final Set<Term> topLevelDualJuncts = Arrays.stream(QuantifierUtils.getDualFiniteJuncts(quantifier, input))
-				.collect(Collectors.toSet());
+		final Set<Term> topLevelDualJuncts =
+				Arrays.stream(QuantifierUtils.getDualFiniteJuncts(quantifier, input)).collect(Collectors.toSet());
 		for (final BinaryEqualityRelation ber : classification.getImage(DerCase.CLASSICAL_DER)) {
 			if (topLevelDualJuncts.contains(ber.toTerm(mgdScript.getScript()))) {
 				throw new AssertionError("Should have been eliminated by DER");
@@ -137,14 +127,15 @@ public class DerPreprocessor extends TermTransformer {
 			}
 		}
 
-		final ArrayIndexReplacementConstructor airc = new ArrayIndexReplacementConstructor(mgdScript, AUX_VAR_PREFIX, eliminatee);
+		final ArrayIndexReplacementConstructor airc =
+				new ArrayIndexReplacementConstructor(mgdScript, AUX_VAR_PREFIX, eliminatee);
 
 		final Map<Term, Term> substitutionMapping;
 		if (someTopLevelEquality != null) {
-			final Term derEnabler = constructDerEnabler(someTopLevelEquality, mgdScript, eliminatee, quantifier,
-					derCase, airc, aiem);
-			substitutionMapping = Collections.singletonMap(someTopLevelEquality.toTerm(mgdScript.getScript()),
-					derEnabler);
+			final Term derEnabler =
+					constructDerEnabler(someTopLevelEquality, mgdScript, eliminatee, quantifier, derCase, airc, aiem);
+			substitutionMapping =
+					Collections.singletonMap(someTopLevelEquality.toTerm(mgdScript.getScript()), derEnabler);
 			mIntroducedDerPossibility = true;
 		} else {
 			if (existsEqualityThatIsNotOnTopLevel) {
@@ -168,8 +159,8 @@ public class DerPreprocessor extends TermTransformer {
 		for (final BinaryEqualityRelation selfUpdate : selfupdates) {
 			final Term otherSide = getOtherSide(selfUpdate, eliminatee);
 			final MultiDimensionalNestedStore nas = MultiDimensionalNestedStore.of(otherSide);
-			final Term selfUpdateReplacement = constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier,
-					airc, aiem);
+			final Term selfUpdateReplacement =
+					constructReplacementForStoreCase(nas, mgdScript, eliminatee, quantifier, airc, aiem);
 			substitutionMapping.put(selfUpdate.toTerm(mgdScript.getScript()), selfUpdateReplacement);
 		}
 		return substitutionMapping;
@@ -220,7 +211,8 @@ public class DerPreprocessor extends TermTransformer {
 		return otherSide;
 	}
 
-	private static DerCase classify(final Script script, final Term otherSide, final TermVariable eliminatee) throws ElimStorePlainException {
+	private static DerCase classify(final Script script, final Term otherSide, final TermVariable eliminatee)
+			throws ElimStorePlainException {
 		if (!Arrays.asList(otherSide.getFreeVars()).contains(eliminatee)) {
 			return DerCase.CLASSICAL_DER;
 		}
@@ -247,8 +239,6 @@ public class DerPreprocessor extends TermTransformer {
 		return mNewAuxVars;
 	}
 
-
-
 	public Term getResult() {
 		return mResult;
 	}
@@ -272,9 +262,6 @@ public class DerPreprocessor extends TermTransformer {
 		}
 		final Term result;
 		if (nas.getArray().equals(eliminatee)) {
-			final ThreeValuedEquivalenceRelation<Term> tver;
-			final Term context;
-			final ILogger logger;
 			// is (possibly nested) self-update
 			final LinkedList<ArrayIndex> indices = new LinkedList<>(newIndices);
 			final LinkedList<Term> values = new LinkedList<>(newValues);
@@ -286,7 +273,7 @@ public class DerPreprocessor extends TermTransformer {
 						eliminatee, mgdScript.getScript(), quantifier, aiem);
 			}
 			assert indices.isEmpty();
-			values.isEmpty();
+			assert values.isEmpty();
 			result = QuantifierUtils.applyDualFiniteConnective(mgdScript.getScript(), quantifier,
 					resultDualFiniteJuncts);
 		} else {
@@ -337,10 +324,9 @@ public class DerPreprocessor extends TermTransformer {
 	}
 
 	/**
-	 * Let oi_1,...,oi_n be the terms in otherIndices, construct the formula ((idx
-	 * != oi_1) /\ ... /\ (idx != oi_n)) ==> ((select arr idx) = value) for
-	 * existential quantification and the formula (not ((idx == oi_1) \/ ... \/ (idx
-	 * == oi_n))) /\ ((select arr idx) != value) for universal quantification.
+	 * Let oi_1,...,oi_n be the terms in otherIndices, construct the formula ((idx != oi_1) /\ ... /\ (idx != oi_n)) ==>
+	 * ((select arr idx) = value) for existential quantification and the formula (not ((idx == oi_1) \/ ... \/ (idx ==
+	 * oi_n))) /\ ((select arr idx) != value) for universal quantification.
 	 *
 	 * @param quantifier
 	 * @param script
@@ -350,13 +336,13 @@ public class DerPreprocessor extends TermTransformer {
 			final LinkedList<ArrayIndex> indices, final Term innermostValue, final Term arr, final Script script,
 			final int quantifier, final ArrayIndexEqualityManager aiem) {
 		final Term select = new MultiDimensionalSelect(arr, innermostIndex).toTerm(script);
-		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList(
+		final ArrayList<Term> correspondingFiniteJuncts = new ArrayList<>(
 				indices.stream().map(x -> aiem.constructDerRelation(script, quantifier, innermostIndex, x))
 						.collect(Collectors.toList()));
 		final Term selectEqualsValue = QuantifierUtils.applyDerOperator(script, quantifier, select, innermostValue);
 		correspondingFiniteJuncts.add(selectEqualsValue);
-		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
-				correspondingFiniteJuncts);
+		final Term result =
+				QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, correspondingFiniteJuncts);
 		return result;
 	}
 

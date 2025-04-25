@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
@@ -93,7 +94,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * This option allows us to omit quantified formulas from the critical constraint.
 	 */
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
-	private static final boolean SIMPLIFY_REPEATEDLY = true;
+	private static final Repetition SIMPLIFY_REPEATEDLY = Repetition.REPEAT_UNTIL_NO_CHANGE;
 	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 	/**
 	 * Do some overapproximation of quantifiers in the succedent of implications. We implement implication checks as
@@ -149,7 +150,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private final ArrayDeque<Map<TermVariable, Term>> mRenamingMaps;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		super();
 		mServices = services;
 		mMgdScript = mgdScript;
 		mRenamingMaps = new ArrayDeque<>();
@@ -574,8 +574,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);
-		final Set<TermVariable> freeVariables = new HashSet<>();
-		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
+		final Set<TermVariable> freeVariables = new HashSet<>(Arrays.asList(context.getFreeVars()));
 		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
 		final Map<TermVariable, Term> substitutionMapping =
 				constructFreshConstantSymbols(mgdScript, freeVariables, term, context);
@@ -666,7 +665,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	@Override
-	protected boolean applyRepeatedlyUntilNoChange() {
+	protected Repetition applyRepeatedly() {
 		return SIMPLIFY_REPEATEDLY;
 	}
 

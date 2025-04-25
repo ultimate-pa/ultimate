@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.decider;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -50,24 +51,24 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * 
+ *
  * The {@link TranslationTestResultDecider} is a {@link TestResultDecider} that checks whether a translating toolchain
  * fails or not.
- * 
+ *
  * The decider will fail if the results contain a {@link TypeErrorResult}, {@link SyntaxErrorResult},
  * {@link ExceptionOrErrorResult}, or a {@link ITimeoutResult}.
- * 
+ *
  * Additionally, the decider can check whether the output of the BoogiePrinter plugin is as expected. This is done only
  * if there is a desired translation file and an appropriately configured BoogiePrinter plugin that generates a
  * BoogieFile.
- * 
+ *
  * If there is a .bpl file besides the input file that is named like the input file but with the .bpl extension (e.g.,
  * foo.c and foo.bpl), this file is used as desired translation. This decider then finds the auto-generated format of
  * BoogiePrinter (i.e., BoogiePrinter_inputfilename_UID...) besides the input and compares it line by line with the
  * desired translation. If they do not match, the test fails.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class TranslationTestResultDecider extends TestResultDecider {
 
@@ -121,7 +122,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 			// against syntax errors.
 
 			final File inputFile = new File(mInputFile);
-			final String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.c", "");
+			final String inputFileNameWithoutEnding = inputFile.getName().replace(".c", "");
 			final File desiredBplFile = new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(),
 					IPath.SEPARATOR, inputFileNameWithoutEnding, ".bpl"));
 
@@ -168,9 +169,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 	}
 
 	private static void addMultilineString(final Collection<String> customMessages, final String actualContent) {
-		for (final String s : actualContent.split(CoreUtil.getPlatformLineSeparator())) {
-			customMessages.add(s);
-		}
+		Collections.addAll(customMessages, actualContent.split(CoreUtil.getPlatformLineSeparator()));
 	}
 
 	@Override

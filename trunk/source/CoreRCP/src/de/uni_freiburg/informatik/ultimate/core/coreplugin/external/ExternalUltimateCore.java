@@ -173,7 +173,7 @@ public class ExternalUltimateCore {
 		}
 	}
 
-	protected class ManualReleaseToolchainJob extends DefaultToolchainJob {
+	protected static class ManualReleaseToolchainJob extends DefaultToolchainJob {
 
 		public ManualReleaseToolchainJob(final String name, final ICore<RunDefinition> core,
 				final IController<RunDefinition> controller, final ILogger logger, final File[] inputs) {

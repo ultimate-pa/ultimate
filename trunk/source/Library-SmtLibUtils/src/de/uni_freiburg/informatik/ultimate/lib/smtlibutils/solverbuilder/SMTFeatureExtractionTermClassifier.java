@@ -170,7 +170,7 @@ public class SMTFeatureExtractionTermClassifier extends NonRecursive {
 	public static double normalize(final double score, final double lower_bound, final double upper_bound) {
 		// Normalizes a given value to a certain interval.
 		// Normalize to [0,1]
-		double normalized_score = 1.0 - 1.0 / (score != 0 ? (double) score : 1.0);
+		final double normalized_score = 1.0 - 1.0 / (score != 0 ? (double) score : 1.0);
 		// Scale to [lower_bound,upper_bound]
 		final double range = upper_bound - lower_bound;
 		return normalized_score * range + lower_bound;

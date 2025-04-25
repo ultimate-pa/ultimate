@@ -53,7 +53,7 @@ import edu.uci.ics.jung.io.GraphIOException;
  */
 public class WitnessParser implements ISource {
 
-	private static final String[] FILE_TYPES = new String[] { "graphml", "yaml", "yml" };
+	private static final String[] FILE_TYPES = { "graphml", "yaml", "yml" };
 	private IUltimateServiceProvider mServices;
 	private String mFilename;
 	private ModelType.Type mWitnessType;

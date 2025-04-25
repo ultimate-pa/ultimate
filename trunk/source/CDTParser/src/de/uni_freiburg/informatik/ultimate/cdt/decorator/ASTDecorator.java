@@ -127,9 +127,9 @@ public class ASTDecorator {
 				mCurrentStartLineNr = node.getFileLocation().getStartingLineNumber();
 			}
 			final List<DecoratorNode> newChildren = mapASTs(node.getChildren()[i], result);
-			for (int j = 0; j < newChildren.size(); j++) {
-				if (newChildren.get(j) != null) {
-					result.addChildren(newChildren.get(j));
+			for (final DecoratorNode newChild : newChildren) {
+				if (newChild != null) {
+					result.addChildren(newChild);
 				}
 			}
 		}
@@ -157,7 +157,8 @@ public class ASTDecorator {
 		final List<DecoratorNode> list = new ArrayList<>();
 		for (int i = 0; i < mAcslASTs.size(); i++) {
 			if (mAcslASTs.get(i).getEndingLineNumber() <= end && mAcslASTs.get(i).getStartingLineNumber() >= start) {
-				list.add(new DecoratorNode(parent, mAcslASTs.remove(i--)));
+				list.add(new DecoratorNode(parent, mAcslASTs.remove(i)));
+				i--;
 			}
 		}
 		return list;

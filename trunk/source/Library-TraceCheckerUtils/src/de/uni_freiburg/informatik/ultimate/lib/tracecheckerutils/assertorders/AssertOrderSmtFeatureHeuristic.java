@@ -147,14 +147,10 @@ public class AssertOrderSmtFeatureHeuristic<L extends IAction> implements IAsser
 	// Function to partition a list of Terms according to their scores.
 	private List<Set<Integer>>
 			partitionStmtsAccordingToTermScores(final List<Triple<Term, Double, Integer>> termScoreIndexTriples) {
-		switch (mPartitioningType) {
-		case FIXED_NUM_PARTITIONS:
-			return partitionFixedNumberOfPartitions(termScoreIndexTriples);
-		case THRESHOLD:
-			return partitionUsingThreshold(termScoreIndexTriples);
-		default:
-			throw new UnsupportedOperationException("Unknown partitioning type " + mPartitioningType);
-		}
+		return switch (mPartitioningType) {
+		case FIXED_NUM_PARTITIONS -> partitionFixedNumberOfPartitions(termScoreIndexTriples);
+		case THRESHOLD -> partitionUsingThreshold(termScoreIndexTriples);
+		};
 	}
 
 	@Override

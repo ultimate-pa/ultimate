@@ -81,14 +81,12 @@ public class RegexDagCompressorTest {
 
 	@Test
 	public void mergeForkOnly() {
-		compressAssertEq("0a 1b 2c 3d", "01 13 12 23",
-				dag("0a 1b 2b 3c 4d", "01 13 34 02 24"));
+		compressAssertEq("0a 1b 2c 3d", "01 13 12 23", dag("0a 1b 2b 3c 4d", "01 13 34 02 24"));
 	}
 
 	@Test
 	public void mergeJoinOnly() {
-		compressAssertEq("0a 1b 2c 3d", "01 12 02 23",
-				dag("0a 1b 2c 3c 4d", "01 13 34 02 24"));
+		compressAssertEq("0a 1b 2c 3d", "01 12 02 23", dag("0a 1b 2c 3c 4d", "01 13 34 02 24"));
 	}
 
 	@Test
@@ -102,7 +100,7 @@ public class RegexDagCompressorTest {
 	public void example1() {
 		compressAssertEq("0ε 1a 2e 3b 4c 5f 6a", "01 02 13 34 35 42 46 52 65",
 				dag("14ε 1e 2a 3b 4c 5e 6a 7b 8c 9a 10f 11e 12b 13a 0ε",
-				"10 23 50 67 11.0 12.10 13.12 34 78 45 89 10.11 9.10 14.2 14.13 14.6 14.1"));
+						"10 23 50 67 11.0 12.10 13.12 34 78 45 89 10.11 9.10 14.2 14.13 14.6 14.1"));
 	}
 
 	@Test
@@ -114,9 +112,7 @@ public class RegexDagCompressorTest {
 	}
 
 	private static void assertDagParsingEqualsTgf(final String nodes, final String edges) {
-		Assert.assertEquals(
-				sortTgf(dag(nodes, edges).toString()),
-				sortTgf(toTgf(nodes, edges)));
+		Assert.assertEquals(sortTgf(dag(nodes, edges).toString()), sortTgf(toTgf(nodes, edges)));
 	}
 
 	// TODO create some test cases including ∅

@@ -121,9 +121,8 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	}
 
 	/**
-	 * Converts this Interprocedural Control Flow Graph (ICFG) into the plain text file format
-	 * "Trivial Graph Format" (TGF). TGF files can be used to get a visual representation of this ICFG
-	 * using graph visualization software.
+	 * Converts this Interprocedural Control Flow Graph (ICFG) into the plain text file format "Trivial Graph Format"
+	 * (TGF). TGF files can be used to get a visual representation of this ICFG using graph visualization software.
 	 *
 	 * @return This ICFG in Trivial Graph Format (TGF)
 	 *

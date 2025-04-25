@@ -34,7 +34,6 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.EqualityStatus;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ThreeValuedEquivalenceRelation;
 
-
 /**
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -81,14 +80,12 @@ public class ThreeValuedEquivalenceRelationTest {
 
 		tver1.reportDisequality("i", "j");
 
-
 		assertTrue(tver1.getEqualityStatus("a", "i") == EqualityStatus.UNKNOWN);
 		assertTrue(tver1.getEqualityStatus("x", "i") == EqualityStatus.UNKNOWN);
 
 		tver1.reportEquality("y", "z");
 
 		assertTrue(tver1.isInconsistent());
-
 
 	}
 }

@@ -61,8 +61,8 @@ public final class CommaDeleter extends CommaSeparatedChildDeleter {
 		}
 	}
 
-	public static void deleteNodesWithComma(final SourceRewriter rewriter, final List<ISourceRange> nodeLocationsToDelete,
-			final List<CommaSeparatedChild> commaPositions) {
+	public static void deleteNodesWithComma(final SourceRewriter rewriter,
+			final List<ISourceRange> nodeLocationsToDelete, final List<CommaSeparatedChild> commaPositions) {
 		try {
 			new CommaDeleter(nodeLocationsToDelete, commaPositions, rewriter).deleteChildren();
 		} catch (final MissingCommaLocationException e) {

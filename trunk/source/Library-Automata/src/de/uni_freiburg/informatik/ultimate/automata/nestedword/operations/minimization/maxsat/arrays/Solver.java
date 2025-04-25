@@ -107,8 +107,7 @@ final class Solver {
 	}
 
 	private enum Sat {
-		OK,
-		UNSATISFIABLE;
+		OK, UNSATISFIABLE;
 	}
 
 	private void setVar(final int v, final char a) {
@@ -132,8 +131,9 @@ final class Solver {
 	}
 
 	private Sat propagate() {
-		/* NOTE: the termination condition is "flexible" since the
-		 * loop body might insert new elements into `op' */
+		/*
+		 * NOTE: the termination condition is "flexible" since the loop body might insert new elements into `op'
+		 */
 		for (int i = 0; i < mOp.size(); i++) {
 			for (final int c : mOccur[mOp.get(i)]) {
 				if (check(mClauses.get(c, mClause)) == Sat.UNSATISFIABLE) {
@@ -179,11 +179,10 @@ final class Solver {
 		mOp.clear();
 
 		for (int v = 0; v < mNumVars; v++) {
-			if (mAssign[v] == NONE) {
-				if (setAndPropagate(v, TRUE) == Sat.UNSATISFIABLE && setAndPropagate(v, FALSE) == Sat.UNSATISFIABLE) {
-					/* should not happen */
-					assert false;
-				}
+			if ((mAssign[v] == NONE) && (setAndPropagate(v, TRUE) == Sat.UNSATISFIABLE
+					&& setAndPropagate(v, FALSE) == Sat.UNSATISFIABLE)) {
+				/* should not happen */
+				assert false;
 			}
 		}
 
@@ -201,37 +200,37 @@ final class Solver {
 		}
 	}
 
-//	// "test" the thing
-//	public static void main(final String[] args) {
-//		Horn3ArrayBuilder builder;
-//
-//		builder = new Horn3ArrayBuilder(4);
-//		builder.addClauseF(3);
-//		builder.addClauseFT(2, 3);
-//
-//		char[] assign;
-//		assign = new Solver(builder.extract()).solve();
-//		assert assign[2] == FALSE;
-//		assert assign[3] == FALSE;
-//
-//		builder = new Horn3ArrayBuilder(5);
-//		builder.addClauseT(2);
-//		builder.addClauseFT(2, 3);
-//		builder.addClauseFFT(2, 3, 4);
-//
-//		assign = new Solver(builder.extract()).solve();
-//		assert assign[2] == TRUE;
-//		assert assign[3] == TRUE;
-//		assert assign[4] == TRUE;
-//
-//		builder = new Horn3ArrayBuilder(5);
-//		builder.addClauseT(2);
-//		builder.addClauseFT(2, 3);
-//		builder.addClauseFFT(2, 3, 4);
-//		builder.addClauseF(4);
-//
-//		assert builder.extract() == null;
-//
-//		System.err.printf("tests passed%n");
-//	}
+	// // "test" the thing
+	// public static void main(final String[] args) {
+	// Horn3ArrayBuilder builder;
+	//
+	// builder = new Horn3ArrayBuilder(4);
+	// builder.addClauseF(3);
+	// builder.addClauseFT(2, 3);
+	//
+	// char[] assign;
+	// assign = new Solver(builder.extract()).solve();
+	// assert assign[2] == FALSE;
+	// assert assign[3] == FALSE;
+	//
+	// builder = new Horn3ArrayBuilder(5);
+	// builder.addClauseT(2);
+	// builder.addClauseFT(2, 3);
+	// builder.addClauseFFT(2, 3, 4);
+	//
+	// assign = new Solver(builder.extract()).solve();
+	// assert assign[2] == TRUE;
+	// assert assign[3] == TRUE;
+	// assert assign[4] == TRUE;
+	//
+	// builder = new Horn3ArrayBuilder(5);
+	// builder.addClauseT(2);
+	// builder.addClauseFT(2, 3);
+	// builder.addClauseFFT(2, 3, 4);
+	// builder.addClauseF(4);
+	//
+	// assert builder.extract() == null;
+	//
+	// System.err.printf("tests passed%n");
+	// }
 }

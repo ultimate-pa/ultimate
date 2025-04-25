@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -96,21 +96,16 @@ public abstract class ExpressionTranslation {
 		mSymboltable = symboltable;
 		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
 
-		switch (mSettings.getPointerIntegerCastMode()) {
+		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
 		case IdentityAxiom:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
 		case NonBijectiveMapping:
-			mPointerIntegerConversion = new NonBijectiveMapping(this, mTypeSizes);
-			break;
+			yield new NonBijectiveMapping(this, mTypeSizes);
 		case NutzBijection:
 			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
-			mPointerIntegerConversion = new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown value " + mSettings.getPointerIntegerCastMode());
-
-		}
+			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
+		};
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -238,7 +233,7 @@ public abstract class ExpressionTranslation {
 			Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 
 	public final Expression constructBinaryEqualityExpression(final ILocation loc, final int nodeOperator,
-			final Expression exp1, final CType type1, final Expression exp2, final CType type2) {
+			final Expression exp1, final ICType type1, final Expression exp2, final ICType type2) {
 		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
 			return constructBinaryEqualityExpressionFloating(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
@@ -246,10 +241,10 @@ public abstract class ExpressionTranslation {
 	}
 
 	protected abstract Expression constructBinaryEqualityExpressionFloating(ILocation loc, int nodeOperator,
-			Expression exp1, CType type1, Expression exp2, CType type2);
+			Expression exp1, ICType type1, Expression exp2, ICType type2);
 
 	protected abstract Expression constructBinaryEqualityExpressionInteger(ILocation loc, int nodeOperator,
-			Expression exp1, CType type1, Expression exp2, CType type2);
+			Expression exp1, ICType type1, Expression exp2, ICType type2);
 
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
 
@@ -330,7 +325,7 @@ public abstract class ExpressionTranslation {
 	 * result is 0 if the value compares equal to 0; otherwise, the result is 1.
 	 */
 	ExpressionResult convertToBool(final ILocation loc, final ExpressionResult expr) {
-		CType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
+		ICType underlyingType = expr.getLrValue().getCType().getUnderlyingType();
 		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
 		final Expression zeroInputType = constructZero(loc, underlyingType);
 		final Expression isZero;
@@ -354,7 +349,7 @@ public abstract class ExpressionTranslation {
 		return new ExpressionResultBuilder().addAllExceptLrValue(expr).setLrValue(rValue).build();
 	}
 
-	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final CType ctype,
+	public void addAssumeValueInRangeStatements(final ILocation loc, final Expression expr, final ICType ctype,
 			final ExpressionResultBuilder expressionResultBuilder) {
 		final var constraint = getTypeConstraint(loc, expr, ctype);
 		if (constraint.isPresent()) {
@@ -368,7 +363,7 @@ public abstract class ExpressionTranslation {
 	 * {@code Optional.empty()}.
 	 */
 	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
-			final CType cType);
+			final ICType cType);
 
 	public Expression constructNullPointer(final ILocation loc) {
 		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
@@ -383,27 +378,20 @@ public abstract class ExpressionTranslation {
 		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
 	}
 
-	public Expression constructZero(final ILocation loc, final CType cType) {
-		final Expression result;
+	public Expression constructZero(final ILocation loc, final ICType cType) {
 		if (cType instanceof CPrimitive) {
-			switch (((CPrimitive) cType).getGeneralType()) {
+			return switch (((CPrimitive) cType).getGeneralType()) {
 			case FLOATTYPE:
-				result = constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
-				break;
+				yield constructLiteralForFloatingType(loc, (CPrimitive) cType, BigDecimal.ZERO);
 			case INTTYPE:
-				result = mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
-				break;
+				yield mTypeSizes.constructLiteralForIntegerType(loc, (CPrimitive) cType, BigInteger.ZERO);
 			case VOID:
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
-			default:
-				throw new AssertionError("illegal type");
-			}
+			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			result = constructNullPointer(loc);
-		} else {
-			throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
+			return constructNullPointer(loc);
 		}
-		return result;
+		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}
 
 	/**
@@ -581,8 +569,8 @@ public abstract class ExpressionTranslation {
 		return ExpressionFactory.constructIfThenElseExpression(loc, boolExpr, one, zero);
 	}
 
-	public Expression toBool(final ILocation loc, final Expression intExpr, final CType cType) {
-		final CType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
+	public Expression toBool(final ILocation loc, final Expression intExpr, final ICType cType) {
+		final ICType underlyingType = CEnum.replaceEnumWithInt(cType.getUnderlyingType());
 		final Expression zero = constructZero(loc, underlyingType);
 
 		if (underlyingType instanceof CPrimitive) {

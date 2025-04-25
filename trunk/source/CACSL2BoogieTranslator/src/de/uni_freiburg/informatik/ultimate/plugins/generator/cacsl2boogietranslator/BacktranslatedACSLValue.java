@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.math.BigInteger;
 import java.util.Objects;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BigInterval;
@@ -45,7 +45,7 @@ public sealed interface BacktranslatedACSLValue {
 	 * Such expressions may be used for the backtranslation of invariants and procedure contracts, as well as for
 	 * program states.
 	 */
-	public record BacktranslatedExpression(Expression expression, CType cType, BigInterval range)
+	public record BacktranslatedExpression(Expression expression, ICType cType, BigInterval range)
 			implements BacktranslatedACSLValue {
 		public BacktranslatedExpression(final Expression expression) {
 			this(expression, null, BigInterval.unbounded());

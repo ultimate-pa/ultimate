@@ -38,7 +38,7 @@ public class PSTPrintVisitor implements IPSTVisitor {
 	private final Consumer<String> mPrinter;
 	private final boolean mVisitLiteralRegions;
 	private int mDepth;
-	
+
 	/**
 	 * @param printer
 	 *            Printer.
@@ -46,7 +46,7 @@ public class PSTPrintVisitor implements IPSTVisitor {
 	public PSTPrintVisitor(final Consumer<String> printer) {
 		this(printer, false);
 	}
-	
+
 	/**
 	 * @param printer
 	 *            Printer.
@@ -57,29 +57,29 @@ public class PSTPrintVisitor implements IPSTVisitor {
 		mPrinter = printer;
 		mVisitLiteralRegions = visitLiteralRegionContents;
 	}
-	
+
 	@Override
 	public int defaultLeave(final IPSTNode node) {
 		--mDepth;
 		return PROCESS_CONTINUE;
 	}
-	
+
 	@Override
 	public int defaultVisit(final IPSTNode node) {
 		if (!mVisitLiteralRegions && node.getParent() instanceof IPSTLiteralRegion) {
 			return PROCESS_SKIP;
 		}
-		
+
 		printNode(node);
 		++mDepth;
 		return PROCESS_CONTINUE;
 	}
-	
+
 	@Override
 	public int leave(final IPSTLiteralRegion literalRegion) {
 		return defaultLeave(literalRegion);
 	}
-	
+
 	void printNode(final IPSTNode node) {
 		for (int i = 0; i < mDepth; i++) {
 			mPrinter.accept("|   ");
@@ -87,7 +87,7 @@ public class PSTPrintVisitor implements IPSTVisitor {
 		mPrinter.accept(node.toString());
 		mPrinter.accept(System.lineSeparator());
 	}
-	
+
 	@Override
 	public int visit(final IPSTLiteralRegion literalRegion) {
 		return defaultVisit(literalRegion);

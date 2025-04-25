@@ -13,17 +13,19 @@ import de.uni_freiburg.informatik.ultimate.util.CombinatoricsUtils;
 
 /***
  * Check if a given tree automaton is deterministic.
+ *
  * @author mostafa
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class isDetereministic<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class isDetereministic<LETTER extends IRankedLetter, STATE>
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	private ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	
-	private boolean mResultTreeRun;
-	
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+
+	private final boolean mResultTreeRun;
+
 	public isDetereministic(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
 		mTreeAutomaton = tree;
@@ -33,13 +35,15 @@ public class isDetereministic<LETTER extends IRankedLetter, STATE> extends Gener
 	private boolean computeResult() {
 		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
 			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
-				if (CombinatoricsUtils.iterateAll(mTreeAutomaton.getSuccessors(rule.getSource(), rule.getLetter())).size() != 1) {
+				if (CombinatoricsUtils.iterateAll(mTreeAutomaton.getSuccessors(rule.getSource(), rule.getLetter()))
+						.size() != 1) {
 					return false;
 				}
 			}
 		}
 		return true;
 	}
+
 	@Override
 	public String startMessage() {
 		return "Starting determinism check";
@@ -49,13 +53,14 @@ public class isDetereministic<LETTER extends IRankedLetter, STATE> extends Gener
 	public String exitMessage() {
 		return "Exit determinism check";
 	}
+
 	@Override
 	public Boolean getResult() {
 		return mResultTreeRun;
 	}
 
 	@Override
-	public boolean checkResult(IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 

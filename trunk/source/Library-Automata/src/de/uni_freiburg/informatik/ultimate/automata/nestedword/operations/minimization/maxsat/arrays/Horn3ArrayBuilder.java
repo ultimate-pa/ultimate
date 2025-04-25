@@ -51,7 +51,7 @@ final class Horn3ArrayBuilder {
 
 	private boolean mSolveable;
 
-	Horn3ArrayBuilder(int numEqVars) {
+	Horn3ArrayBuilder(final int numEqVars) {
 		mArray = new Horn3Array(numEqVars);
 		mSingle = new char[numEqVars];
 		mSolveable = true;
@@ -61,11 +61,11 @@ final class Horn3ArrayBuilder {
 		return mSolveable;
 	}
 
-	boolean isAlreadyFalse(int x) {
+	boolean isAlreadyFalse(final int x) {
 		return mSingle[x] == SETFALSE;
 	}
 
-	void addClauseFalse(int x) {
+	void addClauseFalse(final int x) {
 		if (mSingle[x] == UNSET) {
 			mArray.add(TRUEVAR, x, FALSEVAR);
 			mSingle[x] = SETFALSE;
@@ -74,7 +74,7 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseTrue(int x) {
+	void addClauseTrue(final int x) {
 		if (mSingle[x] == UNSET) {
 			mArray.add(TRUEVAR, TRUEVAR, x);
 			mSingle[x] = SETTRUE;
@@ -83,7 +83,7 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseFalseFalse(int x, int y) {
+	void addClauseFalseFalse(final int x, final int y) {
 		if (x > y) {
 			addClauseFalseFalse(y, x);
 		} else if (mSingle[x] == SETFALSE) {
@@ -99,7 +99,7 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseFalseTrue(int y, int z) {
+	void addClauseFalseTrue(final int y, final int z) {
 		if (mSingle[y] == SETFALSE) {
 			// satisfied
 		} else if (mSingle[y] == SETTRUE) {
@@ -113,7 +113,7 @@ final class Horn3ArrayBuilder {
 		}
 	}
 
-	void addClauseFalseFalseTrue(int x, int y, int z) {
+	void addClauseFalseFalseTrue(final int x, final int y, final int z) {
 		if (x > y) {
 			addClauseFalseFalseTrue(y, x, z);
 		} else if (mSingle[x] == SETFALSE) {

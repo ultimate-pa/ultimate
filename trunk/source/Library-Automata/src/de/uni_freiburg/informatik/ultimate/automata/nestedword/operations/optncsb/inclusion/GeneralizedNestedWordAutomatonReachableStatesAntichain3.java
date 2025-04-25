@@ -329,24 +329,22 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 					}
 				} while (!topState.equals(state));
 				// whether there is accepting loop
-				if (pair.mLabels.size() == getAcceptanceSize()) {
-					if (scc.size() > 1 || prodStateCont.hashSelfloop()) {
-						mSccList.add(scc);
-						mIsEmpty = false;
-					}
+				if ((pair.mLabels.size() == getAcceptanceSize()) && (scc.size() > 1 || prodStateCont.hashSelfloop())) {
+					mSccList.add(scc);
+					mIsEmpty = false;
 				}
 			}
 			return notEmpty;
 		}
 	}
 
-	private class AsccPair<LETTER, STATE> {
+	private static class AsccPair<LETTER, STATE> {
 		final STATE mState;
 		final Set<Integer> mLabels;
 
 		AsccPair(final STATE state, final Set<Integer> labels) {
-			this.mState = state;
-			this.mLabels = labels;
+			mState = state;
+			mLabels = labels;
 		}
 
 		@Override
@@ -354,7 +352,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 			if (this == obj) {
 				return true;
 			}
-			if (!(obj instanceof AsccPair)) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")
@@ -568,8 +566,7 @@ public class GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STA
 			if (sndElem == null) {
 				return false;
 			}
-			for (int i = 0; i < sndElem.size(); i++) {
-				final ProductState elem = sndElem.get(i);
+			for (final GeneralizedNestedWordAutomatonReachableStatesAntichain3<LETTER, STATE>.ProductState elem : sndElem) {
 				if (state.coveredBy(elem)) { // no need to add it
 					return true;
 				}

@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
-	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] {
+	public static final String[] VALUES_ABSTRACT_DOMAIN = {
 
 			EmptyDomain.class.getSimpleName(), SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(),
 			OctagonDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(),
@@ -76,9 +76,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	};
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN_FUTURE =
-			new String[] { EmptyDomain.class.getSimpleName(), VPDomain.class.getSimpleName(),
-					DataflowDomain.class.getSimpleName(), LiveVariableDomain.class.getSimpleName(),
-					SMTTheoryDomain.class.getSimpleName(), PoormanAbstractDomain.class.getSimpleName() };
+			{ EmptyDomain.class.getSimpleName(), VPDomain.class.getSimpleName(), DataflowDomain.class.getSimpleName(),
+					LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
+					PoormanAbstractDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -132,12 +132,12 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		// Abstract Domains Container
 		final UltimatePreferenceItemContainer abstractDomainContainer =
 				new UltimatePreferenceItemContainer("Abstract Domains");
-		abstractDomainContainer.addItem(
-				new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
+		abstractDomainContainer
+				.addItem(new UltimatePreferenceItem<>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
 				PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
-		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE,
-				null, PreferenceType.Label));
+		abstractDomainContainer.addItem(
+				new UltimatePreferenceItem<>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN_FUTURE, null, PreferenceType.Label));
 		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN_FUTURE,
 				DEF_ABSTRACT_DOMAIN_FUTURE, PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN_FUTURE));
 

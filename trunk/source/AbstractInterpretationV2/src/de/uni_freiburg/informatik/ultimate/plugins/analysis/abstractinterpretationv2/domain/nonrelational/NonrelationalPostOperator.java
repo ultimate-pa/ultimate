@@ -158,7 +158,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final IcfgEdge transitionLabel = transition.getLabel();
 
 		assert transitionLabel instanceof Call || transitionLabel instanceof Return
-				|| transitionLabel instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
+				|| transitionLabel instanceof Summary
+				: "Cannot calculate hierachical post for non-hierachical transition";
 
 		if (transitionLabel instanceof Call) {
 			final Call call = (Call) transitionLabel;
@@ -330,11 +331,11 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final ITermProvider inValue = inVals.get(i);
 			final Expression inExpression = args[i];
 
-			final IIdentifierTranslator[] translators = new IIdentifierTranslator[] { new SimpleTranslator(),
-					mBoogie2Smt.createConstOnlyIdentifierTranslator() };
+			final IIdentifierTranslator[] translators =
+					{ new SimpleTranslator(), mBoogie2Smt.createConstOnlyIdentifierTranslator() };
 
 			final Term expressionTerm =
-					mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression).getTerm();
+					mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression).term();
 
 			final Term valueTerm = inValue.getTerm(mBoogie2Smt.getScript(), expressionTerm.getSort(), expressionTerm);
 

@@ -151,8 +151,7 @@ public class SymbolicTools {
 	}
 
 	public Term[] dnfDisjuncts(final IPredicate pred, final UnaryOperator<Term> termTransformer) {
-		final Term dnf =
-				SmtUtils.toDnf(mServices, mMngdScript, termTransformer.apply(pred.getFormula()));
+		final Term dnf = SmtUtils.toDnf(mServices, mMngdScript, termTransformer.apply(pred.getFormula()));
 		return SmtUtils.getDisjuncts(dnf);
 	}
 

@@ -123,9 +123,9 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		if (loc == null) {
 			throw new IllegalArgumentException("Cannot add null location");
 		}
-		assert getLocationClass()
-				.isAssignableFrom(loc.getClass()) : "Incompatible location types. Should be subclass of "
-						+ getLocationClass() + " but is " + loc.getClass();
+		assert getLocationClass().isAssignableFrom(loc.getClass())
+				: "Incompatible location types. Should be subclass of " + getLocationClass() + " but is "
+						+ loc.getClass();
 		final String proc = getProcedure(loc);
 		final Map<DebugIdentifier, LOC> name2Loc = mProgramPoints.get(proc);
 		assert name2Loc != null : "Unknown procedure";
@@ -146,13 +146,13 @@ public class BasicIcfg<LOC extends IcfgLocation> extends BasePayloadContainer im
 		}
 		if (isProcEntry) {
 			final LOC oldEntry = mEntryNodes.put(proc, loc);
-			assert oldEntry == null || loc.equals(
-					oldEntry) : "Do not overwrite the procedure entry node by mistake! Remove the old one first";
+			assert oldEntry == null || loc.equals(oldEntry)
+					: "Do not overwrite the procedure entry node by mistake! Remove the old one first";
 		}
 		if (isProcExit) {
 			final LOC oldExit = mExitNodes.put(proc, loc);
-			assert oldExit == null || loc
-					.equals(oldExit) : "Do not overwrite the procedure exit node by mistake! Remove the old one first";
+			assert oldExit == null || loc.equals(oldExit)
+					: "Do not overwrite the procedure exit node by mistake! Remove the old one first";
 		}
 		if (isLoopLocation) {
 			mLoopLocations.add(loc);

@@ -82,8 +82,8 @@ public class SmtUtilsTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		final String names = "ABCDE";
-		final Term[] values = new Term[] { mScript.term("-", mScript.numeral("1")), mScript.numeral("0"),
-				mScript.numeral("2"), mScript.numeral("0"), mScript.numeral("0"), };
+		final Term[] values = { mScript.term("-", mScript.numeral("1")), mScript.numeral("0"), mScript.numeral("2"),
+				mScript.numeral("0"), mScript.numeral("0"), };
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);
@@ -114,7 +114,7 @@ public class SmtUtilsTest {
 		final Sort intSort = SmtSortUtils.getIntSort(mScript);
 
 		final String names = "AB";
-		final Term[] values = new Term[] { mScript.term("-", mScript.numeral("1")), mScript.numeral("0") };
+		final Term[] values = { mScript.term("-", mScript.numeral("1")), mScript.numeral("0") };
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (int i = 0; i < names.length(); ++i) {
 			final Term term = declareVar(String.valueOf(names.charAt(i)), intSort);

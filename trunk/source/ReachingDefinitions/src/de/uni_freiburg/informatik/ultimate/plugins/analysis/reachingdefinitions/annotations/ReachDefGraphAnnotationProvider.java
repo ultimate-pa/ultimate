@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
@@ -41,25 +41,25 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 
 	private final HashSet<String> mKeys;
 
-	public ReachDefGraphAnnotationProvider(String annotationSuffix) {
+	public ReachDefGraphAnnotationProvider(final String annotationSuffix) {
 		mAnnotationSuffix = annotationSuffix;
 		mKeys = new HashSet<>();
 		mKeys.add(sDefaultKey);
 	}
 
 	@Override
-	public T getAnnotation(IElement element) {
+	public T getAnnotation(final IElement element) {
 		return getAnnotation(element, sDefaultKey);
 	}
 
 	@Override
-	public void annotate(IElement node, T annotation) {
+	public void annotate(final IElement node, final T annotation) {
 		annotate(node, annotation, sDefaultKey);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public T getAnnotation(IElement element, String uniqueId) {
+	public T getAnnotation(final IElement element, final String uniqueId) {
 		assert uniqueId != null && !uniqueId.isEmpty();
 		if (!element.hasPayload()) {
 			return null;
@@ -76,7 +76,7 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 	}
 
 	@Override
-	public void annotate(IElement node, T annotation, String uniqueId) {
+	public void annotate(final IElement node, final T annotation, final String uniqueId) {
 		assert uniqueId != null && !uniqueId.isEmpty();
 		mKeys.add(uniqueId);
 		final String key = sAnnotationName + " " + uniqueId;
@@ -88,11 +88,11 @@ public class ReachDefGraphAnnotationProvider<T extends ReachDefBaseAnnotation> i
 	}
 
 	@Override
-	public List<T> getAllAnnotations(IElement element) {
+	public List<T> getAllAnnotations(final IElement element) {
 		final List<T> rtr = new ArrayList<>();
-		for(final String key : mKeys){
+		for (final String key : mKeys) {
 			final T annot = getAnnotation(element, key);
-			if(annot != null){
+			if (annot != null) {
 				rtr.add(annot);
 			}
 		}

@@ -14,9 +14,11 @@ public class InvariantSynthesisSettings {
 	private final boolean mUseLBE; // use large-block encoding?
 	private final AbstractTemplateIncreasingDimensionsStrategy mTemplateDimensionsStrat;
 
-	public InvariantSynthesisSettings(final SolverSettings solverSettings, final AbstractTemplateIncreasingDimensionsStrategy templateDimensionsStrat,
-			final boolean useNonlinearConstraints, 	final boolean useUnsatCores,
-			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
+	public InvariantSynthesisSettings(final SolverSettings solverSettings,
+			final AbstractTemplateIncreasingDimensionsStrategy templateDimensionsStrat,
+			final boolean useNonlinearConstraints, final boolean useUnsatCores,
+			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants,
+			final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mSolverSettings = solverSettings;
 		mUseUnsatCores = useUnsatCores;

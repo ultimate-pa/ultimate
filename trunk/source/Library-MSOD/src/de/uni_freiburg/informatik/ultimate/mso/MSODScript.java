@@ -75,7 +75,7 @@ public class MSODScript extends NoopScript {
 
 	@Override
 	public LBool assertTerm(final Term term) throws SMTLIBException {
-		mAssertionTerm = mAssertionTerm == null ? term : term("and", new Term[] { mAssertionTerm, term });
+		mAssertionTerm = mAssertionTerm == null ? term : term("and", mAssertionTerm, term);
 		return null;
 	}
 

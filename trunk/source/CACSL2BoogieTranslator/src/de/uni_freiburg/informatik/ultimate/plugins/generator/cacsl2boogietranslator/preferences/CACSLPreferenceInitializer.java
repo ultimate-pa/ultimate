@@ -166,34 +166,22 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		HoenickeLindenmann_8ByteResolution;
 
 		public int getByteSize() {
-			switch (this) {
-			case HoenickeLindenmann_1ByteResolution:
-				return 1;
-			case HoenickeLindenmann_2ByteResolution:
-				return 2;
-			case HoenickeLindenmann_4ByteResolution:
-				return 4;
-			case HoenickeLindenmann_8ByteResolution:
-				return 8;
-			case HoenickeLindenmann_Original:
-				throw new AssertionError("HoenickeLindenmann_Original has no associated byte size");
-			default:
-				throw new AssertionError("missing case/MemoryModel?");
-			}
+			return switch (this) {
+			case HoenickeLindenmann_1ByteResolution -> 1;
+			case HoenickeLindenmann_2ByteResolution -> 2;
+			case HoenickeLindenmann_4ByteResolution -> 4;
+			case HoenickeLindenmann_8ByteResolution -> 8;
+			case HoenickeLindenmann_Original ->
+					throw new AssertionError("HoenickeLindenmann_Original has no associated byte size");
+			};
 		}
 
 		public boolean isBitVectorMemoryModel() {
-			switch (this) {
-			case HoenickeLindenmann_1ByteResolution:
-			case HoenickeLindenmann_2ByteResolution:
-			case HoenickeLindenmann_4ByteResolution:
-			case HoenickeLindenmann_8ByteResolution:
-				return true;
-			case HoenickeLindenmann_Original:
-				return false;
-			default:
-				throw new AssertionError("missing case/MemoryModel?");
-			}
+			return switch (this) {
+			case HoenickeLindenmann_1ByteResolution, HoenickeLindenmann_2ByteResolution,
+					HoenickeLindenmann_4ByteResolution, HoenickeLindenmann_8ByteResolution -> true;
+			case HoenickeLindenmann_Original -> false;
+			};
 		}
 
 		public static MemoryModel getPreciseEnoughMemoryModelFor(final int byteSize) {

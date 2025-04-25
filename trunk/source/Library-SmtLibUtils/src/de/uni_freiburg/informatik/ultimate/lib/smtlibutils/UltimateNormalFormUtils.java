@@ -186,5 +186,4 @@ public final class UltimateNormalFormUtils {
 		return !new SubtermPropertyChecker(property).isSatisfiedBySomeSubterm(term);
 	}
 
-
 }

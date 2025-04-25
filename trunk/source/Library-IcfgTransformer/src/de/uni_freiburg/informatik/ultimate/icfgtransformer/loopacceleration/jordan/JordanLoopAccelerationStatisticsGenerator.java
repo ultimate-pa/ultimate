@@ -47,7 +47,6 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 	public JordanLoopAccelerationStatisticsGenerator(final int numberOfAssignedVariables,
 			final int numberOfHavocedVariables, final int numberOfArrayWrites, final int numberOfReadonlyVariables,
 			final NestedMap2<Integer, Integer, Integer> eigenvalues, final String errorMessage) {
-		super();
 		mNumberOfAssignedVariables = numberOfAssignedVariables;
 		mNumberOfHavocedVariables = numberOfHavocedVariables;
 		mNumberOfReadonlyVariables = numberOfReadonlyVariables;
@@ -61,29 +60,18 @@ public class JordanLoopAccelerationStatisticsGenerator implements IStatisticsDat
 
 	@Override
 	public Object getValue(final String key) {
-		final JordanLoopAccelerationDefinitions keyEnum = Enum.valueOf(JordanLoopAccelerationDefinitions.class, key);
-		switch (keyEnum) {
-		case AssignedVariables:
-			return mNumberOfAssignedVariables;
-		case HavocedVariables:
-			return mNumberOfHavocedVariables;
-		case ReadonlyVariables:
-			return mNumberOfReadonlyVariables;
-		case ArrayWrites:
-			return mNumberOfArrayWrites;
-		case Eigenvalues:
-			return mEigenvalues;
-		case SequentialAcceleration:
-			return mSequentialAcceleration;
-		case QuantifierFreeResult:
-			return mQuantifierFreeResult;
-		case AlternatingAcceleration:
-			return mAlternatingAcceleration;
-		case ErrorMessage:
-			return mErrorMessage;
-		default:
-			throw new AssertionError("unknown data");
-		}
+		final JordanLoopAccelerationDefinitions keyEnum = JordanLoopAccelerationDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case AssignedVariables -> mNumberOfAssignedVariables;
+		case HavocedVariables -> mNumberOfHavocedVariables;
+		case ReadonlyVariables -> mNumberOfReadonlyVariables;
+		case ArrayWrites -> mNumberOfArrayWrites;
+		case Eigenvalues -> mEigenvalues;
+		case SequentialAcceleration -> mSequentialAcceleration;
+		case QuantifierFreeResult -> mQuantifierFreeResult;
+		case AlternatingAcceleration -> mAlternatingAcceleration;
+		case ErrorMessage -> mErrorMessage;
+		};
 	}
 
 	@Override

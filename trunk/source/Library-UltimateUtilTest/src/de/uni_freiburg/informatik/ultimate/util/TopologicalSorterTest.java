@@ -54,7 +54,9 @@ public class TopologicalSorterTest {
 
 		/**
 		 * Constructs a graph from a a list of nodes and edges.
-		 * @param nodesAndEdges  Nodes of the form "word" and edges of the form "word1→word2" separated by whitespace
+		 *
+		 * @param nodesAndEdges
+		 *            Nodes of the form "word" and edges of the form "word1→word2" separated by whitespace
 		 */
 		public Graph(final String nodesAndEdges) {
 			Arrays.stream(entries(nodesAndEdges)).forEach(this::addNodeOrEdge);
@@ -82,7 +84,9 @@ public class TopologicalSorterTest {
 
 		/**
 		 * Retrieves the successors of a given node. The node is created if it did not already exist.
-		 * @param node Any node from the graph or a new one to be created
+		 *
+		 * @param node
+		 *            Any node from the graph or a new one to be created
 		 * @return Successors of the node
 		 */
 		public Set<String> successors(final String node) {
@@ -95,33 +99,32 @@ public class TopologicalSorterTest {
 	}
 
 	@Test
-	public void empty(){
+	public void empty() {
 		assertTopSortEqualsAny("", "");
 	}
 
 	@Test
-	public void disconnected(){
+	public void disconnected() {
 		assertTopSortEqualsAny("a→b x→y", "a b x y", "a x b y", "x y a b");
 	}
 
 	@Test
-	public void cycle(){
+	public void cycle() {
 		assertUnsortable("a→a");
 		assertUnsortable("a→b b→c c→d d→a");
 		assertUnsortable("a→b a→end b→c c→end c→d d→a");
 	}
 
-
 	@Test
-	public void twoNodesPermutations(){
+	public void twoNodesPermutations() {
 		final String expected = "source sink";
 		assertTopSortEqualsAny("source→sink", expected);
 		assertTopSortEqualsAny("sink source→sink", expected);
 	}
 
 	@Test
-	public void cherryPermutations(){
-		for (String nodePermutation : new String[]{"a b c", "b a c", "c a b", "a c b", "b c a", "c b a"}) {
+	public void cherryPermutations() {
+		for (final String nodePermutation : new String[] { "a b c", "b a c", "c a b", "a c b", "b c a", "c b a" }) {
 			assertTopSortEqualsAny(nodePermutation + " a→b a→c", "a b c", "a c b");
 		}
 	}
@@ -170,7 +173,7 @@ public class TopologicalSorterTest {
 
 	@Test(expected = AssertionError.class)
 	public void testCheckingMechanismMissingNode() {
-		checkTopOrder("a b","a→b a→c");
+		checkTopOrder("a b", "a→b a→c");
 	}
 
 	@Test(expected = AssertionError.class)
@@ -223,7 +226,7 @@ public class TopologicalSorterTest {
 		}
 		Assert.fail("Result did not match any expected order: " + actual);
 	}
-	
+
 	private static List<String> assertExists(final Optional<List<String>> topologicalOrdering) {
 		if (topologicalOrdering.isPresent()) {
 			return topologicalOrdering.get();
@@ -243,7 +246,7 @@ public class TopologicalSorterTest {
 
 	private static String[] entries(final String whitespaceSeparatedEntries) {
 		if (whitespaceSeparatedEntries.isEmpty()) {
-			return new String[]{};
+			return new String[] {};
 		}
 		return whitespaceSeparatedEntries.trim().split("\\s+");
 	}
@@ -273,8 +276,8 @@ public class TopologicalSorterTest {
 		for (final String source : graph.nodes()) {
 			for (final String target : graph.successors(source)) {
 				if (actualTopOrder.indexOf(source) >= actualTopOrder.indexOf(target)) {
-					Assert.fail(String.format("Dependency %s→%s violated by result %s",
-							source, target, actualTopOrder));
+					Assert.fail(
+							String.format("Dependency %s→%s violated by result %s", source, target, actualTopOrder));
 				}
 			}
 		}

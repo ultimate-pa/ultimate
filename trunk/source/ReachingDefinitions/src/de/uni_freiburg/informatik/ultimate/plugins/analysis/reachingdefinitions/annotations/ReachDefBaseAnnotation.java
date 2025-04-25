@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -97,7 +97,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 			return false;
 		}
 
-		if (!(arg instanceof ReachDefBaseAnnotation)) {
+		if (getClass() != arg.getClass()) {
 			return false;
 		}
 
@@ -141,7 +141,8 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 		return prettyPrintDefUse(getUse());
 	}
 
-	protected HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> copy(final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> other) {
+	protected HashMap<ScopedBoogieVar, HashSet<IndexedStatement>>
+			copy(final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> other) {
 		if (other == null) {
 			return null;
 		}
@@ -151,10 +152,7 @@ public abstract class ReachDefBaseAnnotation extends AbstractAnnotations {
 			if (otherset == null) {
 				continue;
 			}
-			final HashSet<IndexedStatement> newset = new HashSet<>();
-			for (final IndexedStatement stmt : otherset) {
-				newset.add(stmt);
-			}
+			final HashSet<IndexedStatement> newset = new HashSet<>(otherset);
 			newmap.put(key, newset);
 		}
 		return newmap;
