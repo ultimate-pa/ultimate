@@ -55,4 +55,9 @@
 
     <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerBplInline.xml</option>
   </tasks>
+
+  <tasks name="termute">
+    <include>/storage/cav23-termute-examples/*/*.bpl</include>
+    <option name="-tc">../../../trunk/examples/toolchains/BuchiAutomizerBplInline.xml</option>
+  </tasks>
 </benchmark>
