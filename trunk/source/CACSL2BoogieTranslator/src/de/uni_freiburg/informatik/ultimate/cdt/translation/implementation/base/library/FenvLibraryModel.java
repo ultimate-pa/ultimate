@@ -112,11 +112,6 @@ public class FenvLibraryModel implements ILibraryModel {
 	}
 
 	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
-	}
-
-	@Override
 	public Collection<ConstantModel> getConstantModels() {
 		final var intType = new CPrimitive(CPrimitives.INT);
 		return List.of(

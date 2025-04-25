@@ -84,19 +84,4 @@ public class SocketLibraryModel implements ILibraryModel {
 
 		return result;
 	}
-
-	@Override
-	public Collection<String> getUnsupportedFunctions() {
-		return List.of();
-	}
-
-	@Override
-	public Collection<TypeModel> getTypeModels() {
-		return List.of();
-	}
-
-	@Override
-	public Collection<ConstantModel> getConstantModels() {
-		return List.of();
-	}
 }
