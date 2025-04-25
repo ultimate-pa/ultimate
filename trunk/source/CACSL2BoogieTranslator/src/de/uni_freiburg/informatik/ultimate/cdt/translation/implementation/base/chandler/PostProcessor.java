@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -377,10 +378,6 @@ public class PostProcessor {
 	}
 
 	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
-		/*
-		 * Hardcoded to the following constants: FE_DOWNWARD 1024 FE_TONEAREST 0 FE_TOWARDZERO 3072 FE_UPWARD 2048
-		 */
-
 		final String functionName = BitvectorTranslation.ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE;
 		final String functionArgumentVariableName = "i";
 		final String returnVariableName = "r";
@@ -407,13 +404,13 @@ public class PostProcessor {
 
 		// rounding macros constants
 		final Expression rtzIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3072));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_TOWARDZERO);
 		final Expression rneIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_TONEAREST);
 		final Expression rtpIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2048));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_UPWARD);
 		final Expression rtnIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(1024));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_DOWNWARD);
 
 		final IdentifierExpression functionArgumentIdentifierExpression =
 				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
