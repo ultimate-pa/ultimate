@@ -1,15 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class LocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<String, ? extends LOC> mEntryLocs;
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
+	private HeuristicLocationAbstraction<LOC> mHeuristicLocationAbstraction;
 
 	public LocationAbstraction(final Map<String, ? extends LOC> entryLocs) {
 		mEntryLocs = entryLocs;
@@ -19,16 +22,19 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 			final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		// TODO: enum for setting strings
 		// TODO: parametrize countervalues
-		final HeuristicLocationAbstraction<LOC> heuristicsAbstraction = new HeuristicLocationAbstraction<>(services,
-				icfg);
+		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
 		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		case "Fully precise" ->
 			new AbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
-		case "Heuristic splitting" -> heuristicsAbstraction.computeLocationAbstraction();
+		case "Heuristic splitting" -> mHeuristicLocationAbstraction.computeLocationAbstraction();
 		default -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
 		};
 		return absMap;
+	}
+
+	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
+		return mHeuristicLocationAbstraction.shouldDifferentiate(outgoing);
 	}
 
 	private int getAndIncrementThreadLocationCounter(final String thread) {
@@ -36,5 +42,4 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		mPerThreadLocationCounterMap.put(thread, counter + 1);
 		return counter;
 	}
-
 }

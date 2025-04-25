@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 
 public class InterferenceCreator {
 
@@ -18,7 +19,8 @@ public class InterferenceCreator {
 			final Map<String, ? extends LOC> mEntryLocs, final IIcfg<? extends LOC> icfg,
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
 			final ITransitionProvider<ACTION, LOC> mTransitionProvider, final int maxSize,
-			final AbstractLocationMap<LOC> mLocationAbstraction) {
+			final AbstractLocationMap<LOC> mLocationAbstraction,
+			final LocationAbstraction<LOC> locationAbstractionCalculator) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
 		final boolean precise = false;
 		final var unionOp = new GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC>();
@@ -27,10 +29,14 @@ public class InterferenceCreator {
 		for (final LOC entryLoc : mEntryLocs.values()) {
 			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
 				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction)) {
+					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction,
+							locationAbstractionCalculator, loc)) {
 						continue;
 					}
 					final var preState = mStateStorage.getAbstractState(mTransitionProvider.getSource((ACTION) edge));
+					if (preState == null) {
+						continue;
+					}
 					final var interference = computeInterference(precise, preState, edge, unionOp, maxSize);
 					result.addInterference(entryLoc.getProcedure(), interference);
 				}
@@ -57,16 +63,22 @@ public class InterferenceCreator {
 	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
 	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> boolean isInterferingTransition(
 			final ACTION transition, final IIcfg<? extends LOC> icfg,
-			final AbstractLocationMap<LOC> mLocationAbstraction) {
-		return true;
-//		if (mLocationAbstraction.getAbstractLocation(transition.getSource()) != mLocationAbstraction
-//				.getAbstractLocation(transition.getTarget())) {
-//			return true;
-//		}
-//		if (!transition.getTransformula().getAssignedVars().stream()
-//				.anyMatch(assignedVar -> icfg.getCfgSmtToolkit().getSymbolTable().getGlobals().contains(assignedVar))) {
-//			return true;
-//		}
-//		return false;
+			final AbstractLocationMap<LOC> mLocationAbstraction,
+			final LocationAbstraction<LOC> locationAbstractionCalculator, final LOC loc) {
+		if (mLocationAbstraction.getAbstractLocation(transition.getSource()) != mLocationAbstraction
+				.getAbstractLocation(transition.getTarget())) {
+			return true;
+		}
+		if (locationAbstractionCalculator.shouldDifferentiate(loc.getOutgoingEdges())) {
+			return true;
+		}
+		final var globals = icfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
+		if ((transition.getTransformula().getOutVars().keySet().stream().anyMatch(globals::contains))) {
+			return true;
+		}
+		if (transition instanceof ForkThreadCurrent) {
+			return true;
+		}
+		return false;
 	}
 }

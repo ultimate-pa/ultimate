@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private final ILogger mLogger;
 
+	// TODO: Dont widen states which dont need it (dont group-widen)
 	// TODO: since we now re initialize this class constantly, move cache somehwere else
 	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, STATE> mInterferenceCache = new HashMap<>();
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
