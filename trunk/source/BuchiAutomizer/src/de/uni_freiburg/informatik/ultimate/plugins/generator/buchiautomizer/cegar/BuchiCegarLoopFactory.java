@@ -85,7 +85,6 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 
 	private final IUltimateServiceProvider mServices;
 	private final TAPreferences mPrefs;
-	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
 	private final Class<L> mTransitionClazz;
 	private final ICopyActionFactory<L> mCopyFactory;
 	private int mNumberOfConstructions;
@@ -93,18 +92,17 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private IndependenceProviderFactory<L> mIndependenceProviderFactory;
 
 	public BuchiCegarLoopFactory(final IUltimateServiceProvider services, final TAPreferences taPrefs,
-			final Class<L> transitionClazz, final ICopyActionFactory<L> copyFactory,
-			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+			final Class<L> transitionClazz, final ICopyActionFactory<L> copyFactory) {
 		mServices = services;
 		mPrefs = taPrefs;
 		mTransitionClazz = transitionClazz;
 		mCopyFactory = copyFactory;
-		mCegarLoopBenchmark = benchmarkGenerator;
 		mNumberOfConstructions = 0;
 	}
 
 	public AbstractBuchiCegarLoop<L, ?> constructCegarLoop(final IIcfg<?> icfg,
-			final IWitnessTransformer<L> witnessTransformer) {
+			final IWitnessTransformer<L> witnessTransformer,
+			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		final String variableSuffix = mNumberOfConstructions > 0 ? Integer.toString(mNumberOfConstructions) : "";
 		mNumberOfConstructions++;
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(icfg.getCfgSmtToolkit(), variableSuffix);
@@ -119,7 +117,7 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 					new NwaInitialAbstractionProvider<>(mServices, stateFactoryForRefinement, true, predicateFactory,
 							mPrefs.getHoareSettings());
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
-					stateFactoryForRefinement, automatonProvider);
+					stateFactoryForRefinement, automatonProvider, benchmarkGenerator);
 		}
 		final var petriNetProvider = constructPetriNetProvider(predicateFactory, icfg);
 		final AutomatonTypeConcurrent automatonTypeConcurrent = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -130,10 +128,11 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 			final var automatonProvider = createAutomatonProvider(petriNetProvider, automatonTypeConcurrent,
 					stateFactoryForRefinement, predicateFactory);
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
-					stateFactoryForRefinement, automatonProvider);
+					stateFactoryForRefinement, automatonProvider, benchmarkGenerator);
 		case BUCHI_PETRI_NET:
 			return new BuchiPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
-					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg), mCegarLoopBenchmark);
+					mTransitionClazz, constructInitialAbstraction(petriNetProvider, icfg, benchmarkGenerator),
+					benchmarkGenerator);
 		// case RABIN_PETRI_NET:
 		// return new RabinPetriNetCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
 		// mTransitionClazz, new RabinPetriNetWrapper<>(constructInitialAbstraction(petriNetProvider, icfg)),
@@ -208,12 +207,14 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private BuchiAutomatonCegarLoop<L> createBuchiAutomatonCegarLoop(final IIcfg<?> icfg,
 			final RankVarConstructor rankVarConstructor, final PredicateFactory predicateFactory,
 			final IWitnessTransformer<L> witnessTransformer, final PredicateFactoryRefinement stateFactory,
-			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> provider) {
+			IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> provider,
+			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		if (witnessTransformer != null) {
 			provider = new WitnessAutomatonAbstractionProvider<>(predicateFactory, provider, witnessTransformer);
 		}
 		return new BuchiAutomatonCegarLoop<>(icfg, rankVarConstructor, predicateFactory, mPrefs, mServices,
-				mTransitionClazz, constructInitialAbstraction(provider, icfg), stateFactory, mCegarLoopBenchmark);
+				mTransitionClazz, constructInitialAbstraction(provider, icfg, benchmarkGenerator), stateFactory,
+				benchmarkGenerator);
 	}
 
 	private static Set<IcfgLocation> getAcceptingStates(final IIcfg<?> icfg) {
@@ -226,14 +227,15 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 				.collect(Collectors.toSet());
 	}
 
-	private <A extends IAutomaton<L, IPredicate>> A
-			constructInitialAbstraction(final IInitialAbstractionProvider<L, A> provider, final IIcfg<?> icfg) {
+	private <A extends IAutomaton<L, IPredicate>> A constructInitialAbstraction(
+			final IInitialAbstractionProvider<L, A> provider, final IIcfg<?> icfg,
+			final BuchiCegarLoopBenchmarkGenerator benchmark) {
 		// OverallTime should include InitialAbstractionConstructionTime. Hence we start and stop both stopwatches.
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime);
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
+		benchmark.start(CegarLoopStatisticsDefinitions.OverallTime);
+		benchmark.start(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
 		try {
 			final var abstraction = provider.getInitialAbstraction(icfg, getAcceptingStates(icfg));
-			mCegarLoopBenchmark.addInitialAbstractionStatistics(provider.getStatistics());
+			benchmark.addInitialAbstractionStatistics(provider.getStatistics());
 			return abstraction;
 		} catch (final AutomataOperationCanceledException ex) {
 			final RunningTaskInfo runningTaskInfo =
@@ -248,8 +250,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime);
+			benchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
+			benchmark.stop(CegarLoopStatisticsDefinitions.OverallTime);
 		}
 	}
 

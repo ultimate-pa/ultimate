@@ -326,11 +326,13 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 		} catch (final AutomataLibraryException e1) {
 			mLogger.warn("Verification cancelled");
 			mMDBenchmark.reportRemainderModule(mAbstraction.size(), false);
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 			return BuchiCegarLoopResult.constructTimeoutResult(new ToolchainCanceledException(e1.getClassOfThrower()),
 					mMDBenchmark, mTermcompProofBenchmark);
 		}
 		if (initalAbstractionCorrect) {
 			mMDBenchmark.reportNoRemainderModule();
+			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 			return BuchiCegarLoopResult.constructTerminatingResult(mMDBenchmark, mTermcompProofBenchmark);
 		}
 
@@ -343,6 +345,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			} catch (final AutomataLibraryException e1) {
 				mLogger.warn("Verification cancelled");
 				reportRemainderModule(false);
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 				return BuchiCegarLoopResult.constructTimeoutResult(
 						new ToolchainCanceledException(e1.getClassOfThrower()), mMDBenchmark, mTermcompProofBenchmark);
 			}
@@ -351,6 +354,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				if (mConstructTermcompProof) {
 					mTermcompProofBenchmark.reportNoRemainderModule();
 				}
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 				return BuchiCegarLoopResult.constructTerminatingResult(mMDBenchmark, mTermcompProofBenchmark);
 			}
 
@@ -389,6 +393,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 								+ traceHistogramMaxStem + " " + "loop: length " + mCounterexample.getLoop().getLength()
 								+ " TraceHistMax " + traceHistogramMaxLoop + ")";
 				e.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 				return BuchiCegarLoopResult.constructTimeoutResult(e, mMDBenchmark, mTermcompProofBenchmark);
 			} finally {
 				mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.LASSO_ANALYSIS_TIME);
@@ -414,6 +419,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 							mCsToolkitWithoutRankVars.getConcurrencyInformation().getInUseErrorNodeMap().values());
 					final NestedWord<L> stem = getWordWithoutLocs(mCounterexample.getStem(), inUseLocs);
 					final NestedWord<L> loop = getWordWithoutLocs(mCounterexample.getLoop(), inUseLocs);
+					mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 					if (cd == ContinueDirective.REPORT_NONTERMINATION && getOverapproximations().isEmpty()) {
 						reportRemainderModule(true);
 						// The loop is empty, i.e. it contains only self-loops in the insufficient thread locations.
@@ -438,12 +444,15 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 				}
 
 			} catch (final AutomataLibraryException e) {
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 				return BuchiCegarLoopResult.constructTimeoutResult(
 						new ToolchainCanceledException(e.getClassOfThrower()), mMDBenchmark, mTermcompProofBenchmark);
 			} catch (final ToolchainCanceledException e) {
+				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 				return BuchiCegarLoopResult.constructTimeoutResult(e, mMDBenchmark, mTermcompProofBenchmark);
 			}
 		}
+		mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		return BuchiCegarLoopResult.constructTimeoutResult(
 				new ToolchainCanceledException(getClass(), "exceeding the number of iterations"), mMDBenchmark,
 				mTermcompProofBenchmark);

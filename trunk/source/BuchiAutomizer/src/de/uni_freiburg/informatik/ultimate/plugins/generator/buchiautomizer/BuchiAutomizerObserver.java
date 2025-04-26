@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cega
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.cegar.BuchiCegarLoopResult.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -149,8 +148,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private BuchiCegarLoopResult<IcfgEdge> runCegarLoops(final IIcfg<?> icfg,
 			final BuchiCegarLoopFactory<IcfgEdge> factory) throws IOException {
 		if (!IcfgUtils.isConcurrent(icfg)) {
-			return factory.constructCegarLoop(icfg, mWitnessTransformer).runCegarLoop();
+			runSingleCegarLoop(icfg, factory);
 		}
+
 		if (mWitnessTransformer != null) {
 			throw new UnsupportedOperationException("Witness validation for concurrency is currently not supported.");
 		}
@@ -159,7 +159,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IcfgPetrifier icfgPetrifier = new IcfgPetrifier(mServices, icfg, numberOfThreadInstances, true);
 			mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 			final IIcfg<IcfgLocation> petrified = icfgPetrifier.getPetrifiedIcfg();
-			final BuchiCegarLoopResult<IcfgEdge> result = factory.constructCegarLoop(petrified, null).runCegarLoop();
+			final BuchiCegarLoopResult<IcfgEdge> result = runSingleCegarLoop(petrified, factory);
 			if (result.getResult() != Result.INSUFFICIENT_THREADS) {
 				return result;
 			}
@@ -167,6 +167,18 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					+ " thread instances were not sufficient, I will increase this number and restart the analysis");
 			numberOfThreadInstances++;
 		}
+	}
+
+	private BuchiCegarLoopResult<IcfgEdge> runSingleCegarLoop(final IIcfg<?> icfg,
+			final BuchiCegarLoopFactory<IcfgEdge> factory) throws IOException {
+		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
+		final var result = factory.constructCegarLoop(icfg, mWitnessTransformer, benchGen).runCegarLoop();
+
+		final BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
+		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
+		reportResult(benchTiming);
+
+		return result;
 	}
 
 	private INestedWordAutomaton<WitnessEdge, WitnessNode> extendWitnessAutomaton(
@@ -185,19 +197,15 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	}
 
 	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
-		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
-
 		final BuchiCegarLoopResult<IcfgEdge> result;
 		final var copyFactory = new IcfgCopyFactory(mServices, icfg.getCfgSmtToolkit());
-		final var factory = new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class,
-				copyFactory, benchGen);
+		final var factory =
+				new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class, copyFactory);
 		try {
 			result = runCegarLoops(icfg, factory);
 		} finally {
 			factory.shutdown();
 		}
-
-		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 
 		final IResult benchDecomp = new StatisticsResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				result.getMDBenchmark());
@@ -212,10 +220,6 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					result.getTermcompProofBenchmark());
 			reportResult(termcompProof);
 		}
-
-		final BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
-		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
-		reportResult(benchTiming);
 
 		interpretAndReportResult(result, icfg);
 		return icfg;
