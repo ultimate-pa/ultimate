@@ -40,15 +40,15 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final Map<String, ? extends LOC> mEntryLocs;
 	private final ITransitionProvider<ACTION, LOC> mTransitionProvider;
 	private final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage;
-	private final GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> mDomain;
+	private GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> mDomain;
 	private final IAbstractDomain<UNDERLYINGSTATE, ACTION> mUnderlyingDomain;
 	private final IVariableProvider<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION> mVarProvider;
 	private final IFixpointEngineFactory<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> mFixpointEngineFactory;
 	private final FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final FixpointPrintHelper<UNDERLYINGSTATE, ACTION, LOC> mPrinter;
-	private GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
-	private final DisjunctiveGuardedStateFactory<UNDERLYINGSTATE, ACTION, LOC> mDisjFactory;
+//	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
+//	private final DisjunctiveGuardedStateFactory<UNDERLYINGSTATE, ACTION, LOC> mDisjFactory;
 	private AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mResult;
 	private final SummaryMap<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mSummaryMap;
 	private final IIcfg<? extends LOC> mIfcg;
@@ -92,9 +92,9 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mLocationAbstractionType = locationAbstraction;
 		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier();
-		mItfApplier = applier;
-		mDisjFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates, mDomain,
-				mItfApplier, mEntryLocs);
+//		mItfApplier = applier;
+//		mDisjFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates, mDomain,
+//				mItfApplier, mEntryLocs);
 		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mDomain.getWideningOperator());
 	}
 
@@ -152,14 +152,14 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private IFixpointEngine<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> createNewUnderlyingFixpointEngine(
 			final String procedure, final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
-		final var initialState = mDisjFactory.getInitialState(procedure);
-		final var newDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
+		mDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings, interferences);
+		final var initialFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates,
+				mDomain, null, mEntryLocs);
 		final var paramsWithInterferences = mParams.setStorage(mStateStorage.copy())
-				.setVariableProvider(new InterferingVariableProvider<>(mVarProvider, initialState))
-				.setDomain(newDomain);
-		mItfApplier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) newDomain
-				.getPostOperator()).getItfApplier();
+				.setVariableProvider(
+						new InterferingVariableProvider<>(mVarProvider, initialFactory.getInitialState(procedure)))
+				.setDomain(mDomain);
 		final var fixpointEngine = mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
 		return fixpointEngine;
 	}

@@ -1,10 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,8 +20,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private final ILogger mLogger;
 
 	// TODO: Dont widen states which dont need it (dont group-widen)
-	// TODO: since we now re initialize this class constantly, move cache somehwere else
-	private final Map<InterferenceStatePair<STATE, ACTION, LOC>, STATE> mInterferenceCache = new HashMap<>();
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mGuardedInterferenceDomain;
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
@@ -48,16 +44,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		iterationsReached = 0;
 	}
 
-	private record InterferenceStatePair<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
-			Interference<STATE, ACTION, LOC> interf, STATE targetState) {
-	}
-
 	private record InterferenceWithParentThread<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
 			Interference<STATE, ACTION, LOC> interf, String sourceThread) {
-	}
-
-	public AbstractInterferenceState<STATE, ACTION, LOC> getInterferences() {
-		return mInterferences;
 	}
 
 	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
@@ -81,9 +69,13 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		final var procedureMap = oldstate.threadCounter().getThreadInstances();
 		for (final String threadName : threadNameSet) {
 			final int threadInstances = procedureMap.get(threadName);
-			if (threadInstances >= 2 || threadName != ownerThread && threadInstances > 0) {
-				possibleInterferenceSet.add(threadName);
+			if (threadName == ownerThread && threadInstances <= 1) {
+				continue;
 			}
+			possibleInterferenceSet.add(threadName);
+//			if (threadInstances >= 2 || threadName != ownerThread && threadInstances > 0) {
+//				possibleInterferenceSet.add(threadName);
+//			}
 		}
 		return possibleInterferenceSet;
 	}

@@ -19,10 +19,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.For
 
 public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage;
+	private final GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> mDomain;
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final int mMaxParallelStates;
-	private final GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> mDomain;
-	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
 	private final Map<String, ? extends LOC> mEntryLocs;
 
 	public DisjunctiveGuardedStateFactory(
@@ -35,7 +34,6 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		mAnalyzer = analyzer;
 		mMaxParallelStates = maxStates;
 		mDomain = domain;
-		mItfApplier = applier;
 		mEntryLocs = entryLocs;
 	}
 
@@ -150,15 +148,10 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> interferenceDomainStates = new LinkedHashSet<>();
 		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : result
 				.getStates()) {
-			interferenceDomainStates
-					.addAll(mItfApplier.stateAfterInterferences(guardedInterferenceDomainState, procedure));
 			interferenceDomainStates.add(guardedInterferenceDomainState);
-		}
-		final var statesCopy = new HashSet<>(interferenceDomainStates);
-		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : statesCopy) {
-			interferenceDomainStates
-					.addAll(mItfApplier.stateAfterInterferences(guardedInterferenceDomainState, procedure));
-			interferenceDomainStates.add(guardedInterferenceDomainState);
+			interferenceDomainStates.addAll(
+					((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
+							.getItfApplier().stateAfterInterferences(guardedInterferenceDomainState, procedure));
 		}
 		return DisjunctiveAbstractState.createDisjunction(interferenceDomainStates, mMaxParallelStates);
 	}
@@ -183,5 +176,4 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		}
 		return state.removeVariables(varsToRemove);
 	}
-
 }

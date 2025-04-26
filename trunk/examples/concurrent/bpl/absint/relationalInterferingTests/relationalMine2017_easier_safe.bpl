@@ -27,7 +27,7 @@ procedure Thread2()
 modifies x, y;
 {  
     while (true) {
-        if (y < 4) {
+        if (y < 3) {
             y := y + 1;
             assert x <= y;
         }
