@@ -33,8 +33,7 @@
   </rundefinition>
 
   <rundefinition name="PARTIAL_ORDER_BA">
-    <option name="-s">../../../trunk/examples/settings/buchiAutomizer/concurrent-automaton-noLbe.epf</option>
-    <option name="--buchiautomizer.automaton.type.for.concurrent.programs">PARTIAL_ORDER_BA</option>
+    <option name="-s">../../../trunk/examples/settings/gemcutter/Termination.epf</option>
   </rundefinition>
 
   <rundefinition name="RABIN_PETRI_NET-NoLBE">
