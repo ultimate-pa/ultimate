@@ -144,7 +144,7 @@ public class AmpleReduction<L, S> {
 		mLogger.warn("Number of  initially assigned non-trivial ample sets:" + mAssignedNonTrivialAmple);
 		mLogger.warn("Times succ was already a loop node:" + mTargetAlreadyLN);
 		mLogger.warn(
-				"Times some other node on the cycle alrdy had a trivial ample set:" + mSomeOtherNodeOnCycleAlreadyLN);
+				"Times some other node on the cycle already had a trivial ample set:" + mSomeOtherNodeOnCycleAlreadyLN);
 
 		mLogger.info("Finished ample reduction");
 	}
