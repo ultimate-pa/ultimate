@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction;
 
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -62,10 +63,12 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 		implements IInitialAbstractionProvider<L, NestedWordAutomaton<L, IPredicate>> {
 
-	private final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mUnderlying;
 	private final IUltimateServiceProvider mServices;
-	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
 	private final AutomataLibraryServices mAutomataServices;
+	private final IEmptyStackStateFactory<IPredicate> mStateFactory;
+	private final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mUnderlying;
+	private final Function<IIcfg<?>, IIndependenceRelation<?, L>> mMakeIndependence;
+
 	private final AmpleRedStatistics mStatistics;
 
 	/**
@@ -77,16 +80,19 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 	 *            Ultimate services used by Ample Set Reduction
 	 * @param stateFactory
 	 *            A state factory used by the reduced automaton
-	 * @param seed
-	 *            The seed to use for the random DFS order.
+	 * @param makeIndependence
+	 *            Optionally, a function that constructs the independence relation to use. If {@code null}, a default
+	 *            construction is used.
 	 */
 	public AmpleRedAbstractionProvider(
 			final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> underlying,
-			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory) {
+			final IUltimateServiceProvider services, final IEmptyStackStateFactory<IPredicate> stateFactory,
+			final Function<IIcfg<?>, IIndependenceRelation<?, L>> makeIndependence) {
 		mUnderlying = underlying;
 		mServices = services;
 		mAutomataServices = new AutomataLibraryServices(services);
 		mStateFactory = stateFactory;
+		mMakeIndependence = makeIndependence;
 		mStatistics = new AmpleRedStatistics();
 	}
 
@@ -95,9 +101,16 @@ public class AmpleRedAbstractionProvider<L extends IIcfgTransition<?>>
 			final Set<? extends IcfgLocation> errorLocs) throws AutomataLibraryException {
 
 		mStatistics.startTimer();
-		final IIndependenceRelation<IPredicate, L> indep =
-				IndependenceBuilder.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
-						.withSyntacticCheck().cached().threadSeparated().build();
+
+		final IIndependenceRelation<?, L> indep;
+		if (mMakeIndependence == null) {
+			indep = IndependenceBuilder
+					.<L> semantic(mServices, icfg.getCfgSmtToolkit().getManagedScript(), false, false)
+					.withSyntacticCheck().cached().threadSeparated().build();
+		} else {
+			indep = mMakeIndependence.apply(icfg);
+		}
+
 		// get persistent sets - do the error locations even matter?
 		final IPersistentSetChoice<L, IPredicate> persistent =
 				new ThreadBasedPersistentSets(mServices, icfg, indep, null, errorLocs, true);

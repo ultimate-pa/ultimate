@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IcfgCopyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessUtils;
@@ -185,8 +186,16 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private IIcfg<?> doTerminationAnalysis(final IIcfg<?> icfg) throws IOException, AssertionError {
 		final BuchiCegarLoopBenchmarkGenerator benchGen = new BuchiCegarLoopBenchmarkGenerator();
-		final BuchiCegarLoopResult<IcfgEdge> result = runCegarLoops(icfg,
-				new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class, benchGen));
+
+		final BuchiCegarLoopResult<IcfgEdge> result;
+		final var copyFactory = new IcfgCopyFactory(mServices, icfg.getCfgSmtToolkit());
+		final var factory = new BuchiCegarLoopFactory<>(mServices, new TAPreferences(mServices), IcfgEdge.class,
+				copyFactory, benchGen);
+		try {
+			result = runCegarLoops(icfg, factory);
+		} finally {
+			factory.shutdown();
+		}
 
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime);
 

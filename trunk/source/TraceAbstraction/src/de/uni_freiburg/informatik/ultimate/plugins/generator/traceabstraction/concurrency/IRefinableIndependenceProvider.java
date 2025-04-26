@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
  * @param <L>
  *            The type of letters for which an independence relation is managed.
  */
-interface IRefinableIndependenceProvider<L extends IIcfgTransition<?>> {
+public interface IRefinableIndependenceProvider<L extends IIcfgTransition<?>> {
 	/**
 	 * Initializes the provider. This is called once, before all other methods.
 	 */

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.IIndependenceRelation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
@@ -55,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.Petri2FiniteAutomatonAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.IndependenceSettings.AbstractionType;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.IcfgCompositionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
@@ -66,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.IWitnessTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.WitnessAutomatonAbstractionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 /**
@@ -83,13 +87,18 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private final TAPreferences mPrefs;
 	private final BuchiCegarLoopBenchmarkGenerator mCegarLoopBenchmark;
 	private final Class<L> mTransitionClazz;
+	private final ICopyActionFactory<L> mCopyFactory;
 	private int mNumberOfConstructions;
 
+	private IndependenceProviderFactory<L> mIndependenceProviderFactory;
+
 	public BuchiCegarLoopFactory(final IUltimateServiceProvider services, final TAPreferences taPrefs,
-			final Class<L> transitionClazz, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
+			final Class<L> transitionClazz, final ICopyActionFactory<L> copyFactory,
+			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) {
 		mServices = services;
 		mPrefs = taPrefs;
 		mTransitionClazz = transitionClazz;
+		mCopyFactory = copyFactory;
 		mCegarLoopBenchmark = benchmarkGenerator;
 		mNumberOfConstructions = 0;
 	}
@@ -118,8 +127,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		switch (automatonTypeConcurrent) {
 		case BUCHI_AUTOMATON:
 		case PARTIAL_ORDER_BA:
-			final var automatonProvider =
-					createAutomatonProvider(petriNetProvider, automatonTypeConcurrent, stateFactoryForRefinement);
+			final var automatonProvider = createAutomatonProvider(petriNetProvider, automatonTypeConcurrent,
+					stateFactoryForRefinement, predicateFactory);
 			return createBuchiAutomatonCegarLoop(icfg, rankVarConstructor, predicateFactory, witnessTransformer,
 					stateFactoryForRefinement, automatonProvider);
 		case BUCHI_PETRI_NET:
@@ -138,7 +147,8 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 	private IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>>
 			createAutomatonProvider(final IInitialAbstractionProvider<L, BoundedPetriNet<L, IPredicate>> petriProvider,
 					final AutomatonTypeConcurrent automatonType,
-					final PredicateFactoryRefinement stateFactoryForRefinement) {
+					final PredicateFactoryRefinement stateFactoryForRefinement,
+					final PredicateFactory predicateFactory) {
 		final IInitialAbstractionProvider<L, ? extends INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> productProvider;
 		if (USE_EAGER_PRODUCT) {
 			productProvider = new Petri2FiniteAutomatonAbstractionProvider.Eager<>(mServices, petriProvider,
@@ -151,11 +161,35 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		return switch (automatonType) {
 		case BUCHI_AUTOMATON -> productProvider;
 		// TODO: Statistics, Check if input automaton meets requirements?
-		case PARTIAL_ORDER_BA ->
-				new AmpleRedAbstractionProvider<>(productProvider, mServices, stateFactoryForRefinement);
+		case PARTIAL_ORDER_BA -> new AmpleRedAbstractionProvider<>(productProvider, mServices,
+				stateFactoryForRefinement, icfg -> constructIndependenceRelation(predicateFactory, icfg));
 		case BUCHI_PETRI_NET, RABIN_PETRI_NET ->
 				throw new AssertionError("Petri nets should be handled elsewhere: " + automatonType);
 		};
+	}
+
+	private IIndependenceRelation<IPredicate, L> constructIndependenceRelation(final PredicateFactory predicateFactory,
+			final IIcfg<?> icfg) {
+		if (mPrefs.getNumberOfIndependenceRelations() != 1) {
+			throw new UnsupportedOperationException("Multiple independence relations are not supported");
+		}
+		if (mPrefs.porIndependenceSettings(0).getAbstractionType() != AbstractionType.NONE) {
+			throw new UnsupportedOperationException("Abstract independence relations are not supported");
+		}
+
+		// If multiple independence relations are created, possibly for different ICFGs, shutdown the old factory and
+		// create a new one.
+		if (mIndependenceProviderFactory != null) {
+			mIndependenceProviderFactory.shutdown();
+		}
+
+		mIndependenceProviderFactory = new IndependenceProviderFactory<>(mServices, mPrefs, mCopyFactory);
+		final var providers = mIndependenceProviderFactory.createProviders(icfg, predicateFactory);
+		assert providers.size() == 1 : "Expected one independence provider, but got " + providers.size();
+
+		final var provider = providers.getFirst();
+		provider.initialize();
+		return provider.retrieveIndependence();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -216,6 +250,12 @@ public class BuchiCegarLoopFactory<L extends IIcfgTransition<?>> {
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.InitialAbstractionConstructionTime);
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.OverallTime);
+		}
+	}
+
+	public void shutdown() {
+		if (mIndependenceProviderFactory != null) {
+			mIndependenceProviderFactory.shutdown();
 		}
 	}
 }
