@@ -27,7 +27,8 @@ public class InterferenceUtils {
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<InterferenceWithParentThread<STATE, ACTION, LOC>> getValidInterferences(
 			final Set<String> interferingThreads, final String ownerThread,
-			final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences) {
+			final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences,
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state) {
 		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		for (final String interferenceThreadName : interferingThreads) {
@@ -43,7 +44,11 @@ public class InterferenceUtils {
 						.get(ownerThread) == 0) {
 					continue;
 				}
+				if (state.threadCounter().getThreadInstances().get(interferenceThreadName) == 0) {
+					continue;
+				}
 				allInterferences.add(new InterferenceWithParentThread<>(interference, interferenceThreadName));
+
 			}
 		}
 		return allInterferences;
@@ -53,6 +58,9 @@ public class InterferenceUtils {
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState, final String ownerThread,
 			final String interferenceThreadName, final Interference<STATE, ACTION, LOC> interference,
 			final AbstractLocationMap<LOC> mAbstractLocationMap) {
+		if (singleState.threadCounter().getThreadInstances().get(interferenceThreadName) < 1) {
+			return false;
+		}
 		final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()
 				.getLocationForThread(interferenceThreadName);
 		final int interferenceLocation = mAbstractLocationMap.getAbstractLocation(interference.action().getSource());

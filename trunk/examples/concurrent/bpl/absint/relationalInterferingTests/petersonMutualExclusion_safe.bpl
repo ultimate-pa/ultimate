@@ -24,6 +24,7 @@ modifies b1, turn, crit;
     turn := false;
     assume (!b2 || turn);
     // critical section
+    assert crit == 0;
     crit := 1;
     assert crit == 1;
     crit := 0;
@@ -36,6 +37,7 @@ modifies b2, turn, crit;
     b2 := true;
     turn := true;
     assume (!b1 || !turn);
+    assert crit == 0;
     // critical section
     crit := 2;
     assert crit == 2;

@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -71,10 +72,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		var allDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
 		var newDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
 
-		final var allInterferences = InterferenceUtils.getValidInterferences(interferingThreads, ownerThread,
-				mInterferences);
-
 		while (true) {
+			final var allInterferences = InterferenceUtils.getValidInterferences(interferingThreads, ownerThread,
+					mInterferences, state);
 			mIterations++;
 			if (mIterations > iterationsReached) {
 				iterationsReached = mIterations;
@@ -98,22 +98,19 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 					}
 				}
 			}
-//			final var moved = newStates.stream()
-//					.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s.state(), s.threadCounter(),
-//							s.abstractLocationState().copyToNewState(state.abstractLocationState().getLoc())))
-//					.collect(Collectors.toSet());
+			final var moved = newStates.stream()
+					.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s.state(), s.threadCounter(),
+							s.abstractLocationState().copyToNewState(state.abstractLocationState().getLoc())))
+					.collect(Collectors.toSet());
 			oldStates.clear();
-			newDisj = DisjunctiveAbstractState.createDisjunction(newStates, mMaxParallelStates);
+			newDisj = DisjunctiveAbstractState.createDisjunction(moved, mMaxParallelStates);
 			if (newDisj == null || allDisj == null) {
 				continue;
 			}
-			final boolean changed = newDisj.isSubsetOf(allDisj) != SubsetResult.NONE ? false : true;
-//			if (mIterations <= mMaxItf) {
-			allDisj = allDisj.union(newDisj);
-//			} else {
-//				var oldState = allDisj;
-//				var widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
-//
+			if (mIterations > mMaxItf) {
+//				final var oldState = allDisj;
+				final var widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
+
 //				int innerIterations = 0;
 //				while (!widenedState.isEqualTo(oldState)) {
 //					oldState = widenedState;
@@ -123,14 +120,15 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 //						break;
 //					}
 //				}
-//				allDisj = widenedState;
-//			}
+				allDisj = widenedState;
+			}
 
+			final boolean changed = newDisj.isSubsetOf(allDisj) != SubsetResult.NONE ? false : true;
+			allDisj = allDisj.union(newDisj);
 			if (!changed) {
 				break;
 			}
 			oldStates.addAll(newDisj.getStates());
-			allDisj = allDisj.union(newDisj);
 		}
 		return allDisj.getStates();
 	}

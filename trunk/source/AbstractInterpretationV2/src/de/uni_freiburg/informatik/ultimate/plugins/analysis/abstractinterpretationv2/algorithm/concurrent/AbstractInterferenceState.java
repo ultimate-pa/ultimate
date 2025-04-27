@@ -58,6 +58,13 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 			return;
 		}
 		final var threadMap = mInterferenceMap.computeIfAbsent(threadName, k -> new HashMap<>());
+//		final var existing = threadMap.get(action);
+//		Interference<STATE, ACTION, LOC> newItf;
+//		if (existing == null) {
+//			newItf = new Interference<>(action, state);
+//		} else {
+//			newItf = new Interference<>(action, state.union(existing.disjState()));
+//		}
 		final var newItf = new Interference<>(action, state);
 		threadMap.put(action, newItf);
 	}
