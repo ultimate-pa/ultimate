@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFact
 
 /**
  * Computes the union of two nested word automata.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -75,10 +75,11 @@ public final class Union<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
-		final TotalizeNwa<LETTER, STATE> fstTotalized = new TotalizeNwa<>(mFstOperand, stateFactory, false);
-		final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, stateFactory, false);
-		final UnionNwa<LETTER, STATE> union = new UnionNwa<>(fstTotalized, sndTotalized, stateFactory, false);
+
+		// With totalization it doesnt seem to work anymore Max 04.2025
+		// final TotalizeNwa<LETTER, STATE> fstTotalized = new TotalizeNwa<>(mFstOperand, stateFactory, false);
+		// final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, stateFactory, false);
+		final UnionNwa<LETTER, STATE> union = new UnionNwa<>(mFstOperand, mSndOperand, stateFactory, false);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, union);
 
 		if (mLogger.isInfoEnabled()) {
@@ -112,15 +113,33 @@ public final class Union<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE
 			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
+		// Check if Both automata are disjoint
+		final Intersect<LETTER, STATE> intersect = new Intersect<>(mServices, stateFactory, mFstOperand, mSndOperand);
+		assert intersect.checkResult(stateFactory);
+		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<>(mServices, intersect.getResult());
+
+		boolean correct = true;
 		final IDoubleDeckerAutomaton<LETTER, STATE> resMinusFst =
 				new Difference<>(mServices, stateFactory, mResult, mFstOperand).getResult();
 		final IDoubleDeckerAutomaton<LETTER, STATE> resMinusSnd =
 				new Difference<>(mServices, stateFactory, mResult, mSndOperand).getResult();
-		boolean correct;
-		correct = new IsIncluded<>(mServices, stateFactory, mSndOperand, resMinusFst).getResult();
-		assert correct;
-		correct = correct && new IsIncluded<>(mServices, stateFactory, mFstOperand, resMinusSnd).getResult();
-		assert correct;
+
+		// If disjoint ...
+		if (emptinessCheck.getResult()) {
+			correct = new IsIncluded<>(mServices, stateFactory, mSndOperand, resMinusFst).getResult();
+			assert correct;
+			correct = correct && new IsIncluded<>(mServices, stateFactory, mFstOperand, resMinusSnd).getResult();
+			assert correct;
+		} else {
+			if (new IsIncluded<>(mServices, stateFactory, mFstOperand, mSndOperand).getResult()) {
+				correct = new IsEmpty<>(mServices, resMinusFst).getResult();
+				assert correct;
+			}
+			if (new IsIncluded<>(mServices, stateFactory, mSndOperand, mFstOperand).getResult()) {
+				correct = new IsEmpty<>(mServices, resMinusSnd).getResult();
+				assert correct;
+			}
+		}
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);

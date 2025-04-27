@@ -9,10 +9,17 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Union;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
@@ -25,9 +32,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	Set<L> mPathProgramRepresentative; // Needs to be a Set of words
 	int mRunningThreadForPP = 0;
 	protected final ILogger mLogger;
-	boolean mLoopAccelerationWasTried = false;
+	boolean mLoopAccelerationWasTried = true;
 	int mImperfectSequencesSoFar = 0;
 	int mExecutorSize = 0;
+	INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
 
 	/*
 	 * call getStrategyForWorker() to get the strategy that we want to execute. This class maintains the overview of our
@@ -47,8 +55,45 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	}
 
-	public void reportImperfectSequence() {
+	public void reportImperfectSequence(final IUltimateServiceProvider iUltimateServiceProvider,
+			final PredicateFactoryRefinement stateFactory,
+			final INestedWordAutomaton<L, IPredicate> newImperfectInterpolantAutomaton)
+			throws AutomataLibraryException {
+		if (mImperfectInterpolantAutomaton == null) {
+			mImperfectInterpolantAutomaton = newImperfectInterpolantAutomaton;
+		} else {
+			mImperfectInterpolantAutomaton =
+					createUnionOfInterpolantAutomata(new AutomataLibraryServices(iUltimateServiceProvider),
+							stateFactory, newImperfectInterpolantAutomaton);
+		}
 		mImperfectSequencesSoFar += 1;
+	}
+
+	/**
+	 * TODO debug TODO use
+	 *
+	 * @param services
+	 * @param stateFactory
+	 * @param newImperfectInterpolantAutomaton
+	 * @return
+	 * @throws AutomataLibraryException
+	 */
+	public INestedWordAutomaton<L, IPredicate> createUnionOfInterpolantAutomata(final AutomataLibraryServices services,
+			PredicateFactoryRefinement stateFactory,
+			final INestedWordAutomaton<L, IPredicate> newImperfectInterpolantAutomaton)
+			throws AutomataLibraryException {
+		stateFactory = (PredicateFactoryRefinement) newImperfectInterpolantAutomaton.getStateFactory();
+		// assert stateFactory.equals(mImperfectInterpolantAutomaton.getStateFactory());
+		// final IntersectDD<L, IPredicate> in = new IntersectDD<>(services, stateFactory,
+		// newImperfectInterpolantAutomaton, mImperfectInterpolantAutomaton);
+		// in.checkResult(stateFactory);
+
+		final Union<L, IPredicate> union =
+				new Union<>(services, stateFactory, newImperfectInterpolantAutomaton, mImperfectInterpolantAutomaton);
+
+		assert union.checkResult(stateFactory);
+
+		return union.getResult();
 	}
 
 	/*
