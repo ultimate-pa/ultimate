@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IFinitePrefix2PetriNetStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IUnionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -54,8 +55,9 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata
-		implements INwaInclusionStateFactory<IPredicate>, IIncrementalInclusionStateFactory<IPredicate>,
-		IBuchiNwaInclusionStateFactory<IPredicate>, IFinitePrefix2PetriNetStateFactory<IPredicate> {
+		implements IUnionStateFactory<IPredicate>, INwaInclusionStateFactory<IPredicate>,
+		IIncrementalInclusionStateFactory<IPredicate>, IBuchiNwaInclusionStateFactory<IPredicate>,
+		IFinitePrefix2PetriNetStateFactory<IPredicate> {
 
 	private static final boolean DEBUG_COMPUTE_HISTORY = false;
 
@@ -63,6 +65,17 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	protected int mIteration;
 	private final Set<? extends IcfgLocation> mHoareAnnotationProgramPoints;
 
+	/**
+	 * StateFactory for the intersection, determinization, senwa, Buchi intersection union of IPredicate States
+	 *
+	 * used primarily for NWA
+	 *
+	 * @param services
+	 * @param mgdScript
+	 * @param predicateFactory
+	 * @param computeHoareAnnoation
+	 * @param hoareAnnotationLocations
+	 */
 	public PredicateFactoryRefinement(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final PredicateFactory predicateFactory, final boolean computeHoareAnnoation,
 			final Set<? extends IcfgLocation> hoareAnnotationLocations) {
@@ -206,4 +219,11 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		}
 	}
 
+	/**
+	 * The difference in constructing a Union or Intersection Automaton solely lies in the accepting states.
+	 */
+	@Override
+	public IPredicate union(final IPredicate p1, final IPredicate p2) {
+		return intersection(p1, p2);
+	}
 }

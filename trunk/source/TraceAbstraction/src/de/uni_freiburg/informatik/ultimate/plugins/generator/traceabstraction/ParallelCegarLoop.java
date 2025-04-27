@@ -545,7 +545,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			updateExecutorSizes();
 			mRunningThreads -= 1;
 		} else if (mPpStrategyMap.containsKey(pathProgramRepresentative)) {
-			mPpStrategyMap.get(pathProgramRepresentative).reportImperfectSequence();
+			mPpStrategyMap.get(pathProgramRepresentative).reportImperfectSequence(getServices(),
+					stateFactoryForRefinement, mAbstraction);
 		}
 
 		// Kill the worker script
