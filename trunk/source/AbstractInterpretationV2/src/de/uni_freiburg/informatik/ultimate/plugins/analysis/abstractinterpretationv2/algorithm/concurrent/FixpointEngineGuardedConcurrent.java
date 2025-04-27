@@ -131,13 +131,14 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			}
 
 			final var newInterferences = computeNewInterferences();
-			final boolean fixpointReached = newInterferences.isSubsetOf(interferences);
+			final var newMaybeWidened = updateOrWidenInterferences(interferences, newInterferences);
+			final boolean fixpointReached = newMaybeWidened.isSubsetOf(interferences);
 			if (fixpointReached) {
 				mPrinter.printResults(mLogger, mIteration, resultSet, mEntryLocs, mDomain.getAbstractLocationMap(),
 						script);
 				break;
 			}
-			interferences = updateOrWidenInterferences(interferences, newInterferences);
+			interferences = newMaybeWidened;
 			printInterferenceLog(interferences);
 			mIteration++;
 		}

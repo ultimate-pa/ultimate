@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
@@ -99,36 +98,33 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 					}
 				}
 			}
-			final var moved = newStates.stream()
-					.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s.state(), s.threadCounter(),
-							s.abstractLocationState().copyToNewState(state.abstractLocationState().getLoc())))
-					.collect(Collectors.toSet());
+//			final var moved = newStates.stream()
+//					.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s.state(), s.threadCounter(),
+//							s.abstractLocationState().copyToNewState(state.abstractLocationState().getLoc())))
+//					.collect(Collectors.toSet());
 			oldStates.clear();
-			newDisj = DisjunctiveAbstractState.createDisjunction(moved, mMaxParallelStates);
+			newDisj = DisjunctiveAbstractState.createDisjunction(newStates, mMaxParallelStates);
 			if (newDisj == null || allDisj == null) {
 				continue;
 			}
 			final boolean changed = newDisj.isSubsetOf(allDisj) != SubsetResult.NONE ? false : true;
-			if (mIterations <= mMaxItf) {
-				allDisj = allDisj.union(newDisj);
-			} else {
-				var oldState = allDisj;
-				var widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
-
-				int innerIterations = 0;
-				while (!widenedState.isEqualTo(oldState)) {
-					oldState = widenedState;
-					widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), oldState);
-					innerIterations++;
-					if (innerIterations > mMaxItf) {
-						break;
-					}
-				}
-				allDisj = widenedState;
-			}
-			if (mIterations > mMaxItf + 2) {
-				break;
-			}
+//			if (mIterations <= mMaxItf) {
+			allDisj = allDisj.union(newDisj);
+//			} else {
+//				var oldState = allDisj;
+//				var widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), newDisj);
+//
+//				int innerIterations = 0;
+//				while (!widenedState.isEqualTo(oldState)) {
+//					oldState = widenedState;
+//					widenedState = allDisj.widen(mGuardedInterferenceDomain.getWideningOperator(), oldState);
+//					innerIterations++;
+//					if (innerIterations > mMaxItf) {
+//						break;
+//					}
+//				}
+//				allDisj = widenedState;
+//			}
 
 			if (!changed) {
 				break;
@@ -166,5 +162,4 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		}
 		return interferedState;
 	}
-
 }
