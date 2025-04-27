@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -22,7 +25,7 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 	public AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> calcWidenedInterferences(
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferences,
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferences,
-			final Set<String> threadNames) {
+			final Set<String> threadNames, final int maxSize) {
 
 		final Set<String> threads = threadNames;
 		final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> result = new AbstractInterferenceState<>(threads);
@@ -45,13 +48,46 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 				} else if (newInterference == null) {
 					widenedState = oldInterference.disjState();
 				} else {
-					widenedState = combineStates(oldInterference.disjState(), newInterference.disjState());
+//					widenedState = combineStates(oldInterference.disjState(), newInterference.disjState());
+
+					final var unionOp = new GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC>();
+					final var widenedStateSingle = mWideningOperator.apply(
+							oldInterference.disjState().getSingleState(unionOp),
+							newInterference.disjState().getSingleState(unionOp));
+					widenedState = new DisjunctiveAbstractState<>(1, widenedStateSingle);
 				}
 
 				result.addInterference(thread, act, widenedState);
 			}
 		}
 		return result;
+	}
+
+	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceInterferencePrestate(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
+			final int maxSize) {
+		final var states = preState.getStates();
+		if (states.size() <= 1) {
+			return preState;
+		}
+		final List<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
+		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = new HashSet<>();
+		final int startingLen = toProcess.size();
+		while (!toProcess.isEmpty()) {
+			GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> base = toProcess.remove(toProcess.size() - 1);
+			final ListIterator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> it = toProcess
+					.listIterator();
+			while (it.hasNext()) {
+				final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> candidate = it.next();
+				if (base.state().isEqualTo(candidate.state())) {
+					base = base.union(candidate);
+					it.remove();
+				}
+			}
+			result.add(base);
+		}
+		final int endLen = result.size();
+		return DisjunctiveAbstractState.createDisjunction(result, maxSize);
 	}
 
 	private Map<ACTION, Interference<UNDERLYINGSTATE, ACTION, LOC>> mapByAction(

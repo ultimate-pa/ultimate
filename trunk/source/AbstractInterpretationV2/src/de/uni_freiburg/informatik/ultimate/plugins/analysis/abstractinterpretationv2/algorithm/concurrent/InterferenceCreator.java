@@ -1,6 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -22,7 +27,8 @@ public class InterferenceCreator {
 			final AbstractLocationMap<LOC> mLocationAbstraction,
 			final LocationAbstraction<LOC> locationAbstractionCalculator) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
-		final boolean precise = false;
+		// Seems to not make much difference in state amount actually
+		final boolean precise = true;
 		final var unionOp = new GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC>();
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
@@ -52,12 +58,40 @@ public class InterferenceCreator {
 			final int maxSize) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
 		if (precise) {
-			interference = new Interference<>((ACTION) edge, preState);
+			final var reduced = reduceInterferencePrestate(preState, maxSize);
+			interference = new Interference<>((ACTION) edge, reduced);
 		} else {
 			interference = new Interference<>((ACTION) edge,
 					new DisjunctiveAbstractState<>(maxSize, preState.getSingleState(unionOp)));
 		}
 		return interference;
+	}
+
+	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceInterferencePrestate(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
+			final int maxSize) {
+		final var states = preState.getStates();
+		if (states.size() <= 1) {
+			return preState;
+		}
+		final List<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
+		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = new HashSet<>();
+		final int startingLen = toProcess.size();
+		while (!toProcess.isEmpty()) {
+			GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> base = toProcess.remove(toProcess.size() - 1);
+			final ListIterator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> it = toProcess
+					.listIterator();
+			while (it.hasNext()) {
+				final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> candidate = it.next();
+				if (base.state().isEqualTo(candidate.state())) {
+					base = base.union(candidate);
+					it.remove();
+				}
+			}
+			result.add(base);
+		}
+		final int endLen = result.size();
+		return DisjunctiveAbstractState.createDisjunction(result, maxSize);
 	}
 
 	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"

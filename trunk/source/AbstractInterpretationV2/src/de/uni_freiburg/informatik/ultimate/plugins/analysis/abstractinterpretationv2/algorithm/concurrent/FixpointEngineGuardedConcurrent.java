@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,8 +47,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC> mParams;
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final FixpointPrintHelper<UNDERLYINGSTATE, ACTION, LOC> mPrinter;
-//	private final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> mItfApplier;
-//	private final DisjunctiveGuardedStateFactory<UNDERLYINGSTATE, ACTION, LOC> mDisjFactory;
 	private AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mResult;
 	private final SummaryMap<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mSummaryMap;
 	private final IIcfg<? extends LOC> mIfcg;
@@ -90,11 +88,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mPrinter = new FixpointPrintHelper<>(mMaxUnwindings, mMaxInterferenceFixpointUnwindings, mMaxParallelStates,
 				mLogger);
 		mLocationAbstractionType = locationAbstraction;
-		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).getItfApplier();
-//		mItfApplier = applier;
-//		mDisjFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates, mDomain,
-//				mItfApplier, mEntryLocs);
 		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mDomain.getWideningOperator());
 	}
 
@@ -122,14 +115,14 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private void calculateFixpoint(final Script script) {
 		mIteration = 1;
-		final var reachableErrorLocations = new HashSet<LOC>();
+		final var reachableErrorLocations = new LinkedHashSet<LOC>();
 		var interferences = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				mIfcg.getCfgSmtToolkit().getProcedures());
 		while (true) {
 			mLogger.error("\n");
 			mLogger.error("Starting thread modular fixpoint engine iteration " + mIteration);
 			// TODO: for debugging, remove later
-			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new HashMap<>();
+			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
 				final var fixpointEngine = createNewUnderlyingFixpointEngine(procedure, interferences);
 				final var threadResult = fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
@@ -154,6 +147,9 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			final String procedure, final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
 		mDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings, interferences);
+		if (mIteration > mMaxUnwindings) {
+			mDomain.mWiden = true;
+		}
 		final var initialFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates,
 				mDomain, null, mEntryLocs);
 		final var paramsWithInterferences = mParams.setStorage(mStateStorage.copy())
@@ -190,7 +186,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		if (mIteration > mMaxUnwindings) {
 			mLogger.info("Applying widenning to the interferences.");
 			return mInterferenceWideningOperator.calcWidenedInterferences(interferences, newInterferences,
-					mIfcg.getCfgSmtToolkit().getProcedures());
+					mIfcg.getCfgSmtToolkit().getProcedures(), mMaxParallelStates);
 		}
 		return newInterferences;
 	}

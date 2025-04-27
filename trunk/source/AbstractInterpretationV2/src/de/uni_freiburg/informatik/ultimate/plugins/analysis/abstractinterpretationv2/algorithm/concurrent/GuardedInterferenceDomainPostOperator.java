@@ -61,7 +61,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		// 1. normal poststate
 		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
 		// adjust abstract location according to new location
-		final var guardedStates = states.stream()
+		final var guardedStates = states.stream().filter(s -> !s.isBottom())
 				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newState.threadCounter(),
 						newState.abstractLocationState().copyToNewState(transition.getTarget())))
 				.collect(Collectors.toSet());
@@ -74,8 +74,16 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 						.addAll(mItfApplier.stateAfterInterferences(postRelationalState, mCurrentThreadName));
 			}
 		}
-
-		return postRelationalStates;
+		final var moved = postRelationalStates.stream().filter(s -> !s.isBottom()).filter(s -> !(s == null))
+				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s.state(), s.threadCounter(),
+						s.abstractLocationState().copyToNewState(transition.getTarget())))
+				.collect(Collectors.toSet());
+		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> movedState : moved) {
+			if (movedState.abstractLocationState().getLoc() != transition.getTarget()) {
+				throw new AssertionError();
+			}
+		}
+		return moved;
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(

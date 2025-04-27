@@ -65,7 +65,19 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return mLocationTracker.isEqualTo(other.mLocationTracker);
 	}
 
+	public LOC getLoc() {
+		return mLocation;
+	}
+
+	public int getintLoc() {
+		return mAbstractLocation;
+	}
+
 	public AbstractLocationState<LOC> union(final AbstractLocationState<LOC> other) {
+		if (mLocation != other.mLocation) {
+			throw new AssertionError(
+					"You are trying to merge states of different locations. Move the location of one to the correct one.");
+		}
 		if (other == null || other.getTracker() == null) {
 			return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker);
 		}

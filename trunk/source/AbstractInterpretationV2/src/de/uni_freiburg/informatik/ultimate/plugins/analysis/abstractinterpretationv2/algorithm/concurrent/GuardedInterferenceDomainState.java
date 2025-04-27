@@ -160,9 +160,6 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	@Override
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> union(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-//		if (!mAbstractLocationState.isEqualTo(other.abstractLocationState())) {
-//			assert false;
-//		}
 		return new GuardedInterferenceDomainState<>(mState.union(other.state()),
 				mThreadCounter.union(other.threadCounter()),
 				mAbstractLocationState.union(other.abstractLocationState()));

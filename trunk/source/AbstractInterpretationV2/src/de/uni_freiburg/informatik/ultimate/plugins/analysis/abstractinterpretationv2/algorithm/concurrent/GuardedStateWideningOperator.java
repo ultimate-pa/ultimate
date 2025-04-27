@@ -9,21 +9,23 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class GuardedStateWideningOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
 		implements IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
-	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
-	public GuardedStateWideningOperator(final IAbstractDomain<STATE, ACTION> underlying,
-			final ThreadInstanceCounterFactory threadFactory) {
+	public GuardedStateWideningOperator(final IAbstractDomain<STATE, ACTION> underlying) {
 		mUnderlyingDomain = underlying;
-		mThreadInstanceCounterFactory = threadFactory;
 	}
 
 	@Override
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> apply(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> first,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> second) {
+		if (first.state() == null || first.state().isBottom()) {
+			return second;
+		}
+		if (second.state() == null || second.state().isBottom()) {
+			return first;
+		}
 		final var widenedState = mUnderlyingDomain.getWideningOperator().apply(first.state(), second.state());
-		final var widenedTC = mThreadInstanceCounterFactory.widen(first.threadCounter(), second.threadCounter());
-		// TODO: join fine for abstractlocation widening?
+		final var widenedTC = first.threadCounter().union(second.threadCounter());
 		final AbstractLocationState<LOC> joinedLoc = first.abstractLocationState()
 				.union(second.abstractLocationState());
 		return new GuardedInterferenceDomainState<>(widenedState, widenedTC, joinedLoc);

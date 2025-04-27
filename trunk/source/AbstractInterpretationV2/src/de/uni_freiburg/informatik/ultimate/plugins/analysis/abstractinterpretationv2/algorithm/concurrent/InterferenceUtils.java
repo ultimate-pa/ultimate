@@ -1,0 +1,68 @@
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.GuardedInterferenceApplier.InterferenceWithParentThread;
+
+public class InterferenceUtils {
+
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<String> getThreadsThatCanInterfere(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final String ownerThread) {
+		final Set<String> threadNameSet = oldstate.threadCounter().getThreadNameSet();
+		final Set<String> possibleInterferenceSet = new HashSet<>();
+		final var procedureMap = oldstate.threadCounter().getThreadInstances();
+		for (final String threadName : threadNameSet) {
+			final int threadInstances = procedureMap.get(threadName);
+			if (threadInstances >= 2 || threadName != ownerThread && threadInstances > 0) {
+				possibleInterferenceSet.add(threadName);
+			}
+		}
+		return possibleInterferenceSet;
+	}
+
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<InterferenceWithParentThread<STATE, ACTION, LOC>> getValidInterferences(
+			final Set<String> interferingThreads, final String ownerThread,
+			final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences) {
+		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
+
+		for (final String interferenceThreadName : interferingThreads) {
+			final var interferences = mInterferences.getInterferencesForThread(interferenceThreadName);
+			if (interferences == null) {
+				continue;
+			}
+			for (final Interference<STATE, ACTION, LOC> interference : interferences) {
+				if (interference.disjState() == null) {
+					continue;
+				}
+				if (GuardedStateTransformer.getThreadInstanceState(interference.disjState()).getThreadInstances()
+						.get(ownerThread) == 0) {
+					continue;
+				}
+				allInterferences.add(new InterferenceWithParentThread<>(interference, interferenceThreadName));
+			}
+		}
+		return allInterferences;
+	}
+
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> boolean matchesLocation(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState, final String ownerThread,
+			final String interferenceThreadName, final Interference<STATE, ACTION, LOC> interference,
+			final AbstractLocationMap<LOC> mAbstractLocationMap) {
+		final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()
+				.getLocationForThread(interferenceThreadName);
+		final int interferenceLocation = mAbstractLocationMap.getAbstractLocation(interference.action().getSource());
+		if ((!possibleInterferingLocations.contains(interferenceLocation)
+				|| !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 0))
+				&& !(ownerThread.equals(interferenceThreadName))
+				&& !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 1)) {
+			return false;
+		}
+		return true;
+	}
+
+}

@@ -153,7 +153,16 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 					((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
 							.getItfApplier().stateAfterInterferences(guardedInterferenceDomainState, procedure));
 		}
-		return DisjunctiveAbstractState.createDisjunction(interferenceDomainStates, mMaxParallelStates);
+		final var moved = interferenceDomainStates.stream()
+				.map(s -> new GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>(s.state(), s.threadCounter(),
+						s.abstractLocationState().copyToNewState(mEntryLocs.get(procedure))))
+				.collect(Collectors.toSet());
+		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedState : moved) {
+			if (movedState.abstractLocationState().getLoc() != mEntryLocs.get(procedure)) {
+				throw new AssertionError();
+			}
+		}
+		return DisjunctiveAbstractState.createDisjunction(moved, mMaxParallelStates);
 	}
 
 	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(
