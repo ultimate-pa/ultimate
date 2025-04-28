@@ -37,10 +37,11 @@ modifies b2, turn, crit;
     b2 := true;
     turn := true;
     assume (!b1 || !turn);
-    assert crit == 0;
     // critical section
+    assert crit == 0;
     crit := 2;
     assert crit == 2;
     crit := 0;
     b2 := false;
 }
+

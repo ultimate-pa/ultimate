@@ -37,6 +37,10 @@ public class InterferenceUtils {
 				continue;
 			}
 			for (final Interference<STATE, ACTION, LOC> interference : interferences) {
+				if (!InterferenceUtils.matchesLocation(state, ownerThread, interferenceThreadName, interference,
+						state.abstractLocationState().getLocationMap())) {
+					continue;
+				}
 				if (interference.disjState() == null) {
 					continue;
 				}

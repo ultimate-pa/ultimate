@@ -153,16 +153,24 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 					((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
 							.getItfApplier().stateAfterInterferences(guardedInterferenceDomainState, procedure));
 		}
-		final var moved = interferenceDomainStates.stream()
-				.map(s -> new GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>(s.state(), s.threadCounter(),
-						s.abstractLocationState().copyToNewState(mEntryLocs.get(procedure))))
-				.collect(Collectors.toSet());
-		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedState : moved) {
-			if (movedState.abstractLocationState().getLoc() != mEntryLocs.get(procedure)) {
-				throw new AssertionError();
-			}
+		// TODO: solve better (problem: fork interferences dont enable new interferences during calc, so we go again)
+		final var stateCopy = new HashSet<>(interferenceDomainStates);
+		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : stateCopy) {
+			interferenceDomainStates.add(guardedInterferenceDomainState);
+			interferenceDomainStates.addAll(
+					((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
+							.getItfApplier().stateAfterInterferences(guardedInterferenceDomainState, procedure));
 		}
-		return DisjunctiveAbstractState.createDisjunction(moved, mMaxParallelStates);
+//		final var moved = interferenceDomainStates.stream()
+//				.map(s -> new GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>(s.state(), s.threadCounter(),
+//						s.abstractLocationState().copyToNewState(mEntryLocs.get(procedure))))
+//				.collect(Collectors.toSet());
+//		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedState : moved) {
+//			if (movedState.abstractLocationState().getLoc() != mEntryLocs.get(procedure)) {
+//				throw new AssertionError();
+//			}
+//		}
+		return DisjunctiveAbstractState.createDisjunction(interferenceDomainStates, mMaxParallelStates);
 	}
 
 	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(

@@ -83,7 +83,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				throw new AssertionError();
 			}
 		}
-		return moved;
+		return postRelationalStates;
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(

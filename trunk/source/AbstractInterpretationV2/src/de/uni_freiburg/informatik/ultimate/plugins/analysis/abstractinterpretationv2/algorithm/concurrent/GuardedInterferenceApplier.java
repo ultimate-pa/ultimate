@@ -71,10 +71,11 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		oldStates.add(state);
 		var allDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
 		var newDisj = new DisjunctiveAbstractState<>(mMaxParallelStates, state);
+		final var allInterferences = InterferenceUtils.getValidInterferences(interferingThreads, ownerThread,
+				mInterferences, state);
+		final int lol = 0;
 
 		while (true) {
-			final var allInterferences = InterferenceUtils.getValidInterferences(interferingThreads, ownerThread,
-					mInterferences, state);
 			mIterations++;
 			if (mIterations > iterationsReached) {
 				iterationsReached = mIterations;
@@ -103,7 +104,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 							s.abstractLocationState().copyToNewState(state.abstractLocationState().getLoc())))
 					.collect(Collectors.toSet());
 			oldStates.clear();
-			newDisj = DisjunctiveAbstractState.createDisjunction(moved, mMaxParallelStates);
+			newDisj = DisjunctiveAbstractState.createDisjunction(newStates, mMaxParallelStates);
 			if (newDisj == null || allDisj == null) {
 				continue;
 			}
