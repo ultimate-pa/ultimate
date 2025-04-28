@@ -33,6 +33,7 @@ public class InterferenceCreator {
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
 		for (final LOC entryLoc : mEntryLocs.values()) {
+			// while
 			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
 				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction,
@@ -58,11 +59,13 @@ public class InterferenceCreator {
 			final int maxSize) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
 		if (precise) {
-			final var reduced = reduceInterferencePrestate(preState, maxSize);
-			interference = new Interference<>((ACTION) edge, reduced);
+//			final var reduced = reduceInterferencePrestate(preState, maxSize);
+//			interference = new Interference<>((ACTION) edge, reduced);
+			interference = new Interference<>((ACTION) edge, preState);
 		} else {
 			interference = new Interference<>((ACTION) edge,
-					new DisjunctiveAbstractState<>(maxSize, preState.getSingleState(unionOp)));
+					new DisjunctiveAbstractState<>(1, preState.getSingleState(GuardedInterferenceDomainState::union)));
+
 		}
 		return interference;
 	}
@@ -103,11 +106,8 @@ public class InterferenceCreator {
 				.getAbstractLocation(transition.getTarget())) {
 			return true;
 		}
-		if (locationAbstractionCalculator.shouldDifferentiate(loc.getOutgoingEdges())) {
-			return true;
-		}
 		final var globals = icfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
-		if ((transition.getTransformula().getOutVars().keySet().stream().anyMatch(globals::contains))) {
+		if ((transition.getTransformula().getAssignedVars().stream().anyMatch(globals::contains))) {
 			return true;
 		}
 		if (transition instanceof ForkThreadCurrent) {
