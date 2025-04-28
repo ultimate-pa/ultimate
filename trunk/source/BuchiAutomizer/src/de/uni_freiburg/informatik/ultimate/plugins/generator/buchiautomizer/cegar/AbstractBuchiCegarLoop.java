@@ -303,7 +303,7 @@ public abstract class AbstractBuchiCegarLoop<L extends IIcfgTransition<?>, A ext
 			throws AutomataOperationCanceledException;
 
 	public final BuchiCegarLoopResult<L> runCegarLoop() throws IOException {
-		mLogger.info("Interprodecural is " + mPref.interprocedural());
+		mLogger.info("Interprocedural is " + mPref.interprocedural());
 		mLogger.info("Hoare is " + mPref.getHoareSettings().getHoarePositions());
 		mLogger.info("Compute interpolants for " + mInterpolation);
 		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
