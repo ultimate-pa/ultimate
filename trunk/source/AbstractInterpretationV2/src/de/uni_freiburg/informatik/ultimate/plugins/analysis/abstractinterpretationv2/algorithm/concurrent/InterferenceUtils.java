@@ -7,7 +7,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.GuardedInterferenceApplier.InterferenceWithParentThread;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread;
 
 public class InterferenceUtils {
 
@@ -18,7 +18,7 @@ public class InterferenceUtils {
 		final var procedureMap = oldstate.threadCounter().getThreadInstances();
 		for (final String threadName : threadNameSet) {
 			final int threadInstances = procedureMap.get(threadName);
-			if (threadInstances >= 2 || threadName != ownerThread && threadInstances > 0) {
+			if (threadInstances >= 2 || threadName != ownerThread) {
 				possibleInterferenceSet.add(threadName);
 			}
 		}
@@ -29,7 +29,7 @@ public class InterferenceUtils {
 			final Set<String> interferingThreads, final String ownerThread,
 			final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state) {
-		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
+		final Set<de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		for (final String interferenceThreadName : interferingThreads) {
 			final var interferences = mInterferences.getInterferencesForThread(interferenceThreadName);
@@ -37,18 +37,11 @@ public class InterferenceUtils {
 				continue;
 			}
 			for (final Interference<STATE, ACTION, LOC> interference : interferences) {
-				if (!InterferenceUtils.matchesLocation(state, ownerThread, interferenceThreadName, interference,
-						state.abstractLocationState().getLocationMap())) {
-					continue;
-				}
 				if (interference.disjState() == null) {
 					continue;
 				}
 				if (GuardedStateTransformer.getThreadInstanceState(interference.disjState()).getThreadInstances()
 						.get(ownerThread) == 0) {
-					continue;
-				}
-				if (state.threadCounter().getThreadInstances().get(interferenceThreadName) == 0) {
 					continue;
 				}
 				allInterferences.add(new InterferenceWithParentThread<>(interference, interferenceThreadName));
@@ -63,6 +56,10 @@ public class InterferenceUtils {
 			final String interferenceThreadName, final Interference<STATE, ACTION, LOC> interference,
 			final AbstractLocationMap<LOC> mAbstractLocationMap) {
 		if (singleState.threadCounter().getThreadInstances().get(interferenceThreadName) < 1) {
+			return false;
+		}
+		if (GuardedStateTransformer.getThreadInstanceState(interference.disjState()).getThreadInstances()
+				.get(ownerThread) == 0) {
 			return false;
 		}
 		final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()

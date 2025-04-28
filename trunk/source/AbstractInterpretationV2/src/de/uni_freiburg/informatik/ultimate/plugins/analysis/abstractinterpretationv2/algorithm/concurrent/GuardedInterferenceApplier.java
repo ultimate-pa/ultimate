@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 
 public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
@@ -42,9 +43,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		iterationsReached = 0;
 	}
 
-	public record InterferenceWithParentThread<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
-			Interference<STATE, ACTION, LOC> interf, String sourceThread) {
-	}
+//	public record InterferenceWithParentThread<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
+//			Interference<STATE, ACTION, LOC> interf, String sourceThread) {
+//	}
 
 	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final String ownerThread) {
@@ -53,7 +54,12 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		if (possibleInterferenceSet.isEmpty()) {
 			return Set.of(oldstate);
 		}
-		return interferenceFixpointFast(possibleInterferenceSet, oldstate, ownerThread);
+		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = InterferenceUtils
+				.getValidInterferences(possibleInterferenceSet, ownerThread, mInterferences, oldstate);
+		final var mSimple = new SimpleInterferenceApplier<>(mLogger, mUnderlyingPostOp, mAbstractLocationMap,
+				allInterferences, mMaxItf, mGuardedInterferenceDomain);
+		return mSimple.applyFixpoint(Set.of(oldstate), ownerThread);
+//		return interferenceFixpointFast(possibleInterferenceSet, oldstate, ownerThread);
 	}
 
 	private void initialize() {

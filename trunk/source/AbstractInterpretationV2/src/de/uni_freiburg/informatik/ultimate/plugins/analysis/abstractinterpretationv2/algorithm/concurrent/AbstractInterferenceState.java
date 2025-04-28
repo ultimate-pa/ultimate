@@ -96,7 +96,8 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 
 	public Set<String> interferenceStrings() {
 		return mInterferenceMap.entrySet().stream().flatMap(e -> e.getValue().values().stream().map(i -> "Thread "
-				+ e.getKey() + ": " + i.action() + GuardedStateTransformer.getSingleState(i.disjState())))
+//				+ e.getKey() + ": " + i.action() + GuardedStateTransformer.getSingleState(i.disjState())))
+				+ e.getKey() + ": " + i.action() + (i.disjState())))
 //								+ GuardedStateTransformer.getSingleState(i.disjState()).state()))
 				.collect(Collectors.toSet());
 	}
