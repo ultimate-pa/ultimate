@@ -28,7 +28,7 @@ public class InterferenceCreator {
 			final LocationAbstraction<LOC> locationAbstractionCalculator) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
 		// Seems to not make much difference in state amount actually
-		final boolean precise = false;
+		final boolean precise = true;
 		final var unionOp = new GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC>();
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
@@ -64,8 +64,7 @@ public class InterferenceCreator {
 			interference = new Interference<>((ACTION) edge, preState);
 		} else {
 			interference = new Interference<>((ACTION) edge,
-					new DisjunctiveAbstractState<>(1, preState.getSingleState(GuardedInterferenceDomainState::union)));
-
+					new DisjunctiveAbstractState<>(maxSize, preState.getSingleState(unionOp)));
 		}
 		return interference;
 	}
