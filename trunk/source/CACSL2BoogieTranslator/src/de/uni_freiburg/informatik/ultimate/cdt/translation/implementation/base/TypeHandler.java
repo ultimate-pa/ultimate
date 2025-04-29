@@ -275,14 +275,14 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final IDispatcher main, final IASTNamedTypeSpecifier node) {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		final String cId = node.getName().toString();
-		final ICType libraryType = mLibraryTypes.get(cId);
-		if (libraryType != null) {
-			return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
-					libraryType);
-		}
 		final String modifiedName = mSymboltable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 		final SymbolTableValue stv = mSymboltable.findCSymbol(node, modifiedName);
 		if (stv == null) {
+			final ICType libraryType = mLibraryTypes.get(cId);
+			if (libraryType != null) {
+				return new TypesResult(cType2AstType(loc, libraryType), node.isConst(), libraryType.isVoidType(),
+						libraryType);
+			}
 			final String msg = "Undefined type " + cId;
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
