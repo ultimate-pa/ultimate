@@ -59,12 +59,10 @@ public class InterferenceCreator {
 			final int maxSize) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
 		if (precise) {
-//			final var reduced = reduceInterferencePrestate(preState, maxSize);
-//			interference = new Interference<>((ACTION) edge, reduced);
 			interference = new Interference<>((ACTION) edge, preState);
 		} else {
-			interference = new Interference<>((ACTION) edge,
-					new DisjunctiveAbstractState<>(maxSize, preState.getSingleState(unionOp)));
+			interference = new Interference<>((ACTION) edge, new DisjunctiveAbstractState<>(maxSize,
+					preState.getSingleState(GuardedInterferenceDomainState::union)));
 		}
 		return interference;
 	}

@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -145,32 +144,12 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 				initialStates.add(removeLocalVars(forkState));
 			}
 		}
-		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> interferenceDomainStates = new LinkedHashSet<>();
-		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : result
-				.getStates()) {
-			interferenceDomainStates.add(guardedInterferenceDomainState);
-			interferenceDomainStates.addAll(
-					((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
-							.getItfApplier().stateAfterInterferences(guardedInterferenceDomainState, procedure));
-		}
+		final var interferenceDomainDisj = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+				.getPostOperator()).getItfApplier().stateAfterInterferences(result, procedure);
 		// TODO: solve better (problem: fork interferences dont enable new interferences during calc, so we go again)
-		final var stateCopy = new HashSet<>(interferenceDomainStates);
-		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> guardedInterferenceDomainState : stateCopy) {
-			interferenceDomainStates.add(guardedInterferenceDomainState);
-			interferenceDomainStates.addAll(
-					((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
-							.getItfApplier().stateAfterInterferences(guardedInterferenceDomainState, procedure));
-		}
-//		final var moved = interferenceDomainStates.stream()
-//				.map(s -> new GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>(s.state(), s.threadCounter(),
-//						s.abstractLocationState().copyToNewState(mEntryLocs.get(procedure))))
-//				.collect(Collectors.toSet());
-//		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedState : moved) {
-//			if (movedState.abstractLocationState().getLoc() != mEntryLocs.get(procedure)) {
-//				throw new AssertionError();
-//			}
-//		}
-		return DisjunctiveAbstractState.createDisjunction(interferenceDomainStates, mMaxParallelStates);
+		final var interferenceDomainDisjRound2 = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+				.getPostOperator()).getItfApplier().stateAfterInterferences(interferenceDomainDisj, procedure);
+		return interferenceDomainDisjRound2;
 	}
 
 	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(

@@ -78,7 +78,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings,
 				new AbstractInterferenceState<>(icfg.getCfgSmtToolkit().getProcedures()));
 		mParams = (FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) params
-				.setDomain((IAbstractDomain<UNDERLYINGSTATE, ACTION>) mDomain);
+				.setDomain((IAbstractDomain<UNDERLYINGSTATE, ACTION>) mDomain).setMaxUnwindings(2);
 		mTransitionProvider = mParams.getTransitionProvider();
 		mStateStorage = mParams.getStorage();
 		mVarProvider = mParams.getVariableProvider();

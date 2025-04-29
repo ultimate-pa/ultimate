@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -11,14 +9,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 public class InterferenceApplier {
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> STATE applyInterferenceToSTATEsingle(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleInterferingState, final ACTION action,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
-			final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp) {
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToSTATEsingle(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjunctiveAbstractState,
+			final ACTION action,
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> statesThatCanBeInterferedbyItf,
+			final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> postOp) {
 
 		// Add variables to both states to be able to intersect
-		STATE interferingState = singleInterferingState.state();
-		STATE stateState = singleState.state();
+		var interferingState = disjunctiveAbstractState;
+		var stateState = statesThatCanBeInterferedbyItf;
 		final var missingLocals = DataStructureUtils.difference(stateState.getVariables(),
 				interferingState.getVariables());
 		final var missingLocals2 = DataStructureUtils.difference(interferingState.getVariables(),
@@ -32,28 +31,20 @@ public class InterferenceApplier {
 		if (!missingLocals.isEmpty()) {
 			interferingState = interferingState.addVariables(missingLocals);
 		}
-		final STATE intersectionState = stateState.intersect(interferingState);
+		final var intersectionState = stateState.intersect(interferingState);
 		if (intersectionState.isBottom()) {
 			return null;
 		}
 		// postop
-		Collection<STATE> postState = mUnderlyingPostOp.apply(intersectionState, action);
+		var postState = intersectionState.apply(postOp, action);
 		// TODO: sound?
-		if (postState.isEmpty()) {
+		if (postState.isEmpty() || postState.isBottom()) {
 			return null;
 		}
+		// remove local variables of other state locations we used in postop
 		if (!missingLocals2.isEmpty()) {
-			postState = postState.stream().map(s -> s.removeVariables(missingLocals2)).collect(Collectors.toList());
+			postState = postState.removeVariables(missingLocals2);
 		}
-		STATE unionState = postState.iterator().next();
-		for (final STATE state : postState) {
-			if (state != unionState) {
-				unionState = unionState.union(state);
-			}
-		}
-		if (unionState.isBottom()) {
-			return null;
-		}
-		return unionState;
+		return postState;
 	}
 }

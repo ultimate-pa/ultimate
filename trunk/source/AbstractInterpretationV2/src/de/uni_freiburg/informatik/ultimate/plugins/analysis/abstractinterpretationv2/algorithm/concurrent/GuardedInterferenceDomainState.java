@@ -70,6 +70,11 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 				this.abstractLocationState().movedTo(threadName, newLocation));
 	}
 
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> copyToNewStateLocation(final LOC newLoc) {
+		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
+				this.abstractLocationState().copyToNewState(newLoc));
+	}
+
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsActive(
 			final Collection<String> forkingStrings) {
 		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setActive(forkingStrings));

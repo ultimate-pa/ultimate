@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -12,10 +14,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class InterferenceUtils {
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<String> getThreadsThatCanInterfere(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final String ownerThread) {
-		final Set<String> threadNameSet = oldstate.threadCounter().getThreadNameSet();
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
+			final String ownerThread) {
+		if (result.getStates().isEmpty()) {
+			return Collections.emptySet();
+		}
+		final Set<String> threadNameSet = result.getStates().iterator().next().threadCounter().getThreadNameSet();
 		final Set<String> possibleInterferenceSet = new HashSet<>();
-		final var procedureMap = oldstate.threadCounter().getThreadInstances();
+		final var procedureMap = GuardedStateTransformer.getThreadInstanceState(result).getThreadInstances();
 		for (final String threadName : threadNameSet) {
 			final int threadInstances = procedureMap.get(threadName);
 			if (threadInstances >= 2 || threadName != ownerThread) {
@@ -27,12 +33,12 @@ public class InterferenceUtils {
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<InterferenceWithParentThread<STATE, ACTION, LOC>> getValidInterferences(
 			final Set<String> interferingThreads, final String ownerThread,
-			final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state) {
+			final AbstractInterferenceState<STATE, ACTION, LOC> interferences2,
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result) {
 		final Set<de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		for (final String interferenceThreadName : interferingThreads) {
-			final var interferences = mInterferences.getInterferencesForThread(interferenceThreadName);
+			final var interferences = interferences2.getInterferencesForThread(interferenceThreadName);
 			if (interferences == null) {
 				continue;
 			}

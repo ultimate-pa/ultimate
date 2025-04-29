@@ -1,12 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
@@ -29,6 +29,9 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final GuardedInterferenceApplier<STATE, ACTION, LOC> mItfApplier;
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
 
+	private final int mMaxParallelStates;
+	private boolean mApplyInterferences = true;
+
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
@@ -39,10 +42,19 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		mItfApplier = new GuardedInterferenceApplier<>(logger, postOp, relationalInterferingDomain, globalMap, maxItf,
 				maxParallelStates, interferences);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
+		mMaxParallelStates = maxParallelStates;
 	}
 
 	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
 		return mItfApplier;
+	}
+
+	public void disAbleInterferences() {
+		mApplyInterferences = false;
+	}
+
+	public void enableInterferences() {
+		mApplyInterferences = true;
 	}
 
 	@Override
@@ -66,24 +78,15 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 						newState.abstractLocationState().copyToNewState(transition.getTarget())))
 				.collect(Collectors.toSet());
 
+		if (!mApplyInterferences) {
+			return guardedStates;
+		}
 		// 2. apply interferences
-		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> postRelationalStates = new LinkedHashSet<>();
-		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> postRelationalState : guardedStates) {
-			if (!postRelationalState.isBottom()) {
-				postRelationalStates
-						.addAll(mItfApplier.stateAfterInterferences(postRelationalState, mCurrentThreadName));
-			}
-		}
-		final var moved = postRelationalStates.stream().filter(s -> !s.isBottom()).filter(s -> !(s == null))
-				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s.state(), s.threadCounter(),
-						s.abstractLocationState().copyToNewState(transition.getTarget())))
-				.collect(Collectors.toSet());
-		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> movedState : moved) {
-			if (movedState.abstractLocationState().getLoc() != transition.getTarget()) {
-				throw new AssertionError();
-			}
-		}
-		return postRelationalStates;
+		final var afterItfs = mItfApplier.stateAfterInterferences(
+				DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates), mCurrentThreadName);
+		// TODO: should be moved during interferencecomputation?
+//		final var moved = GuardedStateTransformer.copyToNewStateLocation(transition.getTarget(), afterItfs);
+		return afterItfs.getStates();
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(

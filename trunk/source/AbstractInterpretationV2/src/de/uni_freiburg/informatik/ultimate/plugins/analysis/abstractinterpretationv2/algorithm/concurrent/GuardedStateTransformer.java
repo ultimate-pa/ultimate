@@ -71,6 +71,12 @@ public final class GuardedStateTransformer {
 		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.movedTo(threadName, newLocation)));
 	}
 
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> copyToNewStateLocation(
+			final LOC newLoc, final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
+		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
+		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.copyToNewStateLocation(newLoc)));
+	}
+
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> setThreadsActive(
 			final Collection<String> forkingStrings,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
