@@ -9,8 +9,8 @@
 
 int main(void) {
   _Bool x = 0;
-  _Bool y = atomic_test_and_set(&x);
+  _Bool y = atomic_test_and_set_explicit(&x, memory_order_seq_cst);
   //@ assert x == 1 && y == 0;
-  atomic_clear(&x);
+  atomic_clear_explicit(&x, memory_order_seq_cst);
   //@ assert x == 0;
 }

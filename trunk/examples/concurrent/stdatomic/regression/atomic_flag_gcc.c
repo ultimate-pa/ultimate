@@ -2,15 +2,13 @@
 
 /*
  * Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * Date: 2025-04-30
+ * Date: 2023-08-07
  */
-
-#include <stdatomic.h>
 
 int main(void) {
   _Bool x = 0;
-  _Bool y = atomic_test_and_set(&x);
+  _Bool y = __atomic_test_and_set(&x, 5);
   //@ assert x == 1 && y == 0;
-  atomic_clear(&x);
+  __atomic_clear(&x, 5);
   //@ assert x == 0;
 }

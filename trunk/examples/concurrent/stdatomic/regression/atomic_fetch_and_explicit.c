@@ -4,12 +4,11 @@
  * Author: Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * Date: 2025-04-30
  */
- 
+
 #include <stdatomic.h>
 
 int main(void) {
-  int x = 0;
-  int y = 1;
-  int z = atomic_exchange(&x, y);
-  //@ assert x == 1 && y == 1 && z == 0;
+  int x = 1;
+  int y = atomic_fetch_and_explicit(&x, 0, memory_order_seq_cst);
+  //@ assert x == 0 && y == 1;
 }
