@@ -51,7 +51,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 				for (final var interference : mAllInterfs) {
 					final var statesThatCanBeInterferedbyItf = DisjunctiveAbstractState.createDisjunction(
 							state.getStates().stream()
-									.filter(s -> !InterferenceUtils.matchesLocation(s, ownerThread,
+									.filter(s -> InterferenceUtils.matchesLocation(s, ownerThread,
 											interference.sourceThread(), interference.interf, mLocMap))
 									.toList(),
 							mMaxSize);
@@ -80,9 +80,6 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 			worklist = rebasedWork;
 //			worklist.addAll(rebasedWork);
 			iteration++;
-			if (iteration > mMaxItfIterations) {
-				break;
-			}
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).disAbleInterferences();
 		return result;
@@ -98,7 +95,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 		if (interference.interf.action() instanceof final ForkThreadCurrent fork) {
 			moved = GuardedStateTransformer.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()), moved);
 		}
-		GuardedStateTransformer.copyToNewStateLocation(baseLoc, moved);
+		moved = GuardedStateTransformer.copyToNewStateLocation(baseLoc, moved);
 		return moved;
 	}
 
@@ -118,9 +115,14 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 			final LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> nextWorklist,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved) {
 		final var widenOp = mGuardedInterferenceDomain.getWideningOperator();
+		for (final var existing : result) {
+			if (moved.isSubsetOf(existing) != SubsetResult.NONE) {
+				return;
+			}
+		}
 		for (final var existing : new LinkedHashSet<>(result)) {
 			if (existing.isSubsetOf(moved) != SubsetResult.NONE) {
-				final var widened = moved.widen(widenOp, moved);
+				final var widened = moved.widen(widenOp, existing);
 				if (!widened.isEqualTo(existing)) {
 					result.remove(existing);
 					result.add(widened);

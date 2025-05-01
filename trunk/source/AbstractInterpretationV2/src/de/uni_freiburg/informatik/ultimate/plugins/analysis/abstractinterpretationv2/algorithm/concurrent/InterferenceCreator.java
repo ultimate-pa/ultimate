@@ -33,8 +33,9 @@ public class InterferenceCreator {
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
 		for (final LOC entryLoc : mEntryLocs.values()) {
-			// while
-			new IcfgLocationIterator<>(entryLoc).forEachRemaining(loc -> {
+			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
+			while (iter.hasNext()) {
+				final LOC loc = iter.next();
 				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
 					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction,
 							locationAbstractionCalculator, loc)) {
@@ -47,7 +48,7 @@ public class InterferenceCreator {
 					final var interference = computeInterference(precise, preState, edge, unionOp, maxSize);
 					result.addInterference(entryLoc.getProcedure(), interference);
 				}
-			});
+			}
 		}
 		return result;
 	}

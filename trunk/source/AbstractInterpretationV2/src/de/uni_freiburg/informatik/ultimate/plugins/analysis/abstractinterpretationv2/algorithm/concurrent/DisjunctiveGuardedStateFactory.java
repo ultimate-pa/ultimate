@@ -149,7 +149,9 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		// TODO: solve better (problem: fork interferences dont enable new interferences during calc, so we go again)
 		final var interferenceDomainDisjRound2 = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier().stateAfterInterferences(interferenceDomainDisj, procedure);
-		return interferenceDomainDisjRound2;
+		final var moved = GuardedStateTransformer.copyToNewStateLocation(mEntryLocs.get(procedure),
+				interferenceDomainDisjRound2);
+		return moved;
 	}
 
 	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(

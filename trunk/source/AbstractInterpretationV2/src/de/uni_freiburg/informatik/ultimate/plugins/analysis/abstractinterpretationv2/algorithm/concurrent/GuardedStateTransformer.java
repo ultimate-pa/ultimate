@@ -19,8 +19,10 @@ public final class GuardedStateTransformer {
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> ThreadInstanceCounter getThreadInstanceState(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
-		final var singleState = getSingleState(disj);
-		return singleState.threadCounter();
+		final ThreadInstanceCounter unionCounter = disj.getStates().stream().map(s -> s.threadCounter())
+				.reduce((a, b) -> a.union(b))
+				.orElseThrow(() -> new IllegalStateException("Trying to get threadinstancestate from empty list"));
+		return unionCounter;
 	}
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> GuardedInterferenceDomainState<STATE, ACTION, LOC> getSingleState(

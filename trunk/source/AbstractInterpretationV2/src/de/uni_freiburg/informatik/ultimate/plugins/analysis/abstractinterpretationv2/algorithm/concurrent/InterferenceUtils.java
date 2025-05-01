@@ -38,6 +38,11 @@ public class InterferenceUtils {
 		final Set<de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		for (final String interferenceThreadName : interferingThreads) {
+			// TODO: possibly exclude states from disjunction where interferingthread is not active
+			if (GuardedStateTransformer.getThreadInstanceState(result).getThreadInstances()
+					.get(interferenceThreadName) == 0) {
+				continue;
+			}
 			final var interferences = interferences2.getInterferencesForThread(interferenceThreadName);
 			if (interferences == null) {
 				continue;
