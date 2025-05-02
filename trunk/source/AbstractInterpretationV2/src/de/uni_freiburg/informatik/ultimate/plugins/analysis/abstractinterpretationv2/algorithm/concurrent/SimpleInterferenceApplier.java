@@ -81,7 +81,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 //			worklist.addAll(rebasedWork);
 			iteration++;
 		}
-		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).disAbleInterferences();
+		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
 		return result;
 	}
 

@@ -85,8 +85,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		final var afterItfs = mItfApplier.stateAfterInterferences(
 				DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates), mCurrentThreadName);
 		// TODO: should be moved during interferencecomputation?
-//		final var moved = GuardedStateTransformer.copyToNewStateLocation(transition.getTarget(), afterItfs);
-		return afterItfs.getStates();
+		final var moved = GuardedStateTransformer.copyToNewStateLocation(transition.getTarget(), afterItfs);
+		return moved.getStates();
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(
