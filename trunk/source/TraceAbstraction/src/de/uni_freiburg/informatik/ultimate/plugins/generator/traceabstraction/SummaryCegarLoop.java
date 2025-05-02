@@ -22,19 +22,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -46,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.AutomatonFreeRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.floydhoare.NwaHoareProofProducer;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
@@ -56,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.ProgramUtilities.AssureStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
@@ -66,7 +64,7 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 	protected PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 	protected PredicateFactoryRefinement mPredicateFactoryRefinement;
 
-	protected ProgramExtractor<L> mProgramExtractor;
+	protected ProgramUtilities<L> mProgramUtilities;
 
 	protected ContractMode mContractMode = ContractMode.GLOBAL_KEEP;
 
@@ -84,7 +82,7 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		mPredicateFactoryRefinement = new PredicateFactoryRefinement(services, mCsToolkit.getManagedScript(),
 				mPredicateFactory, true, new AnySet<>());
 
-		mProgramExtractor = new ProgramExtractor<>(mIcfg, mServices, mPredicateFactory, mPredicateTransformer,
+		mProgramUtilities = new ProgramUtilities<>(mIcfg, mServices, mPredicateFactory, mPredicateTransformer,
 				mStateFactoryForRefinement, mErrorLocs, mCsToolkit, mPref);
 	}
 
@@ -164,11 +162,12 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 	}
 
 	protected void setFunctionContract(final String functionName, final Collection<FunctionContract> contracts) {
-		for (final Summary summary : mProgramExtractor.getFunctionSummaries(functionName)) {
+		for (final Summary summary : mProgramUtilities.getFunctionSummaries(functionName)) {
 			// final UnmodifiableTransFormula transFormula =
 			// buildContractTransFormula(summary, precondition, postcondition);
 
-			final UnmodifiableTransFormula transFormula = buildContractsTransFormula(summary, contracts);
+			final UnmodifiableTransFormula transFormula =
+					FunctionContract.buildTransFormulaForContracts(summary, contracts, mProgramUtilities);
 
 			// final UnmodifiableTransFormula mergedTransFormula =
 			// mergeTransFormulas(summary.getTransformula(), transFormula);
@@ -180,10 +179,10 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 	protected UnmodifiableTransFormula buildContractTransFormula(final Summary summary, final IPredicate precondition,
 			final IPredicate postcondition) {
 
-		final Term transformedPrecondition = mProgramExtractor.callTransitionReverse(summary, precondition);
+		final Term transformedPrecondition = mProgramUtilities.callTransitionReverse(summary, precondition);
 
 		// TODO needs transformed pre as param?
-		final Term transformedPostcondition = mProgramExtractor.returnTransition(summary, precondition, postcondition);
+		final Term transformedPostcondition = mProgramUtilities.returnTransition(summary, precondition, postcondition);
 
 		final Set<TermVariable> preconditionFreeVars = new HashSet<>();
 		Collections.addAll(preconditionFreeVars, transformedPrecondition.getFreeVars());
@@ -200,8 +199,8 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 			mappedProgramVars.put(termVar, programVar);
 		}
 
-		final Set<IProgramVar> callParams = mProgramExtractor.getCallParams(summary);
-		final Set<IProgramVar> returnParams = mProgramExtractor.getReturnParams(summary);
+		final Set<IProgramVar> callParams = mProgramUtilities.getCallParams(summary);
+		final Set<IProgramVar> returnParams = mProgramUtilities.getReturnParams(summary);
 
 		final Collection<TermVariable> quantifiablePreconditionVars =
 				preconditionFreeVars.stream().filter(v -> !callParams.contains(mappedProgramVars.get(v))).toList();
@@ -256,24 +255,24 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		return builder.finishConstruction(mCsToolkit.getManagedScript());
 	}
 
-	protected UnmodifiableTransFormula buildContractsTransFormula(final Summary summary,
+	protected UnmodifiableTransFormula buildContractsTransFormula1(final Summary summary,
 			final Collection<FunctionContract> contracts) {
 		final Map<FunctionContract, Term> transformedPreconditions = new HashMap<>();
 		final Map<FunctionContract, Term> transformedPostconditions = new HashMap<>();
 
-		final Set<IProgramVar> callParams = mProgramExtractor.getCallParams(summary);
-		final Set<IProgramVar> returnParams = mProgramExtractor.getReturnParams(summary);
+		final Set<IProgramVar> callParams = mProgramUtilities.getCallParams(summary);
+		final Set<IProgramVar> returnParams = mProgramUtilities.getReturnParams(summary);
 		final Set<IProgramVar> callReturnParams = new HashSet<>(callParams);
 		callReturnParams.addAll(returnParams);
 
 		for (final FunctionContract contract : contracts) {
 			final Term transformedPrecondition =
-					mProgramExtractor.callTransitionReverse(summary, contract.getPrecondition());
+					mProgramUtilities.callTransitionReverse(summary, contract.getPrecondition());
 
 			transformedPreconditions.put(contract, transformedPrecondition);
 			final IPredicate transformedPreconditionPredicate = mPredicateFactory.newPredicate(transformedPrecondition);
 
-			final Term transformedPostcondition = mProgramExtractor.returnTransition(summary,
+			final Term transformedPostcondition = mProgramUtilities.returnTransition(summary,
 					contract.getPostcondition(), transformedPreconditionPredicate);
 
 			transformedPostconditions.put(contract, transformedPostcondition);
@@ -462,8 +461,8 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		final Set<IProgramVar> outProgramVars = new HashSet<>(transFormula1.getOutVars().keySet());
 		outProgramVars.addAll(transFormula2.getOutVars().keySet());
 
-		final Set<IProgramVar> callParams = mProgramExtractor.getCallParams(summary);
-		final Set<IProgramVar> returnParams = mProgramExtractor.getReturnParams(summary);
+		// final Set<IProgramVar> callParams = mProgramExtractor.getCallParams(summary);
+		// final Set<IProgramVar> returnParams = mProgramExtractor.getReturnParams(summary);
 
 		inVars.putAll(transFormula1.getInVars());
 		inVars.putAll(transFormula2.getInVars());
@@ -496,7 +495,7 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 
 	protected Map<String, CorrectnessResult<L>> runCorrectnessChecks() throws AutomataOperationCanceledException {
 		final Map<String, CorrectnessResult<L>> results = new HashMap<>();
-		for (final String function : mProgramExtractor.getFunctionsToCheck()) {
+		for (final String function : mProgramUtilities.getFunctionsToCheck()) {
 			final CorrectnessResult<L> result = runCorrectnessCheck(function);
 			results.put(function, result);
 		}
@@ -504,70 +503,44 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		return results;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected CorrectnessResult<L> runCorrectnessCheck(final String function)
 			throws AutomataOperationCanceledException { // TODO
 		// rewrite
-		final L preconditionTransition;
 
-		final UnmodifiableTransFormula preconditionTransFormula = mProgramExtractor.getPreconditionTransition(function);
+		final Set<Term> terms = new HashSet<>();
+		for (final IProgramNonOldVar globalVar : mCsToolkit.getModifiableGlobalsTable()
+				.getModifiedBoogieVars(function)) {
+			final Term globalEqualsOld = mCsToolkit.getManagedScript().getScript().term("=",
+					globalVar.getTermVariable(), globalVar.getOldVar().getTermVariable());
 
-		// final Set<Term> terms = new HashSet<>();
-		// for (final IProgramNonOldVar globalVar : mCsToolkit.getModifiableGlobalsTable()
-		// .getModifiedBoogieVars(function)) {
-		// final Term globalEqualsOld = mCsToolkit.getManagedScript().getScript().term("=",
-		// globalVar.getTermVariable(), globalVar.getOldVar().getTermVariable());
-		//
-		// terms.add(globalEqualsOld);
-		// }
-		//
-		// if (!terms.isEmpty()) {
-		// if (preconditionTransFormula != null) {
-		// terms.add(preconditionTransFormula.getFormula());
-		// }
-		// final Term formula = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), terms);
-		// final IPredicate pred = mPredicateFactory.newPredicate(formula);
-		//
-		// preconditionTransFormula =
-		// TransFormulaBuilder.constructTransFormulaFromPredicate(pred, mCsToolkit.getManagedScript());
-		// }
-
-		if (preconditionTransFormula != null) {
-			preconditionTransition = (L) new PrePostDummyTransition(function, preconditionTransFormula,
-					String.valueOf(preconditionTransFormula.getFormula()));
-		} else {
-			preconditionTransition = null;
+			terms.add(globalEqualsOld);
 		}
 
-		final L postconditionViolatedTransition;
+		final Term preFormula = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), terms);
+		final IPredicate prePred = mPredicateFactory.newPredicate(preFormula);
 
-		final UnmodifiableTransFormula postconditionViolatedTransFormula =
-				mProgramExtractor.getPostconditionViolatedTransition(function);
+		final Term postViolatedFormula = mCsToolkit.getManagedScript().getScript().term("false");
+		final IPredicate postViolatedPred = mPredicateFactory.newPredicate(postViolatedFormula);
 
-		if (postconditionViolatedTransFormula != null) {
-			postconditionViolatedTransition = (L) new PrePostDummyTransition(function,
-					postconditionViolatedTransFormula, String.valueOf(postconditionViolatedTransFormula.getFormula()));
-		} else {
-			postconditionViolatedTransition = null;
-		}
-
-		if (!mProgramExtractor.functionHasImplementation(function)) {
-			return new CorrectnessResult<>(true, null, mProgramExtractor.newContractMap(), null, null);
+		if (!mProgramUtilities.functionHasImplementation(function)) {
+			return new CorrectnessResult<>(true, null, null, mProgramUtilities.newContractMap(), null, null);
 		}
 
 		// final INestedWordAutomaton<L, IPredicate> abstraction = mProgramExtractor.initializeRawAbstraction(function);
-		final INestedWordAutomaton<L, IPredicate> abstraction = mProgramExtractor
-				.initializeFunctionAbstraction(function, preconditionTransition, postconditionViolatedTransition);
+		final INestedWordAutomaton<L, IPredicate> abstraction =
+				mProgramUtilities.initializeFunctionAbstraction(function, prePred, postViolatedPred);
 
-		final TermVariable virtualErrorVariable = mCsToolkit.getManagedScript().getScript().variable("vError",
-				SmtSortUtils.getBoolSort(mCsToolkit.getManagedScript()));
-
-		final Term notTerm = mCsToolkit.getManagedScript().getScript().term("not", virtualErrorVariable);
+		// final TermVariable virtualErrorVariable = mCsToolkit.getManagedScript().getScript().variable("vError",
+		// SmtSortUtils.getBoolSort(mCsToolkit.getManagedScript()));
+		//
+		// final Term notTerm = mCsToolkit.getManagedScript().getScript().term("not", virtualErrorVariable);
 
 		// mPredicateFactory.newPredicate(notTerm);
 
+		System.out.println(abstraction);
+
 		// TODO
-		final CorrectnessResult<L> result = checkAutomatonCorrectness(abstraction, mProgramExtractor.newContractMap());
+		final CorrectnessResult<L> result = checkAutomatonCorrectness(abstraction, mProgramUtilities.newContractMap());
 		System.out.println(result);
 		return result;
 
@@ -577,18 +550,16 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 			final Map<Summary, Collection<FunctionContract>> contracts, final IPredicate preconditionPredicate,
 			final IPredicate postconditionViolatedPredicate) throws AutomataOperationCanceledException {
 		final String functionName = summary.getCallStatement().getMethodName();
-		final INestedWordAutomaton<L, IPredicate> functionAbstraction = mProgramExtractor
+		final INestedWordAutomaton<L, IPredicate> functionAbstraction = mProgramUtilities
 				.initializeFunctionAbstraction(functionName, preconditionPredicate, postconditionViolatedPredicate);
 
-		final CorrectnessResult<L> result = checkAutomatonCorrectness(functionAbstraction, contracts);
-		final IPredicate betterPost = mProgramExtractor.extractPostcondition(result.getAbstraction());
+		return checkAutomatonCorrectness(functionAbstraction, contracts);
 
-		final FunctionContract contract = new FunctionContract(preconditionPredicate, betterPost);
+		// final IPredicate betterPost = mProgramExtractor.extractPostcondition(result.getAbstraction());
+		//
+		// final FunctionContract contract = new FunctionContract(preconditionPredicate, betterPost);
 
 		// assignContractMap(contracts, contracts);
-
-		return new CorrectnessResult<>(result.isCorrect(), result.getAbstraction(), contracts,
-				result.getCounterexampleState(), result.getCounterexampleTrace());
 
 	}
 
@@ -597,26 +568,29 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 
 		INestedWordAutomaton<L, IPredicate> currentAbstraction = abstraction;
 
-		// Contracts
+		final Map<Summary, Collection<FunctionContract>> functionContracts = new HashMap<>(contracts);
 
 		for (int i = 0; i < 10000000; i++) { // TODO max iterations
 			final IsEmpty<L, ?> emptynessCheck =
 					new IsEmpty<>(new AutomataLibraryServices(getServices()), currentAbstraction, mSearchStrategy);
 			if (emptynessCheck.getResult()) {
-				return new CorrectnessResult<>(true, currentAbstraction, contracts, null, null);
+				// TODO top level automaton
+				final FunctionContract contract = extractContract(currentAbstraction);
+				return new CorrectnessResult<>(true, currentAbstraction, contract, functionContracts, null, null);
 			}
 
 			final IRun<L, ?> counterexample = emptynessCheck.getNestedRun();
 
-			final FeasabilityResult result = checkFeasability(counterexample, contracts);
+			final FeasabilityResult result = checkFeasability(counterexample, functionContracts);
+			functionContracts.putAll(result.getContracts());
 
 			final var locations = getControlConfigurationsFromCounterexample(counterexample);
 			final var cEx = new Counterexample<>(counterexample.getWord(), locations);
 
 			final boolean feasable = result.isFeasable();
 			if (feasable) {
-				return new CorrectnessResult<>(false, currentAbstraction, contracts, result.getCounterexampleState(),
-						cEx);
+				return new CorrectnessResult<>(false, currentAbstraction, null, functionContracts,
+						result.getCounterexampleState(), cEx);
 			}
 
 			final ITARefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(getServices(), cEx,
@@ -650,21 +624,50 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		throw new RuntimeException("Max iterations reached"); // TODO
 	}
 
+	private FunctionContract extractContract(final INestedWordAutomaton<L, IPredicate> currentAbstraction) {
+		final Set<Term> preconditionTerms = new HashSet<>();
+		final Set<Term> postconditionTerms = new HashSet<>();
+
+		for (final IPredicate s : currentAbstraction.getStates()) {
+			final ISLPredicate state = (ISLPredicate) s;
+			final IcfgLocation entryNode = mIcfg.getProcedureEntryNodes().get(state.getProgramPoint().getProcedure());
+			final IcfgLocation exitNode = mIcfg.getProcedureExitNodes().get(state.getProgramPoint().getProcedure());
+
+			if (state.getProgramPoint().equals(entryNode)) {
+				preconditionTerms.add(state.getFormula());
+			}
+			if (state.getProgramPoint().equals(exitNode)) {
+				postconditionTerms.add(state.getFormula());
+			}
+		}
+		final IPredicate precondition = mPredicateFactory
+				.newPredicate(SmtUtils.and(mCsToolkit.getManagedScript().getScript(), preconditionTerms));
+		final IPredicate postcondition = mPredicateFactory
+				.newPredicate(SmtUtils.or(mCsToolkit.getManagedScript().getScript(), postconditionTerms));
+
+		return new FunctionContract(precondition, postcondition);
+	}
+
 	public FeasabilityResult checkFeasability(final IRun<L, ?> counterexample,
 			final Map<Summary, Collection<FunctionContract>> contracts) throws AutomataOperationCanceledException {
 		final Script script = mCsToolkit.getManagedScript().getScript();
 
-		final Word<L> word = counterexample.getWord();
-		final int n = word.length();
+		final Word<L> trace = counterexample.getWord();
+		final int n = trace.length();
 
-		final Map<Summary, Collection<FunctionContract>> functionContracts = new HashMap<>(contracts);
-		// applyContracts(functionContracts);
+		Map<Summary, Collection<FunctionContract>> functionContracts = new HashMap<>(contracts);
+		applyContracts(functionContracts);
 
 		final List<SPredicate> interpolatedPredicates = initPredicates(counterexample);
 
+		final L firstSummary = getFirstSummaryInTrace(trace);
+		if (firstSummary == null) {
+			return simpleCheck(trace, functionContracts, interpolatedPredicates);
+		}
+
 		int k = 0;
 		while (k < n) {
-			L symbol = word.getSymbol(k);
+			L symbol = trace.getSymbol(k);
 			final SPredicate preconditionPredicate = interpolatedPredicates.get(k);
 			final SPredicate postconditionPredicate = interpolatedPredicates.get(k + 1);
 			final Term sp = mPredicateTransformer.strongestPostcondition(interpolatedPredicates.get(k),
@@ -673,7 +676,61 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 					mPredicateFactory.newSPredicate(postconditionPredicate.getProgramPoint(), sp);
 
 			boolean strenghtenBackwards = false;
-			if (k + 1 == n) { // TODO move this
+			boolean feasibilityProven = false;
+			Term violatingTerm = null;
+
+			if (symbol instanceof AssureStatement) {
+				final AssureStatement assure = (AssureStatement) symbol;
+				final IPredicate preconditionTransitionedPredicate =
+						mProgramUtilities.transformPrecondition(assure.getSummary(), preconditionPredicate);
+
+				final Term falseTerm = script.term("false");
+				final IPredicate falsePredicate = mPredicateFactory.newPredicate(falseTerm);
+
+				final INestedWordAutomaton<L, IPredicate> functionAbstraction =
+						mProgramUtilities.initializeFunctionAbstraction(assure.getAssuredProcedure(),
+								preconditionTransitionedPredicate, falsePredicate);
+				final CorrectnessResult<L> result = checkAutomatonCorrectness(functionAbstraction, functionContracts);
+				functionContracts = assignContractMap(functionContracts, result.getContracts());
+				if (result.isCorrect()) {
+					final FunctionContract assureContract = result.getFunctionContract();
+					functionContracts = assignContract(functionContracts, assure.getSummary(), assureContract);
+					applyContracts(functionContracts);
+
+					return new FeasabilityResult(false, functionContracts, script.term("false"),
+							interpolatedPredicates);
+				}
+				applyContracts(functionContracts);
+
+				final Term counterexampleState = result.getCounterexampleState();
+				final Term negatedCounterexample = SmtUtils.not(script, counterexampleState);
+				final BasicPredicate negatedCounterexamplePredicate =
+						mPredicateFactory.newPredicate(negatedCounterexample);
+
+				final Term negatedCounterexampleTransitioned =
+						mProgramUtilities.callTransitionReverse(assure.getSummary(), negatedCounterexamplePredicate);
+
+				final Term andTerm =
+						SmtUtils.and(script, preconditionPredicate.getFormula(), negatedCounterexampleTransitioned);
+
+				final SPredicate andPredicate =
+						mPredicateFactory.newSPredicate(preconditionPredicate.getProgramPoint(), andTerm);
+				interpolatedPredicates.set(k, andPredicate);
+
+				if (symbol == firstSummary) {
+					feasibilityProven = true;
+
+					final IPredicate counterexampleStatePredicate = mPredicateFactory.newPredicate(counterexampleState);
+					final Term counterexampleStateTransitioned =
+							mProgramUtilities.callTransitionReverse(assure.getSummary(), counterexampleStatePredicate);
+
+					violatingTerm = counterexampleStateTransitioned;
+				}
+
+				strenghtenBackwards = true;
+				k--;
+
+			} else if (k + 1 == n) {
 				final LBool isSat = SmtUtils.checkSatTerm(script, sp);
 				switch (isSat) {
 				case SAT:
@@ -687,62 +744,78 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 					throw new RuntimeException("unknown sat"); // TODO handle
 
 				}
-			}
-
-			if (symbol instanceof Summary) {
+			} else if (symbol instanceof Summary) {
 				final Summary summarySymbol = (Summary) symbol;
+				final String summaryFunction = summarySymbol.getCallStatement().getMethodName();
+
 				final LBool implicationHolds =
 						SmtUtils.checkImplication(sp, postconditionPredicate.getFormula(), script);
 				switch (implicationHolds) {
 				case SAT: // implication holds not
-					final Term strengthenedPostState = SmtUtils.and(script, postconditionPredicate.getFormula(), sp);
-					interpolatedPredicates.set(k + 1, mPredicateFactory
-							.newSPredicate(postconditionPredicate.getProgramPoint(), strengthenedPostState));
+					// final Term strengthenedPostState = SmtUtils.and(script, postconditionPredicate.getFormula(), sp);
+					// interpolatedPredicates.set(k + 1, mPredicateFactory
+					// .newSPredicate(postconditionPredicate.getProgramPoint(), strengthenedPostState));
 
-					final IPredicate temp =
-							mProgramExtractor.transformPrecondition(summarySymbol, preconditionPredicate);
+					final IPredicate preconditionTransitionedPredicate =
+							mProgramUtilities.transformPrecondition(summarySymbol, preconditionPredicate);
 
-					final IPredicate postconditionTransitionedPredicate =
-							mProgramExtractor.transformPostcondition(summarySymbol, postconditionPredicate, temp);
-					final IPredicate spTransitionedPredicate =
-							mProgramExtractor.transformPostcondition(summarySymbol, spPredicate, temp);
+					final Set<TermVariable> toQuantifyPostPredicate = new HashSet<>();
+					for (final IProgramVar programVar : postconditionPredicate.getVars()) {
+						if (programVar.isOldvar()) {
+							toQuantifyPostPredicate.add(programVar.getTermVariable());
+						}
+					}
+
+					final Term postconditionQ = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS,
+							toQuantifyPostPredicate, postconditionPredicate.getFormula());
+					final IPredicate postconditionQPredicate =
+							mPredicateFactory.newSPredicate(postconditionPredicate.getProgramPoint(), postconditionQ);
+
+					final Set<TermVariable> toQuantifySpPredicate = new HashSet<>();
+					for (final IProgramVar programVar : spPredicate.getVars()) {
+						if (programVar.isOldvar()) {
+							toQuantifySpPredicate.add(programVar.getTermVariable());
+						}
+					}
+
+					final Term spQ = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, toQuantifySpPredicate,
+							spPredicate.getFormula());
+					final IPredicate spQPredicate = mPredicateFactory.newSPredicate(spPredicate.getProgramPoint(), spQ);
+
+					final IPredicate postconditionTransitionedPredicate = mProgramUtilities.transformPostcondition(
+							summarySymbol, postconditionQPredicate, preconditionTransitionedPredicate);
+					final IPredicate spTransitionedPredicate = mProgramUtilities.transformPostcondition(summarySymbol,
+							spQPredicate, preconditionTransitionedPredicate);
 
 					final LBool contractedImplicationHolds =
 							SmtUtils.checkImplication(spTransitionedPredicate.getFormula(),
 									postconditionTransitionedPredicate.getFormula(), script);
+
 					switch (contractedImplicationHolds) {
 					case SAT: // contract holds not
-						final IPredicate preconditionTransitionedPredicate =
-								mProgramExtractor.transformPrecondition(summarySymbol, preconditionPredicate);
-
 						// TODO refactor to own function
 						final IPredicate postconditionViolatedTransitionedPredicate =
 								mPredicateFactory.not(postconditionTransitionedPredicate);
 
-						final String functionName = summarySymbol.getCallStatement().getMethodName();
 						final INestedWordAutomaton<L, IPredicate> functionAbstraction =
-								mProgramExtractor.initializeFunctionAbstraction(functionName,
+								mProgramUtilities.initializeFunctionAbstraction(summaryFunction,
 										preconditionTransitionedPredicate, postconditionViolatedTransitionedPredicate);
-						final CorrectnessResult<L> result = checkAutomatonCorrectness(functionAbstraction, contracts);
-						// functionContracts = assignContractMap(functionContracts, result.getContracts());
-						// applyContracts();
+						final CorrectnessResult<L> result =
+								checkAutomatonCorrectness(functionAbstraction, functionContracts);
+
+						functionContracts = assignContractMap(functionContracts, result.getContracts());
 						if (result.isCorrect()) {
-							final IPredicate refinedPostcondition =
-									mProgramExtractor.extractPostcondition(result.getAbstraction()); // TODO
-
-							final FunctionContract fc =
-									new FunctionContract(preconditionTransitionedPredicate, refinedPostcondition);
-							final Set<FunctionContract> cs = new HashSet<>();
-							cs.add(fc);
-
-							setFunctionContract(functionName, cs);
+							final FunctionContract contract = result.getFunctionContract();
+							functionContracts = assignContract(functionContracts, summarySymbol, contract);
+							applyContracts(functionContracts);
 						} else {
+							applyContracts(functionContracts);
 							final Term counterexampleState = result.getCounterexampleState();
 							final Term negatedCounterexample = SmtUtils.not(script, counterexampleState);
 							final BasicPredicate negatedCounterexamplePredicate =
 									mPredicateFactory.newPredicate(negatedCounterexample);
 
-							final Term negatedCounterexampleTransitioned = mProgramExtractor
+							final Term negatedCounterexampleTransitioned = mProgramUtilities
 									.callTransitionReverse(summarySymbol, negatedCounterexamplePredicate);
 
 							final Term andTerm = SmtUtils.and(script, preconditionPredicate.getFormula(),
@@ -752,13 +825,70 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 									mPredicateFactory.newSPredicate(preconditionPredicate.getProgramPoint(), andTerm);
 							interpolatedPredicates.set(k, andPredicate);
 
+							if (symbol == firstSummary) {
+								feasibilityProven = true;
+
+								final IPredicate counterexampleStatePredicate =
+										mPredicateFactory.newPredicate(counterexampleState);
+								final Term counterexampleStateTransitioned = mProgramUtilities
+										.callTransitionReverse(summarySymbol, counterexampleStatePredicate);
+
+								violatingTerm = counterexampleStateTransitioned;
+							}
+
 							strenghtenBackwards = true;
 							k--;
 						}
 						break;
-					case UNSAT: // contract holds
-						// TODO use pre
+					case UNSAT: // contract holds for transformed predicate, check precondition -> false
+						final Term trueTerm = script.term("true");
+						final IPredicate truePredicate = mPredicateFactory.newPredicate(trueTerm);
+
+						final INestedWordAutomaton<L, IPredicate> reachableEndCheckAbstraction =
+								mProgramUtilities.initializeFunctionAbstraction(summaryFunction,
+										preconditionTransitionedPredicate, truePredicate);
+						final CorrectnessResult<L> reachableEndCheckResult =
+								checkAutomatonCorrectness(reachableEndCheckAbstraction, functionContracts);
+						functionContracts =
+								assignContractMap(functionContracts, reachableEndCheckResult.getContracts());
+						if (reachableEndCheckResult.isCorrect()) {
+							final FunctionContract contract = reachableEndCheckResult.getFunctionContract();
+							functionContracts = assignContract(functionContracts, summarySymbol, contract);
+							applyContracts(functionContracts);
+
+							continue;
+						}
+						applyContracts(functionContracts);
+
+						final Term counterexampleState = reachableEndCheckResult.getCounterexampleState();
+						final Term negatedCounterexample = SmtUtils.not(script, counterexampleState);
+						final BasicPredicate negatedCounterexamplePredicate =
+								mPredicateFactory.newPredicate(negatedCounterexample);
+
+						final Term negatedCounterexampleTransitioned =
+								mProgramUtilities.callTransitionReverse(summarySymbol, negatedCounterexamplePredicate);
+
+						final Term andTerm = SmtUtils.and(script, preconditionPredicate.getFormula(),
+								negatedCounterexampleTransitioned);
+
+						final SPredicate andPredicate =
+								mPredicateFactory.newSPredicate(preconditionPredicate.getProgramPoint(), andTerm);
+						interpolatedPredicates.set(k, andPredicate);
+
+						if (symbol == firstSummary) {
+							feasibilityProven = true;
+
+							final IPredicate counterexampleStatePredicate =
+									mPredicateFactory.newPredicate(counterexampleState);
+							final Term counterexampleStateTransitioned = mProgramUtilities
+									.callTransitionReverse(summarySymbol, counterexampleStatePredicate);
+
+							violatingTerm = counterexampleStateTransitioned;
+						}
+
 						strenghtenBackwards = true;
+						k--;
+
 						break;
 					default:
 					case UNKNOWN:
@@ -781,9 +911,24 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 				continue;
 			}
 
+			if (feasibilityProven) {
+				Term current = violatingTerm;
+
+				while (k >= 0) {
+					symbol = trace.getSymbol(k);
+					final IPredicate predicate = mPredicateFactory.newPredicate(current);
+					current = mPredicateTransformer.pre(predicate, symbol.getTransformula());
+
+					k--;
+				}
+
+				return new FeasabilityResult(true, functionContracts, current, interpolatedPredicates);
+
+			}
+
 			if (strenghtenBackwards) {
 				while (k >= 0) {
-					symbol = word.getSymbol(k);
+					symbol = trace.getSymbol(k);
 					if (symbol instanceof Summary) {
 						break;
 					}
@@ -798,8 +943,10 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 				}
 
 				if (k < 0) {
-					final Term notTerm = SmtUtils.not(script, interpolatedPredicates.get(0).getFormula());
-					return new FeasabilityResult(true, contracts, notTerm, interpolatedPredicates);
+					throw new AssertionError("Should not have happened, feasibilityProven should have been true");
+
+					// final Term notTerm = SmtUtils.not(script, interpolatedPredicates.get(0).getFormula());
+					// return new FeasabilityResult(true, contracts, notTerm, interpolatedPredicates);
 				}
 
 			}
@@ -807,6 +954,72 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 		}
 
 		throw new RuntimeException("Should not happen");
+	}
+
+	protected FeasabilityResult simpleCheck(final Word<L> trace,
+			final Map<Summary, Collection<FunctionContract>> functionContracts,
+			final List<SPredicate> interpolatedPredicates) {
+		final Script script = mCsToolkit.getManagedScript().getScript();
+
+		Term current = script.term("true");
+		final int n = trace.length();
+
+		for (int k = 0; k < n; k++) {
+			final L symbol = trace.getSymbol(k);
+			final IPredicate predicate = mPredicateFactory.newPredicate(current);
+			current = mPredicateTransformer.strongestPostcondition(predicate, symbol.getTransformula());
+		}
+
+		final LBool isSat = SmtUtils.checkSatTerm(script, current);
+		switch (isSat) {
+		case SAT:
+			break;
+		case UNSAT:
+			return new FeasabilityResult(false, functionContracts, script.term("false"), interpolatedPredicates);
+		default:
+		case UNKNOWN:
+			throw new RuntimeException("unknown sat"); // TODO handle
+
+		}
+
+		for (int k = n - 1; k >= 0; k--) {
+			final L symbol = trace.getSymbol(k);
+			final IPredicate predicate = mPredicateFactory.newPredicate(current);
+			current = mPredicateTransformer.pre(predicate, symbol.getTransformula());
+		}
+
+		return new FeasabilityResult(true, functionContracts, current, interpolatedPredicates);
+
+	}
+
+	protected L getFirstSummaryInTrace(final Word<L> trace) {
+		for (final L symbol : trace) {
+			if (symbol instanceof Summary || symbol instanceof AssureStatement) {
+				return symbol;
+			}
+		}
+
+		return null;
+	}
+
+	protected static Map<Summary, Collection<FunctionContract>> assignContract(
+			final Map<Summary, Collection<FunctionContract>> oldContracts, final Summary summary,
+			final FunctionContract contract) {
+
+		final Map<Summary, Collection<FunctionContract>> newMap = new HashMap<>();
+		for (final var entry : oldContracts.entrySet()) {
+			final Summary entrySummary = entry.getKey();
+			final Collection<FunctionContract> old = entry.getValue();
+			final Collection<FunctionContract> newContracts = new HashSet<>(old);
+			if (summary.getCallStatement().getMethodName().equals(entrySummary.getCallStatement().getMethodName())) {
+				newContracts.add(contract);
+			}
+
+			newMap.put(entrySummary, newContracts);
+		}
+
+		return newMap;
+
 	}
 
 	protected static Map<Summary, Collection<FunctionContract>> assignContractMap(
@@ -827,6 +1040,24 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 
 		return newMap;
 
+	}
+
+	protected void applyContracts(final Map<Summary, Collection<FunctionContract>> contracts) {
+		for (final var entry : contracts.entrySet()) {
+			final Summary summary = entry.getKey();
+			final Collection<FunctionContract> entryContracts = entry.getValue();
+
+			final UnmodifiableTransFormula summaryTransFormula =
+					FunctionContract.buildTransFormulaForContracts(summary, entryContracts, mProgramUtilities);
+			summary.setTransitionFormula(summaryTransFormula);
+
+			final AssureStatement assure = mProgramUtilities.getAssureStatement(summary);
+			if (assure != null) {
+				final UnmodifiableTransFormula assureTransFormula =
+						FunctionContract.buildAssureTransFormula(summary, entryContracts, mProgramUtilities);
+				assure.setTransformula(assureTransFormula);
+			}
+		}
 	}
 
 	protected List<SPredicate> initPredicates(final IRun<L, ?> counterexample) {
@@ -881,15 +1112,17 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 	public static class CorrectnessResult<L> {
 		final boolean mIsCorrect;
 		final INestedWordAutomaton<L, IPredicate> mAbstraction;
+		final FunctionContract mFunctionContract;
 		final Map<Summary, Collection<FunctionContract>> mContracts;
 		final Term mCounterexampleState;
 		final Counterexample<L> mCounterexampleTrace;
 
 		public CorrectnessResult(final boolean isCorrect, final INestedWordAutomaton<L, IPredicate> abstraction,
-				final Map<Summary, Collection<FunctionContract>> contracts, final Term counterexampleState,
-				final Counterexample<L> counterexampleTrace) {
+				final FunctionContract functionContract, final Map<Summary, Collection<FunctionContract>> contracts,
+				final Term counterexampleState, final Counterexample<L> counterexampleTrace) {
 			mIsCorrect = isCorrect;
 			mAbstraction = abstraction;
+			mFunctionContract = functionContract;
 			mContracts = contracts;
 			mCounterexampleState = counterexampleState;
 			mCounterexampleTrace = counterexampleTrace;
@@ -901,6 +1134,10 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 
 		public INestedWordAutomaton<L, IPredicate> getAbstraction() {
 			return mAbstraction;
+		}
+
+		public FunctionContract getFunctionContract() {
+			return mFunctionContract;
 		}
 
 		public Map<Summary, Collection<FunctionContract>> getContracts() {
@@ -957,70 +1194,6 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 			return "FeasabilityResult [mIsFeasable=" + mIsFeasable + ", mCounterexampleState=" + mCounterexampleState
 					+ ", mPredicates=" + mPredicates + "]";
 		}
-	}
-
-	/**
-	 * Dummy class for Precondition and Postcondition Transitions that need to be dymamically checked
-	 */
-	public static class PrePostDummyTransition implements IIcfgTransition<IcfgLocation>, IInternalAction {
-
-		private static final long serialVersionUID = -295366297188547709L;
-
-		final String mProcedure;
-		final UnmodifiableTransFormula mTransFormula;
-		final String mPrettyPrinted;
-
-		public PrePostDummyTransition(final String procedure, final UnmodifiableTransFormula transFormula) {
-			this(procedure, transFormula, null);
-		}
-
-		public PrePostDummyTransition(final String procedure, final UnmodifiableTransFormula transFormula,
-				final String prettyPrinted) {
-			mProcedure = procedure;
-			mTransFormula = transFormula;
-			mPrettyPrinted = prettyPrinted != null ? prettyPrinted : "";
-		}
-
-		@Override
-		public IPayload getPayload() {
-			return new Payload();
-		}
-
-		@Override
-		public boolean hasPayload() {
-			return false;
-		}
-
-		@Override
-		public String getPrecedingProcedure() {
-			return mProcedure;
-		}
-
-		@Override
-		public String getSucceedingProcedure() {
-			return mProcedure;
-		}
-
-		@Override
-		public UnmodifiableTransFormula getTransformula() {
-			return mTransFormula;
-		}
-
-		@Override
-		public IcfgLocation getSource() {
-			return null;
-		}
-
-		@Override
-		public IcfgLocation getTarget() {
-			return null;
-		}
-
-		@Override
-		public String toString() {
-			return mPrettyPrinted;
-		}
-
 	}
 
 	public enum ContractMode {

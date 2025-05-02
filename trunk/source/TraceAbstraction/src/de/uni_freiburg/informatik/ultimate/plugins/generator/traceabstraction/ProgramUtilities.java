@@ -19,12 +19,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.StringDebugIdentifier;
@@ -39,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -50,11 +54,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SummaryCegarLoop.PrePostDummyTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SummaryCegarLoop.SingleFunctionAutomatonWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
-public class ProgramExtractor<L extends IIcfgTransition<?>> {
+public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	protected IIcfg<?> mIcfg;
 
@@ -76,6 +79,8 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	protected Map<String, Collection<Summary>> mFunctionSummaries;
 	protected Set<String> mFunctionsWithImplementation;
+	protected Set<String> mFunctionsToAssure;
+	protected Map<Summary, AssureStatement> mAssureStatements;
 
 	protected Map<Call, Summary> mCallSummaries;
 	protected Map<Return, Summary> mReturnSummaries;
@@ -88,8 +93,9 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	protected Map<String, IcfgLocation> dummyPreLocations;
 	protected Map<String, IcfgLocation> dummyPostLocations;
+	protected Map<Summary, IcfgLocation> dummyAssureLocations;
 
-	public ProgramExtractor(final IIcfg<?> icfg, final IUltimateServiceProvider services,
+	public ProgramUtilities(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final Set<? extends IcfgLocation> errorLocs,
@@ -128,6 +134,24 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		extractCallReturnTransitions();
 
+		dummyAssureLocations = new HashMap<>();
+		mFunctionSummaries.values().stream().flatMap(Collection::stream).forEach(s -> dummyAssureLocations.put(s,
+				new IcfgLocation(new StringDebugIdentifier(s + ":dummyAssureLoc"), s.getPrecedingProcedure())));
+
+		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
+		final IPredicate truePredicate = mPredicateFactory.newPredicate(trueTerm);
+		final UnmodifiableTransFormula trueTransFormula =
+				TransFormulaBuilder.constructTransFormulaFromPredicate(truePredicate, mCsToolkit.getManagedScript());
+
+		extractFunctionsToAssure();
+
+		mAssureStatements = new HashMap<>();
+		mFunctionSummaries.values().stream().flatMap(Collection::stream).forEach(s -> {
+			dummyAssureLocations.put(s,
+					new IcfgLocation(new StringDebugIdentifier(s + ":dummyAssureLoc"), s.getPrecedingProcedure()));
+			mAssureStatements.put(s, new AssureStatement(s, trueTransFormula));
+		});
+
 		mCallParams = new HashMap<>();
 		mReturnParams = new HashMap<>();
 		for (final var callTransition : mCallTransitions.entrySet()) {
@@ -151,6 +175,50 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 			params.addAll(modifiableGlobalVars);
 			// params.addAll(modifiableGlobalVars.stream().map(IProgramNonOldVar::getOldVar).toList());
 			mReturnParams.put(summary, params);
+		}
+
+	}
+
+	protected void extractFunctionsToAssure() {
+		mFunctionsToAssure = new HashSet<>();
+
+		final Set<String> functionsWithErrorState = new HashSet<>();
+
+		final Map<String, Collection<String>> calledFunctions = new HashMap<>();
+		mFunctionAutomataRaw.keySet().stream().forEach(f -> calledFunctions.put(f, new HashSet<>()));
+
+		for (final var entry : mFunctionAutomataRaw.entrySet()) {
+			final String function = entry.getKey();
+			final var automaton = entry.getValue();
+			if (!automaton.getFinalStates().isEmpty()) {
+				functionsWithErrorState.add(function);
+			}
+
+			for (final L symbol : automaton.getAlphabet()) {
+				if (symbol instanceof Summary && ((Summary) symbol).getCallStatement() != null) {
+					calledFunctions.get(function).add(((Summary) symbol).getCallStatement().getMethodName());
+				}
+			}
+		}
+
+		for (final String f : calledFunctions.keySet()) {
+			final Set<String> visited = new HashSet<>();
+			final Queue<String> queue = new ArrayDeque<>();
+			queue.add(f);
+
+			while (!queue.isEmpty()) {
+				final String current = queue.poll();
+				if (visited.contains(current)) {
+					continue;
+				}
+				visited.add(current);
+				if (functionsWithErrorState.contains(current)) {
+					mFunctionsToAssure.add(f);
+					break;
+				}
+
+				queue.addAll(calledFunctions.get(current));
+			}
 		}
 
 	}
@@ -508,7 +576,7 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	}
 
-	public INestedWordAutomaton<L, IPredicate> constructSingleAutomaton(
+	public INestedWordAutomaton<L, IPredicate> constructSingleAutomaton1(
 			final INestedWordAutomaton<L, IPredicate> abstraction, final L preconditionTransition,
 			final L postconditionViolatedTransition) {
 
@@ -574,10 +642,102 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	}
 
+	// TODO top level
+	public INestedWordAutomaton<L, IPredicate> constructFunctionAutomaton(
+			final INestedWordAutomaton<L, IPredicate> abstraction, final L preconditionTransition,
+			final L postconditionViolatedTransition, Collection<String> functionsToAssure) {
+
+		if (functionsToAssure == null) {
+			functionsToAssure = Collections.emptySet();
+		}
+
+		final Set<L> alphabet = new HashSet<>(abstraction.getAlphabet());
+		alphabet.add(preconditionTransition);
+		alphabet.add(postconditionViolatedTransition);
+
+		final NestedWordAutomaton<L, IPredicate> automaton = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), new VpAlphabet<>(alphabet), mStateFactoryForRefinement);
+
+		final Map<IPredicate, Iterable<OutgoingInternalTransition<L, IPredicate>>> originalEdges = new HashMap<>();
+		final Map<IPredicate, IPredicate> newPredicates = new HashMap<>();
+
+		SPredicate entryNode = null;
+		SPredicate exitNode = null;
+
+		for (final IPredicate state : abstraction.getStates()) {
+			final IcfgLocation programPoint = ((ISLPredicate) state).getProgramPoint();
+
+			final SPredicate newState = mPredicateFactory.newSPredicate(programPoint, state.getFormula());
+
+			newPredicates.put(state, newState);
+			originalEdges.put(newState, abstraction.internalSuccessors(state));
+
+			if (programPoint.equals(mIcfg.getProcedureEntryNodes().get(programPoint.getProcedure()))) {
+				entryNode = newState;
+			}
+			if (programPoint.equals(mIcfg.getProcedureExitNodes().get(programPoint.getProcedure()))) {
+				exitNode = newState;
+			}
+
+			automaton.addState(false, abstraction.isFinal(state), newState);
+		}
+
+		final Map<Summary, IPredicate> functionPreStates = new HashMap<>();
+
+		for (final var entry : originalEdges.entrySet()) {
+			final IPredicate newState = entry.getKey();
+			final var transitions = entry.getValue();
+			for (final var transition : transitions) {
+				if (transition.getLetter() instanceof Summary) {
+					functionPreStates.put((Summary) transition.getLetter(), newState);
+				}
+
+				final IPredicate newSucc = newPredicates.get(transition.getSucc());
+				automaton.addInternalTransition(newState, transition.getLetter(), newSucc);
+			}
+		}
+
+		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
+
+		final IPredicate newPreconditionState = mPredicateFactory
+				.newSPredicate(dummyPreLocations.get(entryNode.getProgramPoint().getProcedure()), trueTerm);
+
+		automaton.addState(true, false, newPreconditionState);
+		automaton.addInternalTransition(newPreconditionState, preconditionTransition, entryNode);
+
+		final IPredicate newPostconditionViolatedState = mPredicateFactory
+				.newSPredicate(dummyPostLocations.get(exitNode.getProgramPoint().getProcedure()), trueTerm);
+
+		automaton.addState(false, true, newPostconditionViolatedState);
+		automaton.addInternalTransition(exitNode, postconditionViolatedTransition, newPostconditionViolatedState);
+
+		for (final var entry : functionPreStates.entrySet()) {
+			final Summary summary = entry.getKey();
+			final IPredicate preSummaryState = entry.getValue();
+
+			if (!functionsToAssure.contains(summary.getCallStatement().getMethodName())) {
+				continue;
+			}
+
+			final IPredicate assureState = mPredicateFactory.newSPredicate(dummyAssureLocations.get(summary), trueTerm);
+			automaton.addState(false, true, assureState);
+
+			@SuppressWarnings("unchecked")
+			final L assure = (L) mAssureStatements.get(summary);
+			alphabet.add(assure);
+			automaton.addInternalTransition(preSummaryState, assure, assureState);
+		}
+
+		return automaton;
+
+	}
+
 	public INestedWordAutomaton<L, IPredicate> initializeFunctionAbstraction(final String functionName,
 			final L preconditionTransition, final L postconditionViolatedTransition) {
 		final INestedWordAutomaton<L, IPredicate> abstraction = mFunctionAutomata.get(functionName);
-		return constructSingleAutomaton(abstraction, preconditionTransition, postconditionViolatedTransition);
+		final INestedWordAutomaton<L, IPredicate> raw = mFunctionAutomataRaw.get(functionName);
+		return constructFunctionAutomaton(raw, preconditionTransition, postconditionViolatedTransition,
+				mFunctionsToAssure);
 	}
 
 	public INestedWordAutomaton<L, IPredicate> initializeFunctionAbstraction(final String functionName,
@@ -667,6 +827,7 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 		return mPredicateFactory.newPredicate(predicateTransitioned);
 	}
 
+	@Deprecated
 	protected IPredicate extractPostcondition(final INestedWordAutomaton<L, IPredicate> abstraction) {
 		final Script script = mCsToolkit.getManagedScript().getScript();
 		final Set<IPredicate> states = abstraction.getStates();
@@ -779,7 +940,6 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 		final UnmodifiableTransFormula returnTransition = getReturnTransition(summary);
 
-		// TODO do we need wpReturn here? Correct parameter for callPredicate?
 		return mPredicateTransformer.weakestPreconditionReturn(returnPredicate, callPredicate, returnTransition,
 				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
 
@@ -792,6 +952,10 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	public Set<IProgramVar> getReturnParams(final Summary summary) {
 		return mReturnParams.get(summary);
+	}
+
+	public AssureStatement getAssureStatement(final Summary summary) {
+		return mAssureStatements.get(summary);
 	}
 
 	public boolean functionHasImplementation(final String functionName) {
@@ -810,5 +974,160 @@ public class ProgramExtractor<L extends IIcfgTransition<?>> {
 
 	public UnmodifiableTransFormula getPostconditionViolatedTransition(final String function) {
 		return mPostconditionViolatedTransFormulas.get(function);
+	}
+
+	public CfgSmtToolkit getCsToolkit() {
+		return mCsToolkit;
+	}
+
+	public PredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
+	}
+
+	/**
+	 * Dummy class for Precondition and Postcondition Transitions that need to be dymamically checked
+	 */
+	public static class PrePostDummyTransition implements IIcfgTransition<IcfgLocation>, IInternalAction {
+
+		private static final long serialVersionUID = -295366297188547709L;
+
+		Payload mPayload;
+
+		final String mProcedure;
+		final UnmodifiableTransFormula mTransFormula;
+		final String mPrettyPrinted;
+
+		public PrePostDummyTransition(final String procedure, final UnmodifiableTransFormula transFormula) {
+			this(procedure, transFormula, null);
+		}
+
+		public PrePostDummyTransition(final String procedure, final UnmodifiableTransFormula transFormula,
+				final String prettyPrinted) {
+			mProcedure = procedure;
+			mTransFormula = transFormula;
+			mPrettyPrinted = prettyPrinted != null ? prettyPrinted : "";
+		}
+
+		@Override
+		public IPayload getPayload() {
+			if (hasPayload()) {
+				return mPayload;
+			}
+
+			mPayload = new Payload();
+			return mPayload;
+		}
+
+		@Override
+		public boolean hasPayload() {
+			return mPayload != null;
+		}
+
+		@Override
+		public String getPrecedingProcedure() {
+			return mProcedure;
+		}
+
+		@Override
+		public String getSucceedingProcedure() {
+			return mProcedure;
+		}
+
+		@Override
+		public UnmodifiableTransFormula getTransformula() {
+			return mTransFormula;
+		}
+
+		@Override
+		public IcfgLocation getSource() {
+			return null;
+		}
+
+		@Override
+		public IcfgLocation getTarget() {
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return mPrettyPrinted;
+		}
+
+	}
+
+	public static class AssureStatement implements IIcfgTransition<IcfgLocation>, IInternalAction {
+
+		private static final long serialVersionUID = -851307156749743054L;
+
+		Payload mPayload;
+
+		final Summary mSummary;
+		final String mProcedure;
+		UnmodifiableTransFormula mTransFormula;
+		String mPrettyPrinted;
+
+		public AssureStatement(final Summary summary, final UnmodifiableTransFormula transFormula) {
+			mSummary = summary;
+			mProcedure = summary.getPrecedingProcedure();
+			setTransformula(transFormula);
+		}
+
+		@Override
+		public IPayload getPayload() {
+			if (hasPayload()) {
+				return mPayload;
+			}
+
+			mPayload = new Payload();
+			return mPayload;
+		}
+
+		@Override
+		public boolean hasPayload() {
+			return mPayload != null;
+		}
+
+		@Override
+		public String getPrecedingProcedure() {
+			return mProcedure;
+		}
+
+		@Override
+		public String getSucceedingProcedure() {
+			return mProcedure;
+		}
+
+		public void setTransformula(final UnmodifiableTransFormula transFormula) {
+			mTransFormula = transFormula;
+			mPrettyPrinted = "Assure: " + transFormula.toString();
+		}
+
+		public Summary getSummary() {
+			return mSummary;
+		}
+
+		public String getAssuredProcedure() {
+			return mSummary.getCallStatement().getMethodName();
+		}
+
+		@Override
+		public UnmodifiableTransFormula getTransformula() {
+			return mTransFormula;
+		}
+
+		@Override
+		public IcfgLocation getSource() {
+			return null;
+		}
+
+		@Override
+		public IcfgLocation getTarget() {
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			return mPrettyPrinted;
+		}
 	}
 }
