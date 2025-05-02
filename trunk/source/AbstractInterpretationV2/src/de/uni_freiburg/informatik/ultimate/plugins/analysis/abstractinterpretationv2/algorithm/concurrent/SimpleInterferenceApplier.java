@@ -40,7 +40,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 		final LOC baseLoc = startState.getStates().iterator().next().abstractLocationState().getLoc();
 		final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> result = new LinkedHashSet<>(
 				startStates);
-		LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> worklist = new LinkedHashSet<>(
+		final LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> worklist = new LinkedHashSet<>(
 				startStates);
 
 		int iteration = 1;
@@ -48,6 +48,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 		while (!worklist.isEmpty()) {
 			final var nextWorklist = new LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>>();
 			for (final var state : worklist) {
+
 				for (final var interference : mAllInterfs) {
 					final var statesThatCanBeInterferedbyItf = DisjunctiveAbstractState.createDisjunction(
 							state.getStates().stream()
@@ -55,6 +56,9 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 											interference.sourceThread(), interference.interf, mLocMap))
 									.toList(),
 							mMaxSize);
+					if (statesThatCanBeInterferedbyItf.getStates().isEmpty()) {
+						continue;
+					}
 					final var post = InterferenceApplier.applyInterferenceToSTATEsingle(interference.interf.disjState(),
 							interference.interf.action(), statesThatCanBeInterferedbyItf, mPostOp);
 					if (post == null) {
@@ -77,8 +81,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 			for (final var state : nextWorklist) {
 				rebasedWork.add(GuardedStateTransformer.copyToNewStateLocation(baseLoc, state));
 			}
-			worklist = rebasedWork;
-//			worklist.addAll(rebasedWork);
+			worklist.addAll(rebasedWork);
 			iteration++;
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
@@ -91,7 +94,8 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 			final LOC baseLoc) {
 		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved;
 		moved = GuardedStateTransformer.movedTo(interference.interf.action().getPrecedingProcedure(),
-				mLocMap.getAbstractLocation(interference.interf.action().getTarget()), post);
+				mLocMap.getAbstractLocation(interference.interf.action().getTarget()),
+				interference.interf.action().getTarget(), post);
 		if (interference.interf.action() instanceof final ForkThreadCurrent fork) {
 			moved = GuardedStateTransformer.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()), moved);
 		}

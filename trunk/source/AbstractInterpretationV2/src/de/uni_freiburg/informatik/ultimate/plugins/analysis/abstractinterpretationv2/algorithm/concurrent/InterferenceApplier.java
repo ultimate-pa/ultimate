@@ -36,7 +36,10 @@ public class InterferenceApplier {
 			return null;
 		}
 		// postop
-		var postState = intersectionState.apply(postOp, action);
+		final var realLocation = GuardedStateTransformer.getAbstractLocationUnion(disjunctiveAbstractState).getLoc();
+		final var postStateBroken = intersectionState.apply(postOp, action);
+		// SET TO ORIGINAL LOCATION (apply moves the state as if it is now the location of target state of itf trans
+		var postState = GuardedStateTransformer.copyToNewStateLocation(realLocation, postStateBroken);
 		// TODO: sound?
 		if (postState.isEmpty() || postState.isBottom()) {
 			return null;

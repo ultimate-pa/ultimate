@@ -59,15 +59,18 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 		GuardedInterferenceDomainState<STATE, ACTION, LOC> newState = new GuardedInterferenceDomainState<>(this.state(),
 				this.threadCounter(), new AbstractLocationState<>(location, globalMap, threadNames));
 		for (final LOC loc : forkLocs) {
-			newState = newState.movedTo(loc.getProcedure(), newState.abstractLocationState().getLocationMap()
-					.getAbstractLocation((LOC) loc.getOutgoingNodes().iterator().next()));
+			// TODO: unsafe
+			final var newLocc = newState.abstractLocationState().getLocationMap()
+					.getAbstractLocation((LOC) loc.getOutgoingNodes().iterator().next());
+			newState = newState.movedTo(loc.getProcedure(), newLocc, (LOC) loc.getOutgoingNodes().iterator().next());
 		}
 		return newState;
 	}
 
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation) {
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation,
+			final LOC newLoc) {
 		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
-				this.abstractLocationState().movedTo(threadName, newLocation));
+				this.abstractLocationState().movedTo(threadName, newLocation, newLoc));
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> copyToNewStateLocation(final LOC newLoc) {

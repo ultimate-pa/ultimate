@@ -66,6 +66,12 @@ public class InterferenceUtils {
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState, final String ownerThread,
 			final String interferenceThreadName, final Interference<STATE, ACTION, LOC> interference,
 			final AbstractLocationMap<LOC> mAbstractLocationMap) {
+		final var itfThinksStateIs = GuardedStateTransformer.getAbstractLocationUnion(interference.disjState())
+				.getTracker().getLocationForThread(ownerThread);
+		final var realLoc = singleState.abstractLocationState().getintLoc();
+		if (!itfThinksStateIs.contains(realLoc)) {
+			return false;
+		}
 		if (singleState.threadCounter().getThreadInstances().get(interferenceThreadName) < 1) {
 			return false;
 		}

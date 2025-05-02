@@ -77,6 +77,7 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		if (other == null || other.getTracker() == null) {
 			return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker);
 		}
+		// TODO: shouldnt need to comment this
 //		if (mLocation != other.mLocation) {
 //			throw new AssertionError(
 //					"You are trying to merge states of different locations. Move the location of one to the correct one.");
@@ -89,18 +90,15 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 				mLocationTracker.intersect(other.getTracker()));
 	}
 
-	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocation) {
+	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocationInt,
+			final LOC newLocation) {
 		if (threadName == mLocation.getProcedure()) {
-			if (mLocation.getOutgoingNodes().size() == 0) {
-				return new AbstractLocationState<>(mLocation, mAbstractLocationMap,
-						mLocationTracker.movedTo(threadName, newLocation));
-			}
-			return new AbstractLocationState<>((LOC) mLocation.getOutgoingNodes().getFirst(), mAbstractLocationMap,
-					mLocationTracker.movedTo(threadName, newLocation));
-
+			return new AbstractLocationState<>(newLocation, mAbstractLocationMap,
+					mLocationTracker.movedTo(threadName, newLocationInt));
 		}
+		// TODO: newlocation or mlocation ?
 		return new AbstractLocationState<>(mLocation, mAbstractLocationMap,
-				mLocationTracker.movedTo(threadName, newLocation));
+				mLocationTracker.movedTo(threadName, newLocationInt));
 
 	}
 

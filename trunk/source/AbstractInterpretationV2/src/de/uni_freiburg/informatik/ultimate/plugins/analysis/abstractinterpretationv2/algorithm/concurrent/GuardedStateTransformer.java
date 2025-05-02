@@ -25,6 +25,14 @@ public final class GuardedStateTransformer {
 		return unionCounter;
 	}
 
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> AbstractLocationState<LOC> getAbstractLocationUnion(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
+		final AbstractLocationState<LOC> unionLoc = disj.getStates().stream().map(s -> s.abstractLocationState())
+				.reduce((a, b) -> a.union(b))
+				.orElseThrow(() -> new IllegalStateException("Trying to get threadinstancestate from empty list"));
+		return unionLoc;
+	}
+
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> GuardedInterferenceDomainState<STATE, ACTION, LOC> getSingleState(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
 		final var states = disj.getStates();
@@ -67,10 +75,11 @@ public final class GuardedStateTransformer {
 	}
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> movedTo(
-			final String threadName, final int newLocation,
+			final String threadName, final int newLocation, final LOC newLoc,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
 		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
-		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.movedTo(threadName, newLocation)));
+		return DisjunctiveAbstractState
+				.createDisjunction(mapStates(states, s -> s.movedTo(threadName, newLocation, newLoc)));
 	}
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> copyToNewStateLocation(

@@ -83,9 +83,11 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 				.getLocationMap();
 		final var proceduresEntryLoc = globalImmutableMap.getEntryLoc(procedure);
 		for (final var singleState : inputState.getStates()) {
+			// TODO: unsafe
 			final var afterForkLocation = globalImmutableMap
 					.getAbstractLocation((LOC) loc.getOutgoingNodes().getFirst());
-			final var executedFork = singleState.movedTo(loc.getProcedure(), afterForkLocation);
+			final var executedFork = singleState.movedTo(loc.getProcedure(), afterForkLocation,
+					(LOC) loc.getOutgoingNodes().getFirst());
 			final var movedOwnershipLocation = new AbstractLocationState<>(proceduresEntryLoc,
 					executedFork.abstractLocationState());
 			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedOwnership = new GuardedInterferenceDomainState<>(
@@ -144,14 +146,13 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 				initialStates.add(removeLocalVars(forkState));
 			}
 		}
+		final var moved = GuardedStateTransformer.copyToNewStateLocation(mEntryLocs.get(procedure), result);
 		final var interferenceDomainDisj = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).getItfApplier().stateAfterInterferences(result, procedure);
+				.getPostOperator()).getItfApplier().stateAfterInterferences(moved, procedure);
 		// TODO: solve better (problem: fork interferences dont enable new interferences during calc, so we go again)
 		final var interferenceDomainDisjRound2 = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier().stateAfterInterferences(interferenceDomainDisj, procedure);
-		final var moved = GuardedStateTransformer.copyToNewStateLocation(mEntryLocs.get(procedure),
-				interferenceDomainDisjRound2);
-		return moved;
+		return interferenceDomainDisjRound2;
 	}
 
 	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(
