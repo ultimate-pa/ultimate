@@ -66,7 +66,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mUnderlyingDomain = params.getAbstractDomain();
 		mLogger = params.getLogger();
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mMaxInterferenceFixpointUnwindings = 80;
+		mMaxInterferenceFixpointUnwindings = 9;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mIfcg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>(mEntryLocs);

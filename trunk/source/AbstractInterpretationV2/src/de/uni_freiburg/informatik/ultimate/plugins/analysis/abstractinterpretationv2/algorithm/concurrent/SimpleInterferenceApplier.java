@@ -36,20 +36,19 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 	public Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> applyFixpoint(
 			final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> startStates,
 			final String ownerThread) {
-		final var startState = startStates.iterator().next();
-		final LOC baseLoc = startState.getStates().iterator().next().abstractLocationState().getLoc();
-		final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> result = new LinkedHashSet<>(
-				startStates);
-		final LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> worklist = new LinkedHashSet<>(
-				startStates);
 
+		final var baseLoc = startStates.iterator().next().getStates().iterator().next().abstractLocationState()
+				.getLoc();
+		final var result = new LinkedHashSet<>(startStates);
+		LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> worklist = new LinkedHashSet<>(
+				startStates);
 		int iteration = 1;
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).disAbleInterferences();
 		while (!worklist.isEmpty()) {
 			final var nextWorklist = new LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>>();
 			for (final var state : worklist) {
-
 				for (final var interference : mAllInterfs) {
+
 					final var statesThatCanBeInterferedbyItf = DisjunctiveAbstractState.createDisjunction(
 							state.getStates().stream()
 									.filter(s -> InterferenceUtils.matchesLocation(s, ownerThread,
@@ -64,9 +63,10 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 					if (post == null) {
 						continue;
 					}
-
+					if (post.isSubsetOf(statesThatCanBeInterferedbyItf) != SubsetResult.NONE) {
+						continue;
+					}
 					final var moved = adjustState(interference, post, baseLoc);
-
 					if (iteration <= mMaxItfIterations) {
 						addIfNew(result, nextWorklist, moved);
 					} else {
@@ -77,11 +77,10 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 			if (nextWorklist.isEmpty()) {
 				break;
 			}
-			final var rebasedWork = new LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>>();
-			for (final var state : nextWorklist) {
-				rebasedWork.add(GuardedStateTransformer.copyToNewStateLocation(baseLoc, state));
+			worklist = new LinkedHashSet<>();
+			for (final var s : nextWorklist) {
+				worklist.add(GuardedStateTransformer.copyToNewStateLocation(baseLoc, s));
 			}
-			worklist.addAll(rebasedWork);
 			iteration++;
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
@@ -116,25 +115,21 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 
 	private void widenOrAdd(
 			final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> result,
-			final LinkedHashSet<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> nextWorklist,
+			final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> nextWorklist,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved) {
+
 		final var widenOp = mGuardedInterferenceDomain.getWideningOperator();
-		for (final var existing : result) {
-			if (moved.isSubsetOf(existing) != SubsetResult.NONE) {
-				return;
+		for (final var existingSet = result.iterator(); existingSet.hasNext();) {
+			final var existing = existingSet.next();
+			final var widened = existing.widen(widenOp, moved);
+			if (!widened.isEqualTo(existing)) {
+				existingSet.remove();
+				result.add(widened);
+				nextWorklist.add(widened);
 			}
+			return;
 		}
-		for (final var existing : new LinkedHashSet<>(result)) {
-			if (existing.isSubsetOf(moved) != SubsetResult.NONE) {
-				final var widened = moved.widen(widenOp, existing);
-				if (!widened.isEqualTo(existing)) {
-					result.remove(existing);
-					result.add(widened);
-					nextWorklist.add(widened);
-				}
-				return;
-			}
-		}
+
 		result.add(moved);
 		nextWorklist.add(moved);
 	}
