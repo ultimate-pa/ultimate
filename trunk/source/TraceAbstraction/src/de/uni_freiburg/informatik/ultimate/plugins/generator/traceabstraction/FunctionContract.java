@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,23 +71,70 @@ public class FunctionContract {
 		final Term transitionedPostcondition =
 				programExtractor.returnTransition(summary, mPostcondition, transitionedPreconditionPredicate);
 
-		final Set<TermVariable> postconditionFreeVars = new HashSet<>();
-		Collections.addAll(postconditionFreeVars, transitionedPostcondition.getFreeVars());
+		final Term transitionedPostcondition1 =
+				programExtractor.returnTransition(summary, mPostcondition, mPrecondition);
 
-		final Collection<TermVariable> quantifiablePostconditionVars = postconditionFreeVars.stream()
-				.filter(tv -> !callReturnParams.contains(csToolkit.getSymbolTable().getProgramVar(tv))).toList();
-		final Term quantifiedPostcondition = SmtUtils.quantifier(csToolkit.getManagedScript().getScript(),
-				QuantifiedFormula.EXISTS, quantifiablePostconditionVars, transitionedPostcondition);
+		final UnmodifiableTransFormula callTransition = programExtractor.getCallTransition(summary);
+		final UnmodifiableTransFormula returnTransition = programExtractor.getReturnTransition(summary);
 
-		final Map<TermVariable, TermVariable> postconditionOutVarMap = new HashMap<>();
-		for (final TermVariable freeVar : quantifiedPostcondition.getFreeVars()) {
-			final IProgramVar programVar = csToolkit.getSymbolTable().getProgramVar(freeVar);
-			if (returnParams.contains(programVar)) {
-				postconditionOutVarMap.put(freeVar, postReturnVarsMap.get(programVar));
+		final Collection<TermVariable> prms = returnTransition.getInVars().values();
+
+		final Term cal = programExtractor.getPredicateTransformer().pre(mPostcondition, callTransition);
+
+		// final Term a =
+		// programExtractor.getPredicateTransformer().strongestPostcondition(mPostcondition, returnTransition);
+
+		// for (final TermVariable freeVar : cal.getFreeVars()) {
+		// final IProgramVar programVar = csToolkit.getSymbolTable().getProgramVar(freeVar);
+		// if (prms.contains(freeVar)) {
+		// postconditionOutVarMap.put(freeVar, postReturnVarsMap.get(programVar));
+		// }
+		// }
+
+		// There probably is a better way to get return var mapping
+		final List<List<IProgramVar>> equalities = ProgramUtilities.getEqualities(returnTransition);
+		final Map<TermVariable, TermVariable> eqMap = new HashMap<>();
+
+		for (final TermVariable tv : mPostcondition.getFormula().getFreeVars()) {
+			final IProgramVar pv = csToolkit.getSymbolTable().getProgramVar(tv);
+
+			for (final List<IProgramVar> eq : equalities) {
+				if (eq.contains(pv)) {
+					final IProgramVar other = eq.get(0).equals(pv) ? eq.get(1) : eq.get(0);
+					eqMap.put(tv, other.getTermVariable());
+					break;
+				}
+
 			}
 		}
 
-		return Substitution.apply(csToolkit.getManagedScript(), postconditionOutVarMap, quantifiedPostcondition);
+		final Map<TermVariable, TermVariable> substitutionMap = new HashMap<>();
+		for (final var entry : eqMap.entrySet()) {
+			final TermVariable origin = entry.getKey();
+			final TermVariable target = entry.getValue();
+
+			final IProgramVar targetProgramVar = csToolkit.getSymbolTable().getProgramVar(target);
+			final TermVariable subVar = postReturnVarsMap.get(targetProgramVar);
+
+			substitutionMap.put(origin, subVar);
+
+		}
+
+		final Term substitutedPostcondition = Substitution.apply(csToolkit.getManagedScript(), substitutionMap, cal);
+
+		// final IPredicate subb = programExtractor.getPredicateFactory().newPredicate(substitutedPostcondition);
+
+		// final Term b = programExtractor.getPredicateTransformer().pre(subb, callTransition);
+
+		final Set<TermVariable> postconditionFreeVars = new HashSet<>();
+		Collections.addAll(postconditionFreeVars, substitutedPostcondition.getFreeVars());
+
+		final Collection<TermVariable> quantifiablePostconditionVars = postconditionFreeVars.stream()
+				.filter(tv -> !callReturnParams.contains(csToolkit.getSymbolTable().getProgramVar(tv))
+						&& !postReturnVarsMap.containsValue(tv))
+				.toList();
+		return SmtUtils.quantifier(csToolkit.getManagedScript().getScript(), QuantifiedFormula.EXISTS,
+				quantifiablePostconditionVars, substitutedPostcondition);
 	}
 
 	public static UnmodifiableTransFormula buildTransFormulaForContract(final Summary summary,
@@ -103,6 +151,11 @@ public class FunctionContract {
 
 		final Set<IProgramVar> callParams = programUtilities.getCallParams(summary);
 		final Set<IProgramVar> returnParams = programUtilities.getReturnParams(summary);
+
+		final UnmodifiableTransFormula callTransition = programUtilities.getCallTransition(summary);
+		final UnmodifiableTransFormula returnTransition = programUtilities.getReturnTransition(summary);
+
+		final Collection<TermVariable> prms = returnTransition.getInVars().values();
 
 		final Map<IProgramVar, TermVariable> postReturnVarsMap = new HashMap<>();
 		for (final IProgramVar returnParam : returnParams) {

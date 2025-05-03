@@ -2,13 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -309,58 +309,65 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		return builder.finishConstruction(mCsToolkit.getManagedScript());
 	}
 
-	@Deprecated
-	protected static Map<Summary, Map<IProgramVar, IProgramVar>>
-			extractVarMappings(final Map<Summary, UnmodifiableTransFormula> transitions) {
-		final HashMap<Summary, Map<IProgramVar, IProgramVar>> mappings = new HashMap<>();
-		for (final var entry : transitions.entrySet()) {
-			final Summary summary = entry.getKey();
-			final UnmodifiableTransFormula transFormula = entry.getValue();
+	// @Deprecated
+	// protected static Map<Summary, Map<IProgramVar, IProgramVar>>
+	// extractVarMappings(final Map<Summary, UnmodifiableTransFormula> transitions) {
+	// final HashMap<Summary, Map<IProgramVar, IProgramVar>> mappings = new HashMap<>();
+	// for (final var entry : transitions.entrySet()) {
+	// final Summary summary = entry.getKey();
+	// final UnmodifiableTransFormula transFormula = entry.getValue();
+	//
+	// final Map<IProgramVar, IProgramVar> varMapping = new HashMap<>();
+	//
+	// final List<List<TermVariable>> equalities = getEqualities(transFormula);
+	// final Map<TermVariable, IProgramVar> outTermVarMapping = new HashMap<>();
+	//
+	// for (final Entry<IProgramVar, TermVariable> outVar : transFormula.getOutVars().entrySet()) {
+	// final IProgramVar programVar = outVar.getKey();
+	// final TermVariable termVar = outVar.getValue();
+	//
+	// for (final List<TermVariable> equality : equalities) {
+	// if (equality.size() == 2 && equality.contains(termVar)) {
+	// final TermVariable other = equality.stream().filter(tv -> !tv.equals(termVar)).findAny().get();
+	// outTermVarMapping.put(other, programVar);
+	// }
+	// }
+	// }
+	//
+	// for (final Entry<IProgramVar, TermVariable> inVar : transFormula.getInVars().entrySet()) {
+	// final IProgramVar programVar = inVar.getKey();
+	// final TermVariable termVar = inVar.getValue();
+	//
+	// final IProgramVar mappedProgramVar = outTermVarMapping.get(termVar);
+	//
+	// varMapping.put(programVar, mappedProgramVar);
+	// }
+	//
+	// mappings.put(summary, varMapping);
+	// }
+	//
+	// return mappings;
+	// }
 
-			final Map<IProgramVar, IProgramVar> varMapping = new HashMap<>();
+	protected static List<List<IProgramVar>> getEqualities(final UnmodifiableTransFormula equalityTransFormula) {
+		final List<List<IProgramVar>> equalities = new ArrayList<>();
 
-			final List<Set<TermVariable>> equalities = getEqualities(transFormula);
-			final Map<TermVariable, IProgramVar> outTermVarMapping = new HashMap<>();
-
-			for (final Entry<IProgramVar, TermVariable> outVar : transFormula.getOutVars().entrySet()) {
-				final IProgramVar programVar = outVar.getKey();
-				final TermVariable termVar = outVar.getValue();
-
-				for (final Set<TermVariable> equality : equalities) {
-					if (equality.size() == 2 && equality.contains(termVar)) {
-						final TermVariable other = equality.stream().filter(tv -> !tv.equals(termVar)).findAny().get();
-						outTermVarMapping.put(other, programVar);
-					}
-				}
-			}
-
-			for (final Entry<IProgramVar, TermVariable> inVar : transFormula.getInVars().entrySet()) {
-				final IProgramVar programVar = inVar.getKey();
-				final TermVariable termVar = inVar.getValue();
-
-				final IProgramVar mappedProgramVar = outTermVarMapping.get(termVar);
-
-				varMapping.put(programVar, mappedProgramVar);
-			}
-
-			mappings.put(summary, varMapping);
+		final Map<TermVariable, IProgramVar> mapping = new HashMap<>();
+		for (final var entry : equalityTransFormula.getInVars().entrySet()) {
+			mapping.put(entry.getValue(), entry.getKey());
 		}
-
-		return mappings;
-	}
-
-	@Deprecated
-	protected static List<Set<TermVariable>> getEqualities(final UnmodifiableTransFormula equalityTransFormula) {
-		final List<Set<TermVariable>> equalities = new ArrayList<>();
+		for (final var entry : equalityTransFormula.getOutVars().entrySet()) {
+			mapping.put(entry.getValue(), entry.getKey());
+		}
 
 		final ApplicationTerm formula = (ApplicationTerm) equalityTransFormula.getFormula();
 		switch (formula.getFunction().getName()) {
 		case "=":
-			equalities.add(Set.of(formula.getFreeVars()));
+			equalities.add(Arrays.stream(formula.getFreeVars()).map(tv -> mapping.get(tv)).toList());
 			break;
 		case "and":
 			for (final Term parameter : formula.getParameters()) {
-				equalities.add(Set.of(parameter.getFreeVars()));
+				equalities.add(Arrays.stream(parameter.getFreeVars()).map(tv -> mapping.get(tv)).toList());
 			}
 			break;
 		default:
@@ -770,9 +777,9 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		final IPredicate predicateQuantified = quantifyPredicate(predicate, callParams);
+		// final IPredicate predicateQuantified = quantifyPredicate(predicate, callParams);
 
-		final Term transitionedTerm = callTransition(summary, predicateQuantified);
+		final Term transitionedTerm = callTransition(summary, predicate);
 		return mPredicateFactory.newPredicate(transitionedTerm);
 
 	}
@@ -790,12 +797,17 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		final IPredicate predicateQuantified = quantifyPredicate(predicate, returnParams);
+		// final IPredicate predicateQuantified = quantifyPredicate(predicate, returnParams);
 
 		// TODO do we actually need to quantify this?
-		final IPredicate prePredicateQuantified = quantifyPredicate(prePredicate, returnParams);
+		// final IPredicate prePredicateQuantified = quantifyPredicate(prePredicate, returnParams);
 
-		final Term transitionedTerm = returnTransitionReverse(summary, predicateQuantified, prePredicateQuantified);
+		// final Term callTransitionedTerm = callTransition(summary, prePredicate);
+
+		SmtUtils.and(mCsToolkit.getManagedScript().getScript(), predicate.getFormula(), prePredicate.getFormula());
+
+		final Term transitionedTerm = returnTransitionReverse(summary, predicate, prePredicate);
+
 		return mPredicateFactory.newPredicate(transitionedTerm);
 	}
 
@@ -902,8 +914,8 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 		final UnmodifiableTransFormula callTransition = getCallTransition(summary);
 
-		return mPredicateTransformer.weakestPreconditionCall(callPredicate, callTransition, globalVarsAssignments,
-				oldVarAssignments, modifiableGlobals);
+		return mPredicateTransformer.preCall(callPredicate, callTransition, globalVarsAssignments, oldVarAssignments,
+				modifiableGlobals);
 
 		// return mPredicateTransformer.weakestPrecondition(callPredicate, callTransition);
 	}
@@ -919,10 +931,11 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(functionName);
 
+		final UnmodifiableTransFormula callTransition = getCallTransition(summary);
 		final UnmodifiableTransFormula returnTransition = getReturnTransition(summary);
 
 		return mPredicateTransformer.strongestPostconditionReturn(returnPredicate, callPredicate, returnTransition,
-				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+				callTransition, oldVarAssignments, modifiableGlobals);
 
 		// return mPredicateTransformer.strongestPostcondition(returnPredicate, returnTransition);
 	}
@@ -938,10 +951,14 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(functionName);
 
+		final UnmodifiableTransFormula callTransition = getCallTransition(summary);
 		final UnmodifiableTransFormula returnTransition = getReturnTransition(summary);
 
-		return mPredicateTransformer.weakestPreconditionReturn(returnPredicate, callPredicate, returnTransition,
-				globalVarsAssignments, oldVarAssignments, modifiableGlobals);
+		return mPredicateTransformer.preReturn(returnPredicate, callPredicate, returnTransition, callTransition,
+				oldVarAssignments, modifiableGlobals);
+
+		// return mPredicateTransformer.weakestPreconditionReturn(returnPredicate, callPredicate, returnTransition,
+		// callTransition, oldVarAssignments, modifiableGlobals);
 
 		// return mPredicateTransformer.weakestPrecondition(returnPredicate, returnTransition);
 	}
@@ -982,6 +999,10 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	public PredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
+	}
+
+	public PredicateTransformer<Term, IPredicate, TransFormula> getPredicateTransformer() {
+		return mPredicateTransformer;
 	}
 
 	/**

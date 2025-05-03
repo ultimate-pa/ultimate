@@ -782,10 +782,10 @@ public class SummaryCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop
 							spPredicate.getFormula());
 					final IPredicate spQPredicate = mPredicateFactory.newSPredicate(spPredicate.getProgramPoint(), spQ);
 
-					final IPredicate postconditionTransitionedPredicate = mProgramUtilities.transformPostcondition(
-							summarySymbol, postconditionQPredicate, preconditionTransitionedPredicate);
-					final IPredicate spTransitionedPredicate = mProgramUtilities.transformPostcondition(summarySymbol,
-							spQPredicate, preconditionTransitionedPredicate);
+					final IPredicate postconditionTransitionedPredicate = mProgramUtilities
+							.transformPostcondition(summarySymbol, postconditionPredicate, preconditionPredicate);
+					final IPredicate spTransitionedPredicate =
+							mProgramUtilities.transformPostcondition(summarySymbol, spPredicate, preconditionPredicate);
 
 					final LBool contractedImplicationHolds =
 							SmtUtils.checkImplication(spTransitionedPredicate.getFormula(),
