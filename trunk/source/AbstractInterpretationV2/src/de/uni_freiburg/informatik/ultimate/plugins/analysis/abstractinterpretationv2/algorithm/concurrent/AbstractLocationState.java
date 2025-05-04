@@ -42,10 +42,10 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 	}
 
 	public AbstractLocationState(final LOC loc, final AbstractLocationState<LOC> other) {
-		mLocation = loc;
 		mAbstractLocationMap = other.mAbstractLocationMap;
-		mAbstractLocation = other.mAbstractLocation;
+		mLocation = loc;
 		final var track = new AbstractLocationGlobalTracker(other.mLocationTracker);
+		mAbstractLocation = mAbstractLocationMap.getAbstractLocation(loc);
 		mLocationTracker = track.movedTo(mLocation.getProcedure(), mAbstractLocation);
 	}
 
@@ -78,10 +78,10 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 			return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker);
 		}
 		// TODO: shouldnt need to comment this
-//		if (mLocation != other.mLocation) {
-//			throw new AssertionError(
-//					"You are trying to merge states of different locations. Move the location of one to the correct one.");
-//		}
+		if (mLocation != other.mLocation) {
+			throw new AssertionError(
+					"You are trying to merge states of different locations. Move the location of one to the correct one.");
+		}
 		return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker.union(other.getTracker()));
 	}
 
