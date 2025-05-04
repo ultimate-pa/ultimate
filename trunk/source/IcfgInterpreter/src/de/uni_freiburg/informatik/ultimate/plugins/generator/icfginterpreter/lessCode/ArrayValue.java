@@ -1,9 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class ArrayValue implements Value {
 	private final HashMap<Value, Value> mValue;
@@ -32,23 +38,64 @@ public class ArrayValue implements Value {
 	}
 
 	@Override
-	public BoolValue equals(final Value other) {
-		if (other instanceof final ArrayValue av) {
-			return new BoolValue(mValue.equals(av.mValue));
-		}
-		return new BoolValue(false);
-	}
-
-	@Override
 	public BoolValue distinct(final Value other) {
 		if (other instanceof final ArrayValue av) {
 			return new BoolValue(!mValue.equals(av.mValue));
 		}
-		return new BoolValue(true);
+		return BoolValue.mTrue;
 	}
 
 	@Override
 	public HashMap<Value, Value> getValue() {
 		return mValue;
+	}
+
+	@Override
+	public String toString() {
+		final ArrayList<Entry<Value, Value>> list = new ArrayList<>(mValue.entrySet());
+
+		Collections.sort(list, (entry1, entry2) -> entry1.getKey().compareTo(entry2.getKey()));
+
+		final ArrayList<String> lines = Util.map(list, (entry) -> {
+			return entry.getKey() + " -> " + entry.getValue();
+		}, new ArrayList<String>());
+
+		return new StringBuilder("{").append(String.join(", ", lines)).append("}").toString();
+	}
+
+	@Override
+	public Term toTerm(final Script script) {
+		return null;
+		// TODO convert arrays
+	}
+
+	@Override
+	public BoolValue equals(final Value other) {
+		if (other instanceof final ArrayValue av) {
+			return new BoolValue(mValue.equals(av.mValue));
+		}
+		return BoolValue.mFalse;
+	}
+
+	@Override
+	public boolean equals(final Object b) {
+		if (b instanceof final ArrayValue av) {
+			return mValue.equals(av.mValue);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return mValue.hashCode();
+	}
+
+	@Override
+	public int compareTo(final Value b) {
+		if (b instanceof final ArrayValue av) {
+			// TODO find better way that is consistent
+			return Integer.compare(mValue.size(), av.mValue.size());
+		}
+		return this.getClass().getSimpleName().compareTo(b.getClass().getSimpleName());
 	}
 }

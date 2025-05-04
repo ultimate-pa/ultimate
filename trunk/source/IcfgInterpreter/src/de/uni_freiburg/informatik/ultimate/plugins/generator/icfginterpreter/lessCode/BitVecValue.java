@@ -2,6 +2,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 public class BitVecValue implements Value {
 	private final BigInteger mValue;
 	/**
@@ -162,19 +167,11 @@ public class BitVecValue implements Value {
 	}
 
 	@Override
-	public BoolValue equals(final Value other) {
-		if (other instanceof final BitVecValue bvv) {
-			return new BoolValue(mValue.equals(bvv.mValue));
-		}
-		return new BoolValue(false);
-	}
-
-	@Override
 	public BoolValue distinct(final Value other) {
 		if (other instanceof final BitVecValue bvv) {
 			return new BoolValue(!mValue.equals(bvv.mValue));
 		}
-		return new BoolValue(true);
+		return BoolValue.mTrue;
 	}
 
 	@Override
@@ -190,5 +187,40 @@ public class BitVecValue implements Value {
 			out = String.valueOf("0").repeat(unpadded) + out;
 		}
 		return "bv" + mLength + " " + out;
+	}
+
+	@Override
+	public Term toTerm(final Script script) {
+		return script.getTheory().constant(Rational.valueOf(mValue, BigInteger.ONE),
+				script.getTheory().getSort(SMTLIBConstants.BITVEC, new String[] { String.valueOf(mLength) }));
+	}
+
+	@Override
+	public BoolValue equals(final Value other) {
+		if (other instanceof final BitVecValue bvv) {
+			return new BoolValue(mValue.equals(bvv.mValue));
+		}
+		return BoolValue.mFalse;
+	}
+
+	@Override
+	public boolean equals(final Object b) {
+		if (b instanceof final BitVecValue bvv) {
+			return mValue.equals(bvv.mValue);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return mValue.hashCode();
+	}
+
+	@Override
+	public int compareTo(final Value b) {
+		if (b instanceof final BitVecValue bvv) {
+			return mValue.compareTo(bvv.mValue);
+		}
+		return this.getClass().getSimpleName().compareTo(b.getClass().getSimpleName());
 	}
 }

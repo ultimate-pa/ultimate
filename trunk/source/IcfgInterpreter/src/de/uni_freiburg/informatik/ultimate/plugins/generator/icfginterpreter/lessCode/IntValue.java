@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class IntValue implements Value {
 	private final BigInteger mValue;
@@ -66,19 +68,11 @@ public class IntValue implements Value {
 	}
 
 	@Override
-	public BoolValue equals(final Value other) {
-		if (other instanceof final IntValue iv) {
-			return new BoolValue(mValue.equals(iv.mValue));
-		}
-		return new BoolValue(false);
-	}
-
-	@Override
 	public BoolValue distinct(final Value other) {
 		if (other instanceof final IntValue iv) {
 			return new BoolValue(!mValue.equals(iv.mValue));
 		}
-		return new BoolValue(true);
+		return BoolValue.mTrue;
 	}
 
 	@Override
@@ -89,5 +83,40 @@ public class IntValue implements Value {
 	@Override
 	public String toString() {
 		return mValue.toString();
+	}
+
+	@Override
+	public Term toTerm(final Script script) {
+		return script.getTheory().constant(Rational.valueOf(mValue, BigInteger.ONE),
+				script.getTheory().getNumericSort());
+	}
+
+	@Override
+	public BoolValue equals(final Value other) {
+		if (other instanceof final IntValue iv) {
+			return new BoolValue(mValue.equals(iv.mValue));
+		}
+		return BoolValue.mFalse;
+	}
+
+	@Override
+	public boolean equals(final Object b) {
+		if (b instanceof final IntValue iv) {
+			return mValue.equals(iv.mValue);
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return mValue.hashCode();
+	}
+
+	@Override
+	public int compareTo(final Value b) {
+		if (b instanceof final IntValue iv) {
+			return mValue.compareTo(iv.mValue);
+		}
+		return this.getClass().getSimpleName().compareTo(b.getClass().getSimpleName());
 	}
 }

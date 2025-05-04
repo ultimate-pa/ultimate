@@ -36,8 +36,7 @@ public class TermEvaluator {
 	 *
 	 * private final DefaultIcfgSymbolTable table;
 	 */
-	public static Value evaluate(final Map<TermVariable, Value> state, final Term term,
-			final NonDeterministicChoice ndc) {
+	public static Value evaluate(final Map<Term, Value> state, final Term term, final NonDeterministicChoice ndc) {
 		switch (term) {
 		case final ApplicationTerm a:
 			return evaluateApplicationTerm(state, a, ndc);
@@ -76,7 +75,7 @@ public class TermEvaluator {
 		}
 	}
 
-	private static Value evaluateApplicationTerm(final Map<TermVariable, Value> state, final ApplicationTerm aTerm,
+	private static Value evaluateApplicationTerm(final Map<Term, Value> state, final ApplicationTerm aTerm,
 			final NonDeterministicChoice ndc) {
 		final Stream<Value> params = Arrays.stream(aTerm.getParameters()).map(x -> evaluate(state, x, ndc));
 		Iterator<Value> iter;
@@ -126,9 +125,9 @@ public class TermEvaluator {
 		/**** ------ Bool ------ ****/
 
 		case "true":
-			return new BoolValue(true);
+			return BoolValue.mTrue;
 		case "false":
-			return new BoolValue(false);
+			return BoolValue.mFalse;
 		case "not":
 			// single param term
 			return ((BoolValue) params.iterator().next()).not();
@@ -141,11 +140,11 @@ public class TermEvaluator {
 			}
 			return rightSideElement;
 		case "and":
-			return params.reduce(new BoolValue(true), (x, y) -> ((BoolValue) x).and((BoolValue) y));
+			return params.reduce(BoolValue.mTrue, (x, y) -> ((BoolValue) x).and((BoolValue) y));
 		case "or":
-			return params.reduce(new BoolValue(false), (x, y) -> ((BoolValue) x).or((BoolValue) y));
+			return params.reduce(BoolValue.mFalse, (x, y) -> ((BoolValue) x).or((BoolValue) y));
 		case "xor":
-			return params.reduce(new BoolValue(false), (x, y) -> ((BoolValue) x).xor((BoolValue) y));
+			return params.reduce(BoolValue.mFalse, (x, y) -> ((BoolValue) x).xor((BoolValue) y));
 
 		/**** ------ ArraysEx ------ ****/
 
@@ -171,21 +170,21 @@ public class TermEvaluator {
 			value = iter.next();
 			while (iter.hasNext()) {
 				if (!value.equals(iter.next()).getValue()) {
-					return new BoolValue(false);
+					return BoolValue.mFalse;
 				}
 			}
-			return new BoolValue(true);
+			return BoolValue.mTrue;
 		case "distinct":
 			// pairwise
 			final HashSet<Object> distinctValues = new HashSet<>();
 
 			for (final Value param : params.toList()) {
 				if (distinctValues.contains(param.getValue())) {
-					return new BoolValue(false);
+					return BoolValue.mFalse;
 				}
 				distinctValues.add(param.getValue());
 			}
-			return new BoolValue(true);
+			return BoolValue.mTrue;
 		case "ite":
 			// three param term
 			iter = params.iterator();
@@ -206,10 +205,10 @@ public class TermEvaluator {
 		while (iter.hasNext()) {
 			final IntValue nextValue = (IntValue) iter.next();
 			if (!comparison.apply(value, nextValue).getValue()) {
-				return new BoolValue(false);
+				return BoolValue.mFalse;
 			}
 			value = nextValue;
 		}
-		return new BoolValue(true);
+		return BoolValue.mTrue;
 	}
 }

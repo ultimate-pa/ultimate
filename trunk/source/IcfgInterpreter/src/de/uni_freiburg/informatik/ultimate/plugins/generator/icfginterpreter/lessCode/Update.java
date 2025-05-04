@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
@@ -16,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
 public interface Update {
-	Value makeValue(Map<TermVariable, Value> state, NonDeterministicChoice ndc);
+	Value makeValue(Map<Term, Value> state, NonDeterministicChoice ndc);
 
 	TermVariable getVariable();
 
@@ -31,7 +32,7 @@ public interface Update {
 		}
 
 		@Override
-		public Value makeValue(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc) {
+		public Value makeValue(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
 			return TermEvaluator.evaluate(state, mValue, ndc);
 		}
 
@@ -65,7 +66,7 @@ public interface Update {
 		private final HashSet<Term> mGreaterEq;
 		private final HashSet<Term> mInEqual;
 
-		public HavocUpdate(final TermVariable programVar, final ArrayList<SolvedEquation> equations) {
+		public HavocUpdate(final TermVariable programVar, final List<SolvedEquation> equations) {
 			mProgramVar = programVar;
 			mLessEq = new HashSet<>();
 			mGreaterEq = new HashSet<>();
@@ -131,7 +132,7 @@ public interface Update {
 		}
 
 		@Override
-		public Value makeValue(final Map<TermVariable, Value> state, final NonDeterministicChoice ndc) {
+		public Value makeValue(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
 			switch (mProgramVar.getSort().getName()) {
 			// TODO Rewrite when NDC uses Value. Add Array and BitVec
 			case SMTLIBConstants.BOOL:
