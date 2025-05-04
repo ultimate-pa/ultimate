@@ -85,7 +85,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final Map<String, Map<DebugIdentifier, IcfgLocation>> programPoints,
 			final Map<String, IcfgLocation> procedureEntries, final Map<String, IcfgLocation> procedureExits,
 			final Map<String, Set<IcfgLocation>> procedureErrors, final Set<IcfgLocation> initialNodes,
-			final Set<IcfgLocation> loopLocations, final Set<IcfgLocation> LocationsOfInterest) {
+			final Set<IcfgLocation> loopLocations, final Set<IcfgLocation> locationsOfInterest) {
 		mIdentifier = Objects.requireNonNull(identifier);
 		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
 		mProgramPoints = Objects.requireNonNull(programPoints);
@@ -94,7 +94,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		mProcError = Objects.requireNonNull(procedureErrors);
 		mInitialNodes = Objects.requireNonNull(initialNodes);
 		mLoopLocations = Objects.requireNonNull(loopLocations);
-		mLocationsOfInterest = Objects.requireNonNull(LocationsOfInterest);
+		mLocationsOfInterest = Objects.requireNonNull(locationsOfInterest);
 
 	}
 
