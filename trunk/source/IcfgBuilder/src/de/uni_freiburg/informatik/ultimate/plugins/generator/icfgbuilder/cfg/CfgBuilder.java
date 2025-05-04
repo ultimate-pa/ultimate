@@ -1440,15 +1440,13 @@ public class CfgBuilder {
 					ModelUtils.copyAnnotations(gotoEdge, out, LoopExitAnnotation.class);
 				}
 
-				final boolean childMustBeKept =
-						mIcfg.getLoopLocations().contains(child) || mIcfg.getLocationsOfInterest().contains(child);
-				if (childMustBeKept) {
+				final boolean childMustBePreserved = isLoopLocationOrLoi(child);
+				if (childMustBePreserved) {
 					mergeLocNodes(mother, child, false);
 					mLogger.debug(mother + " gets absorbed by " + child);
 				} else {
-					final boolean motherMustBeKept = mIcfg.getLoopLocations().contains(mother)
-							|| mIcfg.getLocationsOfInterest().contains(mother);
-					if (motherMustBeKept) {
+					final boolean motherMustBePreserved = isLoopLocationOrLoi(mother);
+					if (motherMustBePreserved) {
 						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
 					}
 					mergeLocNodes(child, mother, true);
@@ -1483,6 +1481,10 @@ public class CfgBuilder {
 				return true;
 			}
 			return false;
+		}
+
+		private boolean isLoopLocationOrLoi(final BoogieIcfgLocation loc) {
+			return mIcfg.getLoopLocations().contains(loc) || mIcfg.getLocationsOfInterest().contains(loc);
 		}
 
 		/**
