@@ -96,9 +96,9 @@ public class TermEvaluator {
 			}
 			return intValue;
 		case "+":
-			return params.reduce(new IntValue(BigInteger.ZERO), (x, y) -> ((IntValue) x).add((IntValue) y));
+			return params.reduce(IntValue.ZERO, (x, y) -> ((IntValue) x).add((IntValue) y));
 		case "*":
-			return params.reduce(new IntValue(BigInteger.ONE), (x, y) -> ((IntValue) x).multiply((IntValue) y));
+			return params.reduce(IntValue.ONE, (x, y) -> ((IntValue) x).multiply((IntValue) y));
 		case "div":
 			iter = params.iterator();
 			intValue = (IntValue) iter.next();

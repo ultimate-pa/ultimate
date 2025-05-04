@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
-import java.util.HashSet;
+import java.util.Set;
 
 public abstract class Restriction<T> {
-	protected final HashSet<T> mInequal;
+	protected final Set<T> mInequal;
 	protected final T mMinimum;
 	protected final T mMaximum;
 
@@ -12,17 +12,15 @@ public abstract class Restriction<T> {
 	 * @param minimum  The smallest value a variable can take
 	 * @param maximuum The biggest value a variable can take
 	 */
-	public Restriction(final HashSet<T> inequal, final T minimum, final T maximum) {
+	public Restriction(final Set<T> inequal, final T minimum, final T maximum) {
 		mInequal = inequal;
 		mMinimum = minimum;
 		mMaximum = maximum;
 	}
 
-	public HashSet<T> getInequal() {
+	public Set<T> getInequal() {
 		return mInequal;
 	}
-
-	public abstract String toCode();
 
 	@Override
 	public abstract String toString();

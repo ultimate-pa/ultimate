@@ -100,14 +100,48 @@ procedure main() {
     correctFibonacci[90] := 2880067194370816120;
     correctFibonacci[91] := 4660046610375530309;
     correctFibonacci[92] := 7540113804746346429;
-
-
+    correctFibonacci[93] := 12200160415121876738;
+    correctFibonacci[94] := 19740274219868223167;
+    correctFibonacci[95] := 31940434634990099905;
+    correctFibonacci[96] := 51680708854858323072;
+    correctFibonacci[97] := 83621143489848422977;
+    correctFibonacci[98] := 135301852344706746049;
+    correctFibonacci[99] := 218922995834555169026;
+    correctFibonacci[100] := 354224848179261915075;
+    correctFibonacci[101] := 573147844013817084101;
+    correctFibonacci[102] := 927372692193078999176;
+    correctFibonacci[103] := 1500520536206896083277;
+    correctFibonacci[104] := 2427893228399975082453;
+    correctFibonacci[105] := 3928413764606871165730;
+    correctFibonacci[106] := 6356306993006846248183;
+    correctFibonacci[107] := 10284720757613717413913;
+    correctFibonacci[108] := 16641027750620563662096;
+    correctFibonacci[109] := 26925748508234281076009;
+    correctFibonacci[110] := 43566776258854844738105;
+    correctFibonacci[111] := 70492524767089125814114;
+    correctFibonacci[112] := 114059301025943970552219;
+    correctFibonacci[113] := 184551825793033096366333;
+    correctFibonacci[114] := 298611126818977066918552;
+    correctFibonacci[115] := 483162952612010163284885;
+    correctFibonacci[116] := 781774079430987230203437;
+    correctFibonacci[117] := 1264937032042997393488322;
+    correctFibonacci[118] := 2046711111473984623691759;
+    correctFibonacci[119] := 3311648143516982017180081;
+    correctFibonacci[120] := 5358359254990966640871840;
+    correctFibonacci[121] := 8670007398507948658051921;
+    correctFibonacci[122] := 14028366653498915298923761;
+    correctFibonacci[123] := 22698374052006863956975682;
+    correctFibonacci[124] := 36726740705505779255899443;
+    correctFibonacci[125] := 59425114757512643212875125;
+    correctFibonacci[126] := 96151855463018422468774568;
+    correctFibonacci[127] := 155576970220531065681649693;
+    correctFibonacci[128] := 251728825683549488150424261;
 
     cache[0] := 0;
     cache[1] := 1;
     highestIndex := 1;
     havoc index;
-    assume 0 <= index && index <= 92;
+    assume 0 <= index && index <= 128;
 
     while(highestIndex < index) {
         cache[highestIndex + 1] := cache[highestIndex - 1] + cache[highestIndex];

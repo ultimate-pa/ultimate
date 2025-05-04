@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
@@ -10,9 +11,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.DynamicLoader;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	private static RcpPreferenceProvider mSettings = null;
@@ -34,7 +33,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
-		final ArrayList<NonDeterministicChoice> interfaces = Settings.getSettings().getInterfaces();
+		final List<NonDeterministicChoice> interfaces = Settings.getSettings().getInterfaces();
 		final ArrayList<UltimatePreferenceItemGroup> subPrefs = new ArrayList<>();
 		final String[] names = new String[interfaces.size()];
 
@@ -48,9 +47,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		}
 
 		final BaseUltimatePreferenceItem[] mainPrefs = {
-				new UltimatePreferenceItem<>(SettingLabel.PROJECT_DIRECTORY.toString(),
-						DynamicLoader.getProjectSourceDirectory().getAbsolutePath(), PROJECT_DIRECTORY_HINT,
-						PreferenceType.Directory),
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString(), 5, EXECUTIONS_PE_HINT,
 						PreferenceType.Integer),
 				// ADD NEW SETTINGS HERE
@@ -65,7 +61,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 
 		allPrefs[mainPrefs.length] = new UltimatePreferenceItemContainer(
 				"Non-Deterministic Interface specific settings",
-				Util.fillArray(subPrefs, new UltimatePreferenceItemGroup[subPrefs.size()]));
+				subPrefs.toArray(new UltimatePreferenceItemGroup[subPrefs.size()]));
 		return allPrefs;
 	}
 
@@ -73,7 +69,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 	 * The labels used for each settings, to enable easy value retrieval.
 	 */
 	public enum SettingLabel {
-		PROJECT_DIRECTORY("Ultimate directory"),
 		NDC_IMLPEMENTATIONS(
 				"Non-Deterministic Interface (" + NonDeterministicChoice.class.getSimpleName() + ") implementations:"),
 		EXECUTIONS_PER_ENTRYPOINT("Number of executions to generate per program entry point");
@@ -90,7 +85,6 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		}
 	}
 
-	public static String PROJECT_DIRECTORY_HINT = "Path of directory which contains the /ultimate/ directory";
 	public static String NDC_IMLPEMENTATIONS_HINT = "Class to use for methods like havoc.";
 	public static String EXECUTIONS_PE_HINT = "Should be at least 1";
 }

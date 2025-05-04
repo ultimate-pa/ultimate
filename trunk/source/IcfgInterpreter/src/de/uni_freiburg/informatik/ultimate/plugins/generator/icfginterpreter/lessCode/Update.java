@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -134,47 +135,57 @@ public interface Update {
 		@Override
 		public Value makeValue(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
 			switch (mProgramVar.getSort().getName()) {
-			// TODO Rewrite when NDC uses Value. Add Array and BitVec
+			// TODO Add Array and BitVec
 			case SMTLIBConstants.BOOL:
-				final HashSet<Boolean> inEqualBools = new HashSet<>();
+				final HashSet<BoolValue> inEqualBools = new HashSet<>();
 
 				for (final Term inEqual : mInEqual) {
-					final BoolValue eval = (BoolValue) TermEvaluator.evaluate(state, inEqual, ndc);
-					inEqualBools.add(eval.getValue());
+					inEqualBools.add((BoolValue) TermEvaluator.evaluate(state, inEqual, ndc));
 				}
 
-				return new BoolValue(ndc.havocBool(new BooleanRestriction(inEqualBools)));
+				return ndc.havocBool(new BooleanRestriction(inEqualBools));
 			case SMTLIBConstants.INT:
 				if (mInEqual.size() + mLessEq.size() + mGreaterEq.size() == 0) {
-					return new IntValue(BigInteger.valueOf(ndc.havocInt(null)));
+					return ndc.havocInt(null);
 				}
-				final Long[] inEqualInts = new Long[mInEqual.size()];
-				final Long[] maximumInts = new Long[mLessEq.size()];
-				final Long[] minimumInts = new Long[mGreaterEq.size()];
 
+				IntValue maximum = null;
+				if (mLessEq.size() > 0) {
+					final Iterator<Term> lessEqlIter = mLessEq.iterator();
+					maximum = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc);
+					while (lessEqlIter.hasNext()) {
+						final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc);
+						if (nextValue.compareTo(maximum) < 0) {
+							maximum = nextValue;
+						}
+					}
+				}
+
+				IntValue minimum = null;
+				if (mGreaterEq.size() > 0) {
+					final Iterator<Term> greaterEqlIter = mGreaterEq.iterator();
+					minimum = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc);
+					while (greaterEqlIter.hasNext()) {
+						final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc);
+						if (minimum.compareTo(nextValue) < 0) {
+							minimum = nextValue;
+						}
+					}
+				}
+
+				final Set<IntValue> inEqualInts = new HashSet<>();
 				final Iterator<Term> inEqualIter = mInEqual.iterator();
-				for (int i = 0; i < mInEqual.size(); i++) {
-					final IntValue eval = (IntValue) TermEvaluator.evaluate(state, inEqualIter.next(), ndc);
-					inEqualInts[i] = eval.getValue().longValue();
+				while (inEqualIter.hasNext()) {
+					final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, inEqualIter.next(), ndc);
+					if ((minimum == null || minimum.compareTo(nextValue) <= 0)
+							&& (maximum == null || nextValue.compareTo(maximum) <= 0)) {
+						inEqualInts.add(nextValue);
+					}
 				}
 
-				final Iterator<Term> lessEqlIter = mLessEq.iterator();
-				for (int i = 0; i < mLessEq.size(); i++) {
-					final IntValue eval = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc);
-					maximumInts[i] = eval.getValue().longValue();
-				}
+				final IntegerRestriction restriction = new IntegerRestriction(inEqualInts, minimum, maximum);
 
-				final Iterator<Term> greaterEqlIter = mGreaterEq.iterator();
-				for (int i = 0; i < mGreaterEq.size(); i++) {
-					final IntValue eval = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc);
-					minimumInts[i] = eval.getValue().longValue();
-				}
-
-				final IntegerRestriction restriction = IntegerRestriction.makeRestriction(
-						IntegerRestriction.findMinimum(minimumInts), IntegerRestriction.findMaximum(maximumInts),
-						inEqualInts);
-
-				return new IntValue(BigInteger.valueOf(ndc.havocInt(restriction)));
+				return ndc.havocInt(restriction);
 			default:
 				return null;
 			}

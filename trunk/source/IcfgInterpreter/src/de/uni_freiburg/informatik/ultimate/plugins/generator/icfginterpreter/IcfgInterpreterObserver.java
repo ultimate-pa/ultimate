@@ -13,9 +13,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.CompiledEnumExecutionProducer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LessCodeExecutionProducer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LiteralExecutionProducer;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
@@ -55,15 +53,12 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			if (!seenICFGs.contains(mIcfg)) {
 				seenICFGs.add(mIcfg);
 			}
-			DynamicLoader.makeCompilationDirectory();
 			try {
 				final Random random = new Random();
 				final long seed = random.nextLong();
 				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LessCodeExecutionProducer(),
 						new Random(seed));
-				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LiteralExecutionProducer(),
-						new Random(seed));
-				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new CompiledEnumExecutionProducer<>(),
+				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LessCodeExecutionProducer(),
 						new Random(seed));
 			} catch (final Exception e) {
 				final ByteArrayOutputStream bs = new ByteArrayOutputStream();
@@ -71,14 +66,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				e.printStackTrace(message);
 				mLogger.error(bs.toString(StandardCharsets.UTF_8));
 			}
-			DynamicLoader.deleteCompilationDirectory();
 		}
 		return false;
-	}
-
-	@Override
-	public void finish() {
-		DynamicLoader.deleteCompilationDirectory();
 	}
 
 	private static final ArrayList<IIcfg<?>> seenICFGs = new ArrayList<>();

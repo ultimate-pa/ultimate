@@ -227,7 +227,6 @@ public class EqualityExtractor {
 
 	public static Equations extractAppliactionTerm(final ApplicationTerm term, final ManagedScript script) {
 		Equations out;
-		System.out.println(term.toStringDirect());
 		switch (term.getFunction().getName()) {
 		case SMTLIBConstants.OR:
 			out = new Equations();

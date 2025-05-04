@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -10,11 +9,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
@@ -33,20 +32,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.EnumState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.IVariableName;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.compiled.JavaCodeEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IcfgTranslation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.InterpretedIcfg;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BitVecValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BoolValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations.SolvedEquations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.PossibleUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update;
@@ -55,13 +44,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.Settings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms.generic.Variable;
 
 public class ExecutionProducer {
 	public interface IIcfgExecutionProducer {
 		boolean printExecution = true;
 
-		void init(InterpretedIcfg intIcfg, IUltimateServiceProvider services);
+		void init(IIcfg<? extends IcfgLocation> icfg, IUltimateServiceProvider services);
 
 		IcfgProgramExecution<?> makeExecution(NonDeterministicChoice ndc, IcfgLocation source);
 	}
@@ -77,10 +65,8 @@ public class ExecutionProducer {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
 
-		final InterpretedIcfg execIcfg = IcfgTranslation.parseIcfg(icfg, services);
-
 		final long startTime = System.nanoTime();
-		producer.init(execIcfg, services);
+		producer.init(icfg, services);
 		final long initTime = System.nanoTime();
 		for (final IcfgLocation node : initialNodes) {
 			for (int i = 0; i < testExecutionCount; i++) {
@@ -109,149 +95,14 @@ public class ExecutionProducer {
 		return out;
 	}
 
-	public static class CompiledEnumExecutionProducer<T extends Enum<T> & IVariableName>
-			implements IIcfgExecutionProducer {
-		private HashMap<IcfgLocation, ArrayList<JavaCodeEdge<T>>> compiledEdges;
-		private Function<NonDeterministicChoice, EnumState<T>> stateMaker;
-		HashSet<IcfgLocation> mErrorLocation;
-		private HashMap<String, Set<IcfgLocation>> mErrorMap;
-
-		@Override
-		public void init(final InterpretedIcfg intIcfg, final IUltimateServiceProvider services) {
-			final HashSet<Variable> variables = intIcfg.getVariables();
-			try {
-				final Class<T> enumClass = DynamicLoader.makeVariableNameEnum(variables);
-				compiledEdges = (DynamicLoader.makeUpdates(intIcfg, enumClass));
-				stateMaker = EnumState.getStateInitializer(variables, enumClass);
-			} catch (final Exception e) {
-				e.printStackTrace();
-				return;
-			}
-
-			mErrorMap = getErrorLocations(intIcfg.getIcfg());
-		}
-
-		@Override
-		public IcfgProgramExecution<?> makeExecution(final NonDeterministicChoice ndc, final IcfgLocation source) {
-			final ArrayList<EnumState<T>> states = new ArrayList<>();
-			final ArrayList<JavaCodeEdge<T>> edges = new ArrayList<>();
-			EnumState<T> state = stateMaker.apply(ndc);
-			states.add(state);
-
-			ArrayList<JavaCodeEdge<T>> nextEdges = compiledEdges.getOrDefault(source, new ArrayList<>());
-
-			while (nextEdges.size() > 0) {
-				final EnumState<T> stateReference = state;
-				final List<JavaCodeEdge<T>> availableEdges = nextEdges.stream().filter((edge) -> {
-					return edge.guard(stateReference);
-				}).toList();
-
-				JavaCodeEdge<T> nextEdge;
-				if (availableEdges.size() > 1) {
-					nextEdge = ndc.chooseEdge(availableEdges);
-				} else if (availableEdges.size() == 0) {
-					// No guard was true, or no edges exist from the current vertex
-					break;
-				} else {
-					nextEdge = availableEdges.get(0);
-				}
-
-				edges.add(nextEdge);
-				state = nextEdge.update(state);
-				states.add(state);
-
-				nextEdges = compiledEdges.getOrDefault(nextEdge.getTarget(), new ArrayList<>());
-			}
-
-			if (printExecution) {
-				final StringBuilder out = new StringBuilder();
-				out.append(states.get(0).toString());
-				for (int i = 0; i < edges.size(); i++) {
-					out.append("\n->\n").append(edges.get(i));
-					out.append("\n->\n").append(states.get(i + 1));
-				}
-				IcfgInterpreterObserver.getLogger().info(out.toString());
-			}
-
-			// Report if the exit location was an error location
-			final IcfgLocation finalLocation = edges.get(edges.size() - 1).getTarget();
-			if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
-				IcfgInterpreterObserver.getLogger()
-						.error("Execution successfully ended at error location " + finalLocation.toString());
-			}
-			return null;
-		}
-
-	}
-
-	public static class LiteralExecutionProducer implements IIcfgExecutionProducer {
-		private ArrayList<Variable> mVariables;
-		private InterpretedIcfg mIIcfg;
-		private HashMap<String, Set<IcfgLocation>> mErrorMap;
-
-		@Override
-		public void init(final InterpretedIcfg intIcfg, final IUltimateServiceProvider services) {
-			mVariables = new ArrayList<>(intIcfg.getVariables());
-			mIIcfg = intIcfg;
-			mErrorMap = getErrorLocations(intIcfg.getIcfg());
-		}
-
-		@Override
-		public IcfgProgramExecution<?> makeExecution(final NonDeterministicChoice ndc, final IcfgLocation source) {
-			ProgramState state = new ProgramState(mVariables, ndc);
-			state.finalizeState();
-
-			final IcfgExecution execution = new IcfgExecution(state, source);
-
-			final ArrayList<ICFGExecutionEdge> nextEdges = new ArrayList<>(mIIcfg.getOutEdges(source));
-
-			while (!nextEdges.isEmpty()) {
-				final ProgramState stateRefernce = state;
-				final List<ICFGExecutionEdge> availableEdges = nextEdges.stream().filter((nextEdge) -> {
-					return nextEdge.canBeTaken(stateRefernce);
-				}).toList();
-
-				ICFGExecutionEdge nextEdge;
-				if (availableEdges.size() > 1) {
-					nextEdge = ndc.chooseEdge(availableEdges);
-				} else if (availableEdges.size() == 0) {
-					// No guard was true, or no edges exist from the current vertex
-					break;
-				} else {
-					nextEdge = availableEdges.get(0);
-				}
-
-				state = nextEdge.execute(state);
-				execution.addStep(state, nextEdge.mTarget, nextEdge.getTransFormula());
-				nextEdges.clear();
-				nextEdges.addAll(mIIcfg.getOutEdges(nextEdge.mTarget));
-			}
-
-			if (printExecution) {
-				IcfgInterpreterObserver.getLogger().info(execution.toString());
-			}
-			// Report if the exit location was an error location
-			final IcfgLocation finalLocation = execution.getFinalStep().getLocation();
-			if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
-				IcfgInterpreterObserver.getLogger()
-						.error("Execution successfully ended at error location " + finalLocation.toString());
-			}
-			return null;
-		}
-
-	}
-
 	public static class LessCodeExecutionProducer implements IIcfgExecutionProducer {
-		private ArrayList<Variable> mVariables;
 		private HashMap<String, Set<IcfgLocation>> mErrorMap;
 		private final HashMap<IcfgLocation, ArrayList<InterpretedIcfgEdge>> mOutEdges = new HashMap<>();
 		private ManagedScript mngScript;
 		private final HashMap<TermVariable, IProgramVar> mSymbolTable = new HashMap<>();
 
 		@Override
-		public void init(final InterpretedIcfg intIcfg, final IUltimateServiceProvider services) {
-			final IIcfg<? extends IcfgLocation> icfg = intIcfg.getIcfg();
-
+		public void init(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services) {
 			final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 			mngScript = icfg.getCfgSmtToolkit().getManagedScript();
 
@@ -318,9 +169,7 @@ public class ExecutionProducer {
 				}
 			}
 
-			mVariables = new ArrayList<>(intIcfg.getVariables());
-
-			mErrorMap = getErrorLocations(intIcfg.getIcfg());
+			mErrorMap = getErrorLocations(icfg);
 		}
 
 		private Update[] makeUpdates(final Set<SolvedEquation> equations, final UnmodifiableTransFormula formula) {
@@ -506,31 +355,24 @@ public class ExecutionProducer {
 		private HashMap<Term, Value> makeState(final NonDeterministicChoice ndc) {
 			final HashMap<Term, Value> state = new HashMap<>();
 
-			for (final Variable variable : mVariables) {
-				final IProgramVar programVar = variable.getVariableTerm().mProgramVar;
-				if (programVar == null) {
-					continue;
-				}
+			for (final IProgramVar programVar : mSymbolTable.values()) {
 				final TermVariable termVar = programVar.getTermVariable();
 				if (state.containsKey(termVar)) {
 					continue;
 				}
 				switch (programVar.getSort().getName()) {
 				case SMTLIBConstants.ARRAY:
-					// TODO change NDC and havoc actual Value object
-					state.put(termVar,
-							new ArrayValue(new HashMap<>(), programVar.getGloballyUniqueId(), programVar.getSort()));
+					state.put(termVar, ndc.newArray(programVar.getSort(), termVar.getName(), null));
 					break;
 				case SMTLIBConstants.BITVEC:
 					final int length = Util.getBitVecLength(programVar.getSort());
-					final BigInteger value = ndc.havocBitVector(length, null).bv2nat();
-					state.put(termVar, new BitVecValue(value, length));
+					state.put(termVar, ndc.havocBitVector(length, null));
 					break;
 				case SMTLIBConstants.BOOL:
-					state.put(termVar, new BoolValue(ndc.havocBool(null)));
+					state.put(termVar, ndc.havocBool(null));
 					break;
 				case SMTLIBConstants.INT:
-					state.put(termVar, new IntValue(BigInteger.valueOf(ndc.havocInt(null))));
+					state.put(termVar, ndc.havocInt(null));
 					break;
 				}
 			}
@@ -610,23 +452,21 @@ public class ExecutionProducer {
 			// TODO find out if it doesn't need final or initial state
 			states.remove(0);
 
-			final List<Map<Term, Term>> statesCast = states.stream().map(stateUncast -> castMap(stateUncast)).toList();
+			/* final List<Map<Term, Term>> statesCast = */states.stream().map(stateUncast -> castMap(stateUncast))
+					.toList();
+			// return createExecution(edges, statesCast);
 
 			// TODO make toTerm() for ArrayValue
-			return null;// createExecution(edges, statesCast);
+			return null;
 		}
 
 		@SuppressWarnings("unused")
 		private static <L extends IAction> IcfgProgramExecution<L> createExecution(final List<L> trace,
 				final List<Map<Term, Term>> states) {
-			// TODO: Don't define our own ProgramState in this plugin, then we can just use a normal import here.
-			final Map<Integer, de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState<Term>> stateMapping = new HashMap<>();
+			final Map<Integer, ProgramState<Term>> stateMapping = new HashMap<>();
 			for (int i = 0; i < states.size(); i++) {
-				stateMapping.put(i,
-						new de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState<>(
-								states.get(i).entrySet().stream().collect(
-										Collectors.toMap(x -> x.getKey(), x -> List.of(x.getValue()))),
-								Term.class));
+				stateMapping.put(i, new ProgramState<>(states.get(i).entrySet().stream()
+						.collect(Collectors.toMap(x -> x.getKey(), x -> List.of(x.getValue()))), Term.class));
 			}
 			return IcfgProgramExecution.create(trace, stateMapping);
 		}

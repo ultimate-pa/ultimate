@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -10,12 +11,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.BitVector;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.datatypes.SMTArray;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BitVecValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BoolValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
 
 public class RNGChoice implements NonDeterministicChoice {
@@ -44,7 +48,8 @@ public class RNGChoice implements NonDeterministicChoice {
 					+ ", maximum havoc value is less than the minimum havoc value");
 		}
 
-		mHavocStandard = new IntegerRestriction(new HashSet<>(), mMinHavocInt, mMaxHavocInt);
+		mHavocStandard = new IntegerRestriction(new HashSet<>(), new IntValue(BigInteger.valueOf(mMinHavocInt)),
+				new IntValue(BigInteger.valueOf(mMaxHavocInt)));
 	}
 
 	private RNGChoice(final long seed, final IntegerRestriction havocStandard) {
@@ -69,56 +74,86 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
-	public long havocInt(IntegerRestriction values) {
+	public IntValue havocInt(IntegerRestriction values) {
 		if (values == null) {
 			values = mHavocStandard;
 		}
 
-		final long elementCount = values.getValueCount();
-		final long index = (Math.abs(xorShift()) % elementCount);
+		if (values.getValueCount() == null) {
+			// one or both ends are unlimited
 
-		return values.getNthValue(index);
+			IntValue value = null;
+			while (value == null || values.getInequal().contains(value)) {
+				value = new IntValue(BigInteger.valueOf(xorShift()));
+				// cap the value should either end be finite
+				if ((values.getMaximum() != null) && (values.getMaximum().compareTo(value) < 0)) {
+					value = values.getMaximum().subtract(value.abs());
+				} else if ((values.getMinimum() != null) && (value.compareTo(values.getMinimum()) < 0)) {
+					value = values.getMinimum().add(value.abs());
+				}
+			}
+
+			return value;
+		}
+
+		// the range has finite bounds
+		final IntValue index = new IntValue(BigInteger.valueOf(Math.abs(xorShift()))).mod(values.getValueCount());
+
+		IntValue currentValue = values.getMinimum().add(index);
+		IntValue skipped = IntValue.ZERO;
+		boolean contained = values.getInequal().contains(currentValue);
+
+		while (contained || IntValue.ZERO.compareTo(skipped) < 0) {
+			if (!contained) {
+				skipped = skipped.subtract(IntValue.ONE);
+			} else {
+				skipped = skipped.add(IntValue.ONE);
+			}
+			currentValue = currentValue.add(IntValue.ONE);
+			if (values.getMaximum().compareTo(currentValue) <= 0) {
+				currentValue = currentValue.subtract(values.getRangeSize());
+			}
+			contained = values.getInequal().contains(currentValue);
+		}
+		assert values.getMinimum().compareTo(currentValue) <= 0 && currentValue.compareTo(values.getMaximum()) <= 0;
+		return currentValue;
 	}
 
 	@Override
-	public boolean havocBool(final BooleanRestriction values) {
+	public BoolValue havocBool(final BooleanRestriction values) {
 		if (values != null && values.getInequal().size() == 1) {
 			// can only be the value that is not in the inequalities
-			return values.getInequal().contains(false);
+			return new BoolValue(values.getInequal().contains(BoolValue.mFalse));
 		}
 		// can be false or true (either both allowed or neither)
-		return xorShift() < 0; // == is first bit 0 or 1
+		return new BoolValue(xorShift() < 0); // == is first bit 0 or 1
 	}
 
 	@Override
-	public BitVector havocBitVector(final int length, final BitVectorRestriction values) {
-		return new BitVector(length, BigInteger.ZERO);
+	public BitVecValue havocBitVector(final int length, final BitVectorRestriction values) {
+		return new BitVecValue(BigInteger.ZERO, length);
 	}
 
 	@Override
-	public SMTArray newArray(final Sort sort, final ArrayRestriction values) {
-		return new SMTArray(sort);
+	public ArrayValue newArray(final Sort sort, final String uniqueIdentifier, final ArrayRestriction values) {
+		return new ArrayValue(new HashMap<>(), uniqueIdentifier, sort);
 	}
 
 	@Override
-	public Object havocArrayEntry(final SMTArray array, final Object index) {
+	public Value havocArrayEntry(final ArrayValue array, final Value index) {
 		final long hashKey = array.hashCode() + index.hashCode();
-		switch (array.mValueSort.getName()) {
+		switch (array.getSort().getArguments()[0].getName()) {
 		case SMTLIBConstants.ARRAY:
-			return newArray(array.mValueSort, null);
+			return newArray(array.getSort().getArguments()[1], array.getUniqueIdentifier() + " _ " + index, null);
 		case SMTLIBConstants.BITVEC:
 			return null;
 		case SMTLIBConstants.BOOL:
-			return 0 < hash(hashKey);
+			return new BoolValue(0 < hash(hashKey));
 		case SMTLIBConstants.INT:
-			return (Math.abs(hash(hashKey)) % mHavocStandard.getValueCount()) + mHavocStandard.getMinimum();
+			final IntValue value = new IntValue(BigInteger.valueOf(Math.abs(hash(hashKey))));
+			return value.mod(mHavocStandard.getValueCount()).add(mHavocStandard.getMinimum());
 		}
 		return null;
-	}
-
-	@Override
-	public boolean areArraysEqual(final SMTArray a, final SMTArray b) {
-		return havocBool(null);
 	}
 
 	/** http://zimbry.blogspot.com/2011/09/better-bit-mixing-improving-on.html */
@@ -160,9 +195,9 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";
-	public static String MAX_INT_HAVOC_HINT =
-			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be more than the minimum option.";
+	public static String MAX_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
+			+ "\nHas to be more than the minimum option.";
 	public static String MIN_INT_HAVOC_LABEL = "Minimum havoc integer value";
-	public static String MIN_INT_HAVOC_HINT =
-			"Any value between Integer.MIN_VALUE and Integer.MAX_VALUE." + "\nHas to be less than the maximum option.";
+	public static String MIN_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
+			+ "\nHas to be less than the maximum option.";
 }

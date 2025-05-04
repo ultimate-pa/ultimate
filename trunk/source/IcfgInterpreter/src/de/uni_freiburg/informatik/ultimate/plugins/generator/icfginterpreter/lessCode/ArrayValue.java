@@ -3,20 +3,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class ArrayValue implements Value {
-	private final HashMap<Value, Value> mValue;
+	private final Map<Value, Value> mValue;
 	private final String mUniqueIdentifier;
 	private final Sort mSort;
 
-	public ArrayValue(final HashMap<Value, Value> value, final String uniqueIdentifier, final Sort sort) {
+	public ArrayValue(final Map<Value, Value> value, final String uniqueIdentifier, final Sort sort) {
 		mValue = value;
 		mUniqueIdentifier = uniqueIdentifier;
 		mSort = sort;
@@ -46,7 +47,7 @@ public class ArrayValue implements Value {
 	}
 
 	@Override
-	public HashMap<Value, Value> getValue() {
+	public Map<Value, Value> getValue() {
 		return mValue;
 	}
 
@@ -56,9 +57,7 @@ public class ArrayValue implements Value {
 
 		Collections.sort(list, (entry1, entry2) -> entry1.getKey().compareTo(entry2.getKey()));
 
-		final ArrayList<String> lines = Util.map(list, (entry) -> {
-			return entry.getKey() + " -> " + entry.getValue();
-		}, new ArrayList<String>());
+		final List<String> lines = list.stream().map((entry) -> entry.getKey() + " -> " + entry.getValue()).toList();
 
 		return new StringBuilder("{").append(String.join(", ", lines)).append("}").toString();
 	}
@@ -97,5 +96,13 @@ public class ArrayValue implements Value {
 			return Integer.compare(mValue.size(), av.mValue.size());
 		}
 		return this.getClass().getSimpleName().compareTo(b.getClass().getSimpleName());
+	}
+
+	public Sort getSort() {
+		return mSort;
+	}
+
+	public String getUniqueIdentifier() {
+		return mUniqueIdentifier;
 	}
 }

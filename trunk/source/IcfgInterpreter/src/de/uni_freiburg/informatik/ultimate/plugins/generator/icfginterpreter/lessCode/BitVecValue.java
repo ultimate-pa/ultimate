@@ -61,7 +61,7 @@ public class BitVecValue implements Value {
 		// Extracting bit mLength to j by shifting the value by j bits to the right.
 		final BigInteger shifted = mValue.shiftRight(j.getValue().intValueExact());
 		// The bits over the i-th one are automatically removed by the mask in the constructor
-		final IntValue length = i.subtract(j).add(new IntValue(BigInteger.ONE));
+		final IntValue length = i.subtract(j).add(IntValue.ONE);
 		return new BitVecValue(shifted, length.getValue().intValueExact());
 	}
 
@@ -222,5 +222,9 @@ public class BitVecValue implements Value {
 			return mValue.compareTo(bvv.mValue);
 		}
 		return this.getClass().getSimpleName().compareTo(b.getClass().getSimpleName());
+	}
+
+	public int getLength() {
+		return mLength;
 	}
 }

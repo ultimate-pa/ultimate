@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.terms;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;

@@ -8,6 +8,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class IntValue implements Value {
 	private final BigInteger mValue;
+	public final static IntValue ZERO = new IntValue(BigInteger.ZERO);
+	public final static IntValue ONE = new IntValue(BigInteger.ONE);
+	public final static IntValue TWO = new IntValue(BigInteger.TWO);
 
 	public IntValue(final BigInteger value) {
 		mValue = value;
