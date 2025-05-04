@@ -192,10 +192,9 @@ public class IcfgUtils {
 		final Set<IcfgLocation> reachableProgramPoints =
 				new IcfgEdgeIterator(icfg).asStream().map(IcfgEdge::getTarget).collect(Collectors.toSet());
 		reachableProgramPoints.addAll(icfg.getInitialNodes());
-		final Set<LOC> registeredProgramPoints =
+		final Set<IcfgLocation> registeredProgramPoints =
 				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
-		final Set<IcfgLocation> diff = new HashSet<>(reachableProgramPoints);
-		diff.removeAll(registeredProgramPoints);
+		final Set<IcfgLocation> diff = DataStructureUtils.difference(reachableProgramPoints, registeredProgramPoints);
 		if (!diff.isEmpty()) {
 			throw new AssertionError("Program points reachable but not registered: " + diff);
 		}
@@ -224,8 +223,7 @@ public class IcfgUtils {
 	public static <LOC extends IcfgLocation> boolean areLocationsOfInterestRegistered(final IIcfg<LOC> icfg) {
 		final Set<LOC> registeredProgramPoints =
 				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
-		final Set<LOC> diff = new HashSet<>(icfg.getLocationsOfInterest());
-		diff.removeAll(registeredProgramPoints);
+		final Set<LOC> diff = DataStructureUtils.difference(icfg.getLocationsOfInterest(), registeredProgramPoints);
 		if (!diff.isEmpty()) {
 			throw new AssertionError("Unregistered location of interest (LOI): " + diff);
 		}
@@ -235,8 +233,7 @@ public class IcfgUtils {
 	public static <LOC extends IcfgLocation> boolean areLoopLocationsRegistered(final IIcfg<LOC> icfg) {
 		final Set<LOC> registeredProgramPoints =
 				icfg.getProgramPoints().values().stream().flatMap(x -> x.values().stream()).collect(Collectors.toSet());
-		final Set<LOC> diff = new HashSet<>(icfg.getLoopLocations());
-		diff.removeAll(registeredProgramPoints);
+		final Set<LOC> diff = DataStructureUtils.difference(icfg.getLoopLocations(), registeredProgramPoints);
 		if (!diff.isEmpty()) {
 			throw new AssertionError("Unregistered loop location: " + diff);
 		}
