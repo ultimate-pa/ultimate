@@ -261,14 +261,15 @@ public class AddInitializingEdgesIcfgTransformer<INLOC extends IcfgLocation, OUT
 
 	private OUTLOC createAndAddNewLocation(final INLOC originalInitNode, final boolean isInitial, final boolean isError,
 			final boolean isProcEntry, final boolean isProcExit, final boolean isLoopLocation,
-			final DebugIdentifier locName, final boolean isLabel) {
+			final DebugIdentifier locName, final boolean isLocationOfInterest) {
 		// TODO: general solution.. this one works for BoogieIcfgLocations
 		// final String debugString = this.getClass().toString() + "freshInit" + originalInitNode.hashCode();
 		final OUTLOC freshLoc = (OUTLOC) new BoogieIcfgLocation(locName, originalInitNode.getProcedure(), false,
 				((BoogieIcfgLocation) originalInitNode).getBoogieASTNode());
 
 		// add fresh location to resultIcfg
-		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation, isLabel);
+		mResultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
+				isLocationOfInterest);
 
 		return freshLoc;
 	}
