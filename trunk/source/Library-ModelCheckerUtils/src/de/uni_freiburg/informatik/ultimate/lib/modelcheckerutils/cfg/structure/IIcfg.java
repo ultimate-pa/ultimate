@@ -75,10 +75,14 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	 * In our CFG we have distinct nodes that we call location of interest (LOI).
 	 * <li>LOIs are nodes for which verification algorithms typically produce invariants and for which counterexamples
 	 * have to provide values.
+	 * <li>LOIs are not necessarily loop heads. However, loop heads are also nodes for which verification algorithms
+	 * typically produce invariants and for which counterexamples have to provide values.
+	 * <li>A typical application for LOIs is when we want to get invariants for labels in a C program. In that case, we
+	 * make the node that stems from a label a LOI.
 	 * <li>ICFG transformations should try to preserve LOIs or provide a backtranslation that can compute invariants or
 	 * values of counterexample states for LOIs.
 	 *
-	 * @return all locations of interest (LOI).
+	 * @return All locations of interest (LOI).
 	 */
 	Set<LOC> getLocationsOfInterest();
 
