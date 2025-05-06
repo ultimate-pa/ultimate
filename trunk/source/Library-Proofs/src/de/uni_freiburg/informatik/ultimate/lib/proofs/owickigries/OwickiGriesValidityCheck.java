@@ -205,7 +205,7 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 			mLogger.warn(
 					"Annotation %s of place %s is not interference-free under transition %s. Invalid Hoare triple:\n"
 							+ "\tprecondition %s\n\ttransition %s\n\tpostcondition %s",
-					annotation, place, transition, place, precondition, action, conjunction);
+					annotation, place, transition, conjunction, action, annotation);
 		}
 
 		return result;
