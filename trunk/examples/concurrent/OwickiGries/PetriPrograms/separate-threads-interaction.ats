@@ -1,4 +1,4 @@
-// Simple scalable test for computation of Owicki-Gries annotation for Petri Net with a main thread and a temporary worker thread
+// Simple test for computation of Owicki-Gries annotation where some ghost variables are necessary
 // ------------------------------------------------------------------------------------------------------------------------------
 
 //@ variables (g Int) (z1 Int) (z2 Int)
