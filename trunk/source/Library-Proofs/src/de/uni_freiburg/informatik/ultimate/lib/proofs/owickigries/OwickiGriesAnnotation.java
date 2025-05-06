@@ -53,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  *            transitions; in interprocedural CFGs, it's the type of CFG edges.
  * @param <P>
  *            The type of places, or program locations, in the program model
+ * @param <M>
+ *            The type of "markings", i.e., control configurations of the entire concurrent program
  */
 public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProof {
 
