@@ -264,7 +264,7 @@ public class ArrayHandler {
 				(CPrimitive) currentDimension.getCType().getUnderlyingType());
 		inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		switch (mSettings.checkArrayAccessOffHeap()) {
-		case ASSERTandASSUME:
+		case CHECK:
 			final Statement assertStm = new AssertStatement(loc, inRange);
 			final Check chk = new Check(Spec.ARRAY_INDEX);
 			chk.annotate(assertStm);

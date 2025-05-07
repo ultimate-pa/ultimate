@@ -549,7 +549,7 @@ public abstract class ExpressionTranslation {
 			// Avoid the creation of trivial statements
 			return;
 		}
-		if (mSettings.checkSignedIntegerBounds() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.checkSignedIntegerBounds() == CheckMode.CHECK) {
 			final AssertStatement assertSt = new AssertStatement(loc, condition);
 			new Check(Spec.INTEGER_OVERFLOW).annotate(assertSt);
 			erb.addStatement(assertSt);
