@@ -2200,7 +2200,7 @@ public class MemoryHandler {
 		final Expression offsetInAllocatedRange =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.CHECK) {
 			isFreeRequires = false;
 		} else {
 			assert mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSUME;
@@ -2238,7 +2238,7 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
+		if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
 			isFreeRequires = false;
 		} else {
 			assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME;
@@ -3317,7 +3317,7 @@ public class MemoryHandler {
 			// valid[s.base]
 			final Expression validBase = constructPointerBaseValidityCheckExpr(loc, pointerValue);
 
-			if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
+			if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
@@ -3349,7 +3349,7 @@ public class MemoryHandler {
 					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
 							offsetNonnegative);
-			if (mSettings.getPointerBaseValidityMode() == CheckMode.ASSERTandASSUME) {
+			if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);

@@ -147,7 +147,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
 
 	public enum CheckMode {
-		IGNORE, ASSUME, ASSERTandASSUME
+		IGNORE, ASSUME, CHECK
 	}
 
 	public enum Signedness {
@@ -267,11 +267,11 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.ASSERTandASSUME,
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.CHECK,
 						PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.ASSERTandASSUME, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.CHECK, PreferenceType.Combo,
 						CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.ASSERTandASSUME,
+				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.CHECK,
 						PreferenceType.Combo, CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
@@ -286,8 +286,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						CheckMode.ASSERTandASSUME, PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.ASSERTandASSUME,
+						CheckMode.CHECK, PreferenceType.Combo, CheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
 						PreferenceType.Combo, CheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
 						PreferenceType.Combo, CheckMode.values()),
