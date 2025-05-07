@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator;
 
 /**
@@ -260,87 +262,91 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.CHECK,
-						PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.CHECK, PreferenceType.Combo,
-						CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.CHECK,
-						PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
-						DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_ALLOCATION_PURITY, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
-						PreferenceType.Combo, MemoryModel.values()),
-				new UltimatePreferenceItem<>(LABEL_POINTER_INTEGER_CONVERSION,
-						PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
-						PointerIntegerConversion.values()),
-				new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						CheckMode.CHECK, PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
-						PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
-						PreferenceType.Combo, CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE, PreferenceType.Combo,
-						CheckMode.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_OVERAPPROXIMATE_FLOATS, false, DESC_OVERAPPROXIMATE_FLOATS,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
+		return new BaseUltimatePreferenceItem[] {
 
-				new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND,
-						DEF_FP_ROUNDING_MODE_ENABLE_FESETROUND, DESC_FP_ROUNDING_MODE_ENABLE_FESETROUND,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_INITIAL, DEF_FP_ROUNDING_MODE_INITIAL,
-						DESC_FP_ROUNDING_MODE_INITIAL, PreferenceType.Combo, FloatingPointRoundingMode.values()),
+				new UltimatePreferenceItemGroup("Specification",
+						new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC,
+								PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.CHECK,
+								PreferenceType.Combo, CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.CHECK, PreferenceType.Combo,
+								CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.CHECK,
+								PreferenceType.Combo, CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
+								DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_ALLOCATION_PURITY, false, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
+								CheckMode.CHECK, PreferenceType.Combo, CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
+								PreferenceType.Combo, CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
+								PreferenceType.Combo, CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, CheckMode.IGNORE,
+								PreferenceType.Combo, CheckMode.values()),
+						new UltimatePreferenceItem<>(LABEL_CHECK_DATA_RACES, false, PreferenceType.Boolean)),
 
-				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
+				new UltimatePreferenceItemGroup("Target Architecture",
+						// typesize stuff
+						new UltimatePreferenceItem<>(LABEL_USE_EXPLICIT_TYPESIZES, true, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_BOOL, 1, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_CHAR, 1, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_SHORT, 2, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_INT, 4, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_LONG, 8, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_LONGLONG, 8, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_FLOAT, 4, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_DOUBLE, 8, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_POINTER, 8, PreferenceType.Integer),
+						// more exotic types
+						// new UltimatePreferenceItem<Integer>(
+						// LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
+						// new UltimatePreferenceItem<Integer>(
+						// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_SIGNEDNESS_CHAR, Signedness.SIGNED, PreferenceType.Combo,
+								Signedness.values()),
+						new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND,
+								DEF_FP_ROUNDING_MODE_ENABLE_FESETROUND, DESC_FP_ROUNDING_MODE_ENABLE_FESETROUND,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_INITIAL, DEF_FP_ROUNDING_MODE_INITIAL,
+								DESC_FP_ROUNDING_MODE_INITIAL, PreferenceType.Combo,
+								FloatingPointRoundingMode.values())),
 
-				// typesize stuff
-				new UltimatePreferenceItem<>(LABEL_USE_EXPLICIT_TYPESIZES, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_BOOL, 1, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_CHAR, 1, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_SHORT, 2, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_INT, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_LONG, 8, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_LONGLONG, 8, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_FLOAT, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_DOUBLE, 8, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_EXPLICIT_TYPESIZE_POINTER, 8, PreferenceType.Integer),
-				// more exotic types
-				// new UltimatePreferenceItem<Integer>(
-				// LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
-				// new UltimatePreferenceItem<Integer>(
-				// LABEL_EXPLICIT_TYPESIZE_CHAR32, 4, PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_SIGNEDNESS_CHAR, Signedness.SIGNED, PreferenceType.Combo,
-						Signedness.values()),
-				new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
-						DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
-						DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
-						PreferenceType.Integer),
-				new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
-						UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
-						PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
-				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
-						PreferenceType.Boolean) };
-
+				new UltimatePreferenceItemGroup("Optimizations",
+						new UltimatePreferenceItem<>(LABEL_POINTER_INTEGER_CONVERSION,
+								PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
+								PointerIntegerConversion.values()),
+						new UltimatePreferenceItem<>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
+								PreferenceType.Combo, MemoryModel.values()),
+						new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_BITPRECISE_BITFIELDS, false, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_OVERAPPROXIMATE_FLOATS, false, DESC_OVERAPPROXIMATE_FLOATS,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_USE_CONSTANT_ARRAYS, false, DESC_USE_CONSTANT_ARRAYS,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false,
+								"Only for benchmarking -- do not use", PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
+								DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_STRING_OVERAPPROXIMATION_THRESHOLD,
+								DEFAULT_STRING_OVERAPPROXIMATION_THRESHOLD, DESC_STRING_OVERAPPROXIMATION_THRESHOLD,
+								PreferenceType.Integer),
+						new UltimatePreferenceItem<>(LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+								UndefinedFunctionBehaviour.NON_DETERMINISTIC_RETURN, DESC_BEHAVIOUR_UNDEFINED_FUNCTIONS,
+								PreferenceType.Combo, UndefinedFunctionBehaviour.values()),
+						new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false,
+								DESC_ENFORCE_IF_FOR_CONDITIONAL, PreferenceType.Boolean)) };
 	}
 }
