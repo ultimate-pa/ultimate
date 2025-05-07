@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IConstantModelHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.ILibraryModel.IFunctionModelHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -149,29 +150,5 @@ public class LibraryModelHandler {
 		if (old != null) {
 			throw new AssertionError("Accidentally overwrote definition for " + key);
 		}
-	}
-
-	/**
-	 * An interface to represent the model of a library function.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 */
-	@FunctionalInterface
-	interface IFunctionModelHandler {
-		/**
-		 * Translates a library function.
-		 *
-		 * @param main
-		 *            A dispatcher.
-		 * @param node
-		 *            A node for the function call.
-		 * @param loc
-		 *            A location.
-		 * @param methodName
-		 *            The name of the called function.
-		 * @return The model of the call to a library function.
-		 */
-		Result handleFunction(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
-				String methodName);
 	}
 }
