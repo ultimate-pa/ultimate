@@ -30,7 +30,7 @@ public record OwickiGriesSettings(OwickiGriesComputation computationMode, boolea
 		boolean useCoveringSimplification) {
 
 	public enum OwickiGriesComputation {
-		NONE, NAIVE, CROWN, SYMBOLIC_EXECUTION, AUTOMATA, CONJUNCTION
+		NONE, NAIVE, CROWN, SYMBOLIC_EXECUTION, AUTOMATA, LEGAL_FOCUS
 	}
 
 	public boolean computeProof() {

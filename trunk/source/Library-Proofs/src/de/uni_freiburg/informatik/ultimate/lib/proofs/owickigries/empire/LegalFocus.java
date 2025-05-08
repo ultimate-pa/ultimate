@@ -15,21 +15,36 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class LegalFocus<L, P> {
-	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
 	private final HashRelation<State<L, P>, Region<P>> mLegalFocus;
 	private final IPetriNet<L, P> mNet;
 
 	public LegalFocus(final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire,
 			final IPetriNet<L, P> net) {
-		mEmpireAutomaton = empire;
 		mNet = net;
-		mLegalFocus = computeLegalFocus();
+		mLegalFocus = computeLegalFocus(empire);
 	}
 
-	private HashRelation<State<L, P>, Region<P>> computeLegalFocus() {
-		final var finalStates = mEmpireAutomaton.getFinalStates().stream().collect(Collectors.toSet());
+	public LegalFocus(final Set<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> empires,
+			final IPetriNet<L, P> net) {
+		mNet = net;
+		mLegalFocus = computeLegalFocus(empires);
+	}
+
+	private HashRelation<State<L, P>, Region<P>>
+			computeLegalFocus(final Set<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> empires) {
+		final var focus = new HashRelation<State<L, P>, Region<P>>();
+		for (final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire : empires) {
+			final var empireFocus = computeLegalFocus(empire);
+			focus.addAll(empireFocus);
+		}
+		return focus;
+	}
+
+	private HashRelation<State<L, P>, Region<P>>
+			computeLegalFocus(final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire) {
+		final var finalStates = empire.getFinalStates().stream().collect(Collectors.toSet());
 		final var queue = new ArrayDeque<State<L, P>>();
-		final var focus = computeFinalStateFocus(finalStates);
+		final var focus = computeFinalStateFocus(empire, finalStates);
 		for (final State<L, P> state : finalStates) {
 			queue.offer(state);
 		}
@@ -39,7 +54,7 @@ public class LegalFocus<L, P> {
 			if (currentFocus.isEmpty()) {
 				continue;
 			}
-			final var predecessors = mEmpireAutomaton.internalPredecessors(state);
+			final var predecessors = empire.internalPredecessors(state);
 			for (final IncomingInternalTransition<Transition<L, P>, State<L, P>> incomingInternalTransition : predecessors) {
 				final var predecessor = incomingInternalTransition.getPred();
 				final var transition = incomingInternalTransition.getLetter();
@@ -71,14 +86,15 @@ public class LegalFocus<L, P> {
 		return focused;
 	}
 
-	private HashRelation<State<L, P>, Region<P>> computeFinalStateFocus(final Set<State<L, P>> finalStates) {
+	private HashRelation<State<L, P>, Region<P>> computeFinalStateFocus(
+			final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire,
+			final Set<State<L, P>> finalStates) {
 		final var focus = new HashRelation<State<L, P>, Region<P>>();
 		for (final State<L, P> state : finalStates) {
 			final var territory = state.territory();
 			final var enabledTransitions = territory.getEnabledTransitions(mNet);
-			final var successorlessTransitions =
-					enabledTransitions.filter(t -> !mEmpireAutomaton.internalSuccessors(state, t).iterator().hasNext())
-							.collect(Collectors.toSet());
+			final var successorlessTransitions = enabledTransitions
+					.filter(t -> !empire.internalSuccessors(state, t).iterator().hasNext()).collect(Collectors.toSet());
 			for (final Transition<L, P> transition : successorlessTransitions) {
 				final var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
 				final var minRegion =
@@ -90,6 +106,15 @@ public class LegalFocus<L, P> {
 			}
 		}
 		return focus;
+	}
+
+	public Set<Region<P>> getLegalFocus(final State<L, P> state) {
+		return mLegalFocus.getImage(state);
+	}
+
+	public boolean isFocused(final P place, final State<L, P> state) {
+		final var legalFocus = getLegalFocus(state);
+		return legalFocus.stream().anyMatch(r -> r.contains(place));
 	}
 
 }

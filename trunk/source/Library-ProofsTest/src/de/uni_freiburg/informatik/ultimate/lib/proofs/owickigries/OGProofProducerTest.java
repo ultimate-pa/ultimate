@@ -141,16 +141,16 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		}
 	}
 
-	public static final class AutomatonConjunctionOG extends OGProofProducerTest {
+	public static final class LegalFocusOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new AutomataOwickiGriesConjunction<>(mServices, program, createCsToolkit());
+			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit());
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
-			return new OwickiGriesSettings(OwickiGriesComputation.CONJUNCTION, false, false);
+			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
 		}
 	}
 }
