@@ -96,25 +96,39 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		return initialState.contains(state);
 	}
 
+	/**
+	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
+	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
+	 * successor law must be false.
+	 */
 	@Override
 	public boolean isFinal(final State<L, P> state) {
 		final var successors = internalSuccessors(state);
+		final var succStates = new HashSet<State<L, P>>();
 		for (final OutgoingInternalTransition<Transition<L, P>, State<L, P>> outgoingInternalTransition : successors) {
 			final var succState = outgoingInternalTransition.getSucc();
+			succStates.add(succState);
 			if (state != succState) {
 				return false;
 			}
 		}
 		final var territory = state.territory();
-		final var enabledTransitions = territory.getEnabledTransitions(mNet);
+		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
 		final var acceptingPlaces = mNet.getAcceptingPlaces();
 		if (DataStructureUtils.haveNonEmptyIntersection(territory.getPlaces(), acceptingPlaces)) {
+			if (!SmtUtils.isFalseLiteral(state.law.getFormula())) {
+				return false;
+			}
 			return true;
 		}
-		final var acceptingTransitions = enabledTransitions
-				.filter(t -> DataStructureUtils.haveNonEmptyIntersection(t.getSuccessors(), acceptingPlaces))
-				.collect(Collectors.toSet());
-		return !acceptingTransitions.isEmpty();
+		if (succStates.size() < enabledTransitions.size()) {
+			final var falseSuccessors = enabledTransitions.stream()
+					.anyMatch(t -> SmtUtils.isFalseLiteral(getSuccessorLaw(state.law, t).getFormula()));
+			assert falseSuccessors
+					: "There exists no successor for an enabled transition, but the successor law is not false";
+		}
+		// Check if there is at least one enabled transition, for which state has no successor
+		return succStates.size() < enabledTransitions.size();
 	}
 
 	@Override
