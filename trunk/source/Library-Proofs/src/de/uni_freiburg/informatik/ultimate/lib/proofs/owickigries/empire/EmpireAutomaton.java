@@ -101,8 +101,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
 	 * successor law must be false.
 	 */
-	@Override
-	public boolean isFinal(final State<L, P> state) {
+	public boolean isFinal2(final State<L, P> state) {
 		final var successors = internalSuccessors(state);
 		final var succStates = new HashSet<State<L, P>>();
 		for (final OutgoingInternalTransition<Transition<L, P>, State<L, P>> outgoingInternalTransition : successors) {
@@ -114,21 +113,37 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		}
 		final var territory = state.territory();
 		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
-		final var acceptingPlaces = mNet.getAcceptingPlaces();
-		if (DataStructureUtils.haveNonEmptyIntersection(territory.getPlaces(), acceptingPlaces)) {
-			if (!SmtUtils.isFalseLiteral(state.law.getFormula())) {
-				return false;
-			}
-			return true;
-		}
 		if (succStates.size() < enabledTransitions.size()) {
 			final var falseSuccessors = enabledTransitions.stream()
 					.anyMatch(t -> SmtUtils.isFalseLiteral(getSuccessorLaw(state.law, t).getFormula()));
+			if (!falseSuccessors) {
+				mLogger.debug("Bla");
+			}
 			assert falseSuccessors
 					: "There exists no successor for an enabled transition, but the successor law is not false";
 		}
 		// Check if there is at least one enabled transition, for which state has no successor
 		return succStates.size() < enabledTransitions.size();
+	}
+
+	/**
+	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
+	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
+	 * successor law must be false.
+	 */
+	@Override
+	public boolean isFinal(final State<L, P> state) {
+		final var territory = state.territory();
+		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
+		for (final Transition<L, P> transition : enabledTransitions) {
+			final var succ = internalSuccessors(state, transition);
+			if (!succ.iterator().hasNext()) {
+				final var newLaw = getSuccessorLaw(state.law, transition);
+				assert SmtUtils.isFalseLiteral(newLaw.getFormula()) : "There is no successor, but the law is not false";
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

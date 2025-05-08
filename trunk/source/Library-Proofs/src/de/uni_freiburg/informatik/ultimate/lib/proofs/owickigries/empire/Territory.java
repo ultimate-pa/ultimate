@@ -259,6 +259,17 @@ public final class Territory<PLACE> {
 				.collect(Collectors.toSet());
 	}
 
+	/**
+	 * Get all regions that contain at least one place of places
+	 *
+	 * @param places
+	 * @return Set of regions, that contain a place from places
+	 */
+	public Set<Region<PLACE>> getPlacesRegions(final Set<PLACE> places) {
+		return mTerritory.stream().filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), places))
+				.collect(Collectors.toSet());
+	}
+
 	public boolean containsPlace(final PLACE p) {
 		return getPlaces().contains(p);
 	}

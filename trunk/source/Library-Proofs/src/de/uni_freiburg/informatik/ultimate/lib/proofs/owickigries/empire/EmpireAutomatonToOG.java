@@ -99,7 +99,6 @@ public class EmpireAutomatonToOG<L, P> {
 			throw new ToolchainCanceledException(aoce,
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
 		}
-
 		mStateTerms = getStateTerms();
 		final Map<P, IPredicate> formulaMapping = getFormulaMap();
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
