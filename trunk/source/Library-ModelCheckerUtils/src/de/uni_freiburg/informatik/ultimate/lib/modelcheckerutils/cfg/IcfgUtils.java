@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.util.DfsBookkeeping;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -180,9 +181,9 @@ public class IcfgUtils {
 		int result = 0;
 		while (locIt.hasNext()) {
 			final LOC loc = locIt.next();
-			result += loc.hashCode();
+			result = HashUtils.hashHsieh(result, loc.hashCode());
 			for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-				result += edge.hashCode();
+				result = HashUtils.hashHsieh(result, edge.hashCode());
 			}
 		}
 		return result;
