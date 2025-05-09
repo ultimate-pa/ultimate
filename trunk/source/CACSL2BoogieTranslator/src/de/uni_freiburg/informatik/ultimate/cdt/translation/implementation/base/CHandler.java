@@ -2714,7 +2714,10 @@ public class CHandler {
 		final String loopLabel = hasContinue ? mNameHandler.getGloballyUniqueIdentifier(SFO.LOOPLABEL) : null;
 		final List<Statement> bodyBlock = new ArrayList<>();
 		if (hasContinue) {
-			bodyBlock.add(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
+			// If there is a continue, we need to insert an additional label to jump to.
+			// We insert this label right before the actual loop in order to produce the correct invariant and to check
+			// an existing invariant correctly (if any).
+			resultBuilder.addStatement(BoogieUtils.constuctAuxiliaryLabel(loc, loopLabel));
 		}
 		final ExpressionResult cond = dispatchLoopCondition(main, node.getCondition(), loc);
 		final Expression loopCond;
