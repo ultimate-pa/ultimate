@@ -261,8 +261,12 @@ public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvi
 				createEntry("_fastcall", "__attribute__((__fastcall__))"),
 				createEntry("_stdcall", "__attribute__((__stdcall__))"),
 				createEntry("_thiscall", "__attribute__((__thiscall__))"),
+				// Add a custom macro to handle __builtin_va_arg and va_arg, otherwise we crash already during parsing.
+				// Therefore we don't need to handle these functions at all in our library model.
 				createEntry("__builtin_va_arg(ap,type)", "*((typeof(type) *)((ap += sizeof(type)) - sizeof(type)))"),
 				createEntry("va_arg(ap,type)", "*((typeof(type) *)((ap += sizeof(type)) - sizeof(type)))"),
+				// These are type qualifiers that are not supported by the parser (it would crash).
+				// Therefore, we replace them by custom GCC attributes that can be used in the C translation.
 				createEntry("__thread", "__attribute__((thread))"),
 				createEntry("thread_local", "__attribute__((thread))"),
 				createEntry("_Atomic", "__attribute__((atomic))") };
