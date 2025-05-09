@@ -17,7 +17,6 @@ record Interference<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTra
 	boolean isEqualTo(final Interference<STATE, ACTION, LOC> other) {
 		return disjState().isEqualTo(other.disjState());
 	}
-
 }
 
 public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {

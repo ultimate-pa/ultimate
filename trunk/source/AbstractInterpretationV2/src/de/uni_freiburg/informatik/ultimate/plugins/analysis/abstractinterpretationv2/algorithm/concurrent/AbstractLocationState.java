@@ -78,10 +78,10 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 			return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker);
 		}
 		// TODO: shouldnt need to comment this
-		if (mLocation != other.mLocation) {
-			throw new AssertionError(
-					"You are trying to merge states of different locations. Move the location of one to the correct one.");
-		}
+//		if (mLocation != other.mLocation) {
+//			throw new AssertionError(
+//					"You are trying to merge states of different locations. Move the location of one to the correct one.");
+//		}
 		return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker.union(other.getTracker()));
 	}
 
@@ -139,21 +139,12 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 			return false;
 		}
 		final AbstractLocationState<?> other = (AbstractLocationState<?>) o;
-		if (!Objects.equals(mLocation, other.mLocation)) {
-			return false;
-		}
-		if (mAbstractLocation != other.mAbstractLocation) {
-			return false;
-		}
 		return Objects.equals(mLocationTracker, other.mLocationTracker);
 	}
 
 	@Override
 	public int hashCode() {
-		int result = Objects.hashCode(mLocation);
-		result = result + Integer.hashCode(mAbstractLocation);
-		result = result + Objects.hashCode(mLocationTracker);
-		return result;
+		return Objects.hashCode(mLocationTracker);
 	}
 
 }

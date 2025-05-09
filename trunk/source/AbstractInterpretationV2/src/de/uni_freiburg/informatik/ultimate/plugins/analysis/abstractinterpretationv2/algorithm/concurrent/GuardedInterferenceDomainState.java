@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
@@ -242,6 +243,28 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	public String toLogString() {
 		return "STATE:" + state().toString() + " | COUNTER:" + threadCounter().toString() + " | LOCATIONS:"
 				+ abstractLocationState().toString();
+	}
+
+	@Override
+	public int hashCode() {
+		// TODO: state hashcode
+		return Objects.hash(mAbstractLocationState, mThreadCounter);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
+			return false;
+		}
+
+		final GuardedInterferenceDomainState<?, ?, ?> other = (GuardedInterferenceDomainState<?, ?, ?>) obj;
+
+		return Objects.equals(mAbstractLocationState, other.mAbstractLocationState)
+				&& Objects.equals(mThreadCounter, other.mThreadCounter)
+				&& (mState == null ? other.mState == null : mState.isEqualTo((STATE) other.mState));
 	}
 
 }

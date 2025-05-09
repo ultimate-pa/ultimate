@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread;
 
 public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private final ILogger mLogger;
@@ -45,14 +44,16 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		if (possibleInterferenceSet.isEmpty()) {
 			return result;
 		}
-		final Set<InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = InterferenceUtils
-				.getValidInterferences(possibleInterferenceSet, ownerThread, mInterferences, result);
+		final var allInterferences = InterferenceUtils.getValidInterferences(possibleInterferenceSet, ownerThread,
+				mInterferences, result);
 		final var mSimple = new SimpleInterferenceApplier<>(mLogger, mAbstractLocationMap, allInterferences, mMaxItf,
 				mGuardedInterferenceDomain, mMaxParallelStates);
-		final var disjSet = mSimple.applyFixpoint(Set.of(result), ownerThread);
-		// TODO: do we have to ?
-		return DisjunctiveAbstractState
-				.createDisjunction(disjSet.stream().flatMap(s -> s.getStates().stream()).toList(), mMaxParallelStates);
+		final int method = 0;
+		return switch (method) {
+		case 0 -> mSimple.applyFixpointSingle(Set.of(result), ownerThread);
+		case 1 -> mSimple.applyFixpoint(Set.of(result), ownerThread);
+		default -> mSimple.applyFixpointDisj(Set.of(result), ownerThread);
+		};
 	}
 
 }
