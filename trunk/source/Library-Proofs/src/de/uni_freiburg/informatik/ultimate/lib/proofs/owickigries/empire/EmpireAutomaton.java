@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -195,8 +196,20 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		return List.of(new OutgoingInternalTransition<>(letter, maxMarkedSuccessor));
 	}
 
-	public record State<L, P>(Territory<P> territory, IPredicate law, Set<Region<P>> bystanders) {
-		// empty body
+	// TODO use ImmutableSet for bystanders
+	public record State<L, P>(Territory<P> territory, IPredicate law, Set<Region<P>> bystanders, int hash) {
+		// Convenience constructor that computes the correct hash code. Always use this constructor.
+		public State(final Territory<P> territory, final IPredicate law, final Set<Region<P>> bystanders) {
+			this(territory, law, bystanders, Objects.hash(territory, law, bystanders));
+		}
+
+		@Override
+		public int hashCode() {
+			// Hash code is cached for performance.
+			// TODO This caching is brittle, as accidental constructor misuse can lead to incorrect hash codes.
+			// TODO Re-evaluate the impact other implementation details have been improved, and improve or remove it.
+			return hash;
+		}
 	}
 
 	private State<L, P> extendAll(final State<L, P> state, final Set<Transition<L, P>> transitions) {
