@@ -137,6 +137,14 @@ public final class SimplificationUtils {
 		return Substitution.apply(mgdScript, substitutionMapping, term);
 	}
 
+	/**
+	 * Try to apply a select-over-store simplification. Use the context in which we consider the current formula to
+	 * infer whether indices are similar or distinct.
+	 *
+	 * TODO 20250510 Matthias: Could be extended to cases where we have select-over-store in indices or values. Could be
+	 * extended to store-over-store.
+	 *
+	 */
 	public static Term tryArraySimplification(final ManagedScript mgdScript, final ValidityCheck validityCheck,
 			final Term term) {
 		final List<MultiDimensionalSelectOverNestedStore> list =

@@ -79,6 +79,10 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * Try to simplify modulo terms.
 	 */
 	private static final boolean APPLY_MODULO_SIMPLIFICATION = true;
+	/**
+	 * Try to apply a select-over-store simplification.
+	 */
+	private static final boolean APPLY_ARRAY_SIMPLIFICATION = true;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
@@ -132,6 +136,10 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		}
 		if (APPLY_MODULO_SIMPLIFICATION) {
 			result = SimplificationUtils.tryModSimplification(mMgdScript,
+					x -> isValidInContext(mMgdScript.getScript(), context, x), result);
+		}
+		if (APPLY_ARRAY_SIMPLIFICATION) {
+			result = SimplificationUtils.tryArraySimplification(mMgdScript,
 					x -> isValidInContext(mMgdScript.getScript(), context, x), result);
 		}
 		return new TermContextTransformationEngine.FinalResultForAscend(result);
