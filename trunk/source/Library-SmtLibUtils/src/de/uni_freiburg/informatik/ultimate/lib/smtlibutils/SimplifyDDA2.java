@@ -476,7 +476,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		Term preprocessedTerm = term;
 		if (PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION) {
 			if (APPLY_CONSTANT_FOLDING) {
-				throw new AssertionError("PolyPac Simplefication Already Implements Constant Folding");
+				throw new AssertionError("PolyPac Simplification Already Implements Constant Folding");
 			}
 			preprocessedTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context, term);
 		} else if (APPLY_CONSTANT_FOLDING) {
