@@ -44,13 +44,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            The type of places in the Petri program
  */
-
 public final class Territory<PLACE> {
-
 	/**
 	 * Set of regions in Territory.
 	 */
 	private final ImmutableSet<Region<PLACE>> mTerritory;
+
+	// Cached set of places in the territory. This is computed on-demand in #getPlaces().
+	private Set<PLACE> mPlaces;
 
 	/**
 	 * Data structure which contains the different Regions of a Territory.
@@ -84,7 +85,10 @@ public final class Territory<PLACE> {
 	 * @return Set of all places in Territory.
 	 */
 	public Set<PLACE> getPlaces() {
-		return mTerritory.stream().flatMap(r -> r.getPlaces().stream()).collect(Collectors.toSet());
+		if (mPlaces == null) {
+			mPlaces = mTerritory.stream().flatMap(r -> r.getPlaces().stream()).collect(Collectors.toUnmodifiableSet());
+		}
+		return mPlaces;
 	}
 
 	/**

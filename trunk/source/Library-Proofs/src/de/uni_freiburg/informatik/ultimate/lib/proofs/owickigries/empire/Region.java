@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
+import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
@@ -42,10 +43,12 @@ public final class Region<PLACE> {
 	 */
 
 	private final ImmutableSet<PLACE> mRegion;
+	private final LazyInt mHash;
 
 	public Region(final ImmutableSet<PLACE> region) {
 		assert !region.isEmpty() : "Region is empty";
 		mRegion = region;
+		mHash = new LazyInt(region::hashCode);
 	}
 
 	public boolean contains(final PLACE place) {
@@ -63,22 +66,16 @@ public final class Region<PLACE> {
 		return mRegion.size();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Region<PLACE> other = (Region<PLACE>) obj;
-		return mRegion.equals(other.getPlaces());
+		return obj == this || (obj instanceof final Region<?> other && mRegion.equals(other.getPlaces()));
 	}
 
 	@Override
 	public int hashCode() {
-		return mRegion.hashCode();
+		// Hash code is cached for performance reasons. Regions are almost always used in sets (typically, HashSets)
+		// such as territories, and each hash code computation requires an iteration over the set of places.
+		return mHash.get();
 	}
 
 	@Override
