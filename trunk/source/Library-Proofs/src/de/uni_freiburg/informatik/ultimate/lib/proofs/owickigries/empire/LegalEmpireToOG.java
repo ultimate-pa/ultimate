@@ -99,9 +99,12 @@ public class LegalEmpireToOG<L, P> {
 		newSymbolTable.add(mGhostVariable);
 		mFactory = new BasicPredicateFactory(services, mManagedScript, newSymbolTable);
 
+		final var logger = services.getLoggingService().getLogger(getClass());
 		try {
+			logger.info("Exploring product empire...");
 			mProductAutomaton =
 					new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empireProduct);
+			logger.info("Product empire has %s", mProductAutomaton.sizeInformation());
 		} catch (final AutomataOperationCanceledException aoce) {
 			throw new ToolchainCanceledException(aoce,
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));

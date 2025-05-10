@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
 	private final IUltimateServiceProvider mServices;
@@ -106,17 +107,33 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
 				mProgram.getPlaces(), mDiff2OriginalTransition);
 
+		final Set<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> empireAutomata;
 		mStatistics.startEmpireComputation();
-		final var empireAutomata = getEmpireAutomata();
-		final var legalFocus = new LegalFocus<>(empireAutomata, mProgram);
-		final var listStateEmpires = convertEmpires(empireAutomata);
-		constructProduct(listStateEmpires);
-		mStatistics.stopEmpireComputation();
+		try {
+			empireAutomata = getEmpireAutomata();
+			final var listStateEmpires = convertEmpires(empireAutomata);
+			constructProduct(listStateEmpires);
+		} finally {
+			mStatistics.stopEmpireComputation();
+		}
+
+		final LegalFocus<L, P> legalFocus;
+		mStatistics.startFocusComputation();
+		try {
+			mLogger.info("Computing focus for %d empire automata", empireAutomata.size());
+			legalFocus = new LegalFocus<>(empireAutomata, mProgram);
+		} finally {
+			mStatistics.stopFocusComputation();
+		}
 
 		mStatistics.startOwickiGriesComputation();
-		final var annotationConstruction = getOwickiGriesAnnotation(possibleInterferences, legalFocus);
-		mOwickiGries = annotationConstruction.getAnnotation();
-		mStatistics.stopOwickiGriesComputation();
+		try {
+			final var annotationConstruction = getOwickiGriesAnnotation(possibleInterferences, legalFocus);
+			mOwickiGries = annotationConstruction.getAnnotation();
+		} finally {
+			mStatistics.stopOwickiGriesComputation();
+		}
+
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 		return mOwickiGries;
 	}
@@ -143,10 +160,12 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 				.collect(Collectors.toSet());
 		final var automata = new HashSet<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>>();
 		for (final EmpireAutomaton<L, P> empireAutomaton : lazyAutomata) {
+			mLogger.info("Exploring empire automaton...");
 			try {
 				final var automaton = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
 						empireAutomaton);
 				automata.add(automaton);
+				mLogger.info("Explored empire automaton has %s", automaton.sizeInformation());
 			} catch (final AutomataOperationCanceledException aoce) {
 				throw new ToolchainCanceledException(aoce,
 						new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
@@ -238,12 +257,23 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	}
 
 	private static final class Statistics extends OwickiGriesStatistics {
+		private final TimeTracker mFocusTimer = new TimeTracker();
+
 		public Statistics(final ILogger logger) {
 			super(logger, EmpireComputation.class, EmpireToOwickiGries.class);
+			declareTimeTracker("Focus computation time", mFocusTimer);
 		}
 
 		public void reportEmpire(final IStatisticsDataProvider statistics) {
 			reportEmpireStatistics(statistics, null);
+		}
+
+		private void startFocusComputation() {
+			mFocusTimer.start();
+		}
+
+		private void stopFocusComputation() {
+			mFocusTimer.stop();
 		}
 	}
 
