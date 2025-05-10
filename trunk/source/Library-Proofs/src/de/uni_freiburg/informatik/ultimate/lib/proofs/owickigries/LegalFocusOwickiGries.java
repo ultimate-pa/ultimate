@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireT
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalEmpireToOG;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -56,6 +57,8 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	private final IIcfgSymbolTable mSymbolTable;
 	private final Set<String> mProcedures;
 	private final ModifiableGlobalsTable mModifiableGlobals;
+	private final boolean mUseTrivialFocus;
+
 	private BranchingProcess<L, P> mRefinedUnfolding;
 
 	private final Statistics mStatistics;
@@ -67,14 +70,14 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	private INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, List<State<L, P>>> mProduct = null;
 
 	public LegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit) {
+			final CfgSmtToolkit csToolkit, final boolean useTrivialLegalFocus) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable());
+				csToolkit.getModifiableGlobalsTable(), useTrivialLegalFocus);
 	}
 
 	public LegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals) {
+			final ModifiableGlobalsTable modifiableGlobals, final boolean useTrivialLegalFocus) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mProgram = program;
@@ -84,6 +87,7 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 		mModifiableGlobals = modifiableGlobals;
 		mUnionFactory = new UnionFactory<>();
 		mStatistics = new Statistics(mLogger);
+		mUseTrivialFocus = useTrivialLegalFocus;
 	}
 
 	@Override
@@ -121,7 +125,8 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 		mStatistics.startFocusComputation();
 		try {
 			mLogger.info("Computing focus for %d empire automata", empireAutomata.size());
-			legalFocus = new LegalFocus<>(empireAutomata, mProgram);
+			legalFocus =
+					mUseTrivialFocus ? new TrivialLegalFocus<>(mProgram) : new LegalFocus<>(empireAutomata, mProgram);
 		} finally {
 			mStatistics.stopFocusComputation();
 		}
@@ -249,6 +254,24 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 			final LegalFocus<L, P> legalFocus) {
 		return new LegalEmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures, mProduct, legalFocus,
 				possibleInterferences);
+	}
+
+	// Extending the LegalFocus class like this is a hack.
+	// TODO Refactor focus so that different implementations of some common interface can be passed to this class.
+	private static final class TrivialLegalFocus<L, P> extends LegalFocus<L, P> {
+		public TrivialLegalFocus(final IPetriNet<L, P> net) {
+			super(Set.of(), net);
+		}
+
+		@Override
+		public Set<Region<P>> getLegalFocus(final State<L, P> state) {
+			return state.territory().getRegions();
+		}
+
+		@Override
+		public boolean isFocused(final P place, final State<L, P> state) {
+			return state.territory().containsPlace(place);
+		}
 	}
 
 	@Override

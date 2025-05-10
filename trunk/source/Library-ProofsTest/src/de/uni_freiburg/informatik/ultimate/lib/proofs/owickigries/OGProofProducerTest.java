@@ -141,11 +141,24 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		}
 	}
 
+	public static final class SeparateEmpiresOG extends OGProofProducerTest {
+		@Override
+		protected IPetriNetProofProducer<SimpleAction, IPredicate>
+				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
+			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), true);
+		}
+
+		@Override
+		protected OwickiGriesSettings getSettings() {
+			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
+		}
+	}
+
 	public static final class LegalFocusOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit());
+			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), false);
 		}
 
 		@Override
