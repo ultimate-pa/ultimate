@@ -112,10 +112,10 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 
 
 	private static final String[] mUltimateRepository = {
-	//	"examples/programs/regression",
+		"examples/programs/regression",
 	//	"examples/programs/quantifier/regression",
 //		"examples/programs/recursive/regression",
-		"examples/programs/toy",
+	//	"examples/programs/toy",
 //		"examples/programs/20170304-DifficultPathPrograms",
 	};
 
@@ -129,7 +129,7 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] mSettingsBoogie = {
 //		"automizer/ForwardPredicatesBtorTest.epf",
-		"automizer/ForwardPredicatesBtorTestInlining.epf",
+		"automizer/ForwardPredicatesBtorTestInliningNoRemoveTrue.epf",
 //		"automizer/BackwardPredicates.epf",
 	};
 
@@ -147,7 +147,7 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 10 * 1000;
+		return 100 * 1000;
 	}
 
 	private static final String[] mBoogieToolchains = {

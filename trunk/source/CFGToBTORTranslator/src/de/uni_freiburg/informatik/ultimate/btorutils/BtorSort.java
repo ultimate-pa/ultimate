@@ -3,31 +3,35 @@ package de.uni_freiburg.informatik.ultimate.btorutils;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 public class BtorSort {
-	int size;
-	public BtorSort keySort;
-	public BtorSort valueSort;
+	int size; // if > 0, number of bits. if = 0, represents an array sort
+	public BtorSort keySort; // null if bitvector, otherwise is the sort of the key of the array
+	public BtorSort valueSort; // null if bitvector, otherwise is the sort of the value of the array
 
+	// constructor for a bitvector sort
 	public BtorSort(final int size) {
 		this.size = size;
 		keySort = null;
 		valueSort = null;
 	}
 
+	// constructor for an array sort
 	public BtorSort(final BtorSort keySort, final BtorSort valueSort) {
 		size = 0;
-		this.keySort = null;
-		this.valueSort = null;
+		this.keySort = keySort;
+		this.valueSort = valueSort;
 	}
 
+	// constructor that takes an SMT sort and creates the corresponding btor sort
 	public BtorSort(final Sort sort) {
 		if (sort.getName() == "Int") {
+			// assume integers are 64 bit
 			size = 64;
 		} else if (sort.getName() == "Bool") {
 			size = 1;
 		} else if (sort.getName() == "BitVec") {
 			size = Integer.parseInt(sort.getIndices()[0]);
 		} else if (sort.getName() == "Array") {
-
+			// combine sizes of all array dimensions
 			Sort[] vargs = sort.getArguments();
 			int i = new BtorSort(vargs[0]).size;
 			while (vargs[1].getName() == "Array") {
@@ -52,6 +56,7 @@ public class BtorSort {
 
 	}
 
+	// check for deep equality
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null) {
@@ -63,14 +68,15 @@ public class BtorSort {
 		final BtorSort other = (BtorSort) obj;
 		if (keySort == null) {
 			if (other.keySort == null) {
-				return size == other.size;
+				return size == other.size; // both sorts are bitvectors, so check if sizes are the same
 			}
-			return false;
+			return false; // we are a bitvector, the other is not, therefore the sorts cannot be equal
 		}
 		if (other.keySort != null) {
+			// both sorts are arrays, so check if the keysort and valuesort sorts are equal
 			return keySort.equals(other.keySort) && valueSort.equals(other.valueSort);
 		}
-		return false;
+		return false; // we are an array, the other is not, therefore the sorts cannot be equal
 	}
 
 	public boolean isArray() {

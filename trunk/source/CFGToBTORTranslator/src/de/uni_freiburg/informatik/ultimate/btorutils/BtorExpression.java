@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BtorExpression {
 	private final BtorSort sort;
@@ -23,6 +25,7 @@ public class BtorExpression {
 		stateName = "";
 	}
 
+	// btor expression for constants
 	public BtorExpression(final BtorSort sort, final long constant) {
 		this.sort = sort;
 		type = BtorExpressionType.CONSTD;
@@ -31,6 +34,7 @@ public class BtorExpression {
 		stateName = "";
 	}
 
+	//
 	public BtorExpression(final BtorSort sort, final BtorExpressionType type) {
 		this.sort = sort;
 		this.type = type;
@@ -110,6 +114,17 @@ public class BtorExpression {
 		}
 		this.nid = nid;
 		return true;
+	}
+
+	public Set<BtorSort> getRequiredBtorSorts() {
+		final Set<BtorSort> sorts = new HashSet<>();
+		sorts.add(sort);
+		if (!children.isEmpty()) {
+			for (final BtorExpression child : children) {
+				sorts.addAll(child.getRequiredBtorSorts());
+			}
+		}
+		return sorts;
 	}
 
 	public int dumpExpression(int currentLine, final OutputStreamWriter writer,
