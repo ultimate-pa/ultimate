@@ -1220,6 +1220,27 @@ public class SimplificationTest {
 	}
 
 	@Test
+	public void simplifyMod01PolyPac() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z", "c"), };
+		final String formulaAsString =
+				"(and (= x (mod (+ (mod y 23) (mod z 256) c) 737)) (>= y 1) (<= y 20) (>= z 5) (<= z 255) (<= c 200) (>= c 13))";
+		final String expectedResultAsString =
+				"(and (<= 13 c) (<= c 200) (<= 1 y) (<= y 20) (= x (+ c y z)) (<= 5 z) (<= z 255))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void simplifyMod02() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "x", "y", "z", "c"), };
+		final String formulaAsString =
+				"(and (= x (mod (+ (mod y 23) (mod z 256) c) 737)) (>= y 1) (<= y 20) (>= z 5) (<= z 255))";
+		final String expectedResultAsString = "(and (<= 1 y) (<= y 20) (<= 5 z) (= x (mod (+ c y z) 737)) (<= z 255))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.SIMPLIFY_DDA2,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
 	public void selectOverStore01() {
 		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"),
 				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
