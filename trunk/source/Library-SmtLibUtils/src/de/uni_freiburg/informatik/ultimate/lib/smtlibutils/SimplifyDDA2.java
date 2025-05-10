@@ -326,6 +326,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Term subTerm : subTerms) {
 			ModTerm modTerm = ModTerm.of(subTerm);
+			final Term originalDivident = modTerm.getDivident();
 			{
 				// Check if we can apply the simplification recursively
 				final Term divident = modTerm.getDivident();
@@ -344,6 +345,8 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			final LBool modIsSuperfluous = Util.checkSat(mMgdScript.getScript(), notInRange);
 			if (modIsSuperfluous == LBool.UNSAT) {
 				substitutionMapping.put(subTerm, modTerm.getDivident());
+			} else if (originalDivident != modTerm.getDivident()) {
+				substitutionMapping.put(originalDivident, modTerm.getDivident());
 			}
 		}
 		if (!substitutionMapping.isEmpty()) {
