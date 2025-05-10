@@ -68,6 +68,9 @@ public class ThreadInstanceCounter {
 	public ThreadInstanceCounter intersect(final ThreadInstanceCounter other) {
 		final Map<String, Integer> newThreadMap = new HashMap<>();
 		for (final String thread : mThreadNameSet) {
+			if (getThreadInstances().get(thread) != other.getThreadInstances().get(thread)) {
+				return null;
+			}
 			newThreadMap.put(thread,
 					Math.min(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
 		}

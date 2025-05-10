@@ -16,7 +16,8 @@ public class InterferenceApplier {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjunctiveAbstractState,
 			final ACTION action,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> statesThatCanBeInterferedbyItf,
-			final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> postOp) {
+			final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> postOp,
+			final int maxSize) {
 
 		// Add variables to both states to be able to intersect
 		var interferingState = disjunctiveAbstractState;
@@ -35,12 +36,16 @@ public class InterferenceApplier {
 			interferingState = interferingState.addVariables(missingLocals);
 		}
 		final var intersectionState = stateState.intersect(interferingState);
-		if (intersectionState.isBottom()) {
+		final var filtered = DisjunctiveAbstractState.createDisjunction(intersectionState.getStates().stream()
+				.filter(s -> s != null && s.threadCounter() != null && s.abstractLocationState() != null)
+				.collect(Collectors.toSet()), maxSize);
+
+		if (filtered.getStates().size() == 0 || filtered.isBottom()) {
 			return null;
 		}
 		// postop
 		final var realLocation = GuardedStateTransformer.getAbstractLocationUnion(disjunctiveAbstractState).getLoc();
-		final var postStateBroken = intersectionState.apply(postOp, action);
+		final var postStateBroken = filtered.apply(postOp, action);
 		// SET TO ORIGINAL LOCATION (apply moves the state as if it is now the location of target state of itf trans
 		var postState = GuardedStateTransformer.copyToNewStateLocation(realLocation, postStateBroken);
 		// TODO: sound?
@@ -77,7 +82,7 @@ public class InterferenceApplier {
 			interferingState = interferingState.addVariables(missingLocals);
 		}
 		final var intersectionState = stateState.intersect(interferingState);
-		if (intersectionState.isBottom()) {
+		if (intersectionState == null || intersectionState.isBottom()) {
 			return null;
 		}
 		// postop

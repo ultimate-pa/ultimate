@@ -25,6 +25,8 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final IIcfg<? extends LOC> mIcfg;
 	private final Set<IProgramNonOldVar> mGlobals;
 	private final IUltimateServiceProvider mServices;
+	private boolean mMutexReached;
+	private String mLastThreadString;
 
 	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
@@ -32,9 +34,31 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		mIcfg = icfg;
 		mGlobals = mIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals();
 		mServices = services;
+		mMutexReached = false;
 	}
 
 	public AbstractLocationMap<LOC> computeLocationAbstraction() {
+		mMutexReached = false;
+		mLastThreadString = "Ultimate.start";
+		final AbstractLocationMap<LOC> x = new AbstractLocationMap<>(l -> {
+			if (!l.getProcedure().equals(mLastThreadString)) {
+				mLastThreadString = l.getProcedure();
+				mMutexReached = false;
+			}
+			final var outgoing = l.getOutgoingEdges();
+			final String sourceThread = l.getProcedure();
+			if (shouldDifferentiate(outgoing) && !mMutexReached) {
+				mMutexReached = true;
+				return getAndIncrementThreadLocationCounter(sourceThread);
+			} else if (!mMutexReached) {
+				return getAndIncrementThreadLocationCounter(sourceThread);
+			}
+			return getThreadLocationCounter(sourceThread);
+		}, mIcfg.getProcedureEntryNodes());
+		return x;
+	}
+
+	public AbstractLocationMap<LOC> computeMine() {
 		final AbstractLocationMap<LOC> x = new AbstractLocationMap<>(l -> {
 			final var outgoing = l.getOutgoingEdges();
 			final String sourceThread = l.getProcedure();

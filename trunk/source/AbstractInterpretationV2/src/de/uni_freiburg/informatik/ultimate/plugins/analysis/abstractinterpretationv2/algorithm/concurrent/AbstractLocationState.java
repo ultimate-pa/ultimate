@@ -86,8 +86,11 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 	}
 
 	public AbstractLocationState<LOC> intersect(final AbstractLocationState<LOC> other) {
-		return new AbstractLocationState<>(mLocation, mAbstractLocationMap,
-				mLocationTracker.intersect(other.getTracker()));
+		final var trackIntersection = mLocationTracker.intersect(other.getTracker());
+		if (trackIntersection == null) {
+			return null;
+		}
+		return new AbstractLocationState<>(mLocation, mAbstractLocationMap, trackIntersection);
 	}
 
 	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocationInt,

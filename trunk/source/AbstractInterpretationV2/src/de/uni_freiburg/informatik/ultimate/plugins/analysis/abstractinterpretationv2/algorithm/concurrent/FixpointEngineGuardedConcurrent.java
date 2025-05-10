@@ -62,11 +62,11 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			throw new IllegalArgumentException("invalid params");
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
-		mMaxParallelStates = params.getMaxParallelStates();
+//		mMaxParallelStates = params.getMaxParallelStates();
 		mUnderlyingDomain = params.getAbstractDomain();
 		mLogger = params.getLogger();
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mMaxInterferenceFixpointUnwindings = 90;
+		mMaxInterferenceFixpointUnwindings = 5;
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mIfcg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>(mEntryLocs);
@@ -74,6 +74,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				.computeLocationAbstraction(locationAbstraction, services, icfg);
 		mLocationAbstraction = absMap;
 		// TODO: not sure this is sound
+		mMaxParallelStates = absMap.maximumOfAll();
+//		mMaxParallelStates = 200;
+//		params.setMaxParallelStates(200);
+//		mMaxParallelStates = params.getMaxParallelStates();
 		mDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings,
 				new AbstractInterferenceState<>(icfg.getCfgSmtToolkit().getProcedures()));
@@ -138,6 +142,11 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			if (fixpointReached) {
 				mPrinter.printResults(mLogger, mIteration, resultSet, mEntryLocs, mDomain.getAbstractLocationMap(),
 						script);
+				mLogger.warn("maxStates used: " + mMaxParallelStates);
+				for (final String thread : mEntryLocs.keySet()) {
+					mLogger.warn("thread: " + thread + "maxother: "
+							+ mLocationAbstraction.maxParallelOtherLocationsOf(thread));
+				}
 				break;
 			}
 			interferences = newMaybeWidened;

@@ -51,7 +51,19 @@ public class AbstractLocationGlobalTracker {
 
 	public AbstractLocationGlobalTracker intersect(final AbstractLocationGlobalTracker other) {
 		final var newMap = new HashMap<>(mThreadLocationMap);
-		other.threadLocationMap().forEach((key, value) -> newMap.merge(key, value, DataStructureUtils::intersection));
+		for (final var entry : other.threadLocationMap().entrySet()) {
+			final var key = entry.getKey();
+			final var otherValue = entry.getValue();
+			final var thisValue = mThreadLocationMap.get(key);
+			if (thisValue == null) {
+				return null;
+			}
+			final var intersection = DataStructureUtils.intersection(thisValue, otherValue);
+			if (intersection == null) {
+				return null;
+			}
+			newMap.put(key, intersection);
+		}
 		return new AbstractLocationGlobalTracker(newMap);
 	}
 

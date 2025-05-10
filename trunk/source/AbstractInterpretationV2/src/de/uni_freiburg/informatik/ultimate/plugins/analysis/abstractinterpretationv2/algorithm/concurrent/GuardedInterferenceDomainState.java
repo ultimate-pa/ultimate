@@ -161,9 +161,10 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	@Override
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> intersect(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-		return new GuardedInterferenceDomainState<>(mState.intersect(other.state()),
-				mThreadCounter.intersect(other.threadCounter()),
-				mAbstractLocationState.intersect(other.abstractLocationState()));
+		final var counterIntersection = mThreadCounter.intersect(other.threadCounter());
+		final var locationIntersection = mAbstractLocationState.intersect(other.abstractLocationState());
+		return new GuardedInterferenceDomainState<>(mState.intersect(other.state()), counterIntersection,
+				locationIntersection);
 	}
 
 	@Override
@@ -212,6 +213,11 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	public SubsetResult isSubsetOf(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
 		if (mState.isBottom() && other.mState.isBottom()) {
 			return SubsetResult.EQUAL;
+		}
+		// TODO: sound?
+		if (threadCounter() == null || abstractLocationState() == null || other == null || other.threadCounter() == null
+				|| other.abstractLocationState() == null) {
+			return SubsetResult.NONE;
 		}
 		// TODO: maybe be less strict
 		final SubsetResult stateResult = state().isSubsetOf(other.state());
