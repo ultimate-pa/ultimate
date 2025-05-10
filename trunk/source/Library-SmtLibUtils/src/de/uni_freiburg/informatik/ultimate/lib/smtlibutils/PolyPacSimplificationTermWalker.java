@@ -28,9 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -39,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.CondisDepthCodeGenerator.CondisDepthCode;
@@ -81,7 +78,7 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	/**
 	 * Try to simplify modulo terms.
 	 */
-	private static final boolean MOD_SIMPLIFICATION = true;
+	private static final boolean APPLY_MODULO_SIMPLIFICATION = true;
 
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
@@ -131,9 +128,9 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		}
 		Term result = term;
 		if (APPLY_CONSTANT_FOLDING) {
-			result = applyConstantFolding(mMgdScript, context, result);
+			result = SimplificationUtils.applyConstantFolding(mMgdScript, context, result);
 		}
-		if (MOD_SIMPLIFICATION) {
+		if (APPLY_MODULO_SIMPLIFICATION) {
 			result = SimplificationUtils.tryModSimplification(mMgdScript,
 					x -> isValidInContext(mMgdScript.getScript(), context, x), result);
 		}
@@ -151,39 +148,6 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else {
 			return LBool.UNKNOWN;
 		}
-	}
-
-	/**
-	 * Use equalities of the form `x=l` (where x is a constant symbol or variable and l is a number) to substitute all
-	 * occurrences of x by the number l.
-	 *
-	 * @param context
-	 *            Term that we check for equalities. This term is not added to the result. E.g., in the
-	 *            {@link PolyPacSimplificationTermWalker} this is the critical constraint.
-	 * @param term
-	 *            Term in which we apply the substitution.
-	 */
-	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
-				continue;
-			}
-			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
-			if (polyRel != null) {
-				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mgdScript.getScript());
-				if (sbr != null) {
-					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
-				}
-			}
-		}
-		final Term result;
-		if (!substitutionMapping.isEmpty()) {
-			result = Substitution.apply(mgdScript, substitutionMapping, term);
-		} else {
-			result = term;
-		}
-		return result;
 	}
 
 	@Override

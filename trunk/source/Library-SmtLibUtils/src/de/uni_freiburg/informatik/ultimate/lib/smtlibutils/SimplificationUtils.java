@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -45,6 +47,36 @@ public final class SimplificationUtils {
 
 	private SimplificationUtils() {
 		// Prevent instantiation of this utility class
+	}
+
+	/**
+	 * Use equalities of the form `x=l` (where x is a constant symbol or variable and l is a number) to substitute all
+	 * occurrences of x by the number l.
+	 *
+	 * @param context
+	 *            Term that we check for equalities. This term is not added to the result. E.g., in the
+	 *            {@link PolyPacSimplificationTermWalker} this is the critical constraint.
+	 * @param term
+	 *            Term in which we apply the substitution.
+	 */
+	public static Term applyConstantFolding(final ManagedScript mgdScript, final Term context, final Term term) {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
+			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
+				continue;
+			}
+			final PolynomialRelation polyRel = PolynomialRelation.of(mgdScript.getScript(), conjunct);
+			if (polyRel != null) {
+				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mgdScript.getScript());
+				if (sbr != null) {
+					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
+				}
+			}
+		}
+		if (substitutionMapping.isEmpty()) {
+			return term;
+		}
+		return Substitution.apply(mgdScript, substitutionMapping, term);
 	}
 
 	@FunctionalInterface

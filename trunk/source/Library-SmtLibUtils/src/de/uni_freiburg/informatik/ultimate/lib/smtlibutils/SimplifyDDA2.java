@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransforma
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
@@ -105,7 +104,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	/**
 	 * Try to simplify modulo terms.
 	 */
-	private static final boolean MOD_SIMPLIFICATION = true;
+	private static final boolean APPLY_MOD_SIMPLIFICATION = true;
 	/**
 	 * Try to apply a select-over-store simplification.
 	 */
@@ -299,7 +298,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			}
 		}
 		Term termBasedSimplification = term;
-		if (MOD_SIMPLIFICATION) {
+		if (APPLY_MOD_SIMPLIFICATION) {
 			termBasedSimplification = SimplificationUtils.tryModSimplification(mMgdScript, this::checkValidity, term);
 		}
 		if (ARRAY_SIMPLIFICATION) {
@@ -414,27 +413,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				|| (CHECKED_NODES == CheckedNodes.ONLY_LEAVES && isLeaf(term)));
 	}
 
-	private Term doConstantFolding(final Term context, final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
-				continue;
-			}
-			final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
-			if (polyRel != null) {
-				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
-				if (sbr != null) {
-					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
-				}
-			}
-		}
-		if (!substitutionMapping.isEmpty()) {
-			final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
-			return renamed;
-		}
-		return term;
-	}
-
 	/**
 	 * Simplifies the formula based on if we want to preprocess it with PolyPac simplification or constant folding.
 	 * Constant folding is already applied in the PolyPac simplification.
@@ -448,7 +426,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 			}
 			preprocessedTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context, term);
 		} else if (APPLY_CONSTANT_FOLDING) {
-			preprocessedTerm = doConstantFolding(context, term);
+			preprocessedTerm = SimplificationUtils.applyConstantFolding(mMgdScript, context, term);
 		} else {
 			preprocessedTerm = term;
 		}
