@@ -82,7 +82,7 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 		mSymbolTable = symbolTable;
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
-		mUnionFactory = new UnionFactory();
+		mUnionFactory = new UnionFactory<>();
 		mStatistics = new Statistics(mLogger);
 	}
 
