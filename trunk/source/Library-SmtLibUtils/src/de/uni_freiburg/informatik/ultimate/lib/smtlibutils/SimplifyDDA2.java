@@ -46,9 +46,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
@@ -108,7 +105,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	/**
 	 * Try to apply a select-over-store simplification.
 	 */
-	private static final boolean ARRAY_SIMPLIFICATION = true;
+	private static final boolean APPLY_ARRAY_SIMPLIFICATION = true;
 
 	/**
 	 * Options for which nodes to check for redundancy. To check redundancy, we check if the critical constraint at the
@@ -297,18 +294,15 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				return new TermContextTransformationEngine.FinalResultForAscend(result);
 			}
 		}
-		Term termBasedSimplification = term;
+		Term tmp = term;
 		if (APPLY_MOD_SIMPLIFICATION) {
-			termBasedSimplification = SimplificationUtils.tryModSimplification(mMgdScript, this::checkValidity, term);
+			tmp = SimplificationUtils.tryModSimplification(mMgdScript, this::checkValidity, tmp);
 		}
-		if (ARRAY_SIMPLIFICATION) {
-			final Term arraySimplificationResult = tryArraySimplification(termBasedSimplification);
-			if (arraySimplificationResult != null) {
-				termBasedSimplification = arraySimplificationResult;
-			}
+		if (APPLY_ARRAY_SIMPLIFICATION) {
+			tmp = SimplificationUtils.tryArraySimplification(mMgdScript, this::checkValidity, tmp);
 		}
-		if (termBasedSimplification != term) {
-			return new TermContextTransformationEngine.FinalResultForAscend(termBasedSimplification);
+		if (tmp != term) {
+			return new TermContextTransformationEngine.FinalResultForAscend(tmp);
 		}
 		return null;
 	}
@@ -321,42 +315,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final Term conjunction = SmtUtils.and(mMgdScript.getScript(), terms);
 		final Term negated = SmtUtils.not(mMgdScript.getScript(), conjunction);
 		return Util.checkSat(mMgdScript.getScript(), negated);
-	}
-
-	private Term tryArraySimplification(final Term term) {
-		final List<MultiDimensionalSelectOverNestedStore> list =
-				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverNestedStore(term, true);
-		if (list.isEmpty()) {
-			return null;
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final MultiDimensionalSelectOverNestedStore mdsons : list) {
-			if (mdsons.getNestedStore().getValues().size() != 1) {
-				continue;
-			}
-			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
-			final ArrayIndex selectIndex = mdsons.getSelectIndex();
-			final Term idxEquivalence =
-					ArrayIndex.constructIndexEquality(mMgdScript.getScript(), storeIndex, selectIndex);
-			final LBool idxEquivalent =
-					Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), idxEquivalence));
-			if (idxEquivalent == LBool.UNSAT) {
-				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()),
-						mdsons.getNestedStore().getValues().get(0));
-				continue;
-			}
-			final LBool idxNotEquivalent = Util.checkSat(mMgdScript.getScript(), idxEquivalence);
-			if (idxNotEquivalent == LBool.UNSAT) {
-				final MultiDimensionalSelect mds =
-						new MultiDimensionalSelect(mdsons.getNestedStore().getArray(), mdsons.getSelectIndex());
-				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()), mds.toTerm(mMgdScript.getScript()));
-			}
-		}
-		if (!substitutionMapping.isEmpty()) {
-			return Substitution.apply(mMgdScript, substitutionMapping, term);
-		} else {
-			return null;
-		}
 	}
 
 	/**

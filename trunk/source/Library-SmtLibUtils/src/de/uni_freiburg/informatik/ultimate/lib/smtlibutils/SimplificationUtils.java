@@ -28,9 +28,13 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolynomialRelation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -131,6 +135,42 @@ public final class SimplificationUtils {
 			return term;
 		}
 		return Substitution.apply(mgdScript, substitutionMapping, term);
+	}
+
+	public static Term tryArraySimplification(final ManagedScript mgdScript, final ValidityCheck validityCheck,
+			final Term term) {
+		final List<MultiDimensionalSelectOverNestedStore> list =
+				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverNestedStore(term, true);
+		if (list.isEmpty()) {
+			return term;
+		}
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final MultiDimensionalSelectOverNestedStore mdsons : list) {
+			if (mdsons.getNestedStore().getValues().size() != 1) {
+				continue;
+			}
+			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
+			final ArrayIndex selectIndex = mdsons.getSelectIndex();
+			final Term idxEquivalence =
+					ArrayIndex.constructIndexEquality(mgdScript.getScript(), storeIndex, selectIndex);
+			final LBool idxEquivalent = validityCheck.isValid(idxEquivalence);
+			if (idxEquivalent == LBool.UNSAT) {
+				substitutionMapping.put(mdsons.toTerm(mgdScript.getScript()),
+						mdsons.getNestedStore().getValues().get(0));
+				continue;
+			}
+			final LBool idxNotEquivalent = validityCheck.isValid(SmtUtils.not(mgdScript.getScript(), idxEquivalence));
+			if (idxNotEquivalent == LBool.UNSAT) {
+				final MultiDimensionalSelect mds =
+						new MultiDimensionalSelect(mdsons.getNestedStore().getArray(), mdsons.getSelectIndex());
+				substitutionMapping.put(mdsons.toTerm(mgdScript.getScript()), mds.toTerm(mgdScript.getScript()));
+			}
+		}
+		if (substitutionMapping.isEmpty()) {
+			return term;
+		}
+		return Substitution.apply(mgdScript, substitutionMapping, term);
+
 	}
 
 }
