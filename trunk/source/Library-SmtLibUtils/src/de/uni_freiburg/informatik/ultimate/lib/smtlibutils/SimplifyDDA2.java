@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -301,10 +300,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		}
 		Term termBasedSimplification = term;
 		if (MOD_SIMPLIFICATION) {
-			final Term modSimplificationResult = tryModSimplification(term);
-			if (modSimplificationResult != null) {
-				termBasedSimplification = modSimplificationResult;
-			}
+			termBasedSimplification = SimplificationUtils.tryModSimplification(mMgdScript, this::checkValidity, term);
 		}
 		if (ARRAY_SIMPLIFICATION) {
 			final Term arraySimplificationResult = tryArraySimplification(termBasedSimplification);
@@ -318,42 +314,14 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		return null;
 	}
 
-	private Term tryModSimplification(final Term term) {
-		final Set<ApplicationTerm> subTerms = SmtUtils.extractApplicationTerms("mod", term, true);
-		if (subTerms.isEmpty()) {
-			return null;
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Term subTerm : subTerms) {
-			ModTerm modTerm = ModTerm.of(subTerm);
-			final Term originalDivident = modTerm.getDivident();
-			{
-				// Check if we can apply the simplification recursively
-				final Term divident = modTerm.getDivident();
-				final Term tmp = tryModSimplification(divident);
-				if (tmp != null) {
-					modTerm = new ModTerm(tmp, modTerm.getDivisor());
-				}
-			}
-			final Term dividentGeq0 =
-					SmtUtils.geq(mMgdScript.getScript(), modTerm.getDivident(), SmtUtils.constructIntegerValue(
-							mMgdScript.getScript(), SmtSortUtils.getIntSort(mMgdScript), BigInteger.ZERO));
-			final Term dividentSmallerDivisor =
-					SmtUtils.less(mMgdScript.getScript(), modTerm.getDivident(), modTerm.getDivisor());
-			final Term inRange = SmtUtils.and(mMgdScript.getScript(), dividentGeq0, dividentSmallerDivisor);
-			final Term notInRange = SmtUtils.not(mMgdScript.getScript(), inRange);
-			final LBool modIsSuperfluous = Util.checkSat(mMgdScript.getScript(), notInRange);
-			if (modIsSuperfluous == LBool.UNSAT) {
-				substitutionMapping.put(subTerm, modTerm.getDivident());
-			} else if (originalDivident != modTerm.getDivident()) {
-				substitutionMapping.put(originalDivident, modTerm.getDivident());
-			}
-		}
-		if (!substitutionMapping.isEmpty()) {
-			return Substitution.apply(mMgdScript, substitutionMapping, term);
-		} else {
-			return null;
-		}
+	/**
+	 * Our implementation of SimplificationUtils.ValidityCheck#isValid. In our setting, the current context is already
+	 * on the solvers assertion stack and we only check if the negation of the conjunction of terms is unsatisfiable.
+	 */
+	private LBool checkValidity(final Term... terms) {
+		final Term conjunction = SmtUtils.and(mMgdScript.getScript(), terms);
+		final Term negated = SmtUtils.not(mMgdScript.getScript(), conjunction);
+		return Util.checkSat(mMgdScript.getScript(), negated);
 	}
 
 	private Term tryArraySimplification(final Term term) {
