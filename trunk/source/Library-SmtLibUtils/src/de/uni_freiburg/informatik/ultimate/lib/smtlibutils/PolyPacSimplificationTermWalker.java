@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.Context.Cc
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -76,6 +77,12 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 	 * (E.g., a {@link TermVariable}, a constant symbol (0-ary function symbol), a select term `(select a k)`.)
 	 */
 	private static final boolean APPLY_CONSTANT_FOLDING = true;
+
+	/**
+	 * Try to simplify modulo terms.
+	 */
+	private static final boolean MOD_SIMPLIFICATION = true;
+
 	private static final boolean DEBUG_CHECK_RESULT = false;
 
 	private PolyPacSimplificationTermWalker(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
@@ -122,13 +129,28 @@ public class PolyPacSimplificationTermWalker extends TermWalker<Term> {
 		} else if (term instanceof QuantifiedFormula) {
 			return new TermContextTransformationEngine.IntermediateResultForDescend(term);
 		}
+		Term result = term;
 		if (APPLY_CONSTANT_FOLDING) {
-			final Term tmp = applyConstantFolding(mMgdScript, context, term);
-			if (tmp != term) {
-				return new TermContextTransformationEngine.FinalResultForAscend(tmp);
-			}
+			result = applyConstantFolding(mMgdScript, context, result);
 		}
-		return new TermContextTransformationEngine.FinalResultForAscend(term);
+		if (MOD_SIMPLIFICATION) {
+			result = SimplificationUtils.tryModSimplification(mMgdScript,
+					x -> isValidInContext(mMgdScript.getScript(), context, x), result);
+		}
+		return new TermContextTransformationEngine.FinalResultForAscend(result);
+	}
+
+	/**
+	 * Check if the conjunction of the terms is valid in the given context. (Resp. check if the context implies each of
+	 * the terms.) This check uses the PolyPoNeUtils and is very fast but incomplete.
+	 */
+	private static LBool isValidInContext(final Script script, final Term context, final Term... terms) {
+		final Term simplifiedConjunction = PolyPoNeUtils.and(script, context, Arrays.asList(terms));
+		if (SmtUtils.isTrueLiteral(simplifiedConjunction)) {
+			return LBool.UNSAT;
+		} else {
+			return LBool.UNKNOWN;
+		}
 	}
 
 	/**
