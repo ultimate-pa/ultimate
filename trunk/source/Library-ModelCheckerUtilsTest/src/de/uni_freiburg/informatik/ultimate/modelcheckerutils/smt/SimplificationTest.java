@@ -1260,6 +1260,26 @@ public class SimplificationTest {
 				mServices, mLogger, mMgdScript, mCsvWriter);
 	}
 
+	@Test
+	public void selectOverStore01PolyPac() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= z (select (store a k 100) i)) (= i k))";
+		final String expectedResultAsString = "(and (= i k) (= z 100))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
+	@Test
+	public void selectOverStore02PolyPac() {
+		final FunDecl[] funDecls = { new FunDecl(SmtSortUtils::getIntSort, "i", "k", "z"),
+				new FunDecl(QuantifierEliminationTest::getArrayIntIntSort, "a"), };
+		final String formulaAsString = "(and (= z (select (store a k 100) i)) (distinct i k))";
+		final String expectedResultAsString = "(and (= z (select a i)) (not (= i k)))";
+		runSimplificationTest(funDecls, formulaAsString, expectedResultAsString, SimplificationTechnique.POLY_PAC,
+				mServices, mLogger, mMgdScript, mCsvWriter);
+	}
+
 	static void runSimplificationTest(final FunDecl[] funDecls, final String eliminationInputAsString,
 			final String expectedResultAsString, final SimplificationTechnique simplificationTechnique,
 			final IUltimateServiceProvider services, final ILogger logger, final ManagedScript mgdScript,
