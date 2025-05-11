@@ -152,6 +152,7 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	private void addToProduct(final INestedWordAutomaton<Transition<L, P>, List<State<L, P>>> automaton) {
 		if (mProduct == null) {
 			mProduct = automaton;
+			return;
 		}
 		try {
 			mProduct = new UnionNwa<>(mProduct, automaton, mUnionFactory, false);
