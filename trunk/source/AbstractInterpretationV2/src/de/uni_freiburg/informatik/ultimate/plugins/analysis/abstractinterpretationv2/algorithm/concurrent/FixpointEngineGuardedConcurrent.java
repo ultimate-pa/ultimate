@@ -53,36 +53,37 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final AbstractLocationMap<LOC> mLocationAbstraction;
 	private final LocationAbstraction<LOC> mLocationAbstractionCalculator;
 	private final InterferenceWideningOperator<UNDERLYINGSTATE, ACTION, LOC> mInterferenceWideningOperator;
+	private final ThreadModularAbsintPrefs mThreadModPrefs;
 
 	public FixpointEngineGuardedConcurrent(final IUltimateServiceProvider services,
 			final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
 			final IFixpointEngineFactory<UNDERLYINGSTATE, ACTION, VARDECL, LOC> factory,
-			final IIcfg<? extends LOC> icfg, final String locationAbstraction) {
+			final IIcfg<? extends LOC> icfg, final ThreadModularAbsintPrefs threadModPrefs) {
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
 		mMaxUnwindings = params.getMaxUnwindings();
-//		mMaxParallelStates = params.getMaxParallelStates();
 		mUnderlyingDomain = params.getAbstractDomain();
 		mLogger = params.getLogger();
 		mEntryLocs = icfg.getProcedureEntryNodes();
-		mMaxInterferenceFixpointUnwindings = 5;
+		mThreadModPrefs = threadModPrefs;
+		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
+		SimpleInterferenceApplier.mReductionMethod = threadModPrefs.locationReduction();
+		SimpleInterferenceApplier.mReiterateOverStates = threadModPrefs.reiterate();
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mIfcg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>(mEntryLocs);
 		final AbstractLocationMap<LOC> absMap = mLocationAbstractionCalculator
-				.computeLocationAbstraction(locationAbstraction, services, icfg);
+				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
-		// TODO: not sure this is sound
-		mMaxParallelStates = absMap.maximumOfAll();
-//		mMaxParallelStates = 200;
-//		params.setMaxParallelStates(200);
-//		mMaxParallelStates = params.getMaxParallelStates();
+		if (absMap.maximumOfAll() > 16) {
+			mMaxParallelStates = 1;
+		} else {
+			mMaxParallelStates = Math.min(absMap.maximumOfAll(), threadModPrefs.maxStates());
+		}
 		mDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings,
 				new AbstractInterferenceState<>(icfg.getCfgSmtToolkit().getProcedures()));
-//		mParams = (FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) params
-//				.setDomain((IAbstractDomain<UNDERLYINGSTATE, ACTION>) mDomain).setMaxUnwindings(2);
 		mParams = (FixpointEngineParameters<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) params
 				.setDomain((IAbstractDomain<UNDERLYINGSTATE, ACTION>) mDomain);
 		mTransitionProvider = mParams.getTransitionProvider();
@@ -93,7 +94,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mAnalyzer = new ConcurrentIcfgAnalyzer<>(icfg);
 		mPrinter = new FixpointPrintHelper<>(mMaxUnwindings, mMaxInterferenceFixpointUnwindings, mMaxParallelStates,
 				mLogger);
-		mLocationAbstractionType = locationAbstraction;
+		mLocationAbstractionType = threadModPrefs.locationAbstraction();
 		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mDomain.getWideningOperator());
 	}
 
@@ -188,7 +189,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeNewInterferences() {
 		final var newInterferences = InterferenceCreator.computeInterferences(mEntryLocs, mIfcg, mStateStorage,
-				mTransitionProvider, mMaxParallelStates, mLocationAbstraction, mLocationAbstractionCalculator);
+				mTransitionProvider, mMaxParallelStates, mLocationAbstraction, mLocationAbstractionCalculator,
+				mThreadModPrefs.interferencePrestatePrecision());
 		return newInterferences;
 	}
 

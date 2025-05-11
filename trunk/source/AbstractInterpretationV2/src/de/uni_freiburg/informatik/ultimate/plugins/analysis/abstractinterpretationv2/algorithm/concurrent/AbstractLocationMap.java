@@ -16,6 +16,7 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 	private final Map<String, ? extends LOC> mEntryLocs;
 	// say we are thread 1, how many combinations of lcoations can thread 2 and thread 3 be in ?
 	// assuming both have 2 abstract locations each -> 2*2 combinations
+	// TOOD: just a heuristic upper limit(?) atm, make precise. (Need deterministic state reduction then too though)
 	final Map<String, Integer> mLocationCountMap = new HashMap<>();
 	private final Map<String, Integer> mMaxParallelLocationStates;
 
@@ -50,6 +51,9 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 	public int maximumOfAll() {
 		int max = 0;
 		for (final String thread : mEntryLocs.keySet()) {
+			if (thread.equals("ULTIMATE.start")) {
+				continue;
+			}
 			max = Math.max(max, maxParallelOtherLocationsOf(thread));
 		}
 		return max;
@@ -79,7 +83,9 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 				}
 			}
 			// threadcounter
-//			maxCombinations = maxCombinations * mEntryLocs.size() - 1;
+			if (maxCombinations > 1) {
+				maxCombinations = maxCombinations * mEntryLocs.size() - 1;
+			}
 			mMaxParallelLocationStates.put(thread, maxCombinations);
 		}
 	}

@@ -48,12 +48,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				mInterferences, result);
 		final var mSimple = new SimpleInterferenceApplier<>(mLogger, mAbstractLocationMap, allInterferences, mMaxItf,
 				mGuardedInterferenceDomain, mMaxParallelStates);
-		final int method = 0;
-		return switch (method) {
-		case 0 -> mSimple.applyFixpointSingle(Set.of(result), ownerThread);
-		case 1 -> mSimple.applyFixpoint(Set.of(result), ownerThread);
-		default -> mSimple.applyFixpointDisj(Set.of(result), ownerThread);
-		};
+		return mSimple.applyFixpointSingle(Set.of(result), ownerThread);
 	}
 
 }

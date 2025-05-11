@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineGuardedConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.ThreadModularAbsintPrefs;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
@@ -118,8 +119,7 @@ public final class AbstractInterpreter {
 			if (method == "Old") {
 				return new FixpointEngineConcurrent<>(params, FixpointEngine::new, root);
 			} else if (method == "New") {
-				final String selectedLocationAbstraction = prefs
-						.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
+				final ThreadModularAbsintPrefs threadModPrefs = getThreadModPrefs(prefs);
 				@SuppressWarnings("unchecked")
 				final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> factory = (
 						final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> p) -> new FixpointEngine<>(
@@ -128,13 +128,25 @@ public final class AbstractInterpreter {
 				@SuppressWarnings("unchecked")
 				final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine = new FixpointEngineGuardedConcurrent<>(
 						services, (FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
-						selectedLocationAbstraction);
+						threadModPrefs);
 				return engine;
 
 			}
 		}
 
 		return new FixpointEngine<>(params);
+	}
+
+	private static ThreadModularAbsintPrefs getThreadModPrefs(final IPreferenceProvider prefs) {
+		final var method = prefs.getString(AbsIntPrefInitializer.LABEL_THREAD_MODULAR_METHOD);
+		final var locationAbstraction = prefs.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
+		final var interferencePrestates = prefs.getString(AbsIntPrefInitializer.LABEL_PRECISE_INTERFERENCE_PRESTATES);
+		final var locationReduction = prefs.getString(AbsIntPrefInitializer.LABEL_LOCATION_REDUCTION);
+		final var reiterate = prefs.getBoolean(AbsIntPrefInitializer.LABEL_REITERATE_OVER_STATES);
+		final var maxStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_PARALLEL_STATES_CONC);
+		final var maxItf = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_ITF_RECURSION_DEPTH);
+		return new ThreadModularAbsintPrefs(method, locationAbstraction, interferencePrestates, locationReduction,
+				reiterate, maxStates, maxItf);
 	}
 
 	/**

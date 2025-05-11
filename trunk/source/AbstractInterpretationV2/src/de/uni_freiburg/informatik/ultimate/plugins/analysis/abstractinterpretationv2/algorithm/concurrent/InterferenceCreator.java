@@ -20,10 +20,15 @@ public class InterferenceCreator {
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
 			final ITransitionProvider<ACTION, LOC> mTransitionProvider, final int maxSize,
 			final AbstractLocationMap<LOC> mLocationAbstraction,
-			final LocationAbstraction<LOC> locationAbstractionCalculator) {
+			final LocationAbstraction<LOC> locationAbstractionCalculator, final String precision) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
 		// Seems to not make much difference in state amount actually
-		final boolean precise = true;
+		final boolean precise;
+		if (precision.equals("Unioned")) {
+			precise = false;
+		} else {
+			precise = true;
+		}
 		final var unionOp = new GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC>();
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
