@@ -70,19 +70,22 @@ public class LegalFocus<L, P> {
 
 	private Set<Region<P>> getFocusedRegions(final State<L, P> predecessor, final Set<Region<P>> successorFocus,
 			final Transition<L, P> transition) {
-		final var focused = new HashSet<Region<P>>();
 		final var territory = predecessor.territory();
 		final var bystanders = territory.getBystanders(transition);
 		final var focusedBystanders = DataStructureUtils.intersection(bystanders, successorFocus);
 		if (successorFocus.size() == focusedBystanders.size()) {
 			return focusedBystanders;
 		}
+
 		final var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
-		final var minRegion = mayRegions.stream().min(Comparator.comparingInt(r -> r.getPlaces().size())).orElse(null);
-		if (minRegion != null) {
-			focused.add(minRegion);
-		}
-		focused.addAll(focusedBystanders);
+		assert !mayRegions.isEmpty() : "territory enables transition but has no predecessor regions";
+
+		// TODO Check if any regions in mayRegions are already focused; if so, choose one of those.
+		final var minRegion = mayRegions.stream().min(Comparator.comparingInt(Region::size));
+		assert minRegion.isPresent() : "could not find best predecessor region";
+
+		final var focused = new HashSet<>(focusedBystanders);
+		focused.add(minRegion.orElseThrow());
 		return focused;
 	}
 
