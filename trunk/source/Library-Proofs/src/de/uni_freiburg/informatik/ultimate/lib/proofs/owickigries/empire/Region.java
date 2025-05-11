@@ -29,39 +29,66 @@ import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Class represents a Region which is a sets of places. Region is an Immutable class.
+ * Represents a <em>region</em>, which is a set of places of a Petri net.
  *
+ * A region typically (though it is not strictly necessary) represents a block of places connected by transitions.
+ * Intuitively, we think of a region as a (connected) segment of the control flow of a single thread.
+ *
+ * Therefore, regions should satisfy the invariant that any two places in the region cannot occur together in a
+ * reachable marking of the Petri net.
+ *
+ * This class is immutable.
+ *
+ * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
  * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <PLACE>
  *            The type of places in the Petri program
  */
 public final class Region<PLACE> {
-
-	/**
-	 * The set of places in Region.
-	 */
-
 	private final ImmutableSet<PLACE> mRegion;
 	private final LazyInt mHash;
 
+	/**
+	 * Creates a new region.
+	 *
+	 * NOTE: The constructor does not check the invariants that should be satisfied by regions (see above). Checking
+	 * these would be prohibitively expensive. Thus, it is the caller's responsibility to only call this constructor
+	 * with places satisfying these invariants.
+	 *
+	 * @param region
+	 *            the set of places constituting the region
+	 */
 	public Region(final ImmutableSet<PLACE> region) {
 		assert !region.isEmpty() : "Region is empty";
 		mRegion = region;
 		mHash = new LazyInt(region::hashCode);
 	}
 
+	/**
+	 * Checks if a given place is in this region
+	 *
+	 * @param place
+	 *            the place to check
+	 * @return {@code true} if the given place is in this region, {@code false} otherwise
+	 */
 	public boolean contains(final PLACE place) {
 		return mRegion.contains(place);
 	}
 
 	/**
-	 * @return set of all places in region.
+	 * @return the set of all places in region
 	 */
 	public ImmutableSet<PLACE> getPlaces() {
 		return mRegion;
 	}
 
+	/**
+	 * Determines the size of this region.
+	 *
+	 * @return the number of places
+	 */
 	public int size() {
 		return mRegion.size();
 	}

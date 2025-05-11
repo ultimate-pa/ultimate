@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -228,8 +227,8 @@ public class LegalEmpireToOG<L, P> {
 		final var stateToPlaces = new HashRelation<List<State<L, P>>, P>();
 		final var states = mProductAutomaton.getStates();
 		for (final List<State<L, P>> list : states) {
-			final var intersection = list.stream().map(s -> s.territory().getPlaces())
-					.reduce((BinaryOperator<Set<P>>) DataStructureUtils::intersection);
+			final var intersection =
+					list.stream().<Set<P>> map(s -> s.territory().getPlaces()).reduce(DataStructureUtils::intersection);
 			final var interOrEmpty = intersection.orElseGet(Set::of);
 			stateToPlaces.addAllPairs(list, interOrEmpty);
 		}

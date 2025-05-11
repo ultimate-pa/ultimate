@@ -37,30 +37,85 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 /**
- * Class represents a Territory which is a set of Regions. Territory is Immutable.
+ * A <em>territory</em> consists of several {@link Region}s, and represents a collection of reachable markings of a
+ * Petri net.
+ *
+ * Territories should satisfy the invariants that any two places in different regions of the territory are co-related,
+ * and that any marking in the territory's treaty (see {@link #getTreaty()}) is a reachable marking.
+ *
+ * This class is immutable.
  *
  * @author Miriam Lagunes (miriam.lagunes@students.uni-freiburg.de)
+ * @author Matthias Zumkeller (zumkellm@informatik.uni-freiburg.de)
+ * @author Dominik Klumpp (klumpp@informatik.uni-freiburg.de)
  *
  * @param <PLACE>
- *            The type of places in the Petri program
+ *            The type of places in the Petri net
  */
 public final class Territory<PLACE> {
-	/**
-	 * Set of regions in Territory.
-	 */
-	private final ImmutableSet<Region<PLACE>> mTerritory;
+	private final ImmutableSet<Region<PLACE>> mRegions;
 
 	// Cached set of places in the territory. This is computed on-demand in #getPlaces().
-	private Set<PLACE> mPlaces;
+	private ImmutableSet<PLACE> mPlaces;
 
 	/**
-	 * Data structure which contains the different Regions of a Territory.
+	 * Creates a new territory.
+	 *
+	 * NOTE: The constructor does not check the invariants that should be satisfied by territories (see above). Checking
+	 * these would be prohibitively expensive. Thus, it is the caller's responsibility to only call this constructor
+	 * with regions satisfying these invariants.
 	 *
 	 * @param regions
-	 *            Set of regions for which a Territory should be created.
+	 *            the set of regions constituting the territory
 	 */
 	public Territory(final ImmutableSet<Region<PLACE>> regions) {
-		mTerritory = regions;
+		assert !regions.isEmpty() : "cannot create an empty territory";
+		mRegions = regions;
+	}
+
+	/**
+	 * @return the regions constituting this territory
+	 */
+	public ImmutableSet<Region<PLACE>> getRegions() {
+		return mRegions;
+	}
+
+	/**
+	 * @return the set of all places in this territory, which corresponds to the union of its regions.
+	 */
+	public ImmutableSet<PLACE> getPlaces() {
+		if (mPlaces == null) {
+			mPlaces = mRegions.stream().flatMap(r -> r.getPlaces().stream()).collect(ImmutableSet.collector());
+		}
+		return mPlaces;
+	}
+
+	/**
+	 * Determines if this territory contains a given place.
+	 *
+	 * @param place
+	 *            the place to check
+	 * @return {@code true} if one of the regions in this territory contains the place, {@code false} otherwise
+	 */
+	public boolean containsPlace(final PLACE place) {
+		return getPlaces().contains(place);
+	}
+
+	/**
+	 * Calculates the treaty, i.e., the set of all markings represented by this territory.
+	 *
+	 * The markings in the treaty are computed by picking one place per region of the territory.
+	 *
+	 * NOTE: This method is typically be extremely expensive. Except for sanity checks in assertions (which are skipped
+	 * while running in production), calling this method should be avoided whenever possible.
+	 *
+	 * @return the territory's treaty
+	 */
+	public Set<Marking<PLACE>> getTreaty() {
+		final Set<Marking<PLACE>> treatySet = new HashSet<>();
+		final Set<Region<PLACE>> territoryRegions = new HashSet<>(mRegions);
+		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
+		return treatySet;
 	}
 
 	private void getAllMarkings(final Set<Region<PLACE>> remainingTerritory, final Set<PLACE> currentMarking,
@@ -80,40 +135,26 @@ public final class Territory<PLACE> {
 	}
 
 	/**
-	 * Get the union of all places in the Territory's Regions.
+	 * Retrieves the size of the territory.
 	 *
-	 * @return Set of all places in Territory.
+	 * @return the number of regions in the territory
 	 */
-	public Set<PLACE> getPlaces() {
-		if (mPlaces == null) {
-			mPlaces = mTerritory.stream().flatMap(r -> r.getPlaces().stream()).collect(Collectors.toUnmodifiableSet());
-		}
-		return mPlaces;
-	}
-
-	/**
-	 * @return Set of regions in Territory.
-	 */
-	public ImmutableSet<Region<PLACE>> getRegions() {
-		return mTerritory;
-	}
-
-	/**
-	 * Calculate the treaty by creating a set of markings picking one place per region.
-	 *
-	 * @return Treaty of the Territory.
-	 */
-	public Set<Marking<PLACE>> getTreaty() {
-		final Set<Marking<PLACE>> treatySet = new HashSet<>();
-		final Set<Region<PLACE>> territoryRegions = new HashSet<>(mTerritory);
-		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
-		return treatySet;
-	}
-
 	public int size() {
-		return mTerritory.size();
+		return mRegions.size();
 	}
 
+	/**
+	 * Determines whether this territory <em>subsumes</em> a given territory.
+	 *
+	 * One territory subsumes another if the subsuming territory's treaty (see {@link #getTreaty()}) is a superset of
+	 * the subsumed territory's treaty.
+	 *
+	 * NOTE: The implementation of this method does not actually compute the treaty, and should be reasonably efficient.
+	 *
+	 * @param subsumee
+	 *            the territory for which subsumption should be checked
+	 * @return {@code true} if this territory subsumes the given territory, {@code false} otherwise
+	 */
 	public boolean subsumes(final Territory<PLACE> subsumee) {
 		final var bigRegions = new HashSet<>(getRegions());
 		for (final var smallRegion : subsumee.getRegions()) {
@@ -134,6 +175,16 @@ public final class Territory<PLACE> {
 		return true;
 	}
 
+	/**
+	 * Determines whether a given marking is represented by this territory, i.e., whether it is contained in the treaty,
+	 * see {@link #getTreaty()}.
+	 *
+	 * NOTE: The implementation of this method does not actually compute the treaty, and should be reasonably efficient.
+	 *
+	 * @param marking
+	 *            the marking for which membership in the treaty should be checked
+	 * @return {@code true} if this territory's treaty contains the given marking, {@code false} otherwise
+	 */
 	public boolean containsMarking(final Marking<PLACE> marking) {
 		final Set<Region<PLACE>> regions = new HashSet<>(getRegions());
 		if (marking.size() != regions.size()) {
@@ -156,7 +207,16 @@ public final class Territory<PLACE> {
 		return regions.isEmpty();
 	}
 
-	public <L> boolean enables(final Transition<L, PLACE> transition) {
+	/**
+	 * Determines if this territory <em>enables</em> a given transition of a Petri net.
+	 *
+	 * A territory enables a transition if the territory's treating contains any marking that enables the transition.
+	 *
+	 * @param transition
+	 *            the transition for which enabledness is checked
+	 * @return {@code true} if this territory enables the given transition, {@code false} otherwise
+	 */
+	public boolean enables(final Transition<?, PLACE> transition) {
 		final var regions = new HashSet<>(getRegions());
 		final var predecessors = transition.getPredecessors();
 		for (final var place : predecessors) {
@@ -176,38 +236,44 @@ public final class Territory<PLACE> {
 		return true;
 	}
 
-	public <L> boolean enables(final Transition<L, PLACE> transition, final Set<PLACE> assertionPlaces) {
-		final var regions = new HashSet<>(getRegions());
-		final var predecessors = transition.getPredecessors();
-		final var originalPredecessors = DataStructureUtils.difference(predecessors, assertionPlaces);
-		for (final var place : originalPredecessors) {
-			final var it = regions.iterator();
-			boolean found = false;
-			while (!found && it.hasNext()) {
-				final var region = it.next();
-				if (region.contains(place)) {
-					found = true;
-					it.remove();
-				}
-			}
-			if (!found) {
-				return false;
-			}
-		}
-		return true;
+	/**
+	 * Get all transitions of a Petri net that are enabled by this territory.
+	 *
+	 * @see #enables(Transition)
+	 *
+	 * @param <L>
+	 *            The type of labels on the transitions
+	 * @param net
+	 *            A Petri net (containing all places of this territory) whose enabled transitions shall be collected
+	 * @return a stream of all transitions enabled in some marking represented by this territory
+	 */
+	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(final IPetriNet<L, PLACE> net) {
+		return net.getSuccessorTransitionProviders(getPlaces(), getPlaces()).stream()
+				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t));
 	}
 
 	/**
-	 * Check if some other territory is a successor if the territory for a given transition
+	 * Checks if some other territory is a successor of this territory for a given transition.
 	 *
-	 * @param <L>
+	 * A given territory is the successor of this territory, if this territory enables the transition (see
+	 * {@link #enables(Transition)}), and for every region of this territory containing some predecessor place of the
+	 * transition, there exists a region in the given territory containing a successor place of the transition. These
+	 * successor regions must be pairwise distinct (no two successor places may belong to the same region), but they may
+	 * be the same region that (in this territory) contains the predecessor place. In fact, a territory may be its own
+	 * successor (not only for self-loop transitions). All bystander regions of the transition in this territory (see
+	 * {@link #getBystanders(Transition)}) must also be present in the given territory.
+	 *
+	 * The above conditions imply that (but are stronger than) for every marking in this territory's treaty that enables
+	 * the transition, the marking resulting from firing the transition is in the successor territory's treaty.
+	 *
 	 * @param otherTerritory
-	 *            The potential successor territory
+	 *            the potential successor territory
 	 * @param transition
-	 *            Transition that is enabled by the territory
-	 * @return True if otherTerritory is a successor of the territory for transition
+	 *            a transition that is enabled by this territory
+	 * @return {@code true} if {@code otherTerritory} is a successor of this territory for {@code transition},
+	 *         {@code false} otherwise
 	 */
-	public <L> boolean isSuccessor(final Territory<PLACE> otherTerritory, final Transition<L, PLACE> transition) {
+	public boolean isSuccessor(final Territory<PLACE> otherTerritory, final Transition<?, PLACE> transition) {
 		final var bystanders = getBystanders(transition);
 		final var successorPlaces = transition.getSuccessors();
 		if (!otherTerritory.getRegions().containsAll(bystanders)
@@ -231,73 +297,45 @@ public final class Territory<PLACE> {
 	}
 
 	/**
-	 * Get all transitions of a PetriNet that are enabled by the territory.
+	 * Get bystander regions in the territory for a given transition (which is enabled by this territory).
 	 *
-	 * @param <L>
-	 * @param successorProvider
-	 *            Petri Net successor Provider
-	 * @param lawPlace
-	 *            Law place corresponding to the Territory
-	 * @param assertionPlaces
-	 *            Assertion places of the proof automata
-	 * @return
-	 */
-	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(final IPetriNet<L, PLACE> net) {
-		final var mayPlaces = DataStructureUtils.union(getPlaces());
-		return net.getSuccessorTransitionProviders(getPlaces(), mayPlaces).stream()
-				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t));
-	}
-
-	/**
-	 * Get bystanders in the territory for an enabled transition.
+	 * A bystander region is a region of the territory that does not contain any of the transition's predecessor places.
 	 *
-	 * @param <L>
 	 * @param transition
-	 *            Transition enabled by the territory
-	 * @return Set of bystander regions
+	 *            A transition enabled by this territory
+	 * @return the set of bystander regions
 	 */
-	public <L> Set<Region<PLACE>> getBystanders(final Transition<L, PLACE> transition) {
+	public Set<Region<PLACE>> getBystanders(final Transition<?, PLACE> transition) {
 		assert enables(transition) : "Territory does not enable the given transition";
 		final var predecessors = transition.getPredecessors();
-		return mTerritory.stream().filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
+		return mRegions.stream().filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
 				.collect(Collectors.toSet());
 	}
 
 	/**
-	 * Get all regions that contain at least one place of places
+	 * Retrieves all regions that contain at least one place in a given set of places.
 	 *
 	 * @param places
-	 * @return Set of regions, that contain a place from places
+	 *            a set of places
+	 * @return the set of corresponding regions
 	 */
 	public Set<Region<PLACE>> getPlacesRegions(final Set<PLACE> places) {
-		return mTerritory.stream().filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), places))
+		return mRegions.stream().filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), places))
 				.collect(Collectors.toSet());
 	}
 
-	public boolean containsPlace(final PLACE p) {
-		return getPlaces().contains(p);
-	}
-
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null || getClass() != obj.getClass()) {
-			return false;
-		}
-		final Territory<PLACE> other = (Territory<PLACE>) obj;
-		return mTerritory.equals(other.getRegions());
+		return this == obj || (obj instanceof final Territory<?> other && mRegions.equals(other.getRegions()));
 	}
 
 	@Override
 	public int hashCode() {
-		return mTerritory.hashCode();
+		return mRegions.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return mTerritory.toString();
+		return mRegions.toString();
 	}
 }
