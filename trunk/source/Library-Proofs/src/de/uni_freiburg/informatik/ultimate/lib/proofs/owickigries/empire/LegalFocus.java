@@ -97,12 +97,13 @@ public class LegalFocus<L, P> {
 					.filter(t -> !empire.internalSuccessors(state, t).iterator().hasNext()).collect(Collectors.toSet());
 			for (final Transition<L, P> transition : successorlessTransitions) {
 				final var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
-				final var minRegion =
-						mayRegions.stream().min(Comparator.comparingInt(r -> r.getPlaces().size())).orElse(null);
-				if (minRegion != null) {
-					focus.addPair(state, minRegion);
-				}
+				assert !mayRegions.isEmpty() : "territory enables transition but has no predecessor regions";
 
+				// TODO Check if any regions in mayRegions are already focused; if so, choose one of those.
+				final var minRegion = mayRegions.stream().min(Comparator.comparingInt(Region::size));
+				assert minRegion.isPresent() : "could not find best predecessor region";
+
+				focus.addPair(state, minRegion.orElseThrow());
 			}
 		}
 		return focus;
@@ -116,5 +117,4 @@ public class LegalFocus<L, P> {
 		final var legalFocus = getLegalFocus(state);
 		return legalFocus.stream().anyMatch(r -> r.contains(place));
 	}
-
 }
