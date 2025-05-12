@@ -163,11 +163,10 @@ public class OwickiGriesAnnotation<T, P, M extends Iterable<P>> implements IProo
 	}
 
 	public long size() {
-		final DAGSize sizeComputation = new DAGSize();
 		final long initSize = mGhostInitAssignment.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue())));
+				.collect(Collectors.summingLong(x -> new DAGSize().size(x.getValue())));
 		final long formulaSize = mFormulaMapping.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
+				.collect(Collectors.summingLong(x -> new DAGSize().size(x.getValue().getFormula())));
 		final long assignSize = mAssignmentMapping.values().stream().collect(Collectors.summingLong(GhostUpdate::size));
 		return initSize + formulaSize + assignSize;
 	}

@@ -58,9 +58,8 @@ public class ComputeAutomataStatistics<L, P> {
 	 * @return Size of the law as long.
 	 */
 	public final long getLawSize() {
-		final DAGSize sizeComputation = new DAGSize();
 		return mEmpireAutomaton.getStates().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.law().getFormula())));
+				.collect(Collectors.summingLong(x -> new DAGSize().size(x.law().getFormula())));
 	}
 
 	/**

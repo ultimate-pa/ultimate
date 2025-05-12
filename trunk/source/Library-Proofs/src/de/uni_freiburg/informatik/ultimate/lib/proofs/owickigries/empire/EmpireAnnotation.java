@@ -185,8 +185,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @return Size of the law as long.
 	 */
 	public final long getLawSize() {
-		final DAGSize sizeComputation = new DAGSize();
-		return mEmpire.stream().collect(Collectors.summingLong(x -> sizeComputation.size(x.getSecond().getFormula())));
+		return mEmpire.stream().collect(Collectors.summingLong(x -> new DAGSize().size(x.getSecond().getFormula())));
 	}
 
 	/**

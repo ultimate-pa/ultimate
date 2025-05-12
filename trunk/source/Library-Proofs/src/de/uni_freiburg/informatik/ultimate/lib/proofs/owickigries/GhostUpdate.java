@@ -166,8 +166,7 @@ public final class GhostUpdate {
 	 * @return the sum of the DAG sizes of all terms assigned to ghost variables
 	 */
 	public int size() {
-		final DAGSize sizeComputation = new DAGSize();
-		return mUpdates.values().stream().collect(Collectors.summingInt(sizeComputation::size));
+		return mUpdates.values().stream().collect(Collectors.summingInt(t -> new DAGSize().size(t)));
 	}
 
 	@Override

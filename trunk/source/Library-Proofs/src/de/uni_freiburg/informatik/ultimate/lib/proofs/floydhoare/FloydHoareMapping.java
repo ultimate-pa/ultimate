@@ -120,12 +120,11 @@ public class FloydHoareMapping<S> implements IFloydHoareAnnotation<S> {
 	}
 
 	public long size() {
-		final DAGSize sizeComputation = new DAGSize();
 		final long mapSize = mAnnotation.entrySet().stream()
-				.collect(Collectors.summingLong(x -> sizeComputation.size(x.getValue().getFormula())));
+				.collect(Collectors.summingLong(x -> new DAGSize().size(x.getValue().getFormula())));
 		if (mDefaultPredicate == null) {
 			return mapSize;
 		}
-		return mapSize + sizeComputation.size(mDefaultPredicate.getFormula());
+		return mapSize + new DAGSize().size(mDefaultPredicate.getFormula());
 	}
 }
