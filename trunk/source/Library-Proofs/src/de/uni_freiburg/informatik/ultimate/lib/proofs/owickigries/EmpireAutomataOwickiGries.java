@@ -135,10 +135,14 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
+		mLogger.info("Computing Empire automaton...");
 		mStatistics.startEmpireComputation();
-		final var automaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
-		mStatistics.stopEmpireComputation();
-		mLogger.debug("Constructed Empire Automaton");
+		final EmpireAutomaton<L, P> automaton;
+		try {
+			automaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
+		} finally {
+			mStatistics.stopEmpireComputation();
+		}
 
 		assert checkAutomatonValidity(automaton) : "Empire automaton is invalid";
 
@@ -156,6 +160,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private boolean checkAutomatonValidity(final EmpireAutomaton<L, P> automaton) {
+		mLogger.info("Checking validity of Empire automaton...");
 		mStatistics.startEmpireValidity();
 		try {
 			final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
@@ -167,6 +172,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		mLogger.info("Checking validity of Owicki-Gries proof...");
 		mStatistics.startOwickiGriesValidity();
 		try {
 			final var validity =
@@ -193,13 +199,17 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private EmpireAutomatonToOG<L, P> getOwickiGriesAnnotation(final EmpireAutomaton<L, P> empireAutomaton) {
+		mLogger.info("Converting Empire automaton to Owicki-Gries proof...");
 		mStatistics.startOwickiGriesComputation();
-		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-				mProgram.getPlaces(), mDiff2OriginalTransition);
-		final EmpireAutomatonToOG<L, P> empireToOwickiGries = new EmpireAutomatonToOG<>(mServices, mMgdScript, mProgram,
-				mSymbolTable, mProcedures, empireAutomaton, possibleInterferences);
-		mStatistics.stopOwickiGriesComputation();
-		return empireToOwickiGries;
+		try {
+			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
+					mProgram.getPlaces(), mDiff2OriginalTransition);
+			final EmpireAutomatonToOG<L, P> empireToOwickiGries = new EmpireAutomatonToOG<>(mServices, mMgdScript,
+					mProgram, mSymbolTable, mProcedures, empireAutomaton, possibleInterferences);
+			return empireToOwickiGries;
+		} finally {
+			mStatistics.stopOwickiGriesComputation();
+		}
 	}
 
 	@Override

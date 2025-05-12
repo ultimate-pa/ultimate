@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -130,6 +131,10 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	}
 
 	private Validity isInductive(final T transition) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), "checking inductivity of Owicki-Gries proof");
+		}
+
 		final var precondition = getPrecondition(transition);
 		final var postcondition = getPostcondition(transition);
 		final var composedAction = getTransitionSeqAction(transition);
@@ -195,6 +200,10 @@ public abstract class OwickiGriesValidityCheck<T, P> {
 	}
 
 	private Validity isInterferenceFreeForTransition(final P place, final T transition) {
+		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(getClass(), "checking interference-freedom of Owicki-Gries proof");
+		}
+
 		final var annotation = getPlacePredicate(place);
 		final var precondition = getPrecondition(transition);
 		final var conjunction = Arrays.asList(precondition, annotation);

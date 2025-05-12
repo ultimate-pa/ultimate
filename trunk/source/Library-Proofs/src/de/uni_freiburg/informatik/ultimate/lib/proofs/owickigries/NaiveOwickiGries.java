@@ -119,6 +119,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> convertToOwickiGries(
 			final IFloydHoareAnnotation<Marking<P>> floydHoare, final Collection<Marking<P>> reachableMarkings) {
+		mLogger.info("Converting Floyd-Hoare proof to Owicki-Gries proof...");
 		mStatistics.startOwickiGriesComputation();
 		OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation;
 		try {
@@ -135,6 +136,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 	}
 
 	private boolean checkFloydHoareValidity(final IFloydHoareAnnotation<Marking<P>> floydHoare) {
+		mLogger.info("Checking validity of Floyd-Hoare proof...");
 		mStatistics.startFloydHoareValidity();
 		final Validity validity;
 		try {
@@ -152,6 +154,7 @@ public class NaiveOwickiGries<L extends IAction, P> {
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		mLogger.info("Checking validity of Owicki-Gries proof...");
 		mStatistics.startOwickiGriesValidity();
 		try {
 			final var validity =
@@ -207,8 +210,9 @@ public class NaiveOwickiGries<L extends IAction, P> {
 		@Override
 		public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
 			// compute the Floyd-Hoare annotation
-			PetriFloydHoare<L, P> petriFloydHoare;
+			mLogger.info("Computing Floyd-Hoare proof...");
 			mStatistics.startFloydHoareComputation();
+			PetriFloydHoare<L, P> petriFloydHoare;
 			try {
 				petriFloydHoare = new PetriFloydHoare<>(mPredicateFactory, mProgram, mFinalAbstraction,
 						mAssertionPlaceToAssertion, mCoverageRelations, mSettings.useCoveringSimplification());
