@@ -229,9 +229,11 @@ public class LegalEmpireToOG<L, P> {
 		for (final List<State<L, P>> list : states) {
 			final var intersection =
 					list.stream().<Set<P>> map(s -> s.territory().getPlaces()).reduce(DataStructureUtils::intersection);
+			assert intersection.isPresent() : "Places of the state list is empty";
 			final var interOrEmpty = intersection.orElseGet(Set::of);
 			stateToPlaces.addAllPairs(list, interOrEmpty);
 		}
+
 		return stateToPlaces;
 	}
 
