@@ -87,7 +87,7 @@ public final class CrownConstruction<PLACE, LETTER> {
 		mBp = bp;
 		mOrigConds = origConds;
 		mAssertConds = assertConds;
-		mPlacesCoRelation = new PlacesCoRelation<>(bp);
+		mPlacesCoRelation = new PlacesCoRelation<>(services, bp);
 		final Set<Condition<LETTER, PLACE>> singletonConditions = getSingletonConditions();
 		final Set<Condition<LETTER, PLACE>> expansionConditions =
 				DataStructureUtils.difference(mOrigConds, singletonConditions);
@@ -182,15 +182,15 @@ public final class CrownConstruction<PLACE, LETTER> {
 
 	private Set<Rook<PLACE, LETTER>> crownComputation(final Set<Rook<PLACE, LETTER>> colonizedRooks,
 			final Set<Condition<LETTER, PLACE>> expansionConditions) {
-		mLogger.debug("Starting Crown Computation...");
-		mLogger.debug("Starting Colonization...");
+		mLogger.info("Starting Crown Computation...");
+		mLogger.info("Starting Colonization...");
 		final Set<Rook<PLACE, LETTER>> reSet =
 				crownExpansionIterative(colonizedRooks, new ArrayList<>(expansionConditions), true);
 		if (SINGLE_ASSERTION_LAWS) {
 			reSet.removeIf(r -> r.containsNonCut(mBp, mOrigConds));
 			return reSet;
 		}
-		mLogger.debug("Starting Legislation...");
+		mLogger.info("Starting Legislation...");
 		final Set<Rook<PLACE, LETTER>> legislationRooks =
 				crownExpansionIterative(reSet, new ArrayList<>(mAssertConds), false);
 
@@ -250,6 +250,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 		}
 		boolean isMaximal = true;
 		while (!rookQueue.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "expanding crown set");
+			}
+
 			final Rook<PLACE, LETTER> currentRook = rookQueue.poll();
 			if (!seenRooks.add(currentRook)) {
 				continue;
@@ -302,6 +306,10 @@ public final class CrownConstruction<PLACE, LETTER> {
 		final Kindred<PLACE, LETTER> kindred = new Kindred<>(rooks);
 		final List<Rook<PLACE, LETTER>> crownRooks = new ArrayList<>(rooks);
 		for (final Rook<PLACE, LETTER> rook : crownRooks) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "refurbishing crown set");
+			}
+
 			final Set<Marking<PLACE>> kindredMarkings = kindred.getKindredMarkings(rook);
 			if (kindredMarkings.isEmpty()) {
 				continue;

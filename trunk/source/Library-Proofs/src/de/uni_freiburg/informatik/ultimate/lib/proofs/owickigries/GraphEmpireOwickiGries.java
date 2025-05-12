@@ -164,7 +164,7 @@ public class GraphEmpireOwickiGries<L extends IAction, P> implements IPetriNetPr
 	private EmpireComputation<L, P> getEmpireComputation() {
 		mStatistics.startEmpireComputation();
 		try {
-			final var placesCorelation = new PlacesCoRelation<>(mRefinedUnfolding);
+			final var placesCorelation = new PlacesCoRelation<>(mServices, mRefinedUnfolding);
 			final var computation = new EmpireComputation<>(mServices, mProgram, placesCorelation, mProofProduct);
 			mStatistics.reportEmpire(computation);
 			return computation;

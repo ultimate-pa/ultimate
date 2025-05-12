@@ -27,6 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.crown;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public final class PlacesCoRelation<PLACE> {
@@ -40,9 +42,14 @@ public final class PlacesCoRelation<PLACE> {
 	 * @param net
 	 *            Original Petri net.
 	 */
-	public <LETTER> PlacesCoRelation(final BranchingProcess<LETTER, PLACE> bp) {
+	public <LETTER> PlacesCoRelation(final IUltimateServiceProvider services,
+			final BranchingProcess<LETTER, PLACE> bp) {
 		final var coRelation = bp.getCoRelation();
 		for (final var cond : bp.getConditions()) {
+			// TODO consider making this class lazy
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(getClass(), "initializing co-relation between places");
+			}
 			if (cond.getPredecessorEvent().isCutoffEvent()) {
 				continue;
 			}
