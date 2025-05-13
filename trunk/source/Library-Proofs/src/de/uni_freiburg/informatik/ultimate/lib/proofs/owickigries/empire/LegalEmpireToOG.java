@@ -139,6 +139,7 @@ public class LegalEmpireToOG<L, P> {
 		for (final P place : mNet.getPlaces()) {
 			final var states = mStateToPlaces.entrySet().stream().filter(p -> p.getValue().contains(place))
 					.map(Entry::getKey).collect(Collectors.toSet());
+			assert noErrorPlaceInStates(place, states) : "Accepting place in intersection of the states";
 			final var disjuncts = new ArrayList<Term>();
 			for (final List<State<L, P>> stateList : states) {
 				final var conjuncts = new ArrayList<Term>();
@@ -152,6 +153,10 @@ public class LegalEmpireToOG<L, P> {
 			formulaMap.put(place, mFactory.newPredicate(SmtUtils.or(mScript, disjuncts)));
 		}
 		return formulaMap;
+	}
+
+	private boolean noErrorPlaceInStates(final P place, final Set<List<State<L, P>>> states) {
+		return mNet.isAccepting(place) && !states.isEmpty() ? false : true;
 	}
 
 	/**
