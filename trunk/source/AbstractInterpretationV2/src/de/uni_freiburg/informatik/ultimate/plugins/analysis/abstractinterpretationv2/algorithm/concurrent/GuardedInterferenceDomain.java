@@ -23,6 +23,9 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 	int locationCounter = 0;
 	public boolean mWiden = false;
+	public static int postoperatorCalls;
+	public static int totalInnerInterferenceIterations;
+	public static int maxStatesInOneItf;
 
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
 			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf,
@@ -33,6 +36,9 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
 				mUnderlyingDomain.getPostOperator(), this, mAbstractLocationMap, maxItf, maxSize, interferences);
 		mWideningOperator = new GuardedStateWideningOperator<>(underlying);
+		postoperatorCalls = 0;
+		totalInnerInterferenceIterations = 0;
+		maxStatesInOneItf = 0;
 	}
 
 	public AbstractLocationMap<LOC> getAbstractLocationMap() {

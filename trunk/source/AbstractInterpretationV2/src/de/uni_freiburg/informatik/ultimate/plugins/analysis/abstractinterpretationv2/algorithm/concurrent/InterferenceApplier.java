@@ -34,7 +34,20 @@ public class InterferenceApplier {
 		if (!missingLocals.isEmpty()) {
 			interferingState = interferingState.addVariables(missingLocals);
 		}
-		final var intersectionState = stateState.intersect(interferingState);
+		if (stateState.isBottom() || interferingState.isBottom()) {
+			return null;
+		}
+		final var filteredStateState = DisjunctiveAbstractState
+				.createDisjunction(stateState
+						.getStates().stream().filter(s -> !(s.state().isBottom()) && s != null
+								&& s.threadCounter() != null && s.abstractLocationState() != null)
+						.collect(Collectors.toSet()), maxSize);
+		final var filteredInterferingState = DisjunctiveAbstractState
+				.createDisjunction(interferingState
+						.getStates().stream().filter(s -> !(s.state().isBottom()) && s != null
+								&& s.threadCounter() != null && s.abstractLocationState() != null)
+						.collect(Collectors.toSet()), maxSize);
+		final var intersectionState = filteredStateState.intersect(filteredInterferingState);
 		final var filtered = DisjunctiveAbstractState.createDisjunction(intersectionState.getStates().stream()
 				.filter(s -> s != null && s.threadCounter() != null && s.abstractLocationState() != null)
 				.collect(Collectors.toSet()), maxSize);
@@ -45,6 +58,7 @@ public class InterferenceApplier {
 		// postop
 		final var realLocation = GuardedStateTransformer.getAbstractLocationUnion(disjunctiveAbstractState).getLoc();
 		final var postStateBroken = filtered.apply(postOp, action);
+		GuardedInterferenceDomain.postoperatorCalls++;
 		// SET TO ORIGINAL LOCATION (apply moves the state as if it is now the location of target state of itf trans
 		var postState = GuardedStateTransformer.copyToNewStateLocation(realLocation, postStateBroken);
 		// TODO: sound?

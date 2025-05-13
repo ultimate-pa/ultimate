@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -103,6 +102,9 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mDomain.getWideningOperator());
 	}
 
+	private record concStatistics(int postOpCalls, int totalInnerIterations, int maxStatesOneItf) {
+	}
+
 	@Override
 	public AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> run(
 			final Collection<? extends LOC> initialNodes, final Script script) {
@@ -127,18 +129,22 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private void calculateFixpoint(final Script script) {
 		mIteration = 1;
+		var stats = new concStatistics(0, 0, 0);
 		final var reachableErrorLocations = new LinkedHashSet<LOC>();
 		var interferences = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				mIfcg.getCfgSmtToolkit().getProcedures());
 		while (true) {
-			mLogger.error("\n");
-			mLogger.error("Starting thread modular fixpoint engine iteration " + mIteration);
+//			mLogger.info("\n");
+			mLogger.info("Starting thread modular fixpoint engine iteration " + mIteration);
 			// TODO: for debugging, remove later
-			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
+//			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
 				final var fixpointEngine = createNewUnderlyingFixpointEngine(procedure, interferences);
 				final var threadResult = fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
-				resultSet.put(procedure, threadResult);
+				stats = new concStatistics(stats.postOpCalls + GuardedInterferenceDomain.postoperatorCalls,
+						stats.totalInnerIterations + GuardedInterferenceDomain.totalInnerInterferenceIterations,
+						stats.maxStatesOneItf + GuardedInterferenceDomain.maxStatesInOneItf);
+//				resultSet.put(procedure, threadResult);
 				updateStateStorageAndCounterexamples(threadResult, reachableErrorLocations);
 			}
 
@@ -146,17 +152,20 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			final var newMaybeWidened = updateOrWidenInterferences(interferences, newInterferences);
 			final boolean fixpointReached = newMaybeWidened.isSubsetOf(interferences);
 			if (fixpointReached) {
-				mPrinter.printResults(mLogger, mIteration, resultSet, mEntryLocs, mDomain.getAbstractLocationMap(),
-						script);
-				mLogger.warn("maxStates used: " + mMaxParallelStates);
+//				mPrinter.printResults(mLogger, mIteration, resultSet, mEntryLocs, mDomain.getAbstractLocationMap(),
+//						script);
+				mLogger.info("maxStates used: " + mMaxParallelStates);
 				for (final String thread : mEntryLocs.keySet()) {
-					mLogger.warn("thread: " + thread + "maxother: "
+					mLogger.info("thread: " + thread + "maxother: "
 							+ mLocationAbstraction.maxParallelOtherLocationsOf(thread));
 				}
+				mLogger.info("Interference postOp calls:" + stats.postOpCalls());
+				mLogger.info("Total inner interference Iterations:" + stats.totalInnerIterations());
+				mLogger.info("max states explored dduring one ITF fixpoint: " + stats.maxStatesOneItf());
 				break;
 			}
 			interferences = newMaybeWidened;
-			printInterferenceLog(interferences);
+//			printInterferenceLog(interferences);
 			mIteration++;
 		}
 	}

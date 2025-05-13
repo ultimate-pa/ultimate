@@ -54,6 +54,7 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 		while (!worklist.isEmpty()) {
 			final LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> nextWorklist = new LinkedHashSet<>();
 			for (final var interference : mAllInterfs) {
+				GuardedInterferenceDomain.totalInnerInterferenceIterations++;
 				final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferable;
 				// todo: why less precise with just worklist stream ? If we hash it shouldnt matter though
 				if (mReiterateOverStates) {
@@ -84,14 +85,16 @@ public class SimpleInterferenceApplier<STATE extends IAbstractState<STATE>, ACTI
 				}
 			}
 			if (nextWorklist.isEmpty()) {
+				GuardedInterferenceDomain.maxStatesInOneItf = Math.max(GuardedInterferenceDomain.maxStatesInOneItf,
+						result.size());
 				break;
 			}
 			worklist = nextWorklist.stream().map(s -> s.copyToNewStateLocation(baseLoc))
 					.collect(Collectors.toCollection(LinkedHashSet::new));
 			iteration++;
-			if (iteration > 8) {
-				mLogger.warn(iteration);
-			}
+//			if (iteration > 8) {
+//				mLogger.warn(iteration);
+//			}
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
 		if (mReductionMethod.equals("Reduce per location")) {
