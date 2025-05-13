@@ -377,6 +377,9 @@ public class PostProcessor {
 		return decls;
 	}
 
+	// TODO: This function is used to handle the rounding mode. The constants are defined in FenvLibraryModel and the
+	// actual handling of the rounding mode should happen also there, but this was not moved yet (this might also
+	// require some refactoring).
 	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
 		final String functionName = BitvectorTranslation.ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE;
 		final String functionArgumentVariableName = "i";
