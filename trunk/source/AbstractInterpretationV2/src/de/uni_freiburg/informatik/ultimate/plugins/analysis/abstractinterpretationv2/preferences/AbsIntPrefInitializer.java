@@ -83,8 +83,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String[] THREAD_MODULAR_METHOD = { "Old", "New" };
 	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Fully precise", "Split only at Guards",
 			"Mutex Guard and Vars Splitting", "Mutex Guard and Vars Splitting no Cutoff" };
-	public static final Boolean DEF_PRECISE_INTERFERENCE_PRESTATE = false;
 	public static final String[] VALUES_LOCATION_REDUCTION = { "None", "Reduce per location" };
+	public static final Boolean DEF_PRECISE_INTERFERENCE_PRESTATE = false;
 	public static final Boolean DEF_REITERATE_OVER_STATES = false;
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
@@ -104,8 +104,8 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
-	public static final int DEF_MAXSTATES_CONC = 16;
-	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 5;
+	public static final int DEF_MAXSTATES_CONC = 8;
+	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 6;
 
 	public static final String INDENT = "   ";
 	public static final String DINDENT = INDENT + INDENT;

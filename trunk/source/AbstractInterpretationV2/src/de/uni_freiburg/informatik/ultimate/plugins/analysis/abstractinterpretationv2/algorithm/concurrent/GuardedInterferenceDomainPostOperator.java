@@ -28,6 +28,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final GuardedInterferenceApplier<STATE, ACTION, LOC> mItfApplier;
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
+//	private final static Map<Pair<IAbstractState<?>, IIcfgTransition<?>>, Collection<? extends IAbstractState<?>>> mCacheMap = new HashMap<>();
 
 	private final int mMaxParallelStates;
 	private boolean mApplyInterferences = true;
@@ -72,6 +73,9 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 		// 1. normal poststate
 		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
+//		final var states = (Collection<STATE>) mCacheMap.computeIfAbsent(new Pair<>(newState.state(), transition),
+//				x -> mUnderlyingPostOp.apply((STATE) x.getFirst(), (ACTION) x.getSecond()));
+
 		// adjust abstract location according to new location
 		final var guardedStates = states.stream().filter(s -> !s.isBottom())
 				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newState.threadCounter(),

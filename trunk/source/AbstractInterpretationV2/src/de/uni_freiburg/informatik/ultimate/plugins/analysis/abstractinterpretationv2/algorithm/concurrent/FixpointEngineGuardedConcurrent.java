@@ -54,6 +54,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 	private final LocationAbstraction<LOC> mLocationAbstractionCalculator;
 	private final InterferenceWideningOperator<UNDERLYINGSTATE, ACTION, LOC> mInterferenceWideningOperator;
 	private final ThreadModularAbsintPrefs mThreadModPrefs;
+	private final int LOCATION_TRACK_LIMIT = 100;
 
 	public FixpointEngineGuardedConcurrent(final IUltimateServiceProvider services,
 			final FixpointEngineParameters<UNDERLYINGSTATE, ACTION, VARDECL, LOC> params,
@@ -62,7 +63,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		if (params == null || !params.isValid()) {
 			throw new IllegalArgumentException("invalid params");
 		}
-		mMaxUnwindings = params.getMaxUnwindings();
+		mMaxUnwindings = threadModPrefs.maxItf();
 		mUnderlyingDomain = params.getAbstractDomain();
 		mLogger = params.getLogger();
 		mEntryLocs = icfg.getProcedureEntryNodes();
@@ -76,10 +77,14 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		final AbstractLocationMap<LOC> absMap = mLocationAbstractionCalculator
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
-		if (absMap.maximumOfAll() > 16) {
-			mMaxParallelStates = 1;
+		if (absMap.maximumOfAll() > threadModPrefs.maxStates()) {
+			if (absMap.maximumOfAll() > LOCATION_TRACK_LIMIT) {
+				mMaxParallelStates = 1;
+			} else {
+				mMaxParallelStates = threadModPrefs.maxStates();
+			}
 		} else {
-			mMaxParallelStates = Math.min(absMap.maximumOfAll(), threadModPrefs.maxStates());
+			mMaxParallelStates = absMap.maximumOfAll();
 		}
 		mDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings,
