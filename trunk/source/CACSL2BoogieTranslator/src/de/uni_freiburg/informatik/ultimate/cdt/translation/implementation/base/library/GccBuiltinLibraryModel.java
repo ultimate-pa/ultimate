@@ -345,10 +345,25 @@ public class GccBuiltinLibraryModel implements ILibraryModel {
 		return new ExpressionResult(List.of(), rvalue, List.of(auxvar.getVarDec()), Set.of(auxvar));
 	}
 
+	private ConstantModel modelSizeofConstant(final String name, final ICType type) {
+		return new ConstantModel(name, loc -> new ExpressionResult(
+				new RValue(mTypeSizeComputer.constructBytesizeExpression(loc, type), type)));
+	}
+
 	@Override
 	public Collection<ConstantModel> getConstantModels() {
 		return List.of(new ConstantModel("__PRETTY_FUNCTION__", this::handleFunction),
 				new ConstantModel("__FUNCTION__", this::handleFunction),
-				new ConstantModel("__func__", this::handleFunction));
+				new ConstantModel("__func__", this::handleFunction),
+				modelSizeofConstant("__SIZEOF_INT__", new CPrimitive(CPrimitives.INT)),
+				modelSizeofConstant("__SIZEOF_LONG__", new CPrimitive(CPrimitives.LONG)),
+				modelSizeofConstant("__SIZEOF_LONG_LONG__", new CPrimitive(CPrimitives.LONGLONG)),
+				modelSizeofConstant("__SIZEOF_SHORT__", new CPrimitive(CPrimitives.SHORT)),
+				modelSizeofConstant("__SIZEOF_POINTER__", CPointer.voidPointer()),
+				modelSizeofConstant("__SIZEOF_FLOAT__", new CPrimitive(CPrimitives.FLOAT)),
+				modelSizeofConstant("__SIZEOF_DOUBLE__", new CPrimitive(CPrimitives.DOUBLE)),
+				modelSizeofConstant("__SIZEOF_LONG_DOUBLE__", new CPrimitive(CPrimitives.LONGDOUBLE)),
+				modelSizeofConstant("__SIZEOF_SIZE_T__", mTypeSizeComputer.getSizeT()),
+				modelSizeofConstant("__SIZEOF_INT128__", new CPrimitive(CPrimitives.INT128)));
 	}
 }
