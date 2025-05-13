@@ -75,19 +75,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
  */
 public class AtomicLibraryModel implements ILibraryModel {
 	private enum MemoryOrder {
-		RELAXED("memory_order_relaxed", 0), CONSUME("memory_order_consume", 1), ACQUIRE("memory_order_acquire", 2),
-		RELEASE("memory_order_release", 3), ACQ_REL("memory_order_acq_rel", 4), SEQ_CST("memory_order_seq_cst", 5);
+		RELAXED("memory_order_relaxed", "__ATOMIC_RELAXED", 0), CONSUME("memory_order_consume", "__ATOMIC_CONSUME", 1),
+		ACQUIRE("memory_order_acquire", "__ATOMIC_ACQUIRE", 2), RELEASE("memory_order_release", "__ATOMIC_RELEASE", 3),
+		ACQ_REL("memory_order_acq_rel", "__ATOMIC_ACQ_REL", 4), SEQ_CST("memory_order_seq_cst", "__ATOMIC_SEQ_CST", 5);
 
-		private final String mName;
+		private final String mFieldName;
+		private final String mGccConstantName;
 		private final int mValue;
 
-		MemoryOrder(final String name, final int value) {
-			mName = name;
+		MemoryOrder(final String fieldName, final String gccConstantName, final int value) {
+			mFieldName = fieldName;
+			mGccConstantName = gccConstantName;
 			mValue = value;
 		}
 
-		public String getName() {
-			return mName;
+		public String getFieldName() {
+			return mFieldName;
+		}
+
+		public String getGccConstantName() {
+			return mGccConstantName;
 		}
 
 		public BigInteger getValue() {
@@ -505,14 +512,18 @@ public class AtomicLibraryModel implements ILibraryModel {
 				new TypeModel("atomic_llong", CPrimitive.constructAtomicType(CPrimitives.LONGLONG)),
 				new TypeModel("atomic_ullong", CPrimitive.constructAtomicType(CPrimitives.ULONGLONG)),
 				new TypeModel("memory_order", new CEnum("memory_order",
-						Arrays.stream(MemoryOrder.values()).map(MemoryOrder::getName).toArray(String[]::new))));
+						Arrays.stream(MemoryOrder.values()).map(MemoryOrder::getFieldName).toArray(String[]::new))));
 	}
 
 	@Override
 	public Collection<ConstantModel> getConstantModels() {
-		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-		return Arrays.stream(MemoryOrder.values()).map(
-				x -> new ConstantModel(x.getName(), loc -> mHelper.constructIntegerLiteral(loc, x.getValue(), intType)))
-				.toList();
+		final List<ConstantModel> result = new ArrayList<>();
+		for (final MemoryOrder memOrder : MemoryOrder.values()) {
+			final IConstantModelHandler model =
+					loc -> mHelper.constructIntegerLiteral(loc, memOrder.getValue(), new CPrimitive(CPrimitives.INT));
+			result.add(new ConstantModel(memOrder.getFieldName(), model));
+			result.add(new ConstantModel(memOrder.getGccConstantName(), model));
+		}
+		return result;
 	}
 }
