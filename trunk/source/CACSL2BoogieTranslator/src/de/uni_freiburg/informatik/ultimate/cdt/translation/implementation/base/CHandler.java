@@ -2570,7 +2570,7 @@ public class CHandler {
 				throw new UnsupportedOperationException("Not yet implemented " + preS.toString());
 			}
 		}
-		if (!mIsPrerun) {
+		if (!mIsPrerun && mSettings.checkAcsl()) {
 			mAcsl = main.nextACSLStatement();
 
 			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();

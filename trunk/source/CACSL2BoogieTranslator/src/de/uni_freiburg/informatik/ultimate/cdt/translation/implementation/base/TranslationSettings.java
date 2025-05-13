@@ -69,6 +69,7 @@ public final class TranslationSettings {
 	private final String mEntryFunction;
 	private final boolean mCheckErrorFunction;
 	private final boolean mCheckAssertions;
+	private final boolean mCheckAcsl;
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
 	private final boolean mCheckAllocationPurity;
 	private final boolean mCheckMemoryLeakInMain;
@@ -93,6 +94,7 @@ public final class TranslationSettings {
 		mCheckMemoryLeakInMain = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN);
 
 		mCheckAssertions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ASSERTIONS);
+		mCheckAcsl = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ACSL);
 		mEntryFunction = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
 		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
@@ -137,7 +139,7 @@ public final class TranslationSettings {
 			final boolean checkIfFreedPointerIsValid, final CheckMode checkPointerDerefValidity,
 			final CheckMode checkPointerSubtractionAndComparisonValidity, final MemoryModel memoryModelPreference,
 			final boolean fpToIeeeBvExtension, final boolean smtBoolArraysWorkaround, final String entryFunction,
-			final boolean checkErrorFunction, final boolean checkAssertions,
+			final boolean checkErrorFunction, final boolean checkAssertions, final boolean checkAcsl,
 			final boolean isSvcompMemtrackCompatibilityMode, final boolean checkAllocationPurity,
 			final boolean checkMemoryLeakInMain, final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
@@ -160,6 +162,7 @@ public final class TranslationSettings {
 		mEntryFunction = entryFunction;
 		mCheckErrorFunction = checkErrorFunction;
 		mCheckAssertions = checkAssertions;
+		mCheckAcsl = checkAcsl;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
 		mCheckAllocationPurity = checkAllocationPurity;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
@@ -247,6 +250,10 @@ public final class TranslationSettings {
 		return mCheckAssertions;
 	}
 
+	public boolean checkAcsl() {
+		return mCheckAcsl;
+	}
+
 	public boolean isSvcompMemtrackCompatibilityMode() {
 		return mIsSvcompMemtrackCompatibilityMode;
 	}
@@ -308,7 +315,7 @@ public final class TranslationSettings {
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
 				mPointerIntegerConversion, mCheckIfFreedPointerIsValid, mCheckPointerDerefValidity,
 				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
-				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions,
+				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions, mCheckAcsl,
 				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
