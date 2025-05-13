@@ -1,23 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="90" cpuCores="2">
-  <rundefinition name="Octagon Domain">
-		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
-		<option name="-s">../../../trunk/examples/settings/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf</option>
-	</rundefinition>
-  
-  <rundefinition name="Interval Domain">
-		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
-		<option name="-s">../../../trunk/examples/settings/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf</option>
-	</rundefinition>
-  
-  <rundefinition name="Compund Domain">
-		<option name="-tc">../../../trunk/examples/toolchains/AbstractInterpretationInline.xml</option>
-		<option name="-s">../../../trunk/examples/settings/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf</option>
-	</rundefinition>
-
-	<tasks name="Concurrency">
-		<includesfile>../../../trunk/examples/concurrency-bpl.set</includesfile>
-	</tasks>
-  
   <resultfiles></resultfiles>
+  <option name="--force-no-wrapper" />
+  <option name="--full-output" />
+  <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
+  <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
+  <option name="--abstractinterpretationv2.abstract.domain">OctagonDomain</option>
+
+  <rundefinition name="Singleton">
+    <option name="--abstractinterpretationv2.location.abstraction.method">Singleton</option>
+  </rundefinition>
+
+  <rundefinition name="Fully precise">
+    <option name="--abstractinterpretationv2.location.abstraction.method">Fully precise</option>
+  </rundefinition>
+
+  <rundefinition name="Split only at Guards">
+    <option name="--abstractinterpretationv2.location.abstraction.method">Split only at Guards</option>
+  </rundefinition>
+
+  <rundefinition name="Split only at Guards (single state)">
+    <option name="--abstractinterpretationv2.location.abstraction.method">Split only at Guards</option>
+    <option name="--abstractinterpretationv2.maximum.states.in.upper.concurrent.fixpointengine">1</option>
+  </rundefinition>
+
+  <rundefinition name="Mutex Guard and Vars Splitting">
+    <option name="--abstractinterpretationv2.location.abstraction.method">Mutex Guard and Vars Splitting</option>
+  </rundefinition>
+
+  <rundefinition name="Mutex Guard and Vars Splitting no Cutoff">
+    <option name="--abstractinterpretationv2.location.abstraction.method">Mutex Guard and Vars Splitting no Cutoff</option>
+  </rundefinition>
+
+  <tasks name="canary">
+    <include>${benchmark_path}/../../../trunk/examples/svcomp/weaver/parallel-misc-2-unrolled-atomic.wvr.yml</include>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="SVCOMP-ConcurrencySafety-Main">
+    <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
 </benchmark>
