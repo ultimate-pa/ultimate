@@ -64,6 +64,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 					+ "If this assumption does not hold, the analysis becomes unsound — not just for this property, "
 					+ "but for other properties as well. If set to IGNORE, the analyzer performs no checks and makes "
 					+ "no assumptions regarding the validity of memory accesses through pointers or arrays.";
+	public static final String LABEL_CHECK_ACSL = "Check ACSL annotations";
+	private static final String DESC_CHECK_ACSL =
+			"Check if the annotations in ACSL (assert, loop invariant, function contracts) are valid. "
+					+ "In addition, ghost code is also considered.";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
 			"Check for the main procedure if all allocated memory was freed";
@@ -276,6 +280,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_ACSL, true, DESC_CHECK_ACSL, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.CHECK,
 								DESC_CHECK_POINTER_DEREF_VALIDITY, PreferenceType.Combo, CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
