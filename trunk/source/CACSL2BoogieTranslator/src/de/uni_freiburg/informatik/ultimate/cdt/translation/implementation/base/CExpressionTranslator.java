@@ -463,10 +463,16 @@ public class CExpressionTranslator {
 		final ExpressionResultBuilder result = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
 		switch (op) {
 		case IASTBinaryExpression.op_multiply:
-		case IASTBinaryExpression.op_divide:
 		case IASTBinaryExpression.op_multiplyAssign:
-		case IASTBinaryExpression.op_divideAssign:
+			// Use the generic overflow check, i.e., check if the result is in the bounds
 			addIntegerBoundsCheck(loc, result, typeOfResult, op, left.getLrValue().getValue(),
+					right.getLrValue().getValue());
+			break;
+		case IASTBinaryExpression.op_divide:
+		case IASTBinaryExpression.op_divideAssign:
+			// Use a specific overflow check for division (it can only overflow for cases like INT_MIN / -1)
+			// We could also use the generic overflow check here, but it produces a more complicated assertion
+			addIntegerBoundsCheckForDivision(loc, result, typeOfResult, left.getLrValue().getValue(),
 					right.getLrValue().getValue());
 			break;
 		case IASTBinaryExpression.op_modulo:
@@ -1035,6 +1041,25 @@ public class CExpressionTranslator {
 		}
 		mExpressionTranslation.addOverflowCheck(loc, inBoundsCheck.getFirst(), erb);
 		mExpressionTranslation.addOverflowCheck(loc, inBoundsCheck.getSecond(), erb);
+	}
+
+	private void addIntegerBoundsCheckForDivision(final ILocation loc, final ExpressionResultBuilder erb,
+			final CPrimitive resultType, final Expression left, final Expression right) {
+		if (mCheckSignedIntegerBounds == CheckMode.IGNORE || !resultType.isIntegerType()
+				|| mTypeSizes.isUnsigned(resultType)) {
+			// nothing to do
+			return;
+		}
+		final Expression leftIsNotMin =
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_notequals, left,
+						resultType, mExpressionTranslation.constructLiteralForIntegerType(loc, resultType,
+								mTypeSizes.getMinValueOfPrimitiveType(resultType)),
+						resultType);
+		final Expression rightIsNotMinusOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_notequals, right, resultType,
+				mExpressionTranslation.constructLiteralForIntegerType(loc, resultType, BigInteger.ONE.negate()),
+				resultType);
+		mExpressionTranslation.addOverflowCheck(loc, ExpressionFactory.or(loc, leftIsNotMin, rightIsNotMinusOne), erb);
 	}
 
 	/**
