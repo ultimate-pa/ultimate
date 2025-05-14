@@ -120,45 +120,45 @@ public class AtomicLibraryModel implements ILibraryModel {
 		final List<FunctionModel> result = new ArrayList<>();
 
 		// Atomic operations https://en.cppreference.com/w/c/atomic
-		result.add(new FunctionModel("atomic_load", this::handleAtomicLoad));
-		result.add(new FunctionModel("atomic_store", this::handleAtomicStore));
-		result.add(new FunctionModel("atomic_exchange", this::handleAtomicExchange));
-		result.add(new FunctionModel("atomic_compare_exchange_strong", this::handleAtomicCompareExchange));
-		result.add(new FunctionModel("atomic_compare_exchange_weak", this::handleAtomicCompareExchange));
+		result.add(new FunctionModel("atomic_load", this::handleLoad));
+		result.add(new FunctionModel("atomic_store", this::handleStore));
+		result.add(new FunctionModel("atomic_exchange", this::handleExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_strong", this::handleCompareExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_weak", this::handleCompareExchange));
 
-		result.add(new FunctionModel("atomic_load_explicit", this::handleAtomicLoad));
-		result.add(new FunctionModel("atomic_store_explicit", this::handleAtomicStore));
-		result.add(new FunctionModel("atomic_exchange_explicit", this::handleAtomicExchange));
-		result.add(new FunctionModel("atomic_compare_exchange_strong_explicit", this::handleAtomicCompareExchange));
-		result.add(new FunctionModel("atomic_compare_exchange_weak_explicit", this::handleAtomicCompareExchange));
+		result.add(new FunctionModel("atomic_load_explicit", this::handleLoad));
+		result.add(new FunctionModel("atomic_store_explicit", this::handleStore));
+		result.add(new FunctionModel("atomic_exchange_explicit", this::handleExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_strong_explicit", this::handleCompareExchange));
+		result.add(new FunctionModel("atomic_compare_exchange_weak_explicit", this::handleCompareExchange));
 
 		result.add(new FunctionModel("atomic_fetch_add",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
 		result.add(new FunctionModel("atomic_fetch_sub",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_minus)));
-		result.add(new FunctionModel("atomic_fetch_and", (main, node, loc, name) -> handleAtomicFetch(main, node, loc,
-				name, IASTBinaryExpression.op_binaryAnd)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_minus)));
+		result.add(new FunctionModel("atomic_fetch_and",
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryAnd)));
 		result.add(new FunctionModel("atomic_fetch_or",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr)));
-		result.add(new FunctionModel("atomic_fetch_xor", (main, node, loc, name) -> handleAtomicFetch(main, node, loc,
-				name, IASTBinaryExpression.op_binaryXor)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr)));
+		result.add(new FunctionModel("atomic_fetch_xor",
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryXor)));
 
 		result.add(new FunctionModel("atomic_fetch_add_explicit",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
 		result.add(new FunctionModel("atomic_fetch_sub_explicit",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_minus)));
-		result.add(new FunctionModel("atomic_fetch_and_explicit", (main, node, loc, name) -> handleAtomicFetch(main,
-				node, loc, name, IASTBinaryExpression.op_binaryAnd)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_minus)));
+		result.add(new FunctionModel("atomic_fetch_and_explicit",
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryAnd)));
 		result.add(new FunctionModel("atomic_fetch_or_explicit",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr)));
-		result.add(new FunctionModel("atomic_fetch_xor_explicit", (main, node, loc, name) -> handleAtomicFetch(main,
-				node, loc, name, IASTBinaryExpression.op_binaryXor)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr)));
+		result.add(new FunctionModel("atomic_fetch_xor_explicit",
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryXor)));
 
-		result.add(new FunctionModel("atomic_test_and_set", this::handleAtomicTestAndSet));
-		result.add(new FunctionModel("atomic_clear", this::handleAtomicClear));
+		result.add(new FunctionModel("atomic_test_and_set", this::handleTestAndSet));
+		result.add(new FunctionModel("atomic_clear", this::handleClear));
 
-		result.add(new FunctionModel("atomic_test_and_set_explicit", this::handleAtomicTestAndSet));
-		result.add(new FunctionModel("atomic_clear_explicit", this::handleAtomicClear));
+		result.add(new FunctionModel("atomic_test_and_set_explicit", this::handleTestAndSet));
+		result.add(new FunctionModel("atomic_clear_explicit", this::handleClear));
 
 		result.add(new FunctionModel("atomic_thread_fence", (main, node, loc, name) -> mHelper
 				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
@@ -168,29 +168,29 @@ public class AtomicLibraryModel implements ILibraryModel {
 				.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(CPrimitives.BOOL))));
 
 		// Preprocessing leads to: https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html
-		result.add(new FunctionModel("__atomic_load", this::handleGccAtomicLoad));
-		result.add(new FunctionModel("__atomic_store", this::handleGccAtomicStore));
-		result.add(new FunctionModel("__atomic_exchange", this::handleGccAtomicExchange));
-		result.add(new FunctionModel("__atomic_compare_exchange", this::handleGccAtomicCompareExchange));
+		result.add(new FunctionModel("__atomic_load", this::handleBuiltinLoad));
+		result.add(new FunctionModel("__atomic_store", this::handleBuiltinStore));
+		result.add(new FunctionModel("__atomic_exchange", this::handleBuiltinExchange));
+		result.add(new FunctionModel("__atomic_compare_exchange", this::handleBuiltinCompareExchange));
 
-		result.add(new FunctionModel("__atomic_load_n", this::handleAtomicLoad));
-		result.add(new FunctionModel("__atomic_store_n", this::handleAtomicStore));
-		result.add(new FunctionModel("__atomic_exchange_n", this::handleAtomicExchange));
-		result.add(new FunctionModel("__atomic_compare_exchange_n", this::handleAtomicCompareExchangeN));
+		result.add(new FunctionModel("__atomic_load_n", this::handleLoad));
+		result.add(new FunctionModel("__atomic_store_n", this::handleStore));
+		result.add(new FunctionModel("__atomic_exchange_n", this::handleExchange));
+		result.add(new FunctionModel("__atomic_compare_exchange_n", this::handleBuiltinCompareExchangeN));
 
 		result.add(new FunctionModel("__atomic_fetch_add",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_plus)));
 		result.add(new FunctionModel("__atomic_fetch_sub",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_minus)));
-		result.add(new FunctionModel("__atomic_fetch_and", (main, node, loc, name) -> handleAtomicFetch(main, node, loc,
-				name, IASTBinaryExpression.op_binaryAnd)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_minus)));
+		result.add(new FunctionModel("__atomic_fetch_and",
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryAnd)));
 		result.add(new FunctionModel("__atomic_fetch_or",
-				(main, node, loc, name) -> handleAtomicFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr)));
-		result.add(new FunctionModel("__atomic_fetch_xor", (main, node, loc, name) -> handleAtomicFetch(main, node, loc,
-				name, IASTBinaryExpression.op_binaryXor)));
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryOr)));
+		result.add(new FunctionModel("__atomic_fetch_xor",
+				(main, node, loc, name) -> handleFetch(main, node, loc, name, IASTBinaryExpression.op_binaryXor)));
 
-		result.add(new FunctionModel("__atomic_test_and_set", this::handleAtomicTestAndSet));
-		result.add(new FunctionModel("__atomic_clear", this::handleAtomicClear));
+		result.add(new FunctionModel("__atomic_test_and_set", this::handleTestAndSet));
+		result.add(new FunctionModel("__atomic_clear", this::handleClear));
 
 		result.add(new FunctionModel("__atomic_thread_fence", (main, node, loc, name) -> mHelper
 				.handleUnsupportedFunctionByOverapproximation(main, loc, name, new CPrimitive(CPrimitives.VOID))));
@@ -204,7 +204,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return result;
 	}
 
-	private Result handleAtomicClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleClear(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 2 : 1, name, arguments);
@@ -223,8 +223,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return builder.addAllExceptLrValue(applyMemoryOrders(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
-	private Result handleAtomicTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
+	private Result handleTestAndSet(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 2 : 1, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
@@ -246,8 +246,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
-	private Result handleGccAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
+	private Result handleBuiltinLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 3, name, arguments);
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
@@ -264,7 +264,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 				.addAllExceptLrValue(write).build();
 	}
 
-	private Result handleGccAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleBuiltinStore(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 3, name, arguments);
@@ -283,7 +283,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
-	private Result handleGccAtomicExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleBuiltinExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 4, name, arguments);
@@ -306,7 +306,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return builder.build();
 	}
 
-	private Result handleAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 5 : 3, name, arguments);
@@ -326,17 +326,16 @@ public class AtomicLibraryModel implements ILibraryModel {
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[3]);
 			final ExpressionResult failureMemoryOrder =
 					mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[4]);
-			return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
-					weakResult, successMemoryOrder, failureMemoryOrder);
+			return handleCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead, weakResult,
+					successMemoryOrder, failureMemoryOrder);
 		}
 
-		return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
-				weakResult);
+		return handleCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead, weakResult);
 	}
 
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
 	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
-	private Result handleGccAtomicCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleBuiltinCompareExchange(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 6, name, arguments);
@@ -352,13 +351,13 @@ public class AtomicLibraryModel implements ILibraryModel {
 		final ExpressionResult failureMemoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
 
-		return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
-				weakResult, successMemoryOrder, failureMemoryOrder);
+		return handleCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead, weakResult,
+				successMemoryOrder, failureMemoryOrder);
 	}
 
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
 	// https://en.cppreference.com/w/c/atomic/atomic_compare_exchange
-	private Result handleAtomicCompareExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
+	private Result handleBuiltinCompareExchangeN(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 6, name, arguments);
@@ -376,8 +375,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 		final ExpressionResult failureMemoryOrder =
 				mExprResultTransformer.transformDispatchSwitchRexBoolToInt(main, loc, arguments[5]);
 
-		return handleAtomicCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead,
-				weakResult, successMemoryOrder, failureMemoryOrder);
+		return handleCompareExchange(main, loc, arguments[0], arguments[1], desiredResult, desiredRead, weakResult,
+				successMemoryOrder, failureMemoryOrder);
 	}
 
 	// https://gcc.gnu.org/onlinedocs/gcc/_005f_005fatomic-Builtins.html#index-_005f_005fatomic_005fcompare_005fexchange_005fn
@@ -403,7 +402,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 	// }
 	// return success
 	// @formatter:on
-	private Result handleAtomicCompareExchange(final IDispatcher main, final ILocation loc,
+	private Result handleCompareExchange(final IDispatcher main, final ILocation loc,
 			final IASTInitializerClause pointer, final IASTInitializerClause expected,
 			final ExpressionResult desiredResult, final ExpressionResult desiredRead, final ExpressionResult weakResult,
 			final ExpressionResult... memoryOrders) {
@@ -471,7 +470,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return functionName.startsWith("__") || functionName.endsWith("explicit");
 	}
 
-	private Result handleAtomicLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleLoad(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 2 : 1, name, arguments);
@@ -487,7 +486,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 				.addAllIncludingLrValue(applyMemoryOrders(loc, read, memoryOrder.getLrValue().getValue())).build();
 	}
 
-	private Result handleAtomicStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleStore(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 3 : 2, name, arguments);
@@ -508,8 +507,8 @@ public class AtomicLibraryModel implements ILibraryModel {
 		return builder.addAllExceptLrValue(applyMemoryOrders(loc, write, memoryOrder.getLrValue().getValue())).build();
 	}
 
-	private Result handleAtomicExchange(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
+	private Result handleExchange(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+			final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 3 : 2, name, arguments);
 		final ExpressionResult pointer = mExprResultTransformer.dispatchPointerLValue(main, loc, arguments[0]);
@@ -532,7 +531,7 @@ public class AtomicLibraryModel implements ILibraryModel {
 				applyMemoryOrders(loc, atomicBuilder.build(), memoryOrder.getLrValue().getValue())).build();
 	}
 
-	private Result handleAtomicFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
+	private Result handleFetch(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name, final int operator) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, hasExplicitMemoryOrder(name) ? 3 : 2, name, arguments);
