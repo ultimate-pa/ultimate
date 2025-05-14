@@ -45,12 +45,11 @@ import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
-import de.uni_freiburg.informatik.ultimate.cdt.parser.Activator;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLProblemNode;
 
 /**
  * @author Markus Lindenmann
@@ -134,9 +133,10 @@ public class CommentParser {
 						acslList.add(acslNode);
 					}
 				} catch (final ACSLSyntaxErrorException e) {
-					final ACSLNode node = e.getLocation();
-					node.setFileName(comment.getFileLocation().getFileName());
-					reportSyntaxError(node, e.getMessageText());
+					final ACSLProblemNode problem = new ACSLProblemNode(e.getMessageText());
+					problem.setFileName(comment.getContainingFilename());
+					problem.setLocation(e.getLocation().getLocation());
+					acslList.add(problem);
 				} catch (final Exception e) {
 					throw new RuntimeException(e);
 				}
@@ -186,14 +186,6 @@ public class CommentParser {
 			}
 		}
 		return "gstart";
-	}
-
-	private void reportSyntaxError(final ACSLNode node, final String msg) {
-		final ILocation loc = new SimpleAcslLocation(node);
-		final SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
-		mLogger.warn(msg);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
 	private static final class SimpleAcslLocation implements ILocation {
