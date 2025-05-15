@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.ToLongFunction;
 
@@ -33,6 +34,7 @@ public final class MinMaxMed {
 	private long mMinimum;
 	private long mMaximum;
 	private long mMedian;
+	private double mAverage;
 
 	public <T> void report(final Collection<T> items, final ToLongFunction<T> measure) {
 		if (items.isEmpty()) {
@@ -46,6 +48,7 @@ public final class MinMaxMed {
 		mMinimum = numbers[0];
 		mMaximum = numbers[numbers.length - 1];
 		mMedian = numbers[numbers.length / 2];
+		mAverage = Arrays.stream(numbers).sum() / (double) numbers.length;
 	}
 
 	public long getMinimum() {
@@ -58,5 +61,10 @@ public final class MinMaxMed {
 
 	public long getMedian() {
 		return mMedian;
+	}
+
+	@Override
+	public String toString() {
+		return "(min: %d, max: %d, median: %d, avg: %.2f)".formatted(mMinimum, mMaximum, mMedian, mAverage);
 	}
 }

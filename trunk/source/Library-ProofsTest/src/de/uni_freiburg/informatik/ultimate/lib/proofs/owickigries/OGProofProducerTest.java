@@ -75,6 +75,9 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 
 		// print proof producer statistics
 		mLogger.info(producer.getStatistics());
+
+		// TODO temporary; integrate this into the regular statistics
+		OwickiGriesStatistics.printModularityData(mLogger, annotation);
 	}
 
 	protected CfgSmtToolkit createCsToolkit() {

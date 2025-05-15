@@ -27,11 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAnnotation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
@@ -104,7 +106,7 @@ abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
 		// TODO log information
 		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
 				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
-
+		printModularityData(mLogger, annotation);
 	}
 
 	public void startOwickiGriesValidity() {
@@ -113,5 +115,22 @@ abstract class OwickiGriesStatistics extends AbstractStatisticsDataProvider {
 
 	public void stopOwickiGriesValidity() {
 		mOwickiGriesValidityTime.stop();
+	}
+
+	// TODO temporary; integrate this into the regular statistics
+	public static void printModularityData(final ILogger logger, final OwickiGriesAnnotation<?, ?, ?> annotation) {
+		final MinMaxMed freeVars = new MinMaxMed();
+		freeVars.report(annotation.getFormulaMapping().values(), fm -> fm.getFormula().getFreeVars().length);
+		logger.info("free variables mentioned in invariants: " + freeVars);
+
+		final MinMaxMed ghostVars = new MinMaxMed();
+		ghostVars.report(annotation.getFormulaMapping().values(),
+				fm -> fm.getVars().stream().filter(annotation.getGhostVariables()::contains).count());
+		logger.info("ghost variables mentioned in invariants: " + ghostVars);
+
+		final MinMaxMed programVars = new MinMaxMed();
+		programVars.report(annotation.getFormulaMapping().values(),
+				fm -> fm.getVars().stream().filter(Predicate.not(annotation.getGhostVariables()::contains)).count());
+		logger.info("program variables mentioned in invariants: " + programVars);
 	}
 }
