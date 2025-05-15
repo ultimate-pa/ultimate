@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -11,14 +10,19 @@ import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LessCodeExecutionProducer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
+	private List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> mExecutions = List.of();
 	private static IcfgInterpreterObserver mInstance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {
@@ -50,14 +54,11 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			// * SmtUtils.getConjuncts
 			// * SmtUtils.toDnf
 			// * mLogger can be used for output (e.g., for debugging)
-			if (!seenICFGs.contains(mIcfg)) {
-				seenICFGs.add(mIcfg);
-			}
 			try {
 				final Random random = new Random();
 				final long seed = random.nextLong();
-				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LessCodeExecutionProducer(),
-						new Random(seed));
+				mExecutions = ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger,
+						new LessCodeExecutionProducer(), new Random(seed));
 				ExecutionProducer.makeExecutions(mIcfg, mServices, mLogger, new LessCodeExecutionProducer(),
 						new Random(seed));
 			} catch (final Exception e) {
@@ -70,21 +71,11 @@ public class IcfgInterpreterObserver extends BaseObserver {
 		return false;
 	}
 
-	private static final ArrayList<IIcfg<?>> seenICFGs = new ArrayList<>();
-
 	public static IcfgInterpreterObserver getInstance() {
 		return mInstance;
 	}
 
-	/**
-	 * Returns a number unique to an ICFG that was previously or is currently beeing processed.
-	 */
-	public int getCurrentICFGCardinality() {
-		return seenICFGs.indexOf(mIcfg);
-	}
-
 	public IElement getExecutions() {
-		// TODO: Actually return the calculcated executions
-		return new ProgramExecutions<>(List.of());
+		return new ProgramExecutions<>(List.copyOf(mExecutions));
 	}
 }

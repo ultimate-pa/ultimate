@@ -19,23 +19,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 
 public class TermEvaluator {
-	/**
-	 * public TermEvaluator(final IIcfg<? extends IcfgLocation> iicfg) { table = new DefaultIcfgSymbolTable(); final
-	 * ArrayList<IcfgLocation> next = new ArrayList<>(iicfg.getInitialNodes()); final HashSet<IcfgLocation> visited =
-	 * new HashSet<>(next); while (!next.isEmpty()) { final IcfgLocation location = next.remove(0);
-	 *
-	 * for (final IcfgEdge edge : location.getOutgoingEdges()) { final UnmodifiableTransFormula formula =
-	 * edge.getTransformula();
-	 *
-	 * formula.getInVars().keySet().stream().filter(a -> !a.isOldvar()).forEach(table::add);
-	 * formula.getOutVars().keySet().stream().filter(a -> !a.isOldvar()).forEach(table::add);
-	 * formula.getNonTheoryConsts().stream().forEach(table::add);
-	 *
-	 * final IcfgLocation target = edge.getTarget(); if (visited.contains(target)) { continue; } visited.add(target);
-	 * next.add(target); } } table.finishConstruction(); }
-	 *
-	 * private final DefaultIcfgSymbolTable table;
-	 */
 	public static Value evaluate(final Map<Term, Value> state, final Term term, final NonDeterministicChoice ndc) {
 		switch (term) {
 		case final ApplicationTerm a:
@@ -194,8 +177,12 @@ public class TermEvaluator {
 			return condition.getValue() ? a : b;
 
 		default:
-			throw new AssertionError();
+			throw new UnsopportedTermError();
 		}
+	}
+
+	public static class UnsopportedTermError extends AssertionError {
+
 	}
 
 	private static final BoolValue compareTo(final Stream<Value> params,

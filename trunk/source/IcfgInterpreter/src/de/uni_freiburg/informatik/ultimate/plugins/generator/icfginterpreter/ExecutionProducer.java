@@ -32,11 +32,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.InterpretedIcfgEdgeBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.UntranslatableIcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.TermEvaluator.UnsopportedTermError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.AssignmentUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
@@ -50,11 +55,13 @@ public class ExecutionProducer {
 
 		void init(IIcfg<? extends IcfgLocation> icfg, IUltimateServiceProvider services);
 
-		List<IcfgProgramExecution<?>> makeExecution(NonDeterministicChoice ndc, IcfgLocation source);
+		List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> makeExecutions(NonDeterministicChoice ndc,
+				IcfgLocation source);
 	}
 
-	public static void makeExecutions(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
-			final ILogger logger, final IIcfgExecutionProducer producer, final Random random) throws Exception {
+	public static List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> makeExecutions(
+			final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services, final ILogger logger,
+			final IIcfgExecutionProducer producer, final Random random) throws Exception {
 		IcfgInterpreterPreferences.updatePreferences();
 		final int testExecutionCount = Math.max(1, IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString()));
@@ -64,6 +71,8 @@ public class ExecutionProducer {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
 
+		final List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> executions = new ArrayList<>();
+
 		final long startTime = System.nanoTime();
 		producer.init(icfg, services);
 		final long initTime = System.nanoTime();
@@ -71,7 +80,7 @@ public class ExecutionProducer {
 			for (int i = 0; i < testExecutionCount; i++) {
 				final long seed = random.nextLong();
 				final NonDeterministicChoice ndcInstance = ndc.newInstance(seed);
-				producer.makeExecution(ndcInstance, node);
+				executions.addAll(producer.makeExecutions(ndcInstance, node));
 			}
 		}
 		final long endTime = System.nanoTime();
@@ -82,6 +91,7 @@ public class ExecutionProducer {
 		logger.info(
 				producer.getClass().getSimpleName() + " used " + (initTotal / 1000000.0) + "ms for initialitation.");
 		logger.info(producer.getClass().getSimpleName() + " used " + (executionTime / 1000000.0) + "ms for execution.");
+		return executions;
 	}
 
 	private static <LOC extends IcfgLocation> HashMap<String, Set<IcfgLocation>> getErrorLocations(
@@ -157,17 +167,22 @@ public class ExecutionProducer {
 			if (!Arrays.asList(formula.getFormula().getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
 				// This term contains no information that is needed in updates or all updates are havocs.
 				// (The formula contains no OutVar that is assigned)
-				final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
-						.addUpdates(extractUpdates(formula, script, script.getTheory().mTrue))
-						.makeGuardUnchanged(services, mngScript, formula).finish();
 
-				// make sure that the extracted guard is equivalent to the whole transition formula
-				final Term fullTermSub = substituteProgramVars(formula.getFormula(), formula);
-				assert SmtUtils.checkEquivalence(icfgEdge.getGuardTerm(), fullTermSub, script) == LBool.UNSAT;
+				try {
+					final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+							.addUpdates(extractUpdates(formula, script, script.getTheory().mTrue))
+							.makeGuardUnchanged(services, mngScript, formula).finish();
 
-				System.out.println(icfgEdge.toString());
-				System.out.println("\n\n");
-				return List.of(icfgEdge);
+					// make sure that the extracted guard is equivalent to the whole transition formula
+					final Term fullTermSub = substituteProgramVars(formula.getFormula(), formula);
+					assert SmtUtils.checkEquivalence(icfgEdge.getGuardTerm(), fullTermSub, script) == LBool.UNSAT;
+
+					System.out.println(icfgEdge.toString());
+					System.out.println("\n\n");
+					return List.of(icfgEdge);
+				} catch (final EdgeUntranslatableError untranslated) {
+					return List.of(new UntranslatableIcfgEdge(edge));
+				}
 			}
 
 			if (formula.getFormula() instanceof final ApplicationTerm app
@@ -190,19 +205,22 @@ public class ExecutionProducer {
 				final Term notGuardB = SmtUtils.not(script, icfgEdgeB.getGuardTerm());
 				if (SmtUtils.checkEquivalence(icfgEdgeA.getGuardTerm(), notGuardB, script) != LBool.UNSAT) {
 					// the two have guards that are not opposites
-					throw new AssertionError(
-							"This plug-in does not handle or terms that encode different paths of a program.\n"
+
+					IcfgInterpreterObserver.getLogger()
+							.error("This plug-in does not handle or terms that encode different paths of a program.\n"
 									+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
 									+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+					return List.of(new UntranslatableIcfgEdge(edge));
 				}
 
 				final Term notUpdatesB = SmtUtils.not(script, icfgEdgeB.getUpdateTerm(script));
 				if (SmtUtils.checkEquivalence(icfgEdgeA.getUpdateTerm(script), notUpdatesB, script) != LBool.UNSAT) {
 					// the two have updates that are not opposites
-					throw new AssertionError(
-							"This plug-in does not handle or terms that encode different paths of a program.\n"
+					IcfgInterpreterObserver.getLogger()
+							.error("This plug-in does not handle or terms that encode different paths of a program.\n"
 									+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
 									+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+					return List.of(new UntranslatableIcfgEdge(edge));
 				}
 
 				System.out.println(icfgEdgeA.toString());
@@ -211,13 +229,18 @@ public class ExecutionProducer {
 				return List.of(icfgEdgeA, icfgEdgeB);
 			}
 
-			final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
-					.addUpdates(extractUpdates(formula, script, formula.getFormula()))
-					.makeGuardUnchanged(services, mngScript, formula).finish();
+			try {
+				final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+						.addUpdates(extractUpdates(formula, script, formula.getFormula()))
+						.makeGuardUnchanged(services, mngScript, formula).finish();
 
-			System.out.println(icfgEdge.toString());
-			System.out.println("\n\n");
-			return List.of(icfgEdge);
+				System.out.println(icfgEdge.toString());
+				System.out.println("\n\n");
+				return List.of(icfgEdge);
+
+			} catch (final EdgeUntranslatableError untranslated) {
+				return List.of(new UntranslatableIcfgEdge(edge));
+			}
 		}
 
 		private Update[] extractUpdates(final UnmodifiableTransFormula formula, final Script script, final Term term) {
@@ -464,21 +487,22 @@ public class ExecutionProducer {
 		}
 
 		@Override
-		public List<IcfgProgramExecution<?>> makeExecution(final NonDeterministicChoice ndc,
-				final IcfgLocation source) {
+		public List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> makeExecutions(
+				final NonDeterministicChoice ndc, final IcfgLocation source) {
 			final HashMap<Term, Value> state = makeState(ndc);
 
 			final List<PartialExecution> executions = new ArrayList<>();
-			executions.add(new PartialExecution(source, ndc.clone(), List.of(), List.of(state), false));
+			executions.add(new PartialExecution(source, ndc.clone(), List.of(), List.of(state),
+					ExecutionTermintionReason.unterminated));
 			final List<PartialExecution> finishedExecutions = new ArrayList<>();
 
-			final List<IcfgProgramExecution<?>> out = new ArrayList<>();
+			final List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> out = new ArrayList<>();
 
 			while (!executions.isEmpty()) {
 				for (final PartialExecution execution : executeStep(executions.remove(0))) {
-					if (execution.isFinished()) {
+					if (execution.status != ExecutionTermintionReason.unterminated) {
 						finishedExecutions.add(execution);
-						out.add(printExecution(execution));
+						out.add(new Pair<>(printExecution(execution), execution.status));
 					} else {
 						executions.add(execution);
 					}
@@ -488,7 +512,7 @@ public class ExecutionProducer {
 			return out;
 		}
 
-		private IcfgProgramExecution<?> printExecution(final PartialExecution execution) {
+		private <L extends IAction> IcfgProgramExecution<L> printExecution(final PartialExecution execution) {
 			if (printExecution) {
 				final StringBuilder out = new StringBuilder();
 				out.append(execution.states.get(0).toString());
@@ -505,11 +529,11 @@ public class ExecutionProducer {
 				}
 				IcfgInterpreterObserver.getLogger().info(out.toString());
 			}
+
 			// Report if the exit location was an error location
-			final IcfgLocation finalLocation = execution.edges.getLast().getTarget();
-			if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
-				IcfgInterpreterObserver.getLogger()
-						.error("Execution successfully ended at error location " + finalLocation.toString());
+			if (execution.status == ExecutionTermintionReason.reachedError) {
+				IcfgInterpreterObserver.getLogger().error(
+						"Execution successfully ended at error location " + execution.currentLocation.toString());
 			}
 
 			// trace requires same number of states and edges?
@@ -525,47 +549,82 @@ public class ExecutionProducer {
 		}
 
 		private record PartialExecution(IcfgLocation currentLocation, NonDeterministicChoice ndc, List<IcfgEdge> edges,
-				List<Map<Term, Value>> states, boolean isFinished) {
+				List<Map<Term, Value>> states, ExecutionTermintionReason status) {
 			public Map<Term, Value> getCurrentState() {
 				return states.getLast();
 			}
 
-			public PartialExecution finish() {
-				return new PartialExecution(currentLocation, ndc.clone(), edges, states, true);
+			public PartialExecution finish(final ExecutionTermintionReason reason) {
+				return new PartialExecution(currentLocation, ndc.clone(), edges, states, reason);
 			}
 
 			public PartialExecution addStep(final IcfgEdge edge, final Map<Term, Value> state) {
-				if (isFinished) {
+				if (status != ExecutionTermintionReason.unterminated) {
 					throw new AssertionError("Cannot add steps to finished Execution.");
 				}
 				final List<IcfgEdge> newEdges = new ArrayList<>(edges());
 				newEdges.add(edge);
 				final List<Map<Term, Value>> newStates = new ArrayList<>(states());
 				newStates.add(state);
-				return new PartialExecution(edge.getTarget(), ndc.clone(), newEdges, newStates, isFinished);
+				return new PartialExecution(edge.getTarget(), ndc.clone(), newEdges, newStates, status);
 			}
 		}
 
 		private List<PartialExecution> executeStep(final PartialExecution execution) {
-			if (execution.isFinished()) {
+			if (execution.status != ExecutionTermintionReason.unterminated) {
 				return List.of(execution);
 			}
 
 			final Map<Term, Value> stateReference = execution.getCurrentState();
 			final List<InterpretedIcfgEdge> nextEdges = mOutEdges.getOrDefault(execution.currentLocation,
 					new ArrayList<>());
-			final List<InterpretedIcfgEdge> availableEdges = nextEdges.stream().filter((nextEdge) -> {
-				return nextEdge.guard(stateReference, execution.ndc);
-			}).toList();
 
-			if (availableEdges.size() == 0) {
-				// No guard was true, or no edges exist from the current vertex
-				return List.of(execution.finish());
+			if (nextEdges.size() == 0) {
+				// No edges exist from the current vertex
+				final IcfgLocation finalLocation = execution.currentLocation;
+				if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
+					return List.of(execution.finish(ExecutionTermintionReason.reachedError));
+				}
+				return List.of(execution.finish(ExecutionTermintionReason.reachedExit));
 			}
 
+			final List<InterpretedIcfgEdge> availableEdges = new ArrayList<>();
 			final List<PartialExecution> out = new ArrayList<>();
+
+			for (final InterpretedIcfgEdge nextEdge : nextEdges) {
+				try {
+					if (nextEdge.guard(stateReference, execution.ndc)) {
+						availableEdges.add(nextEdge);
+					}
+				} catch (final UnsopportedTermError unsupported) {
+					final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
+					out.add(failedExecution.finish(ExecutionTermintionReason.unsopportedOperation));
+				} catch (final EdgeUntranslatableError untranslated) {
+					final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
+					out.add(failedExecution.finish(ExecutionTermintionReason.edgeUnusble));
+				}
+			}
+
+			if (availableEdges.size() == 0) {
+				// No guard was true
+				if (out.size() == 0) {
+					// There were no edges that failed due to not being implemented
+					out.add(execution.finish(ExecutionTermintionReason.noEdgeAllowed));
+				}
+				return out;
+			}
+
 			for (final InterpretedIcfgEdge nextEdge : availableEdges) {
-				out.add(execution.addStep(nextEdge.getEdge(), nextEdge.update(stateReference, execution.ndc)));
+				try {
+					final Map<Term, Value> nextState = nextEdge.update(stateReference, execution.ndc);
+					out.add(execution.addStep(nextEdge.getEdge(), nextState));
+				} catch (final UnsopportedTermError unsupported) {
+					final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
+					out.add(failedExecution.finish(ExecutionTermintionReason.unsopportedOperation));
+				} catch (final EdgeUntranslatableError untranslated) {
+					final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
+					out.add(failedExecution.finish(ExecutionTermintionReason.edgeUnusble));
+				}
 			}
 			return out;
 		}

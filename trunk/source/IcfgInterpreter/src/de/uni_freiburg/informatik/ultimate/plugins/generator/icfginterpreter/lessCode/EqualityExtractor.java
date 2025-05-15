@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.IcfgInterpreterObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
 public class EqualityExtractor {
@@ -64,13 +65,16 @@ public class EqualityExtractor {
 	public static Equations extract(final Term term, final Script script, final UnmodifiableTransFormula formula) {
 		switch (term) {
 		case final ApplicationTerm at:
-			return extractAppliactionTerm(at, script, formula);
+			return extractApplicationTerm(at, script, formula);
 		default:
 			return new Equations();
 		}
 	}
 
-	public static Equations extractAppliactionTerm(final ApplicationTerm term, final Script script,
+	public static class EdgeUntranslatableError extends AssertionError {
+	}
+
+	public static Equations extractApplicationTerm(final ApplicationTerm term, final Script script,
 			final UnmodifiableTransFormula formula) {
 		Equations out;
 		switch (term.getFunction().getName()) {
@@ -82,9 +86,11 @@ public class EqualityExtractor {
 
 			if (Arrays.asList(term.getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
 				// This term contains information that is needed in updates.
-				throw new AssertionError("This plug-in does not handle or terms nested in other terms.\n"
-						+ "Try using SingleStatement in your Icfg / Cfg Builder settings.\nOffending Term:\n"
-						+ term.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+				IcfgInterpreterObserver.getLogger()
+						.error("This plug-in does not handle or terms nested in other terms.\n"
+								+ "Try using SingleStatement in your Icfg / Cfg Builder settings.\nOffending Term:\n"
+								+ term.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+				throw new EdgeUntranslatableError();
 			}
 			// It's just guards, continue operation
 			out = new Equations();

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 
 public class InterpretedIcfgEdge {
 	private final Term mGuard;
@@ -93,6 +95,22 @@ public class InterpretedIcfgEdge {
 
 	public Update[] getUpdates() {
 		return mUpdates;
+	}
+
+	public static class UntranslatableIcfgEdge extends InterpretedIcfgEdge {
+		public UntranslatableIcfgEdge(final IcfgEdge edge) {
+			super(edge.getTransformula().getFormula().getTheory().mTrue, new Update[0], edge, new HashSet<>());
+		}
+
+		@Override
+		public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+			throw new EdgeUntranslatableError();
+		}
+
+		@Override
+		public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+			throw new EdgeUntranslatableError();
+		}
 	}
 
 	public static class InterpretedIcfgEdgeBuilder {
