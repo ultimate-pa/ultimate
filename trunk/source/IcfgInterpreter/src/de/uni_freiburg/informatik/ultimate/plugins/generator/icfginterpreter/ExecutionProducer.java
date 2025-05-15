@@ -50,7 +50,7 @@ public class ExecutionProducer {
 
 		void init(IIcfg<? extends IcfgLocation> icfg, IUltimateServiceProvider services);
 
-		IcfgProgramExecution<?> makeExecution(NonDeterministicChoice ndc, IcfgLocation source);
+		List<IcfgProgramExecution<?>> makeExecution(NonDeterministicChoice ndc, IcfgLocation source);
 	}
 
 	public static void makeExecutions(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services,
@@ -464,50 +464,40 @@ public class ExecutionProducer {
 		}
 
 		@Override
-		public IcfgProgramExecution<?> makeExecution(final NonDeterministicChoice ndc, final IcfgLocation source) {
-			HashMap<Term, Value> state = makeState(ndc);
+		public List<IcfgProgramExecution<?>> makeExecution(final NonDeterministicChoice ndc,
+				final IcfgLocation source) {
+			final HashMap<Term, Value> state = makeState(ndc);
 
-			final ArrayList<InterpretedIcfgEdge> nextEdges = new ArrayList<>(
-					mOutEdges.getOrDefault(source, new ArrayList<>()));
+			final List<PartialExecution> executions = new ArrayList<>();
+			executions.add(new PartialExecution(source, ndc.clone(), List.of(), List.of(state), false));
+			final List<PartialExecution> finishedExecutions = new ArrayList<>();
 
-			final ArrayList<HashMap<Term, Value>> states = new ArrayList<>();
-			final ArrayList<IcfgEdge> edges = new ArrayList<>();
+			final List<IcfgProgramExecution<?>> out = new ArrayList<>();
 
-			states.add(state);
-
-			while (!nextEdges.isEmpty()) {
-				final HashMap<Term, Value> stateReference = state;
-				final List<InterpretedIcfgEdge> availableEdges = nextEdges.stream().filter((nextEdge) -> {
-					return nextEdge.guard(stateReference, ndc);
-				}).toList();
-
-				InterpretedIcfgEdge nextEdge;
-				if (availableEdges.size() > 1) {
-					nextEdge = ndc.chooseEdge(availableEdges);
-				} else if (availableEdges.size() == 0) {
-					// No guard was true, or no edges exist from the current vertex
-					break;
-				} else {
-					nextEdge = availableEdges.get(0);
+			while (!executions.isEmpty()) {
+				for (final PartialExecution execution : executeStep(executions.remove(0))) {
+					if (execution.isFinished()) {
+						finishedExecutions.add(execution);
+						out.add(printExecution(execution));
+					} else {
+						executions.add(execution);
+					}
 				}
-
-				edges.add(nextEdge.getEdge());
-				state = nextEdge.update(state, ndc);
-				states.add(state);
-
-				nextEdges.clear();
-				nextEdges.addAll(mOutEdges.getOrDefault(nextEdge.getTarget(), new ArrayList<>()));
 			}
 
+			return out;
+		}
+
+		private IcfgProgramExecution<?> printExecution(final PartialExecution execution) {
 			if (printExecution) {
 				final StringBuilder out = new StringBuilder();
-				out.append(states.get(0).toString());
-				for (int i = 0; i < edges.size(); i++) {
-					out.append("\n->\n").append(edges.get(i).getSource()).append(" to ")
-							.append(edges.get(i).getTarget());
-					out.append(" ").append(edges.get(i).getTransformula().toStringDirect());
+				out.append(execution.states.get(0).toString());
+				for (int i = 0; i < execution.edges.size(); i++) {
+					out.append("\n->\n").append(execution.edges.get(i).getSource()).append(" to ")
+							.append(execution.edges.get(i).getTarget());
+					out.append(" ").append(execution.edges.get(i).getTransformula().toStringDirect());
 					out.append("\n->\n{");
-					for (final Entry<Term, Value> entry : states.get(i + 1).entrySet()) {
+					for (final Entry<Term, Value> entry : execution.states.get(i + 1).entrySet()) {
 						out.append("\n\t").append(entry.getKey()).append(" = ").append(entry.getValue());
 					}
 					out.append("\n}");
@@ -516,7 +506,7 @@ public class ExecutionProducer {
 				IcfgInterpreterObserver.getLogger().info(out.toString());
 			}
 			// Report if the exit location was an error location
-			final IcfgLocation finalLocation = edges.getLast().getTarget();
+			final IcfgLocation finalLocation = execution.edges.getLast().getTarget();
 			if (mErrorMap.getOrDefault(finalLocation.getProcedure(), new HashSet<>()).contains(finalLocation)) {
 				IcfgInterpreterObserver.getLogger()
 						.error("Execution successfully ended at error location " + finalLocation.toString());
@@ -524,14 +514,60 @@ public class ExecutionProducer {
 
 			// trace requires same number of states and edges?
 			// TODO find out if it doesn't need final or initial state
-			states.remove(0);
+			execution.states.remove(0);
 
-			/* final List<Map<Term, Term>> statesCast = */states.stream().map(stateUncast -> castMap(stateUncast))
-					.toList();
+			/* final List<Map<Term, Term>> statesCast = */execution.states.stream()
+					.map(stateUncast -> castMap(stateUncast)).toList();
 			// return createExecution(edges, statesCast);
 
 			// TODO make toTerm() for ArrayValue
 			return null;
+		}
+
+		private record PartialExecution(IcfgLocation currentLocation, NonDeterministicChoice ndc, List<IcfgEdge> edges,
+				List<Map<Term, Value>> states, boolean isFinished) {
+			public Map<Term, Value> getCurrentState() {
+				return states.getLast();
+			}
+
+			public PartialExecution finish() {
+				return new PartialExecution(currentLocation, ndc.clone(), edges, states, true);
+			}
+
+			public PartialExecution addStep(final IcfgEdge edge, final Map<Term, Value> state) {
+				if (isFinished) {
+					throw new AssertionError("Cannot add steps to finished Execution.");
+				}
+				final List<IcfgEdge> newEdges = new ArrayList<>(edges());
+				newEdges.add(edge);
+				final List<Map<Term, Value>> newStates = new ArrayList<>(states());
+				newStates.add(state);
+				return new PartialExecution(edge.getTarget(), ndc.clone(), newEdges, newStates, isFinished);
+			}
+		}
+
+		private List<PartialExecution> executeStep(final PartialExecution execution) {
+			if (execution.isFinished()) {
+				return List.of(execution);
+			}
+
+			final Map<Term, Value> stateReference = execution.getCurrentState();
+			final List<InterpretedIcfgEdge> nextEdges = mOutEdges.getOrDefault(execution.currentLocation,
+					new ArrayList<>());
+			final List<InterpretedIcfgEdge> availableEdges = nextEdges.stream().filter((nextEdge) -> {
+				return nextEdge.guard(stateReference, execution.ndc);
+			}).toList();
+
+			if (availableEdges.size() == 0) {
+				// No guard was true, or no edges exist from the current vertex
+				return List.of(execution.finish());
+			}
+
+			final List<PartialExecution> out = new ArrayList<>();
+			for (final InterpretedIcfgEdge nextEdge : availableEdges) {
+				out.add(execution.addStep(nextEdge.getEdge(), nextEdge.update(stateReference, execution.ndc)));
+			}
+			return out;
 		}
 
 		@SuppressWarnings("unused")
