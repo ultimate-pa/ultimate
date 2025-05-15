@@ -1,3 +1,5 @@
+// Works with OneNontrivialStatement
+
 var a : bool;
 var b : bool;
 procedure main() {

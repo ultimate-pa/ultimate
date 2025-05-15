@@ -1,244 +1,95 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
 public class EqualityExtractor {
 	public static class Equations {
-		/**
-		 * The outer set stores the different possible sets of equations that form a valid way of updating. It is a
-		 * disjunction of conjunctions.
-		 */
-		protected final Set<Set<Equation>> mEquations;
+		private final Set<Equation> mEquations;
 
-		protected Equations(final Equation equation) {
-			final HashSet<Equation> andConjunct = new HashSet<>();
-			andConjunct.add(equation);
-			mEquations = new HashSet<>();
-			mEquations.add(andConjunct);
+		public Equations(final Set<Equation> equations) {
+			mEquations = equations;
 		}
 
-		public Equations(final Set<Set<Equation>> equations) {
-			mEquations = equations;
+		protected Equations(final Equation equation) {
+			mEquations = new HashSet<>();
+			mEquations.add(equation);
 		}
 
 		public Equations() {
 			this(new HashSet<>());
 		}
 
-		public void and(final Equations equationsB, final ManagedScript script) {
-			if (mEquations.isEmpty()) {
-				mEquations.add(new HashSet<>());
-			}
-
-			final Set<Set<Equation>> newElements = new HashSet<>();
-
-			// Distributivity, make a conjunct from each pair of conjuncts.
-			for (final Set<Equation> equationSet : mEquations) {
-				for (final Set<Equation> equationSetB : equationsB.mEquations) {
-					final HashSet<Equation> andConjunct = new HashSet<>(equationSet);
-					andConjunct.addAll(equationSetB);
-					newElements.add(andConjunct);
-				}
-			}
-
-			mEquations.clear();
-			mEquations.addAll(newElements);
-			removeImpossible(script);
-		}
-
-		public void and(final Equation newEquation, final ManagedScript script) {
-			if (mEquations.isEmpty()) {
-				mEquations.add(new HashSet<>());
-			}
-
-			final Set<Set<Equation>> newElements = new HashSet<>();
-
-			// Distributivity, add the equation to every conjunct.
-			for (final Set<Equation> equationSet : mEquations) {
-				final HashSet<Equation> andConjunct = new HashSet<>(equationSet);
-				andConjunct.add(newEquation);
-				newElements.add(andConjunct);
-			}
-
-			mEquations.clear();
-			mEquations.addAll(newElements);
-			removeImpossible(script);
-		}
-
-		public void or(final Equations equationsB, final ManagedScript script) {
+		public void and(final Equations equationsB) {
 			mEquations.addAll(equationsB.mEquations);
-			removeImpossible(script);
 		}
 
-		public void or(final Equation newEquation, final ManagedScript script) {
-			// Add new and conjunct that only contains the equation
-			final HashSet<Equation> andConjunct = new HashSet<>();
-			andConjunct.add(newEquation);
-			mEquations.add(andConjunct);
-			removeImpossible(script);
+		public void and(final Equation newEquation, final Script script) {
+			mEquations.addAll(newEquation.solveForVars(script));
 		}
 
-		private void removeImpossible(final ManagedScript script) {
-			final Set<Set<Equation>> unsatisfiable = new HashSet<>();
-			for (final Set<Equation> equationSet : mEquations) {
-				if (equationSet.size() < 2) {
-					continue;
-				}
-				final List<Term> smtEquations = equationSet.stream()
-						.map(equation -> equation.toTerm(script.getScript())).toList();
-				final Term test = SmtUtils.and(script.getScript(), smtEquations);
-
-				if (test.equals(script.getScript().getTheory().mFalse)
-						|| SmtUtils.checkEquivalence(test, script.getScript().getTheory().mFalse, script.getScript())
-								.equals(LBool.UNSAT)) {
-					unsatisfiable.add(equationSet);
-				}
+		public Set<SolvedEquation> solveForAllVars(final Script script) {
+			final Set<SolvedEquation> outData = new HashSet<>();
+			for (final Equation equation : mEquations) {
+				outData.addAll(equation.solveForVars(script));
 			}
-			mEquations.removeAll(unsatisfiable);
-		}
-
-		public void negate(final ManagedScript script) {
-			final Equations out = new Equations();
-
-			for (final Set<Equation> equationSet : mEquations) {
-				if (equationSet.isEmpty()) {
-					continue;
-				}
-				// Get the negated term, negation turns the dnf into a cnf, this is a conjunction of disjunctions.
-				final Set<Equation> negatedSet = new HashSet<>(
-						equationSet.stream().map((equation) -> equation.negate()).toList());
-
-				// Create dnf from cnf by using the defined and / or operations that handle distributivity.
-				final Iterator<Equation> iter = negatedSet.iterator();
-				final Equations disjunct = new Equations(iter.next());
-				while (iter.hasNext()) {
-					disjunct.or(iter.next(), script);
-				}
-				out.and(disjunct, script);
-			}
-
-			mEquations.clear();
-			mEquations.addAll(out.mEquations);
-		}
-
-		/**
-		 * Removes all equalities that do not contain Out- or Aux-Vars.
-		 *
-		 * @param term
-		 * @return
-		 */
-		public void removeGuardEquations(final UnmodifiableTransFormula formula) {
-			final HashSet<TermVariable> assignableVars = new HashSet<>(formula.getAuxVars());
-			final Collection<TermVariable> inVars = formula.getInVars().values();
-
-			assignableVars
-					.addAll(formula.getOutVars().values().stream().filter((entry) -> !inVars.contains(entry)).toList());
-
-			for (final Set<Equation> equationSet : mEquations) {
-				final HashSet<Equation> guardTerms = new HashSet<>();
-				for (final Equation equation : equationSet) {
-					if (!equation.getFreeVars().stream().anyMatch((var) -> assignableVars.contains(var))) {
-						// if exists var that is in the assignable vars
-						// => term has importance for updates
-						// otherwise: delete from equations
-						guardTerms.add(equation);
-					}
-				}
-				equationSet.removeAll(guardTerms);
-			}
-		}
-
-		public SolvedEquations solveForAllVars(final Script script) {
-			final Set<Set<SolvedEquation>> outData = new HashSet<>();
-			for (final Set<Equation> equationSet : mEquations) {
-				final HashSet<SolvedEquation> solvedEquations = new HashSet<>();
-				for (final Equation equation : equationSet) {
-					solvedEquations.addAll(equation.solveForVars(script));
-				}
-				outData.add(solvedEquations);
-			}
-			return new SolvedEquations(outData);
-		}
-
-		public record SolvedEquations(Set<Set<SolvedEquation>> equations) {
-			@Override
-			public String toString() {
-				final StringBuilder builder = new StringBuilder("or (\n");
-				for (final Set<SolvedEquation> equationSet : equations) {
-					builder.append("\tand(\n");
-					for (final Equation equation : equationSet) {
-						builder.append("\t\t").append(equation.toString()).append("\n");
-					}
-					builder.append("\t)\n");
-				}
-				return builder.append(")").toString();
-			}
-
-			/** */
-			public SolvedEquations getGuardSubset(final UnmodifiableTransFormula formula) {
-				final Collection<TermVariable> inVars = formula.getInVars().values();
-
-				return new SolvedEquations(
-						new HashSet<>(equations.stream()
-								.map(equationSet -> new HashSet<>(equationSet.stream()
-										.filter(equation -> inVars.containsAll(equation.getFreeVars())).toList()))
-								.toList()));
-			}
+			return outData;
 		}
 
 		@Override
 		public String toString() {
-			final StringBuilder builder = new StringBuilder("or (\n");
-			for (final Set<Equation> equationSet : mEquations) {
-				builder.append("\tand(\n");
-				for (final Equation equation : equationSet) {
-					builder.append("\t\t").append(equation.toString()).append("\n");
-				}
-				builder.append("\t)\n");
+			final StringBuilder builder = new StringBuilder();
+			for (final Equation equation : mEquations) {
+				builder.append("\t").append(equation.toString()).append("\n");
 			}
-			return builder.append(")").toString();
+			return builder.toString().stripTrailing();
+		}
+
+		public Set<Equation> getEquations() {
+			return mEquations;
 		}
 	}
 
-	public static Equations extract(final Term term, final ManagedScript script) {
+	public static Equations extract(final Term term, final Script script, final UnmodifiableTransFormula formula) {
 		switch (term) {
 		case final ApplicationTerm at:
-			return extractAppliactionTerm(at, script);
+			return extractAppliactionTerm(at, script, formula);
 		default:
 			return new Equations();
 		}
 	}
 
-	public static Equations extractAppliactionTerm(final ApplicationTerm term, final ManagedScript script) {
+	public static Equations extractAppliactionTerm(final ApplicationTerm term, final Script script,
+			final UnmodifiableTransFormula formula) {
 		Equations out;
 		switch (term.getFunction().getName()) {
 		case SMTLIBConstants.OR:
-			out = new Equations();
-			for (final Term subTerm : term.getParameters()) {
-				final Equation booleanEq = getBooleanEquivalence(subTerm);
-				if (booleanEq != null) {
-					out.or(booleanEq, script);
-				} else {
-					out.or(extract(subTerm, script), script);
-				}
+
+			final List<TermVariable> outVars = formula.getOutVars().entrySet().stream()
+					.filter((entry) -> formula.getAssignedVars().contains(entry.getKey()))
+					.map((entry) -> entry.getValue()).toList();
+
+			if (Arrays.asList(term.getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
+				// This term contains information that is needed in updates.
+				throw new AssertionError("This plug-in does not handle or terms nested in other terms.\n"
+						+ "Try using SingleStatement in your Icfg / Cfg Builder settings.\nOffending Term:\n"
+						+ term.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
 			}
+			// It's just guards, continue operation
+			out = new Equations();
 			break;
+
 		case SMTLIBConstants.AND:
 			out = new Equations();
 			for (final Term subTerm : term.getParameters()) {
@@ -246,7 +97,7 @@ public class EqualityExtractor {
 				if (booleanEq != null) {
 					out.and(booleanEq, script);
 				} else {
-					out.and(extract(subTerm, script), script);
+					out.and(extract(subTerm, script, formula));
 				}
 			}
 			break;
@@ -266,8 +117,13 @@ public class EqualityExtractor {
 			out = addEquations(term.getParameters(), RelationSymbol.GREATER, script);
 			break;
 		case SMTLIBConstants.NOT:
-			out = extract(term.getParameters()[0], script);
-			out.negate(script);
+			final Set<Equation> eqs = extract(term.getParameters()[0], script, formula).getEquations();
+			if (eqs.size() == 1) {
+				final Equation equation = eqs.iterator().next().negate();
+				out = new Equations(equation);
+			} else {
+				out = new Equations();
+			}
 			break;
 		default:
 			out = new Equations();
@@ -291,7 +147,7 @@ public class EqualityExtractor {
 
 		if (term instanceof final TermVariable tv) {
 			// we have a variable term which means we return the equation var = true / false.
-			return new SolvedEquation(RelationSymbol.EQ, tv, element);
+			return new Equation(RelationSymbol.EQ, tv, element);
 		}
 		if (term instanceof final ApplicationTerm subAT
 				&& subAT.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
@@ -301,8 +157,7 @@ public class EqualityExtractor {
 		return null;
 	}
 
-	private static Equations addEquations(final Term[] subTerms, final RelationSymbol relation,
-			final ManagedScript script) {
+	private static Equations addEquations(final Term[] subTerms, final RelationSymbol relation, final Script script) {
 		final Equations out = new Equations();// new Equation(relation, subTerms[0], subTerms[1]));
 
 		for (int i = 1; i < subTerms.length; i++) {

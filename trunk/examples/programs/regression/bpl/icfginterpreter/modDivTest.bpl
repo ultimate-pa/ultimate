@@ -1,3 +1,5 @@
+// Works with SequenceOfStatements setting
+
 procedure main() {
     var a : int;
     var b : int;

@@ -8,7 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
@@ -17,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.int
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
-public interface Update {
+public interface Update extends ITermProvider {
 	Value makeValue(Map<Term, Value> state, NonDeterministicChoice ndc);
 
 	TermVariable getVariable();
@@ -58,6 +61,11 @@ public interface Update {
 		@Override
 		public int hashCode() {
 			return mProgramVar.hashCode() * 31 + mValue.hashCode();
+		}
+
+		@Override
+		public Term toTerm(final Script script) {
+			return SmtUtils.binaryEquality(script, mProgramVar, mValue);
 		}
 	}
 
@@ -200,28 +208,19 @@ public interface Update {
 		public String toString() {
 			final ArrayList<String> types = new ArrayList<>();
 
-			final ArrayList<String> inEquals = new ArrayList<>();
-			for (final Term inEqual : mInEqual) {
-				inEquals.add(inEqual.toStringDirect());
-			}
-			if (!inEquals.isEmpty()) {
-				types.add("var != {" + String.join(", ", inEquals) + "}");
+			if (!mInEqual.isEmpty()) {
+				types.add("var != {" + String.join(", ", mInEqual.stream().map(neq -> neq.toStringDirect()).toList())
+						+ "}");
 			}
 
-			final ArrayList<String> maximums = new ArrayList<>();
-			for (final Term lessEqual : mLessEq) {
-				maximums.add(lessEqual.toStringDirect());
-			}
-			if (!maximums.isEmpty()) {
-				types.add("var <= {" + String.join(", ", maximums) + "}");
+			if (!mGreaterEq.isEmpty()) {
+				types.add("var >= {" + String.join(", ", mGreaterEq.stream().map(geq -> geq.toStringDirect()).toList())
+						+ "}");
 			}
 
-			final ArrayList<String> minimums = new ArrayList<>();
-			for (final Term greaterEqual : mGreaterEq) {
-				minimums.add(greaterEqual.toStringDirect());
-			}
-			if (!minimums.isEmpty()) {
-				types.add("var >= {" + String.join(", ", minimums) + "}");
+			if (!mLessEq.isEmpty()) {
+				types.add("var <= {" + String.join(", ", mLessEq.stream().map(leq -> leq.toStringDirect()).toList())
+						+ "}");
 			}
 
 			return mProgramVar + " := havoc(" + String.join("; ", types) + ")";
@@ -240,6 +239,25 @@ public interface Update {
 		public int hashCode() {
 			return (((mProgramVar.hashCode() * 31 + mInEqual.hashCode()) * 31 + mGreaterEq.hashCode()) * 31
 					+ mLessEq.hashCode()) * 31;
+		}
+
+		@Override
+		public Term toTerm(final Script script) {
+			final List<Term> equations = new ArrayList<>();
+
+			for (final Term neq : mInEqual) {
+				return SmtUtils.distinct(script, mProgramVar, neq);
+			}
+
+			for (final Term geq : mGreaterEq) {
+				return SmtUtils.geq(script, mProgramVar, geq);
+			}
+
+			for (final Term leq : mLessEq) {
+				return SmtUtils.leq(script, mProgramVar, leq);
+			}
+
+			return SmtUtils.and(script, equations);
 		}
 	}
 }

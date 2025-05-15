@@ -1,3 +1,5 @@
+// Works with SequenceOfStatements setting
+
 procedure main() returns (gdc : int) {
     var a : int;
     var b : int;

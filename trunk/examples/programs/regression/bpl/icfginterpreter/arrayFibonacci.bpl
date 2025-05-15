@@ -1,5 +1,4 @@
-// Given that the program currently uses longs, we know that the highest fibonacci
-// number to be correctly calculated before overflow is the 92nd one, 7540113804746346429
+// Works with SequenceOfStatements setting
 
 procedure main() {
     var correctFibonacci : [int]int;

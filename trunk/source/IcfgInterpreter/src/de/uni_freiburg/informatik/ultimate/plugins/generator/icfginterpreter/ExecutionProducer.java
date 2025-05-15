@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +20,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
@@ -29,15 +29,14 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.Relati
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations.SolvedEquations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.PossibleUpdate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.InterpretedIcfgEdge.InterpretedIcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.AssignmentUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
@@ -107,7 +106,6 @@ public class ExecutionProducer {
 			mngScript = icfg.getCfgSmtToolkit().getManagedScript();
 
 			final Script script = mngScript.getScript();
-			final Theory theory = script.getTheory();
 
 			final HashSet<IcfgLocation> visited = new HashSet<>();
 			final ArrayList<IcfgLocation> next = new ArrayList<>(initialNodes);
@@ -125,46 +123,22 @@ public class ExecutionProducer {
 
 					final UnmodifiableTransFormula formula = edge.getTransformula();
 
+					System.out.println(formula.toStringDirect());
+					printDNF(formula.getFormula(), 0, services);
+
 					for (final Entry<IProgramVar, TermVariable> programVar : formula.getInVars().entrySet()) {
 						mSymbolTable.put(programVar.getValue(), programVar.getKey());
 					}
 					for (final Entry<IProgramVar, TermVariable> programVar : formula.getOutVars().entrySet()) {
 						mSymbolTable.put(programVar.getValue(), programVar.getKey());
 					}
-
-					final Term dnf = SmtUtils.toDnf(services, mngScript, formula.getFormula());
-
-					final Equations dnfSet = EqualityExtractor.extract(formula.getFormula(), mngScript);
-					// dnfSet.removeGuardEquations(formula);
-					final SolvedEquations solvedDnfSet = dnfSet.solveForAllVars(script);
-
-					final Set<PossibleUpdate> updateVariants = new HashSet<>();
-					for (final Set<SolvedEquation> equationSet : solvedDnfSet.equations()) {
-						final List<Term> guardEquations = equationSet.stream()
-								.filter(equation -> formula.getInVars().values().containsAll(equation.getFreeVars()))
-								.map(equation -> generalize(equation, formula).toTerm(script)).toList();
-						final Term guardTerm = SmtUtils.and(script, guardEquations);
-						updateVariants.add(new PossibleUpdate(guardTerm, makeUpdates(equationSet, formula)));
+					for (final Entry<IProgramVar, TermVariable> programVar : formula.getOutVars().entrySet()) {
+						mSymbolTable.put(programVar.getValue(), programVar.getKey());
 					}
 
-					if (updateVariants.size() == 1) {
-						// Only one possible variant means the specific guard is the same as the guard of the edge
-						final PossibleUpdate update = updateVariants.iterator().next();
-						updateVariants.clear();
-						updateVariants.add(new PossibleUpdate(theory.mTrue, update.updates()));
-					}
-
-					final Term fullGuard = TransFormulaUtils.computeGuardTerm(services, mngScript, formula,
-							printExecution);
-					final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdge(fullGuard, updateVariants, edge);
-
-					System.out.println(formula.toStringDirect());
-					printDNF(dnf, 0, services);
-					System.out.println(icfgEdge.toString());
-					System.out.println("\n\n");
 					final ArrayList<InterpretedIcfgEdge> allOutEdges = mOutEdges.getOrDefault(source,
 							new ArrayList<>());
-					allOutEdges.add(icfgEdge);
+					allOutEdges.addAll(extractEdges(formula, edge, script, services));
 					mOutEdges.put(source, allOutEdges);
 				}
 			}
@@ -172,8 +146,87 @@ public class ExecutionProducer {
 			mErrorMap = getErrorLocations(icfg);
 		}
 
-		private Update[] makeUpdates(final Set<SolvedEquation> equations, final UnmodifiableTransFormula formula) {
+		public List<InterpretedIcfgEdge> extractEdges(final UnmodifiableTransFormula formula, final IcfgEdge edge,
+				final Script script, final IUltimateServiceProvider services) {
+			// check if this transition is only a guard
+			final List<TermVariable> outVars = formula.getOutVars().entrySet().stream()
+					.filter((entry) -> formula.getAssignedVars().contains(entry.getKey()))
+					.map((entry) -> entry.getValue()).toList();
 
+			final Set<TermVariable> auxVars = formula.getAuxVars();
+			if (!Arrays.asList(formula.getFormula().getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
+				// This term contains no information that is needed in updates or all updates are havocs.
+				// (The formula contains no OutVar that is assigned)
+				final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+						.addUpdates(extractUpdates(formula, script, script.getTheory().mTrue))
+						.makeGuardUnchanged(services, mngScript, formula).finish();
+
+				// make sure that the extracted guard is equivalent to the whole transition formula
+				final Term fullTermSub = substituteProgramVars(formula.getFormula(), formula);
+				assert SmtUtils.checkEquivalence(icfgEdge.getGuardTerm(), fullTermSub, script) == LBool.UNSAT;
+
+				System.out.println(icfgEdge.toString());
+				System.out.println("\n\n");
+				return List.of(icfgEdge);
+			}
+
+			if (formula.getFormula() instanceof final ApplicationTerm app
+					&& app.getFunction().getName().equals(SMTLIBConstants.OR)) {
+				// check if we have two opposite assignments like:
+				// ((var x = true && guardA) || (var y = false && guardB))
+				final Term[] subTerms = app.getParameters();
+				if (subTerms.length != 2) {
+					return List.of();
+				}
+
+				final InterpretedIcfgEdge icfgEdgeA = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+						.addUpdates(extractUpdates(formula, script, subTerms[0]))
+						.makeGuardFromTerm(services, mngScript, formula, subTerms[0]).finish();
+
+				final InterpretedIcfgEdge icfgEdgeB = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+						.addUpdates(extractUpdates(formula, script, subTerms[1]))
+						.makeGuardFromTerm(services, mngScript, formula, subTerms[1]).finish();
+
+				final Term notGuardB = SmtUtils.not(script, icfgEdgeB.getGuardTerm());
+				if (SmtUtils.checkEquivalence(icfgEdgeA.getGuardTerm(), notGuardB, script) != LBool.UNSAT) {
+					// the two have guards that are not opposites
+					throw new AssertionError(
+							"This plug-in does not handle or terms that encode different paths of a program.\n"
+									+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
+									+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+				}
+
+				final Term notUpdatesB = SmtUtils.not(script, icfgEdgeB.getUpdateTerm(script));
+				if (SmtUtils.checkEquivalence(icfgEdgeA.getUpdateTerm(script), notUpdatesB, script) != LBool.UNSAT) {
+					// the two have updates that are not opposites
+					throw new AssertionError(
+							"This plug-in does not handle or terms that encode different paths of a program.\n"
+									+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
+									+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+				}
+
+				System.out.println(icfgEdgeA.toString());
+				System.out.println(icfgEdgeB.toString());
+				System.out.println("\n\n");
+				return List.of(icfgEdgeA, icfgEdgeB);
+			}
+
+			final InterpretedIcfgEdge icfgEdge = new InterpretedIcfgEdgeBuilder(edge, auxVars)
+					.addUpdates(extractUpdates(formula, script, formula.getFormula()))
+					.makeGuardUnchanged(services, mngScript, formula).finish();
+
+			System.out.println(icfgEdge.toString());
+			System.out.println("\n\n");
+			return List.of(icfgEdge);
+		}
+
+		private Update[] extractUpdates(final UnmodifiableTransFormula formula, final Script script, final Term term) {
+			final Equations equations = EqualityExtractor.extract(term, script, formula);
+			final Set<SolvedEquation> solvedEquations = equations.solveForAllVars(script);
+			return makeUpdates(solvedEquations, formula);
+		}
+
+		private Update[] makeUpdates(final Set<SolvedEquation> equations, final UnmodifiableTransFormula formula) {
 			// Equations have to be ordered such that
 			// 1. A variable that is defined by a last state value comes before any update that overrides the required
 			// update
@@ -200,6 +253,7 @@ public class ExecutionProducer {
 
 			final Map<IProgramVar, TermVariable> formulaInVars = formula.getInVars();
 			final Map<IProgramVar, TermVariable> formulaOutVars = formula.getOutVars();
+			final Set<TermVariable> formulaAuxVars = formula.getAuxVars();
 
 			for (final SolvedEquation equation : equationList) {
 				final List<TermVariable> inVars = neededInVars.getOrDefault(equation, new ArrayList<>());
@@ -210,19 +264,19 @@ public class ExecutionProducer {
 						continue;
 					}
 					if (formulaInVars.containsValue(usedVar)) {
-						inVars.add(usedVar);
+						inVars.add(lookupSymbolTableSafe(usedVar, formula));
 					}
-					if (formulaOutVars.containsValue(usedVar)) {
-						outVars.add(usedVar);
+					if (formulaOutVars.containsValue(usedVar) || formulaAuxVars.contains(usedVar)) {
+						outVars.add(lookupSymbolTableSafe(usedVar, formula));
 					}
 				}
 				neededInVars.put(equation, inVars);
 				neededOutVars.put(equation, outVars);
 			}
 
-			for (final Entry<IProgramVar, TermVariable> inVar : formulaInVars.entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> inVar : formula.getInVars().entrySet()) {
 				// A variable is freely havoced if it has an InVar but no OutVar
-				if (formulaOutVars.containsKey(inVar.getKey())) {
+				if (formula.getOutVars().containsKey(inVar.getKey())) {
 					continue;
 				}
 				final SolvedEquation havocEquation = new SolvedEquation(null, inVar.getValue(), null);
@@ -231,9 +285,9 @@ public class ExecutionProducer {
 				neededOutVars.put(havocEquation, new ArrayList<>());
 			}
 
-			for (final Entry<IProgramVar, TermVariable> outVar : formulaOutVars.entrySet()) {
+			for (final Entry<IProgramVar, TermVariable> outVar : formula.getOutVars().entrySet()) {
 				// A variable is freely havoced if it has an OutVar but isn't defined in the transition and not an InVar
-				if (formulaInVars.containsKey(outVar.getKey())
+				if (formula.getInVars().containsKey(outVar.getKey())
 						|| equationList.stream().anyMatch(equation -> equation.getLhs().equals(outVar.getValue()))) {
 					continue;
 				}
@@ -243,29 +297,42 @@ public class ExecutionProducer {
 				neededOutVars.put(havocEquation, new ArrayList<>());
 			}
 
+			for (final TermVariable outVar : formula.getAuxVars()) {
+				// An aux variable is freely havoced if it isn't defined in the transition
+				if (equationList.stream().anyMatch(equation -> equation.getLhs().equals(outVar))) {
+					continue;
+				}
+				final SolvedEquation havocEquation = new SolvedEquation(null, outVar, null);
+				equationList.add(havocEquation);
+				neededInVars.put(havocEquation, new ArrayList<>());
+				neededOutVars.put(havocEquation, new ArrayList<>());
+			}
+
 			Collections.sort(equationList, (eq1, eq2) -> {
-				if (neededInVars.get(eq1).contains(eq2.getLhs())) {
+				final TermVariable var1 = lookupSymbolTableSafe(eq1.getLhs(), formula);
+				final TermVariable var2 = lookupSymbolTableSafe(eq2.getLhs(), formula);
+				if (neededInVars.get(eq1).contains(var2)) {
 					// Equation 1 uses the variable defined by equation 2 in the last state context.
 					// Equation 1 comes first.
 					return -1;
 				}
-				if (neededOutVars.get(eq1).contains(eq2.getLhs())) {
+				if (neededOutVars.get(eq1).contains(var2)) {
 					// Equation 1 uses the variable defined by equation 2 in the next state context.
 					// Equation 2 comes first.
 					return 1;
 				}
-				if (neededInVars.get(eq2).contains(eq1.getLhs())) {
+				if (neededInVars.get(eq2).contains(var1)) {
 					// Equation 2 uses the variable defined by equation 1 in the last state context.
 					// Equation 2 comes first.
 					return 1;
 				}
-				if (neededOutVars.get(eq2).contains(eq1.getLhs())) {
+				if (neededOutVars.get(eq2).contains(var1)) {
 					// Equation 2 uses the variable defined by equation 1 in the next state context.
 					// Equation 1 comes first.
 					return -1;
 				}
 				// Otherwise, sort by name for consistent ordering of terms
-				return Integer.compare(eq1.getLhs().getName().hashCode(), eq2.getLhs().getName().hashCode());
+				return Integer.compare(var1.getName().hashCode(), var2.getName().hashCode());
 			});
 
 			final ArrayList<Update> out = new ArrayList<>();
@@ -282,7 +349,7 @@ public class ExecutionProducer {
 
 				if (equation.getRhs() == null || equation.getRelation() == null) {
 					// can be havoced to any value
-					out.add(new HavocUpdate(mSymbolTable.get(definedVar).getTermVariable(), new ArrayList<>()));
+					out.add(new HavocUpdate(lookupSymbolTableSafe(definedVar, formula), new ArrayList<>()));
 					continue;
 				}
 
@@ -298,7 +365,7 @@ public class ExecutionProducer {
 				}
 
 				// Replace the formula specific TermVariable with its generic global counterpart
-				definedVar = mSymbolTable.get(definedVar).getTermVariable();
+				definedVar = lookupSymbolTableSafe(definedVar, formula);
 
 				if (!equals.isEmpty()) {
 					// We have at least one Term that directly defines the variable.
@@ -312,8 +379,15 @@ public class ExecutionProducer {
 			return out.toArray(new Update[out.size()]);
 		}
 
+		private TermVariable lookupSymbolTableSafe(final TermVariable var, final UnmodifiableTransFormula formula) {
+			if (formula.getAuxVars().contains(var)) {
+				return var;
+			}
+			return mSymbolTable.get(var).getTermVariable();
+		}
+
 		private SolvedEquation generalize(final SolvedEquation equation, final UnmodifiableTransFormula formula) {
-			final TermVariable genericVar = mSymbolTable.get(equation.getLhs()).getTermVariable();
+			final TermVariable genericVar = lookupSymbolTableSafe(equation.getLhs(), formula);
 			final Term genericTerm = substituteProgramVars(equation.getRhs(), formula);
 			return new SolvedEquation(equation.getRelation(), genericVar, genericTerm);
 		}

@@ -1,4 +1,6 @@
+// Works with SequenceOfStatements setting
 // based on https://de.wikipedia.org/wiki/Quicksort#Iteratives_Quicksort
+
 procedure main() {
     var randomArray : [int]int;
     var stack : [int]int;
