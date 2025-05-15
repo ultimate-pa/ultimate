@@ -67,7 +67,20 @@ public final class Region<PLACE> {
 	}
 
 	/**
-	 * Checks if a given place is in this region
+	 * Creates a region containing only a single place.
+	 *
+	 * @param <P>
+	 *            the type of places
+	 * @param place
+	 *            the only place in the region
+	 * @return the singleton region
+	 */
+	public static <P> Region<P> singleton(final P place) {
+		return new Region<>(ImmutableSet.singleton(place));
+	}
+
+	/**
+	 * Checks if a given place is in this region.
 	 *
 	 * @param place
 	 *            the place to check

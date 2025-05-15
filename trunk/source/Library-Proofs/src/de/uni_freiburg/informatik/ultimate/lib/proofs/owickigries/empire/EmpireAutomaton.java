@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -48,19 +47,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutomaton.State<L, P>> {
+	private final ILogger mLogger;
+
 	private final IPetriNet<L, P> mNet;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
 
-	private final ILogger mLogger;
+	private final State<L, P> mInitialState;
 
 	public EmpireAutomaton(final IPetriNet<L, P> net,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
 			final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(getClass());
-		mLogger.setLevel(LogLevel.ERROR);
-
 		mNet = net;
 		mProduct = product;
+
+		// Construct initial state
+		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
+		final var regions = mNet.getInitialPlaces().stream().map(Region::singleton).collect(ImmutableSet.collector());
+		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw, Collections.emptySet());
+		mInitialState = getMarkedSuccessor(state);
 	}
 
 	@Override
@@ -75,26 +80,17 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public VpAlphabet<Transition<L, P>> getVpAlphabet() {
-		final var transitions = mNet.getTransitions();
-		return new VpAlphabet<>(transitions);
+		return new VpAlphabet<>(mNet.getTransitions());
 	}
 
 	@Override
 	public Iterable<State<L, P>> getInitialStates() {
-		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
-		final var regions = mNet.getInitialPlaces().stream().map(p -> new Region<>(ImmutableSet.singleton(p)))
-				.collect(ImmutableSet.collector());
-		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw, Collections.emptySet());
-		final var markedSuccessor = getMarkedSuccessor(state);
-		return List.of(markedSuccessor);
+		return List.of(mInitialState);
 	}
 
 	@Override
 	public boolean isInitial(final State<L, P> state) {
-		final var initialStates = getInitialStates();
-		final Set<State<L, P>> initialState = new HashSet<>();
-		initialStates.forEach(initialState::add);
-		return initialState.contains(state);
+		return mInitialState.equals(state);
 	}
 
 	/**
@@ -139,8 +135,8 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		for (final Transition<L, P> transition : enabledTransitions) {
 			final var succ = internalSuccessors(state, transition);
 			if (!succ.iterator().hasNext()) {
-				final var newLaw = getSuccessorLaw(state.law, transition);
-				assert SmtUtils.isFalseLiteral(newLaw.getFormula()) : "There is no successor, but the law is not false";
+				assert SmtUtils.isFalseLiteral(getSuccessorLaw(state.law, transition).getFormula())
+						: "There is no successor, but the law is not false";
 				return true;
 			}
 		}
@@ -154,7 +150,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public String sizeInformation() {
-		return "unknown";
+		return "unknown size";
 	}
 
 	@Override
@@ -166,17 +162,12 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	@Override
 	public Iterable<OutgoingInternalTransition<Transition<L, P>, State<L, P>>>
 			internalSuccessors(final State<L, P> state, final Transition<L, P> letter) {
-
-		// (state is marked)
-
 		// step 1: see if letter should lead to any successor at all or can be optimized away
 		// (iterate over alphabet and see which other transitions are enabled in the territory)
-		final var territory = state.territory;
-		final var law = state.law;
-		if (!territory.enables(letter)) {
+		if (!state.territory().enables(letter)) {
 			return List.of();
 		}
-		if (isExtendingTransition(law, getSuccessorLaw(law, letter), letter) && isCycle(state, letter)) {
+		if (isExtendingTransition(state.law(), letter) && isCycle(state, letter)) {
 			return List.of(new OutgoingInternalTransition<>(letter, state));
 		}
 
@@ -189,27 +180,10 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 		// step 3: while the current successor is not marked, pick one (or a set of) transitions and compute the
 		// successor again
-
 		final var maxMarkedSuccessor = getMarkedSuccessor(directSucc);
 
 		// return the edge to the maximal successor
 		return List.of(new OutgoingInternalTransition<>(letter, maxMarkedSuccessor));
-	}
-
-	// TODO use ImmutableSet for bystanders
-	public record State<L, P>(Territory<P> territory, IPredicate law, Set<Region<P>> bystanders, int hash) {
-		// Convenience constructor that computes the correct hash code. Always use this constructor.
-		public State(final Territory<P> territory, final IPredicate law, final Set<Region<P>> bystanders) {
-			this(territory, law, bystanders, Objects.hash(territory, law, bystanders));
-		}
-
-		@Override
-		public int hashCode() {
-			// Hash code is cached for performance.
-			// TODO This caching is brittle, as accidental constructor misuse can lead to incorrect hash codes.
-			// TODO Re-evaluate the impact other implementation details have been improved, and improve or remove it.
-			return hash;
-		}
 	}
 
 	private State<L, P> extendAll(final State<L, P> state, final Set<Transition<L, P>> transitions) {
@@ -248,57 +222,37 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	}
 
 	private Set<Transition<L, P>> getEnabledTransitions(final State<L, P> state) {
-		final var territory = state.territory;
-		final var lawPlace = state.law;
-		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
-		final var notBotTransitions = new HashSet<Transition<L, P>>();
-		for (final Transition<L, P> transition : enabledTransitions) {
-			final var succLaw = getSuccessorLaw(lawPlace, transition);
-			if (!SmtUtils.isFalseLiteral(succLaw.getFormula())) {
-				notBotTransitions.add(transition);
-			}
-		}
-		return notBotTransitions;
+		return state.territory().getEnabledTransitions(mNet)
+				.filter(transition -> !SmtUtils.isFalseLiteral(getSuccessorLaw(state.law(), transition).getFormula()))
+				.collect(Collectors.toSet());
 	}
 
 	private IPredicate getSuccessorLaw(final IPredicate law, final Transition<L, P> transition) {
 		final var succLaw = mProduct.internalSuccessors(law, transition.getSymbol());
-		IPredicate newLawPlace = law;
 		if (succLaw.iterator().hasNext()) {
-			newLawPlace = DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
-		} else {
-			mLogger.warn("No successor law for transition: %s and law: %s", transition, law);
+			return DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
 		}
-		return newLawPlace;
+
+		// TODO Shouldn't we rather throw an error here?
+		mLogger.warn("No successor law for transition: %s and law: %s", transition, law);
+		return law;
 	}
 
-	private boolean isExtendingTransition(final IPredicate lawPlace, final IPredicate newLawPlace,
-			final Transition<L, P> transition) {
+	private boolean isExtendingTransition(final IPredicate lawPlace, final Transition<L, P> transition) {
+		final IPredicate newLawPlace = getSuccessorLaw(lawPlace, transition);
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
-		if (lawPlace == newLawPlace && predecessors.size() == 1 && successors.size() == 1) {
-			return true;
-		}
-		return false;
+		return lawPlace == newLawPlace && predecessors.size() == 1 && successors.size() == 1;
 	}
 
 	private Set<Transition<L, P>> getExtendingTransitions(final State<L, P> state,
 			final Set<Transition<L, P>> transitions) {
-		final var lawPlace = state.law;
-		final var extendingTransitions = new HashSet<Transition<L, P>>();
-		for (final Transition<L, P> transition : transitions) {
-			final var succLaw = getSuccessorLaw(lawPlace, transition);
-			if (isExtendingTransition(lawPlace, succLaw, transition)) {
-				extendingTransitions.add(transition);
-			}
-		}
-		return extendingTransitions;
+		return transitions.stream().filter(transition -> isExtendingTransition(state.law, transition))
+				.collect(Collectors.toSet());
 	}
 
 	private boolean isNecessaryBridge(final State<L, P> state, final Transition<L, P> transition) {
-		final var territory = state.territory;
-		final var bs = state.bystanders;
-		return !territory.getBystanders(transition).containsAll(bs);
+		return !state.territory.getBystanders(transition).containsAll(state.bystanders);
 	}
 
 	private Set<Transition<L, P>> getUnnecessaryTransitions(final State<L, P> state,
@@ -307,15 +261,13 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		return extending.stream().filter(t -> !isNecessaryBridge(state, t)).collect(Collectors.toSet());
 	}
 
-	private Boolean isCycle(final State<L, P> state, final Transition<L, P> transition) {
+	private boolean isCycle(final State<L, P> state, final Transition<L, P> transition) {
 		final var territory = state.territory;
 		final var law = state.law;
-		final var successors = transition.getSuccessors();
-		if (!territory.enables(transition)
-				|| !isExtendingTransition(law, getSuccessorLaw(law, transition), transition)) {
+		if (!territory.enables(transition) || !isExtendingTransition(law, transition)) {
 			return false;
 		}
-		return territory.getPlaces().containsAll(successors);
+		return territory.getPlaces().containsAll(transition.getSuccessors());
 	}
 
 	private State<L, P> getMarkedSuccessor(final State<L, P> state) {
@@ -331,25 +283,34 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	}
 
 	private State<L, P> getReplacementSuccessor(final State<L, P> state, final Transition<L, P> transition) {
-		final var territory = state.territory;
-		final var lawPlace = state.law;
-
-		final IPredicate newLawPlace = getSuccessorLaw(lawPlace, transition);
-
-		var regions = territory.getBystanders(transition);
-
-		regions = replaceRegions(transition, regions);
+		final IPredicate newLawPlace = getSuccessorLaw(state.law(), transition);
+		final Set<Region<P>> newBystanders = state.territory().getBystanders(transition);
+		final var regions = replaceRegions(transition, newBystanders);
 		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
-		final var newBystanders = territory.getBystanders(transition);
 		return new State<>(newTerritory, newLawPlace, newBystanders);
 	}
 
 	private Set<Region<P>> replaceRegions(final Transition<L, P> transition, final Set<Region<P>> bystanders) {
 		final var regions = new HashSet<>(bystanders);
-		final var successors = transition.getSuccessors();
-		for (final var succ : successors) {
-			regions.add(new Region<>(ImmutableSet.singleton(succ)));
+		for (final var succ : transition.getSuccessors()) {
+			regions.add(Region.singleton(succ));
 		}
 		return regions;
+	}
+
+	// TODO use ImmutableSet for bystanders
+	public record State<L, P>(Territory<P> territory, IPredicate law, Set<Region<P>> bystanders, int hash) {
+		// Convenience constructor that computes the correct hash code. Always use this constructor.
+		public State(final Territory<P> territory, final IPredicate law, final Set<Region<P>> bystanders) {
+			this(territory, law, bystanders, Objects.hash(territory, law, bystanders));
+		}
+
+		@Override
+		public int hashCode() {
+			// Hash code is cached for performance.
+			// TODO This caching is brittle, as accidental constructor misuse can lead to incorrect hash codes.
+			// TODO Re-evaluate the impact other implementation details have been improved, and improve or remove it.
+			return hash;
+		}
 	}
 }
