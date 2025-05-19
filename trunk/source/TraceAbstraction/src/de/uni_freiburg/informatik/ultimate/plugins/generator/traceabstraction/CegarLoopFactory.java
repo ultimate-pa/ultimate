@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstract
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.PetriLbeInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction.ICopyActionFactory;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe.PetriNetLargeBlockEncoding.IPLBECompositionFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SummaryCegarLoop.ContractMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.CegarLoopForPetriNet;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.IndependenceProviderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.concurrency.PartialOrderCegarLoop;
@@ -201,7 +202,9 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 		return new Pair<>(cegar, proofProducer);
 	}
 
+	// TODO front end integration
 	public static final boolean USE_SUMMARY_CEGAR_LOOP = true;
+	public static final ContractMode SUMMARY_CEGAR_LOOP_CONTACT_MODE = ContractMode.CACHE;
 
 	private NwaCegarLoop<L> createFiniteAutomataCegarLoop(final IUltimateServiceProvider services,
 			final DebugIdentifier name, final IIcfg<IcfgLocation> root, final PredicateFactory predicateFactory,
@@ -223,9 +226,10 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					errorLocs, proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		}
 
-		if (USE_SUMMARY_CEGAR_LOOP) { // TODO
+		if (USE_SUMMARY_CEGAR_LOOP) {
 			return new SummaryCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+					proofProducer, services, mTransitionClazz, stateFactoryForRefinement,
+					SUMMARY_CEGAR_LOOP_CONTACT_MODE);
 		}
 
 		switch (mPrefs.getFloydHoareAutomataReuse()) {

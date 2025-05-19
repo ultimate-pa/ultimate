@@ -21,24 +21,46 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
+/**
+ * Class that represents a contract for a function.
+ */
 public class FunctionContract {
 
 	protected IPredicate mPrecondition;
 	protected IPredicate mPostcondition;
 
+	/**
+	 * Constructs a new {@link FunctionContract}.
+	 *
+	 * @param precondition
+	 * @param postcondition
+	 */
 	public FunctionContract(final IPredicate precondition, final IPredicate postcondition) {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 	}
 
+	/**
+	 * @return the precondition of the contract
+	 */
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
 
+	/**
+	 * @return the postcondition of the contract
+	 */
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
 
+	/**
+	 * Transforms the precondition of this function contract to a precondition for the given summary.
+	 *
+	 * @param summary
+	 * @param programUtilities
+	 * @return a {@link Term}
+	 */
 	public Term transformPrecondition(final Summary summary, final ProgramUtilities<?> programUtilities) {
 		final CfgSmtToolkit csToolkit = programUtilities.getCsToolkit();
 
@@ -55,6 +77,14 @@ public class FunctionContract {
 				quantifiablePreconditionVars, transitionedPrecondition);
 	}
 
+	/**
+	 * Transforms the postcondition of this function contract to a postcondition for the given summary.
+	 *
+	 * @param summary
+	 * @param programExtractor
+	 * @param postReturnVarsMap
+	 * @return a {@link Term}
+	 */
 	public Term transformPostcondition(final Summary summary, final ProgramUtilities<?> programExtractor,
 			final Map<IProgramVar, TermVariable> postReturnVarsMap) {
 		final CfgSmtToolkit csToolkit = programExtractor.getCsToolkit();
@@ -64,32 +94,10 @@ public class FunctionContract {
 		final Set<IProgramVar> callReturnParams = new HashSet<>(callParams);
 		callReturnParams.addAll(returnParams);
 
-		final Term transitionedPrecondition = programExtractor.callTransitionReverse(summary, mPrecondition);
-		final IPredicate transitionedPreconditionPredicate =
-				programExtractor.getPredicateFactory().newPredicate(transitionedPrecondition);
-
-		final Term transitionedPostcondition =
-				programExtractor.returnTransition(summary, mPostcondition, transitionedPreconditionPredicate);
-
-		final Term transitionedPostcondition1 =
-				programExtractor.returnTransition(summary, mPostcondition, mPrecondition);
-
 		final UnmodifiableTransFormula callTransition = programExtractor.getCallTransition(summary);
 		final UnmodifiableTransFormula returnTransition = programExtractor.getReturnTransition(summary);
 
-		final Collection<TermVariable> prms = returnTransition.getInVars().values();
-
-		final Term cal = programExtractor.getPredicateTransformer().pre(mPostcondition, callTransition);
-
-		// final Term a =
-		// programExtractor.getPredicateTransformer().strongestPostcondition(mPostcondition, returnTransition);
-
-		// for (final TermVariable freeVar : cal.getFreeVars()) {
-		// final IProgramVar programVar = csToolkit.getSymbolTable().getProgramVar(freeVar);
-		// if (prms.contains(freeVar)) {
-		// postconditionOutVarMap.put(freeVar, postReturnVarsMap.get(programVar));
-		// }
-		// }
+		final Term pre = programExtractor.getPredicateTransformer().pre(mPostcondition, callTransition);
 
 		// There probably is a better way to get return var mapping
 		final List<List<IProgramVar>> equalities = ProgramUtilities.getEqualities(returnTransition);
@@ -120,11 +128,7 @@ public class FunctionContract {
 
 		}
 
-		final Term substitutedPostcondition = Substitution.apply(csToolkit.getManagedScript(), substitutionMap, cal);
-
-		// final IPredicate subb = programExtractor.getPredicateFactory().newPredicate(substitutedPostcondition);
-
-		// final Term b = programExtractor.getPredicateTransformer().pre(subb, callTransition);
+		final Term substitutedPostcondition = Substitution.apply(csToolkit.getManagedScript(), substitutionMap, pre);
 
 		final Set<TermVariable> postconditionFreeVars = new HashSet<>();
 		Collections.addAll(postconditionFreeVars, substitutedPostcondition.getFreeVars());
@@ -137,6 +141,14 @@ public class FunctionContract {
 				quantifiablePostconditionVars, substitutedPostcondition);
 	}
 
+	/**
+	 * Builds the trans formula for the given summary based on the given contract.
+	 *
+	 * @param summary
+	 * @param contract
+	 * @param programUtilities
+	 * @return an {@link UnmodifiableTransFormula}
+	 */
 	public static UnmodifiableTransFormula buildTransFormulaForContract(final Summary summary,
 			final FunctionContract contract, final ProgramUtilities<?> programUtilities) {
 
@@ -145,17 +157,20 @@ public class FunctionContract {
 		return buildTransFormulaForContracts(summary, contracts, programUtilities);
 	}
 
+	/**
+	 * Builds the trans formula for the given summary based on the given contracts.
+	 *
+	 * @param summary
+	 * @param contracts
+	 * @param programUtilities
+	 * @return an {@link UnmodifiableTransFormula}
+	 */
 	public static UnmodifiableTransFormula buildTransFormulaForContracts(final Summary summary,
 			final Collection<FunctionContract> contracts, final ProgramUtilities<?> programUtilities) {
 		final CfgSmtToolkit csToolkit = programUtilities.getCsToolkit();
 
 		final Set<IProgramVar> callParams = programUtilities.getCallParams(summary);
 		final Set<IProgramVar> returnParams = programUtilities.getReturnParams(summary);
-
-		final UnmodifiableTransFormula callTransition = programUtilities.getCallTransition(summary);
-		final UnmodifiableTransFormula returnTransition = programUtilities.getReturnTransition(summary);
-
-		final Collection<TermVariable> prms = returnTransition.getInVars().values();
 
 		final Map<IProgramVar, TermVariable> postReturnVarsMap = new HashMap<>();
 		for (final IProgramVar returnParam : returnParams) {
@@ -205,6 +220,14 @@ public class FunctionContract {
 
 	}
 
+	/**
+	 * Builds the trans formula for the assure statements of the given summary based on the given contracts.
+	 *
+	 * @param summary
+	 * @param contracts
+	 * @param programUtilities
+	 * @return an {@link UnmodifiableTransFormula}
+	 */
 	public static UnmodifiableTransFormula buildAssureTransFormula(final Summary summary,
 			final Collection<FunctionContract> contracts, final ProgramUtilities<?> programUtilities) {
 		final CfgSmtToolkit csToolkit = programUtilities.getCsToolkit();

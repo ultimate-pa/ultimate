@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -47,16 +47,19 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.initialabstraction.NwaInitialAbstractionProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.SummaryCegarLoop.SingleFunctionAutomatonWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
+/**
+ * Class for various utility functions for a given program.
+ *
+ * @param <L>
+ */
 public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	protected IIcfg<?> mIcfg;
@@ -70,12 +73,9 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 	protected TAPreferences mPref;
 
 	protected Set<String> mFunctionsToCheck;
-	protected Map<String, INestedWordAutomaton<L, IPredicate>> mFunctionAutomataRaw;
 	protected Map<String, INestedWordAutomaton<L, IPredicate>> mFunctionAutomata;
 	protected Map<String, UnmodifiableTransFormula> mPreconditionTransFormulas;
 	protected Map<String, UnmodifiableTransFormula> mPostconditionViolatedTransFormulas;
-
-	protected Map<String, Collection<IPredicate[]>> mFunctionContracts; // TODO remove
 
 	protected Map<String, Collection<Summary>> mFunctionSummaries;
 	protected Set<String> mFunctionsWithImplementation;
@@ -84,6 +84,8 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	protected Map<Call, Summary> mCallSummaries;
 	protected Map<Return, Summary> mReturnSummaries;
+	protected Map<Summary, Call> mCallSummariesInverse;
+	protected Map<Summary, Return> mReturnSummariesInverse;
 
 	protected Map<Summary, UnmodifiableTransFormula> mCallTransitions;
 	protected Map<Summary, UnmodifiableTransFormula> mReturnTransitions;
@@ -95,6 +97,18 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 	protected Map<String, IcfgLocation> dummyPostLocations;
 	protected Map<Summary, IcfgLocation> dummyAssureLocations;
 
+	/**
+	 * Constructs a new {@link ProgramUtilities} object.
+	 *
+	 * @param icfg
+	 * @param services
+	 * @param predicateFactory
+	 * @param predicateTransformer
+	 * @param stateFactoryForRefinement
+	 * @param errorLocs
+	 * @param csToolkit
+	 * @param pref
+	 */
 	public ProgramUtilities(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final PredicateFactory predicateFactory,
 			final PredicateTransformer<Term, IPredicate, TransFormula> predicateTransformer,
@@ -117,8 +131,6 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 				nonInterproceduralAbstractionProvider.getInitialAbstraction(mIcfg, mErrorLocs);
 
 		initFunctionAutomata(nonInterproceduralAbstraction);
-
-		mFunctionContracts = null; // TODO remove
 
 		dummyPreLocations = new HashMap<>();
 		dummyPostLocations = new HashMap<>();
@@ -162,7 +174,6 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 					.getModifiedBoogieVars(summary.getCallStatement().getMethodName());
 
 			params.addAll(modifiableGlobalVars);
-			// params.addAll(modifiableGlobalVars.stream().map(IProgramNonOldVar::getOldVar).toList());
 			mCallParams.put(callTransition.getKey(), params);
 		}
 		for (final var returnTransition : mReturnTransitions.entrySet()) {
@@ -173,21 +184,23 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 					.getModifiedBoogieVars(summary.getCallStatement().getMethodName());
 
 			params.addAll(modifiableGlobalVars);
-			// params.addAll(modifiableGlobalVars.stream().map(IProgramNonOldVar::getOldVar).toList());
 			mReturnParams.put(summary, params);
 		}
 
 	}
 
+	/**
+	 * Extracts the functions that need to be assured, meaning functions that may violate an assert statement.
+	 */
 	protected void extractFunctionsToAssure() {
 		mFunctionsToAssure = new HashSet<>();
 
 		final Set<String> functionsWithErrorState = new HashSet<>();
 
 		final Map<String, Collection<String>> calledFunctions = new HashMap<>();
-		mFunctionAutomataRaw.keySet().stream().forEach(f -> calledFunctions.put(f, new HashSet<>()));
+		mFunctionAutomata.keySet().stream().forEach(f -> calledFunctions.put(f, new HashSet<>()));
 
-		for (final var entry : mFunctionAutomataRaw.entrySet()) {
+		for (final var entry : mFunctionAutomata.entrySet()) {
 			final String function = entry.getKey();
 			final var automaton = entry.getValue();
 			if (!automaton.getFinalStates().isEmpty()) {
@@ -223,6 +236,9 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	}
 
+	/**
+	 * Extracts summaries of the program and the corresponding call and return transitions.
+	 */
 	protected void extractCallReturnTransitions() {
 		mFunctionSummaries = new HashMap<>();
 
@@ -288,67 +304,36 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 				mReturnTransitions.put(summary, returnTransFormula);
 			}
 		}
+
+		mCallSummariesInverse =
+				mCallSummaries.entrySet().stream().collect(Collectors.toMap(Entry::getValue, Entry::getKey));
+		mReturnSummariesInverse =
+				mReturnSummaries.entrySet().stream().collect(Collectors.toMap(Entry::getValue, Entry::getKey));
+
 	}
 
-	@Deprecated
-	protected UnmodifiableTransFormula reverseTransFormulaInOutVars(final UnmodifiableTransFormula transFormula) {
-		final TransFormulaBuilder builder = new TransFormulaBuilder(transFormula.getOutVars(), transFormula.getInVars(),
-				transFormula.getNonTheoryConsts().isEmpty(), transFormula.getNonTheoryConsts(),
-				transFormula.getBranchEncoders().isEmpty(), transFormula.getBranchEncoders(),
-				transFormula.getAuxVars().isEmpty());
-
-		for (final TermVariable auxVar : transFormula.getAuxVars()) {
-			builder.addAuxVar(auxVar);
-		}
-
-		builder.setFormula(transFormula.getFormula());
-		builder.setInfeasibility(transFormula.isInfeasible());
-
-		// builder.addAuxVarsButRenameToFreshCopies(null, null);
-
-		return builder.finishConstruction(mCsToolkit.getManagedScript());
+	public Map<Call, Summary> getCallSummaries() {
+		return mCallSummaries;
 	}
 
-	// @Deprecated
-	// protected static Map<Summary, Map<IProgramVar, IProgramVar>>
-	// extractVarMappings(final Map<Summary, UnmodifiableTransFormula> transitions) {
-	// final HashMap<Summary, Map<IProgramVar, IProgramVar>> mappings = new HashMap<>();
-	// for (final var entry : transitions.entrySet()) {
-	// final Summary summary = entry.getKey();
-	// final UnmodifiableTransFormula transFormula = entry.getValue();
-	//
-	// final Map<IProgramVar, IProgramVar> varMapping = new HashMap<>();
-	//
-	// final List<List<TermVariable>> equalities = getEqualities(transFormula);
-	// final Map<TermVariable, IProgramVar> outTermVarMapping = new HashMap<>();
-	//
-	// for (final Entry<IProgramVar, TermVariable> outVar : transFormula.getOutVars().entrySet()) {
-	// final IProgramVar programVar = outVar.getKey();
-	// final TermVariable termVar = outVar.getValue();
-	//
-	// for (final List<TermVariable> equality : equalities) {
-	// if (equality.size() == 2 && equality.contains(termVar)) {
-	// final TermVariable other = equality.stream().filter(tv -> !tv.equals(termVar)).findAny().get();
-	// outTermVarMapping.put(other, programVar);
-	// }
-	// }
-	// }
-	//
-	// for (final Entry<IProgramVar, TermVariable> inVar : transFormula.getInVars().entrySet()) {
-	// final IProgramVar programVar = inVar.getKey();
-	// final TermVariable termVar = inVar.getValue();
-	//
-	// final IProgramVar mappedProgramVar = outTermVarMapping.get(termVar);
-	//
-	// varMapping.put(programVar, mappedProgramVar);
-	// }
-	//
-	// mappings.put(summary, varMapping);
-	// }
-	//
-	// return mappings;
-	// }
+	public Map<Return, Summary> getReturnSummaries() {
+		return mReturnSummaries;
+	}
 
+	public Map<Summary, Call> getCallSummariesInverse() {
+		return mCallSummariesInverse;
+	}
+
+	public Map<Summary, Return> getReturnSummariesInverse() {
+		return mReturnSummariesInverse;
+	}
+
+	/**
+	 * Gets the equalities of a transformula that contains equalities.
+	 *
+	 * @param equalityTransFormula
+	 * @return a list of pairs of program vars
+	 */
 	protected static List<List<IProgramVar>> getEqualities(final UnmodifiableTransFormula equalityTransFormula) {
 		final List<List<IProgramVar>> equalities = new ArrayList<>();
 
@@ -379,7 +364,6 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 	public void initFunctionAutomata(final INestedWordAutomaton<L, IPredicate> abstraction) {
 		mFunctionsToCheck = new HashSet<>();
 		mFunctionAutomata = new HashMap<>();
-		mFunctionAutomataRaw = new HashMap<>();
 		mPreconditionTransFormulas = new HashMap<>();
 		mPostconditionViolatedTransFormulas = new HashMap<>();
 
@@ -396,18 +380,23 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 			final INestedWordAutomaton<L, IPredicate> functionNwaRaw =
 					constructSingleFunctionAutomatonRaw(abstraction, startNode);
-			mFunctionAutomataRaw.put(function, functionNwaRaw);
+			mFunctionAutomata.put(function, functionNwaRaw);
 
 			final SingleFunctionAutomatonWrapper<L> functionNwaWrapper =
 					constructSingleFunctionAutomaton(abstraction, startNode);
-			final INestedWordAutomaton<L, IPredicate> functionNwa = functionNwaWrapper.getAbstraction();
-			mFunctionAutomata.put(function, functionNwa);
 			mPreconditionTransFormulas.put(function, functionNwaWrapper.getPreconditionTransFormula());
 			mPostconditionViolatedTransFormulas.put(function,
 					functionNwaWrapper.getPostconditionViolatedTransFormula());
 		}
 	}
 
+	/**
+	 * Extracts the single function automatons from the given abstraction.
+	 *
+	 * @param abstraction
+	 * @param initialState
+	 * @return an {@link INestedWordAutomaton}
+	 */
 	public INestedWordAutomaton<L, IPredicate> constructSingleFunctionAutomatonRaw(
 			final INestedWordAutomaton<L, IPredicate> abstraction, final ISLPredicate initialState) {
 		final Set<L> alphabet = new HashSet<>();
@@ -583,73 +572,16 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	}
 
-	public INestedWordAutomaton<L, IPredicate> constructSingleAutomaton1(
-			final INestedWordAutomaton<L, IPredicate> abstraction, final L preconditionTransition,
-			final L postconditionViolatedTransition) {
-
-		final Set<L> alphabet = new HashSet<>(abstraction.getAlphabet());
-		if (preconditionTransition != null) {
-			alphabet.add(preconditionTransition);
-		}
-		if (postconditionViolatedTransition != null) {
-			alphabet.add(postconditionViolatedTransition);
-		}
-
-		final NestedWordAutomaton<L, IPredicate> automaton = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), new VpAlphabet<>(alphabet), mStateFactoryForRefinement);
-
-		final Map<IPredicate, Iterable<OutgoingInternalTransition<L, IPredicate>>> originalEdges = new HashMap<>();
-		final Map<IPredicate, IPredicate> newPredicates = new HashMap<>();
-
-		for (final IPredicate state : abstraction.getStates()) {
-			final IcfgLocation programPoint = ((ISLPredicate) state).getProgramPoint();
-
-			final IPredicate newState = mPredicateFactory.newSPredicate(programPoint, state.getFormula());
-
-			newPredicates.put(state, newState);
-			originalEdges.put(newState, abstraction.internalSuccessors(state));
-
-			final boolean isInitial = abstraction.isInitial(state);
-			final boolean isFinal = abstraction.isFinal(state);
-			final boolean hasSuccessors = abstraction.internalSuccessors(state).iterator().hasNext();
-
-			automaton.addState(preconditionTransition == null && isInitial, abstraction.isFinal(state), newState);
-
-			if (preconditionTransition != null && isInitial) {
-				final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
-				final IPredicate newPreconditionState =
-						mPredicateFactory.newSPredicate(dummyPreLocations.get(programPoint.getProcedure()), trueTerm);
-
-				automaton.addState(true, false, newPreconditionState);
-				automaton.addInternalTransition(newPreconditionState, preconditionTransition, newState);
-			}
-
-			if (postconditionViolatedTransition != null && !hasSuccessors && !isFinal) {
-				final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
-				final IPredicate newPostconditionViolatedState =
-						mPredicateFactory.newSPredicate(dummyPostLocations.get(programPoint.getProcedure()), trueTerm);
-
-				automaton.addState(false, true, newPostconditionViolatedState);
-				automaton.addInternalTransition(newState, postconditionViolatedTransition,
-						newPostconditionViolatedState);
-			}
-
-		}
-
-		for (final var entry : originalEdges.entrySet()) {
-			final IPredicate newState = entry.getKey();
-			final var transitions = entry.getValue();
-			for (final var transition : transitions) {
-				final IPredicate newSucc = newPredicates.get(transition.getSucc());
-				automaton.addInternalTransition(newState, transition.getLetter(), newSucc);
-			}
-		}
-
-		return automaton;
-
-	}
-
-	// TODO top level
+	/**
+	 * Constructs a function automaton, including pre- and postcondition edges, and assure edges for the summaries of
+	 * the given functions.
+	 *
+	 * @param abstraction
+	 * @param preconditionTransition
+	 * @param postconditionViolatedTransition
+	 * @param functionsToAssure
+	 * @return an {@link INestedWordAutomaton}
+	 */
 	public INestedWordAutomaton<L, IPredicate> constructFunctionAutomaton(
 			final INestedWordAutomaton<L, IPredicate> abstraction, final L preconditionTransition,
 			final L postconditionViolatedTransition, Collection<String> functionsToAssure) {
@@ -739,14 +671,30 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	}
 
+	/**
+	 * Constructs a function automaton, including pre- and postcondition edges and required assure edges.
+	 *
+	 * @param functionName
+	 * @param preconditionTransition
+	 * @param postconditionViolatedTransition
+	 * @return an {@link INestedWordAutomaton}
+	 */
 	public INestedWordAutomaton<L, IPredicate> initializeFunctionAbstraction(final String functionName,
 			final L preconditionTransition, final L postconditionViolatedTransition) {
 		final INestedWordAutomaton<L, IPredicate> abstraction = mFunctionAutomata.get(functionName);
-		final INestedWordAutomaton<L, IPredicate> raw = mFunctionAutomataRaw.get(functionName);
-		return constructFunctionAutomaton(raw, preconditionTransition, postconditionViolatedTransition,
+		return constructFunctionAutomaton(abstraction, preconditionTransition, postconditionViolatedTransition,
 				mFunctionsToAssure);
 	}
 
+	/**
+	 * Constructs a function automaton, including pre- and postcondition edges and required assure edges. The given
+	 * predicates are converted to transitions.
+	 *
+	 * @param functionName
+	 * @param precondition
+	 * @param postconditionViolated
+	 * @return an {@link INestedWordAutomaton}
+	 */
 	public INestedWordAutomaton<L, IPredicate> initializeFunctionAbstraction(final String functionName,
 			final IPredicate precondition, final IPredicate postconditionViolated) {
 
@@ -765,10 +713,14 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		return initializeFunctionAbstraction(functionName, preconditionTransition, postconditionViolatedTransition);
 	}
 
+	/**
+	 * Transforms the precondition predicate by applying the call transition.
+	 *
+	 * @param summary
+	 * @param predicate
+	 * @return an {@link IPredicate}
+	 */
 	protected IPredicate transformPrecondition(final Summary summary, final IPredicate predicate) {
-		// final Set<TermVariable> callParams =
-		// mCallParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
-
 		final Set<TermVariable> callParams = new HashSet<>();
 		for (final IProgramVar programVariable : mCallParams.get(summary)) {
 			callParams.add(programVariable.getTermVariable());
@@ -777,17 +729,21 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 			}
 		}
 
-		// final IPredicate predicateQuantified = quantifyPredicate(predicate, callParams);
-
 		final Term transitionedTerm = callTransition(summary, predicate);
 		return mPredicateFactory.newPredicate(transitionedTerm);
 
 	}
 
+	/**
+	 * Transforms the postcondition predicate by applying the return transition.
+	 *
+	 * @param summary
+	 * @param predicate
+	 * @param prePredicate
+	 * @return an {@link IPredicate}
+	 */
 	protected IPredicate transformPostcondition(final Summary summary, final IPredicate predicate,
 			final IPredicate prePredicate) {
-		// final Set<TermVariable> returnParams =
-		// mReturnParams.get(summary).stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 
 		final Set<TermVariable> returnParams = new HashSet<>();
 		for (final IProgramVar programVariable : mReturnParams.get(summary)) {
@@ -796,15 +752,6 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 				returnParams.add(((ProgramNonOldVar) programVariable).getOldVar().getTermVariable());
 			}
 		}
-
-		// final IPredicate predicateQuantified = quantifyPredicate(predicate, returnParams);
-
-		// TODO do we actually need to quantify this?
-		// final IPredicate prePredicateQuantified = quantifyPredicate(prePredicate, returnParams);
-
-		// final Term callTransitionedTerm = callTransition(summary, prePredicate);
-
-		SmtUtils.and(mCsToolkit.getManagedScript().getScript(), predicate.getFormula(), prePredicate.getFormula());
 
 		final Term transitionedTerm = returnTransitionReverse(summary, predicate, prePredicate);
 
@@ -822,48 +769,8 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		return mPredicateFactory.newPredicate(quantifiedFormula);
 	}
 
-	@Deprecated
-	protected IPredicate transformPredicate(final IPredicate predicate, final Set<TermVariable> params,
-			final UnmodifiableTransFormula transition) {
-		final Set<TermVariable> toQuantify = new HashSet<>();
-		Collections.addAll(toQuantify, predicate.getFormula().getFreeVars());
-		toQuantify.removeAll(params);
-
-		final Term quantifiedFormula = SmtUtils.quantifier(mCsToolkit.getManagedScript().getScript(),
-				QuantifiedFormula.EXISTS, toQuantify, predicate.getFormula());
-
-		final BasicPredicate predicateQuantified = mPredicateFactory.newPredicate(quantifiedFormula);
-
-		final Term predicateTransitioned =
-				mPredicateTransformer.strongestPostcondition(predicateQuantified, transition);
-		return mPredicateFactory.newPredicate(predicateTransitioned);
-	}
-
-	@Deprecated
-	protected IPredicate extractPostcondition(final INestedWordAutomaton<L, IPredicate> abstraction) {
-		final Script script = mCsToolkit.getManagedScript().getScript();
-		final Set<IPredicate> states = abstraction.getStates();
-		if (states.isEmpty()) {
-			return mPredicateFactory.newPredicate(script.term("true"));
-		}
-
-		final String function = ((ISLPredicate) states.iterator().next()).getProgramPoint().getProcedure();
-
-		// Check on exit node because postcondition is a dummy transition added after the exit node
-		final IcfgLocation exitLocation = mIcfg.getProcedureExitNodes().get(function);
-		final List<Term> exitStates = new ArrayList<>();
-		for (final IPredicate state : states) {
-			if (((ISLPredicate) state).getProgramPoint().equals(exitLocation)) {
-				exitStates.add(state.getFormula());
-			}
-		}
-
-		final Term postcondition = SmtUtils.or(script, exitStates);
-		return mPredicateFactory.newPredicate(postcondition);
-	}
-
-	public INestedWordAutomaton<L, IPredicate> initializeRawAbstraction(final String functionName) {
-		final INestedWordAutomaton<L, IPredicate> abstraction = mFunctionAutomataRaw.get(functionName);
+	public INestedWordAutomaton<L, IPredicate> constructAbstraction(final String functionName) {
+		final INestedWordAutomaton<L, IPredicate> abstraction = mFunctionAutomata.get(functionName);
 		return constructSingleFunctionAutomatonRaw(abstraction,
 				(ISLPredicate) abstraction.getInitialStates().iterator().next()); // copy the automaton
 	}
@@ -884,6 +791,14 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		return mReturnTransitions.get(summary);
 	}
 
+	/**
+	 * Computes the call transition using {@link PredicateTransformer#strongestPostconditionCall
+	 * strongestPostconditionCall}.
+	 *
+	 * @param summary
+	 * @param callPredicate
+	 * @return
+	 */
 	public Term callTransition(final Summary summary, final IPredicate callPredicate) {
 		final String functionName = summary.getCallStatement().getMethodName();
 
@@ -898,10 +813,15 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.strongestPostconditionCall(callPredicate, callTransition, globalVarsAssignments,
 				oldVarAssignments, modifiableGlobals);
-
-		// return mPredicateTransformer.strongestPostcondition(callPredicate, callTransition);
 	}
 
+	/**
+	 * Computes the reverse call transition using {@link PredicateTransformer#preCall preCall}.
+	 *
+	 * @param summary
+	 * @param callPredicate
+	 * @return
+	 */
 	public Term callTransitionReverse(final Summary summary, final IPredicate callPredicate) {
 		final String functionName = summary.getCallStatement().getMethodName();
 
@@ -916,16 +836,21 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.preCall(callPredicate, callTransition, globalVarsAssignments, oldVarAssignments,
 				modifiableGlobals);
-
-		// return mPredicateTransformer.weakestPrecondition(callPredicate, callTransition);
 	}
 
+	/**
+	 * Computes the return transition using {@link PredicateTransformer#strongestPostconditionReturn
+	 * strongestPostconditionReturn}.
+	 *
+	 * @param summary
+	 * @param returnPredicate
+	 * @param callPredicate
+	 * @return
+	 */
 	public Term returnTransition(final Summary summary, final IPredicate returnPredicate,
 			final IPredicate callPredicate) {
 		final String functionName = summary.getCallStatement().getMethodName();
 
-		final TransFormula globalVarsAssignments =
-				mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(functionName);
 		final TransFormula oldVarAssignments =
 				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(functionName);
 		final Set<IProgramNonOldVar> modifiableGlobals =
@@ -936,16 +861,20 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.strongestPostconditionReturn(returnPredicate, callPredicate, returnTransition,
 				callTransition, oldVarAssignments, modifiableGlobals);
-
-		// return mPredicateTransformer.strongestPostcondition(returnPredicate, returnTransition);
 	}
 
+	/**
+	 * Computes the reverse return transition using {@link PredicateTransformer#preReturn preReturn}.
+	 *
+	 * @param summary
+	 * @param returnPredicate
+	 * @param callPredicate
+	 * @return
+	 */
 	public Term returnTransitionReverse(final Summary summary, final IPredicate returnPredicate,
 			final IPredicate callPredicate) {
 		final String functionName = summary.getCallStatement().getMethodName();
 
-		final TransFormula globalVarsAssignments =
-				mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(functionName);
 		final TransFormula oldVarAssignments =
 				mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(functionName);
 		final Set<IProgramNonOldVar> modifiableGlobals =
@@ -956,11 +885,6 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 		return mPredicateTransformer.preReturn(returnPredicate, callPredicate, returnTransition, callTransition,
 				oldVarAssignments, modifiableGlobals);
-
-		// return mPredicateTransformer.weakestPreconditionReturn(returnPredicate, callPredicate, returnTransition,
-		// callTransition, oldVarAssignments, modifiableGlobals);
-
-		// return mPredicateTransformer.weakestPrecondition(returnPredicate, returnTransition);
 	}
 
 	public Set<IProgramVar> getCallParams(final Summary summary) {
@@ -975,13 +899,30 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		return mAssureStatements.get(summary);
 	}
 
+	public Set<String> getFunctionsWithImplementation() {
+		return mFunctionsWithImplementation;
+	}
+
+	/**
+	 * Returns <code>true</code> if the given function has an given implementation, else <code>false</code>
+	 *
+	 * @param functionName
+	 * @return a boolean
+	 */
 	public boolean functionHasImplementation(final String functionName) {
 		return mFunctionsWithImplementation.contains(functionName);
 	}
 
+	/**
+	 * Constructs a new, empty contract map that contains an empty set as value for all summaries for functions that
+	 * have implementations.
+	 *
+	 * @return a {@link Map}
+	 */
 	public Map<Summary, Collection<FunctionContract>> newContractMap() {
 		final Map<Summary, Collection<FunctionContract>> map = new HashMap<>();
-		mFunctionSummaries.values().stream().flatMap(Collection::stream).forEach(c -> map.put(c, new HashSet<>()));
+		mFunctionSummaries.values().stream().flatMap(Collection::stream)
+				.filter(Summary::calledProcedureHasImplementation).forEach(s -> map.put(s, new HashSet<>()));
 		return map;
 	}
 
@@ -1076,6 +1017,37 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 
 	}
 
+	public static class SingleFunctionAutomatonWrapper<L> {
+		final INestedWordAutomaton<L, IPredicate> mAbstraction;
+		final UnmodifiableTransFormula mPreconditionTransFormula;
+		final UnmodifiableTransFormula mPostconditionViolatedTransFormula;
+
+		public SingleFunctionAutomatonWrapper(final INestedWordAutomaton<L, IPredicate> abstraction,
+				final UnmodifiableTransFormula preconditionTransFormula,
+				final UnmodifiableTransFormula postconditionViolatedTransFormula) {
+			mAbstraction = abstraction;
+			mPreconditionTransFormula = preconditionTransFormula;
+			mPostconditionViolatedTransFormula = postconditionViolatedTransFormula;
+		}
+
+		public INestedWordAutomaton<L, IPredicate> getAbstraction() {
+			return mAbstraction;
+		}
+
+		public UnmodifiableTransFormula getPreconditionTransFormula() {
+			return mPreconditionTransFormula;
+		}
+
+		public UnmodifiableTransFormula getPostconditionViolatedTransFormula() {
+			return mPostconditionViolatedTransFormula;
+		}
+
+	}
+
+	/**
+	 * Class that represents an Assure Statement. The assure statement is used to check if an assert statement can be
+	 * violated inside a function given by a summary.
+	 */
 	public static class AssureStatement implements IIcfgTransition<IcfgLocation>, IInternalAction {
 
 		private static final long serialVersionUID = -851307156749743054L;
@@ -1087,6 +1059,12 @@ public class ProgramUtilities<L extends IIcfgTransition<?>> {
 		UnmodifiableTransFormula mTransFormula;
 		String mPrettyPrinted;
 
+		/**
+		 * Constructs a new {@link AssureStatement}.
+		 *
+		 * @param summary
+		 * @param transFormula
+		 */
 		public AssureStatement(final Summary summary, final UnmodifiableTransFormula transFormula) {
 			mSummary = summary;
 			mProcedure = summary.getPrecedingProcedure();
