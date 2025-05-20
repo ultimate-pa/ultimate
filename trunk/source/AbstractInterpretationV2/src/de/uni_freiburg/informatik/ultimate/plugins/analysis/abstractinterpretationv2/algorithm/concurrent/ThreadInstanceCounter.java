@@ -72,9 +72,14 @@ public class ThreadInstanceCounter {
 					&& (getThreadInstances().get(thread) == 0 || other.getThreadInstances().get(thread) == 0)) {
 				return null;
 			}
-//			newThreadMap.put(thread, getThreadInstances().get(thread));
-			newThreadMap.put(thread,
-					Math.min(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+			if ((getThreadInstances().get(thread) == 0 || other.getThreadInstances().get(thread) == 0)) {
+				newThreadMap.put(thread,
+						Math.min(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+				// edge case, for observing thread 1==2, so an interference of an observer could shrink us from 2->1
+			} else {
+				newThreadMap.put(thread,
+						Math.max(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+			}
 		}
 		return new ThreadInstanceCounter(newThreadMap);
 	}
