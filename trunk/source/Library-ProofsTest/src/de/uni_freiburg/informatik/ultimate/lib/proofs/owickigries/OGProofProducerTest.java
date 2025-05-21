@@ -148,7 +148,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), true);
+			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory, true);
 		}
 
 		@Override
@@ -161,7 +161,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), false);
+			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory, false);
 		}
 
 		@Override

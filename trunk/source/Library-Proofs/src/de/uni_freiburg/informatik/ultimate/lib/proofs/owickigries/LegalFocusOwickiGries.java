@@ -35,14 +35,15 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableG
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton.State;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalEmpireToOG;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.SingleEmpireAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.SingleEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -63,21 +64,24 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 
 	private final Statistics mStatistics;
 	private final IUnionStateFactory<List<State<L, P>>> mUnionFactory;
+	private final IUnionStateFactory<IPredicate> mProofUnionFactory;
 
 	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofs = new ArrayList<>();
+	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProofProduct;
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
 	private INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, List<State<L, P>>> mProduct = null;
 
 	public LegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final boolean useTrivialLegalFocus) {
+			final CfgSmtToolkit csToolkit, final PredicateFactory factory, final boolean useTrivialLegalFocus) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable(), useTrivialLegalFocus);
+				csToolkit.getModifiableGlobalsTable(), factory, useTrivialLegalFocus);
 	}
 
 	public LegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals, final boolean useTrivialLegalFocus) {
+			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory,
+			final boolean useTrivialLegalFocus) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mProgram = program;
@@ -86,6 +90,7 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
 		mUnionFactory = new UnionFactory<>();
+		mProofUnionFactory = new ProofUnionFactory(factory);
 		mStatistics = new Statistics(mLogger);
 		mUseTrivialFocus = useTrivialLegalFocus;
 	}
@@ -94,11 +99,26 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
+		if (mProofProduct == null) {
+			mProofProduct = interpolantAutomaton;
+			final var initialTrueState =
+					DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
+			mProofs.add(new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false));
+		} else {
+			final var initialTrueState1 =
+					DataStructureUtils.getOneAndOnly(mProofProduct.getInitialStates(), "initial state");
+			final var totalizedProduct = new TotalizeNwa<>(mProofProduct, initialTrueState1, false);
 
-		final var initialTrueState =
-				DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
-		final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false);
-		mProofs.add(totalizedProof);
+			final var initialTrueState2 =
+					DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
+			final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState2, false);
+			mProofs.add(totalizedProof);
+			try {
+				mProofProduct = new UnionNwa<>(totalizedProduct, totalizedProof, mProofUnionFactory, false);
+			} catch (final AutomataLibraryException e) {
+				throw new AssertionError(e);
+			}
+		}
 	}
 
 	@Override
@@ -162,10 +182,11 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	}
 
 	private Set<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> getEmpireAutomata() {
-		final var lazyAutomata = mProofs.stream().map(proof -> new EmpireAutomaton<L, P>(mProgram, proof, mServices))
+		final var lazyAutomata = mProofs.stream()
+				.map(proof -> new SingleEmpireAutomaton<L, P>(mProgram, mProofProduct, proof, mServices))
 				.collect(Collectors.toSet());
 		final var automata = new HashSet<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>>();
-		for (final EmpireAutomaton<L, P> empireAutomaton : lazyAutomata) {
+		for (final SingleEmpireAutomaton<L, P> empireAutomaton : lazyAutomata) {
 			mLogger.info("Exploring empire automaton...");
 			try {
 				final var automaton = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(mServices),
@@ -321,6 +342,31 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 		@Override
 		public List<State<L, P>> createSinkStateContent() {
 			throw new UnsupportedOperationException();
+		}
+	}
+
+	private static final class ProofUnionFactory implements IUnionStateFactory<IPredicate> {
+		private final PredicateFactory mPredicateFactory;
+		private final IPredicate mEmptyStack;
+
+		public ProofUnionFactory(final PredicateFactory predicateFactory) {
+			mPredicateFactory = predicateFactory;
+			mEmptyStack = predicateFactory.newEmptyStackPredicate();
+		}
+
+		@Override
+		public IPredicate createEmptyStackState() {
+			return mEmptyStack;
+		}
+
+		@Override
+		public IPredicate createSinkStateContent() {
+			return mPredicateFactory.and();
+		}
+
+		@Override
+		public IPredicate union(final IPredicate state1, final IPredicate state2) {
+			return mPredicateFactory.and(state1, state2);
 		}
 	}
 }
