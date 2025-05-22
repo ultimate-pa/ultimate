@@ -11,8 +11,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ExecutionProducer.LessCodeExecutionProducer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
@@ -22,7 +22,7 @@ public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private IIcfg<? extends IcfgLocation> mIcfg;
-	private List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> mExecutions = List.of();
+	private List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>> mExecutions = List.of();
 	private static IcfgInterpreterObserver mInstance = null;
 
 	public IcfgInterpreterObserver(final IUltimateServiceProvider services) {

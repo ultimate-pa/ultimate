@@ -55,11 +55,11 @@ public class ExecutionProducer {
 
 		void init(IIcfg<? extends IcfgLocation> icfg, IUltimateServiceProvider services);
 
-		List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> makeExecutions(NonDeterministicChoice ndc,
+		List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>> makeExecutions(NonDeterministicChoice ndc,
 				IcfgLocation source);
 	}
 
-	public static List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> makeExecutions(
+	public static List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>> makeExecutions(
 			final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services, final ILogger logger,
 			final IIcfgExecutionProducer producer, final Random random) throws Exception {
 		IcfgInterpreterPreferences.updatePreferences();
@@ -71,7 +71,7 @@ public class ExecutionProducer {
 		final Set<? extends IcfgLocation> initialNodes = icfg.getInitialNodes();
 		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
 
-		final List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> executions = new ArrayList<>();
+		final List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>> executions = new ArrayList<>();
 
 		final long startTime = System.nanoTime();
 		producer.init(icfg, services);
@@ -487,8 +487,8 @@ public class ExecutionProducer {
 		}
 
 		@Override
-		public List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> makeExecutions(
-				final NonDeterministicChoice ndc, final IcfgLocation source) {
+		public List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>>
+				makeExecutions(final NonDeterministicChoice ndc, final IcfgLocation source) {
 			final HashMap<Term, Value> state = makeState(ndc);
 
 			final List<PartialExecution> executions = new ArrayList<>();
@@ -496,7 +496,7 @@ public class ExecutionProducer {
 					ExecutionTermintionReason.unterminated));
 			final List<PartialExecution> finishedExecutions = new ArrayList<>();
 
-			final List<Pair<IcfgProgramExecution<IAction>, ExecutionTermintionReason>> out = new ArrayList<>();
+			final List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>> out = new ArrayList<>();
 
 			while (!executions.isEmpty()) {
 				for (final PartialExecution execution : executeStep(executions.remove(0))) {
@@ -512,7 +512,7 @@ public class ExecutionProducer {
 			return out;
 		}
 
-		private <L extends IAction> IcfgProgramExecution<L> printExecution(final PartialExecution execution) {
+		private IcfgProgramExecution<IcfgEdge> printExecution(final PartialExecution execution) {
 			if (printExecution) {
 				final StringBuilder out = new StringBuilder();
 				out.append(execution.states.get(0).toString());
@@ -536,16 +536,9 @@ public class ExecutionProducer {
 						"Execution successfully ended at error location " + execution.currentLocation.toString());
 			}
 
-			// trace requires same number of states and edges?
-			// TODO find out if it doesn't need final or initial state
-			execution.states.remove(0);
-
-			/* final List<Map<Term, Term>> statesCast = */execution.states.stream()
-					.map(stateUncast -> castMap(stateUncast)).toList();
-			// return createExecution(edges, statesCast);
-
-			// TODO make toTerm() for ArrayValue
-			return null;
+			final List<Map<Term, Term>> statesCast =
+					execution.states.stream().map(stateUncast -> castMap(stateUncast)).toList();
+			return createExecution(execution.edges, statesCast);
 		}
 
 		private record PartialExecution(IcfgLocation currentLocation, NonDeterministicChoice ndc, List<IcfgEdge> edges,
@@ -634,8 +627,12 @@ public class ExecutionProducer {
 				final List<Map<Term, Term>> states) {
 			final Map<Integer, ProgramState<Term>> stateMapping = new HashMap<>();
 			for (int i = 0; i < states.size(); i++) {
-				stateMapping.put(i, new ProgramState<>(states.get(i).entrySet().stream()
-						.collect(Collectors.toMap(x -> x.getKey(), x -> List.of(x.getValue()))), Term.class));
+				stateMapping
+						.put(i - 1,
+								new ProgramState<>(
+										states.get(i).entrySet().stream()
+												.collect(Collectors.toMap(x -> x.getKey(), x -> List.of(x.getValue()))),
+										Term.class));
 			}
 			return IcfgProgramExecution.create(trace, stateMapping);
 		}
