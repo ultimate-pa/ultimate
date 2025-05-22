@@ -4,13 +4,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -68,13 +74,35 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mLogger.error(bs.toString(StandardCharsets.UTF_8));
 			}
 		}
-		// TODO: We should probably not output all executions
-		// TODO: Improve format
-		mLogger.info("Produced %s program executions", mExecutions.size());
-		for (final var e : mExecutions) {
-			mLogger.info("Ended because of %s\n\n%s", e.b(), e.a());
+		if (mIcfg != null) {
+			// TODO: We should probably not output all executions
+			// TODO: Improve format
+			mLogger.info("Produced %s program executions", mExecutions.size());
+			for (final var e : mExecutions) {
+				mLogger.info("Ended because of %s\n\n%s", e.b(), e.a());
+			}
+			// TODO: Add a setting for this or move it to another plugin
+			reportSafetyResults();
 		}
 		return false;
+	}
+
+	private void reportSafetyResults() {
+		final Map<IcfgLocation, IcfgProgramExecution<IcfgEdge>> locs2ErrorExecutions = mExecutions.stream()
+				.filter(x -> x.b() == ExecutionTermintionReason.reachedError).map(x -> x.a()).collect(Collectors
+						.toMap(x -> x.getTraceElement(x.getLength() - 1).getStep().getTarget(), x -> x, (x, y) -> x));
+		for (final IcfgLocation loc : IcfgUtils.getErrorLocations(mIcfg)) {
+			final IcfgProgramExecution<IcfgEdge> errorExecution = locs2ErrorExecutions.get(loc);
+			final IResult result;
+			if (errorExecution == null) {
+				result = new UnprovableResult<>(Activator.PLUGIN_ID, loc, mServices.getBacktranslationService(), null,
+						"No error execution found");
+			} else {
+				result = new CounterExampleResult<>(loc, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+						errorExecution);
+			}
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		}
 	}
 
 	public static IcfgInterpreterObserver getInstance() {
