@@ -37,6 +37,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	int mExecutorSize = 0;
 	INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
 
+	public enum WorkerGeneralizationMode {
+		YES, NO, ONLYIFPERFECT
+	}
+
 	/*
 	 * call getStrategyForWorker() to get the strategy that we want to execute. This class maintains the overview of our
 	 * parallel strategy. We can give any array of tracechecks and make it a parallel strategy
@@ -99,10 +103,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	/*
 	 * default always generalize since we dont have the union yet
 	 */
-	public boolean generalize() {
+	public WorkerGeneralizationMode generalize() {
 		final boolean condition = mImperfectSequencesSoFar >= 1;
 		mImperfectSequencesSoFar = 0;
-		return condition;
+		return WorkerGeneralizationMode.ONLYIFPERFECT;
 	}
 
 	/*

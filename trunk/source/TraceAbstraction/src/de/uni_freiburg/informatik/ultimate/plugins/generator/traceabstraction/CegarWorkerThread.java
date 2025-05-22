@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy.WorkerGeneralizationMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
@@ -63,7 +64,6 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
 
-	// TODO one for each worker or globally?
 	private final CegarLoopResultBuilder mResultBuilder;
 	private final IUltimateServiceProvider mServices;
 
@@ -103,7 +103,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	// Globals for Difference (Interpolant Automaton Enhancement)
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelCegarLoop<L, A> mMainThread;
-	private final boolean mGeneralize;
+
+	private final WorkerGeneralizationMode mGeneralize;
 
 	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
 			final int iteration, final CegarLoopResultBuilder resultBuilder,
@@ -113,7 +114,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
-			final ParallelCegarLoop<L, A> mainThread, final boolean generalize) {
+			final ParallelCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization) {
 
 		mLogger = logger;
 		mPref = pref;
@@ -137,7 +138,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mIcfg = rootNode;
 		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
 		mMainThread = mainThread;
-		mGeneralize = generalize;
+		mGeneralize = generalization;
 	}
 
 	@Override
@@ -151,30 +152,25 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 			if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
 				// in this setting we dont use error automata
-
 				mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
 						mCsToolkit.getManagedScript(), mCounterexample, null, true);
 				return mThreadResult;
 			}
+
 			final AbstractCegarLoop.AutomatonType automatonType =
 					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
-
-			// TODO check if we want to generalize
 			constructRefinementAutomaton(automatonType);
-
 			mThreadResult = refineAbstractionInternally();
 		} catch (AutomataLibraryException | ToolchainCanceledException e) {
-			// TODO deal with failure
+			throw new AssertionError("WorkerThread Failed: " + e);
 		}
-		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#"); // TODO print trace
+		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
 		return mThreadResult;
 	}
 
-	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(final ITARefinementStrategy<L> strategy)
-			throws AutomataOperationCanceledException {
-
+	protected Pair<LBool, IProgramExecution<L, Term>>
+			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
 		IStatisticsDataProvider refinementEngineStats = null;
-
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
 					.getPathProgramCache().getPathProgramCount((Word<L>) mCounterexample)) {
@@ -202,9 +198,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 
 		}
-		if (refinementEngineStats != null && false) { // leads to concurrency problems
-			mCegarLoopBenchmark.addRefinementEngineStatistics(refinementEngineStats);
-		}
+		// leads to concurrency problems!
+		// mCegarLoopBenchmark.addRefinementEngineStatistics(refinementEngineStats);
 		return new Pair<>(feasibility, rcfgProgramExecution);
 	}
 
@@ -214,9 +209,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	public AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
-
 			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
-
 			if (mPref.stopAfterFirstViolation()) {
 				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 			}
@@ -232,10 +225,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			// new UnprovabilityReason("unable to decide satisfiability of path constraint");
 			// actualResult = Result.UNKNOWN;
 			// mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
-		} else {
-			actualResult = Result.TIMEOUT;
-			mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
 		}
+		actualResult = Result.TIMEOUT;
+		mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
 
 		if (mPref.stopAfterFirstViolation()) {
 			mResultBuilder.addResultForAllRemaining(actualResult);
@@ -249,9 +241,6 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		switch (automatonType) {
 		case ERROR:
 		case UNKNOWN:
-			if (mPref.stopAfterFirstViolation()) {
-				// return; //TODO must not return, instead do sth else
-			}
 			mLogger.info("Excluding counterexample to continue analysis with %s automaton", automatonType);
 			constructErrorAutomaton();
 			break;
@@ -294,7 +283,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 
 		mCegarLoopBenchmark.reportErrorAutomatonCreated();
-
+		// TODO reactivate
 		// final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 		// mErrorGeneralizationEngine.getResultBeforeEnhancement();
 		// assert isInterpolantAutomatonOfSingleStateType(resultBeforeEnhancement);
@@ -305,7 +294,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mInterpolAutomaton = mRefinementResult.getInfeasibilityProof();
 
-		// TODO NON_EA_INDUCTIVITY_CHECK and assert
+		// TODO reactivate checks NON_EA_INDUCTIVITY_CHECK and assert
 
 		// assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		// if (NON_EA_INDUCTIVITY_CHECK) {
@@ -335,10 +324,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	 * Globals: mErrorGeneralizationEngine mIteration mStateFactoryForRefinement mRefinementResult mInterpolAutomaton
 	 */
 	public WorkerThreadResult<L, A> refineAbstractionInternally() throws AutomataLibraryException {
-		mStateFactoryForRefinement.setIteration(mIteration); // TODO warning global var
+		mStateFactoryForRefinement.setIteration(mIteration);
 		// mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-
-		// Warning global vars mRefinementResult
 		final IPredicateUnifier predicateUnifier = mRefinementResult.getPredicateUnifier();
 		final IHoareTripleChecker htc = getHoareTripleChecker();
 
@@ -370,7 +357,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO: HTC and predicateunifier statistics are saved in the following
 		// method, but it seems better to save them
 		// at the end of the htc lifecycle instead of there
-		if (mGeneralize) {
+
+		if (generalize()) {
 			mLogger.info("Difference in Worker for Generalization");
 			computeAutomataDifference(mMainThread.getAbstraction(), subtrahend, subtrahendBeforeEnhancement,
 					predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
@@ -383,6 +371,19 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO missing a lot of stuff from NwaCegarLoop
 
 		return workerResult;
+	}
+
+	private boolean generalize() {
+		switch (mGeneralize) {
+		case YES:
+			return true;
+		case NO:
+			return false;
+		case ONLYIFPERFECT:
+			return mRefinementResult.somePerfectSequenceFound();
+		default:
+			throw new AssertionError("Unknown Worker Generalisation Mode");
+		}
 	}
 
 	/*

@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.AutomatonType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -714,14 +713,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			final InterpolantAutomatonEnhancement enhanceMode, final IPredicateUnifier predicateUnifier,
 			final IHoareTripleChecker htc, final NestedWordAutomaton<L, IPredicate> interpolantAutomaton) {
 		final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend;
-		// if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
-		// Worker does the ehancement!
+		// Worker does the enhancement or nobody!
 		subtrahend = interpolantAutomaton;
-		// } else {
-		// final AbstractInterpolantAutomaton<L> ia = constructInterpolantAutomatonForOnDemandEnhancement(
-		// interpolantAutomaton, predicateUnifier, htc, enhanceMode);
-		// subtrahend = ia;
-		// }
 		return subtrahend;
 	}
 
@@ -738,8 +731,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(workerResult.getSubtrahend(),
 					true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
-			// TODO mStateFactoryForRefinement muss fresh vom worker script kommen
-
 			try {
 				if (mPref.differenceSenwa()) {
 					diff = new DifferenceSenwa<>(new AutomataLibraryServices(getServices()), stateFactoryForRefinement,
@@ -753,12 +744,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException tce) {
 				throw tce;
 			} finally {
-				final boolean notEnahncedInWorker = false; // TODO setting?
-				if (workerResult.getEnhanceMode() != InterpolantAutomatonEnhancement.NONE && notEnahncedInWorker) {
-					assert workerResult.getSubtrahend() instanceof AbstractInterpolantAutomaton
-							: "if enhancement is used, we need AbstractInterpolantAutomaton";
-					((AbstractInterpolantAutomaton<L>) workerResult.getSubtrahend()).switchToReadonlyMode();
-				}
+				// We never enhance in main thread!
 			}
 
 			if (!workerResult.useErrorAutomaton()) {
