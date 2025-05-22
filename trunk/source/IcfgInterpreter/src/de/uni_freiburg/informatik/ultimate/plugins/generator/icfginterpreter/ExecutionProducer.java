@@ -16,7 +16,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -603,9 +602,11 @@ public class ExecutionProducer {
 			return out;
 		}
 
-		@SuppressWarnings("unused")
-		private static <L extends IAction> IcfgProgramExecution<L> createExecution(final List<L> trace,
+		private static IcfgProgramExecution<IcfgEdge> createExecution(final List<IcfgEdge> trace,
 				final List<Map<Term, Term>> states) {
+			if (trace.isEmpty()) {
+				return IcfgProgramExecution.create(IcfgEdge.class);
+			}
 			final Map<Integer, ProgramState<Term>> stateMapping = new HashMap<>();
 			for (int i = 0; i < states.size(); i++) {
 				stateMapping
