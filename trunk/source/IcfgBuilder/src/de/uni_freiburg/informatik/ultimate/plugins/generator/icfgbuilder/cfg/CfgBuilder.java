@@ -1442,13 +1442,13 @@ public class CfgBuilder {
 
 				final boolean childMustBePreserved = isLoopLocationOrLoi(child);
 				if (childMustBePreserved) {
-					mergeLocNodes(mother, child, false);
-					mLogger.debug(mother + " gets absorbed by " + child);
-				} else {
 					final boolean motherMustBePreserved = isLoopLocationOrLoi(mother);
 					if (motherMustBePreserved) {
 						throw new AssertionError(String.format("Can neither remove %s nor %s.", child, mother));
 					}
+					mergeLocNodes(mother, child, false);
+					mLogger.debug(mother + " gets absorbed by " + child);
+				} else {
 					mergeLocNodes(child, mother, true);
 					mLogger.debug(child + " gets absorbed by " + mother);
 				}
