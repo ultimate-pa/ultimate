@@ -51,8 +51,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.pre
 
 public class ExecutionProducer {
 	public interface IIcfgExecutionProducer {
-		boolean printExecution = true;
-
 		void init(IIcfg<? extends IcfgLocation> icfg, IUltimateServiceProvider services);
 
 		List<Pair<IcfgProgramExecution<IcfgEdge>, ExecutionTermintionReason>> makeExecutions(NonDeterministicChoice ndc,
@@ -513,23 +511,6 @@ public class ExecutionProducer {
 		}
 
 		private IcfgProgramExecution<IcfgEdge> printExecution(final PartialExecution execution) {
-			if (printExecution) {
-				final StringBuilder out = new StringBuilder();
-				out.append(execution.states.get(0).toString());
-				for (int i = 0; i < execution.edges.size(); i++) {
-					out.append("\n->\n").append(execution.edges.get(i).getSource()).append(" to ")
-							.append(execution.edges.get(i).getTarget());
-					out.append(" ").append(execution.edges.get(i).getTransformula().toStringDirect());
-					out.append("\n->\n{");
-					for (final Entry<Term, Value> entry : execution.states.get(i + 1).entrySet()) {
-						out.append("\n\t").append(entry.getKey()).append(" = ").append(entry.getValue());
-					}
-					out.append("\n}");
-
-				}
-				IcfgInterpreterObserver.getLogger().info(out.toString());
-			}
-
 			// Report if the exit location was an error location
 			if (execution.status == ExecutionTermintionReason.reachedError) {
 				IcfgInterpreterObserver.getLogger().error(

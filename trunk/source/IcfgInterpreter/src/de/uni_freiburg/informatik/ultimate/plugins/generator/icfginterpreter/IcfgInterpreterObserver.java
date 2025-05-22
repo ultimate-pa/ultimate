@@ -68,6 +68,12 @@ public class IcfgInterpreterObserver extends BaseObserver {
 				mLogger.error(bs.toString(StandardCharsets.UTF_8));
 			}
 		}
+		// TODO: We should probably not output all executions
+		// TODO: Improve format
+		mLogger.info("Produced %s program executions", mExecutions.size());
+		for (final var e : mExecutions) {
+			mLogger.info("Ended because of %s\n\n%s", e.b(), e.a());
+		}
 		return false;
 	}
 
