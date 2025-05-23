@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -9,40 +7,19 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.Disjunct
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread;
 
-public class InterferenceUtils {
+public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<String> getThreadsThatCanInterfere(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
-			final String ownerThread) {
-		if (result.getStates().isEmpty()) {
-			return Collections.emptySet();
-		}
-		final Set<String> threadNameSet = result.getStates().iterator().next().threadCounter().getThreadNameSet();
-		final Set<String> possibleInterferenceSet = new HashSet<>();
-		final var procedureMap = GuardedStateTransformer.getThreadInstanceState(result).getThreadInstances();
-		for (final String threadName : threadNameSet) {
-			final int threadInstances = procedureMap.get(threadName);
-			if (threadInstances >= 2 || threadName != ownerThread) {
-				possibleInterferenceSet.add(threadName);
-			}
-		}
-		return possibleInterferenceSet;
+	public InterferenceUtils() {
 	}
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<InterferenceWithParentThread<STATE, ACTION, LOC>> getValidInterferences(
-			final Set<String> interferingThreads, final String ownerThread,
-			final AbstractInterferenceState<STATE, ACTION, LOC> interferences2,
+	public Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> createValidInterferenceThreadPairs(
+			final String ownerThread, final AbstractInterferenceState<STATE, ACTION, LOC> interferences2,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result) {
-		final Set<de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.SimpleInterferenceApplier.InterferenceWithParentThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
+		final Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
+		final var interferingThreads = result.getStates().iterator().next().threadCounter().getThreadNameSet();
 		for (final String interferenceThreadName : interferingThreads) {
-			// TODO: possibly exclude states from disjunction where interferingthread is not active
-			if (GuardedStateTransformer.getThreadInstanceState(result).getThreadInstances()
-					.get(interferenceThreadName) == 0) {
-				continue;
-			}
 			final var interferences = interferences2.getInterferencesForThread(interferenceThreadName);
 			if (interferences == null) {
 				continue;
@@ -51,44 +28,46 @@ public class InterferenceUtils {
 				if (interference.disjState() == null) {
 					continue;
 				}
-				if (GuardedStateTransformer.getThreadInstanceState(interference.disjState()).getThreadInstances()
+				// We can remove interferences where our targetstate sourcethread is not active from the beginning,
+				// no amount of other interferences applied to the state will enable this interference to be valid
+				if (GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
 						.get(ownerThread) == 0) {
 					continue;
 				}
-				allInterferences.add(new InterferenceWithParentThread<>(interference, interferenceThreadName));
+				allInterferences.add(new InterferenceWithSourceThread<>(interference, interferenceThreadName));
 
 			}
 		}
 		return allInterferences;
 	}
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> boolean matchesLocation(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState, final String ownerThread,
-			final String interferenceThreadName, final Interference<STATE, ACTION, LOC> interference,
-			final AbstractLocationMap<LOC> mAbstractLocationMap) {
-		final var itfThinksStateIs = GuardedStateTransformer.getAbstractLocationUnion(interference.disjState())
-				.getTracker().getLocationForThread(ownerThread);
-		final var realLoc = singleState.abstractLocationState().getintLoc();
-		if (!itfThinksStateIs.contains(realLoc)) {
+	public boolean stateIsInterferableBy(final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
+			final String ownerThread, final String interferenceThreadName,
+			final Interference<STATE, ACTION, LOC> interference, final AbstractLocationMap<LOC> abstractLocationMap) {
+		if (!interferingThreadIsActiveInState(ownerThread, interferenceThreadName, singleState)) {
 			return false;
 		}
-		if (singleState.threadCounter().getThreadInstances().get(interferenceThreadName) < 1) {
-			return false;
-		}
-		if (GuardedStateTransformer.getThreadInstanceState(interference.disjState()).getThreadInstances()
-				.get(ownerThread) == 0) {
-			return false;
-		}
-		final Set<Integer> possibleInterferingLocations = singleState.abstractLocationState().getTracker()
+		final Set<Integer> possibleInterferingThreadLocations = singleState.abstractLocationState().getTracker()
 				.getLocationForThread(interferenceThreadName);
-		final int interferenceLocation = mAbstractLocationMap.getAbstractLocation(interference.action().getSource());
-		if ((!possibleInterferingLocations.contains(interferenceLocation)
-				|| !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 0))
-				&& !(ownerThread.equals(interferenceThreadName))
-				&& !(singleState.threadCounter().getThreadInstances().get(interferenceThreadName) > 1)) {
+		final int actualInterferenceThreadLocation = abstractLocationMap
+				.getAbstractLocation(interference.action().getSource());
+		if ((!possibleInterferingThreadLocations.contains(actualInterferenceThreadLocation))) {
 			return false;
 		}
 		return true;
 	}
 
+	private boolean interferingThreadIsActiveInState(final String ownerThread, final String interferenceThreadName,
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
+		final var interferingThreadCount = singleState.threadCounter().getThreadInstances().get(interferenceThreadName);
+		// unforked threads cant interfere
+		if (interferingThreadCount < 1) {
+			return false;
+		}
+		// self interference only when more than 1 threadinstance active
+		if (interferingThreadCount < 2 && ownerThread.equals(interferenceThreadName)) {
+			return false;
+		}
+		return true;
+	}
 }

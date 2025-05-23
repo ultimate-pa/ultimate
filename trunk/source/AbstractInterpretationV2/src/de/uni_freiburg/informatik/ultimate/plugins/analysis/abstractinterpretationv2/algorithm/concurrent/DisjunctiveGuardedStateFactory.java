@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -22,18 +23,19 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final int mMaxParallelStates;
 	private final Map<String, ? extends LOC> mEntryLocs;
+	private final IIcfg<? extends LOC> mIcfg;
 
 	public DisjunctiveGuardedStateFactory(
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> stateStorage,
 			final ConcurrentIcfgAnalyzer<ACTION, LOC> analyzer, final int maxStates,
 			final GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> domain,
-			final GuardedInterferenceApplier<UNDERLYINGSTATE, ACTION, LOC> applier,
-			final Map<String, ? extends LOC> entryLocs) {
+			final Map<String, ? extends LOC> entryLocs, final IIcfg<? extends LOC> icfg) {
 		mStateStorage = stateStorage;
 		mAnalyzer = analyzer;
 		mMaxParallelStates = maxStates;
 		mDomain = domain;
 		mEntryLocs = entryLocs;
+		mIcfg = icfg;
 	}
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
@@ -57,6 +59,12 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> combineForkingStates(
 			final String procedure, final HashSet<LOC> allForkLocs) {
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkStates = new HashSet<>();
+//		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : mIcfg.getCfgSmtToolkit()
+//				.getConcurrencyInformation().getThreadInstanceMap().keySet()) {
+//			if (!fork.getNameOfForkedProcedure().equals(procedure)) {
+//				continue;
+//			}
+//			final LOC loc = (LOC) fork.getSource();
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> state = mStateStorage
 					.getAbstractState(loc);

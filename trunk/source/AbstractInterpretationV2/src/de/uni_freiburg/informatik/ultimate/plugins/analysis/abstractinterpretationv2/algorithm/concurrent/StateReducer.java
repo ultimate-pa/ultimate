@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -21,14 +20,13 @@ public class StateReducer {
 		if (states.size() <= 1) {
 			return result2;
 		}
-		return DisjunctiveAbstractState.createDisjunction(reduceToLocationsSet(states, maxSize), maxSize);
+		return DisjunctiveAbstractState.createDisjunction(reduceToLocationsSet(states), maxSize);
 	}
 
-	public static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceToLocationsSet(
-			final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> states, final int maxSize) {
+	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceToLocationsSet(
+			final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> states) {
 		final List<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = new HashSet<>();
-		final int startingLen = toProcess.size();
 		while (!toProcess.isEmpty()) {
 			GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> base = toProcess.remove(toProcess.size() - 1);
 			final ListIterator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> it = toProcess
@@ -42,31 +40,6 @@ public class StateReducer {
 			}
 			result.add(base);
 		}
-		final int endLen = result.size();
 		return result;
 	}
-
-	public static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> LinkedHashSet<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceToLocationsSet(
-			final LinkedHashSet<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> states,
-			final int maxSize) {
-		final List<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
-		final LinkedHashSet<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = new LinkedHashSet<>();
-		final int startingLen = toProcess.size();
-		while (!toProcess.isEmpty()) {
-			GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> base = toProcess.remove(toProcess.size() - 1);
-			final ListIterator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> it = toProcess
-					.listIterator();
-			while (it.hasNext()) {
-				final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> candidate = it.next();
-				if (base.abstractLocationState().isEqualTo(candidate.abstractLocationState())) {
-					base = base.union(candidate);
-					it.remove();
-				}
-			}
-			result.add(base);
-		}
-		final int endLen = result.size();
-		return result;
-	}
-
 }

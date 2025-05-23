@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineGuardedConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.ThreadModularAbsintPrefs;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
@@ -116,22 +115,15 @@ public final class AbstractInterpreter {
 		if (IcfgUtils.isConcurrent(root)) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 			final String method = prefs.getString(AbsIntPrefInitializer.LABEL_THREAD_MODULAR_METHOD);
-			if (method == "Old") {
-				return new FixpointEngineConcurrent<>(params, FixpointEngine::new, root);
-			} else if (method == "New") {
-				final ThreadModularAbsintPrefs threadModPrefs = getThreadModPrefs(prefs);
-				@SuppressWarnings("unchecked")
-				final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> factory = (
-						final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> p) -> new FixpointEngine<>(
-								p);
+			final ThreadModularAbsintPrefs threadModPrefs = getThreadModPrefs(prefs);
+			final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> factory = (
+					final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> p) -> new FixpointEngine<>(
+							p);
 
-				@SuppressWarnings("unchecked")
-				final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine = new FixpointEngineGuardedConcurrent<>(
-						services, (FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
-						threadModPrefs);
-				return engine;
-
-			}
+			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine = new FixpointEngineGuardedConcurrent<>(
+					services, (FixpointEngineParameters) params, (IFixpointEngineFactory) factory, root,
+					threadModPrefs);
+			return engine;
 		}
 
 		return new FixpointEngine<>(params);

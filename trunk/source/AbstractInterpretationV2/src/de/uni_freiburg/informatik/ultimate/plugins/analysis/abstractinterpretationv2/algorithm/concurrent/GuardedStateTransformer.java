@@ -17,7 +17,7 @@ public final class GuardedStateTransformer {
 		throw new AssertionError("Should not instantiate this class, call the statiic methods");
 	}
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> ThreadInstanceCounter getThreadInstanceState(
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> ThreadInstanceCounter getThreadInstanceStateUnion(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
 		final ThreadInstanceCounter unionCounter = disj.getStates().stream().map(s -> s.threadCounter())
 				.reduce((a, b) -> a.union(b))
@@ -29,7 +29,7 @@ public final class GuardedStateTransformer {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
 		final AbstractLocationState<LOC> unionLoc = disj.getStates().stream().map(s -> s.abstractLocationState())
 				.reduce((a, b) -> a.union(b))
-				.orElseThrow(() -> new IllegalStateException("Trying to get threadinstancestate from empty list"));
+				.orElseThrow(() -> new IllegalStateException("Trying to get abstractlocationstate from empty list"));
 		return unionLoc;
 	}
 

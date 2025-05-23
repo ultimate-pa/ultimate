@@ -12,13 +12,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-record Interference<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
-		ACTION action, DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjState) {
-	boolean isEqualTo(final Interference<STATE, ACTION, LOC> other) {
-		return disjState().isEqualTo(other.disjState());
-	}
-}
-
 public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private final Map<String, Map<ACTION, Interference<STATE, ACTION, LOC>>> mInterferenceMap;
 
@@ -57,13 +50,6 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 			return;
 		}
 		final var threadMap = mInterferenceMap.computeIfAbsent(threadName, k -> new HashMap<>());
-//		final var existing = threadMap.get(action);
-//		Interference<STATE, ACTION, LOC> newItf;
-//		if (existing == null) {
-//			newItf = new Interference<>(action, state);
-//		} else {
-//			newItf = new Interference<>(action, state.union(existing.disjState()));
-//		}
 		final var newItf = new Interference<>(action, state);
 		threadMap.put(action, newItf);
 	}
@@ -94,10 +80,9 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 	}
 
 	public Set<String> interferenceStrings() {
-		return mInterferenceMap.entrySet().stream().flatMap(e -> e.getValue().values().stream().map(i -> "Thread "
-//				+ e.getKey() + ": " + i.action() + GuardedStateTransformer.getSingleState(i.disjState())))
-				+ e.getKey() + ": " + i.action() + (i.disjState())))
-//								+ GuardedStateTransformer.getSingleState(i.disjState()).state()))
+		return mInterferenceMap.entrySet().stream()
+				.flatMap(e -> e.getValue().values().stream()
+						.map(i -> "Thread " + e.getKey() + ": " + i.action() + (i.disjState())))
 				.collect(Collectors.toSet());
 	}
 }
