@@ -186,7 +186,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				break;
 			}
 			interferences = newMaybeWidened;
-//			printInterferenceLog(interferences);
+			printInterferenceLog(interferences);
 			mIteration++;
 		}
 	}

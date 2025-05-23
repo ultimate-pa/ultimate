@@ -47,6 +47,10 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 		if (!interferingThreadIsActiveInState(ownerThread, interferenceThreadName, singleState)) {
 			return false;
 		}
+		if (GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
+				.get(interferenceThreadName) > 1) {
+			return true;
+		}
 		final Set<Integer> possibleInterferingThreadLocations = singleState.abstractLocationState().getTracker()
 				.getLocationForThread(interferenceThreadName);
 		final int actualInterferenceThreadLocation = abstractLocationMap

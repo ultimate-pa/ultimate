@@ -140,11 +140,11 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			final LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> nextWorklist,
 			final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved) {
 
-		for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> potentialNewState : moved) {
+		for (final var potentialNewState : moved) {
 			boolean subsumedByExisting = false;
 			final Iterator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> it = result.iterator();
 			while (it.hasNext()) {
-				final GuardedInterferenceDomainState<STATE, ACTION, LOC> existing = it.next();
+				final var existing = it.next();
 				final SubsetResult subsetRes = potentialNewState.isSubsetOf(existing);
 				if (!(subsetRes == SubsetResult.NONE)) {
 					subsumedByExisting = true;
