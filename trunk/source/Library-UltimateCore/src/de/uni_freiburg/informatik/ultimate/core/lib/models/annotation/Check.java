@@ -65,13 +65,8 @@ public class Check extends ModernAnnotations {
 	private final Set<Spec> mSpec;
 
 	private final IMessageProvider mMsgProvider;
-	private Integer testId;
 
 	public Check(final Spec spec) {
-		this(EnumSet.of(spec));
-	}
-
-	public Check(final Spec spec, final Integer testId) {
 		this(EnumSet.of(spec));
 	}
 
@@ -134,8 +129,7 @@ public class Check extends ModernAnnotations {
 
 		final EnumSet<Spec> newSpec = EnumSet.copyOf(mSpec);
 		newSpec.addAll(otherCheck.getSpec());
-		// note: automatic merging looses all information about message
-		// providers and uses the default ones
+		// note: automatic merging looses all information about message providers and uses the default ones
 		return new Check(newSpec);
 	}
 
@@ -145,26 +139,8 @@ public class Check extends ModernAnnotations {
 	 * @param node
 	 *            the element
 	 */
-	public void annotate(final IElement node, final int countTestGoals) {
-		if (mSpec.equals(Spec.TEST_GOAL_ANNOTATION)) {
-			final TestGoalAnnotation tg1 = new TestGoalAnnotation(countTestGoals);
-			node.getPayload().getAnnotations().put(KEY, tg1);
-		} else {
-			node.getPayload().getAnnotations().put(KEY, this);
-		}
-
-	}
-
-	/**
-	 * Adds this Check object to the annotations of a IElement.
-	 *
-	 * @param node
-	 *            the element
-	 */
 	public void annotate(final IElement node) {
-
 		node.getPayload().getAnnotations().put(KEY, this);
-
 	}
 
 	/**
