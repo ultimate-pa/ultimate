@@ -26,11 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsType;
 
 public class CegarStatisticsType extends StatisticsType<CegarLoopStatisticsDefinitions> {
@@ -55,53 +52,11 @@ public class CegarStatisticsType extends StatisticsType<CegarLoopStatisticsDefin
 		return seconds + "." + tenthDigit + "s";
 	}
 
-	public String prettyprintBenchmarkDataNoStopWatch(final IStatisticsDataProvider benchmarkData,
-			final boolean noStopwatch) {
-		return prettyprintBenchmarkData(getKeys(), benchmarkData, noStopwatch);
-	}
-
-	@Override
-	public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-		return prettyprintBenchmarkData(getKeys(), benchmarkData, false);
-	}
-
-	public static <T extends Enum<T> & IStatisticsElement> String prettyprintBenchmarkData(
-			final Collection<String> keys, final IStatisticsDataProvider benchmarkData, final boolean noStopwatch) {
-		final StringBuilder sb = new StringBuilder();
-		String delimiter = "";
-		for (final String key : keys) {
-			sb.append(delimiter);
-
-			final CegarLoopStatisticsDefinitions keyE = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
-			switch (keyE) {
-			case OverallTime:
-			case EmptinessCheckTime:
-			case AutomataDifference:
-			case DeadEndRemovalTime:
-			case HoareAnnotationTime:
-			case BasicInterpolantAutomatonTime:
-			case InitialAbstractionConstructionTime:
-			case DumpTime:
-				if (noStopwatch) {
-					break;
-				}
-			default:
-				final Object value = benchmarkData.getValue(key);
-				sb.append(keyE.prettyprint(value));
-				delimiter = ", ";
-			}
-
-		}
-		return sb.toString();
-
-	}
-
 	public static class SizeIterationPair {
 		final int mSize;
 		final int mIteration;
 
 		public SizeIterationPair(final int size, final int iteration) {
-			super();
 			mSize = size;
 			mIteration = iteration;
 		}

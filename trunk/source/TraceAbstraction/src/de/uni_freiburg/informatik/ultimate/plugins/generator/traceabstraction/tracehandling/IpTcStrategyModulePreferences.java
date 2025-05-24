@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
  *
  */
 public final class IpTcStrategyModulePreferences<L extends IIcfgTransition<?>>
-extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<L>, L> {
+		extends IpTcStrategyModuleTraceCheck<IInterpolatingTraceCheck<L>, L> {
 
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final Class<L> mTransitionClazz;

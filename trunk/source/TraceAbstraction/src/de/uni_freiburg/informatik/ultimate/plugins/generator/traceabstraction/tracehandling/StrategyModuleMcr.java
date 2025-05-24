@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.Mcr.IMcrResultProvider;
 
 public class StrategyModuleMcr<L extends IIcfgTransition<?>>
-implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultProvider<L> {
+		implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultProvider<L> {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<?> mPrefs;
 	private final StrategyFactory<L> mStrategyFactory;
@@ -158,11 +158,10 @@ implements IIpTcStrategyModule<Mcr<L>, L>, IIpAbStrategyModule<L>, IMcrResultPro
 		if (refinementStrategy == RefinementStrategy.MCR) {
 			throw new IllegalStateException("MCR cannot used with MCR as internal strategy.");
 		}
-
-		final IRefinementStrategy<L> strategy = mStrategyFactory.constructStrategy(mServices,
-				new Counterexample<>(counterexample), mAbstraction, mTaskIdentifier, mEmptyStackFactory,
-				mPredicateUnifier, mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-				refinementStrategy);
+		final IRefinementStrategy<L> strategy =
+				mStrategyFactory.constructStrategy(mServices, new Counterexample<>(counterexample), mAbstraction,
+						mTaskIdentifier, mEmptyStackFactory, mPredicateUnifier, mPredicateUnifier.getTruePredicate(),
+						mPredicateUnifier.getFalsePredicate(), refinementStrategy);
 		final AutomatonFreeRefinementEngine<L> afe = new AutomatonFreeRefinementEngine<>(mServices, mLogger, strategy);
 		final List<L> trace = counterexample.asList();
 		final RefinementEngineStatisticsGenerator statistics = afe.getRefinementEngineStatistics();

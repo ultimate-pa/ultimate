@@ -68,9 +68,6 @@ public class UnionNwa<LETTER, STATE> extends ProductNwa<LETTER, STATE> {
 	protected final ProductState createProductState(final STATE fst, final STATE snd) {
 		final STATE res = mStateFactory.union(fst, snd);
 		final boolean isAccepting = mFstOperand.isFinal(fst) || mSndOperand.isFinal(snd);
-		if (isAccepting) {
-			System.out.append("asd");
-		}
 		return new ProductState(fst, snd, res, isAccepting);
 	}
 }

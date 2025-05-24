@@ -66,7 +66,7 @@ public class TranslationManager {
 		mReversedVarMap = new LinkedHashMap<>();
 
 		mConstraintSet = new HashSet<>();
-		mTc = new TranslationConstrainer(mMgdScript, ConstraintsForBitwiseOperations.MAX);
+		mTc = new TranslationConstrainer(mMgdScript, cfbo);
 		mIntand = mTc.getIntAndFunctionSymbol();
 
 		mNutzTransformation = useNutzTransformation;
