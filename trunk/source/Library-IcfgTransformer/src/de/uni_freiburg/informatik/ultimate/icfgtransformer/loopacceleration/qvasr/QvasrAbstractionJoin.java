@@ -85,9 +85,9 @@ public final class QvasrAbstractionJoin {
 			throw new UnsupportedOperationException();
 		}
 
-		Rational[][] simulationMatrixJoined = new Rational[0][0];
-		Rational[][] tOne = new Rational[0][0];
-		Rational[][] tTwo = new Rational[0][0];
+		Rational[][] simulationMatrixJoined = {};
+		Rational[][] tOne = {};
+		Rational[][] tTwo = {};
 
 		/*
 		 * Get coherence classes.

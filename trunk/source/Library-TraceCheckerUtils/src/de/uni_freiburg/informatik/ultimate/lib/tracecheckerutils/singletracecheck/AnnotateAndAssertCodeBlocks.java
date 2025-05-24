@@ -262,7 +262,6 @@ public class AnnotateAndAssertCodeBlocks<L extends IAction> {
 		private final Term mOriginalTerm;
 
 		public AnnotatedSsaConjunct(final Term annotedTerm, final Term originalTerm) {
-			super();
 			mAnnotedTerm = annotedTerm;
 			mOriginalTerm = originalTerm;
 		}

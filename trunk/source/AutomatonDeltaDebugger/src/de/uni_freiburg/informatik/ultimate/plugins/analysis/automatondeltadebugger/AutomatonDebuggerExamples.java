@@ -182,87 +182,87 @@ public class AutomatonDebuggerExamples {
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IOperation<String, String, ? super StringFactory> operation;
 		switch (type) {
-			case EXCEPTION_DUMMY:
-				throw new IllegalArgumentException("Select a valid operation for delta debugging.");
+		case EXCEPTION_DUMMY:
+			throw new IllegalArgumentException("Select a valid operation for delta debugging.");
 
-			case MINIMIZE_NWA_MAXSAT:
-				operation = minimizeNwaMaxSat(automaton, factory);
-				break;
+		case MINIMIZE_NWA_MAXSAT:
+			operation = minimizeNwaMaxSat(automaton, factory);
+			break;
 
-			case MINIMIZE_NWA_PMAXSAT:
-				operation = minimizeNwaPmaxSat(automaton, factory);
-				break;
+		case MINIMIZE_NWA_PMAXSAT:
+			operation = minimizeNwaPmaxSat(automaton, factory);
+			break;
 
-			case MINIMIZE_NWA_PMAXSAT_ASYMMETRIC:
-				operation = minimizeNwaPmaxSatAsymmetric(automaton, factory);
-				break;
+		case MINIMIZE_NWA_PMAXSAT_ASYMMETRIC:
+			operation = minimizeNwaPmaxSatAsymmetric(automaton, factory);
+			break;
 
-			case REDUCE_NWA_DIRECT_SIMULATION:
-				operation = reduceNwaDirectSimulation(automaton, factory);
-				break;
+		case REDUCE_NWA_DIRECT_SIMULATION:
+			operation = reduceNwaDirectSimulation(automaton, factory);
+			break;
 
-			case REDUCE_NWA_DIRECT_SIMULATION_B:
-				operation = reduceNwaDirectSimulationB(automaton, factory);
-				break;
+		case REDUCE_NWA_DIRECT_SIMULATION_B:
+			operation = reduceNwaDirectSimulationB(automaton, factory);
+			break;
 
-			case REDUCE_NWA_DELAYED_SIMULATION:
-				operation = reduceNwaDelayedSimulation(automaton, factory);
-				break;
+		case REDUCE_NWA_DELAYED_SIMULATION:
+			operation = reduceNwaDelayedSimulation(automaton, factory);
+			break;
 
-			case REDUCE_NWA_DELAYED_SIMULATION_B:
-				operation = reduceNwaDelayedSimulationB(automaton, factory);
-				break;
+		case REDUCE_NWA_DELAYED_SIMULATION_B:
+			operation = reduceNwaDelayedSimulationB(automaton, factory);
+			break;
 
-			case REDUCE_NWA_DELAYED_FULL_MULTIPEBBLE_SIMULATION:
-				operation = reduceNwaDelayedFullMultipebbleSimulation(automaton, factory);
-				break;
+		case REDUCE_NWA_DELAYED_FULL_MULTIPEBBLE_SIMULATION:
+			operation = reduceNwaDelayedFullMultipebbleSimulation(automaton, factory);
+			break;
 
-			case SHRINK_NWA:
-				operation = shrinkNwa(automaton, factory);
-				break;
+		case SHRINK_NWA:
+			operation = shrinkNwa(automaton, factory);
+			break;
 
-			case BUCHI_COMPLEMENT_NCSB:
-				operation = buchiComplementNcsb(automaton, factory);
-				break;
+		case BUCHI_COMPLEMENT_NCSB:
+			operation = buchiComplementNcsb(automaton, factory);
+			break;
 
-			case BUCHI_REDUCE:
-				operation = buchiReduce(automaton, factory);
-				break;
+		case BUCHI_REDUCE:
+			operation = buchiReduce(automaton, factory);
+			break;
 
-			case COMPLEMENT:
-				operation = complement(automaton, factory);
-				break;
+		case COMPLEMENT:
+			operation = complement(automaton, factory);
+			break;
 
-			case MINIMIZE_NWA_OVERAPPROXIMATION:
-				operation = minimizeNwaOverapproximation(automaton, factory);
-				break;
+		case MINIMIZE_NWA_OVERAPPROXIMATION:
+			operation = minimizeNwaOverapproximation(automaton, factory);
+			break;
 
-			case REMOVE_DEAD_ENDS:
-				operation = removeDeadEnds(automaton);
-				break;
+		case REMOVE_DEAD_ENDS:
+			operation = removeDeadEnds(automaton);
+			break;
 
-			case REMOVE_NON_LIVE_STATES:
-				operation = removeNonLiveStates(automaton);
-				break;
+		case REMOVE_NON_LIVE_STATES:
+			operation = removeNonLiveStates(automaton);
+			break;
 
-			case DIRECT_SIMULATION_COMPARISON:
-				operation = directSimulationComparison(automaton, factory);
-				break;
+		case DIRECT_SIMULATION_COMPARISON:
+			operation = directSimulationComparison(automaton, factory);
+			break;
 
-			case REDUCE_NWA_DIRECT_FULL_MULTIPEBBLE_SIMULATION:
-				operation = reduceNwaDirectFullMultipebbleSimulation(automaton, factory);
-				break;
+		case REDUCE_NWA_DIRECT_FULL_MULTIPEBBLE_SIMULATION:
+			operation = reduceNwaDirectFullMultipebbleSimulation(automaton, factory);
+			break;
 
-			case COMPARE_SIMULATIONS:
-				operation = compareSimulations(automaton, factory);
-				break;
+		case COMPARE_SIMULATIONS:
+			operation = compareSimulations(automaton, factory);
+			break;
 
-			case REDUCE_BUCHI_FAIR_DIRECT_SIMULATION:
-				operation = reduceBuchiFairDirectSimulation(automaton, factory);
-				break;
+		case REDUCE_BUCHI_FAIR_DIRECT_SIMULATION:
+			operation = reduceBuchiFairDirectSimulation(automaton, factory);
+			break;
 
-			default:
-				throw new IllegalArgumentException("Unknown operation.");
+		default:
+			throw new IllegalArgumentException("Unknown operation.");
 		}
 		return operation;
 	}

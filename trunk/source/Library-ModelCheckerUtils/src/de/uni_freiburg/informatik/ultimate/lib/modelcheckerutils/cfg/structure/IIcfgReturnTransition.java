@@ -30,13 +30,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 
 /**
  * An {@link IIcfgTransition} that represents a Return.
- * 
+ *
  * An {@link IIcfgReturnTransition} in a {@link IIcfg} represents the return from a called procedure. This represents
  * the execution starting from the position directly before the return statement (resp. the last position of a procedure
  * if there is no return statement) to the position after the corresponding call statement. The update of the variables
  * of the calling procedure is defined by the {@link TransFormula} provided by
  * {@link IIcfgReturnTransition#getAssignmentOfReturn()}.
- * 
+ *
  * Note that each {@link IIcfgReturnTransition} has to have a corresponding call (provided by
  * {@link IIcfgReturnTransition#getCorrespondingCall()}.
  *

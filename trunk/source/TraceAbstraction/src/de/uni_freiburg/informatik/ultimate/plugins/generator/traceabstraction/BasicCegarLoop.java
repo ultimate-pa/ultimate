@@ -422,8 +422,8 @@ extends AbstractCegarLoop<L, A> {
 			}
 		}
 
-		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(),
-				false) : "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(), false)
+				: "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 
 		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
 		// In particular, NwaFloydHoareValidityCheck calls IncrementalHoareTripleChecker, which in the method
@@ -610,26 +610,18 @@ extends AbstractCegarLoop<L, A> {
 			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
-		final AbstractInterpolantAutomaton<L> result;
-		switch (enhanceMode) {
+		return switch (enhanceMode) {
 		case NONE:
 			throw new IllegalArgumentException("In setting NONE we will not do any enhancement");
-		case PREDICATE_ABSTRACTION:
-		case PREDICATE_ABSTRACTION_CONSERVATIVE:
-		case PREDICATE_ABSTRACTION_CANNIBALIZE:
-			result = constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(inputInterpolantAutomaton,
+		case PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE, PREDICATE_ABSTRACTION_CANNIBALIZE:
+			yield constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(inputInterpolantAutomaton,
 					predicateUnifier, htc, enhanceMode);
-			break;
 		case EAGER:
 		case NO_SECOND_CHANCE:
 		case EAGER_CONSERVATIVE:
-			result = constructInterpolantAutomatonForOnDemandEnhancementEager(inputInterpolantAutomaton,
-					predicateUnifier, htc, enhanceMode);
-			break;
-		default:
-			throw new UnsupportedOperationException("unknown " + enhanceMode);
-		}
-		return result;
+			yield constructInterpolantAutomatonForOnDemandEnhancementEager(inputInterpolantAutomaton, predicateUnifier,
+					htc, enhanceMode);
+		};
 	}
 
 	private NondeterministicInterpolantAutomaton<L> constructInterpolantAutomatonForOnDemandEnhancementEager(

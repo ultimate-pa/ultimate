@@ -257,8 +257,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 
 		// Add internal states of the error path
 		mLogger.debug("Add internal states and edges of the error path");
-		addPath(ce_edges, ce_states, ce_interp, mAbstractionInitialState, mAbstractionFinalState,
-				new TreeMap<Integer, IPredicate>());
+		addPath(ce_edges, ce_states, ce_interp, mAbstractionInitialState, mAbstractionFinalState, new TreeMap<>());
 
 		// // // debugging
 		// {
@@ -629,12 +628,12 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 			mLogger.debug("<" + edges.getSymbol(i).toString() + ">");
 		}
 		mLogger.debug("states:");
-		for (int i = 0; i < states.size(); i++) {
-			mLogger.debug("<" + states.get(i).toString() + ">");
+		for (final IPredicate state : states) {
+			mLogger.debug("<" + state.toString() + ">");
 		}
 		mLogger.debug("interp:");
-		for (int i = 0; i < interpolants.length; i++) {
-			mLogger.debug("<" + interpolants[i].toString() + ">");
+		for (final IPredicate interpolant : interpolants) {
+			mLogger.debug("<" + interpolant.toString() + ">");
 		}
 
 		final ArrayList<IPredicate> callPredecessors = new ArrayList<>();

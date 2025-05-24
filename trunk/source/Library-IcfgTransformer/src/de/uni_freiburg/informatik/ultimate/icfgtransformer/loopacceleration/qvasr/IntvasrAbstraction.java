@@ -88,10 +88,10 @@ public class IntvasrAbstraction implements IVasrAbstraction<Integer> {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("S: \n");
-		for (int i = 0; i < mSimulationMatrix.length; i++) {
+		for (final Integer[] element : mSimulationMatrix) {
 			sb.append("[");
 			for (int j = 0; j < mSimulationMatrix[0].length; j++) {
-				sb.append(" " + mSimulationMatrix[i][j].toString() + " ");
+				sb.append(" " + element[j].toString() + " ");
 			}
 			sb.append("]");
 			sb.append("\n");

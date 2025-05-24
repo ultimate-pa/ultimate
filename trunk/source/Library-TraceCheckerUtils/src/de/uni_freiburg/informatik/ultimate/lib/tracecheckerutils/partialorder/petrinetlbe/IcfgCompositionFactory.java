@@ -102,8 +102,8 @@ public class IcfgCompositionFactory implements IPLBECompositionFactory<IcfgEdge>
 
 		final IcfgLocation source = transitions.get(0).getSource();
 		final IcfgLocation target = transitions.get(0).getTarget();
-		assert transitions.stream().allMatch(t -> t.getSource() == source
-				&& t.getTarget() == target) : "Can only compose transitions with equal sources and targets.";
+		assert transitions.stream().allMatch(t -> t.getSource() == source && t.getTarget() == target)
+				: "Can only compose transitions with equal sources and targets.";
 
 		final Map<TermVariable, IcfgEdge> branchIndicator2edge =
 				mEdgeBuilder.constructBranchIndicatorToEdgeMapping(transitions);

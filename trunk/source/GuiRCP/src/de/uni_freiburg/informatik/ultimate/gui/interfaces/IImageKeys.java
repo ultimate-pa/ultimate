@@ -29,18 +29,18 @@ package de.uni_freiburg.informatik.ultimate.gui.interfaces;
 
 public interface IImageKeys {
 	// Misc icons
-	public static final String TRAYICON = "icons/trayicon.png";
+	String TRAYICON = "icons/trayicon.png";
 	// Editor icons
-	public static final String GRAPHEDITOR = "icons/GraphEditor.png";
+	String GRAPHEDITOR = "icons/GraphEditor.png";
 	// Icon for file and toolchain selection
-	public static final String LOADSOURCEFILES = "icons/LoadSourceFiles.png";
+	String LOADSOURCEFILES = "icons/LoadSourceFiles.png";
 	// Icon for ReExecute
-	public static final String REEXEC = "icons/reexec.png";
+	String REEXEC = "icons/reexec.png";
 	// Icon for reexecute old toolchain on new file
-	public static final String REEXECOLDTC = "icons/reexecoldtc.png";
+	String REEXECOLDTC = "icons/reexecoldtc.png";
 	// Icon for reexecute new toolchain on old file
-	public static final String REEXECNEWTC = "icons/reexecnewtc.png";
+	String REEXECNEWTC = "icons/reexecnewtc.png";
 
-	public static final String ICON_CANCEL_TOOLCHAIN = "icons/canceltc.png";
+	String ICON_CANCEL_TOOLCHAIN = "icons/canceltc.png";
 
 }

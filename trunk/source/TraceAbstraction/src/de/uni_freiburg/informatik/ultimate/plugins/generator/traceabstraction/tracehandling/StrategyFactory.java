@@ -394,7 +394,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 						"Interpolant consolidation and AcceleratedInterpolation cannot be combined");
 			}
 			return new IpTcStrategyModuleAcceleratedTraceCheck<>(mServices, mLogger, mCounterexample, mPrecondition,
-					mPostcondition, mPredicateUnifier, mPrefs, mPredicateFactory);
+					mPostcondition, mPredicateUnifier, mPrefs, mPredicateFactory, mTaskIdentifier);
 		}
 
 		public IIpTcStrategyModule<?, L> createIpTcStrategyModuleSmtInterpolCraig(

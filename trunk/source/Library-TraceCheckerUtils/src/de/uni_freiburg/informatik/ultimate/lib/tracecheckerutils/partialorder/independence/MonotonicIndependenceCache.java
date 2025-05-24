@@ -119,17 +119,10 @@ public class MonotonicIndependenceCache<L> implements IIndependenceCache<IPredic
 	@Override
 	public void cacheResult(final IPredicate condition, final L a, final L b, final Dependence result) {
 		switch (result) {
-		case INDEPENDENT:
-			addPositiveCacheEntry(condition, a, b);
-			return;
-		case DEPENDENT:
-			addNegativeCacheEntry(condition, a, b);
-			return;
-		case UNKNOWN:
-			addUnknownCacheEntry(condition, a, b);
-			return;
+		case INDEPENDENT -> addPositiveCacheEntry(condition, a, b);
+		case DEPENDENT -> addNegativeCacheEntry(condition, a, b);
+		case UNKNOWN -> addUnknownCacheEntry(condition, a, b);
 		}
-		throw new IllegalArgumentException("Unknown value " + result);
 	}
 
 	private void addPositiveCacheEntry(final IPredicate state, final L a, final L b) {

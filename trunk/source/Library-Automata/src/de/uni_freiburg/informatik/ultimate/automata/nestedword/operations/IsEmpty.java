@@ -214,7 +214,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, operand, SearchStrategy.BFS);
 	}
 
@@ -250,11 +250,16 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 * search has to start. The set of forbiddenStates defines states that the run must not visit. The set of goalStates
 	 * defines where the run that we search has to end.
 	 *
-	 * @param services        Ultimate services
-	 * @param operand         input NWA
-	 * @param startStates     start states
-	 * @param forbiddenStates forbidden states
-	 * @param goalStates      goal states
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
+	 * @param startStates
+	 *            start states
+	 * @param forbiddenStates
+	 *            forbidden states
+	 * @param goalStates
+	 *            goal states
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates)
@@ -360,44 +365,29 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	// When final state is reached, process the whole call queue before
 	// computation of accepting run.
 	/*
-	/**
-	 * Dequeue a state pair. If available take a state pair that has been
-	 * discovered by taking an internal transition, a return transition or a
-	 * summary. If not take a state pair that has been discovered by taking a
-	 * call transition.
+	 * /** Dequeue a state pair. If available take a state pair that has been discovered by taking an internal
+	 * transition, a return transition or a summary. If not take a state pair that has been discovered by taking a call
+	 * transition.
 	 */
 	/*
-	private IState<LETTER,STATE>[] dequeue() {
-		if (!mqueue.isEmpty()) {
-			return mqueue.removeFirst();
-		}
-		else {
-			return mqueueCall.removeFirst();
-		}
-	}
+	 * private IState<LETTER,STATE>[] dequeue() { if (!mqueue.isEmpty()) { return mqueue.removeFirst(); } else { return
+	 * mqueueCall.removeFirst(); } }
 	 */
 
 	/**
 	 * Dequeue a state pair. If available take a state pair that has been discovered by taking a call transition. If not
 	 * take a state pair that has been discovered by taking an internal transition, a return transition or a summary.
 	 */
-	protected DoubleDecker<STATE> dequeue() {
-		switch (mStrategy) {
-		case BFS:
-			/*
-			 * If available take a state pair that has been discovered by taking a call transition. If not take a
-			 * state pair that has been discovered by taking an internal or a return transition or a summary.
-			 */
-			return dequeueGivenQueues(mQueueCall, mQueue);
-		case DFS:
-			/*
-			 * If available take a state pair that has been discovered by taking an internal or a return transition
-			 * or a summary. If not take a state pair that has been discovered by taking a call transition.
-			 */
-			return dequeueGivenQueues(mQueue, mQueueCall);
-		default:
-			throw new IllegalArgumentException("Unknown search strategy.");
-		}
+	private DoubleDecker<STATE> dequeue() {
+		return switch (mStrategy) {
+		// If available, take a state pair that has been discovered by taking a call transition. If not, take a
+		// state pair that has been discovered by taking an internal or a return transition or a summary.
+		case BFS -> dequeueGivenQueues(mQueueCall, mQueue);
+
+		// If available, take a state pair that has been discovered by taking an internal or a return transition or a
+		// summary. If not, take a state pair that has been discovered by taking a call transition.
+		case DFS -> dequeueGivenQueues(mQueue, mQueueCall);
+		};
 	}
 
 	/**
@@ -596,8 +586,8 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			succK2stateK2Run.put(succK, stateK2Run);
 		}
 		/*
-		 * The following assertion is wrong, there can be a two different call transitions from stateK to state.
-		 * (But in this case we always want to take the one that was first discovered.)
+		 * The following assertion is wrong, there can be a two different call transitions from stateK to state. (But in
+		 * this case we always want to take the one that was first discovered.)
 		 */
 		// assert (!stateK2Run.containsKey(stateK));
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
@@ -639,14 +629,11 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	}
 
 	/*
-	private void addCallStatesOfCallState(IState<LETTER, STATE> callState, IState<LETTER, STATE> callStateOfCallState) {
-		Set<IState<LETTER, STATE>> callStatesOfCallStates = mCallStatesOfCallState.get(callState);
-		if (callStatesOfCallStates == null) {
-			callStatesOfCallStates = new HashSet<IState<LETTER, STATE>>();
-			mCallStatesOfCallState.put(callState, callStatesOfCallStates);
-		}
-		callStatesOfCallStates.add(callStateOfCallState);
-	}
+	 * private void addCallStatesOfCallState(IState<LETTER, STATE> callState, IState<LETTER, STATE>
+	 * callStateOfCallState) { Set<IState<LETTER, STATE>> callStatesOfCallStates =
+	 * mCallStatesOfCallState.get(callState); if (callStatesOfCallStates == null) { callStatesOfCallStates = new
+	 * HashSet<IState<LETTER, STATE>>(); mCallStatesOfCallState.put(callState, callStatesOfCallStates); }
+	 * callStatesOfCallStates.add(callStateOfCallState); }
 	 */
 
 	/**

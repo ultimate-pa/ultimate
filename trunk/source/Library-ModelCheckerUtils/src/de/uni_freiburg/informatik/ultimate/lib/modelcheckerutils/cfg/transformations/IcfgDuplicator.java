@@ -116,7 +116,8 @@ public class IcfgDuplicator {
 			newIcfg.addLocation(newLoc, originalIcfg.getInitialNodes().contains(oldLoc), isError,
 					oldLoc.equals(originalIcfg.getProcedureEntryNodes().get(proc)),
 					oldLoc.equals(originalIcfg.getProcedureExitNodes().get(proc)),
-					originalIcfg.getLoopLocations().contains(oldLoc));
+					originalIcfg.getLoopLocations().contains(oldLoc),
+					originalIcfg.getLocationsOfInterest().contains(oldLoc));
 			mOld2NewLocationMap.put(oldLoc, newLoc);
 		}
 
@@ -132,10 +133,9 @@ public class IcfgDuplicator {
 					openReturns.add(new Pair<>(newSource, oldEdge));
 					continue;
 				}
-				if (ignoreSummariesWithImplementation && oldEdge instanceof IIcfgSummaryTransition) {
-					if (((IIcfgSummaryTransition<?>) oldEdge).calledProcedureHasImplementation()) {
-						continue;
-					}
+				if ((ignoreSummariesWithImplementation && oldEdge instanceof IIcfgSummaryTransition)
+						&& ((IIcfgSummaryTransition<?>) oldEdge).calledProcedureHasImplementation()) {
+					continue;
 				}
 				createEdgeCopy(newSource, oldEdge, edgeFactory);
 			}

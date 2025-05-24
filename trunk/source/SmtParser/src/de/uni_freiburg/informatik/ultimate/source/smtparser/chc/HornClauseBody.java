@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.source.smtparser.chc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -47,9 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
- * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the body of the Horn
- * clause.
+ * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2. Once the Horn clause is fixed (we make no
+ * more derivations in the grammar), we also call this the body of the Horn clause.
  *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -68,6 +68,7 @@ public class HornClauseBody {
 
 	/***
 	 * Constructor of the body of a horn clause.
+	 *
 	 * @param parserScript
 	 */
 	public HornClauseBody(final HornClauseParserScript parserScript) {
@@ -80,6 +81,7 @@ public class HornClauseBody {
 
 	/***
 	 * Add a literal predicate to the cobody.
+	 *
 	 * @param literal
 	 */
 	public void addPredicate(final ApplicationTerm literal) {
@@ -89,6 +91,7 @@ public class HornClauseBody {
 
 	/***
 	 * Add a transition formula to the cobody (can be called several times, a conjunction will be built).
+	 *
 	 * @param formula
 	 */
 	public void addTransitionFormula(final Term formula) {
@@ -98,6 +101,7 @@ public class HornClauseBody {
 
 	/***
 	 * Get the transition formula of the cobody.
+	 *
 	 * @param script
 	 * @return
 	 */
@@ -114,6 +118,7 @@ public class HornClauseBody {
 
 	/***
 	 * Get a map from literals to TermVariable.
+	 *
 	 * @param symbolTable
 	 * @return
 	 */
@@ -129,8 +134,7 @@ public class HornClauseBody {
 		}
 
 		for (final ApplicationTerm pred : mPredicates) {
-			final HcPredicateSymbol cobodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
-					pred);
+			final HcPredicateSymbol cobodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(pred);
 			mPredicateSymbols.add(cobodySymbol);
 			final List<Term> parameterTermVariables = Arrays.asList(pred.getParameters());
 			final List<Term> bodyVars = parameterTermVariables;
@@ -173,30 +177,24 @@ public class HornClauseBody {
 	}
 
 	public void transformTerms(final Function<Term, Term> transformer) {
-		mTransitions =
-				mTransitions.stream().map(t -> transformer.apply(t)).collect(Collectors.toSet());
+		mTransitions = mTransitions.stream().map(t -> transformer.apply(t)).collect(Collectors.toSet());
 
 		mPredicates =
 				mPredicates.stream().map(t -> (ApplicationTerm) transformer.apply(t)).collect(Collectors.toList());
 
 		mPredicateSymbolToArgs = mPredicateSymbolToArgs.stream()
-					.map(l -> l.stream()
-							.map(t -> transformer.apply(t)).collect(Collectors.toList()))
-					.collect(Collectors.toList());
+				.map(l -> l.stream().map(t -> transformer.apply(t)).collect(Collectors.toList()))
+				.collect(Collectors.toList());
 	}
 
 	public Set<TermVariable> getVariables() {
 		final Set<TermVariable> result = new LinkedHashSet<>();
 		for (final Term trans : mTransitions) {
-			for (final TermVariable fv : trans.getFreeVars()) {
-				result.add(fv);
-			}
+			Collections.addAll(result, trans.getFreeVars());
 		}
 		for (final List<Term> terms : mPredicateSymbolToArgs) {
 			for (final Term term : terms) {
-				for (final TermVariable fv : term.getFreeVars()) {
-					result.add(fv);
-				}
+				Collections.addAll(result, term.getFreeVars());
 			}
 		}
 

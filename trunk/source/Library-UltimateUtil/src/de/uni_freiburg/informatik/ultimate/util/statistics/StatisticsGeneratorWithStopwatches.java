@@ -114,7 +114,7 @@ public abstract class StatisticsGeneratorWithStopwatches {
 		return seconds + "." + tenthDigit + "s";
 	}
 
-	public class StopwatchStillRunningException extends Exception {
+	public static class StopwatchStillRunningException extends Exception {
 		private static final long serialVersionUID = 47519007262609785L;
 	}
 }

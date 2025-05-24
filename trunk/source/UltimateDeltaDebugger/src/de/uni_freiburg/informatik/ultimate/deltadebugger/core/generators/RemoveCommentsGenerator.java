@@ -46,24 +46,24 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 public final class RemoveCommentsGenerator implements IVariantGenerator {
 	private final ISourceDocument mSource;
 	private final List<MyChange> mChanges;
-	
+
 	private RemoveCommentsGenerator(final ISourceDocument source, final List<MyChange> changes) {
 		mSource = source;
 		mChanges = changes;
 	}
-	
+
 	@Override
 	public String apply(final List<IChangeHandle> activeChanges) {
 		final SourceRewriter rewriter = new SourceRewriter(mSource);
 		activeChanges.stream().forEach(c -> ((MyChange) c).apply(rewriter));
 		return rewriter.apply();
 	}
-	
+
 	@Override
 	public List<IChangeHandle> getChanges() {
 		return Collections.unmodifiableList(mChanges);
 	}
-	
+
 	/**
 	 * @param context
 	 *            Pass context.
@@ -71,11 +71,10 @@ public final class RemoveCommentsGenerator implements IVariantGenerator {
 	 */
 	public static Optional<IVariantGenerator> analyze(final IPassContext context) {
 		final List<MyChange> changes = collectChanges(context.getSharedAst());
-		return changes.isEmpty()
-				? Optional.empty()
+		return changes.isEmpty() ? Optional.empty()
 				: Optional.of(new RemoveCommentsGenerator(context.getInput(), changes));
 	}
-	
+
 	private static List<MyChange> collectChanges(final IASTTranslationUnit ast) {
 		final List<MyChange> changes = new ArrayList<>();
 		for (final IASTComment comment : ast.getComments()) {
@@ -90,7 +89,7 @@ public final class RemoveCommentsGenerator implements IVariantGenerator {
 		}
 		return changes;
 	}
-	
+
 	/**
 	 * Change handler.
 	 */
@@ -98,17 +97,17 @@ public final class RemoveCommentsGenerator implements IVariantGenerator {
 		private final int mIndex;
 		private final int mOffset;
 		private final int mEndOffset;
-		
+
 		public MyChange(final int index, final int offset, final int endOffset) {
 			mIndex = index;
 			mOffset = offset;
 			mEndOffset = endOffset;
 		}
-		
+
 		void apply(final SourceRewriter rewriter) {
 			rewriter.replace(mOffset, mEndOffset, " ");
 		}
-		
+
 		@Override
 		public int getSequenceIndex() {
 			return mIndex;

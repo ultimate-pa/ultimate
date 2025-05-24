@@ -134,7 +134,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	// ========================================================================
 
 	public static final String LABEL_PETRI_LBE_ONESHOT = "Apply one-shot large block encoding in concurrent analysis";
-	private static final boolean DEF_PETRI_LBE_ONESHOT = true;
+	private static final boolean DEF_PETRI_LBE_ONESHOT = false;
 
 	public static final String LABEL_INDEPENDENCE_PLBE =
 			"Independence relation used for large block encoding in concurrent analysis";
@@ -280,7 +280,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_COMPUTE_PROCEDURE_CONTRACTS =
 			"Controls whether procedure contracts are computed from the Hoare annotation."
 					+ "Contract computation only works if the Hoare annotation for the relevant locations has been computed.";
-	private final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
+	private static final boolean DEF_COMPUTE_PROCEDURE_CONTRACTS = true;
 
 	// Trace Check Solver
 	// ========================================================================
@@ -721,7 +721,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				getConcurrencySettings(), getTestGenerationSettings() };
 	}
 
-	public UltimatePreferenceItemContainer getConcurrencySettings() {
+	private static UltimatePreferenceItemContainer getConcurrencySettings() {
 		return new UltimatePreferenceItemContainer("Concurrent Programs",
 				new UltimatePreferenceItem<>(LABEL_ORDER_OF_ERROR_LOCATIONS, DEF_ORDER_OF_ERROR_LOCATIONS,
 						DESC_ORDER_OF_ERROR_LOCATIONS, PreferenceType.Combo, OrderOfErrorLocations.values()),
@@ -743,21 +743,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 								PreferenceType.Combo, LooperCheck.values())),
 
 				getPORSettings(), getPetriLbeSettings());
-	}
-
-	public UltimatePreferenceItemContainer getTestGenerationSettings() {
-		return new UltimatePreferenceItemContainer("Test Generation",
-				new UltimatePreferenceItem<>(LABEL_TEST_GEN_MODE, DEF_TEST_GEN_MODE, DESC_TEST_GEN_MODE,
-						PreferenceType.Combo, TestGenerationMode.values()),
-				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
-				new UltimatePreferenceItem<>(LABEL_GOALSET, DEF_GOALSET, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH, DEF_PARALLELSEARCH, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
-						PreferenceType.Boolean));
-
 	}
 
 	public UltimatePreferenceItemContainer getPORSettings() {
@@ -801,7 +786,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 								PreferenceType.Integer)));
 	}
 
-	public UltimatePreferenceItemContainer getPetriLbeSettings() {
+	private static UltimatePreferenceItemContainer getPetriLbeSettings() {
 		return new UltimatePreferenceItemContainer("Petri LBE (Lipton Reduction)",
 				new UltimatePreferenceItem<>(LABEL_PETRI_LBE_ONESHOT, DEF_PETRI_LBE_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INDEPENDENCE_PLBE, DEF_INDEPENDENCE_PLBE, PreferenceType.Combo,
@@ -809,7 +794,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_SEMICOMM_PLBE, DEF_SEMICOMM_PLBE, PreferenceType.Boolean));
 	}
 
-	public UltimatePreferenceItemGroup getIndependenceSettings(final int index) {
+	private static UltimatePreferenceItemGroup getIndependenceSettings(final int index) {
 		final var label =
 				getSuffixedLabel("Independence Relation", index) + (index == 0 ? "" : " (Stratified Commutativity)");
 		return new UltimatePreferenceItemGroup(label,

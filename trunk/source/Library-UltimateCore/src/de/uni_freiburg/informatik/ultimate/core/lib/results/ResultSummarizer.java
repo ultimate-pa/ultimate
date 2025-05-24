@@ -51,7 +51,7 @@ public final class ResultSummarizer {
 	public enum ToolchainResult {
 		NORESULT(-1), GENERICRESULT(0), CORRECT(1), UNPROVABLE(2), TIMEOUT(3), INCORRECT(4), SYNTAXERROR(5), ERROR(5);
 
-		private int mValue;
+		private final int mValue;
 
 		ToolchainResult(final int i) {
 			mValue = i;
@@ -149,17 +149,13 @@ public final class ResultSummarizer {
 	}
 
 	private static ToolchainResult translateRefereeResult(final AnnotationCheckResult<?, ?> result) {
-		switch (result.getAnnotationState()) {
-		case INVALID:
-			// We don't know if the program is incorrect, only the program's annotation is.
-			return ToolchainResult.UNPROVABLE;
-		case UNKNOWN:
-			return ToolchainResult.UNPROVABLE;
-		case VALID:
-			return ToolchainResult.CORRECT;
-		default:
-			throw new AssertionError("unknown annotation state: " + result.getAnnotationState());
-		}
+		return switch (result.getAnnotationState()) {
+		// We don't know if the program is incorrect, only that the program's annotation is.
+		case INVALID -> ToolchainResult.UNPROVABLE;
+
+		case UNKNOWN -> ToolchainResult.UNPROVABLE;
+		case VALID -> ToolchainResult.CORRECT;
+		};
 	}
 
 	private static ToolchainResult updateIfLess(final ToolchainResult current, final ToolchainResult desired) {
@@ -170,19 +166,12 @@ public final class ResultSummarizer {
 	}
 
 	private static ToolchainResult translateAutomataScriptInterpreterOverallResult(final OverallResult overallResult) {
-		switch (overallResult) {
-		case ALL_ASSERTIONS_HOLD:
-			return ToolchainResult.CORRECT;
-		case SOME_ASSERTION_FAILED:
-			return ToolchainResult.INCORRECT;
-		case TIMEOUT:
-			return ToolchainResult.TIMEOUT;
-		case EXCEPTION_OR_ERROR:
-		case NO_ASSERTION:
-		case OUT_OF_MEMORY:
-		default:
-			return ToolchainResult.NORESULT;
-		}
+		return switch (overallResult) {
+		case ALL_ASSERTIONS_HOLD -> ToolchainResult.CORRECT;
+		case SOME_ASSERTION_FAILED -> ToolchainResult.INCORRECT;
+		case TIMEOUT -> ToolchainResult.TIMEOUT;
+		case EXCEPTION_OR_ERROR, NO_ASSERTION, OUT_OF_MEMORY -> ToolchainResult.NORESULT;
+		};
 	}
 
 	public ToolchainResult getResultSummary() {
@@ -194,21 +183,13 @@ public final class ResultSummarizer {
 	}
 
 	public String getOldResultMessage() {
-		switch (getResultSummary()) {
-		case SYNTAXERROR:
-		case UNPROVABLE:
-		case TIMEOUT:
-		case NORESULT:
-			return programUnknown(getResultDescription());
-		case INCORRECT:
-			return programIncorrect();
-		case CORRECT:
-			return programCorrect();
-		case GENERICRESULT:
-			return getResultDescription();
-		default:
-			throw new UnsupportedOperationException("unknown result " + getResultSummary());
-		}
+		return switch (getResultSummary()) {
+		case SYNTAXERROR, UNPROVABLE, TIMEOUT, NORESULT -> programUnknown(getResultDescription());
+		case INCORRECT -> programIncorrect();
+		case CORRECT -> programCorrect();
+		case GENERICRESULT -> getResultDescription();
+		case ERROR -> throw new UnsupportedOperationException("unknown result " + getResultSummary());
+		};
 	}
 
 	private static String programCorrect() {

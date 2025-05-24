@@ -44,8 +44,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalPostOperator extends NonrelationalPostOperator<IntervalDomainState, IntervalDomainValue> {
 	protected IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int parallelStates, final Boogie2SMT boogie2Smt,
-			final CfgSmtToolkit cfgSmtToolkit, final NonrelationalEvaluator<IntervalDomainState, IntervalDomainValue> evaluator) {
+			final IBoogieSymbolTableVariableProvider bpl2SmtSymbolTable, final int parallelStates,
+			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolkit,
+			final NonrelationalEvaluator<IntervalDomainState, IntervalDomainValue> evaluator) {
 		super(logger, symbolTable, bpl2SmtSymbolTable, parallelStates, boogie2Smt, cfgSmtToolkit, evaluator);
 	}
 }

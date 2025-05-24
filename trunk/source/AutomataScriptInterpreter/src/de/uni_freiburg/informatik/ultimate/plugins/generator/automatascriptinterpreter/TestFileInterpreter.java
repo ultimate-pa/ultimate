@@ -216,7 +216,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		readPreferences();
-		assert isStatisticsEnumAlphabeticallySorted() : "The entries of enum StatisticsType must be sorted alphabetically.";
+		assert isStatisticsEnumAlphabeticallySorted()
+				: "The entries of enum StatisticsType must be sorted alphabetically.";
 		mVariables = new HashMap<>();
 		mFlow = Flow.NORMAL;
 		mAutomataInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
@@ -561,8 +562,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		while (loopForever || (Boolean) interpret(children.get(0))) {
 			final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
-			for (int i = 0; i < statementList.size(); i++) {
-				interpret(statementList.get(i));
+			for (final AtsASTNode element : statementList) {
+				interpret(element);
 				if (mFlow == Flow.NORMAL) {
 					continue;
 				}
@@ -761,13 +762,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		result = arguments.get(0);
 		if (result instanceof Boolean) {
 			if ((Boolean) result) {
-				mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.PLUGIN_ID,
-						mServices.getBacktranslationService(), ASSERTION_HOLDS_MESSAGE, oe.getAsString(),
-						Severity.INFO));
+				mResultOfAssertStatements.add(
+						new GenericResultAtElement<>(oe, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+								ASSERTION_HOLDS_MESSAGE, oe.getAsString(), Severity.INFO));
 			} else {
-				mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.PLUGIN_ID,
-						mServices.getBacktranslationService(), ASSERTION_VIOLATED_MESSAGE, oe.getAsString(),
-						Severity.ERROR));
+				mResultOfAssertStatements.add(
+						new GenericResultAtElement<>(oe, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+								ASSERTION_VIOLATED_MESSAGE, oe.getAsString(), Severity.ERROR));
 			}
 		} else {
 			throw new AssertionError("assert expects boolean result, type checker should have found this");
@@ -874,8 +875,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		Boolean loopCondition = (Boolean) interpret(children.get(0));
 		while (loopCondition) {
 			final List<AtsASTNode> statementList = children.get(1).getOutgoingNodes();
-			for (int i = 0; i < statementList.size(); i++) {
-				interpret(statementList.get(i));
+			for (final AtsASTNode element : statementList) {
+				interpret(element);
 				if (mFlow == Flow.NORMAL) {
 					continue;
 				}
@@ -1031,9 +1032,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 			for (final Constructor<?> c : operationConstructors) {
 				// Convention: If the first parameter is a StateFactory, we
 				// prepend a StringFactory to the arguments.
-				assert isNoStateFactoryAfterSecondArgument(c.getParameterTypes()) : "constructor of "
-						+ c.getDeclaringClass().getSimpleName()
-						+ " violates \"services and state factory first\" convention";
+				assert isNoStateFactoryAfterSecondArgument(c.getParameterTypes())
+						: "constructor of " + c.getDeclaringClass().getSimpleName()
+								+ " violates \"services and state factory first\" convention";
 				final Object[] argumentsWithServices =
 						prependAutomataLibraryServicesAndStateFactoryIfNeeded(c, arguments);
 				if (!allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {

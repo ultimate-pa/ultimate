@@ -64,7 +64,6 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mComplemented;
 	private final FkvOptimization mOptimization;
 
-
 	/**
 	 * Extended constructor.
 	 *
@@ -79,7 +78,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 */
 	public <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> BuchiComplementFKV(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, FkvOptimization.HEIMAT2.toString(), Integer.MAX_VALUE);
 	}
 
@@ -162,8 +162,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 			mLogger.info(startMessage());
 		}
 
-		mOnDemandComplement = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory, mOptimization,
-				userDefinedMaxRank);
+		mOnDemandComplement = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory,
+				mOptimization, userDefinedMaxRank);
 		mComplemented = new NwaOutgoingLetterAndTransitionAdapter<>(mOnDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mComplemented);
 
@@ -191,9 +191,9 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
 		/*
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		*/
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 */
 		for (int i = 0; i < 11; ++i) {
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 1, i));
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 2, i));
@@ -247,8 +247,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean underApproximationOfComplement)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		boolean correct;

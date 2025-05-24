@@ -89,10 +89,10 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 			transFormulas[i] = currentCodeblock.getTransformula();
 			transFormulasWithBranchEncoders[i] = currentCodeblock.getTransitionFormulaWithBranchEncoders();
 
-			assert TransFormulaUtils
-					.hasInternalNormalForm(transFormulas[i]) : "Cannot parallely compose: not in internal normal form";
-			assert TransFormulaUtils.hasInternalNormalForm(
-					transFormulasWithBranchEncoders[i]) : "Cannot parallely compose: not in internal normal form";
+			assert TransFormulaUtils.hasInternalNormalForm(transFormulas[i])
+					: "Cannot parallely compose: not in internal normal form";
+			assert TransFormulaUtils.hasInternalNormalForm(transFormulasWithBranchEncoders[i])
+					: "Cannot parallely compose: not in internal normal form";
 
 			final String varname = "LBE" + currentCodeblock.getSerialNumber();
 			final Sort boolSort = SmtSortUtils.getBoolSort(script);
@@ -101,10 +101,6 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 			mBranchIndicator2CodeBlock.put(branchIndicator[i], currentCodeblock);
 			ModelUtils.copyAnnotations(currentCodeblock, this);
 		}
-
-		// workaround: set annotation with this pluginId again, because it was
-		// overwritten by the mergeAnnotations method
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 
 		final boolean transformToCNF =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
@@ -115,8 +111,8 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 				branchIndicator, transformToCNF, true, transFormulasWithBranchEncoders);
 
 		assert TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
-		assert TransFormulaUtils
-				.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders) : "Expected TF in internal normal form";
+		assert TransFormulaUtils.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders)
+				: "Expected TF in internal normal form";
 	}
 
 	@Override

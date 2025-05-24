@@ -158,7 +158,6 @@ PolyIdentifier ::=
  /**
  * This node represents an expression.
  * This base class is almost empty, the sub classes contain the possible types.
- * TODO: These are all Boogie Expressions, need to finish this for ACSL
  */
 Expression ::=
 	    /** The type of this expression.  This is set by the type-checker */
@@ -178,17 +177,6 @@ Expression ::=
 	| { ArrayAccessExpression }
 		array   : Expression
 		index : Expression
-	| { ArrayStoreExpression }
-		array   : Expression 
-		indices : Expression[]
-		value   : Expression
-	| { BitVectorAccessExpression }
-		/** The sub expression representing the bit-vector. */
-		bitvec  : Expression
-		/** The end index of this bit-vector access */
-		end     : int
-		/** The start index of this bit-vector access */
-		start   : int
 	| { CastExpression }
 		castedType   : ACSLType 
 		expression : Expression
@@ -204,13 +192,6 @@ Expression ::=
 	        arbitrarily large numbers.  We do not need to compute with them but
 	        give them 1-1 to the decision procedure. */
 		value   : String
-	| { BitvecLiteral }
-	    /** The value given as String.  This representation is used to support 
-	        arbitrarily large numbers.  We do not need to compute with them but
-	        give them 1-1 to the decision procedure. */
-		value   : String
-		/** The number of bits in this bitvector */ 
-		length  : int
 	| { /** Represents a string literal.  
 	        This is only used as attribute value, since strings are not otherwise 
 	        supported in Boogie.  A string literal never has a type. */
@@ -236,7 +217,7 @@ Expression ::=
 		struct : Expression
 		field : String
 	| { SizeOfExpression }
-		/** checks the size of differnent things, like in C */
+		/** checks the size of different things, like in C */
 		expression : ?&Expression
 		logicType : ?&ACSLType
 	| { OldValueExpression }
@@ -254,9 +235,9 @@ Expression ::=
 		/** gets the memory block length of a certain pointer */
 		expression : Expression
 	| { SyntacticNamingExpression }
-		/** special contruct is used in assumes clauses */
+		/** special construct is used in assumes clauses */
 		identifier : String
-		formula : Expression										
+		expression : Expression										
 	| { IdentifierExpression }
 		identifier : String
 	| { FunctionApplication }
@@ -271,9 +252,6 @@ Expression ::=
 		isUniversal : boolean
 		variables : Declaration[]
 		subformula  : Expression
-	| { /** This can be used as call forall parameter, or as if or 
-	     * while condition.  In all other places it is forbidden. */ 
-		WildcardExpression }
 	);
  
 ACSLType ::= 

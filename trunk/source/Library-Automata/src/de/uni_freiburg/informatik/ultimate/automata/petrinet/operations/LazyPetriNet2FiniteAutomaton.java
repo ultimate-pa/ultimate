@@ -233,8 +233,8 @@ public class LazyPetriNet2FiniteAutomaton<L, S> implements INwaOutgoingLetterAnd
 		final S state = mStateFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 		mState2Marking.put(state, marking);
 
-		assert isInitial == new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces()))
-				.equals(marking) : "Wrong initial state";
+		assert isInitial == new Marking<>(ImmutableSet.of(mOperand.getInitialPlaces())).equals(marking)
+				: "Wrong initial state";
 		final boolean isFinal = mOperand.isAccepting(marking);
 		mCache.addState(isInitial, isFinal, state);
 

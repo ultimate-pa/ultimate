@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.BinaryEqualityRelation;
@@ -75,10 +77,9 @@ public class MultiIndexArrayUpdate implements ITermProvider {
 	}
 
 	/**
-	 * The theory of arrays allows us to encode a nondeterministic update at index k
-	 * as follows `a'= (store a k (select a' k))`. Note that this is only a
-	 * nondeterministic update if there are no other constraints for a' at position
-	 * k. This method detects nondeterministc updates that have exactly that form.
+	 * The theory of arrays allows us to encode a nondeterministic update at index k as follows `a'= (store a k (select
+	 * a' k))`. Note that this is only a nondeterministic update if there are no other constraints for a' at position k.
+	 * This method detects nondeterministc updates that have exactly that form.
 	 */
 	public boolean isNondeterministicUpdate(final int i) {
 		final ArrayIndex index = mMultiDimensionalNestedStore.getIndices().get(i);
@@ -89,36 +90,38 @@ public class MultiIndexArrayUpdate implements ITermProvider {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((mMultiDimensionalNestedStore == null) ? 0 : mMultiDimensionalNestedStore.hashCode());
-		result = prime * result + ((mNewArray == null) ? 0 : mNewArray.hashCode());
-		result = prime * result + ((mRelationSymbol == null) ? 0 : mRelationSymbol.hashCode());
-		return result;
+		return Objects.hash(mMultiDimensionalNestedStore, mNewArray, mRelationSymbol);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final MultiIndexArrayUpdate other = (MultiIndexArrayUpdate) obj;
 		if (mMultiDimensionalNestedStore == null) {
-			if (other.mMultiDimensionalNestedStore != null)
+			if (other.mMultiDimensionalNestedStore != null) {
 				return false;
-		} else if (!mMultiDimensionalNestedStore.equals(other.mMultiDimensionalNestedStore))
+			}
+		} else if (!mMultiDimensionalNestedStore.equals(other.mMultiDimensionalNestedStore)) {
 			return false;
+		}
 		if (mNewArray == null) {
-			if (other.mNewArray != null)
+			if (other.mNewArray != null) {
 				return false;
-		} else if (!mNewArray.equals(other.mNewArray))
+			}
+		} else if (!mNewArray.equals(other.mNewArray)) {
 			return false;
-		if (mRelationSymbol != other.mRelationSymbol)
+		}
+		if (mRelationSymbol != other.mRelationSymbol) {
 			return false;
+		}
 		return true;
 	}
 

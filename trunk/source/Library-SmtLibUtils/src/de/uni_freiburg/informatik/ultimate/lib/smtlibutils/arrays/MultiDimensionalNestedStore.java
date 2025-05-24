@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
@@ -41,9 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 /**
- * Data structure that represents a sequence of {@link MultiDimensionalStore}s
- * that are nested. I.e., if the array operand (first operand) of the
- * {@link MultiDimensionalStore} is itself a {@link MultiDimensionalStore} it is
+ * Data structure that represents a sequence of {@link MultiDimensionalStore}s that are nested. I.e., if the array
+ * operand (first operand) of the {@link MultiDimensionalStore} is itself a {@link MultiDimensionalStore} it is
  * explicitly represented by this data structure.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -98,17 +98,15 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 	}
 
 	/**
-	 * Get a only a part of this {@link MultiDimensionalNestedStore}. This part is
-	 * only a {@link MultiDimensionalStore} the array of the result is the array of
-	 * the input. The index of the result is a restriction of the input's innermost
-	 * store to its i-highest dimensions. The value of the result is what is written
-	 * to the restricted input. <br />
-	 * In the special case where the restriction to the i highest dimension
-	 * coincides for all indices coincides, the output is only a different
-	 * representation of the input.
+	 * Get a only a part of this {@link MultiDimensionalNestedStore}. This part is only a {@link MultiDimensionalStore}
+	 * the array of the result is the array of the input. The index of the result is a restriction of the input's
+	 * innermost store to its i-highest dimensions. The value of the result is what is written to the restricted input.
+	 * <br />
+	 * In the special case where the restriction to the i highest dimension coincides for all indices coincides, the
+	 * output is only a different representation of the input.
 	 *
-	 * @param i Number of highest dimension that are extracted from the innermost
-	 *          index.
+	 * @param i
+	 *            Number of highest dimension that are extracted from the innermost index.
 	 */
 	public MultiDimensionalStore extractDowngradeToHigherDimensions(final Script script, final int i) {
 		assert (i >= 1 && i < getDimension());
@@ -135,15 +133,9 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 		return new MultiDimensionalStore(mArray, reducedOuterIndex, innerMds.toTerm(script));
 	}
 
-
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mArray == null) ? 0 : mArray.hashCode());
-		result = prime * result + ((mIndices == null) ? 0 : mIndices.hashCode());
-		result = prime * result + ((mValues == null) ? 0 : mValues.hashCode());
-		return result;
+		return Objects.hash(mArray, mIndices, mValues);
 	}
 
 	@Override
@@ -203,17 +195,16 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 	}
 
 	/**
-	 * Combine this {@link MultiDimensionalNestedStore} with innerArrayMdns such
-	 * that the store operations of innerArrayMdns are first and the store
-	 * operations this are applied afterwards.
+	 * Combine this {@link MultiDimensionalNestedStore} with innerArrayMdns such that the store operations of
+	 * innerArrayMdns are first and the store operations this are applied afterwards.
 	 */
 	private MultiDimensionalNestedStore addInnerSequence(final MultiDimensionalNestedStore innerArrayMdns) {
 		final List<ArrayIndex> indices = new ArrayList<>(innerArrayMdns.getIndices());
 		indices.addAll(mIndices);
 		final List<Term> values = new ArrayList<>(innerArrayMdns.getValues());
 		values.addAll(mValues);
-		final MultiDimensionalNestedStore result = new MultiDimensionalNestedStore(innerArrayMdns.getArray(), indices,
-				values);
+		final MultiDimensionalNestedStore result =
+				new MultiDimensionalNestedStore(innerArrayMdns.getArray(), indices, values);
 		return result;
 	}
 
@@ -236,12 +227,13 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 				remainingValue = remainingValueAsMdns.getValues().get(0);
 				remainingValueAsMdns = MultiDimensionalNestedStore.of(remainingValue);
 			} else {
-				final MultiDimensionalNestedStore result = remainingValueAsMdns.addDimensionsAtBeginning(array,
-						indexEntries, term);
+				final MultiDimensionalNestedStore result =
+						remainingValueAsMdns.addDimensionsAtBeginning(array, indexEntries, term);
 				return result;
 			}
 		}
-		final MultiDimensionalStore mds = new MultiDimensionalStore(array, new ArrayIndex(indexEntries), remainingValue);
+		final MultiDimensionalStore mds =
+				new MultiDimensionalStore(array, new ArrayIndex(indexEntries), remainingValue);
 		return new MultiDimensionalNestedStore(mds);
 	}
 
@@ -258,8 +250,8 @@ public class MultiDimensionalNestedStore implements ITermProvider {
 	}
 
 	/**
-	 * Construct new {@link MultiDimensionalNestedStore} by applying a substitution
-	 * to the array, all indices, and all values.
+	 * Construct new {@link MultiDimensionalNestedStore} by applying a substitution to the array, all indices, and all
+	 * values.
 	 */
 	public MultiDimensionalNestedStore applySubstitution(final ManagedScript mgdScript,
 			final Map<? extends Term, ? extends Term> substitutionMapping) {

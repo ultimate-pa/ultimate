@@ -57,7 +57,7 @@ public class DefaultParserWithACSL extends DefaultParser {
 			final IncludeFileContentProvider includeFileContentProvider, final IParserLogService parserLogService) {
 		super(logger, dummySourceFilePath, scannerInfo, includeFileContentProvider, parserLogService);
 	}
-	
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -69,11 +69,10 @@ public class DefaultParserWithACSL extends DefaultParser {
 	 *            local include paths
 	 */
 	public DefaultParserWithACSL(final ILogger logger, final String dummySourceFilePath,
-			final String[] includeFilePaths,
-			final String[] localIncludePaths) {
+			final String[] includeFilePaths, final String[] localIncludePaths) {
 		super(logger, dummySourceFilePath, includeFilePaths, localIncludePaths);
 	}
-	
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -83,7 +82,7 @@ public class DefaultParserWithACSL extends DefaultParser {
 	public DefaultParserWithACSL(final ILogger logger, final String dummySourceFilePath) {
 		super(logger, dummySourceFilePath);
 	}
-	
+
 	/**
 	 * @param logger
 	 *            Logger.
@@ -91,11 +90,11 @@ public class DefaultParserWithACSL extends DefaultParser {
 	public DefaultParserWithACSL(final ILogger logger) {
 		super(logger);
 	}
-	
+
 	@Override
 	public IPSTTranslationUnit createPst(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
-		final IPSTTranslationUnit pst = new PSTBuilder(mLogger, ast, sourceDocument)
-				.setNodeFactory(new ACSLNodeFactory()).build();
+		final IPSTTranslationUnit pst =
+				new PSTBuilder(mLogger, ast, sourceDocument).setNodeFactory(new ACSLNodeFactory()).build();
 		PSTACSLBuilder.build(pst, mLogger);
 		return pst;
 	}

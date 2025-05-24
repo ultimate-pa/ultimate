@@ -4,22 +4,22 @@
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2010-2015 pashko
- * 
+ *
  * This file is part of the ULTIMATE JungVisualization plug-in.
- * 
+ *
  * The ULTIMATE JungVisualization plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE JungVisualization plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE JungVisualization plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JungVisualization plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -50,11 +50,11 @@ import edu.uci.ics.jung.visualization.control.GraphMousePlugin;
 
 /**
  * Checks for mouse clicks on graph nodes an updates the payload information.
- * 
+ *
  * @see {@link MouseListener}
  * @see {@link GraphMousePlugin}
  * @author lena
- * 
+ *
  */
 public class GraphListener implements MouseListener, GraphMousePlugin, MouseMotionListener {
 
@@ -68,7 +68,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	public GraphListener(final JungSelectionProvider jsp, final JungEditorInput ei) {
 		mSelectionProvider = jsp;
 		mEditorInput = ei;
-		mSelectedElements = new HashSet<IElement>();
+		mSelectedElements = new HashSet<>();
 	}
 
 	@Override
@@ -98,13 +98,8 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 			return;
 		}
 
-		// deselect elements
-		final Iterator<IElement> elementIt = mSelectedElements.iterator();
-
 		// timing problem while refreshing picked state
-		while (elementIt.hasNext()) {
-
-			final IElement currentElement = elementIt.next();
+		for (final IElement currentElement : mSelectedElements) {
 
 			if (currentElement instanceof VisualizationNode) {
 				mEditorInput.getViewer().getPickedVertexState().pick((VisualizationNode) currentElement, false);
@@ -122,12 +117,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 			return;
 		}
 
-		// deselect elements
-		final Iterator<IElement> elementIt = mSelectedElements.iterator();
-
-		while (elementIt.hasNext()) {
-
-			final IElement currentElement = elementIt.next();
+		for (final IElement currentElement : mSelectedElements) {
 
 			if (currentElement instanceof VisualizationEdge) {
 				mEditorInput.getViewer().getPickedEdgeState().pick((VisualizationEdge) currentElement, false);
@@ -189,7 +179,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 
 	/**
 	 * Accessor method to get Payload of selected nodes.
-	 * 
+	 *
 	 * @return A set of selected nodes.
 	 */
 	public Set<VisualizationNode> getSelectedNodes() {
@@ -202,8 +192,8 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	 */
 	public void mouseDragged(final MouseEvent event) {
 		if (mDragpoint != null) {
-			final MultiLayerTransformer transformer = mEditorInput.getViewer().getRenderContext()
-			        .getMultiLayerTransformer();
+			final MultiLayerTransformer transformer =
+					mEditorInput.getViewer().getRenderContext().getMultiLayerTransformer();
 
 			final Point2D beginDragPoint = transformer.inverseTransform(Layer.LAYOUT, mDragpoint);
 			final Point2D currentDragPoint = transformer.inverseTransform(Layer.LAYOUT, event.getPoint());

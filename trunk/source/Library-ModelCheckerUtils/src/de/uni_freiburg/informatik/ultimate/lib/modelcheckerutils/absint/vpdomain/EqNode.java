@@ -52,7 +52,8 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 
 	private final boolean mDependsOnUntrackedArray;
 
-	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory, final boolean dependsOnUntrackedArray) {
+	public EqNode(final Term term, final EqNodeAndFunctionFactory eqNodeFactory,
+			final boolean dependsOnUntrackedArray) {
 		assert term != null;
 		mTerm = term;
 		mEqNodeFactory = eqNodeFactory;
@@ -104,7 +105,6 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode>, ICongruenceCl
 	public boolean hasSameTypeAs(final EqNode other) {
 		return mTerm.getSort().equals(other.mTerm.getSort());
 	}
-
 
 	/**
 	 * default implementation, override in EqFunctionApplicationNode

@@ -103,8 +103,8 @@ public class TransFormulaLRWithArrayCells {
 	private final Set<TermVariable> mVariablesThatOccurInFormula;
 
 	private Set<TermVariable> computeVarsThatOccurInFormula() {
-		final Set<TermVariable> varsInFormula = new HashSet<>();
-		varsInFormula.addAll(Arrays.asList(tflrwai.getTransFormulaLR().getFormula().getFreeVars()));
+		final Set<TermVariable> varsInFormula =
+				new HashSet<>(Arrays.asList(tflrwai.getTransFormulaLR().getFormula().getFreeVars()));
 		varsInFormula.addAll(Arrays.asList(
 				SmtUtils.and(mScript.getScript(), mIndexAnalysisResult.constructListOfEqualities(mScript.getScript()))
 						.getFreeVars()));
@@ -215,15 +215,14 @@ public class TransFormulaLRWithArrayCells {
 			conjuncts[3] = arrayEqualityConstraints[i];
 			conjuncts[4] = Substitution.apply(mScript, mSelect2CellVariable[i], SmtUtils.and(mScript.getScript(),
 					mIndexAnalysisResult.constructListOfEqualities(mScript.getScript())));
-			disjunctsWithUpdateConstraints[i] = Substitution.apply(mScript, mSelect2CellVariable[i],
-					SmtUtils.and(mScript.getScript(), conjuncts));
+			disjunctsWithUpdateConstraints[i] =
+					Substitution.apply(mScript, mSelect2CellVariable[i], SmtUtils.and(mScript.getScript(), conjuncts));
 		}
 		final Term resultDisjunction = SmtUtils.or(mScript.getScript(), disjunctsWithUpdateConstraints);
 		final HashSet<TermVariable> auxVars = new HashSet<>(cvb.getAuxVars());
 
 		final Term result =
-				PartialQuantifierElimination.eliminate(mServices, mScript, resultDisjunction,
-				mSimplificationTechnique);
+				PartialQuantifierElimination.eliminate(mServices, mScript, resultDisjunction, mSimplificationTechnique);
 		assert SmtUtils.isArrayFree(result) : "Result contains still arrays!";
 
 		removeArrayInOutVars();
@@ -234,15 +233,13 @@ public class TransFormulaLRWithArrayCells {
 
 	private void removeArrayInOutVars() {
 		{
-			final List<IProgramVar> toRemove = new ArrayList<>();
-			toRemove.addAll(filterArrays(mResult.getInVars().keySet()));
+			final List<IProgramVar> toRemove = new ArrayList<>(filterArrays(mResult.getInVars().keySet()));
 			for (final IProgramVar rv : toRemove) {
 				mResult.removeInVar(rv);
 			}
 		}
 		{
-			final List<IProgramVar> toRemove = new ArrayList<>();
-			toRemove.addAll(filterArrays(mResult.getOutVars().keySet()));
+			final List<IProgramVar> toRemove = new ArrayList<>(filterArrays(mResult.getOutVars().keySet()));
 			for (final IProgramVar rv : toRemove) {
 				mResult.removeOutVar(rv);
 			}
@@ -382,7 +379,7 @@ public class TransFormulaLRWithArrayCells {
 		if (newInstance2Index2CellVariable == null && oldInstance2Index2CellVariable == null) {
 			return mScript.getScript().term("true");
 		}
-		final Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
+		final Term[] conjuncts = new Term[newInstance2Index2CellVariable.size()];
 		int offset = 0;
 		for (final List<Term> index : newInstance2Index2CellVariable.keySet()) {
 			final Term newCellVariable = newInstance2Index2CellVariable.get(index);
@@ -418,7 +415,7 @@ public class TransFormulaLRWithArrayCells {
 			oldInstance2Index2CellVariable = filterNonOccurring(oldInstance2Index2CellVariable);
 		}
 
-		final Term[] conjuncts = new Term[newInstance2Index2CellVariable.keySet().size()];
+		final Term[] conjuncts = new Term[newInstance2Index2CellVariable.size()];
 		int offset = 0;
 		for (final ArrayIndex index : newInstance2Index2CellVariable.keySet()) {
 			TermVariable newCellVariable = newInstance2Index2CellVariable.get(index);

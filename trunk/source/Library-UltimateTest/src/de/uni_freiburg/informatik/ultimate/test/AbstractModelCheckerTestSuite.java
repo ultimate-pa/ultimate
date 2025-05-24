@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -68,7 +69,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mSortTestcases) {
-			mTestCases.sort(null);
+			Collections.sort(mTestCases);
 		}
 		return mTestCases;
 	}
@@ -80,12 +81,9 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	public Collection<UltimateTestCase> createTestCasesMultipleMachine(final int numberOfMachines,
 			final int currentMachineNumber, final int numberOfStrategies) {
 		if (mSortTestcases) {
-			mTestCases.sort(null);
+			Collections.sort(mTestCases);
 		}
-		final List<UltimateTestCase> copy = new ArrayList<>();
-		for (int j = 0; j < mTestCases.size(); j++) {
-			copy.add(mTestCases.get(j));
-		}
+		final List<UltimateTestCase> copy = new ArrayList<>(mTestCases);
 		mTestCases.clear();
 		assert copy.size() >= 1 : "No test case available";
 		UltimateTestCase currTestCase = copy.get(0);

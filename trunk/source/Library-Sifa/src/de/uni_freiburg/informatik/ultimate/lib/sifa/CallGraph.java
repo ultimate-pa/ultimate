@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.Topological
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Detects which procedures have to be interpreted to reach a given set of locations of interest (LOIs).
- * The call graph is only represented internally and cannot be accessed explicitly since we don't have to.
+ * Detects which procedures have to be interpreted to reach a given set of locations of interest (LOIs). The call graph
+ * is only represented internally and cannot be accessed explicitly since we don't have to.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -54,8 +54,8 @@ public class CallGraph {
 	private final IIcfg<IcfgLocation> mIcfg;
 
 	/**
-	 * Maps each procedure to the set of LOIs it contains directly.
-	 * Locations of interest (LOI) are locations inside procedures for which we want to compute predicates.
+	 * Maps each procedure to the set of LOIs it contains directly. Locations of interest (LOI) are locations inside
+	 * procedures for which we want to compute predicates.
 	 * <p>
 	 * The domain of this relation is the set of all procedures in the icfg.
 	 */
@@ -83,9 +83,8 @@ public class CallGraph {
 	 */
 	private final HashRelation<String, String> mSuccessorsOfInterest = new HashRelation<>();
 	/**
-	 * Relevant procedures in topological order.
-	 * Procedure p is relevant iff p is in {@link #initialProceduresOfInterest()}
-	 * or there is another relevant procedure calling p.
+	 * Relevant procedures in topological order. Procedure p is relevant iff p is in
+	 * {@link #initialProceduresOfInterest()} or there is another relevant procedure calling p.
 	 */
 	private List<String> mTopsortRelevant;
 
@@ -102,8 +101,7 @@ public class CallGraph {
 	}
 
 	private void buildGraph() {
-		new IcfgEdgeIterator(mIcfg).asStream()
-				.filter(edge -> edge instanceof IIcfgCallTransition<?>)
+		new IcfgEdgeIterator(mIcfg).asStream().filter(edge -> edge instanceof IIcfgCallTransition<?>)
 				.forEach(this::addCall);
 	}
 
@@ -136,7 +134,9 @@ public class CallGraph {
 
 	/**
 	 * Computes the smallest closed set under the {@link #mCalls} relation for a given set of procedure names.
-	 * @param procedures Set S
+	 *
+	 * @param procedures
+	 *            Set S
 	 * @return The smallest set S' ⊇ S such that ∀ e1,e2 : (e1∊S' ∧ e1 calls e2) → e2∊S'
 	 */
 	private Set<String> callClosure(final Collection<String> procedures) {
@@ -152,15 +152,12 @@ public class CallGraph {
 	}
 
 	public Collection<String> initialProceduresOfInterest() {
-		return mIcfg.getInitialNodes().stream()
-				.map(IcfgLocation::getProcedure)
-				.filter(this::hasLoiOrSuccessorWithLoi)
+		return mIcfg.getInitialNodes().stream().map(IcfgLocation::getProcedure).filter(this::hasLoiOrSuccessorWithLoi)
 				.collect(Collectors.toList());
 	}
 
 	private boolean hasLoiOrSuccessorWithLoi(final String procedure) {
-		return !mLOIsInsideProcedure.hasEmptyImage(procedure)
-				|| !mSuccessorsOfInterest.hasEmptyImage(procedure);
+		return !mLOIsInsideProcedure.hasEmptyImage(procedure) || !mSuccessorsOfInterest.hasEmptyImage(procedure);
 	}
 
 	public Set<IcfgLocation> locationsOfInterest(final String procedure) {

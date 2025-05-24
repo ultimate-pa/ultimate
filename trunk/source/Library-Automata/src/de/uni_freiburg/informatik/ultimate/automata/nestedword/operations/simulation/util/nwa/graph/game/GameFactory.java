@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 /**
  * Implementation of a StateFactory for game automaton used for summarize edge computation in NWA game graphs. A game
  * automaton uses IGameState, which usually are Spoiler vertices, as states and GameLetter as letters.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class GameFactory implements ISinkStateFactory<IGameState>, IDeterminizeStateFactory<IGameState>,

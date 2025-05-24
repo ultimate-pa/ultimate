@@ -68,7 +68,6 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 
 	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable) {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		mSymbolTable = symbolTable;
@@ -77,8 +76,8 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 	}
 
 	public BasicPredicate newPredicate(final Term term) {
-		assert term == mDontCareTerm
-				|| UltimateNormalFormUtils.respectsUltimateNormalForm(term) : "Term not in UltimateNormalForm";
+		assert term == mDontCareTerm || UltimateNormalFormUtils.respectsUltimateNormalForm(term)
+				: "Term not in UltimateNormalForm";
 		final TermVarsFuns termVarsProc = constructTermVarsProc(term);
 		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getFuns(), termVarsProc.getClosedFormula());
@@ -249,8 +248,8 @@ public class BasicPredicateFactory extends SmtFreePredicateFactory {
 		return funPredicateConstructor.construct(constructFreshSerialNumber(), mScript);
 	}
 
-	public static interface PredicateConstructorFunction<T extends IPredicate> {
-		public T construct(int serial, Script script);
+	public interface PredicateConstructorFunction<T extends IPredicate> {
+		T construct(int serial, Script script);
 	}
 
 }

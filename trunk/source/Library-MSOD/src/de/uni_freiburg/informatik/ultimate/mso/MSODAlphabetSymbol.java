@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.mso;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -123,11 +122,7 @@ public class MSODAlphabetSymbol {
 	 */
 	public boolean allMatches(final boolean value, final Term... excludedTerms) {
 		final Set<Term> excluded = new HashSet<>(Arrays.asList(excludedTerms));
-		final Iterator<Entry<Term, Boolean>> it = mMap.entrySet().iterator();
-
-		while (it.hasNext()) {
-			final Entry<Term, Boolean> entry = it.next();
-
+		for (final Entry<Term, Boolean> entry : mMap.entrySet()) {
 			if (!excluded.contains(entry.getKey()) && !entry.getValue().equals(value)) {
 				return false;
 			}

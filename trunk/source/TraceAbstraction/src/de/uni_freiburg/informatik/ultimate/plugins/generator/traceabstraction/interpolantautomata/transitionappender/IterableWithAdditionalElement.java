@@ -43,7 +43,6 @@ public class IterableWithAdditionalElement<E> implements Iterable<E> {
 	private final E mAdditionalElement;
 
 	public IterableWithAdditionalElement(final Iterable<E> iterable, final E additionalElement) {
-		super();
 		mIterable = iterable;
 		mAdditionalElement = additionalElement;
 	}
@@ -51,7 +50,7 @@ public class IterableWithAdditionalElement<E> implements Iterable<E> {
 	@Override
 	public Iterator<E> iterator() {
 
-		return new Iterator<E>() {
+		return new Iterator<>() {
 			final Iterator<E> mIterator = mIterable.iterator();
 			boolean mAdditionalElementSeen = false;
 			boolean mAdditionalElementReturned = false;

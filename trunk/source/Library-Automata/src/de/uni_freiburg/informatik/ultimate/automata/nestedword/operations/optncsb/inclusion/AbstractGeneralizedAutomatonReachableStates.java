@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -145,17 +144,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public OutgoingCallTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -171,17 +160,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public IncomingCallTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -197,32 +176,12 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public IncomingReturnTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
+		return Collections.emptyList();
 	}
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public OutgoingReturnTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -232,17 +191,7 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
-		return () -> new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
-			@Override
-			public boolean hasNext() {
-				return false;
-			}
-
-			@Override
-			public SummaryReturnTransition<LETTER, STATE> next() {
-				return null;
-			}
-		};
+		return Collections.emptyList();
 	}
 
 	public static String constructRunningTaskInfoMessage(final int numberOfConstructedStates,
@@ -250,5 +199,4 @@ public abstract class AbstractGeneralizedAutomatonReachableStates<LETTER, STATE>
 		return String.format("computing reachable states (%s states constructed, input type %s)",
 				numberOfConstructedStates, operandClazz.getSimpleName());
 	}
-
 }

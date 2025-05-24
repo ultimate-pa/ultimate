@@ -266,9 +266,9 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	public static PolynomialRelation of(final TransformInequality transformInequality,
 			final RelationSymbol relationSymbol, final AbstractGeneralizedAffineTerm<?> polyLhs,
 			final AbstractGeneralizedAffineTerm<?> polyRhs) {
-		// if (polyLhs.getSort() != polyRhs.getSort()) {
-		// throw new AssertionError("Inconsistent sorts");
-		// }
+		if (polyLhs.getSort() != polyRhs.getSort()) {
+			throw new AssertionError("Inconsistent sorts");
+		}
 		if (!SmtSortUtils.isNumericSort(polyLhs.getSort()) && !SmtSortUtils.isBitvecSort(polyLhs.getSort())) {
 			throw new AssertionError("Unsupported sorts");
 		}
@@ -295,7 +295,8 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 			if (transformationOffset.equals(Rational.ZERO)) {
 				polyTerm = difference;
 			} else {
-				polyTerm = PolynomialTerm.sum(difference, constructConstant(difference.getSort(), transformationOffset));
+				polyTerm =
+						PolynomialTerm.sum(difference, constructConstant(difference.getSort(), transformationOffset));
 			}
 		} else {
 			polyTerm = difference;
@@ -313,31 +314,15 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 		if (!term.isConstant()) {
 			return checkMinMaxValues(term, symbol);
 		}
-		switch (symbol) {
-		case DISTINCT:
-			return computeTrivialityStatus(term, a -> a != 0);
-		case EQ:
-			return computeTrivialityStatus(term, a -> a == 0);
-		case LESS:
-			return computeTrivialityStatus(term, a -> a < 0);
-		case GREATER:
-			return computeTrivialityStatus(term, a -> a > 0);
-		case GEQ:
-			return computeTrivialityStatus(term, a -> a >= 0);
-		case LEQ:
-			return computeTrivialityStatus(term, a -> a <= 0);
-		case BVULE:
-		case BVULT:
-		case BVUGE:
-		case BVUGT:
-		case BVSLE:
-		case BVSLT:
-		case BVSGE:
-		case BVSGT:
-			return TrivialityStatus.NONTRIVIAL;
-		default:
-			throw new UnsupportedOperationException("unknown relation symbol: " + symbol);
-		}
+		return switch (symbol) {
+		case DISTINCT -> computeTrivialityStatus(term, a -> a != 0);
+		case EQ -> computeTrivialityStatus(term, a -> a == 0);
+		case LESS -> computeTrivialityStatus(term, a -> a < 0);
+		case GREATER -> computeTrivialityStatus(term, a -> a > 0);
+		case GEQ -> computeTrivialityStatus(term, a -> a >= 0);
+		case LEQ -> computeTrivialityStatus(term, a -> a <= 0);
+		case BVULE, BVULT, BVUGE, BVUGT, BVSLE, BVSLT, BVSGE, BVSGT -> TrivialityStatus.NONTRIVIAL;
+		};
 	}
 
 	private static TrivialityStatus checkMinMaxValues(final AbstractGeneralizedAffineTerm<?> term,
@@ -533,8 +518,9 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 				final SolvedBinaryRelation result = new SolvedBinaryRelation(subject,
 						solvedElpr.getRhs().toTerm(script), solvedElpr.getRelationSymbol());
 				final Term relationToTerm = result.toTerm(script);
-				assert script instanceof INonSolverScript || SmtUtils.checkEquivalence(toTerm(script), relationToTerm,
-						script) != LBool.SAT : "solveForSubject unsound";
+				assert script instanceof INonSolverScript
+						|| SmtUtils.checkEquivalence(toTerm(script), relationToTerm, script) != LBool.SAT
+						: "solveForSubject unsound";
 				return result;
 			}
 		}
@@ -669,12 +655,10 @@ public class PolynomialRelation implements IBinaryRelation, ITermProvider {
 	}
 
 	/**
-	 * Integer inequalities have two logically equivalent
-	 * {@link PolynomialRelation}, one that utilizes a strict relation, one that
-	 * utilizes a non-strict relation. E.g., `x>=1` and `x>0` are logically
-	 * equivalent for integers. This method returns the logically equivalent
-	 * non-strict relation for strict integer relations. Otherwise, this method
-	 * returns the input.
+	 * Integer inequalities have two logically equivalent {@link PolynomialRelation}, one that utilizes a strict
+	 * relation, one that utilizes a non-strict relation. E.g., `x>=1` and `x>0` are logically equivalent for integers.
+	 * This method returns the logically equivalent non-strict relation for strict integer relations. Otherwise, this
+	 * method returns the input.
 	 */
 	public PolynomialRelation tryToConvertToEquivalentNonStrictRelation() {
 		if (SmtSortUtils.isIntSort(mPolynomialTerm.getSort()) && mRelationSymbol.isStrictRelation()) {

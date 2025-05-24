@@ -74,7 +74,7 @@ public class BitvectorFactory {
 		if (bitsize <= 0) {
 			throw new IllegalArgumentException();
 		}
-		switch (bvop) {
+		return switch (bvop) {
 		case bvadd:
 		case bvand:
 		case bvashr:
@@ -99,16 +99,14 @@ public class BitvectorFactory {
 		case bvult:
 		case bvurem:
 		case bvxor:
-			return AUXILIARY_FUNCTION_PREFIX + bvop.toString() + AUXILIARY_FUNCTION_PREFIX + bitsize;
+			yield AUXILIARY_FUNCTION_PREFIX + bvop.toString() + AUXILIARY_FUNCTION_PREFIX + bitsize;
 		case concat:
 		case extract:
 			throw new IllegalArgumentException("Boogie has native support for this operation.");
 		case sign_extend:
 		case zero_extend:
 			throw new IllegalArgumentException("Call method for extend.");
-		default:
-			throw new AssertionError("unknown value " + bvop);
-		}
+		};
 	}
 
 	public static Expression constructUnaryOperation(final ILocation loc, final BvOp bvop, final Expression expr) {
@@ -130,7 +128,7 @@ public class BitvectorFactory {
 		}
 		Expression result = exprs[0];
 		for (int i = 1; i < exprs.length; i++) {
-			result = constructBinaryBitvectorOperation(loc, bvop, new Expression[] { result, exprs[i] });
+			result = constructBinaryBitvectorOperation(loc, bvop, result, exprs[i]);
 		}
 		return result;
 	}
@@ -155,17 +153,10 @@ public class BitvectorFactory {
 			final BigInteger extension, final Expression operandExpression) {
 		if (operandExpression instanceof BitvecLiteral) {
 			final BitvectorConstant bc = toConstant((BitvecLiteral) operandExpression);
-			final BitvectorConstant extendedBc;
-			switch (extendOperation) {
-			case sign_extend:
-				extendedBc = BitvectorConstant.sign_extend(bc, extension);
-				break;
-			case zero_extend:
-				extendedBc = BitvectorConstant.zero_extend(bc, extension);
-				break;
-			default:
-				throw new AssertionError("unknown value " + extendOperation);
-			}
+			final BitvectorConstant extendedBc = switch (extendOperation) {
+			case sign_extend -> BitvectorConstant.sign_extend(bc, extension);
+			case zero_extend -> BitvectorConstant.zero_extend(bc, extension);
+			};
 			return ExpressionFactory.createBitvecLiteral(loc, extendedBc.getValue().toString(),
 					extendedBc.getIndex().intValueExact());
 		}
@@ -236,6 +227,7 @@ public class BitvectorFactory {
 
 	private static FunctionApplication simplifyBinaryAssociativeExpression(final ILocation loc, final BvOp bvop,
 			final Expression[] args, final BitvectorConstant left, final BitvectorConstant right) {
+		assert bvop != null;
 		// if this operator is associative, we move literals to the left and check if
 		// the right operand has the same
 		// operator s.t. we can combine the literals to one.
@@ -249,8 +241,7 @@ public class BitvectorFactory {
 				if (innerLeft instanceof BitvecLiteral) {
 					final Expression newConst =
 							computeBinaryBitvectorExpression(loc, bvop, left, toConstant((BitvecLiteral) innerLeft));
-					return constructBitvectorFunctionApplication(loc, bvop,
-							new Expression[] { newConst, rightFunApp.getArguments()[1] });
+					return constructBitvectorFunctionApplication(loc, bvop, newConst, rightFunApp.getArguments()[1]);
 				}
 
 			}
@@ -286,7 +277,7 @@ public class BitvectorFactory {
 	 * If true, then (op bConst x) == bConst for any x
 	 */
 	private static boolean isAnnihilatingLeft(final BvOp op, final BitvectorConstant bConst) {
-		switch (op) {
+		return switch (op) {
 		case bvsdiv:
 		case bvudiv:
 		case bvsrem:
@@ -294,7 +285,7 @@ public class BitvectorFactory {
 		case bvmul:
 		case bvshl:
 		case bvlshr:
-			return bConst.isZero();
+			yield bConst.isZero();
 		case bvor:
 		case bvand:
 		case bvashr:
@@ -314,10 +305,12 @@ public class BitvectorFactory {
 		case bvsge:
 		case bvsgt:
 		case bvult:
-			return false;
-		default:
+			yield false;
+		case bvsmod:
+		case concat:
+		case sign_extend:
 			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
+		};
 	}
 
 	/**
@@ -326,13 +319,13 @@ public class BitvectorFactory {
 	 * If true, then (op x bConst) == bConst for any x
 	 */
 	private static boolean isAnnihilatingRight(final BvOp op, final BitvectorConstant bConst) {
-		switch (op) {
+		return switch (op) {
 		case bvadd:
 		case bvor:
 		case bvmul:
 		case bvxor:
 		case bvand:
-			return isAnnihilatingLeft(op, bConst);
+			yield isAnnihilatingLeft(op, bConst);
 		case bvudiv:
 		case bvashr:
 		case bvlshr:
@@ -353,10 +346,12 @@ public class BitvectorFactory {
 		case bvsge:
 		case bvsgt:
 		case bvult:
-			return false;
-		default:
+			yield false;
+		case bvsmod:
+		case concat:
+		case sign_extend:
 			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
+		};
 	}
 
 	/**
@@ -366,15 +361,15 @@ public class BitvectorFactory {
 	 */
 	private static boolean isNeutralLeft(final BvOp op, final BitvectorConstant bConst) {
 		// TODO: Add more left neutral elements
-		switch (op) {
+		return switch (op) {
 		case bvadd:
 		case bvor:
-			return bConst.isZero();
+			yield bConst.isZero();
 		case bvmul:
-			return bConst.isOne();
+			yield bConst.isOne();
 		case bvand:
 			// TODO: Is this correct?
-			return bConst.equals(BitvectorConstant.maxValue(bConst.getIndex()));
+			yield bConst.equals(BitvectorConstant.maxValue(bConst.getIndex()));
 		case bvxor:
 		case bvudiv:
 		case bvashr:
@@ -396,10 +391,12 @@ public class BitvectorFactory {
 		case bvsge:
 		case bvsgt:
 		case bvult:
-			return false;
-		default:
+			yield false;
+		case bvsmod:
+		case concat:
+		case sign_extend:
 			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
+		};
 	}
 
 	/**
@@ -408,21 +405,21 @@ public class BitvectorFactory {
 	 * If true, then (op x bConst) == x for any x
 	 */
 	private static boolean isNeutralRight(final BvOp op, final BitvectorConstant bConst) {
-		switch (op) {
+		return switch (op) {
 		case bvadd:
 		case bvor:
 		case bvmul:
 		case bvxor:
 		case bvand:
-			return isNeutralLeft(op, bConst);
+			yield isNeutralLeft(op, bConst);
 		case bvsub:
 		case bvashr:
 		case bvlshr:
 		case bvshl:
-			return bConst.isZero();
+			yield bConst.isZero();
 		case bvudiv:
 		case bvsdiv:
-			return bConst.isOne();
+			yield bConst.isOne();
 		case bvsrem:
 		case bvurem:
 		case extract:
@@ -437,10 +434,12 @@ public class BitvectorFactory {
 		case bvsge:
 		case bvsgt:
 		case bvult:
-			return false;
-		default:
+			yield false;
+		case bvsmod:
+		case concat:
+		case sign_extend:
 			throw new UnsupportedOperationException("Currently unsupported: " + op);
-		}
+		};
 	}
 
 	private static BooleanLiteral toBooleanLiteral(final ILocation loc, final boolean value) {
@@ -484,7 +483,7 @@ public class BitvectorFactory {
 		} else {
 			resultBoogieType = (BoogieType) arguments[0].getType();
 		}
-		switch (bvop) {
+		return switch (bvop) {
 		case bvadd:
 		case bvand:
 		case bvashr:
@@ -511,16 +510,13 @@ public class BitvectorFactory {
 		case bvxor:
 			final String boogieFunctionName = BitvectorFactory.generateBoogieFunctionName(bvop,
 					BitvectorFactory.isBitvectorSort(arguments[0].getType()));
-			return new FunctionApplication(loc, resultBoogieType, boogieFunctionName, arguments);
+			yield new FunctionApplication(loc, resultBoogieType, boogieFunctionName, arguments);
 		case concat:
 		case extract:
 			throw new IllegalArgumentException("Boogie has native support for " + bvop);
 		case sign_extend:
 		case zero_extend:
 			throw new IllegalArgumentException("Should be handled by extend method." + bvop);
-		default:
-			throw new AssertionError("unknown bvop " + bvop);
-		}
+		};
 	}
-
 }

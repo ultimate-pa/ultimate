@@ -36,27 +36,27 @@ import java.util.ArrayList;
  */
 
 public class ConjunctGuards {
-	
-	private ArrayList<ArrayList<Guard>> mFstGuardDNF;
-	private ArrayList<ArrayList<Guard>> mSndGuardDNF;
-	private ArrayList<ArrayList<Guard>> mResult;
-	
-	public ConjunctGuards(ArrayList<ArrayList<Guard>> fstDNF, ArrayList<ArrayList<Guard>> sndDNF) {
+
+	private final ArrayList<ArrayList<Guard>> mFstGuardDNF;
+	private final ArrayList<ArrayList<Guard>> mSndGuardDNF;
+	private final ArrayList<ArrayList<Guard>> mResult;
+
+	public ConjunctGuards(final ArrayList<ArrayList<Guard>> fstDNF, final ArrayList<ArrayList<Guard>> sndDNF) {
 		mFstGuardDNF = fstDNF;
 		mSndGuardDNF = sndDNF;
-		
+
 		mResult = computeResult();
 	}
-	
-	private ArrayList<ArrayList<Guard>> computeResult(){
-		ArrayList<ArrayList<Guard>> resultDNF = new ArrayList<ArrayList<Guard>>();
-		for (ArrayList<Guard> fstList : mFstGuardDNF) {
-			for (ArrayList<Guard> sndList : mSndGuardDNF) {
-				ArrayList<Guard> tempGuard = new ArrayList<Guard>();
-				for (Guard fstGuard : fstList) {
+
+	private ArrayList<ArrayList<Guard>> computeResult() {
+		final ArrayList<ArrayList<Guard>> resultDNF = new ArrayList<>();
+		for (final ArrayList<Guard> fstList : mFstGuardDNF) {
+			for (final ArrayList<Guard> sndList : mSndGuardDNF) {
+				final ArrayList<Guard> tempGuard = new ArrayList<>();
+				for (final Guard fstGuard : fstList) {
 					tempGuard.add(fstGuard.copyGuard());
 				}
-				for (Guard sndGuard : sndList) {
+				for (final Guard sndGuard : sndList) {
 					tempGuard.add(sndGuard.copyGuard());
 				}
 				resultDNF.add(tempGuard);
@@ -64,7 +64,7 @@ public class ConjunctGuards {
 		}
 		return resultDNF;
 	}
-	
+
 	public ArrayList<ArrayList<Guard>> getResult() {
 		return mResult;
 	}

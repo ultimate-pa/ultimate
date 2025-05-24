@@ -27,7 +27,7 @@
 
 /**
  * This package contains delta debugger passes.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes;

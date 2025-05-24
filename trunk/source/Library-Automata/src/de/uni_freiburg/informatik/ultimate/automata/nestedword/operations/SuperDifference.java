@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * such that nwa_difference accepts all words that are accepted by nwa_minuend but not by Psi(nwa_subtrahend), i.e.
  * L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ), where Psi is a transformation of the automaton
  * nwa_subtrahend that is defined by an implementation of IStateDeterminizer.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -59,7 +59,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            String as STATE and your states are labeled e.g. with "q0", "q1", ...
  */
 
-public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionStateFactory<STATE> & ISinkStateFactory<STATE>> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionStateFactory<STATE> & ISinkStateFactory<STATE>>
+		extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String FOLLOW_LABEL = "follow label ";
 	private static final String ADD_TARGET_SINK_STATE_Q2 = "add target (sink) state q2: ";
 	private static final String TRAVERSE_IN_SINK_STATE = "Traverse in sink state ";
@@ -78,7 +79,7 @@ public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionState
 	 * Computes the an automaton A' which is the over approximation of the difference of the two automatons minuend and
 	 * subtrahend such that L(A') >= L(minuend) - L(subtrahend) and L(A') <= L(minuend). Therefore it needs an automaton
 	 * epimorphism.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param minuend
@@ -92,8 +93,8 @@ public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionState
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public SuperDifference(final AutomataLibraryServices services, final FAC stateFactory, final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomaton<LETTER, STATE> subtrahend,
+	public SuperDifference(final AutomataLibraryServices services, final FAC stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> minuend, final INestedWordAutomaton<LETTER, STATE> subtrahend,
 			final AutomatonEpimorphism<STATE> automatonEpimorhpism, final boolean minimize)
 			throws AutomataOperationCanceledException {
 		super(services);
@@ -173,7 +174,7 @@ public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionState
 	/**
 	 * (for computing the super difference) Adds a state into the result automaton. Respectively adds all necessary
 	 * transitions and states.
-	 * 
+	 *
 	 * @param r
 	 *            first part of the label of the state
 	 * @param s
@@ -343,7 +344,7 @@ public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionState
 
 	/**
 	 * Traverse an edge and add it to the new automatons.
-	 * 
+	 *
 	 * @param e
 	 *            the outgoing transition
 	 * @param r
@@ -378,17 +379,17 @@ public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionState
 		boolean targetExistsInMinuend = false;
 		if (hR2 != null) {
 			switch (edgeType) {
-				case 0:
-					targetExistsInMinuend = findTargetInternal(s, label, hR2);
-					break;
-				case 1:
-					targetExistsInMinuend = findTargetCall(s, label, hR2);
-					break;
-				case 2:
-					targetExistsInMinuend = findTargetReturn(s, hierPred, label, hR2);
-					break;
-				default:
-					throw new IllegalArgumentException();
+			case 0:
+				targetExistsInMinuend = findTargetInternal(s, label, hR2);
+				break;
+			case 1:
+				targetExistsInMinuend = findTargetCall(s, label, hR2);
+				break;
+			case 2:
+				targetExistsInMinuend = findTargetReturn(s, hierPred, label, hR2);
+				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 
@@ -411,17 +412,17 @@ public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionState
 		// mLogger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
 
 		switch (edgeType) {
-			case 0:
-				mResult.addInternalTransition(q, label, q2);
-				break;
-			case 1:
-				mResult.addCallTransition(q, label, q2);
-				break;
-			case 2:
-				mResult.addReturnTransition(q, hierPred, label, q2);
-				break;
-			default:
-				throw new IllegalArgumentException();
+		case 0:
+			mResult.addInternalTransition(q, label, q2);
+			break;
+		case 1:
+			mResult.addCallTransition(q, label, q2);
+			break;
+		case 2:
+			mResult.addReturnTransition(q, hierPred, label, q2);
+			break;
+		default:
+			throw new IllegalArgumentException();
 		}
 	}
 

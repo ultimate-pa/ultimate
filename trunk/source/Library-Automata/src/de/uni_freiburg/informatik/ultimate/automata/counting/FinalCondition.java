@@ -36,31 +36,31 @@ import java.util.ArrayList;
  */
 
 public class FinalCondition {
-	
+
 	private ArrayList<ArrayList<Guard>> mCondition;
-	
-	public FinalCondition()
-	{}
-	
-	public FinalCondition(ArrayList<ArrayList<Guard>> condition) {
+
+	public FinalCondition() {
+	}
+
+	public FinalCondition(final ArrayList<ArrayList<Guard>> condition) {
 		mCondition = condition;
 	}
-	
+
 	public ArrayList<ArrayList<Guard>> getCondition() {
 		return mCondition;
 	}
-	
+
 	public FinalCondition copyFinalCondition() {
-		ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<ArrayList<Guard>>();
-		for (ArrayList<Guard> list : mCondition) {
-			ArrayList<Guard> guardListCopy = new ArrayList<Guard>();
-			for (Guard guard : list) {
-				Guard guardCopy = guard.copyGuard();
+		final ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<>();
+		for (final ArrayList<Guard> list : mCondition) {
+			final ArrayList<Guard> guardListCopy = new ArrayList<>();
+			for (final Guard guard : list) {
+				final Guard guardCopy = guard.copyGuard();
 				guardListCopy.add(guardCopy);
 			}
 			guardDNFCopy.add(guardListCopy);
 		}
-		FinalCondition copy = new FinalCondition(guardDNFCopy);
+		final FinalCondition copy = new FinalCondition(guardDNFCopy);
 		return copy;
 	}
 }

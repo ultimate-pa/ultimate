@@ -37,16 +37,16 @@ public class ParallelDataflowgraph<T> extends ModifiableLabeledEdgesMultigraph<P
 
 	@Override
 	public String toString() {
-		String s = "Statement: ";
+		final StringBuilder s = new StringBuilder("Statement: ");
 		if (mNodeLabel == null) {
-			s = s + "no statement" + " Locations: ";
+			s.append("no statement").append(" Locations: ");
 		} else {
-			s = s + mNodeLabel.toString() + " Locations: ";
+			s.append(mNodeLabel.toString()).append(" Locations: ");
 		}
 		for (final Entry<String, Set<IcfgLocation>> entry : mLocations.entrySet()) {
-			s += entry.getKey() + entry.getValue().toString();
+			s.append(entry.getKey()).append(entry.getValue().toString());
 		}
-		return s;
+		return s.toString();
 	}
 
 	public T getNodeLabel() {

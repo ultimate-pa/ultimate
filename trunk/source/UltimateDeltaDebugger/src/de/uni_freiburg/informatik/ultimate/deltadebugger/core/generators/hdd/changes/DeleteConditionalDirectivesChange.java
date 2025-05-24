@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
  */
 public class DeleteConditionalDirectivesChange extends HddChange {
 	private final ISourceRange[] mDeleteLocations;
-	
+
 	/**
 	 * @param block
 	 *            PST block.
@@ -51,7 +51,7 @@ public class DeleteConditionalDirectivesChange extends HddChange {
 		mDeleteLocations[0] = block.getSource().newSourceRange(block.offset(), activeBranchLocation.offset());
 		mDeleteLocations[1] = block.getSource().newSourceRange(activeBranchLocation.endOffset(), block.endOffset());
 	}
-	
+
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		if (mDeleteLocations == null) {
@@ -61,11 +61,12 @@ public class DeleteConditionalDirectivesChange extends HddChange {
 			rewriter.delete(mDeleteLocations[1]);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
-		return "Delete conditional directives " + getNode() + (mDeleteLocations != null
-				? (" (deleting " + mDeleteLocations[0] + " and " + mDeleteLocations[1] + ")")
-				: "");
+		return "Delete conditional directives " + getNode()
+				+ (mDeleteLocations != null
+						? (" (deleting " + mDeleteLocations[0] + " and " + mDeleteLocations[1] + ")")
+						: "");
 	}
 }

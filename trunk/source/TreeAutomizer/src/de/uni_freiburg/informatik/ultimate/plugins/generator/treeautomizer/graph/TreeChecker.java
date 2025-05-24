@@ -42,9 +42,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This is the equivalent of Automizer's traceCheck. Here we check a tree for
- * feasibility instead of a trace.
- * 
+ * This is the equivalent of Automizer's traceCheck. Here we check a tree for feasibility instead of a trace.
+ *
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -61,7 +60,7 @@ public class TreeChecker {
 
 	/***
 	 * Standard constructor.
-	 * 
+	 *
 	 * @param tree
 	 * @param backendSmtSolverScript
 	 * @param preCondition
@@ -69,24 +68,24 @@ public class TreeChecker {
 	 * @param logger
 	 * @param predicateFactory
 	 * @param predicateUnifier
-	 * @param symbolTable 
+	 * @param symbolTable
 	 */
 	public TreeChecker(final TreeRun<HornClause, IPredicate> tree, final ManagedScript backendSmtSolverScript,
-			final HCPredicate preCondition, final HCPredicate postCondition, ILogger logger,
-			final PredicateUnifier predicateUnifier, HcSymbolTable symbolTable) {
+			final HCPredicate preCondition, final HCPredicate postCondition, final ILogger logger,
+			final PredicateUnifier predicateUnifier, final HcSymbolTable symbolTable) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
 		mPredicateUnifier = predicateUnifier;
-		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript,
-				mPredicateUnifier, symbolTable);
+		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript, mPredicateUnifier,
+				symbolTable);
 
 		mLogger = logger;
 	}
-	
-	public TreeRun<HornClause, IPredicate> annotateTreeRunWithInterpolants(
-			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+
+	public TreeRun<HornClause, IPredicate>
+			annotateTreeRunWithInterpolants(final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
 		return mSSABuilder.buildTreeRunWithBackVersionedInterpolants(interpolantsMap);
 	}
 
@@ -94,11 +93,11 @@ public class TreeChecker {
 		return mSSABuilder.getSSA();
 	}
 
-	protected LBool checkTrace(Object lockOwner) {
-		
+	protected LBool checkTrace(final Object lockOwner) {
+
 		final HcSsaTreeFlattener ssa = getSSA();
 		final Term[] nestedExp = ssa.getFlattenedTermList();
-		HashSet<String> visited = new HashSet<>();
+		final HashSet<String> visited = new HashSet<>();
 		for (final Term t : nestedExp) {
 			final Annotation ann = new Annotation(":named", ssa.getName(t));
 			if (!visited.contains(ssa.getName(t))) {
@@ -109,7 +108,7 @@ public class TreeChecker {
 			}
 		}
 		final LBool result = mBackendSmtSolverScript.checkSat(lockOwner);
-		
+
 		return result;
 	}
 }

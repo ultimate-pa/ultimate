@@ -1,6 +1,6 @@
 /**
  * Compound domain package.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */

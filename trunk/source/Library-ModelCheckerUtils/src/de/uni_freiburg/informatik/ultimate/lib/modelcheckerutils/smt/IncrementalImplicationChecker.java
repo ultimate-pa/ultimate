@@ -29,15 +29,15 @@ package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
- * Check implication between two formulas that each represent a set of
- * program states.
+ * Check implication between two formulas that each represent a set of program states.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -49,14 +49,12 @@ public class IncrementalImplicationChecker implements ILockHolderWithVoluntaryLo
 	private IPredicate mSuccedent;
 
 	public IncrementalImplicationChecker(final IUltimateServiceProvider services, final ManagedScript managedScript) {
-		super();
 		mServices = services;
 		mManagedScript = managedScript;
 	}
 
-
 	/**
-	 * Check if implication  antecedent ==> succedent  is valid.
+	 * Check if implication antecedent ==> succedent is valid.
 	 */
 	public Validity checkImplication(final IPredicate antecedent, final IPredicate succedent) {
 		if (mSuccedent != null && mSuccedent != succedent) {

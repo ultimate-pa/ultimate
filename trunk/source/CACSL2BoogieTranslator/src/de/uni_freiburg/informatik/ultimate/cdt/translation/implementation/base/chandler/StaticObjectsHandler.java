@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStructOrUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -125,7 +125,7 @@ public class StaticObjectsHandler {
 	public void addGlobalTypeDeclaration(final TypeDeclaration boogieDec, final CDeclaration cDec) {
 		assert boogieDec != null && cDec != null : "Part of global type declaration is null";
 		mTypeDeclarationToCDeclaration.put(boogieDec, cDec);
-		final CType cType = cDec.getType();
+		final ICType cType = cDec.getType();
 		if (cType.isIncomplete() && !cDec.getType().isVoidType()) {
 			if (cType instanceof CStructOrUnion) {
 				mIncompleteType2TypeDecl.put(((CStructOrUnion) cType).getName(), boogieDec);
@@ -212,7 +212,7 @@ public class StaticObjectsHandler {
 	 * @param cvar
 	 * @param incompleteStruct
 	 */
-	public void completeTypeDeclaration(final String incompleteType, final CType completedType,
+	public void completeTypeDeclaration(final String incompleteType, final ICType completedType,
 			final ITypeHandler typeHandler) {
 		final TypeDeclaration oldBoogieDec = mIncompleteType2TypeDecl.remove(incompleteType);
 		if (oldBoogieDec == null) {
@@ -221,8 +221,8 @@ public class StaticObjectsHandler {
 			return;
 		}
 		final CDeclaration oldCDec = mTypeDeclarationToCDeclaration.get(oldBoogieDec);
-		assert oldCDec != null : "We have a Boogie declaration, we should also have a C declaration: "
-				+ oldBoogieDec.getIdentifier();
+		assert oldCDec != null
+				: "We have a Boogie declaration, we should also have a C declaration: " + oldBoogieDec.getIdentifier();
 
 		final TypeDeclaration newBoogieDec = new TypeDeclaration(oldBoogieDec.getLocation(),
 				oldBoogieDec.getAttributes(), oldBoogieDec.isFinite(), oldBoogieDec.getIdentifier(),
@@ -245,8 +245,6 @@ public class StaticObjectsHandler {
 
 	public void addStatementsForUltimateInit(final List<Statement> stmts) {
 		assert !mIsFrozen;
-		for (final Statement stmt : stmts) {
-			mStatementsForUltimateInit.add(stmt);
-		}
+		mStatementsForUltimateInit.addAll(stmts);
 	}
 }

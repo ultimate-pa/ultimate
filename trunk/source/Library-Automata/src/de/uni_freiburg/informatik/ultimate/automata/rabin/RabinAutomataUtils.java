@@ -78,8 +78,7 @@ public class RabinAutomataUtils {
 		final Set<STATE> finiteStates = new HashSet<>();
 		final Set<STATE> acceptingStates = new HashSet<>();
 
-		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>();
-		currentStateSet.addAll(initialStates);
+		final ArrayDeque<STATE> currentStateSet = new ArrayDeque<>(initialStates);
 		while (!currentStateSet.isEmpty()) {
 			final STATE currentState = currentStateSet.pop();
 			states.add(currentState);

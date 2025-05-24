@@ -32,19 +32,17 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Subclass of {@link PureSubstitution} were we apply our library methods for
- * constructing new terms. This makes sure that if the input satisfies the
- * UltimateNormalForm (i.e., lightweight simplifications are applied) then the
- * output satisfies the UltimateNormalForm and if the input satisfies the
- * CommuHashNormalForm then the output satisfies the CommuHashNormalForm
+ * Subclass of {@link PureSubstitution} were we apply our library methods for constructing new terms. This makes sure
+ * that if the input satisfies the UltimateNormalForm (i.e., lightweight simplifications are applied) then the output
+ * satisfies the UltimateNormalForm and if the input satisfies the CommuHashNormalForm then the output satisfies the
+ * CommuHashNormalForm
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class Substitution extends PureSubstitution {
 
-	private Substitution(final ManagedScript mgdScript,
-			final Map<? extends Term, ? extends Term> substitutionMapping) {
+	private Substitution(final ManagedScript mgdScript, final Map<? extends Term, ? extends Term> substitutionMapping) {
 		super(mgdScript, substitutionMapping);
 	}
 
@@ -52,7 +50,6 @@ public class Substitution extends PureSubstitution {
 	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		setResult(SmtUtils.convertApplicationTerm(appTerm, newArgs, mMgdScript.getScript()));
 	}
-
 
 	public static Term apply(final ManagedScript mgdScript,
 			final Map<? extends Term, ? extends Term> substitutionMapping, final Term term) {
@@ -63,9 +60,5 @@ public class Substitution extends PureSubstitution {
 	protected Term applySubsititution(final Map<Term, Term> substitutionMapping, final Term term) {
 		return apply(mMgdScript, substitutionMapping, term);
 	}
-
-
-
-
 
 }

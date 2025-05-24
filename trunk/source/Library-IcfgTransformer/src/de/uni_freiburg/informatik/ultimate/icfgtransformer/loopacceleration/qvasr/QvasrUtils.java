@@ -448,8 +448,7 @@ public final class QvasrUtils {
 	public static Set<Set<Term>> joinSet(final Set<Set<Term>> inSet, final Set<Term> variable) {
 		final Set<Set<Term>> joinedSet = new HashSet<>(inSet);
 		for (final Set<Term> toBeJoined : inSet) {
-			final Set<Term> varJoin = new HashSet<>();
-			varJoin.addAll(toBeJoined);
+			final Set<Term> varJoin = new HashSet<>(toBeJoined);
 			varJoin.addAll(variable);
 			joinedSet.add(varJoin);
 		}
@@ -470,10 +469,10 @@ public final class QvasrUtils {
 		}
 		for (final Pair<Rational[], Rational[]> transformer : qvasrAbstraction.getVasr().getTransformer()) {
 			final Rational[] additionVector = transformer.getSecond();
-			for (int k = 0; k < additionVector.length; k++) {
-				if (!additionVector[k].isIntegral()) {
-					gcd = Rational.gcd(gcd, additionVector[k].denominator());
-					mult = mult.multiply(additionVector[k].denominator());
+			for (final Rational element : additionVector) {
+				if (!element.isIntegral()) {
+					gcd = Rational.gcd(gcd, element.denominator());
+					mult = mult.multiply(element.denominator());
 				}
 			}
 		}

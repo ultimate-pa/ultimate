@@ -90,7 +90,7 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 	private static final boolean USE_FULL_PREPROCESSING = false;
 
 	@SuppressWarnings("rawtypes")
-	private static final Pair[] EMPTY_LITERALS = new Pair[0];
+	private static final Pair[] EMPTY_LITERALS = {};
 	private STATE mEmptyStackState;
 	private final int mNumberOfInitialPairs;
 
@@ -156,13 +156,14 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings.setSolverModeGeneral(), removeReflexivePairs(initialPairs), null);
+		super(services, stateFactory, operand, settings.setSolverModeGeneral(), removeReflexivePairs(initialPairs),
+				null);
 		mEmptyStackState = mOperand.getEmptyStackState();
 
 		// statistics
 		int numberOfInitialPairs = 0;
-		for (final Iterator<Triple<STATE, STATE, Pair<STATE, STATE>>> iterator =
-				initialPairs.entrySet().iterator(); iterator.hasNext(); iterator.next()) {
+		for (final Iterator<Triple<STATE, STATE, Pair<STATE, STATE>>> iterator = initialPairs.entrySet().iterator();
+				iterator.hasNext(); iterator.next()) {
 			numberOfInitialPairs++;
 		}
 		mNumberOfInitialPairs = numberOfInitialPairs;
@@ -178,11 +179,8 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		super.addStatistics(statistics);
 
-		statistics.addKeyValuePair(
-				mSettings.getLibraryMode()
-						? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT
-						: StatisticsType.NUMBER_INITIAL_PAIRS,
-				mNumberOfInitialPairs);
+		statistics.addKeyValuePair(mSettings.getLibraryMode() ? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT
+				: StatisticsType.NUMBER_INITIAL_PAIRS, mNumberOfInitialPairs);
 	}
 
 	/**
@@ -197,16 +195,17 @@ public class MinimizeNwaPmaxSatDirect<LETTER, STATE> extends MinimizeNwaMaxSat2<
 			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		switch (PREPROCESSING_STANDALONE) {
-			case PARTITION:
-				return createPairsWithInitialPartition(new NwaApproximateBisimulation<>(services, operand,
-						SimulationType.DIRECT, USE_FULL_PREPROCESSING).getResult().getRelation());
-			case PAIRS:
-				return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT, USE_FULL_PREPROCESSING)
-						.getResult();
-			case NONE:
-				return createPairs(operand.getStates());
-			default:
-				throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
+		case PARTITION:
+			return createPairsWithInitialPartition(
+					new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT, USE_FULL_PREPROCESSING)
+							.getResult().getRelation());
+		case PAIRS:
+			return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT, USE_FULL_PREPROCESSING)
+					.getResult();
+		case NONE:
+			return createPairs(operand.getStates());
+		default:
+			throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
 		}
 	}
 

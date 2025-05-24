@@ -25,8 +25,8 @@
  * to convey the resulting work.
  */
 /**
- * Packages provides classes that do a trace check where segments that stem from
- * a loop can be replaced by the accelerated loop.
+ * Packages provides classes that do a trace check where segments that stem from a loop can be replaced by the
+ * accelerated loop.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *

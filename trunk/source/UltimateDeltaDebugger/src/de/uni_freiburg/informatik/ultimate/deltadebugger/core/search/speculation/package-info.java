@@ -27,7 +27,7 @@
 
 /**
  * This package contains classes used for a speculative execution of the delta debugger.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation;

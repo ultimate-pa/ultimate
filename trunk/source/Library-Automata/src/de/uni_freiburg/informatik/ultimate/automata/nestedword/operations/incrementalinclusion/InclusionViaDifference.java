@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  * is not efficient and should not used in practice. We use this implementation only for comparison with the "real"
  * incremental inclusion. This implementation could be improved by applying a removal of dead ends and a minimization to
  * the difference after each step.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -64,7 +64,7 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -77,14 +77,15 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	@SuppressWarnings("unchecked")
 	public InclusionViaDifference(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA)
+			throws AutomataOperationCanceledException {
 		this(services, (SF) stateFactory, stateFactory, nwaA);
 	}
 
 	/**
 	 * Constructor that uses different stateFactories for intersection and determinization. This is currently needed
 	 * when we use the inclusion check in program verification.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactoryIntersect
@@ -98,7 +99,8 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	 */
 	public InclusionViaDifference(final AutomataLibraryServices services, final SF stateFactoryIntersect,
 			final IDeterminizeStateFactory<STATE> stateFactoryDeterminize,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA)
+			throws AutomataOperationCanceledException {
 		super(services, nwaA);
 		mStateFactoryIntersect = stateFactoryIntersect;
 		mStateFactoryDeterminize = stateFactoryDeterminize;
@@ -113,11 +115,13 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	}
 
 	@Override
-	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> determinized = new DeterminizeNwa<>(mServices, nwa,
 				new PowersetDeterminizer<>(nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
-		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(determinized);
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> complemented =
+				new ComplementDeterministicNwa<>(determinized);
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> difference =
 				new IntersectNwa<>(mDifference, complemented, mStateFactoryIntersect, false);
 		if (mRemoveDeadEnds) {

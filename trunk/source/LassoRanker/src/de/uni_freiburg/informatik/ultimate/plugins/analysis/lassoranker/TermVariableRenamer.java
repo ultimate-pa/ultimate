@@ -67,9 +67,9 @@ public class TermVariableRenamer {
 		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
 
-		final Collection<IProgramVar> hasInOnlyVar = new ArrayList<IProgramVar>();
-		final Collection<IProgramVar> hasOutOnlyVar = new ArrayList<IProgramVar>();
-		final Collection<IProgramVar> commonInOutVar = new ArrayList<IProgramVar>();
+		final Collection<IProgramVar> hasInOnlyVar = new ArrayList<>();
+		final Collection<IProgramVar> hasOutOnlyVar = new ArrayList<>();
+		final Collection<IProgramVar> commonInOutVar = new ArrayList<>();
 
 		for (final IProgramVar var : inVars.keySet()) {
 			final TermVariable inVar = inVars.get(var);
@@ -131,6 +131,6 @@ public class TermVariableRenamer {
 
 	@FunctionalInterface
 	public interface IVarAdder {
-		public TermVariable addVar(final IProgramVar key, final TermVariable value);
+		TermVariable addVar(final IProgramVar key, final TermVariable value);
 	}
 }

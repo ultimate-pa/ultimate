@@ -77,7 +77,7 @@ public class Location {
 
 	protected void setInvariant(final String invariant) {
 		if (invariant != null) {
-			mInvariant = invariant.replaceAll("&&", "&");
+			mInvariant = invariant.replace("&&", "&");
 		} else {
 			mInvariant = "";
 		}
@@ -85,7 +85,7 @@ public class Location {
 
 	protected void setFlow(final String flow) {
 		if (flow != null && !"false".equals(flow)) {
-			mFlow = flow.replaceAll("&&", "&");
+			mFlow = flow.replace("&&", "&");
 		} else {
 			mFlow = "";
 		}
@@ -114,7 +114,6 @@ public class Location {
 
 	public void setForbiddenConstraint(final String forbidden) {
 		if (mForbiddenConstraint.contains(forbidden)) {
-			return;
 		} else if (mForbiddenConstraint.isEmpty()) {
 			mForbiddenConstraint = forbidden;
 		} else {

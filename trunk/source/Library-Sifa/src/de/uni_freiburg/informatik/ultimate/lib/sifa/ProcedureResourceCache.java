@@ -51,8 +51,7 @@ public class ProcedureResourceCache {
 	}
 
 	private ProcedureResources computeProcResources(final String procedure) {
-		return new ProcedureResources(mStats, mIcfg, procedure,
-				mCallGraph.locationsOfInterest(procedure),
+		return new ProcedureResources(mStats, mIcfg, procedure, mCallGraph.locationsOfInterest(procedure),
 				mCallGraph.successorsOfInterest(procedure));
 	}
 }

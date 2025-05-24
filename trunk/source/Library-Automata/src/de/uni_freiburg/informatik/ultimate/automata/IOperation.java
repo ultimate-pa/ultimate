@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2011-2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * arguments, and optionally other constructors with more arguments. The minimal constructor should be considered the
  * default for .ats files.
  * </ul>
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Type of objects that are contained in the alphabet.
@@ -95,7 +95,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 
 	/**
 	 * Run some checks to test correctness of the result.
-	 * 
+	 *
 	 * @param stateFactory
 	 *            If new automata have to be built, use this state factory.
 	 * @return {@code true} iff all checks succeeded.
@@ -111,7 +111,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 * This method should only be called by statistic collection frameworks. Implementing classes may decide to only
 	 * compute the statistics on demand, so this may be an expensive method. It is, however, not wise to keep huge data
 	 * structures in memory just for creating statistics data.
-	 * 
+	 *
 	 * @return statistics object
 	 */
 	default AutomataOperationStatistics getAutomataOperationStatistics() {

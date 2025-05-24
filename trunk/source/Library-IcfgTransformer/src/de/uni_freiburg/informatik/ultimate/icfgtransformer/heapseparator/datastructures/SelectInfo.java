@@ -26,12 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 
 /**
- * Represents a select term somewhere in the program.
- *  (including its location in the program)
+ * Represents a select term somewhere in the program. (including its location in the program)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -46,30 +47,29 @@ public class SelectInfo {
 
 	public SelectInfo(final ArrayCellAccess arrayCellAccess, final EdgeInfo edgeInfo, final ArrayGroup arrayGroup,
 			final ManagedScript mgdScript) {
-		super();
 		mArrayCellAccess = arrayCellAccess;
 		mEdgeInfo = edgeInfo;
 		mArrayGroup = arrayGroup;
 	}
 
-//	public ArrayCellAccess getArrayCellAccess() {
-//		return mArrayCellAccess;
-//	}
+	// public ArrayCellAccess getArrayCellAccess() {
+	// return mArrayCellAccess;
+	// }
 
 	public EdgeInfo getEdgeInfo() {
 		return mEdgeInfo;
 	}
 
-//	/**
-//	 *
-//	 * deprecated because array may not have a pvoc (i.e. be an auxvar)
-//	 *
-//	 * @return
-//	 */
-//	@Deprecated
-//	public IProgramVarOrConst getArrayPvoc() {
-//		return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getSimpleArray());
-//	}
+	// /**
+	// *
+	// * deprecated because array may not have a pvoc (i.e. be an auxvar)
+	// *
+	// * @return
+	// */
+	// @Deprecated
+	// public IProgramVarOrConst getArrayPvoc() {
+	// return getEdgeInfo().getProgramVarOrConstForTerm(mArrayCellAccess.getSimpleArray());
+	// }
 
 	@Override
 	public String toString() {
@@ -90,11 +90,7 @@ public class SelectInfo {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mArrayCellAccess == null) ? 0 : mArrayCellAccess.hashCode());
-		result = prime * result + ((mEdgeInfo == null) ? 0 : mEdgeInfo.hashCode());
-		return result;
+		return Objects.hash(mArrayCellAccess, mEdgeInfo);
 	}
 
 	@Override

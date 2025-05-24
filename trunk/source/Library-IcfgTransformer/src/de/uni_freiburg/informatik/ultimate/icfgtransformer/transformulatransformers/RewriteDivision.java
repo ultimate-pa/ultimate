@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IcfgTransformer library.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,16 +48,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 /**
  * Replace integer division and modulo by auxiliary variables and add linear constraints that define these auxiliary
  * variables.
- * 
+ *
  * We use the semantics of SMTLIB2 where the remainder is always positive. http://smtlib.cs.uiowa.edu/theories/Ints.smt2
  * This is different from the semantics of C99 where "truncation towards 0" is used
  * http://www.open-std.org/JTC1/SC22/WG14/www/docs/n1256.pdf (Section 6.5.5)
- * 
+ *
  * Does not check if all statements are linear.
- * 
+ *
  * TODO: (Matthias) this transformation is probably not equivalent if divisor is 0. But I think in this will lead to
  * problems before this transformation is used.
- * 
+ *
  * @author Jan Leike
  * @author Matthias Heizmann
  */
@@ -98,7 +98,6 @@ public class RewriteDivision extends TransformerPreprocessor {
 	 * Constructor
 	 */
 	public RewriteDivision(final ReplacementVarFactory varFactory) {
-		super();
 		mVarFactory = varFactory;
 		mAuxVars = new LinkedHashMap<>();
 		mAuxTerms = new ArrayList<>();
@@ -110,7 +109,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf)
+			throws TermException {
 		// Clear the data structures
 		mAuxVars.clear();
 		mAuxTerms.clear();
@@ -192,7 +192,6 @@ public class RewriteDivision extends TransformerPreprocessor {
 				final Term divAuxTerm = computeDivAuxTerms(dividend, divisor, quotientAuxVar);
 				mAuxTerms.add(divAuxTerm);
 				setResult(quotientAuxVar);
-				return;
 			} else if (func.equals("mod")) {
 				assert appTerm.getParameters().length == 2;
 				final Term dividend = newArgs[0];
@@ -206,21 +205,19 @@ public class RewriteDivision extends TransformerPreprocessor {
 				final Term modAuxTerms = computeModAuxTerms(dividend, divisor, quotientAuxVar, remainderAuxVar);
 				mAuxTerms.add(modAuxTerms);
 				setResult(remainderAuxVar);
-				return;
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
-				return;
 			}
 		}
 
 		/**
 		 * Return the conjunction of the following two formulas
-		 * 
+		 *
 		 * <pre>
 		 * divisor > 0 ==> quotientAuxVar * divisor <= dividend < (quotientAuxVar+1) * divisor
 		 * divisor < 0 ==> quotientAuxVar * divisor <= dividend < (quotientAuxVar-1) * divisor
 		 * </pre>
-		 * 
+		 *
 		 * This conjunction is equivalent to the formula (= quotientAuxVar (div dividend divisor)). We return the result
 		 * <li>in DNF and
 		 * <li>in an <i>optimized</i> way where strict inequalities are replaced by non-strict inequalities.
@@ -246,13 +243,13 @@ public class RewriteDivision extends TransformerPreprocessor {
 
 		/**
 		 * Return the conjunction of the following three formulas
-		 * 
+		 *
 		 * <pre>
 		 * dividend = quotientAuxVar * divisor + remainderAuxVar
 		 * divisor > 0 ==> 0 <= remainderAuxVar < divisor
 		 * divisor < 0 ==> 0 <= remainderAuxVar < -divisor
 		 * </pre>
-		 * 
+		 *
 		 * This conjunction is equivalent to the conjunction of the following two formulas. (= quotientAuxVar (div
 		 * dividend divisor)) (= remainderAuxVar (mod dividend divisor)) We return the result
 		 * <li>in DNF and

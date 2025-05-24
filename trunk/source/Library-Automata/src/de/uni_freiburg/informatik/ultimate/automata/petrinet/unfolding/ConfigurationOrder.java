@@ -75,12 +75,12 @@ public abstract class ConfigurationOrder<LETTER, PLACE> implements Comparator<Ev
 	 * @return true iff this order on events is a total order
 	 */
 	public abstract boolean isTotal();
-	
+
 	public int getFotateNormalFormComparisons() {
 		return 0;
 	}
-	
-//	2019-12-19 Factory method for constructing configuration
-//	public abstract <E extends Configuration<LETTER, PLACE>> E constructNewConfiguration(
-//			final Set<Event<LETTER, PLACE>> events, Integer theIntegerForErv);
+
+	// 2019-12-19 Factory method for constructing configuration
+	// public abstract <E extends Configuration<LETTER, PLACE>> E constructNewConfiguration(
+	// final Set<Event<LETTER, PLACE>> events, Integer theIntegerForErv);
 }

@@ -31,6 +31,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -170,7 +171,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 
 		final HashedPriorityQueue<Item> worklist =
-				new HashedPriorityQueue<>((a, b) -> Double.compare(a.mEstimatedCostToTarget, b.mEstimatedCostToTarget));
+				new HashedPriorityQueue<>(Comparator.comparing(a -> a.mEstimatedCostToTarget));
 
 		for (final STATE state : startStates) {
 			final Item initialItem = new Item(state);
@@ -1137,35 +1138,18 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		 */
 		double getConcreteCost(LETTER trans);
 
-		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
+		static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
 				final ScoringMethod scoringMethod, final long seed) {
-			switch (astarHeuristic) {
-			case RANDOM_FULL:
-				return IHeuristic.getRandomHeuristicFull(seed);
-			case RANDOM_HALF:
-				return IHeuristic.getRandomHeuristicHalf(seed);
-			case SMT_FEATURE_COMPARISON:
-				return IHeuristic.getSmtFeatureHeuristic(scoringMethod);
-			case ZERO:
-				return IHeuristic.getZeroHeuristic();
-			default:
-				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
-
-			}
+			return switch (astarHeuristic) {
+			case RANDOM_FULL -> IHeuristic.getRandomHeuristicFull(seed);
+			case RANDOM_HALF -> IHeuristic.getRandomHeuristicHalf(seed);
+			case SMT_FEATURE_COMPARISON -> IHeuristic.getSmtFeatureHeuristic(scoringMethod);
+			case ZERO -> IHeuristic.getZeroHeuristic();
+			};
 		}
 
-		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
-				final ScoringMethod scoringMethod, final long seed, final Integer testGoalWithHighesID,
-				final List<Integer> testGoalTodoStack) {
-			switch (astarHeuristic) {
-			default:
-				throw new UnsupportedOperationException("Unknown heuristic: " + astarHeuristic.toString());
-
-			}
-		}
-
-		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
-			return new IHeuristic<STATE, LETTER>() {
+		static <STATE, LETTER> IHeuristic<STATE, LETTER> getZeroHeuristic() {
+			return new IHeuristic<>() {
 				@Override
 				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
 					return 0.0;
@@ -1178,8 +1162,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			};
 		}
 
-		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getRandomHeuristicHalf(final long seed) {
-			return new IHeuristic<STATE, LETTER>() {
+		static <STATE, LETTER> IHeuristic<STATE, LETTER> getRandomHeuristicHalf(final long seed) {
+			return new IHeuristic<>() {
 
 				private final Random mRandom = new Random(seed);
 				private final Map<LETTER, Double> mConcreteCosts = new HashMap<>();
@@ -1197,8 +1181,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			};
 		}
 
-		public static <STATE, LETTER> IHeuristic<STATE, LETTER> getRandomHeuristicFull(final long seed) {
-			return new IHeuristic<STATE, LETTER>() {
+		static <STATE, LETTER> IHeuristic<STATE, LETTER> getRandomHeuristicFull(final long seed) {
+			return new IHeuristic<>() {
 
 				private final Random mRandom = new Random(seed);
 				private final Map<LETTER, Double> mConcreteCosts = new HashMap<>();
@@ -1215,7 +1199,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			};
 		}
 
-		public static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
+		static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
 				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
 			return new SmtFeatureHeuristic<>(scoringMethod);
 		}
@@ -1234,7 +1218,6 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		private static final long serialVersionUID = 1L;
 
 		public ElementHashedArrayDeque() {
-			super();
 		}
 
 		public ElementHashedArrayDeque(final Collection<? extends E> c) {

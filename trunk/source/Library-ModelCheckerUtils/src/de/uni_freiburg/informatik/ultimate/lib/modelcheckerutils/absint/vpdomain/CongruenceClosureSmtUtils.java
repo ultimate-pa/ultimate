@@ -45,9 +45,8 @@ public class CongruenceClosureSmtUtils {
 			result.add(literalDisequalities);
 		}
 
-
-		for (final Entry<NODE, SetConstraintConjunction<NODE>> en :
-				pa.getLiteralSetConstraints().getConstraints().entrySet()) {
+		for (final Entry<NODE, SetConstraintConjunction<NODE>> en : pa.getLiteralSetConstraints().getConstraints()
+				.entrySet()) {
 			result.add(literalSetConstraintToTerm(script, en.getValue()));
 		}
 
@@ -55,50 +54,49 @@ public class CongruenceClosureSmtUtils {
 	}
 
 	private static <NODE extends IEqNodeIdentifier<NODE>> Term literalSetConstraintToTerm(final Script script,
-//			final Entry<NODE, Set<NODE>> en) {
+			// final Entry<NODE, Set<NODE>> en) {
 			final SetConstraintConjunction<NODE> constraint) {
-//		assert !en.getValue().isEmpty();
-//		assert !en.getKey().isLiteral();
+		// assert !en.getValue().isEmpty();
+		// assert !en.getKey().isLiteral();
 
 		final Set<Term> conjuncts = new HashSet<>();
 		for (final Set<NODE> set : constraint.getElementSets()) {
 			final Set<Term> disjuncts = new HashSet<>();
 			for (final NODE node : set) {
-				disjuncts.add(SmtUtils.binaryEquality(script,
-						constraint.getConstrainedElement().getTerm(),
-						node.getTerm()));
+				disjuncts.add(
+						SmtUtils.binaryEquality(script, constraint.getConstrainedElement().getTerm(), node.getTerm()));
 			}
 			conjuncts.add(SmtUtils.or(script, disjuncts));
 		}
 		return SmtUtils.and(script, conjuncts);
-//		final Set<Term> disjuncts = new HashSet<>();
-//		for (final NODE lit : constraint.) {
-//			disjuncts.add(SmtUtils.binaryEquality(script, en.getKey().getTerm(), lit.getTerm()));
-//		}
-//		return SmtUtils.or(script, disjuncts);
+		// final Set<Term> disjuncts = new HashSet<>();
+		// for (final NODE lit : constraint.) {
+		// disjuncts.add(SmtUtils.binaryEquality(script, en.getKey().getTerm(), lit.getTerm()));
+		// }
+		// return SmtUtils.or(script, disjuncts);
 	}
 
 	/**
 	 *
 	 * @param script
 	 * @param literalTerms
-	 * 			the set of all literals relevant in the current context (including theory literals)
+	 *            the set of all literals relevant in the current context (including theory literals)
 	 * @return a set of (distinct l1 l2) terms where l1 and l2 are not both theory literals and not identical
 	 */
 	public static List<Term> createDisequalityTermsForNonTheoryLiterals(final Script script,
 			final Set<Term> literalTerms) {
 		final List<Term> nonTheoryLiteralDisequalities = new ArrayList<>();
 		/*
-		 * the theory knows that normal constants are different from each other, also terms of different sorts
-		 *  --> don't add those disequalities
+		 * the theory knows that normal constants are different from each other, also terms of different sorts --> don't
+		 * add those disequalities
 		 */
-		final BiPredicate<Term, Term> pairSelector = (l1, l2) -> l1 != l2
-				&& (!(l1 instanceof ConstantTerm) || !(l2 instanceof ConstantTerm))
-				&& l1.getSort().getRealSort() == l2.getSort().getRealSort() ;
-		for (final Entry<Term, Term> en :
-				CrossProducts.binarySelectiveCrossProduct(literalTerms, false, pairSelector)) {
-					nonTheoryLiteralDisequalities
-							.add(script.term("not", SmtUtils.binaryEquality(script, en.getKey(), en.getValue())));
+		final BiPredicate<Term, Term> pairSelector =
+				(l1, l2) -> l1 != l2 && (!(l1 instanceof ConstantTerm) || !(l2 instanceof ConstantTerm))
+						&& l1.getSort().getRealSort() == l2.getSort().getRealSort();
+		for (final Entry<Term, Term> en : CrossProducts.binarySelectiveCrossProduct(literalTerms, false,
+				pairSelector)) {
+			nonTheoryLiteralDisequalities
+					.add(script.term("not", SmtUtils.binaryEquality(script, en.getKey(), en.getValue())));
 		}
 		return nonTheoryLiteralDisequalities;
 	}

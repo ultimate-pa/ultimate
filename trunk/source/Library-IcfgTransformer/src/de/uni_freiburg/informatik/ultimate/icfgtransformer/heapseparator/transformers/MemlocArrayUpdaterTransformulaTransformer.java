@@ -72,29 +72,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * Transformation rules (assuming a is a heap array group):
  * <ul>
- *  <li> havoc a (i.e., a is completely unconstrained in the given formula TODO: how to determine that??)
- *     --> conjoin a-loc-n := (const l_0) (for every dimension n)
- *  <li> a' = a[i:=v]
- *     -->  conjoin a-loc-1' = a-loc-1[i:=s] (where s is the literal belonging to that store term)
- *  <li> a' = a[i:=a[i][j:=v]]
- *     --> conjoin a-loc-1' = a-loc-1[i:=s]  /\ a-loc-2' = a-loc-2[i:=a-loc-2[i][j:=s']]
- *     (where s,s' are the literals belonging to those store terms)
- *  <li> a' = b (a an in-var b an out-var)
- *     --> conjoin a-loc-n' = b-loc-n (for every dimension n)
- *  <li> a = b (a, b being invars) --> error! forbidden syntax
+ * <li>havoc a (i.e., a is completely unconstrained in the given formula TODO: how to determine that??) --> conjoin
+ * a-loc-n := (const l_0) (for every dimension n)
+ * <li>a' = a[i:=v] --> conjoin a-loc-1' = a-loc-1[i:=s] (where s is the literal belonging to that store term)
+ * <li>a' = a[i:=a[i][j:=v]] --> conjoin a-loc-1' = a-loc-1[i:=s] /\ a-loc-2' = a-loc-2[i:=a-loc-2[i][j:=s']] (where
+ * s,s' are the literals belonging to those store terms)
+ * <li>a' = b (a an in-var b an out-var) --> conjoin a-loc-n' = b-loc-n (for every dimension n)
+ * <li>a = b (a, b being invars) --> error! forbidden syntax
  * </ul>
  *
  *
- * old (17/08/2018):
- * Performs the following steps:
+ * old (17/08/2018): Performs the following steps:
  * <ul>
- *  <li> introduce a fresh array-type variable, called the memloc-array
- *  <li> at each write to an array in the program, at location l with index variable i:
- *   <ul>
- *    <li> introduce a fresh memloc-literal "(l, i)" that represents this write location
- *    <li> update the memloc array like this: memloc[i] := (l,i);
- *   </ul>
- *  <li> make sure that all memloc-literals are assumed as distinct by the solver (may be done outside this class)
+ * <li>introduce a fresh array-type variable, called the memloc-array
+ * <li>at each write to an array in the program, at location l with index variable i:
+ * <ul>
+ * <li>introduce a fresh memloc-literal "(l, i)" that represents this write location
+ * <li>update the memloc array like this: memloc[i] := (l,i);
+ * </ul>
+ * <li>make sure that all memloc-literals are assumed as distinct by the solver (may be done outside this class)
  * </ul>
  *
  * @param <INLOC>
@@ -107,8 +103,8 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 	private final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> mEdgeToPositionToLocUpdateInfo;
 
-//	private final static boolean TRACK_CONSTANTS = false;
-//	private final Set<ConstantTerm> mAllConstantTerms;
+	// private final static boolean TRACK_CONSTANTS = false;
+	// private final Set<ConstantTerm> mAllConstantTerms;
 
 	private final int mMemLocLitCounter = 0;
 
@@ -131,16 +127,13 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 	private final IUltimateServiceProvider mServices;
 
-	public MemlocArrayUpdaterTransformulaTransformer(
-			final IUltimateServiceProvider services,
-			final ILogger logger,
-			final CfgSmtToolkit oldCsToolkit,
-			final MemlocArrayManager memlocArrayManager,
+	public MemlocArrayUpdaterTransformulaTransformer(final IUltimateServiceProvider services, final ILogger logger,
+			final CfgSmtToolkit oldCsToolkit, final MemlocArrayManager memlocArrayManager,
 			final List<IProgramVarOrConst> heapArrays,
 			final NestedMap2<EdgeInfo, SubtreePosition, ArrayEqualityLocUpdateInfo> edgeToPositionToLocUpdateInfo) {
 		mMgdScript = oldCsToolkit.getManagedScript();
 		mEdgeToPositionToLocUpdateInfo = edgeToPositionToLocUpdateInfo;
-//		mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
+		// mAllConstantTerms = TRACK_CONSTANTS ? new HashSet<>() : null;
 		mLocArrayManager = memlocArrayManager;
 		mStoreInfoToLocLiteral = new HashMap<>();
 		mHeapArrays = heapArrays;
@@ -171,7 +164,7 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 		final Set<IProgramConst> extraConstants = new HashSet<>();
 		final Set<TermVariable> extraAuxVars = new HashSet<>();
 		final Map<SubtreePosition, ArrayEqualityLocUpdateInfo> posToLocUpdateInfo =
-					mEdgeToPositionToLocUpdateInfo.get(edgeInfo);
+				mEdgeToPositionToLocUpdateInfo.get(edgeInfo);
 		if (posToLocUpdateInfo != null) {
 			final Map<SubtreePosition, Term> arrayEqualityPosToTermWithLocUpdates = new HashMap<>();
 			for (final Entry<SubtreePosition, ArrayEqualityLocUpdateInfo> en : posToLocUpdateInfo.entrySet()) {
@@ -184,7 +177,7 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 			transitionFormulaWithLocUpdates =
 					new PositionAwareSubstitution(mMgdScript, arrayEqualityPosToTermWithLocUpdates)
-						.transform(tf.getFormula());
+							.transform(tf.getFormula());
 		} else {
 			transitionFormulaWithLocUpdates = tf.getFormula();
 		}
@@ -193,12 +186,11 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 		// assuming the formula is in DNF
 		final List<Term> disjunctsWithLocUpdatesAndLocInitialization = new ArrayList<>();
-//		for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
-		for (final Term disjunct :
-			SmtUtils.getDisjuncts(SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula()))) {
+		// for (final Term disjunct : SmtUtils.getDisjuncts(tf.getFormula())) {
+		for (final Term disjunct : SmtUtils.getDisjuncts(SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula()))) {
 
-			if (!SmtUtils.isAtomicFormula(disjunct) &&
-					(!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or"))) {
+			if (!SmtUtils.isAtomicFormula(disjunct)
+					&& (!SmtUtils.isNNF(disjunct) || SmtUtils.containsFunctionApplication(disjunct, "or"))) {
 				throw new AssertionError("the code below only works for conjunctive formulas");
 			}
 
@@ -213,10 +205,9 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 					assert dimensionality > 0;
 					for (int dim = 1; dim <= dimensionality; dim++) {
 						final LocArrayInfo locArray = mLocArrayManager.getOrConstructLocArray(edgeInfo, ucv, dim);
-						final Term initConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(),
-								locArray.getTerm(),
+						final Term initConjunct = SmtUtils.binaryEquality(mMgdScript.getScript(), locArray.getTerm(),
 								locArray.getInitializingConstantArray());
-						//							mLocArrayManager.getInitConstantArrayForLocArray(locArray));
+						// mLocArrayManager.getInitConstantArrayForLocArray(locArray));
 						tfWithUpdatesAndInitConjuncts.add(initConjunct);
 					}
 				}
@@ -271,34 +262,33 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 		final UnmodifiableTransFormula newTf = tfBuilder.finishConstruction(mMgdScript);
 
-		assert (SmtUtils.checkSatTerm(mMgdScript.getScript(), oldEdge.getTransformula().getClosedFormula())
-					== LBool.UNSAT)
+		assert (SmtUtils.checkSatTerm(mMgdScript.getScript(),
+				oldEdge.getTransformula().getClosedFormula()) == LBool.UNSAT)
 				|| (SmtUtils.checkSatTerm(mMgdScript.getScript(), newTf.getClosedFormula()) != LBool.UNSAT);
 
 		return new TransformulaTransformationResult(newTf);
 	}
 
-//	/**
-//	 * Not this class's core concern but it also picks up all ConstantTerms in the program.
-//	 *
-//	 * EDIT 18/8/2018: I think this will not be needed anymore.. was needed when loc literals did not have their
-//	 *  own {@link Sort} to assert them being different from other literals
-//	 *
-//	 * @return
-//	 */
-//	@Deprecated
-//	public Set<ConstantTerm> getAllConstantTerms() {
-//		if (!TRACK_CONSTANTS) {
-//			throw new IllegalStateException();
-//		}
-//		return mAllConstantTerms;
-//	}
+	// /**
+	// * Not this class's core concern but it also picks up all ConstantTerms in the program.
+	// *
+	// * EDIT 18/8/2018: I think this will not be needed anymore.. was needed when loc literals did not have their
+	// * own {@link Sort} to assert them being different from other literals
+	// *
+	// * @return
+	// */
+	// @Deprecated
+	// public Set<ConstantTerm> getAllConstantTerms() {
+	// if (!TRACK_CONSTANTS) {
+	// throw new IllegalStateException();
+	// }
+	// return mAllConstantTerms;
+	// }
 
 	@Override
 	public void preprocessIcfg(final IIcfg<?> icfg) {
 		// do nothing
 	}
-
 
 	@Override
 	public String getName() {
@@ -317,88 +307,88 @@ public class MemlocArrayUpdaterTransformulaTransformer<INLOC extends IcfgLocatio
 
 }
 
-//class LocArrayUpdateInserter extends PositionAwareTermTransformer {
+// class LocArrayUpdateInserter extends PositionAwareTermTransformer {
 //
-//	Map<SubtreePosition, StoreInfo> mPosToStoreInfo;
-//	private Script mScript;
+// Map<SubtreePosition, StoreInfo> mPosToStoreInfo;
+// private Script mScript;
 //
-//	public LocArrayUpdateInserter() {
-//		// TODO Auto-generated constructor stub
-//	}
+// public LocArrayUpdateInserter() {
+// // TODO Auto-generated constructor stub
+// }
 //
-//	public Map<IProgramVar, TermVariable> getExtraInVars() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+// public Map<IProgramVar, TermVariable> getExtraInVars() {
+// // TODO Auto-generated method stub
+// return null;
+// }
 //
-//	public Set<TermVariable> getExtraAuxVars() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+// public Set<TermVariable> getExtraAuxVars() {
+// // TODO Auto-generated method stub
+// return null;
+// }
 //
-//	public Set<IProgramConst> getExtraConstants() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+// public Set<IProgramConst> getExtraConstants() {
+// // TODO Auto-generated method stub
+// return null;
+// }
 //
-//	public Map<IProgramVar, TermVariable> getExtraOutVars() {
-//		// TODO Auto-generated method stub
-//		return null;
-//	}
+// public Map<IProgramVar, TermVariable> getExtraOutVars() {
+// // TODO Auto-generated method stub
+// return null;
+// }
 //
-//	@Override
-//	protected void convert(final Term term, final SubtreePosition pos) {
-//		final StoreInfo storeInfo = mPosToStoreInfo.get(pos);
-//		if (storeInfo != null) {
-//			assert SmtUtils.isFunctionApplication(term, "store");
+// @Override
+// protected void convert(final Term term, final SubtreePosition pos) {
+// final StoreInfo storeInfo = mPosToStoreInfo.get(pos);
+// if (storeInfo != null) {
+// assert SmtUtils.isFunctionApplication(term, "store");
 //
-//			enqueueWalker(item);
-////			final List<Term> conjuncts = new ArrayList<>(storeInfo.getDimension() + 1);
-////			// keep the original term
-////			conjuncts.add(term);
-////			/*
-////			 * For each dimension of t
-////			 */
-////			for (int i = 0; i < storeInfo.getDimension(); i++) {
+// enqueueWalker(item);
+//// final List<Term> conjuncts = new ArrayList<>(storeInfo.getDimension() + 1);
+//// // keep the original term
+//// conjuncts.add(term);
+//// /*
+//// * For each dimension of t
+//// */
+//// for (int i = 0; i < storeInfo.getDimension(); i++) {
 ////
-////			}
-////			setResult(SmtUtils.and(mScript, conjuncts));
-//		} else {
-//			// leave term unchanged
-//			super.convert(term, pos);
-//		}
-//	}
+//// }
+//// setResult(SmtUtils.and(mScript, conjuncts));
+// } else {
+// // leave term unchanged
+// super.convert(term, pos);
+// }
+// }
 //
-//	protected static class BuildConjunction implements Walker {
+// protected static class BuildConjunction implements Walker {
 //
-//		// how many terms to pop from the converted stack and put into the result conjunction
-//		int mNumberOfConjuncts;
+// // how many terms to pop from the converted stack and put into the result conjunction
+// int mNumberOfConjuncts;
 //
-//		// a script to construct the fresh term
-//		Script mScript;
+// // a script to construct the fresh term
+// Script mScript;
 //
-//		public BuildConjunction(final int noConjuncts, final Script script) {
-//			mNumberOfConjuncts = noConjuncts;
-//			mScript = script;
-//		}
+// public BuildConjunction(final int noConjuncts, final Script script) {
+// mNumberOfConjuncts = noConjuncts;
+// mScript = script;
+// }
 //
-//		@Override
-//		public void walk(final NonRecursive engine) {
-//			final LocArrayUpdateInserter transformer = (LocArrayUpdateInserter) engine;
+// @Override
+// public void walk(final NonRecursive engine) {
+// final LocArrayUpdateInserter transformer = (LocArrayUpdateInserter) engine;
 //
-//			final Term[] conjuncts = new Term[mNumberOfConjuncts];
+// final Term[] conjuncts = new Term[mNumberOfConjuncts];
 //
-//			for (int i = 0; i < mNumberOfConjuncts; i++) {
-//				conjuncts[i] = transformer.getConverted();
-//			}
+// for (int i = 0; i < mNumberOfConjuncts; i++) {
+// conjuncts[i] = transformer.getConverted();
+// }
 //
-//			transformer.setResult(SmtUtils.and(mScript, conjuncts));
-//		}
+// transformer.setResult(SmtUtils.and(mScript, conjuncts));
+// }
 //
-//		@Override
-//		public String toString() {
-//			return "and\\^" + mNumberOfConjuncts;
-//		}
-//	}
+// @Override
+// public String toString() {
+// return "and\\^" + mNumberOfConjuncts;
+// }
+// }
 //
-//}
+// }

@@ -246,8 +246,7 @@ public class PredicateUtils {
 			assert con.getTheory().equals(script.getTheory());
 		}
 
-		final Set<TermVariable> notYetSubst = new HashSet<>();
-		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
+		final Set<TermVariable> notYetSubst = new HashSet<>(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans;
 
 		fTrans = ((HistoryRecordingScript) script).transferTermToWorker(tf.getFormula());

@@ -30,13 +30,12 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * This interface describes the object that is passed to {@link IController#init(ICore, ILoggingService)}.
@@ -97,13 +96,14 @@ public interface ICore<T> {
 	 *
 	 * @param absolutePath
 	 *            An absolute path to a .epf settings file compatible with Ultimate's settings.
-	 * @param silent TODO
+	 * @param silent
+	 *            TODO
 	 */
 	void loadPreferences(String absolutePath, boolean silent);
 
 	/**
 	 * Reset all preferences to their default values.
-	 * 
+	 *
 	 * @param silent
 	 *            Log the reset
 	 */

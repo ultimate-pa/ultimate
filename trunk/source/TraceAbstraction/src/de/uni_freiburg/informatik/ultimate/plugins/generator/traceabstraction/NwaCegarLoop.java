@@ -350,9 +350,9 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mIcfg, allowedTransitions, Collections.emptySet(), x -> true);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 		final PredicateFactory predicateFactory = mPredicateFactory;
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
-				mCsToolkit.getManagedScript(), predicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final IPredicateUnifier predicateUnifier =
+				new PredicateUnifier(mLogger, getServices(), mCsToolkit.getManagedScript(), predicateFactory,
+						mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA);
 		final IPredicate precondition = predicateUnifier.getTruePredicate();
 		final DangerInvariantGuesser dig = new DangerInvariantGuesser(pathProgram, getServices(), precondition,
 				predicateFactory, predicateUnifier, mCsToolkit);
@@ -490,17 +490,18 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				}
 			}
 
-			// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
-			// mPredicateFactoryResultChecking, mCounterexample, false);
-			if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())
-					&& (mFaultLocalizationMode != RelevanceAnalysisMode.NONE)) {
-				final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
-						getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
-						mPref.interprocedural(), mPredicateFactory);
-				mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
-						mRefinementResult.getPredicateUnifier(), mSimplificationTechnique,
-						mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
-						(IIcfg<IcfgLocation>) mIcfg);
+			if (mErrorGeneralizationEngine.hasAutomatonInIteration(getIteration())) {
+				mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
+						mPredicateFactoryResultChecking, mCounterexample, false);
+				if (mFaultLocalizationMode != RelevanceAnalysisMode.NONE) {
+					final INestedWordAutomaton<L, IPredicate> cfg = Cfg2Automaton.constructAutomatonWithSPredicates(
+							getServices(), super.mIcfg, mStateFactoryForRefinement, super.mErrorLocs,
+							mPref.interprocedural(), mPredicateFactory);
+					mErrorGeneralizationEngine.faultLocalizationWithStorage(cfg, mCsToolkit, mPredicateFactory,
+							mRefinementResult.getPredicateUnifier(), mSimplificationTechnique,
+							mIcfg.getCfgSmtToolkit().getSymbolTable(), null, (NestedRun<L, IPredicate>) mCounterexample,
+							(IIcfg<IcfgLocation>) mIcfg);
+				}
 			}
 
 			if (mPref.dumpAutomata()) {
@@ -666,15 +667,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	}
 
 	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
-		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
+		return switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
 				CounterexampleSearchStrategy.class)) {
-		case BFS:
-			return SearchStrategy.BFS;
-		case DFS:
-			return SearchStrategy.DFS;
-		default:
-			throw new IllegalArgumentException();
-		}
+		case BFS -> SearchStrategy.BFS;
+		case DFS -> SearchStrategy.DFS;
+		};
 	}
 
 	@Override

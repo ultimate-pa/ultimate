@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
 /**
  * Operation that reduces a given nwa by using {@link FairSimulation}. <br/>
  * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of nwa
@@ -54,7 +54,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -73,7 +73,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -95,7 +95,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory

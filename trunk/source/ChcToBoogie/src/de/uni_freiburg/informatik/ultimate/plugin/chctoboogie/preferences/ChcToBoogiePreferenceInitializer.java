@@ -43,9 +43,7 @@ public class ChcToBoogiePreferenceInitializer extends UltimatePreferenceInitiali
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Boolean>(ENCODE_AS_GOTO_PROGRAM, ENCODE_AS_GOTO_PROGRAM_DEFAULT,
-						PreferenceType.Boolean),
-		};
+		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>(ENCODE_AS_GOTO_PROGRAM,
+				ENCODE_AS_GOTO_PROGRAM_DEFAULT, PreferenceType.Boolean), };
 	}
 }

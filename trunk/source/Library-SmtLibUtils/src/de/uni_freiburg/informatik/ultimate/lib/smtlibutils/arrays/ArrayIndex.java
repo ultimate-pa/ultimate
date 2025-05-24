@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class ArrayIndex implements List<Term> {
 
 	private final List<Term> mIndexEntries;
-
 
 	public ArrayIndex() {
 		mIndexEntries = Collections.emptyList();
@@ -184,10 +184,7 @@ public class ArrayIndex implements List<Term> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mIndexEntries == null) ? 0 : mIndexEntries.hashCode());
-		return result;
+		return Objects.hash(mIndexEntries);
 	}
 
 	@Override
@@ -228,8 +225,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Returns an new {@link ArrayIndex} that consists of the first k entries of
-	 * this index.
+	 * Returns an new {@link ArrayIndex} that consists of the first k entries of this index.
 	 */
 	public ArrayIndex getFirst(final int k) {
 		final List<Term> indexEntries = new ArrayList<>();
@@ -240,8 +236,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Returns an new {@link ArrayIndex} that consists of the last k entries of this
-	 * index.
+	 * Returns an new {@link ArrayIndex} that consists of the last k entries of this index.
 	 */
 	public ArrayIndex getLast(final int k) {
 		final List<Term> indexEntries = new ArrayList<>();
@@ -250,7 +245,6 @@ public class ArrayIndex implements List<Term> {
 		}
 		return new ArrayIndex(indexEntries);
 	}
-
 
 	/**
 	 * Returns the free variable of all entries.
@@ -274,8 +268,8 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Return a new {@link ArrayIndex} whose entries are the elements of
-	 * newIndexEntries followed by the entries of this.
+	 * Return a new {@link ArrayIndex} whose entries are the elements of newIndexEntries followed by the entries of
+	 * this.
 	 */
 	public ArrayIndex appendEntriesAtBeginning(final List<Term> newIndexEntries) {
 		final List<Term> resultEntries = new ArrayList<>(newIndexEntries);
@@ -284,19 +278,18 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Construct new array index in which the substitution defined by the given
-	 * mapping was applied to all indices.
+	 * Construct new array index in which the substitution defined by the given mapping was applied to all indices.
 	 */
 	public ArrayIndex applySubstitution(final ManagedScript mgdScript,
 			final Map<? extends Term, ? extends Term> substitutionMapping) {
-		final ArrayIndex translatedIndex = new ArrayIndex(this.stream()
-				.map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList()));
+		final ArrayIndex translatedIndex = new ArrayIndex(
+				stream().map(x -> Substitution.apply(mgdScript, substitutionMapping, x)).collect(Collectors.toList()));
 		return translatedIndex;
 	}
 
 	/**
-	 * Appends to each {@link ArrayIndex} in list indices the newIndexEntries. Does
-	 * not modify existing objects but return new objects.
+	 * Appends to each {@link ArrayIndex} in list indices the newIndexEntries. Does not modify existing objects but
+	 * return new objects.
 	 */
 	public static List<ArrayIndex> appendEntriesAtBeginning(final List<ArrayIndex> indices,
 			final List<Term> newIndexEntries) {
@@ -308,8 +301,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Construct conjunction that says that both {@link ArrayIndex} are equivalent
-	 * at all positions.
+	 * Construct conjunction that says that both {@link ArrayIndex} are equivalent at all positions.
 	 */
 	public static Term constructIndexEquality(final Script script, final ArrayIndex index1, final ArrayIndex index2) {
 		assert index1.size() == index2.size();
@@ -321,8 +313,7 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Construct disjunction that says that both {@link ArrayIndex} are different at
-	 * at least one positions.
+	 * Construct disjunction that says that both {@link ArrayIndex} are different at at least one positions.
 	 */
 	public static Term constructIndexNotEquals(final Script script, final ArrayIndex index1, final ArrayIndex index2) {
 		assert index1.size() == index2.size();
@@ -334,19 +325,17 @@ public class ArrayIndex implements List<Term> {
 	}
 
 	/**
-	 * Construct a new {@link ArrayIndex} that is the pairwise difference of this
-	 * {@link ArrayIndex} and some other {@link ArrayIndex}. This operation makes
-	 * only sense for sorts that are supported by {@link SmtUtils#minus}, e.g.,
+	 * Construct a new {@link ArrayIndex} that is the pairwise difference of this {@link ArrayIndex} and some other
+	 * {@link ArrayIndex}. This operation makes only sense for sorts that are supported by {@link SmtUtils#minus}, e.g.,
 	 * numeric sort and bitvector sort.
 	 */
 	public ArrayIndex minus(final Script script, final ArrayIndex subtrahend) {
 		final Term[] resultArray = new Term[size()];
-		for (int i=0; i<size(); i++) {
-			resultArray[i] = SmtUtils.minus(script, this.get(i), subtrahend.get(i));
+		for (int i = 0; i < size(); i++) {
+			resultArray[i] = SmtUtils.minus(script, get(i), subtrahend.get(i));
 		}
 		return new ArrayIndex(resultArray);
 
 	}
-
 
 }

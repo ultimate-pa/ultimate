@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
@@ -276,15 +276,10 @@ public final class DataRaceChecker {
 		// Non-heap LHS whose root variable is not global do not admit races. Even when passed to other threads, they
 		// are either copied (primitives, structs) or passed via pointer (but then they must be on heap!).
 		final VariableLHS varLhs = getRootLhs(((LocalLValue) lrVal).getLhs());
-		switch (varLhs.getDeclarationInformation().getStorageClass()) {
-		case LOCAL:
-		case IMPLEMENTATION_INPARAM:
-		case IMPLEMENTATION_OUTPARAM:
-		case PROC_FUNC:
-			return true;
-		default:
-			return false;
-		}
+		return switch (varLhs.getDeclarationInformation().getStorageClass()) {
+		case LOCAL, IMPLEMENTATION_INPARAM, IMPLEMENTATION_OUTPARAM, PROC_FUNC -> true;
+		case GLOBAL, IMPLEMENTATION, PROC_FUNC_INPARAM, PROC_FUNC_OUTPARAM, QUANTIFIED -> false;
+		};
 	}
 
 	private static VariableLHS getRootLhs(LeftHandSide lhs) {
@@ -324,7 +319,7 @@ public final class DataRaceChecker {
 		return Arrays.stream(getRaceLhs(loc, lrVal)).map(CTranslationUtil::convertLhsToExpression);
 	}
 
-	private int getTypeSize(final ILocation loc, final CType type) {
+	private int getTypeSize(final ILocation loc, final ICType type) {
 		final Expression operandTypeByteSizeExp = mTypeSizeComputer.constructBytesizeExpression(loc, type);
 		return mTypeSizes.extractIntegerValue(operandTypeByteSizeExp, mTypeSizeComputer.getSizeT()).intValueExact();
 	}
@@ -338,9 +333,8 @@ public final class DataRaceChecker {
 			final String name = "#race" + ((VariableLHS) lhs).getIdentifier();
 			final VariableLHS raceLhs = new VariableLHS(loc, getRaceIndicatorType(lhs.getType()), name,
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
-			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType())
-					.equals(raceLhs.getType()) : "Ambiguous types for " + name + ": " + mRaceIndicators.get(name)
-							+ " vs. " + raceLhs.getType();
+			assert mRaceIndicators.getOrDefault(name, (BoogieType) raceLhs.getType()).equals(raceLhs.getType())
+					: "Ambiguous types for " + name + ": " + mRaceIndicators.get(name) + " vs. " + raceLhs.getType();
 			mRaceIndicators.put(name, (BoogieType) raceLhs.getType());
 			return raceLhs;
 		}

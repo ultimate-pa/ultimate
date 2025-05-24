@@ -44,245 +44,237 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * @date 11.09.2012
  */
 public class BoogieStructType extends BoogieType {
-    /**
-     * Serial unique identifier.
-     */
-    private static final long serialVersionUID = -1467920629539012234L;
-    /**
-     * Whether this type is finite or not.
-     */
-    private final boolean isFinite;
-    /**
-     * Field names.
-     */
-    private final String[] fNames;
-    /**
-     * Field types.
-     */
-    private final BoogieType[] fTypes;
-    /**
-     * The underlying real type.
-     */
-    private final BoogieType realType;
+	/**
+	 * Serial unique identifier.
+	 */
+	private static final long serialVersionUID = -1467920629539012234L;
+	/**
+	 * Whether this type is finite or not.
+	 */
+	private final boolean isFinite;
+	/**
+	 * Field names.
+	 */
+	private final String[] fNames;
+	/**
+	 * Field types.
+	 */
+	private final BoogieType[] fTypes;
+	/**
+	 * The underlying real type.
+	 */
+	private final BoogieType realType;
 
-    /**
-     * Constructor.
-     *
-     * @param fNames
-     *            a list of field names.
-     * @param fTypes
-     *            a list of type names.
-     */
-    BoogieStructType(final String[] fNames, final BoogieType[] fTypes) {
-        assert fNames.length == fTypes.length;
-        this.fNames = fNames;
-        this.fTypes = fTypes;
-        boolean changed = false;
-        boolean finite = true;
-        final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
-        for (int i = 0; i < getFieldCount(); i++) {
-            newFTypes[i] = fTypes[i].getUnderlyingType();
-            if (newFTypes[i] != fTypes[i]) {
+	/**
+	 * Constructor.
+	 *
+	 * @param fNames
+	 *            a list of field names.
+	 * @param fTypes
+	 *            a list of type names.
+	 */
+	BoogieStructType(final String[] fNames, final BoogieType[] fTypes) {
+		assert fNames.length == fTypes.length;
+		this.fNames = fNames;
+		this.fTypes = fTypes;
+		boolean changed = false;
+		boolean finite = true;
+		final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
+		for (int i = 0; i < getFieldCount(); i++) {
+			newFTypes[i] = fTypes[i].getUnderlyingType();
+			if (newFTypes[i] != fTypes[i]) {
 				changed = true;
 			}
-            if (finite && fTypes[i].isFinite()) {
+			if (finite && fTypes[i].isFinite()) {
 				finite = false;
 			}
-        }
-        if (changed) {
+		}
+		if (changed) {
 			realType = createStructType(fNames, newFTypes);
 		} else {
 			realType = this;
 		}
-        isFinite = finite;
-    }
+		isFinite = finite;
+	}
 
-    @Override
-    protected BoogieType substitutePlaceholders(final int depth,
-            final BoogieType[] substType) {
-        if (getFieldCount() == 0) {
+	@Override
+	protected BoogieType substitutePlaceholders(final int depth, final BoogieType[] substType) {
+		if (getFieldCount() == 0) {
 			return this;
 		}
-        final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
-        boolean changed = false;
-        for (int i = 0; i < getFieldCount(); i++) {
-            newFTypes[i] = fTypes[i].substitutePlaceholders(depth, substType);
-            if (newFTypes[i] != fTypes[i]) {
+		final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
+		boolean changed = false;
+		for (int i = 0; i < getFieldCount(); i++) {
+			newFTypes[i] = fTypes[i].substitutePlaceholders(depth, substType);
+			if (newFTypes[i] != fTypes[i]) {
 				changed = true;
 			}
-        }
-        if (!changed) {
+		}
+		if (!changed) {
 			return this;
 		}
-        return createStructType(fNames, newFTypes);
-    }
+		return createStructType(fNames, newFTypes);
+	}
 
-    @Override
-    protected BoogieType incrementPlaceholders(final int depth, final int incDepth) {
-        if (getFieldCount() == 0) {
+	@Override
+	protected BoogieType incrementPlaceholders(final int depth, final int incDepth) {
+		if (getFieldCount() == 0) {
 			return this;
 		}
-        final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
-        boolean changed = false;
-        for (int i = 0; i < getFieldCount(); i++) {
-            newFTypes[i] = fTypes[i].incrementPlaceholders(depth, incDepth);
-            if (newFTypes[i] != fTypes[i]) {
+		final BoogieType[] newFTypes = new BoogieType[getFieldCount()];
+		boolean changed = false;
+		for (int i = 0; i < getFieldCount(); i++) {
+			newFTypes[i] = fTypes[i].incrementPlaceholders(depth, incDepth);
+			if (newFTypes[i] != fTypes[i]) {
 				changed = true;
 			}
-        }
-        if (!changed) {
+		}
+		if (!changed) {
 			return this;
 		}
-        return createStructType(fNames, fTypes);
-    }
+		return createStructType(fNames, fTypes);
+	}
 
-    @Override
-    public BoogieType getUnderlyingType() {
-        return realType;
-    }
+	@Override
+	public BoogieType getUnderlyingType() {
+		return realType;
+	}
 
-    @Override
-    protected boolean unify(final int depth, final BoogieType other,
-            final BoogieType[] substitution) {
-        if (!(other instanceof BoogieStructType)) {
+	@Override
+	protected boolean unify(final int depth, final BoogieType other, final BoogieType[] substitution) {
+		if (!(other instanceof BoogieStructType)) {
 			return false;
 		}
-        final BoogieStructType type = (BoogieStructType) other;
-        if (isFinite() != type.isFinite()) {
+		final BoogieStructType type = (BoogieStructType) other;
+		if (isFinite() != type.isFinite()) {
 			return false;
 		}
-        for (final String f : fNames) {
-            if (!getFieldType(f).unify(depth, type.getFieldType(f),
-                    substitution)) {
+		for (final String f : fNames) {
+			if (!getFieldType(f).unify(depth, type.getFieldType(f), substitution)) {
 				return false;
 			}
-        }
-        return true;
-    }
+		}
+		return true;
+	}
 
-    @Override
-    protected boolean hasPlaceholder(final int minDepth, final int maxDepth) {
-        for (final BoogieType t : fTypes) {
-            if (t.hasPlaceholder(minDepth, maxDepth)) {
+	@Override
+	protected boolean hasPlaceholder(final int minDepth, final int maxDepth) {
+		for (final BoogieType t : fTypes) {
+			if (t.hasPlaceholder(minDepth, maxDepth)) {
 				return true;
 			}
-        }
-        return false;
-    }
+		}
+		return false;
+	}
 
-    @Override
-    protected boolean isUnifiableTo(final int depth, final BoogieType other,
-            final ArrayList<BoogieType> subst) {
-        if (this == other || other == TYPE_ERROR) {
+	@Override
+	protected boolean isUnifiableTo(final int depth, final BoogieType other, final ArrayList<BoogieType> subst) {
+		if (this == other || other == TYPE_ERROR) {
 			return true;
 		}
-        if (!(other instanceof BoogieStructType)) {
+		if (!(other instanceof BoogieStructType)) {
 			return false;
 		}
-        final BoogieStructType type = (BoogieStructType) other;
-        if (isFinite() != type.isFinite()) {
+		final BoogieStructType type = (BoogieStructType) other;
+		if (isFinite() != type.isFinite()) {
 			return false;
 		}
-        for (final String f : fNames) {
-            if (!getFieldType(f).isUnifiableTo(depth, type.getFieldType(f),
-                    subst)) {
+		for (final String f : fNames) {
+			if (!getFieldType(f).isUnifiableTo(depth, type.getFieldType(f), subst)) {
 				return false;
 			}
-        }
-        return true;
-    }
+		}
+		return true;
+	}
 
-    /**
-     * Get the number of fields in this struct.
-     *
-     * @return the number of fields.
-     */
-    public int getFieldCount() {
-        return fNames.length;
-    }
+	/**
+	 * Get the number of fields in this struct.
+	 *
+	 * @return the number of fields.
+	 */
+	public int getFieldCount() {
+		return fNames.length;
+	}
 
-    /**
-     * Returns the field type, i.e. the type of the field at the given index.
-     *
-     * @param id
-     *            the fields id.
-     * @return the field type.
-     */
-    public BoogieType getFieldType(final String id) {
-        final int idx = Arrays.asList(fNames).indexOf(id);
-        if (idx < 0) {
-            throw new IllegalArgumentException("Field '" + id
-                    + "' not in struct!");
-        }
-        return fTypes[idx];
-    }
+	/**
+	 * Returns the field type, i.e. the type of the field at the given index.
+	 *
+	 * @param id
+	 *            the fields id.
+	 * @return the field type.
+	 */
+	public BoogieType getFieldType(final String id) {
+		final int idx = Arrays.asList(fNames).indexOf(id);
+		if (idx < 0) {
+			throw new IllegalArgumentException("Field '" + id + "' not in struct!");
+		}
+		return fTypes[idx];
+	}
 
-    /**
-     * Returns the type of the field at the given index.
-     *
-     * @param idx
-     *            the fields index.
-     * @return the field type.
-     */
-    public BoogieType getFieldType(final int idx) {
-        return fTypes[idx];
-    }
+	/**
+	 * Returns the type of the field at the given index.
+	 *
+	 * @param idx
+	 *            the fields index.
+	 * @return the field type.
+	 */
+	public BoogieType getFieldType(final int idx) {
+		return fTypes[idx];
+	}
 
-    /**
-     * Returns the set of fields in this struct.
-     *
-     * @return the set of fields in this struct.
-     */
-    public String[] getFieldIds() {
-        return fNames.clone();
-    }
+	/**
+	 * Returns the set of fields in this struct.
+	 *
+	 * @return the set of fields in this struct.
+	 */
+	public String[] getFieldIds() {
+		return fNames.clone();
+	}
 
-    /**
-     * Returns the set of types in this struct.
-     *
-     * @return the set of types in this struct.
-     */
-    public BoogieType[] getFieldTypes() {
-        return fTypes.clone();
-    }
+	/**
+	 * Returns the set of types in this struct.
+	 *
+	 * @return the set of types in this struct.
+	 */
+	public BoogieType[] getFieldTypes() {
+		return fTypes.clone();
+	}
 
-    @Override
-    protected String toString(final int depth, final boolean needParentheses) {
-        final StringBuilder sb = new StringBuilder();
-        if (needParentheses) {
+	@Override
+	protected String toString(final int depth, final boolean needParentheses) {
+		final StringBuilder sb = new StringBuilder();
+		if (needParentheses) {
 			sb.append("(");
 		}
-        sb.append("{ ");
-        String comma = "";
-        for (int i = 0; i < getFieldCount(); i++) {
-            sb.append(comma);
-            sb.append(fNames[i]).append(":");
-            sb.append(fTypes[i].toString(depth + 1, false));
-            comma = ", ";
-        }
-        sb.append(" }");
-        if (needParentheses) {
+		sb.append("{ ");
+		String comma = "";
+		for (int i = 0; i < getFieldCount(); i++) {
+			sb.append(comma);
+			sb.append(fNames[i]).append(":");
+			sb.append(fTypes[i].toString(depth + 1, false));
+			comma = ", ";
+		}
+		sb.append(" }");
+		if (needParentheses) {
 			sb.append(")");
 		}
-        return sb.toString();
-    }
+		return sb.toString();
+	}
 
 	@Override
 	protected ASTType toASTType(final ILocation loc, final int depth) {
 		final VarList[] varlist = new VarList[fNames.length];
 		for (int i = 0; i < fNames.length; i++) {
-			varlist[i] = new VarList(loc, new String[] { fNames[i] },
-					fTypes[i].toASTType(loc, depth));
+			varlist[i] = new VarList(loc, new String[] { fNames[i] }, fTypes[i].toASTType(loc, depth));
 		}
-		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
-			StructType(loc, this, varlist);
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.StructType(loc, this, varlist);
 	}
 
-    @Override
-    public boolean isFinite() {
-        if (realType != this) {
+	@Override
+	public boolean isFinite() {
+		if (realType != this) {
 			return realType.isFinite();
 		}
-        return isFinite;
-    }
+		return isFinite;
+	}
 }

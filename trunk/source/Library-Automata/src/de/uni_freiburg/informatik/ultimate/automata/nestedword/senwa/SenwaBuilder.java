@@ -84,8 +84,7 @@ public final class SenwaBuilder<LETTER, STATE> extends
 		mStateFactory = stateFactory;
 		mNwa = nwa;
 		mLogger.info(startMessage());
-		mSenwa = new Senwa<>(mServices, mNwa.getVpAlphabet(),
-				stateFactory);
+		mSenwa = new Senwa<>(mServices, mNwa.getVpAlphabet(), stateFactory);
 		new SenwaWalker<>(mServices, mSenwa, this, true);
 		mLogger.info(exitMessage());
 	}

@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * A simple {@link ILinearInequalityInvariantPatternStrategy}, generating
- * location-independent invariant patterns (templates), i.e. it computes for each location
- * the same invariant pattern.
+ * A simple {@link ILinearInequalityInvariantPatternStrategy}, generating location-independent invariant patterns
+ * (templates), i.e. it computes for each location the same invariant pattern.
+ *
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  */
 public abstract class LocationIndependentLinearInequalityInvariantPatternStrategy
@@ -63,13 +63,13 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	 * Generates a simple linear inequality invariant pattern strategy.
 	 *
 	 * @param maxRounds
-	 *            maximal number of rounds to be announced by
-	 *            {@link #getMaxRounds()}.
+	 *            maximal number of rounds to be announced by {@link #getMaxRounds()}.
 	 * @param patternVariables
 	 * @param allProgramVariables
 	 */
-	public LocationIndependentLinearInequalityInvariantPatternStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
-			final int maxRounds, final Set<IProgramVar> allProgramVariables, final Set<IProgramVar> patternVariables,
+	public LocationIndependentLinearInequalityInvariantPatternStrategy(
+			final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, final int maxRounds,
+			final Set<IProgramVar> allProgramVariables, final Set<IProgramVar> patternVariables,
 			final boolean alwaysStrictAndNonStrictCopies, final boolean useStrictInequalitiesAlternatingly) {
 		mDimensionsStrategy = dimensionsStrat;
 		this.maxRounds = maxRounds;
@@ -97,22 +97,19 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		// Build invariant pattern
 		final Dnf<AbstractLinearInvariantPattern> disjunction = new Dnf<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
-			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
-					dimensions[1]);
+			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(dimensions[1]);
 			for (int j = 0; j < dimensions[1]; j++) {
-				boolean[] invariantPatternCopies = new boolean[] { false };
-				if (mUseStrictInequalitiesAlternatingly) {
-					// if it is an odd conjunct, then construct a strict inequality
-					if (j % 2 == 1) {
-						invariantPatternCopies = new boolean[] { true };
-					}
+				boolean[] invariantPatternCopies = { false };
+				// if it is an odd conjunct, then construct a strict inequality
+				if (mUseStrictInequalitiesAlternatingly && (j % 2 == 1)) {
+					invariantPatternCopies = new boolean[] { true };
 				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
 				}
 				for (final boolean strict : invariantPatternCopies) {
-					final LinearPatternBase inequality = new LinearPatternBase (
-							solver, getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
+					final LinearPatternBase inequality = new LinearPatternBase(solver,
+							getPatternVariablesForLocation(location, round), prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
 					// Add the coefficients of the inequality to our set of pattern coefficients
 					patternCoefficients.addAll(inequality.getCoefficients());
@@ -126,33 +123,41 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 
 	@Override
 	public Set<Term> getPatternCoefficientsForLocation(final IcfgLocation location) {
-		assert mLoc2PatternCoefficents.containsKey(location) : "No coefficients available for the location: " + location;
+		assert mLoc2PatternCoefficents.containsKey(location)
+				: "No coefficients available for the location: " + location;
 		return Collections.unmodifiableSet(mLoc2PatternCoefficents.get(location));
 	}
 
 	@Override
 	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix, final Set<IProgramVar> vars) {
-		throw new UnsupportedOperationException("Location independent strategies do not support this kind of pattern construction.");
+		throw new UnsupportedOperationException(
+				"Location independent strategies do not support this kind of pattern construction.");
 	}
 
 	@Override
 	public void setNumOfConjunctsForLocation(final IcfgLocation location, final int maxNumOfConjuncts) {
-		throw new UnsupportedOperationException("Location independent strategies do not support location-dependent pattern settings.");
+		throw new UnsupportedOperationException(
+				"Location independent strategies do not support location-dependent pattern settings.");
 	}
+
 	@Override
 	public void setNumOfDisjunctsForLocation(final IcfgLocation location, final int maxNumOfDisjuncts) {
-		throw new UnsupportedOperationException("Location independent strategies do not support location-dependent pattern settings.");
+		throw new UnsupportedOperationException(
+				"Location independent strategies do not support location-dependent pattern settings.");
 	}
 
 	@Override
 	public void changePatternSettingForLocation(final IcfgLocation location, final int round) {
-		throw new UnsupportedOperationException("Location independent strategies do not support dynamic setting changes.");
+		throw new UnsupportedOperationException(
+				"Location independent strategies do not support dynamic setting changes.");
 	}
 
 	@Override
-	public void changePatternSettingForLocation(final IcfgLocation location, final int round, final Set<IcfgLocation> locationsInUnsatCore) {
-		throw new UnsupportedOperationException("Location independent strategies do not support dynamic setting changes.");
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round,
+			final Set<IcfgLocation> locationsInUnsatCore) {
+		throw new UnsupportedOperationException(
+				"Location independent strategies do not support dynamic setting changes.");
 	}
 
 	/**

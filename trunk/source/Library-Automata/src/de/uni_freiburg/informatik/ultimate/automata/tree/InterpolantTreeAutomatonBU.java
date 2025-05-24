@@ -11,9 +11,7 @@ public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> ext
 
 	private final ISemanticReducerFactory<STATE, LETTER> mReducer;
 
-
 	public <SF extends ISemanticReducerFactory<STATE, LETTER>> InterpolantTreeAutomatonBU(final SF fac) {
-		super();
 		mReducer = fac;
 	}
 
@@ -29,14 +27,12 @@ public class InterpolantTreeAutomatonBU<LETTER extends IRankedLetter, STATE> ext
 			dest.add(s);
 		}
 		return mReducer.getOptimalDestination(getStates(), source, letter, dest);
-	//	return mReducer.filter(super.getSuccessors(source, letter));
+		// return mReducer.filter(super.getSuccessors(source, letter));
 	}
 
 	/*
-	@Override
-	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter) {
-		return mReducer.reduceRules(super.getSuccessors(letter));
-	}
-	*/
+	 * @Override public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final LETTER letter) { return
+	 * mReducer.reduceRules(super.getSuccessors(letter)); }
+	 */
 
 }

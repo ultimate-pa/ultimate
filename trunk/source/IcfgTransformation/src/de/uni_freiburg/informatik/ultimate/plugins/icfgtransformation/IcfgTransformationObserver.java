@@ -364,16 +364,16 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		return icfgTransformer.getResult();
 	}
 
+	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC>
+			applyAbstractInterpretationBasedSimplification(final ILogger logger, final IIcfg<INLOC> icfg,
+					final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+					final IcfgTransformationBacktranslator backtranslationTracker, final ReplacementVarFactory fac,
+					final IUltimateServiceProvider services) {
 
-	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyAbstractInterpretationBasedSimplification(
-			final ILogger logger, final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac,
-			final Class<OUTLOC> outlocClass, final IcfgTransformationBacktranslator backtranslationTracker,
-			final ReplacementVarFactory fac, final IUltimateServiceProvider services) {
-
-		final Map<IcfgLocation, IPredicate> invariants = ConjunctiveAbstractInterpretationUtils.computeInvariants(services,
-				icfg, Widening.INTERSECTION);
-		final InvariantBasedSimplification transformer = new InvariantBasedSimplification(services, logger,
-				icfg.getCfgSmtToolkit(), invariants);
+		final Map<IcfgLocation, IPredicate> invariants =
+				ConjunctiveAbstractInterpretationUtils.computeInvariants(services, icfg, Widening.INTERSECTION);
+		final InvariantBasedSimplification transformer =
+				new InvariantBasedSimplification(services, logger, icfg.getCfgSmtToolkit(), invariants);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		logger.info(String.format(
@@ -389,8 +389,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IUltimateServiceProvider services, final ConstraintsForBitwiseOperations cfbo) {
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		final BvToIntTransformulaTransformer transformer = new BvToIntTransformulaTransformer(icfg.getCfgSmtToolkit().getManagedScript(), cfbo,
-				ups.getBoolean(IcfgTransformationPreferences.LABEL_NUTZ_TRANSFORMATION));
+		final BvToIntTransformulaTransformer transformer =
+				new BvToIntTransformulaTransformer(icfg.getCfgSmtToolkit().getManagedScript(), cfbo,
+						ups.getBoolean(IcfgTransformationPreferences.LABEL_NUTZ_TRANSFORMATION));
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(logger, icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		final UnaryOperator<Term> backtranslation =
@@ -410,8 +411,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
-		transformers.add(new LocalTransformer(new DNF(mServices),
-				icfg.getCfgSmtToolkit().getManagedScript(), fac));
+		transformers.add(new LocalTransformer(new DNF(mServices), icfg.getCfgSmtToolkit().getManagedScript(), fac));
 		final MapEliminationSettings settings = getMapElimSettings();
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
 				icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider));

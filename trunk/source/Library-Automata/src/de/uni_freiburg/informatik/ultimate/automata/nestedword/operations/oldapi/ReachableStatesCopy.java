@@ -77,18 +77,19 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	 *            operand
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
-	 * @see #ReachableStatesCopy(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider, boolean, boolean, boolean,
-	 *      boolean)
+	 * @see #ReachableStatesCopy(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider, boolean, boolean,
+	 *      boolean, boolean)
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		this(services, operand, false, false, false, false);
 	}
 
 	/**
-	 * Given an {@link INwaOutgoingLetterAndTransitionProvider} return an {@link INestedWordAutomaton} that has the same states, but
-	 * all states that are not reachable are omitted. Each state of the result also occurred in the input. Only the
-	 * auxiliary empty stack state of the result is different.
+	 * Given an {@link INwaOutgoingLetterAndTransitionProvider} return an {@link INestedWordAutomaton} that has the same
+	 * states, but all states that are not reachable are omitted. Each state of the result also occurred in the input.
+	 * Only the auxiliary empty stack state of the result is different.
 	 *
 	 * @param services
 	 *            Ultimate services
@@ -106,8 +107,9 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	 *             if operation was canceled
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean totalize, final boolean complement,
-			final boolean removeDeadEnds, final boolean removeNonLiveStates) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean totalize,
+			final boolean complement, final boolean removeDeadEnds, final boolean removeNonLiveStates)
+			throws AutomataOperationCanceledException {
 		super(services);
 		if (complement && !totalize) {
 			throw new IllegalArgumentException("complement requires totalize");
@@ -115,7 +117,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		mComplement = complement;
 		mOperand = operand;
 		mLogger.info(startMessage());
-		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getVpAlphabet(), (IEmptyStackStateFactory<STATE>) operand.getStateFactory());
+		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getVpAlphabet(),
+				(IEmptyStackStateFactory<STATE>) operand.getStateFactory());
 		super.mRemoveDeadEnds = removeDeadEnds;
 		super.mRemoveNonLiveStates = removeNonLiveStates;
 		final boolean operandHasInitialStates = mOperand.getInitialStates().iterator().hasNext();
@@ -130,7 +133,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		}
 		mLogger.info(exitMessage());
 		// assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
-		// 		(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
+		// (IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
 
 	private void makeAutomatonTotal(final STATE sinkState) throws AutomataOperationCanceledException {

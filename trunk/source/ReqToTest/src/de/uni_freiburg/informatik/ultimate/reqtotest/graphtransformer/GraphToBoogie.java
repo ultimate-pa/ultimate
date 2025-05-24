@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 public class GraphToBoogie {
 
-	private static final Attribute[] EMPTY_ATTRIBUTES = new Attribute[0];
+	private static final Attribute[] EMPTY_ATTRIBUTES = {};
 	public static final String GLOBAL_CLOCK_VAR = "reqtotest_delta";
 	public static final String LOCATION_PREFIX = "reqtotest_pc_";
 	public static final String LOCATION_PRIME = "'";
@@ -98,8 +98,7 @@ public class GraphToBoogie {
 		mTerm2Expression =
 				new Term2Expression(new TypeSortTranslator(sortToType, mScript, services), symbolTable, mManagedScript);
 
-		final List<Declaration> decls = new ArrayList<>();
-		decls.addAll(mSymbolTable.constructVariableDeclarations());
+		final List<Declaration> decls = new ArrayList<>(mSymbolTable.constructVariableDeclarations());
 		decls.addAll(generateEncodingVarDeclaration());
 		decls.add(getMainProcedure());
 		mUnit = new Unit(mDummyLocation, decls.toArray(new Declaration[decls.size()]));
@@ -126,20 +125,19 @@ public class GraphToBoogie {
 		final ModifiesSpecification[] modArray = new ModifiesSpecification[1];
 		modArray[0] = mod;
 
-		final Attribute[] attribute = new Attribute[0];
-		final String[] typeParams = new String[0];
-		final VarList[] inParams = new VarList[0];
-		final VarList[] outParams = new VarList[0];
+		final Attribute[] attribute = {};
+		final String[] typeParams = {};
+		final VarList[] inParams = {};
+		final VarList[] outParams = {};
 
-		final VariableDeclaration[] localVars = new VariableDeclaration[0];
+		final VariableDeclaration[] localVars = {};
 		final Body body = new Body(mDummyLocation, localVars, generateProcedureBody());
 
 		return new Procedure(mDummyLocation, attribute, "testGen", typeParams, inParams, outParams, modArray, body);
 	}
 
 	private Statement[] generateProcedureBody() {
-		final List<Statement> statements = new ArrayList<>();
-		statements.addAll(mSymbolTable.constructConstantAssignments());
+		final List<Statement> statements = new ArrayList<>(mSymbolTable.constructConstantAssignments());
 		statements.addAll(generatePcInitialization());
 		statements.addAll(generateClockInitialization());
 		statements.add(generateWhileStatement());
@@ -169,12 +167,11 @@ public class GraphToBoogie {
 		final HashSet<ReqGuardGraph> visited = new HashSet<>();
 		final Queue<ReqGuardGraph> queue = new LinkedList<>();
 		queue.add(reqId);
-		Statement[] elsePart = new Statement[0];
+		Statement[] elsePart = {};
 		while (queue.size() > 0) {
 			final ReqGuardGraph sourceLocation = queue.poll();
 			visited.add(sourceLocation);
-			Statement[] innerIf =
-					new Statement[] { new AssumeStatement(mDummyLocation, new BooleanLiteral(mDummyLocation, false)) };
+			Statement[] innerIf = { new AssumeStatement(mDummyLocation, new BooleanLiteral(mDummyLocation, false)) };
 			for (int i = 0; i < sourceLocation.getOutgoingNodes().size(); i++) {
 				final ReqGuardGraph successorLocation = sourceLocation.getOutgoingNodes().get(i);
 				final TimedLabel label = sourceLocation.getOutgoingEdgeLabels().get(i);
@@ -228,13 +225,12 @@ public class GraphToBoogie {
 		final List<Declaration> statements = new ArrayList<>();
 		final Collection<String> values = mGraphToPc.values();
 		final String[] idents = values.toArray(new String[values.size()]);
-		VarList[] varList =
-				new VarList[] { new VarList(mDummyLocation, idents, BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
+		VarList[] varList = { new VarList(mDummyLocation, idents, BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
 		statements.add(new VariableDeclaration(mDummyLocation, EMPTY_ATTRIBUTES, varList));
 		final Collection<String> valuesPrimed = mGraphToPcPrime.values();
 		final String[] identsPrimed = valuesPrimed.toArray(new String[valuesPrimed.size()]);
-		final VarList[] varListPrimed = new VarList[] {
-				new VarList(mDummyLocation, identsPrimed, BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
+		final VarList[] varListPrimed =
+				{ new VarList(mDummyLocation, identsPrimed, BoogieType.TYPE_INT.toASTType(mDummyLocation)) };
 		statements.add(new VariableDeclaration(mDummyLocation, EMPTY_ATTRIBUTES, varListPrimed));
 		// add encoding variable "delta"
 		varList = new VarList[] { new VarList(mDummyLocation, new String[] { GLOBAL_CLOCK_VAR },
@@ -252,27 +248,26 @@ public class GraphToBoogie {
 	}
 
 	private Statement generateVarVarAssignment(final String asignee, final String asignment) {
-		final LeftHandSide[] lhs = new LeftHandSide[] { new VariableLHS(mDummyLocation, asignee) };
-		final Expression[] rhs = new Expression[] { new IdentifierExpression(mDummyLocation, asignment) };
+		final LeftHandSide[] lhs = { new VariableLHS(mDummyLocation, asignee) };
+		final Expression[] rhs = { new IdentifierExpression(mDummyLocation, asignment) };
 		return new AssignmentStatement(mDummyLocation, lhs, rhs);
 	}
 
 	private Statement generateVarIntAssignment(final String asignee, final int value) {
-		final LeftHandSide[] lhs = new LeftHandSide[] { new VariableLHS(mDummyLocation, asignee) };
-		final Expression[] rhs = new Expression[] { new IntegerLiteral(mDummyLocation, Integer.toString(value)) };
+		final LeftHandSide[] lhs = { new VariableLHS(mDummyLocation, asignee) };
+		final Expression[] rhs = { new IntegerLiteral(mDummyLocation, Integer.toString(value)) };
 		return new AssignmentStatement(mDummyLocation, lhs, rhs);
 	}
 
 	private Statement generateVarRealAssignment(final String asignee, final float value) {
-		final LeftHandSide[] lhs = new LeftHandSide[] { new VariableLHS(mDummyLocation, asignee) };
-		final Expression[] rhs = new Expression[] { new RealLiteral(mDummyLocation, Float.toString(value)) };
+		final LeftHandSide[] lhs = { new VariableLHS(mDummyLocation, asignee) };
+		final Expression[] rhs = { new RealLiteral(mDummyLocation, Float.toString(value)) };
 		return new AssignmentStatement(mDummyLocation, lhs, rhs);
 	}
 
 	private VariableLHS[] generateHavocVariableList() {
-		final List<String> modifiedVarsList = new ArrayList<>();
+		final List<String> modifiedVarsList = new ArrayList<>(mSymbolTable.getInputVars());
 
-		modifiedVarsList.addAll(mSymbolTable.getInputVars());
 		modifiedVarsList.addAll(mSymbolTable.getHiddenVars());
 		modifiedVarsList.addAll(mSymbolTable.getOutputVars());
 		modifiedVarsList.addAll(mSymbolTable.getAuxVars());
@@ -286,9 +281,8 @@ public class GraphToBoogie {
 	}
 
 	private VariableLHS[] generateModifiesVariableList() {
-		final List<String> modifiedVarsList = new ArrayList<>();
+		final List<String> modifiedVarsList = new ArrayList<>(mSymbolTable.getInputVars());
 
-		modifiedVarsList.addAll(mSymbolTable.getInputVars());
 		modifiedVarsList.addAll(mSymbolTable.getHiddenVars());
 		modifiedVarsList.addAll(mSymbolTable.getOutputVars());
 		modifiedVarsList.addAll(mSymbolTable.getConstVars());

@@ -72,7 +72,7 @@ public class Config {
 		loadSettings();
 	}
 
-	public static Path tryGetAbsolutePath(String path) {
+	public static Path tryGetAbsolutePath(final String path) {
 
 		try {
 			return FileSystems.getDefault().getPath(path).normalize().toAbsolutePath().normalize();

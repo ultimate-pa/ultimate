@@ -11,9 +11,9 @@ public class SimpleLoop {
 	final public UnmodifiableTransFormula mLoopTransFormula;
 	final public IcfgLocation mHeadNode;
 	final public List<Entry<UnmodifiableTransFormula, IcfgLocation>> mExitEdges;
-	
-	public SimpleLoop(UnmodifiableTransFormula loopTransFormula, IcfgLocation headNode
-			, List<Entry<UnmodifiableTransFormula, IcfgLocation>> exitEdges){
+
+	public SimpleLoop(final UnmodifiableTransFormula loopTransFormula, final IcfgLocation headNode,
+			final List<Entry<UnmodifiableTransFormula, IcfgLocation>> exitEdges) {
 		mLoopTransFormula = loopTransFormula;
 		mHeadNode = headNode;
 		mExitEdges = exitEdges;

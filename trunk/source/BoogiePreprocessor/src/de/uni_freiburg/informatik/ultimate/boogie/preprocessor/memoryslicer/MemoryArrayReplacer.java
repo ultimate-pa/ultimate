@@ -219,7 +219,7 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 				// do nothing
 			} else {
 				// do nothing
-//				statement.toString();
+				// statement.toString();
 			}
 		}
 		if (statement instanceof AssignmentStatement) {
@@ -237,6 +237,15 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 			}
 		}
 		return super.processStatement(statement);
+	}
+
+	@Override
+	protected Expression processExpression(final Expression expr) {
+		if (expr instanceof final IdentifierExpression id && id.getIdentifier().startsWith("#memory")) {
+			throw new MemorySliceException(
+					"Found direct access to memory array (without a read-call), which is not supported yet.");
+		}
+		return super.processExpression(expr);
 	}
 
 	private AssignmentStatement handleArrayWrite(final AssignmentStatement as) {
@@ -264,8 +273,8 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 			final String oldMemArrayId = ((VariableLHS) arr.getArray()).getIdentifier();
 			final String newMemArrayId = oldMemArrayId + suffix;
 
-			final IdentifierReplacer ir = new IdentifierReplacer(Collections.singletonMap(oldMemArrayId, newMemArrayId),
-					null, null);
+			final IdentifierReplacer ir =
+					new IdentifierReplacer(Collections.singletonMap(oldMemArrayId, newMemArrayId), null, null);
 
 			final LeftHandSide newLhs = ir.processLeftHandSide(oldLhs);
 			// value is unchanged
@@ -314,12 +323,12 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId), null, null);
 		final IdentifierExpression newId = MemorySliceUtils.replaceIdentifierExpression(oldFa.getArguments()[0],
 				Collections.singletonMap(oldMemoryArrayId, newMemoryArrayId), null, null);
-		final Expression[] args = new Expression[] { newId, pointerBaseExpr };
-		final FunctionApplication newFa = new FunctionApplication(oldFa.getLoc(), oldFa.getType(),
-				oldFa.getIdentifier(), args);
+		final Expression[] args = { newId, pointerBaseExpr };
+		final FunctionApplication newFa =
+				new FunctionApplication(oldFa.getLoc(), oldFa.getType(), oldFa.getIdentifier(), args);
 		ModelUtils.copyAnnotations(oldFa, newFa);
-		final AssignmentStatement result = new AssignmentStatement(as.getLocation(), new LeftHandSide[] { newVlhs },
-				new Expression[] { newFa });
+		final AssignmentStatement result =
+				new AssignmentStatement(as.getLocation(), new LeftHandSide[] { newVlhs }, new Expression[] { newFa });
 		ModelUtils.copyAnnotations(as, result);
 		return result;
 	}
@@ -352,34 +361,34 @@ public class MemoryArrayReplacer extends BoogieTransformer {
 		return MemorySliceUtils.constructMemorySliceSuffix(number);
 	}
 
-//	@Override
-//	protected Expression processExpression(final Expression expr) {
-//		if (expr instanceof ArrayStoreExpression) {
-//			throw new MemorySliceException("ArrayStoreExpression");
-//		}
-//		if (expr instanceof ArrayAccessExpression) {
-//			if (!expr.toString().equals("ArrayAccessExpression[IdentifierExpression[#valid,GLOBAL],[IntegerLiteral[0]]]")) {
-//				throw new MemorySliceException("ArrayStoreExpression");
-//			}
-////			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
-////			final Expression arr = processExpression(aaexpr.getArray());
-////			final Expression[] indices = processExpressions(aaexpr.getIndices());
-////			final Expression[] newIndices = processExpressions(indices);
-////			if (arr instanceof IdentifierExpression) {
-////				final IdentifierExpression ie = (IdentifierExpression) arr;
-////				if (isHeap(ie.getIdentifier())) {
-////					final Expression pointerBaseExpr = newIndices[0];
-////					final PointerBase pointerBase = HeapSplitter.extractPointerBase(mAsFac, aaexpr);
-////					final AddressStore rep = mUf.find(pointerBase);
-////					final Expression newArray = null;
-////					final ArrayAccessExpression result = new ArrayAccessExpression(aaexpr.getLocation(),
-////							aaexpr.getType(), newArray, newIndices);
-////					ModelUtils.copyAnnotations(expr, result);
-////					return result;
-////				}
-////			}
-//		}
-//		return super.processExpression(expr);
-//	}
+	// @Override
+	// protected Expression processExpression(final Expression expr) {
+	// if (expr instanceof ArrayStoreExpression) {
+	// throw new MemorySliceException("ArrayStoreExpression");
+	// }
+	// if (expr instanceof ArrayAccessExpression) {
+	// if (!expr.toString().equals("ArrayAccessExpression[IdentifierExpression[#valid,GLOBAL],[IntegerLiteral[0]]]")) {
+	// throw new MemorySliceException("ArrayStoreExpression");
+	// }
+	//// final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
+	//// final Expression arr = processExpression(aaexpr.getArray());
+	//// final Expression[] indices = processExpressions(aaexpr.getIndices());
+	//// final Expression[] newIndices = processExpressions(indices);
+	//// if (arr instanceof IdentifierExpression) {
+	//// final IdentifierExpression ie = (IdentifierExpression) arr;
+	//// if (isHeap(ie.getIdentifier())) {
+	//// final Expression pointerBaseExpr = newIndices[0];
+	//// final PointerBase pointerBase = HeapSplitter.extractPointerBase(mAsFac, aaexpr);
+	//// final AddressStore rep = mUf.find(pointerBase);
+	//// final Expression newArray = null;
+	//// final ArrayAccessExpression result = new ArrayAccessExpression(aaexpr.getLocation(),
+	//// aaexpr.getType(), newArray, newIndices);
+	//// ModelUtils.copyAnnotations(expr, result);
+	//// return result;
+	//// }
+	//// }
+	// }
+	// return super.processExpression(expr);
+	// }
 
 }

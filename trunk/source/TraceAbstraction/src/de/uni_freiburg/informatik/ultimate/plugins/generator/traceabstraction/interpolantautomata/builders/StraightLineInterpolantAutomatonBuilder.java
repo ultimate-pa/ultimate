@@ -41,19 +41,18 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
- * Given one sequence of n+1 pairwise disjoint interpolants and a word of length
- * n, this builder would construct the interpolant automaton that has the shape
- * of a straight line (hence the name). If several interpolants occur twice in
- * the sequence, we construct only one single state for them (resulting in a
- * straight line with selfloops). Furthermore, this builder supports as an input
- * several sequences that have the same precondition and the same postcondition.
- * Several sequences result in several straight lines where some states (those
- * that correspond to similar interpolants) were merged.
+ * Given one sequence of n+1 pairwise disjoint interpolants and a word of length n, this builder would construct the
+ * interpolant automaton that has the shape of a straight line (hence the name). If several interpolants occur twice in
+ * the sequence, we construct only one single state for them (resulting in a straight line with selfloops). Furthermore,
+ * this builder supports as an input several sequences that have the same precondition and the same postcondition.
+ * Several sequences result in several straight lines where some states (those that correspond to similar interpolants)
+ * were merged.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
+public class StraightLineInterpolantAutomatonBuilder<LETTER>
+		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 
 	/**
 	 * Determines which states become initial and accepting in the automaton.
@@ -62,8 +61,8 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	 */
 	public enum InitialAndAcceptingStateMode {
 		/**
-		 * Only the first state becomes initial and only the state whose predicate's
-		 * term is syntactically equivalent to false becomes accepting.
+		 * Only the first state becomes initial and only the state whose predicate's term is syntactically equivalent to
+		 * false becomes accepting.
 		 */
 		ONLY_FIRST_INITIAL_ONLY_FALSE_ACCEPTING,
 		/**
@@ -81,8 +80,8 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 		if (interpolantSequences.isEmpty()) {
 			throw new IllegalArgumentException("Empty list of interpolant sequences is not allowed.");
 		}
-		assert sequencesHaveSamePrePostconditions(
-				interpolantSequences) : "The interpolant sequences should have the same pre- and postconditions.";
+		assert sequencesHaveSamePrePostconditions(interpolantSequences)
+				: "The interpolant sequences should have the same pre- and postconditions.";
 
 		mResult = constructInterpolantAutomaton(services, alphabet, interpolantSequences, NestedWord.nestedWord(word),
 				emptyStackFactory, initialAndAcceptingStateMode);
@@ -96,7 +95,8 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(
 			final IUltimateServiceProvider services, final VpAlphabet<LETTER> alphabet,
 			final List<TracePredicates> interpolantSequences, final NestedWord<LETTER> nestedWord,
-			final IEmptyStackStateFactory<IPredicate> emptyStackFactory, final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
+			final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
 
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, emptyStackFactory);
@@ -118,8 +118,8 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	 *            trace along which the interpolants are constructed
 	 */
 	private void addStatesAccordingToPredicates(final NestedWordAutomaton<LETTER, IPredicate> nwa,
-			final List<TracePredicates> interpolantSequences,
-			final NestedWord<LETTER> nestedWord, final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
+			final List<TracePredicates> interpolantSequences, final NestedWord<LETTER> nestedWord,
+			final InitialAndAcceptingStateMode initialAndAcceptingStateMode) {
 		// add initial state with precondition predicate
 		{
 			final IPredicate firstPredicate = interpolantSequences.get(0).getPrecondition();
@@ -132,7 +132,8 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 			for (int i = 1; i < nestedWord.length() + 1; i++) {
 				final IPredicate interpolant = interpolantSequence.getPredicate(i);
 				if (!nwa.getStates().contains(interpolant)) {
-					final boolean isInitial = (initialAndAcceptingStateMode == InitialAndAcceptingStateMode.ALL_INITIAL_ALL_ACCEPTING);
+					final boolean isInitial =
+							(initialAndAcceptingStateMode == InitialAndAcceptingStateMode.ALL_INITIAL_ALL_ACCEPTING);
 					final boolean isAccepting = isStateAccepting(initialAndAcceptingStateMode, interpolant);
 
 					nwa.addState(false, isFalsePredicate(interpolant), interpolant);
@@ -141,8 +142,8 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 		}
 	}
 
-	private boolean isStateAccepting(final InitialAndAcceptingStateMode initialAndAcceptingStateMode, final IPredicate predicate)
-			throws AssertionError {
+	private boolean isStateAccepting(final InitialAndAcceptingStateMode initialAndAcceptingStateMode,
+			final IPredicate predicate) throws AssertionError {
 		boolean isAccepting;
 		switch (initialAndAcceptingStateMode) {
 		case ALL_INITIAL_ALL_ACCEPTING:
@@ -181,8 +182,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	 *            trace along which the interpolants are constructed
 	 */
 	private void addBasicTransitions(final NestedWordAutomaton<LETTER, IPredicate> nwa,
-			final List<TracePredicates> interpolantSequences,
-			final NestedWord<LETTER> nestedWord) {
+			final List<TracePredicates> interpolantSequences, final NestedWord<LETTER> nestedWord) {
 		for (final TracePredicates interpolantSequence : interpolantSequences) {
 			for (int i = 0; i < nestedWord.length(); i++) {
 				addTransition(nwa, interpolantSequence, nestedWord, i);
@@ -191,8 +191,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER> implements IInterpo
 	}
 
 	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> nwa,
-			final TracePredicates interpolantSequence, final NestedWord<LETTER> nestedWord,
-			final int symbolPos) {
+			final TracePredicates interpolantSequence, final NestedWord<LETTER> nestedWord, final int symbolPos) {
 		final LETTER symbol = nestedWord.getSymbol(symbolPos);
 		final IPredicate succ = interpolantSequence.getPredicate(symbolPos + 1);
 		if (nestedWord.isCallPosition(symbolPos)) {

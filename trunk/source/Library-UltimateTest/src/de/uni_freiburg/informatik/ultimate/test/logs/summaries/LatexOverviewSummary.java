@@ -175,12 +175,9 @@ public class LatexOverviewSummary extends LatexSummary {
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			final PartitionedResults resultsPerFolder =
-					partitionResults(
-							results.All.stream()
-									.filter(entry -> Arrays.stream(entry.getKey().getInput())
-											.anyMatch(a -> a.getParent().endsWith(suffix)))
-									.collect(Collectors.toList()));
+			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
+					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
+					.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size());
 		}
@@ -245,8 +242,7 @@ public class LatexOverviewSummary extends LatexSummary {
 		sb.append("\\multirow{");
 		sb.append(variants.size());
 		sb.append("}{*}{\\folder{Completed}} ").append(br);
-		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>();
-		completed.addAll(results.Safe);
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>(results.Safe);
 		completed.addAll(results.Unsafe);
 		for (int i = 0; i < variants.size(); ++i) {
 			// this is the last in the foldoer row, so it gets a different
@@ -304,7 +300,7 @@ public class LatexOverviewSummary extends LatexSummary {
 				mColumnDefinitions);
 
 		csv = ColumnDefinitionUtil.makeHumanReadable(csv, mColumnDefinitions);
-		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(new String[] { Integer.toString(results.size()) }));
+		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(Integer.toString(results.size())));
 
 		// make list of indices to ignore idx -> true / false
 		final boolean[] idx = new boolean[csv.getColumnTitles().size()];

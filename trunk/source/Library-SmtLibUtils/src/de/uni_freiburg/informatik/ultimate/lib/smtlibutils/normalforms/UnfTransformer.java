@@ -44,9 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
  *
- * {@link TermTransformer} that applies
- * {@link SmtUtils#unfTerm(Script, String, Term...)} to all sub-terms in
- * order to create a new term in Ultimate normal form.
+ * {@link TermTransformer} that applies {@link SmtUtils#unfTerm(Script, String, Term...)} to all sub-terms in order to
+ * create a new term in Ultimate normal form.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -54,7 +53,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 public class UnfTransformer extends TermTransformer {
 
 	private final Script mScript;
-	private static Set<String> mRelationSymbols = Arrays.stream(RelationSymbol.values()).map(Object::toString).collect(Collectors.toSet());
+	private static Set<String> mRelationSymbols =
+			Arrays.stream(RelationSymbol.values()).map(Object::toString).collect(Collectors.toSet());
 
 	public UnfTransformer(final Script script) {
 		mScript = script;
@@ -67,7 +67,6 @@ public class UnfTransformer extends TermTransformer {
 			if (isEqualityOrDisequalityWithMoreThanTwoParams(appTerm)) {
 				final Term binarized = SmtUtils.binarize(mScript, appTerm);
 				convert(binarized);
-				return;
 			} else {
 				super.convert(term);
 			}
@@ -81,7 +80,6 @@ public class UnfTransformer extends TermTransformer {
 				normalized = rational.toTerm(term.getSort());
 			}
 			setResult(normalized);
-			return;
 		} else {
 			super.convert(term);
 		}
@@ -104,14 +102,10 @@ public class UnfTransformer extends TermTransformer {
 			}
 		}
 		setResult(result);
-		return;
 	}
 
 	public static Term apply(final Script script, final Term term) {
 		return new UnfTransformer(script).transform(term);
 	}
-
-
-
 
 }

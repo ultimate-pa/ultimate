@@ -48,7 +48,7 @@ public class DeleteBinaryExpressionOperandChange extends HddChange {
 	private final IPSTRegularNode mBinaryExpressionNode;
 	private final ISourceRange mOperatorPosition;
 	private final List<String> mAlternativeOperandReplacements;
-	
+
 	/**
 	 * @param operandNode
 	 *            Operand PST node.
@@ -67,17 +67,17 @@ public class DeleteBinaryExpressionOperandChange extends HddChange {
 		mOperatorPosition = Objects.requireNonNull(operatorPosition);
 		mAlternativeOperandReplacements = Objects.requireNonNull(alternativeOperandReplacements);
 	}
-	
+
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		// no immediate modification possible
 	}
-	
+
 	@Override
 	public boolean hasDeferredChange() {
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Delete binary expression operand " + getNode() + " (from " + mBinaryExpressionNode
@@ -91,7 +91,7 @@ public class DeleteBinaryExpressionOperandChange extends HddChange {
 		((CombinedChange) deferredChangeMap.computeIfAbsent(mBinaryExpressionNode, CombinedChange::new))
 				.addOperandChange(this);
 	}
-	
+
 	@Override
 	public Optional<HddChange> createAlternativeChange() {
 		if (!mAlternativeOperandReplacements.isEmpty()) {
@@ -100,21 +100,20 @@ public class DeleteBinaryExpressionOperandChange extends HddChange {
 		return Optional.empty();
 	}
 
-	
 	/**
 	 * Combined change.
 	 */
 	static class CombinedChange extends HddChange {
 		private final List<DeleteBinaryExpressionOperandChange> mOperandChanges = new ArrayList<>();
-		
+
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
-		
+
 		void addOperandChange(final DeleteBinaryExpressionOperandChange change) {
 			mOperandChanges.add(change);
 		}
-		
+
 		@Override
 		public void apply(final SourceRewriter rewriter) {
 			if (mOperandChanges.size() == 1) {
@@ -125,14 +124,14 @@ public class DeleteBinaryExpressionOperandChange extends HddChange {
 			if (mOperandChanges.size() != 2) {
 				throw new IllegalStateException("invalid number of operands to delete: " + mOperandChanges.size());
 			}
-				
+
 			// delete the larger operand and immediately replace the other one (if possible)
 			final DeleteBinaryExpressionOperandChange lhs = mOperandChanges.get(0);
 			final DeleteBinaryExpressionOperandChange rhs = mOperandChanges.get(1);
 			if (lhs.mAlternativeOperandReplacements.isEmpty() && rhs.mAlternativeOperandReplacements.isEmpty()) {
 				throw new ChangeConflictException("Unable to delete one operand and replace the other one");
 			}
-			
+
 			int deleteIndex;
 			if (lhs.mAlternativeOperandReplacements.isEmpty() || rhs.mAlternativeOperandReplacements.isEmpty()) {
 				// can only replace one of both so there is no choice
@@ -149,7 +148,7 @@ public class DeleteBinaryExpressionOperandChange extends HddChange {
 		}
 
 		private static int countChildren(final IPSTNode node) {
-			final PSTVisitorWithResult<Integer> action = new PSTVisitorWithResult<Integer>() {
+			final PSTVisitorWithResult<Integer> action = new PSTVisitorWithResult<>() {
 				@Override
 				public int defaultVisit(final IPSTNode node) {
 					setResult(getResult().orElse(0) + 1);

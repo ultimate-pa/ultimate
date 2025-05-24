@@ -33,9 +33,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 
 /**
- * Partitions a trace of length n into n singletons. Use a pseudo random
- * generator to order the elements of the partition. The seed for the pseudo
- * random generator is given by the (stable) hash code of the trace.
+ * Partitions a trace of length n into n singletons. Use a pseudo random generator to order the elements of the
+ * partition. The seed for the pseudo random generator is given by the (stable) hash code of the trace.
  *
  * @author Matthias Heizmann (matthias.heizmann@iste.uni-stuttgart.de)
  */

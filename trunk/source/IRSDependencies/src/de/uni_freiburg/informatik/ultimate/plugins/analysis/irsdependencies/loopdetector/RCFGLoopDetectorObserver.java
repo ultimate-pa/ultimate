@@ -6,21 +6,21 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RCFGLoopDetectorObserver extends BaseObserver{
+public class RCFGLoopDetectorObserver extends BaseObserver {
 
 	private final RCFGLoopDetector mLoopDetector;
 
 	public RCFGLoopDetectorObserver(final IUltimateServiceProvider services) {
 		mLoopDetector = new RCFGLoopDetector(services);
 	}
-	
+
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-		if(root instanceof BoogieIcfgContainer){
+		if (root instanceof BoogieIcfgContainer) {
 			mLoopDetector.process((BoogieIcfgContainer) root);
 			return false;
 		}

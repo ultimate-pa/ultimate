@@ -43,16 +43,15 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 
 /**
- * Creates a random deterministic or non-deterministic finite bottom-up tree
- * automaton (DFTA-BU). Note that the generation is not uniform.
+ * Creates a random deterministic or non-deterministic finite bottom-up tree automaton (DFTA-BU). Note that the
+ * generation is not uniform.
  * <p>
  * The algorithm is similar to the one described in<br>
  * <ul>
- * <li><i>2013 Hanneforth, Thomas et al. - Random Generation of Nondeterministic
- * Finite-State Tree Automata.</i></li>
+ * <li><i>2013 Hanneforth, Thomas et al. - Random Generation of Nondeterministic Finite-State Tree Automata.</i></li>
  * </ul>
- * Roughly said the algorithm randomly selects source and destination nodes in
- * each round, connecting them with a random transition.
+ * Roughly said the algorithm randomly selects source and destination nodes in each round, connecting them with a random
+ * transition.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -67,17 +66,15 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	private static final String STATE_PREFIX = "q";
 
 	/**
-	 * Computes the absolute amount after applying a density to a total number. If
-	 * for example the total number would be <tt>50</tt> and the density
-	 * <tt>0.1</tt> then the result would be <tt>5</tt>. The method ensures that
-	 * <tt>0</tt> is only returned if the density was precisely <tt>0.0</tt>.
+	 * Computes the absolute amount after applying a density to a total number. If for example the total number would be
+	 * <tt>50</tt> and the density <tt>0.1</tt> then the result would be <tt>5</tt>. The method ensures that <tt>0</tt>
+	 * is only returned if the density was precisely <tt>0.0</tt>.
 	 *
 	 * @param density
 	 *            The density to apply
 	 * @param numberOfTotal
 	 *            The total number to apply
-	 * @return The absolute amount after applying the given density to the total
-	 *         number
+	 * @return The absolute amount after applying the given density to the total number
 	 */
 	protected static int densityToAbsolute(final double density, final int numberOfTotal) {
 		final int resultRaw = (int) (density * numberOfTotal);
@@ -95,14 +92,13 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	}
 
 	/**
-	 * The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then all states
-	 * are accepting, if <tt>0</tt> then no state is accepting.
+	 * The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then all states are accepting, if <tt>0</tt> then no
+	 * state is accepting.
 	 */
 	private final double mAcceptanceDensity;
 	/**
-	 * Whether the generator should only generate deterministic tree automata. If
-	 * <tt>true</tt> then only deterministic tree automata will get generated
-	 * whereas <tt>false</tt> can also lead to non-deterministic automata.
+	 * Whether the generator should only generate deterministic tree automata. If <tt>true</tt> then only deterministic
+	 * tree automata will get generated whereas <tt>false</tt> can also lead to non-deterministic automata.
 	 */
 	private final boolean mGenerateOnlyDeterministic;
 	/**
@@ -110,15 +106,13 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 */
 	private final int mNumberOfStates;
 	/**
-	 * Each index stands for the rank of a letter. The value stored at an index
-	 * represents the amount of letters with that rank should be generated. Each
-	 * value is {@code >= 0}.
+	 * Each index stands for the rank of a letter. The value stored at an index represents the amount of letters with
+	 * that rank should be generated. Each value is {@code >= 0}.
 	 */
 	private final int[] mRankToNumberOfLetters;
 	/**
-	 * Each index stands for the rank of a letter. The value stored at an index
-	 * represents the amount of transitions per letter of that rank. The number of
-	 * transitions of nullary letters specify the amount of initial states.
+	 * Each index stands for the rank of a letter. The value stored at an index represents the amount of transitions per
+	 * letter of that rank. The number of transitions of nullary letters specify the amount of initial states.
 	 */
 	protected final int[] mRankToNumberOfTransitionsPerLetter;
 	/**
@@ -131,41 +125,33 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	private long mSeed;
 
 	/**
-	 * Constructor of a deterministic finite tree automaton for the
-	 * {@code TestFileInterpreter}.
+	 * Constructor of a deterministic finite tree automaton for the {@code TestFileInterpreter}.
 	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
 	 *            The number of states {@code (>= 0)}
 	 * @param rankToNumberOfLetters
-	 *            Each index stands for the rank of a letter. The value stored at an
-	 *            index represents the amount of letters with that rank should be
-	 *            generated. Each value must be {@code >= 0}. Note that in order to
-	 *            have initial states there must exist at least one nullary letter,
-	 *            so <code>rankToNumberOfLetters[0]</code> should be set to a value
-	 *            greater than <tt>zero</tt> if initial states are desired.
+	 *            Each index stands for the rank of a letter. The value stored at an index represents the amount of
+	 *            letters with that rank should be generated. Each value must be {@code >= 0}. Note that in order to
+	 *            have initial states there must exist at least one nullary letter, so
+	 *            <code>rankToNumberOfLetters[0]</code> should be set to a value greater than <tt>zero</tt> if initial
+	 *            states are desired.
 	 * @param rankToNumberOfTransitionsPerLetter
-	 *            Each index stands for the rank of a letter. The value stored at an
-	 *            index represents the amount of transitions per letter of that rank
-	 *            {@code (>= 0)}. The number of transitions of nullary letters
-	 *            specify the amount of initial states thus if initial states are
-	 *            desired <code>rankToNumberOfTransitionsPerLetter[0]</code> should
-	 *            be set to a value greater than <tt>zero</tt>. Also note that the
-	 *            number must be below the maximal possible amount of transitions
-	 *            which is given by {@code states^rank} (if deterministic) or
-	 *            {@code states^(rank + 1)} if non-deterministic. For efficiency
-	 *            reasons this object will not check validity for those upper
-	 *            bounds. If setting higher values it is possible that this object
-	 *            never terminates the generation process.
+	 *            Each index stands for the rank of a letter. The value stored at an index represents the amount of
+	 *            transitions per letter of that rank {@code (>= 0)}. The number of transitions of nullary letters
+	 *            specify the amount of initial states thus if initial states are desired
+	 *            <code>rankToNumberOfTransitionsPerLetter[0]</code> should be set to a value greater than
+	 *            <tt>zero</tt>. Also note that the number must be below the maximal possible amount of transitions
+	 *            which is given by {@code states^rank} (if deterministic) or {@code states^(rank + 1)} if
+	 *            non-deterministic. For efficiency reasons this object will not check validity for those upper bounds.
+	 *            If setting higher values it is possible that this object never terminates the generation process.
 	 * @param acceptanceDensity
-	 *            The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then
-	 *            all states are accepting, if <tt>0</tt> then no state is
-	 *            accepting.
+	 *            The acceptance density {@code (0 <= x <= 1)}. If <tt>1</tt> then all states are accepting, if
+	 *            <tt>0</tt> then no state is accepting.
 	 * @param generateOnlyDeterministic
-	 *            Whether the generator should only generate deterministic tree
-	 *            automata. If <tt>true</tt> then only deterministic tree automata
-	 *            will get generated whereas <tt>false</tt> can also lead to
+	 *            Whether the generator should only generate deterministic tree automata. If <tt>true</tt> then only
+	 *            deterministic tree automata will get generated whereas <tt>false</tt> can also lead to
 	 *            non-deterministic automata.
 	 * @param seed
 	 *            The seed to use for random automaton generation.
@@ -175,13 +161,13 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 			final double acceptanceDensity, final boolean generateOnlyDeterministic, final long seed) {
 		super(services);
 
-		this.mNumberOfStates = numberOfStates;
-		this.mRankToNumberOfLetters = rankToNumberOfLetters;
-		this.mRankToNumberOfTransitionsPerLetter = rankToNumberOfTransitionsPerLetter;
-		this.mAcceptanceDensity = acceptanceDensity;
-		this.mGenerateOnlyDeterministic = generateOnlyDeterministic;
+		mNumberOfStates = numberOfStates;
+		mRankToNumberOfLetters = rankToNumberOfLetters;
+		mRankToNumberOfTransitionsPerLetter = rankToNumberOfTransitionsPerLetter;
+		mAcceptanceDensity = acceptanceDensity;
+		mGenerateOnlyDeterministic = generateOnlyDeterministic;
 
-		this.mSeed = seed;
+		mSeed = seed;
 	}
 
 	/*
@@ -192,33 +178,31 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	@Override
 	public TreeAutomatonBU<StringRankedLetter, String> getResult() {
 		assert new isDetereministic<>(mServices, mResult).getResult();
-		return this.mResult;
+		return mResult;
 	}
 
 	/**
-	 * Adds states to the given preliminary automaton such that it has the desired
-	 * amount of states and accepting states, specified by the current internal
-	 * state of this object.<br>
+	 * Adds states to the given preliminary automaton such that it has the desired amount of states and accepting
+	 * states, specified by the current internal state of this object.<br>
 	 * <br>
 	 * Therefore the first <tt>k</tt> states are selected as accepting.
 	 *
 	 * @param result
 	 *            The automaton to add the states to
 	 * @param numberToStateRepresentation
-	 *            An array where the method is allowed to put the representation of
-	 *            the generated states to. It needs to offer at least one entry for
-	 *            each state.
+	 *            An array where the method is allowed to put the representation of the generated states to. It needs to
+	 *            offer at least one entry for each state.
 	 */
 	private void addStates(final TreeAutomatonBU<StringRankedLetter, String> result,
 			final String[] numberToStateRepresentation) {
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to generate states");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to generate states");
 		}
 
-		final int numberOfAcceptingStates = densityToAbsolute(this.mAcceptanceDensity, this.mNumberOfStates);
+		final int numberOfAcceptingStates = densityToAbsolute(mAcceptanceDensity, mNumberOfStates);
 
 		// Generate all states
-		for (int i = 0; i < this.mNumberOfStates; i++) {
+		for (int i = 0; i < mNumberOfStates; i++) {
 			// The representation of the generated state
 			final String stateRepresentation = STATE_PREFIX + Integer.toString(i);
 
@@ -235,12 +219,10 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	}
 
 	/**
-	 * Adds transitions and letters to the given preliminary automaton such that it
-	 * matches the desired amount of letters and their corresponding densities,
-	 * specified by the current internal state of this object.<br>
+	 * Adds transitions and letters to the given preliminary automaton such that it matches the desired amount of
+	 * letters and their corresponding densities, specified by the current internal state of this object.<br>
 	 * <br>
-	 * Therefore transitions are added arbitrary, source states and destination get
-	 * selected randomly.
+	 * Therefore transitions are added arbitrary, source states and destination get selected randomly.
 	 *
 	 * @param result
 	 *            The automaton to add the states to
@@ -251,26 +233,24 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 * @throws IllegalStateException
 	 *             If the generation detected a possible loop and aborted
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private void addTransitionsAndLetters(final TreeAutomatonBU<StringRankedLetter, String> result,
 			final String[] numberToStateRepresentation, final Random random)
 			throws IllegalStateException, AutomataOperationCanceledException {
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting to generate transitions and letters");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting to generate transitions and letters");
 		}
 
 		// Iterate all ranks and create transitions for each rank separately
-		final int highestRank = Math.min(this.mRankToNumberOfLetters.length,
-				this.mRankToNumberOfTransitionsPerLetter.length) - 1;
+		final int highestRank = Math.min(mRankToNumberOfLetters.length, mRankToNumberOfTransitionsPerLetter.length) - 1;
 		for (int rank = 0; rank <= highestRank; rank++) {
-			if (this.mLogger.isDebugEnabled()) {
-				this.mLogger.debug("Generating transitions and letters for rank " + rank);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Generating transitions and letters for rank " + rank);
 			}
 
-			final int numberOfLetters = this.mRankToNumberOfLetters[rank];
-			final int numberOfTransitionsPerLetter = this.mRankToNumberOfTransitionsPerLetter[rank];
+			final int numberOfLetters = mRankToNumberOfLetters[rank];
+			final int numberOfTransitionsPerLetter = mRankToNumberOfTransitionsPerLetter[rank];
 
 			// Iterate each letter for transition generation
 			for (int letterId = 0; letterId < numberOfLetters; letterId++) {
@@ -285,7 +265,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 				// depending on the generation mode
 				final Set<List<Integer>> occupiedSourceStateCombinations;
 				final Set<TreeAutomatonRule<StringRankedLetter, String>> occupiedRules;
-				if (this.mGenerateOnlyDeterministic) {
+				if (mGenerateOnlyDeterministic) {
 					occupiedSourceStateCombinations = new HashSet<>(numberOfTransitionsPerLetter);
 					occupiedRules = Collections.emptySet();
 				} else {
@@ -298,7 +278,7 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 				int transitionCounter = 0;
 				while (transitionCounter < numberOfTransitionsPerLetter) {
 					// Select a random state as destination
-					final int destinationIndex = random.nextInt(this.mNumberOfStates);
+					final int destinationIndex = random.nextInt(mNumberOfStates);
 					final String destinationState = numberToStateRepresentation[destinationIndex];
 
 					// Select random available source state combinations and repeat until a
@@ -312,27 +292,27 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 						}
 
 						// Generate a random combination of source states and add them to the list
-						sourceStateIndices = random.ints(rank, 0, this.mNumberOfStates).sequential().boxed()
+						sourceStateIndices = random.ints(rank, 0, mNumberOfStates).sequential().boxed()
 								.collect(Collectors.toCollection(ArrayList::new));
 
 						// Check whether the combination was already used before
 					} while (occupiedSourceStateCombinations.contains(sourceStateIndices));
 
 					// The combination is available and thus can be used
-					if (this.mGenerateOnlyDeterministic) {
+					if (mGenerateOnlyDeterministic) {
 						occupiedSourceStateCombinations.add(sourceStateIndices);
 					}
 					// Convert the source state indices to their corresponding representations
 					final ArrayList<String> sourceStates = sourceStateIndices.stream().sequential()
-							.map(sourceStateIndex -> numberToStateRepresentation[sourceStateIndex.intValue()])
+							.map(sourceStateIndex -> numberToStateRepresentation[sourceStateIndex])
 							.collect(Collectors.toCollection(ArrayList::new));
 
 					// Create the corresponding rule
-					final TreeAutomatonRule<StringRankedLetter, String> rule = new TreeAutomatonRule<>(letter,
-							sourceStates, destinationState);
+					final TreeAutomatonRule<StringRankedLetter, String> rule =
+							new TreeAutomatonRule<>(letter, sourceStates, destinationState);
 					// If non-deterministic we also need to ensure that the rule was not generated
 					// before already
-					if (!this.mGenerateOnlyDeterministic) {
+					if (!mGenerateOnlyDeterministic) {
 						if (occupiedRules.contains(rule)) {
 							// Try to generate a transition for this letter again
 							continue;
@@ -348,8 +328,8 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 
 				// If operation was canceled, for example from the
 				// Ultimate framework
-				if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-					this.mLogger.debug("Stopped at creating transitions for letters");
+				if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+					mLogger.debug("Stopped at creating transitions for letters");
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
@@ -357,21 +337,20 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	}
 
 	/**
-	 * Checks whether the input of the operation is valid. Throws an exception if
-	 * invalid. The method should be called right after initialization and before
-	 * executing the generation.
+	 * Checks whether the input of the operation is valid. Throws an exception if invalid. The method should be called
+	 * right after initialization and before executing the generation.
 	 *
 	 * @throws IllegalArgumentException
 	 *             If an input is invalid
 	 */
 	protected void checkInputValidity() throws IllegalArgumentException {
 		// Number of states, check bounds
-		if (this.mNumberOfStates < 0) {
+		if (mNumberOfStates < 0) {
 			throw new IllegalArgumentException("Negative number of states.");
 		}
 
 		// Number of letters
-		for (final int numberOfLetters : this.mRankToNumberOfLetters) {
+		for (final int numberOfLetters : mRankToNumberOfLetters) {
 			// Check bounds
 			if (numberOfLetters < 0) {
 				throw new IllegalArgumentException("Negative number of letters.");
@@ -379,30 +358,29 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 		}
 
 		// Number of transitions per letter
-		for (int i = 0; i < this.mRankToNumberOfTransitionsPerLetter.length; i++) {
-			final int numberOfTransitionsPerLetter = this.mRankToNumberOfTransitionsPerLetter[i];
+		for (int i = 0; i < mRankToNumberOfTransitionsPerLetter.length; i++) {
+			final int numberOfTransitionsPerLetter = mRankToNumberOfTransitionsPerLetter[i];
 			// Check bounds
 			if (numberOfTransitionsPerLetter < 0) {
 				throw new IllegalArgumentException("Negative number of transitions per letter.");
 			}
 
 			// Check conflict with number of letters
-			if (numberOfTransitionsPerLetter > 0 && i < this.mRankToNumberOfLetters.length
-					&& this.mRankToNumberOfLetters[i] <= 0) {
+			if (numberOfTransitionsPerLetter > 0 && i < mRankToNumberOfLetters.length
+					&& mRankToNumberOfLetters[i] <= 0) {
 				throw new IllegalArgumentException("Impossible to have transitions without letters.");
 			}
 		}
 
 		// Letter rank, check bounds
-		final int highestRank = Math.min(this.mRankToNumberOfLetters.length,
-				this.mRankToNumberOfTransitionsPerLetter.length);
-		if (highestRank > this.mNumberOfStates) {
+		final int highestRank = Math.min(mRankToNumberOfLetters.length, mRankToNumberOfTransitionsPerLetter.length);
+		if (highestRank > mNumberOfStates) {
 			throw new IllegalArgumentException(
 					"Impossible to have letters with a rank greater than the amount of states.");
 		}
 
 		// Acceptance, check bounds
-		if (this.mAcceptanceDensity < 0.0 || this.mAcceptanceDensity > 1.0) {
+		if (mAcceptanceDensity < 0.0 || mAcceptanceDensity > 1.0) {
 			throw new IllegalArgumentException("Illegal acceptance density.");
 		}
 	}
@@ -414,19 +392,18 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	 *            The seed to use for generation
 	 * @return The generated automaton representing the current internal state
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected TreeAutomatonBU<StringRankedLetter, String> generateAutomaton(final long seed)
 			throws AutomataOperationCanceledException {
-		if (this.mLogger.isDebugEnabled()) {
-			this.mLogger.debug("Starting generation using the seed " + seed);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Starting generation using the seed " + seed);
 		}
 
 		// Create the initial empty tree automaton
 		final TreeAutomatonBU<StringRankedLetter, String> result = new TreeAutomatonBU<>();
 
-		if (this.mNumberOfStates == 0) {
+		if (mNumberOfStates == 0) {
 			// Empty automaton
 			return result;
 		}
@@ -435,14 +412,14 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 		final Random random = new Random(seed);
 
 		// Maps a number to each representation of a state
-		final String[] numberToStateRepresentation = new String[this.mNumberOfStates];
+		final String[] numberToStateRepresentation = new String[mNumberOfStates];
 
 		addStates(result, numberToStateRepresentation);
 
 		// If operation was canceled, for example from the
 		// Ultimate framework
-		if (this.mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
-			this.mLogger.debug("Stopped between creating states and transitions");
+		if (mServices.getProgressAwareTimer() != null && isCancellationRequested()) {
+			mLogger.debug("Stopped between creating states and transitions");
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 
@@ -452,25 +429,24 @@ abstract class AGetRandomFtaBU extends GeneralOperation<StringRankedLetter, Stri
 	}
 
 	/**
-	 * Starts the generation of the random tree automaton. After the method has
-	 * terminated the result can be accessed by using {@link #getResult()}.
+	 * Starts the generation of the random tree automaton. After the method has terminated the result can be accessed by
+	 * using {@link #getResult()}.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected void startGeneration() throws AutomataOperationCanceledException {
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(startMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
 		}
 
 		checkInputValidity();
-		this.mResult = generateAutomaton(this.mSeed);
+		mResult = generateAutomaton(mSeed);
 		// Deterministically change the seed for the next generation
-		this.mSeed++;
+		mSeed++;
 
-		if (this.mLogger.isInfoEnabled()) {
-			this.mLogger.info(exitMessage());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
 		}
 	}
 }

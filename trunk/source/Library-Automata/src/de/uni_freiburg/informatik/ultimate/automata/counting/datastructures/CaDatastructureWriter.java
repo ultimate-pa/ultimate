@@ -134,8 +134,8 @@ public class CaDatastructureWriter<LETTER, STATE> extends GeneralAutomatonPrinte
 				print(QUOTE);
 				print(' ');
 				print('{');
-				final String updateList = conjTrans.getAssignment().stream().map(Object::toString)
-						.collect(Collectors.joining(","));
+				final String updateList =
+						conjTrans.getAssignment().stream().map(Object::toString).collect(Collectors.joining(","));
 				print(updateList);
 				print('}');
 				print(' ');

@@ -99,7 +99,8 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	}
 
 	@Override
-	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
 		mLogger.info(startMessage());
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> tempB =
 				(new RemoveDeadEnds<>(mLocalServiceProvider, nwa)).getResult();
@@ -171,11 +172,11 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		HashMap<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>, HashSet<STATE>> bStates = null;
 		NodeData<LETTER, STATE> tempNodeData = null;
 		int tempHash;
-		if (init == true) {
+		if (init) {
 			tempHash = 0;
 			bStates = new HashMap<>();
 			for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata : mLocalMB) {
-				bStates.put(automata, new HashSet<STATE>());
+				bStates.put(automata, new HashSet<>());
 				for (final STATE Bstate : automata.getInitialStates()) {
 					bStates.get(automata).add(Bstate);
 					tempHash = tempHash | Bstate.hashCode();
@@ -185,7 +186,8 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 				tempNodeData = new NodeData<>(new NestedRun<LETTER, STATE>(state));
 				tempNodeData.mParentNode = null;
 				tempNodeData.mHash = tempHash;
-				tempNodeData.mBStates = (Map<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>, Set<STATE>>) bStates.clone();
+				tempNodeData.mBStates =
+						(Map<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>, Set<STATE>>) bStates.clone();
 				mCounterTotalNodes++;
 				tempNodeData.mAState = state;
 				mAllNodes.add(tempNodeData);
@@ -198,8 +200,9 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 					boolean alreadyExisted = false;
 					tempHash = 0;
 					bStates = new HashMap<>();
-					for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata : currentNodeSet.mBStates.keySet()) {
-						bStates.put(automata, new HashSet<STATE>());
+					for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata : currentNodeSet.mBStates
+							.keySet()) {
+						bStates.put(automata, new HashSet<>());
 						for (final STATE Bstate : currentNodeSet.mBStates.get(automata)) {
 							for (final OutgoingInternalTransition<LETTER, STATE> BTransition : automata
 									.internalSuccessors(Bstate, ATransition.getLetter())) {
@@ -208,8 +211,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 							}
 						}
 					}
-					final ArrayList<STATE> newStateSequence =
-							new ArrayList<>(currentNodeSet.mWord.getStateSequence());
+					final ArrayList<STATE> newStateSequence = new ArrayList<>(currentNodeSet.mWord.getStateSequence());
 					newStateSequence.add(ATransition.getSucc());
 					tempNodeData = new NodeData<>(new NestedRun<>(
 							currentNodeSet.mWord.getWord().concatenate(new NestedWord<>(ATransition.getLetter(), -2)),
@@ -262,7 +264,8 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 							&& completeNodeSet.mHash == (currentNodeSet1.mHash & completeNodeSet.mHash)
 							&& (currentNodeSet1.mBStates.size() == completeNodeSet.mBStates.size())) {
 						containsAllbnState = true;
-						for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet1.mBStates.keySet()) {
+						for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet1.mBStates
+								.keySet()) {
 							if (!currentNodeSet1.mBStates.get(bn).equals(completeNodeSet.mBStates.get(bn))) {
 								containsAllbnState = false;
 							}
@@ -290,7 +293,8 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 							&& (currentNodeSet2.mHash == (currentNodeSet1.mHash & currentNodeSet2.mHash)
 									&& (currentNodeSet2.mBStates.size() == currentNodeSet1.mBStates.size()))) {
 						containsAllbnState = true;
-						for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet2.mBStates.keySet()) {
+						for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet2.mBStates
+								.keySet()) {
 							if (!currentNodeSet1.mBStates.get(bn).equals(currentNodeSet2.mBStates.get(bn))) {
 								containsAllbnState = false;
 							}
@@ -320,7 +324,8 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		for (final NodeData<LETTER, STATE> currentNodeSet : mCurrentTree) {
 			if (mLocalMA.isFinal(currentNodeSet.mAState)) {
 				foundFinal = false;
-				for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet.mBStates.keySet()) {
+				for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet.mBStates
+						.keySet()) {
 					for (final STATE bnState : currentNodeSet.mBStates.get(bn)) {
 						if (bn.isFinal(bnState)) {
 							foundFinal = true;
@@ -395,8 +400,9 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b,
-			final NestedRun<LETTER, STATE> ctrEx) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
+			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bi : b) {
@@ -450,7 +456,6 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 
 	private void deadEndRemove() {
 		mLogger.info("Node size before delete: " + mCompleteTree.size());
-		mCompleteTree.size();
 		toBeKeepedNodes = new HashSet<>();
 		int i = 0;
 		HashSet<NodeData<LETTER, STATE>> toBeDeletedNodes = new HashSet<>(mAllNodes);
@@ -501,7 +506,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		HashSet<STATE> newStates = null;
 		if (mCompleteTree != null) {
 			for (final NodeData<LETTER, STATE> node : mCompleteTree) {
-				node.mBStates.put(nwa, new HashSet<STATE>());
+				node.mBStates.put(nwa, new HashSet<>());
 				newStates = nestedRunStates(nwa, node.mWord);
 				node.mBStates.get(nwa).addAll(newStates);
 				for (final STATE s : newStates) {
@@ -516,7 +521,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		mCoveredNodes.clear();
 		for (final NodeData<LETTER, STATE> node : mCurrentTree) {
 			node.mCovered = false;
-			node.mBStates.put(nwa, new HashSet<STATE>());
+			node.mBStates.put(nwa, new HashSet<>());
 			newStates = nestedRunStates(nwa, node.mWord);
 			node.mBStates.get(nwa).addAll(newStates);
 			for (final STATE s : newStates) {
@@ -545,11 +550,11 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 			}
 		}
 		mErrorNodes.removeAll(toBeDeletedNodes);
-		return;
 
 	}
 
-	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
+	public static <LETTER, STATE> void
+			abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(a)) {
 			throw new UnsupportedOperationException("Operation does not support call or return");
 		}

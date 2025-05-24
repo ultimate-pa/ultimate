@@ -253,13 +253,11 @@ class ModelTranslationContainer implements IBacktranslationService {
 		for (final ITranslator<?, ?, ?, ?, ?, ?, ?> trans : mTranslationSequence) {
 			current.push(trans);
 			canTranslate |= trans.getSourceTraceElementClass()
-					.isAssignableFrom(programExecution.getStem().getTraceElementClass())
-					&& trans.getSourceExpressionClass()
-							.isAssignableFrom(programExecution.getStem().getExpressionClass())
+					.isAssignableFrom(programExecution.stem().getTraceElementClass())
+					&& trans.getSourceExpressionClass().isAssignableFrom(programExecution.stem().getExpressionClass())
 					&& trans.getSourceTraceElementClass()
-							.isAssignableFrom(programExecution.getLoop().getTraceElementClass())
-					&& trans.getSourceExpressionClass()
-							.isAssignableFrom(programExecution.getLoop().getExpressionClass());
+							.isAssignableFrom(programExecution.loop().getTraceElementClass())
+					&& trans.getSourceExpressionClass().isAssignableFrom(programExecution.loop().getExpressionClass());
 		}
 		if (!canTranslate) {
 			throw new IllegalArgumentException("You cannot translate " + programExecution
@@ -267,13 +265,13 @@ class ModelTranslationContainer implements IBacktranslationService {
 		}
 
 		if (!current.peek().getSourceTraceElementClass()
-				.isAssignableFrom(programExecution.getStem().getTraceElementClass())
+				.isAssignableFrom(programExecution.stem().getTraceElementClass())
 				|| !current.peek().getSourceExpressionClass()
-						.isAssignableFrom(programExecution.getStem().getExpressionClass())
+						.isAssignableFrom(programExecution.stem().getExpressionClass())
 				|| !current.peek().getSourceTraceElementClass()
-						.isAssignableFrom(programExecution.getLoop().getTraceElementClass())
+						.isAssignableFrom(programExecution.loop().getTraceElementClass())
 				|| !current.peek().getSourceExpressionClass()
-						.isAssignableFrom(programExecution.getLoop().getExpressionClass())) {
+						.isAssignableFrom(programExecution.loop().getExpressionClass())) {
 			throw new IllegalArgumentException("You cannot translate " + programExecution
 					+ " with this backtranslation service, as the last ITranslator in this chain is not compatible");
 		}

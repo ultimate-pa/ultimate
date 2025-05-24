@@ -47,7 +47,7 @@ public interface IVariantTestFunction {
 	default Optional<Boolean> cancelableTest(final String variant, final BooleanSupplier isCanceled) {
 		return Optional.of(test(variant));
 	}
-	
+
 	/**
 	 * Non cancelable test function.
 	 *

@@ -163,9 +163,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation> {
 	private Deque<IcfgEdge> getPathEdges(final INLOC loopHead) {
 		final Map<IcfgEdge, IcfgEdge> parentMap = new HashMap<>();
 		final HashSet<IcfgEdge> checked = new HashSet<>();
-		final Deque<IcfgEdge> toCheck = new ArrayDeque<>();
-		toCheck.addAll(loopHead.getOutgoingEdges());
-
+		final Deque<IcfgEdge> toCheck = new ArrayDeque<>(loopHead.getOutgoingEdges());
 		while (!toCheck.isEmpty()) {
 			final IcfgEdge current = toCheck.pop();
 

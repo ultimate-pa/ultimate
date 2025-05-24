@@ -141,11 +141,11 @@ public class GolemChcScript implements IChcScript {
 	}
 
 	private String getCommand(final File file) {
-		var command = "golem";
+		final StringBuilder command = new StringBuilder("golem");
 		if (mProduceModels) {
-			command += " --print-witness";
+			command.append(" --print-witness");
 		}
-		return command + " " + file.getAbsolutePath();
+		return command.append(" ").append(file.getAbsolutePath()).toString();
 	}
 
 	@Override

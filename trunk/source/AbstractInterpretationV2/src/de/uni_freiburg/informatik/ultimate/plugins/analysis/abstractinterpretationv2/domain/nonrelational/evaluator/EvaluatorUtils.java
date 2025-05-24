@@ -63,7 +63,8 @@ public final class EvaluatorUtils {
 	}
 
 	/**
-	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an {@link Expression}.
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an
+	 * {@link Expression}.
 	 *
 	 * @param type
 	 *            The {@link BoogiePrimitiveType} of an {@link Expression}.
@@ -81,7 +82,8 @@ public final class EvaluatorUtils {
 	}
 
 	/**
-	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an {@link Expression}.
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an
+	 * {@link Expression}.
 	 *
 	 * @param type
 	 *            The {@link BoogiePrimitiveType} of an {@link Expression}.
@@ -100,7 +102,8 @@ public final class EvaluatorUtils {
 	}
 
 	/**
-	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an {@link Expression}.
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link BoogiePrimitiveType} of an
+	 * {@link Expression}.
 	 *
 	 * @param type
 	 *            The {@link BoogiePrimitiveType} of an {@link Expression}.

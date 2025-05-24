@@ -164,8 +164,7 @@ public class PredicateTree<T extends IPredicate> {
 				return new Pair<>(localPred, null);
 			} else if (result == LBool.SAT) {
 				// they are not equal
-				final Set<IProgramVar> vars = new HashSet<>();
-				vars.addAll(predicateToUnify.getVars());
+				final Set<IProgramVar> vars = new HashSet<>(predicateToUnify.getVars());
 				vars.addAll(localPred.getVars());
 				final Set<ApplicationTerm> terms =
 						vars.stream().map(IProgramVar::getDefaultConstant).collect(Collectors.toSet());

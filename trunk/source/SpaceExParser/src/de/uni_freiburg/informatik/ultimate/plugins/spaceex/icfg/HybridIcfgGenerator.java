@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -141,10 +142,10 @@ public class HybridIcfgGenerator {
 
 		// root location of the ICFG, to this root location each sub-icfg will
 		// be connected.
-		icfg.addLocation(mRootLocation, true, false, true, false, false);
+		icfg.addLocation(mRootLocation, true, false, true, false, false, false);
 
 		// error location
-		icfg.addLocation(mErrorLocation, false, true, false, true, false);
+		icfg.addLocation(mErrorLocation, false, true, false, true, false, false);
 
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
@@ -162,7 +163,8 @@ public class HybridIcfgGenerator {
 			mCfgComponents.forEach((key, value) -> mLogger.debug("ID:" + key + ", Component:" + value.toString()));
 			mLogger.debug("#################### ICFG ######################");
 			mLogger.debug(icfg.getProgramPoints().toString());
-			mLogger.debug(icfg.getCfgSmtToolkit().getSymbolTable().getLocals(HybridTranslatorConstants.PROC_NAME).toString());
+			mLogger.debug(
+					icfg.getCfgSmtToolkit().getSymbolTable().getLocals(HybridTranslatorConstants.PROC_NAME).toString());
 		}
 		return icfg;
 	}
@@ -457,13 +459,13 @@ public class HybridIcfgGenerator {
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, IcfgLocation.class);
 
 		final IcfgLocation startLoc = new IcfgLocation(new StringDebugIdentifier("start"), "MAIN");
-		icfg.addLocation(startLoc, true, false, true, false, false);
+		icfg.addLocation(startLoc, true, false, true, false, false, false);
 
 		final IcfgLocation middleLoc = new IcfgLocation(new StringDebugIdentifier("middle"), "MAIN");
-		icfg.addLocation(middleLoc, false, false, false, false, false);
+		icfg.addLocation(middleLoc, false, false, false, false, false, false);
 
 		final IcfgLocation endLoc = new IcfgLocation(new StringDebugIdentifier("error"), "MAIN");
-		icfg.addLocation(endLoc, false, true, false, true, false);
+		icfg.addLocation(endLoc, false, true, false, true, false, false);
 
 		// Every procedure must have a unique entry and a unique exit. It is not
 		// allowed to have more than one exit (or
@@ -527,11 +529,7 @@ public class HybridIcfgGenerator {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + mAutomataId;
-			result = prime * result + mGroupId;
-			return result;
+			return Objects.hash(mAutomataId, mGroupId);
 		}
 
 		@Override

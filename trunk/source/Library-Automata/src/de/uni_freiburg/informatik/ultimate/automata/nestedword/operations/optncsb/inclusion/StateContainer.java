@@ -40,23 +40,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
 class StateContainer<LETTER, STATE> {
-	
-	protected final STATE mState;		
+
+	protected final STATE mState;
 	// store outgoing transitions
 	private Map<LETTER, Set<STATE>> mInternalOut = new HashMap<>();
 	// store incoming transitions
 	private Map<LETTER, Set<STATE>> mInternalIn = new HashMap<>();
-	
+
 	private final Set<LETTER> mEmptySetOfLetters = new HashSet<>(0);
-	
-	public StateContainer(STATE state) {
+
+	public StateContainer(final STATE state) {
 		mState = state;
 	}
-	
+
 	protected STATE getState() {
 		return mState;
 	}
-	
+
 	protected void addInternalOutgoing(final OutgoingInternalTransition<LETTER, STATE> internalOutgoing) {
 		final LETTER letter = internalOutgoing.getLetter();
 		final STATE succ = internalOutgoing.getSucc();
@@ -70,7 +70,7 @@ class StateContainer<LETTER, STATE> {
 		}
 		succs.add(succ);
 	}
-	
+
 	protected void addInternalIncoming(final IncomingInternalTransition<LETTER, STATE> internalIncoming) {
 		final LETTER letter = internalIncoming.getLetter();
 		final STATE pred = internalIncoming.getPred();
@@ -84,61 +84,69 @@ class StateContainer<LETTER, STATE> {
 		}
 		preds.add(pred);
 	}
-	
-	protected void removeSuccessor(STATE succ) {
-		Map<LETTER, Set<STATE>> outs = new HashMap<>();
-		for(Entry<LETTER, Set<STATE>> entry : mInternalOut.entrySet()) {
-			Set<STATE> succs = entry.getValue();
-			if(succs.contains(succ)) succs.remove(succ);
-			if(!succs.isEmpty()) {
+
+	protected void removeSuccessor(final STATE succ) {
+		final Map<LETTER, Set<STATE>> outs = new HashMap<>();
+		for (final Entry<LETTER, Set<STATE>> entry : mInternalOut.entrySet()) {
+			final Set<STATE> succs = entry.getValue();
+			if (succs.contains(succ)) {
+				succs.remove(succ);
+			}
+			if (!succs.isEmpty()) {
 				outs.put(entry.getKey(), succs);
 			}
 		}
 		mInternalOut = outs;
 	}
-	
-	protected void removePredecessors(Set<STATE> ps) {
-		Map<LETTER, Set<STATE>> ins = new HashMap<>();
-		for(Entry<LETTER, Set<STATE>> entry : mInternalIn.entrySet()) {
-			Set<STATE> preds = entry.getValue();
+
+	protected void removePredecessors(final Set<STATE> ps) {
+		final Map<LETTER, Set<STATE>> ins = new HashMap<>();
+		for (final Entry<LETTER, Set<STATE>> entry : mInternalIn.entrySet()) {
+			final Set<STATE> preds = entry.getValue();
 			preds.removeAll(ps);
-			if(!preds.isEmpty()) {
+			if (!preds.isEmpty()) {
 				ins.put(entry.getKey(), preds);
 			}
- 		}
+		}
 		mInternalIn = ins;
 	}
-	
-	protected LETTER getLetterOfSuccessor(STATE succ) {
-		for(Entry<LETTER, Set<STATE>> entry : mInternalOut.entrySet()) {
-			Set<STATE> succs = entry.getValue();
-			if(succs.contains(succ)) return entry.getKey();
+
+	protected LETTER getLetterOfSuccessor(final STATE succ) {
+		for (final Entry<LETTER, Set<STATE>> entry : mInternalOut.entrySet()) {
+			final Set<STATE> succs = entry.getValue();
+			if (succs.contains(succ)) {
+				return entry.getKey();
+			}
 		}
 		return null;
 	}
-	
-	protected LETTER getLetterOfPredecessor(STATE pred) {
-		for(Entry<LETTER, Set<STATE>> entry : mInternalIn.entrySet()) {
-			Set<STATE> preds = entry.getValue();
-			if(preds.contains(pred)) return entry.getKey();
+
+	protected LETTER getLetterOfPredecessor(final STATE pred) {
+		for (final Entry<LETTER, Set<STATE>> entry : mInternalIn.entrySet()) {
+			final Set<STATE> preds = entry.getValue();
+			if (preds.contains(pred)) {
+				return entry.getKey();
+			}
 		}
 		return null;
 	}
-	
+
 	protected boolean hashSelfloop() {
-		for(Set<STATE> succs : mInternalOut.values()) {
-			if(succs.contains(mState)) return true;
+		for (final Set<STATE> succs : mInternalOut.values()) {
+			if (succs.contains(mState)) {
+				return true;
+			}
 		}
 		return false;
 	}
-	
+
 	public Set<LETTER> lettersInternalIncoming() {
 		final Map<LETTER, Set<STATE>> map = mInternalIn;
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
-	
+
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors() {
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
@@ -183,9 +191,10 @@ class StateContainer<LETTER, STATE> {
 		};
 	}
 
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(LETTER letter) {
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final LETTER letter) {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
+
 			private Iterator<STATE> initialize() {
 				final Map<LETTER, Set<STATE>> letter2succ = mInternalOut;
 				if (letter2succ != null && letter2succ.get(letter) != null) {
@@ -211,7 +220,7 @@ class StateContainer<LETTER, STATE> {
 	}
 
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors() {
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<IncomingInternalTransition<LETTER, STATE>> mCurrentIterator;
@@ -256,8 +265,8 @@ class StateContainer<LETTER, STATE> {
 		};
 	}
 
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(LETTER letter) {
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final LETTER letter) {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -283,6 +292,5 @@ class StateContainer<LETTER, STATE> {
 			}
 		};
 	}
-	
-}
 
+}

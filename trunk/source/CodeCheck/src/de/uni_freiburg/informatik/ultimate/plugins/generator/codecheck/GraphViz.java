@@ -166,7 +166,7 @@ public class GraphViz {
 	 */
 	public byte[] getGraph(final String dot_source, final String type) {
 		File dot;
-		byte[] imgStream = new byte[0];
+		byte[] imgStream = {};
 
 		dot = writeDotSourceToFile(dot_source);
 		if (dot != null) {
@@ -233,7 +233,7 @@ public class GraphViz {
 
 			p.waitFor();
 
-			byte[] imgStream = new byte[0];
+			byte[] imgStream = {};
 			try (FileInputStream in = new FileInputStream(img.getAbsolutePath())) {
 				imgStream = new byte[in.available()];
 				final int readbytes = in.read(imgStream);

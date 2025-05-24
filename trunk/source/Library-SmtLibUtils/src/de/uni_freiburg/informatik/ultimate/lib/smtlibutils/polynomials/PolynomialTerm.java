@@ -28,9 +28,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * where c_i, c, e_i are literals, and x_i are variables.
  *
- * TODO 20230107 Matthias: Revise construction methods. Try to utilize abstract
- * superclass. Convert operands to PolynomialTerm if needed. Convert
- * construction result to AffineTerm if needed.
+ * TODO 20230107 Matthias: Revise construction methods. Try to utilize abstract superclass. Convert operands to
+ * PolynomialTerm if needed. Convert construction result to AffineTerm if needed.
  *
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  *
@@ -46,11 +45,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * Auxiliary polynomial term that represents an error during the translation
-	 * process, e.g., if original term had wrong sorts.
+	 * Auxiliary polynomial term that represents an error during the translation process, e.g., if original term had
+	 * wrong sorts.
 	 */
 	public PolynomialTerm() {
-		super();
 	}
 
 	@Override
@@ -77,8 +75,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * Returns a new PolynomialTerm that represents the product of polynomialTerm
-	 * and multiplier.
+	 * Returns a new PolynomialTerm that represents the product of polynomialTerm and multiplier.
 	 */
 	public static AbstractGeneralizedAffineTerm<?> mul(final IPolynomialTerm polynomialTerm,
 			final Rational multiplier) {
@@ -87,18 +84,17 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 			return PolynomialTermUtils.constructMul(x -> ((AffineTerm) x).getAbstractVariable2Coefficient(),
 					constructor, polynomialTerm, multiplier);
 		} else {
-			final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
-			return PolynomialTermUtils.constructMul(
-					x -> ((AbstractGeneralizedAffineTerm<?>) x).getMonomial2Coefficient(), constructor, polynomialTerm,
+			final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor =
+					PolynomialTerm::minimalRepresentation;
+			return PolynomialTermUtils.constructMul(x -> x.getMonomial2Coefficient(), constructor, polynomialTerm,
 					multiplier);
 		}
 	}
 
 	/**
-	 * The given arguments specify a Term. This constructor determines whether it
-	 * must be represented by the PolynomialTerm class, or if the AffineTerm class
-	 * is sufficient (more storage efficiency). Afterwards it returns this Term
-	 * represented by one of the two classes, chosen accordingly.
+	 * The given arguments specify a Term. This constructor determines whether it must be represented by the
+	 * PolynomialTerm class, or if the AffineTerm class is sufficient (more storage efficiency). Afterwards it returns
+	 * this Term represented by one of the two classes, chosen accordingly.
 	 */
 	private static AbstractGeneralizedAffineTerm<?> minimalRepresentation(final Sort sort, final Rational coeff,
 			final Map<Monomial, Rational> map) {
@@ -109,19 +105,17 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * Returns a new PolynomialTerm that represents the product of two
-	 * polynomialTerms.
+	 * Returns a new PolynomialTerm that represents the product of two polynomialTerms.
 	 */
 	public static IPolynomialTerm mulPolynomials(final IPolynomialTerm poly1, final IPolynomialTerm poly2) {
-		final Rational newConstant = PolynomialTermUtils
-				.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()), poly1.getSort());
+		final Rational newConstant =
+				PolynomialTermUtils.bringValueInRange(poly1.getConstant().mul(poly2.getConstant()), poly1.getSort());
 		final Map<Monomial, Rational> polyMap = calculateProductMap(poly1, poly2);
 		return minimalRepresentation(poly1.getSort(), newConstant, polyMap);
 	}
 
 	/**
-	 * Calculate the map of the product of two polynomials (in Monomial2Coefficient
-	 * form).
+	 * Calculate the map of the product of two polynomials (in Monomial2Coefficient form).
 	 */
 	private static Map<Monomial, Rational> calculateProductMap(final IPolynomialTerm poly1,
 			final IPolynomialTerm poly2) {
@@ -133,8 +127,8 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * Multiply just the Monomials of the two polynomialTerms with each other and
-	 * put them into the given map. Return that same map.
+	 * Multiply just the Monomials of the two polynomialTerms with each other and put them into the given map. Return
+	 * that same map.
 	 */
 	private static SparseMapBuilder<Monomial, Rational> monoTimesMonoIntoMap(
 			final SparseMapBuilder<Monomial, Rational> builder, final IPolynomialTerm poly1,
@@ -162,8 +156,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * Multiply the Monomials of poly1 with the constant of poly2 and put them into
-	 * the given map. Return that same map.
+	 * Multiply the Monomials of poly1 with the constant of poly2 and put them into the given map. Return that same map.
 	 */
 	private static SparseMapBuilder<Monomial, Rational> monomialsTimesConstantIntoMap(
 			final SparseMapBuilder<Monomial, Rational> builder, final IPolynomialTerm poly1,
@@ -191,7 +184,8 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 * Returns the sum of given polynomials.
 	 */
 	public static AbstractGeneralizedAffineTerm<?> sum(final IPolynomialTerm... summands) {
-		final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
+		final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor =
+				PolynomialTerm::minimalRepresentation;
 		return PolynomialTermUtils.constructSum(PolynomialTerm::termWrapper, constructor, summands);
 	}
 
@@ -219,7 +213,8 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	@Override
-	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Monomial abstractVariable, final Rational coeff) {
+	protected Term abstractVariableTimesCoeffToTerm(final Script script, final Monomial abstractVariable,
+			final Rational coeff) {
 		return abstractVariable.timesCoefficientToTerm(script, coeff);
 	}
 
@@ -229,9 +224,8 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	}
 
 	/**
-	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if
-	 *         var is a variable of some {@link Monomial} that has a non-zero
-	 *         coefficient) Note that for returning true it is especially NOT
+	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if var is a variable of some
+	 *         {@link Monomial} that has a non-zero coefficient) Note that for returning true it is especially NOT
 	 *         sufficient if var occurs only as a subterm of some variable.
 	 */
 	@Override
@@ -303,8 +297,8 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		final HashMap<Monomial, Rational> newAbstractVariable2Coefficient = new HashMap<>();
 		for (final Entry<Monomial, Rational> entry : mAbstractVariable2Coefficient.entrySet()) {
 			if (!entry.getKey().equals(monomialOfSubject)) {
-				final Rational newCoefficient = PolynomialTermUtils.bringValueInRange(entry.getValue().negate(),
-						getSort());
+				final Rational newCoefficient =
+						PolynomialTermUtils.bringValueInRange(entry.getValue().negate(), getSort());
 				newAbstractVariable2Coefficient.put(entry.getKey(), newCoefficient);
 				if (!entry.getKey().isLinear()) {
 					allMonomialsAreLinear = false;

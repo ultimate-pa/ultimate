@@ -109,7 +109,8 @@ public final class DifferenceSenwa<LETTER, STATE>
 	public <SF extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> subtrahend)
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
 				true);
 	}
@@ -252,7 +253,8 @@ public final class DifferenceSenwa<LETTER, STATE>
 		final STATE resHierEntry = mSenwa.getEntry(resHier);
 		final DifferenceState<LETTER, STATE> diffHierEntry = getOperandState(resHierEntry);
 
-		for (final OutgoingReturnTransition<LETTER, STATE> trans : mMinuend.returnSuccessorsGivenHier(minuState, minuHier)) {
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mMinuend.returnSuccessorsGivenHier(minuState,
+				minuHier)) {
 			final STATE minuSucc = trans.getSucc();
 			final DeterminizedState<LETTER, STATE> subtrSucc =
 					mStateDeterminizer.returnSuccessor(subtrState, subtrHier, trans.getLetter());

@@ -49,7 +49,7 @@ public class ArrayDomainPreferences {
 
 	public static final String LABEL_ABSTRACT_DOMAIN = "Underlying domain";
 	private static final String[] VALUES_ABSTRACT_DOMAIN =
-			new String[] { IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
+			{ IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
 					CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
 	private static final String DEF_ABSTRACT_DOMAIN = CompoundDomain.class.getSimpleName();
 	private static final String DESC_ABSTRACT_DOMAIN =

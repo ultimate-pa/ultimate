@@ -19,14 +19,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class ParallelDfgGeneratorObserver extends BaseObserver {
-	
+
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
 	IAbstractInterpretationResult<DataflowState<IcfgEdge>, IcfgEdge, IcfgLocation> mDataflowAnalysisResult;
@@ -53,7 +52,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-		
+
 		// rootNode is the dummy note with edges leading to every procedure entry point
 		@SuppressWarnings("unchecked")
 		final IIcfg<IcfgLocation> rootNode = (IIcfg<IcfgLocation>) root;
@@ -138,7 +137,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				final List<ParallelDataflowgraph<IcfgEdge>> sources = explain(x, node);
 				for (ParallelDataflowgraph<IcfgEdge> s : sources) {
 					mLogger.debug("      by the statement " + s.getNodeLabel().toString());
-					Boolean sourceInGraph = false;
+					boolean sourceInGraph = false;
 					if (mInitNode.compare(s)) {
 						// s is the init node
 						sourceInGraph = true;
@@ -180,10 +179,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		// make a special init node a member var of this class and check in
 		final List<ParallelDataflowgraph<IcfgEdge>> sources = new ArrayList<>();
 		final Map<String, Set<IcfgLocation>> nowriteLocs = computeLocationSets(var, node.getLocations());
-		Boolean initInRD = true;
+		boolean initInRD = true;
 		for (final Entry<String, Set<IcfgLocation>> entry : node.getLocations().entrySet()) {
 			// check for every Procedure if there exists a pp which has init in nowrtie(x,pp)
-			Boolean initInRDProc = false;
+			boolean initInRDProc = false;
 			if (!var.isGlobal() && var.getProcedure() != entry.getKey()) {
 				// if var is local and not in the procedure, continue to the next procedure
 				continue;
@@ -223,7 +222,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			}
 			// if there was no pp which set the variable initInRDProc for the procedure to true
 			// then init is not a source node
-			if (initInRDProc.equals(false)) {
+			if (!initInRDProc) {
 				initInRD = false;
 			}
 		}
@@ -239,9 +238,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			final Map<String, Set<IcfgLocation>> locations) {
 		final Map<String, Set<IcfgLocation>> nowriteLocs = new HashMap<>();
 		for (final Entry<String, Set<IcfgLocation>> entry : locations.entrySet()) {
-			final Set<IcfgLocation> L = new HashSet<>();
-			// L always includes the old L set.
-			L.addAll(entry.getValue());
+			final Set<IcfgLocation> L = new HashSet<>(entry.getValue());
 			// compute with nowrites
 			if (!var.isGlobal() && var.getProcedure() != entry.getKey()) {
 				// if var is local and not in the procedure, continue to the next procedure
@@ -379,7 +376,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 
 	private Integer computeMaxNodes() {
-		Integer count = 0;
+		int count = 0;
 		for (final Entry<String, Integer> entry : mStmtsPerThread.entrySet()) {
 			if (entry.getKey() == "~init") {
 				continue;

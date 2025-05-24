@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.RefinementEngineStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
@@ -56,11 +57,12 @@ public class IpTcStrategyModuleAcceleratedTraceCheck<L extends IIcfgTransition<?
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
+	private final TaskIdentifier mTaskIdentifier;
 
 	public IpTcStrategyModuleAcceleratedTraceCheck(final IUltimateServiceProvider services, final ILogger logger,
 			final Counterexample<L> counterexample, final IPredicate precondition, final IPredicate postcondition,
 			final IPredicateUnifier predicateUnifier, final TaCheckAndRefinementPreferences<L> prefs,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory, final TaskIdentifier taskIdentifier) {
 		mServices = services;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -70,12 +72,13 @@ public class IpTcStrategyModuleAcceleratedTraceCheck<L extends IIcfgTransition<?
 		mPrefs = prefs;
 		mScript = mPrefs.getCfgSmtToolkit().getManagedScript();
 		mPredicateFactory = predicateFactory;
+		mTaskIdentifier = taskIdentifier;
 	}
 
 	@Override
 	protected IInterpolatingTraceCheck<L> construct() {
 		return new AcceleratedTraceCheck<>(mServices, mLogger, mPrefs, mScript, mPredicateUnifier, mCounterexample,
-				mPrecondition, mPostcondition, mPredicateFactory);
+				mPrecondition, mPostcondition, mPredicateFactory, mTaskIdentifier);
 	}
 
 	@Override

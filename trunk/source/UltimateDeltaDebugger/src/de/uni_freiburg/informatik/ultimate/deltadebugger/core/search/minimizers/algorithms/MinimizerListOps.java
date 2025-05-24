@@ -36,7 +36,7 @@ public final class MinimizerListOps {
 	private MinimizerListOps() {
 		// utility class
 	}
-	
+
 	/**
 	 * Allocate a new list of the requested capacity.
 	 *
@@ -49,7 +49,7 @@ public final class MinimizerListOps {
 	public static <E> List<E> newList(final int capacity) {
 		return new ArrayList<>(capacity);
 	}
-	
+
 	/**
 	 * Returns the sublist between the specified <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
 	 *
@@ -66,7 +66,7 @@ public final class MinimizerListOps {
 	public static <E> List<E> subList(final List<E> source, final int fromIndex, final int toIndex) {
 		return source.subList(fromIndex, toIndex);
 	}
-	
+
 	/**
 	 * Returns the complement of the sublist between the specified <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>,
 	 * exclusive.

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
 public class HitCountingDuplicateVariantTracker implements IDuplicateVariantTracker<IChangeHandle> {
 	private final IDuplicateVariantTracker<IChangeHandle> mDelegate;
 	private final AtomicInteger mCounter;
-	
+
 	/**
 	 * @param delegate
 	 *            Delegate duplicate variant tracker.
@@ -50,12 +50,12 @@ public class HitCountingDuplicateVariantTracker implements IDuplicateVariantTrac
 		mDelegate = Objects.requireNonNull(delegate);
 		mCounter = Objects.requireNonNull(counter);
 	}
-	
+
 	@Override
 	public void add(final List<? extends IChangeHandle> variant) {
 		mDelegate.add(variant);
 	}
-	
+
 	@Override
 	public boolean contains(final List<? extends IChangeHandle> variant) {
 		final boolean result = mDelegate.contains(variant);
@@ -64,11 +64,11 @@ public class HitCountingDuplicateVariantTracker implements IDuplicateVariantTrac
 		}
 		return result;
 	}
-	
+
 	public AtomicInteger getCounter() {
 		return mCounter;
 	}
-	
+
 	@Override
 	public void removeLargerVariants(final int keptVariantSize) {
 		mDelegate.removeLargerVariants(keptVariantSize);

@@ -40,7 +40,6 @@ public class ModTerm implements ITermProvider {
 	private final Term mDivisor;
 
 	public ModTerm(final Term divident, final Term divisor) {
-		super();
 		mDivident = divident;
 		mDivisor = divisor;
 	}

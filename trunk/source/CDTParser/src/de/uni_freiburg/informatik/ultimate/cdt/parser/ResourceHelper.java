@@ -19,8 +19,6 @@ import java.util.UUID;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
-import org.eclipse.cdt.core.model.CoreModel;
-import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
@@ -49,8 +47,8 @@ public class ResourceHelper {
 	private final static IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
 	private static final int MAX_RETRY = 5;
 
-	private final static Set<String> externalFilesCreated = new HashSet<String>();
-	private final static Set<IResource> resourcesCreated = new HashSet<IResource>();
+	private final static Set<String> externalFilesCreated = new HashSet<>();
+	private final static Set<IResource> resourcesCreated = new HashSet<>();
 
 	/**
 	 * Creates CDT project in a specific path in workspace and opens it.
@@ -64,14 +62,13 @@ public class ResourceHelper {
 	 *             - if the project can't be created.
 	 * @throws OperationCanceledException...
 	 */
-	public static IProject createCDTProject(String projectName, String pathInWorkspace)
+	public static IProject createCDTProject(final String projectName, final String pathInWorkspace)
 			throws OperationCanceledException, CoreException {
 		return createCDTProject(projectName, pathInWorkspace, null);
 	}
 
 	/**
-	 * Creates CDT project in a specific path in workspace adding specified
-	 * configurations and opens it.
+	 * Creates CDT project in a specific path in workspace adding specified configurations and opens it.
 	 *
 	 * @param projectName
 	 *            - project name.
@@ -85,32 +82,32 @@ public class ResourceHelper {
 	 * @throws OperationCanceledException...
 	 */
 	@SuppressWarnings("restriction")
-	public static IProject createCDTProject(String projectName, String pathInWorkspace, String[] configurationIds)
-			throws OperationCanceledException, CoreException {
-		CCorePlugin cdtCorePlugin = CCorePlugin.getDefault();
-		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		IWorkspaceRoot root = workspace.getRoot();
+	public static IProject createCDTProject(final String projectName, final String pathInWorkspace,
+			final String[] configurationIds) throws OperationCanceledException, CoreException {
+		final CCorePlugin cdtCorePlugin = CCorePlugin.getDefault();
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		final IWorkspaceRoot root = workspace.getRoot();
 
 		IProject project = root.getProject(projectName);
 		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEXER_ID, IPDOMManager.ID_NO_INDEXER);
 		resourcesCreated.add(project);
 
-		IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
+		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
 		if (pathInWorkspace != null) {
-			IPath absoluteLocation = root.getLocation().append(pathInWorkspace);
+			final IPath absoluteLocation = root.getLocation().append(pathInWorkspace);
 			prjDescription.setLocation(absoluteLocation);
 		}
 
 		if (configurationIds != null && configurationIds.length > 0) {
-			ICProjectDescriptionManager prjDescManager = cdtCorePlugin.getProjectDescriptionManager();
+			final ICProjectDescriptionManager prjDescManager = cdtCorePlugin.getProjectDescriptionManager();
 
 			project.create(NULL_MONITOR);
 			project.open(NULL_MONITOR);
 
-			ICProjectDescription icPrjDescription = prjDescManager.createProjectDescription(project, false);
-			ICConfigurationDescription baseConfiguration = cdtCorePlugin.getPreferenceConfiguration("123");
+			final ICProjectDescription icPrjDescription = prjDescManager.createProjectDescription(project, false);
+			final ICConfigurationDescription baseConfiguration = cdtCorePlugin.getPreferenceConfiguration("123");
 
-			for (String cfgId : configurationIds) {
+			for (final String cfgId : configurationIds) {
 				icPrjDescription.createConfiguration(cfgId, cfgId + " Name", baseConfiguration);
 			}
 			prjDescManager.setProjectDescription(project, icPrjDescription);
@@ -120,7 +117,7 @@ public class ResourceHelper {
 		// Assert.assertNotNull(project);
 
 		project.open(null);
-		
+
 		// Assert.assertTrue(project.isOpen());
 
 		return project;
@@ -139,16 +136,16 @@ public class ResourceHelper {
 	 * @throws OperationCanceledException...
 	 */
 	@SuppressWarnings("restriction")
-	public static IProject createCDTProject(String projectName, URI locationURI)
+	public static IProject createCDTProject(final String projectName, final URI locationURI)
 			throws OperationCanceledException, CoreException {
-		IWorkspace workspace = ResourcesPlugin.getWorkspace();
-		IWorkspaceRoot root = workspace.getRoot();
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		final IWorkspaceRoot root = workspace.getRoot();
 
 		IProject project = root.getProject(projectName);
 		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEXER_ID, IPDOMManager.ID_NO_INDEXER);
 		resourcesCreated.add(project);
 
-		IProjectDescription description = workspace.newProjectDescription(projectName);
+		final IProjectDescription description = workspace.newProjectDescription(projectName);
 		description.setLocationURI(locationURI);
 		project = CCorePlugin.getDefault().createCDTProject(description, project, NULL_MONITOR);
 		waitForProjectRefreshToFinish();
@@ -170,7 +167,7 @@ public class ResourceHelper {
 	 *             - if the project can't be created.
 	 * @throws OperationCanceledException...
 	 */
-	public static IProject createCDTProject(String projectName) throws OperationCanceledException, CoreException {
+	public static IProject createCDTProject(final String projectName) throws OperationCanceledException, CoreException {
 		return createCDTProject(projectName, null, null);
 	}
 
@@ -184,9 +181,9 @@ public class ResourceHelper {
 	 *             - if the project can't be created.
 	 * @throws OperationCanceledException...
 	 */
-	public static IProject createCDTProjectWithConfig(String projectName) throws Exception {
-		IProject project = createCDTProject(projectName, null,
-				new String[] { "org.eclipse.cdt.core.tests.configuration" });
+	public static IProject createCDTProjectWithConfig(final String projectName) throws Exception {
+		final IProject project =
+				createCDTProject(projectName, null, new String[] { "org.eclipse.cdt.core.tests.configuration" });
 		resourcesCreated.add(project);
 		return project;
 	}
@@ -199,17 +196,18 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if project could not be created
 	 */
-	public static IProject createProject(String projectName) throws CoreException {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IProject project = root.getProject(projectName);
+	public static IProject createProject(final String projectName) throws CoreException {
+		final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		final IProject project = root.getProject(projectName);
 		if (!project.exists()) {
 			project.create(NULL_MONITOR);
 		} else {
 			project.refreshLocal(IResource.DEPTH_INFINITE, null);
 		}
 
-		if (!project.isOpen())
+		if (!project.isOpen()) {
 			project.open(NULL_MONITOR);
+		}
 
 		resourcesCreated.add(project);
 		return project;
@@ -221,11 +219,12 @@ public class ResourceHelper {
 	 * @param projectName
 	 * @throws CoreException
 	 */
-	public static void deleteProject(String projectName) throws CoreException {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IProject project = root.getProject(projectName);
-		if (project.exists())
+	public static void deleteProject(final String projectName) throws CoreException {
+		final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		final IProject project = root.getProject(projectName);
+		if (project.exists()) {
 			delete(project);
+		}
 	}
 
 	/**
@@ -246,18 +245,18 @@ public class ResourceHelper {
 	 *            whether to delete project content
 	 * @throws CoreException
 	 */
-	public static void delete(final IProject project, boolean deleteContent) throws CoreException {
+	public static void delete(final IProject project, final boolean deleteContent) throws CoreException {
 		for (int i = 0; i < MAX_RETRY; i++) {
 			try {
 				project.delete(deleteContent, true, NULL_MONITOR);
 				i = MAX_RETRY;
-			} catch (CoreException x) {
+			} catch (final CoreException x) {
 				if (i == MAX_RETRY - 1) {
-//					CTestPlugin.getDefault().getLog().log(x.getStatus());
+					// CTestPlugin.getDefault().getLog().log(x.getStatus());
 				}
 				try {
 					Thread.sleep(1000); // sleep a second
-				} catch (InterruptedException e) {
+				} catch (final InterruptedException e) {
 				}
 			}
 		}
@@ -274,21 +273,20 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             - if the file can't be created.
 	 */
-	public static IFile createFile(IFile file, String contents) throws CoreException {
+	public static IFile createFile(final IFile file, String contents) throws CoreException {
 		if (contents == null) {
 			contents = "";
 		}
 
-		InputStream inputStream = new ByteArrayInputStream(contents.getBytes());
+		final InputStream inputStream = new ByteArrayInputStream(contents.getBytes());
 		file.create(inputStream, true, NULL_MONITOR);
 		resourcesCreated.add(file);
 		return file;
 	}
 
 	/**
-	 * Creates new file from project root with empty content. The filename can
-	 * include relative path as a part of the name but the the path has to be
-	 * present on disk.
+	 * Creates new file from project root with empty content. The filename can include relative path as a part of the
+	 * name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -298,24 +296,26 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFile createFile(IProject project, String name) throws CoreException {
-		if (new Path(name).segmentCount() > 1)
+	public static IFile createFile(final IProject project, final String name) throws CoreException {
+		if (new Path(name).segmentCount() > 1) {
 			createFolder(project, new Path(name).removeLastSegments(1).toString());
+		}
 		return createFile(project.getFile(name), null);
 	}
-	
-	public static IFile createFile(IProject project, File file) throws CoreException, FileNotFoundException {
-		if (new Path(file.getName()).segmentCount() > 1)
+
+	public static IFile createFile(final IProject project, final File file)
+			throws CoreException, FileNotFoundException {
+		if (new Path(file.getName()).segmentCount() > 1) {
 			createFolder(project, new Path(file.getName()).removeLastSegments(1).toString());
-		String content = new Scanner(file).useDelimiter("\\Z").next();
+		}
+		final String content = new Scanner(file).useDelimiter("\\Z").next();
 		return createFile(project.getFile(file.getName()), content);
 	}
 
 	/**
-	 * Creates new file from workspace root with empty content. The filename can
-	 * include relative path as a part of the name but the the path has to be
-	 * present on disk. The intention of the method is to create files which do
-	 * not belong to any project.
+	 * Creates new file from workspace root with empty content. The filename can include relative path as a part of the
+	 * name but the the path has to be present on disk. The intention of the method is to create files which do not
+	 * belong to any project.
 	 *
 	 * @param name
 	 *            - filename.
@@ -324,12 +324,12 @@ public class ResourceHelper {
 	 * @throws CoreException...
 	 * @throws IOException...
 	 */
-	public static IPath createWorkspaceFile(String name) throws CoreException, IOException {
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		IPath fullPath = workspaceRoot.getLocation().append(name);
-		java.io.File file = new java.io.File(fullPath.toOSString());
+	public static IPath createWorkspaceFile(final String name) throws CoreException, IOException {
+		final IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		final IPath fullPath = workspaceRoot.getLocation().append(name);
+		final java.io.File file = new java.io.File(fullPath.toOSString());
 		if (!file.exists()) {
-			boolean result = file.createNewFile();
+			final boolean result = file.createNewFile();
 			// Assert.assertTrue(result);
 		}
 		// Assert.assertTrue(file.exists());
@@ -340,9 +340,8 @@ public class ResourceHelper {
 	}
 
 	/**
-	 * Creates new folder from project root. The folder name can include
-	 * relative path as a part of the name. Nonexistent parent directories are
-	 * being created.
+	 * Creates new folder from project root. The folder name can include relative path as a part of the name.
+	 * Nonexistent parent directories are being created.
 	 *
 	 * @param project
 	 *            - project where to create the folder.
@@ -352,23 +351,23 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFolder createFolder(IProject project, String name) throws CoreException {
+	public static IFolder createFolder(final IProject project, final String name) throws CoreException {
 		final IPath p = new Path(name);
 		IContainer folder = project;
-		for (String seg : p.segments()) {
+		for (final String seg : p.segments()) {
 			folder = folder.getFolder(new Path(seg));
-			if (!folder.exists())
+			if (!folder.exists()) {
 				((IFolder) folder).create(true, true, NULL_MONITOR);
+			}
 		}
 		resourcesCreated.add(folder);
 		return (IFolder) folder;
 	}
 
 	/**
-	 * Creates new folder from workspace root. The folder name can include
-	 * relative path as a part of the name. Nonexistent parent directories are
-	 * being created as per {@link File#mkdirs()}. The intention of the method
-	 * is to create folders which do not belong to any project.
+	 * Creates new folder from workspace root. The folder name can include relative path as a part of the name.
+	 * Nonexistent parent directories are being created as per {@link File#mkdirs()}. The intention of the method is to
+	 * create folders which do not belong to any project.
 	 *
 	 * @param name
 	 *            - folder name.
@@ -376,12 +375,12 @@ public class ResourceHelper {
 	 * @throws IOException
 	 *             if something goes wrong.
 	 */
-	public static IPath createWorkspaceFolder(String name) throws CoreException, IOException {
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-		IPath fullPath = workspaceRoot.getLocation().append(name);
-		java.io.File folder = new java.io.File(fullPath.toOSString());
+	public static IPath createWorkspaceFolder(final String name) throws CoreException, IOException {
+		final IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		final IPath fullPath = workspaceRoot.getLocation().append(name);
+		final java.io.File folder = new java.io.File(fullPath.toOSString());
 		if (!folder.exists()) {
-			boolean result = folder.mkdirs();
+			final boolean result = folder.mkdirs();
 		}
 
 		externalFilesCreated.add(fullPath.toOSString());
@@ -401,9 +400,8 @@ public class ResourceHelper {
 	}
 
 	/**
-	 * Creates new eclipse file-link from project root to file system file. The
-	 * filename can include relative path as a part of the name but the the path
-	 * has to be present on disk.
+	 * Creates new eclipse file-link from project root to file system file. The filename can include relative path as a
+	 * part of the name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -415,17 +413,17 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFile createLinkedFile(IProject project, String fileLink, IPath realFile) throws CoreException {
-		IFile file = project.getFile(fileLink);
+	public static IFile createLinkedFile(final IProject project, final String fileLink, final IPath realFile)
+			throws CoreException {
+		final IFile file = project.getFile(fileLink);
 		file.createLink(realFile, IResource.REPLACE, null);
 		resourcesCreated.add(file);
 		return file;
 	}
 
 	/**
-	 * Creates new eclipse file-link from project root to file system file. The
-	 * filename can include relative path as a part of the name but the the path
-	 * has to be present on disk.
+	 * Creates new eclipse file-link from project root to file system file. The filename can include relative path as a
+	 * part of the name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -437,7 +435,8 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFile createLinkedFile(IProject project, String fileLink, String realFile) throws CoreException {
+	public static IFile createLinkedFile(final IProject project, final String fileLink, final String realFile)
+			throws CoreException {
 		return createLinkedFile(project, fileLink, new Path(realFile));
 	}
 
@@ -454,8 +453,9 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFile createEfsFile(IProject project, String fileLink, URI realFile) throws CoreException {
-		IFile file = project.getFile(fileLink);
+	public static IFile createEfsFile(final IProject project, final String fileLink, final URI realFile)
+			throws CoreException {
+		final IFile file = project.getFile(fileLink);
 		file.createLink(realFile, IResource.ALLOW_MISSING_LOCAL, NULL_MONITOR);
 		resourcesCreated.add(file);
 		return file;
@@ -476,15 +476,14 @@ public class ResourceHelper {
 	 * @throws URISyntaxException
 	 *             if wrong URI syntax
 	 */
-	public static IFile createEfsFile(IProject project, String fileLink, String realFile)
+	public static IFile createEfsFile(final IProject project, final String fileLink, final String realFile)
 			throws CoreException, URISyntaxException {
 		return createEfsFile(project, fileLink, new URI(realFile));
 	}
 
 	/**
-	 * Creates new eclipse folder-link from project root to file system folder.
-	 * The folder name can include relative path as a part of the name but the
-	 * the path has to be present on disk.
+	 * Creates new eclipse folder-link from project root to file system folder. The folder name can include relative
+	 * path as a part of the name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -496,18 +495,17 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFolder createLinkedFolder(IProject project, String folderLink, IPath realFolder)
+	public static IFolder createLinkedFolder(final IProject project, final String folderLink, final IPath realFolder)
 			throws CoreException {
-		IFolder folder = project.getFolder(folderLink);
+		final IFolder folder = project.getFolder(folderLink);
 		folder.createLink(realFolder, IResource.REPLACE | IResource.ALLOW_MISSING_LOCAL, null);
 		resourcesCreated.add(folder);
 		return folder;
 	}
 
 	/**
-	 * Creates new eclipse folder-link from project root to file system folder.
-	 * The folder name can include relative path as a part of the name but the
-	 * the path has to be present on disk.
+	 * Creates new eclipse folder-link from project root to file system folder. The folder name can include relative
+	 * path as a part of the name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -519,7 +517,7 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFolder createLinkedFolder(IProject project, String folderLink, String realFolder)
+	public static IFolder createLinkedFolder(final IProject project, final String folderLink, final String realFolder)
 			throws CoreException {
 		return createLinkedFolder(project, folderLink, new Path(realFolder));
 	}
@@ -537,8 +535,9 @@ public class ResourceHelper {
 	 * @throws CoreException
 	 *             if something goes wrong.
 	 */
-	public static IFolder createEfsFolder(IProject project, String folderLink, URI realFolder) throws CoreException {
-		IFolder folder = project.getFolder(folderLink);
+	public static IFolder createEfsFolder(final IProject project, final String folderLink, final URI realFolder)
+			throws CoreException {
+		final IFolder folder = project.getFolder(folderLink);
 		if (folder.exists()) {
 			System.out.println("Folder with the same name but different location already exists");
 			return folder;
@@ -564,29 +563,26 @@ public class ResourceHelper {
 	 * @throws URISyntaxException
 	 *             if wrong URI syntax
 	 */
-	public static IFolder createEfsFolder(IProject project, String folderLink, String realFolder)
+	public static IFolder createEfsFolder(final IProject project, final String folderLink, final String realFolder)
 			throws CoreException, URISyntaxException {
 		return createEfsFolder(project, folderLink, new URI(realFolder));
 	}
 
 	/**
-	 * Checks if symbolic links are supported on the system. Used in particular
-	 * by method {@link #createSymbolicLink(IPath, IPath)} and other flavors to
-	 * create symbolic links.
+	 * Checks if symbolic links are supported on the system. Used in particular by method
+	 * {@link #createSymbolicLink(IPath, IPath)} and other flavors to create symbolic links.
 	 *
 	 * Note that Windows links .lnk are not supported here.
-	 * 
-	 * @return {@code true} if symbolic links are suppoted, {@code false}
-	 *         otherwise.
+	 *
+	 * @return {@code true} if symbolic links are suppoted, {@code false} otherwise.
 	 */
 	public static boolean isSymbolicLinkSupported() {
 		return !Platform.getOS().equals(Platform.OS_WIN32);
 	}
 
 	/**
-	 * Creates new symbolic file system link from file or folder on project root
-	 * to another file system file. The filename can include relative path as a
-	 * part of the name but the the path has to be present on disk.
+	 * Creates new symbolic file system link from file or folder on project root to another file system file. The
+	 * filename can include relative path as a part of the name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -633,8 +629,8 @@ public class ResourceHelper {
 	// }
 
 	/**
-	 * Creates new symbolic file system link from file or folder to another
-	 * filesystem file. The target path has to be present on disk.
+	 * Creates new symbolic file system link from file or folder to another filesystem file. The target path has to be
+	 * present on disk.
 	 *
 	 * @param linkPath
 	 *            - filesystem path of the link being created.
@@ -678,9 +674,8 @@ public class ResourceHelper {
 	// }
 
 	/**
-	 * Creates new symbolic file system link from file or folder on project root
-	 * to another file system file. The filename can include relative path as a
-	 * part of the name but the the path has to be present on disk.
+	 * Creates new symbolic file system link from file or folder on project root to another file system file. The
+	 * filename can include relative path as a part of the name but the the path has to be present on disk.
 	 *
 	 * @param project
 	 *            - project where to create the file.
@@ -712,7 +707,8 @@ public class ResourceHelper {
 	 * @throws IOException
 	 *             on IO problem.
 	 */
-	public static String windowsToCygwinPath(String windowsPath) throws IOException, UnsupportedOperationException {
+	public static String windowsToCygwinPath(final String windowsPath)
+			throws IOException, UnsupportedOperationException {
 		return Cygwin.windowsToCygwinPath(windowsPath);
 	}
 
@@ -727,7 +723,8 @@ public class ResourceHelper {
 	 * @throws IOException
 	 *             on IO problem.
 	 */
-	public static String cygwinToWindowsPath(String cygwinPath) throws IOException, UnsupportedOperationException {
+	public static String cygwinToWindowsPath(final String cygwinPath)
+			throws IOException, UnsupportedOperationException {
 		return Cygwin.cygwinToWindowsPath(cygwinPath);
 	}
 
@@ -740,14 +737,14 @@ public class ResourceHelper {
 	 * @throws IOException
 	 *             on IO problem.
 	 */
-	public static String getContents(IPath fullPath) throws IOException {
-		FileInputStream stream = new FileInputStream(fullPath.toFile());
+	public static String getContents(final IPath fullPath) throws IOException {
+		final FileInputStream stream = new FileInputStream(fullPath.toFile());
 		try {
 			// Avoid using java.nio.channels.FileChannel,
 			// see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4715154
-			Reader reader = new BufferedReader(new InputStreamReader(stream, Charset.defaultCharset()));
-			StringBuilder builder = new StringBuilder();
-			char[] buffer = new char[8192];
+			final Reader reader = new BufferedReader(new InputStreamReader(stream, Charset.defaultCharset()));
+			final StringBuilder builder = new StringBuilder();
+			final char[] buffer = new char[8192];
 			int read;
 			while ((read = reader.read(buffer, 0, buffer.length)) > 0) {
 				builder.append(buffer, 0, read);
@@ -767,47 +764,46 @@ public class ResourceHelper {
 	 * @throws IOException
 	 *             on IO problem.
 	 */
-	public static String getContents(String fullPath) throws IOException {
+	public static String getContents(final String fullPath) throws IOException {
 		return getContents(new Path(fullPath));
 	}
 
 	/**
-	 * Clean-up any files created as part of a unit test. This method removes
-	 * *all* Workspace IResources and any external files / folders created with
-	 * the #createWorkspaceFile #createWorkspaceFolder methods in this class
-	 * 
-	 * @deprecated Use {@link #cleanUp(String)} instead so test name can be
-	 *             printed in diagnostics
+	 * Clean-up any files created as part of a unit test. This method removes *all* Workspace IResources and any
+	 * external files / folders created with the #createWorkspaceFile #createWorkspaceFolder methods in this class
+	 *
+	 * @deprecated Use {@link #cleanUp(String)} instead so test name can be printed in diagnostics
 	 */
+	@Deprecated
 	public static void cleanUp() throws CoreException, IOException {
 		cleanUp("<unknown>");
 	}
 
 	/**
-	 * Clean-up any files created as part of a unit test. This method removes
-	 * *all* Workspace IResources and any external files / folders created with
-	 * the #createWorkspaceFile #createWorkspaceFolder methods in this class
+	 * Clean-up any files created as part of a unit test. This method removes *all* Workspace IResources and any
+	 * external files / folders created with the #createWorkspaceFile #createWorkspaceFolder methods in this class
 	 */
-	public static void cleanUp(String testName) throws CoreException, IOException {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+	public static void cleanUp(final String testName) throws CoreException, IOException {
+		final IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		root.refreshLocal(IResource.DEPTH_INFINITE, NULL_MONITOR);
 
 		joinIndexerBeforeCleanup(testName);
 
 		// Delete all external files & folders created using ResourceHelper
-		for (String loc : externalFilesCreated) {
-			File f = new File(loc);
-			if (f.exists())
+		for (final String loc : externalFilesCreated) {
+			final File f = new File(loc);
+			if (f.exists()) {
 				deleteRecursive(f);
+			}
 		}
 		externalFilesCreated.clear();
 
 		// Remove IResources created by this helper
-		for (IResource r : resourcesCreated) {
+		for (final IResource r : resourcesCreated) {
 			if (r.exists()) {
 				try {
 					r.delete(true, NULL_MONITOR);
-				} catch (CoreException e) {
+				} catch (final CoreException e) {
 					// Ignore
 				}
 			}
@@ -815,7 +811,7 @@ public class ResourceHelper {
 		resourcesCreated.clear();
 	}
 
-	public static void joinIndexerBeforeCleanup(String testName) {
+	public static void joinIndexerBeforeCleanup(final String testName) {
 		// Bug 499471: there is a race condition in the indexer when projects
 		// are created and deleted quickly. Therefore, wait for the indexer
 		// to be idle before deleting projects.
@@ -825,7 +821,7 @@ public class ResourceHelper {
 			// happening the total join time is just a few ms for most tests,
 			// and
 			// up to 75 ms for a couple of tests on the HIPP
-			boolean joinSuccess = CCorePlugin.getIndexManager().joinIndexer(2000, new NullProgressMonitor());
+			final boolean joinSuccess = CCorePlugin.getIndexManager().joinIndexer(2000, new NullProgressMonitor());
 			if (!joinSuccess) {
 				System.err.println(
 						"Indexer did not stop runing, possible deadlock about to happen. Running test " + testName);
@@ -841,7 +837,7 @@ public class ResourceHelper {
 			// interferes
 			// with the resource change handler firing see: bug 271264
 			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, null);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			// Ignore
 		}
 	}
@@ -853,7 +849,7 @@ public class ResourceHelper {
 	 *
 	 * @param file
 	 */
-	private static final void deleteRecursive(File f) throws IllegalArgumentException {
+	private static final void deleteRecursive(final File f) throws IllegalArgumentException {
 		// Ensure that the file being deleted is a child of the workspace
 		// root to prevent anything nasty happening
 		if (!f.getAbsolutePath()
@@ -862,7 +858,7 @@ public class ResourceHelper {
 		}
 
 		if (f.isDirectory()) {
-			for (File f1 : f.listFiles()) {
+			for (final File f1 : f.listFiles()) {
 				deleteRecursive(f1);
 			}
 		}
@@ -870,10 +866,9 @@ public class ResourceHelper {
 	}
 
 	/**
-	 * Notify {@link ResourceHelper} that given resource should be removed in
-	 * {@link #cleanUp(String)}.
+	 * Notify {@link ResourceHelper} that given resource should be removed in {@link #cleanUp(String)}.
 	 */
-	public static void addResourceCreated(IResource resource) {
+	public static void addResourceCreated(final IResource resource) {
 		if (resource != null) {
 			resourcesCreated.add(resource);
 		}

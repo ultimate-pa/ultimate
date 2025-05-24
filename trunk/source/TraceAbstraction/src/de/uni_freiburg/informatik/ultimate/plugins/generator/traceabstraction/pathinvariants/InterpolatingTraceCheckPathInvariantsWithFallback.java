@@ -104,16 +104,16 @@ public class InterpolatingTraceCheckPathInvariantsWithFallback<LETTER extends IA
 		mInterpolantComputationStatus = pathInvariantsGenerator.getInterpolantComputationStatus();
 		final IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
-			assert !pathInvariantsGenerator.getInterpolantComputationStatus()
-					.wasComputationSuccessful() : "null only allowed if computation was not successful";
+			assert !pathInvariantsGenerator.getInterpolantComputationStatus().wasComputationSuccessful()
+					: "null only allowed if computation was not successful";
 		} else {
 			if (interpolants.length != mTrace.length() - 1) {
 				throw new AssertionError("incorrect number of interpolants. "
 						+ "There should be one interpolant between each " + "two successive CodeBlocks");
 			}
 			assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), mTrace,
-					mPrecondition, mPostcondition, mPendingContexts, "invariant map", mCsToolkit,
-					mLogger) : "invalid Hoare triple in invariant map";
+					mPrecondition, mPostcondition, mPendingContexts, "invariant map", mCsToolkit, mLogger)
+					: "invalid Hoare triple in invariant map";
 		}
 		mInterpolants = interpolants;
 		// Store path invariants benchmarks

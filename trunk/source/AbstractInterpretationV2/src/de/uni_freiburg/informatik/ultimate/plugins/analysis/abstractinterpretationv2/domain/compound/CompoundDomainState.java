@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -275,6 +276,21 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState> 
 	@Override
 	public int hashCode() {
 		return mId;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final CompoundDomainState other = (CompoundDomainState) obj;
+		return Objects.equals(mAbstractStates, other.mAbstractStates);
 	}
 
 	@Override

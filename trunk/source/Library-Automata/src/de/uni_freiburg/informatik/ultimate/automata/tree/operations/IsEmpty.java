@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Mostafa M.A. (mostafa.amin93@gmail.com)
  * Copyright (C) 2014-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 
 /**
  * Check emptiness of a tree automaton. The output is TreeRun.
- * 
+ *
  * @author Mostafa M. Amin <mostafa.amin93@gmail.com>
  *
  * @param <LETTER>
@@ -51,13 +51,15 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * @param <STATE>
  *            state class of tree automaton.
  */
-public class IsEmpty<LETTER extends IRankedLetter, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class IsEmpty<LETTER extends IRankedLetter, STATE>
+		extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	protected final TreeRun<LETTER, STATE> mResultTreeRun;
 
 	/***
 	 * TreeEmptiness checker
+	 *
 	 * @param services
 	 * @param tree
 	 */
@@ -79,6 +81,7 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> extends GeneralOperati
 
 	/***
 	 * compute the emptiness check.
+	 *
 	 * @return
 	 */
 	private TreeRun<LETTER, STATE> computeResult() {
@@ -91,9 +94,9 @@ public class IsEmpty<LETTER extends IRankedLetter, STATE> extends GeneralOperati
 
 		for (final List<STATE> src : mTreeAutomaton.getSourceCombinations()) {
 			for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getSuccessors(src)) {
-	
+
 				for (final STATE sourceState : rule.getSource()) {
-	
+
 					Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
 					if (rulesBySource.containsKey(sourceState)) {
 						sourceRules = rulesBySource.get(sourceState);

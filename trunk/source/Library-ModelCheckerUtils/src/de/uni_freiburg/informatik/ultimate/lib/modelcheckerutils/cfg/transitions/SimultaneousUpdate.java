@@ -337,7 +337,6 @@ public class SimultaneousUpdate {
 							continue;
 						}
 					}
-
 					final Term renamed =
 							TransFormulaUtils.renameInvarsToDefaultVars(tf, mgdScript, sbr.getRightHandSide());
 					return new Triple<>(renamed, new NondetArrayWriteConstraints(Collections.emptyMap()), null);

@@ -8,7 +8,6 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-
 /***
  * DisjointSets data structure.
  *
@@ -16,7 +15,8 @@ import java.util.Set;
  *
  * @author Mostafa M.A. <mostafa.amin93@gmail.com>
  *
- * @param <T> Elements of the sets
+ * @param <T>
+ *            Elements of the sets
  */
 public class DisjointSets<T> {
 	// Representative element of the set of the element
@@ -37,21 +37,11 @@ public class DisjointSets<T> {
 	}
 
 	/*
-	public DisjointSets(final Set<T> elements_sets,...) {
-		mRepresentative = new HashMap<>();
-		mSubsets = new HashMap<>();
-		// We begin with singleton disjoint sets
-		for (final Set<T> s : elements_sets) {
-			final T representative = s.iterator().next();
-			for (final T x : s) {
-				mRepresentative.put(x, representative);
-			}
-			final Set<T> sub = new HashSet<>();
-			sub.addAll(s);
-			mSubsets.put(representative, sub);
-		}
-	}
-	*/
+	 * public DisjointSets(final Set<T> elements_sets,...) { mRepresentative = new HashMap<>(); mSubsets = new
+	 * HashMap<>(); // We begin with singleton disjoint sets for (final Set<T> s : elements_sets) { final T
+	 * representative = s.iterator().next(); for (final T x : s) { mRepresentative.put(x, representative); } final
+	 * Set<T> sub = new HashSet<>(); sub.addAll(s); mSubsets.put(representative, sub); } }
+	 */
 
 	@Override
 	public String toString() {
@@ -61,13 +51,14 @@ public class DisjointSets<T> {
 		}
 		res.append("\nPart:");
 		for (final Entry<T, Set<T>> s : mSubsets.entrySet()) {
-			res.append(" " + s.getKey() + " in " + getPartition(s.getKey()));//s.getValue());
+			res.append(" " + s.getKey() + " in " + getPartition(s.getKey()));// s.getValue());
 		}
 		return res.toString();
 	}
 
 	/***
 	 * The number of distinct disjoint sets
+	 *
 	 * @return
 	 */
 	public int size() {
@@ -95,6 +86,7 @@ public class DisjointSets<T> {
 
 	/***
 	 * Union of the two disjoint sets.
+	 *
 	 * @param x
 	 * @param y
 	 */
@@ -104,6 +96,7 @@ public class DisjointSets<T> {
 
 	/***
 	 * Find (and update) the representative of the corresponding disjoint set.
+	 *
 	 * @param x
 	 * @return
 	 */
@@ -117,6 +110,7 @@ public class DisjointSets<T> {
 
 	/***
 	 * Check if two elements are equivalent by checking if the disjoint sets are the same.
+	 *
 	 * @param x
 	 * @param y
 	 * @return
@@ -142,7 +136,7 @@ public class DisjointSets<T> {
 	public boolean equals(final Object set) {
 		// TODO: Did you possibly want to override equals here? You did not, and I made that explicit by renaming
 		// this method to equalsTo
-		if (!(set instanceof DisjointSets)) {
+		if (set == null || getClass() != set.getClass()) {
 			return false;
 		} else {
 			@SuppressWarnings("unchecked")

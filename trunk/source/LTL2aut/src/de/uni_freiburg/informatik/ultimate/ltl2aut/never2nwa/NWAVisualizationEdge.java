@@ -1,21 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 
-final class NWAVisualizationEdge<NWAVertex, NWAEdge>
-		extends
-		ModifiableMultigraphEdge<NWAVisualizationNode<NWAVertex, NWAEdge>, NWAVisualizationEdge<NWAVertex, NWAEdge>,NWAVertex, NWAEdge> {
+final class NWAVisualizationEdge<NWAVertex, NWAEdge> extends
+		ModifiableMultigraphEdge<NWAVisualizationNode<NWAVertex, NWAEdge>, NWAVisualizationEdge<NWAVertex, NWAEdge>, NWAVertex, NWAEdge> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mNWAEdge == null) ? 0 : mNWAEdge.hashCode());
-		return result;
+		return Objects.hash(mNWAEdge);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -39,8 +37,8 @@ final class NWAVisualizationEdge<NWAVertex, NWAEdge>
 	private static final long serialVersionUID = 1L;
 	private final NWAEdge mNWAEdge;
 
-	protected NWAVisualizationEdge(NWAVisualizationNode<NWAVertex, NWAEdge> source,
-			NWAVisualizationNode<NWAVertex, NWAEdge> target, NWAEdge nwaEdge) {
+	protected NWAVisualizationEdge(final NWAVisualizationNode<NWAVertex, NWAEdge> source,
+			final NWAVisualizationNode<NWAVertex, NWAEdge> target, final NWAEdge nwaEdge) {
 		super(source, target);
 		mNWAEdge = nwaEdge;
 	}

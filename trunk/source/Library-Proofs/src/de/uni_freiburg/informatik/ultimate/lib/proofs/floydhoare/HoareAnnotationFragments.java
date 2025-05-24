@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class HoareAnnotationFragments<LETTER extends IAction> {
+class HoareAnnotationFragments<LETTER extends IAction> {
 	private final Map<IPredicate, IPredicate> mPred2ProgPoint = new HashMap<>();
 
 	/**
@@ -141,8 +141,8 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 				for (final IPredicate newState : newStates) {
 					if (mPred2ProgPoint.containsKey(newState)) {
 						final IPredicate oldPP = mPred2ProgPoint.get(newState);
-						assert oldPP == pp : "State " + newState + " cannot represent both " + oldPP + " and " + pp
-								+ "!";
+						assert oldPP == pp
+								: "State " + newState + " cannot represent both " + oldPP + " and " + pp + "!";
 					} else {
 						mPred2ProgPoint.put(newState, pp);
 					}
@@ -247,7 +247,6 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 		private final Map<IPredicate, IPredicate> mOld2New;
 
 		public MinimizationUpdate(final Map<IPredicate, IPredicate> old2New) {
-			super();
 			mOld2New = old2New;
 		}
 

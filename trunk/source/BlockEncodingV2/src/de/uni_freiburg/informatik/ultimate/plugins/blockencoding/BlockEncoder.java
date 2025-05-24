@@ -31,13 +31,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdgeBuilder;
@@ -188,9 +189,10 @@ public final class BlockEncoder {
 					break;
 				}
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-							new TimeoutResult(Activator.PLUGIN_ID, "Timeout during SBE block encoding"));
-					return;
+					final int inputlocations = IcfgUtils.getNumberOfLocations(node);
+					final String message =
+							String.format("applying SBE block encoding to ICFG that has %s locations", inputlocations);
+					throw new ToolchainCanceledException(BlockEncoder.class, message);
 				}
 			}
 			mLogger.info("SBE split " + removedEdges + " edges");
@@ -212,9 +214,10 @@ public final class BlockEncoder {
 			mIterationResult = currentResult.getIcfg();
 
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-						new TimeoutResult(Activator.PLUGIN_ID, "Timeout during block encoding"));
-				return;
+				final int inputlocations = IcfgUtils.getNumberOfLocations(node);
+				final String message =
+						String.format("applying block encoding to ICFG that has %s locations", inputlocations);
+				throw new ToolchainCanceledException(BlockEncoder.class, message);
 			}
 
 			if (!optimizeUntilFixpoint || !currentResult.isChanged() || maxIters == 0) {

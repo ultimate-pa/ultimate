@@ -80,7 +80,6 @@ public class ElimStore3 {
 
 	public ElimStore3(final Script script, final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
-		super();
 		mQuantifier = QuantifiedFormula.EXISTS;
 		mScript = script;
 		mMgdScript = mgdScript;
@@ -242,8 +241,8 @@ public class ElimStore3 {
 		if (writeInto != null) {
 			// if update is of form (store oldArr idx val) = newArr,
 			// we replace all occurrences of (store oldArr idx val) by newArr.
-			final Map<Term, Term> mapping = Collections.singletonMap(
-					writeInto.getMultiDimensionalStore().toTerm(mScript), (Term) writeInto.getNewArray());
+			final Map<Term, Term> mapping = Collections
+					.singletonMap(writeInto.getMultiDimensionalStore().toTerm(mScript), (Term) writeInto.getNewArray());
 			intermediateResult = Substitution.apply(mMgdScript, mapping, intermediateResult);
 		}
 
@@ -283,8 +282,8 @@ public class ElimStore3 {
 				Term writtenCellHasNewValue;
 				writtenCellHasNewValue = SmtUtils.binaryEquality(mScript,
 						SmtUtils.multiDimensionalSelect(mScript, a_heir, idx_writeRenamed), dataRenamed);
-				assert !Arrays.asList(writtenCellHasNewValue.getFreeVars()).contains(
-						eliminatee) : "var is still there - maybe you have to switch off the flattening of multi-dimensional arrays";
+				assert !Arrays.asList(writtenCellHasNewValue.getFreeVars()).contains(eliminatee)
+						: "var is still there - maybe you have to switch off the flattening of multi-dimensional arrays";
 				additionalConjuncs.add(writtenCellHasNewValue);
 			}
 
@@ -306,8 +305,8 @@ public class ElimStore3 {
 				intermediateResult = SmtUtils.and(script, intermediateResult, additionalConjuncts);
 			} else {
 				assert quantifier == QuantifiedFormula.FORALL;
-				final Term additionalConjuncts = SmtUtils.or(script, SmtUtils.negateElementwise(mScript, additionalConjuncs)
-						.toArray(new Term[additionalConjuncs.size()]));
+				final Term additionalConjuncts = SmtUtils.or(script, SmtUtils
+						.negateElementwise(mScript, additionalConjuncs).toArray(new Term[additionalConjuncs.size()]));
 				intermediateResult = SmtUtils.or(script, intermediateResult, additionalConjuncts);
 			}
 
@@ -329,8 +328,8 @@ public class ElimStore3 {
 				// in the writtenFrom case there is an additional index-value
 				// connection on eliminatee, namely
 				// that the stored data is the value at index idx_write
-				final ArrayIndex idx_writeRenamed = writtenFrom.getIndex().applySubstitution(mgdScript,
-						iav.getMapping());
+				final ArrayIndex idx_writeRenamed =
+						writtenFrom.getIndex().applySubstitution(mgdScript, iav.getMapping());
 				final Term dataRenamed = Substitution.apply(mMgdScript, iav.getMapping(), writtenFrom.getValue());
 				indices.add(idx_writeRenamed);
 				values.add(dataRenamed);
@@ -338,21 +337,23 @@ public class ElimStore3 {
 
 			indexValueConstraintsFromEliminatee = constructIndexValueConstraints(script, quantifier, indices, values);
 		}
-		final Term result1 = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, indexValueConstraintsFromEliminatee);
+		final Term result1 =
+				QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, indexValueConstraintsFromEliminatee);
 		assert !Arrays.asList(result1.getFreeVars()).contains(eliminatee) : "var is still there";
 
-		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier, Arrays.asList(new Term[] {result1, intermediateResult})) ;
-//		if (quantifier == QuantifiedFormula.EXISTS) {
-//			final Term newConjunctsFromSelect = SmtUtils.and(mScript,
-//					indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
-//			result = SmtUtils.and(script, intermediateResult, newConjunctsFromSelect);
-//		} else {
-//			assert quantifier == QuantifiedFormula.FORALL;
-//			final Term newConjunctsFromSelect =
-//					SmtUtils.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee)
-//							.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
-//			result = SmtUtils.or(script, intermediateResult, newConjunctsFromSelect);
-//		}
+		Term result = QuantifierUtils.applyDualFiniteConnective(mScript, mQuantifier,
+				Arrays.asList(result1, intermediateResult));
+		// if (quantifier == QuantifiedFormula.EXISTS) {
+		// final Term newConjunctsFromSelect = SmtUtils.and(mScript,
+		// indexValueConstraintsFromEliminatee.toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
+		// result = SmtUtils.and(script, intermediateResult, newConjunctsFromSelect);
+		// } else {
+		// assert quantifier == QuantifiedFormula.FORALL;
+		// final Term newConjunctsFromSelect =
+		// SmtUtils.or(mScript, SmtUtils.negateElementwise(mScript, indexValueConstraintsFromEliminatee)
+		// .toArray(new Term[indexValueConstraintsFromEliminatee.size()]));
+		// result = SmtUtils.or(script, intermediateResult, newConjunctsFromSelect);
+		// }
 
 		mMgdScript.getScript().echo(new QuotedObject("started simplification for array quantifier elimination"));
 		result = SmtUtils.simplify(mMgdScript, result, mServices, mSimplificationTechnique);
@@ -372,7 +373,7 @@ public class ElimStore3 {
 			indices1.add(translatedIndex);
 			values1.add(translatedValue);
 		}
-		final Pair<List<ArrayIndex>, List<Term>> result = new Pair<List<ArrayIndex>, List<Term>>(indices1, values1);
+		final Pair<List<ArrayIndex>, List<Term>> result = new Pair<>(indices1, values1);
 		return result;
 	}
 
@@ -382,8 +383,8 @@ public class ElimStore3 {
 		final ArrayList<Term> indexValueConstraints = new ArrayList<>();
 		for (int i = 0; i < indices.size(); i++) {
 			for (int j = i; j < indices.size(); j++) {
-				Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(script, indices.get(i),
-						indices.get(j), values.get(i), values.get(j));
+				Term newConjunct = SmtUtils.indexEqualityImpliesValueEquality(script, indices.get(i), indices.get(j),
+						values.get(i), values.get(j));
 				if (quantifier == QuantifiedFormula.FORALL) {
 					newConjunct = SmtUtils.not(script, newConjunct);
 				}
@@ -472,7 +473,6 @@ public class ElimStore3 {
 		private final Map<Term, Term> mSelectTerm2Value = new HashMap<>();
 		private final int mQuantifier;
 		private final ManagedScript mMgdScript;
-
 
 		public IndicesAndValues(final ManagedScript mgdScript, final int quantifier, final TermVariable array,
 				final Term... conjuncts) {

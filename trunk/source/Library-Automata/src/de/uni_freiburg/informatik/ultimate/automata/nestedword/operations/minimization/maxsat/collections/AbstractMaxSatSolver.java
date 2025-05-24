@@ -63,11 +63,9 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<>();
 
 	/*
-	 * NOTE: The semantics of this variable differ for different solvers.
-	 *       In the old solver, this variable is not always synchronized, which
-	 *       only happens after a successful assignment.
-	 *       In the new solver, this variable is synchronized more often, namely
-	 *       also during backtracking.
+	 * NOTE: The semantics of this variable differ for different solvers. In the old solver, this variable is not always
+	 * synchronized, which only happens after a successful assignment. In the new solver, this variable is synchronized
+	 * more often, namely also during backtracking.
 	 */
 	protected final Set<V> mUnsetVariables = new HashSet<>();
 	/**
@@ -79,9 +77,8 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected Set<Clause<V>> mClausesMarkedForRemoval = new LinkedHashSet<>();
 
 	/*
-	 * NOTE: There is no need to separate the occurrence as positive or negative
-	 *       literal at the moment. Still, having only one relation is slower in
-	 *       practice.
+	 * NOTE: There is no need to separate the occurrence as positive or negative literal at the moment. Still, having
+	 * only one relation is slower in practice.
 	 */
 	protected final HashRelation<V, Clause<V>> mOccursPositive = new HashRelation<>();
 	protected final HashRelation<V, Clause<V>> mOccursNegative = new HashRelation<>();
@@ -346,8 +343,7 @@ public abstract class AbstractMaxSatSolver<V> {
 		for (final V var : variablesIncorrectlySet) {
 			undoAssignment(var);
 			/*
-			 * TODO some clauses are reevaluated several times
-			 *      (if they contain several reset variables)
+			 * TODO some clauses are reevaluated several times (if they contain several reset variables)
 			 */
 			reEvaluateStatusOfAllClauses(var);
 		}
@@ -459,11 +455,9 @@ public abstract class AbstractMaxSatSolver<V> {
 
 		}
 		for (final Clause<V> clause : allClauses) {
-			if (clause.isPseudoUnit()) {
-				if (!mPropagatees.get(clause.getUnsetAtom(this))) {
-					consistent = false;
-					assert consistent;
-				}
+			if (clause.isPseudoUnit() && !mPropagatees.get(clause.getUnsetAtom(this))) {
+				consistent = false;
+				assert consistent;
 			}
 			if (clause.getClauseStatus() == ClauseStatus.TRUE && (!mClausesMarkedForRemoval.contains(clause))) {
 				consistent = false;

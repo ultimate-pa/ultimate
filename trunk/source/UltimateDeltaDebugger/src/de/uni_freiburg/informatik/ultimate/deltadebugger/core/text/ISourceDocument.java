@@ -35,36 +35,36 @@ public interface ISourceDocument {
 	 * @return column number
 	 */
 	int getColumnNumber(int offset);
-	
+
 	/**
 	 * @return The length.
 	 */
 	int getLength();
-	
+
 	/**
 	 * @param offset
 	 *            Offset.
 	 * @return line number
 	 */
 	int getLineNumber(int offset);
-	
+
 	/**
 	 * @param lineNumber
 	 *            Line number.
 	 * @return line offset
 	 */
 	int getLineOffset(int lineNumber);
-	
+
 	/**
 	 * @return The number of lines.
 	 */
 	int getNumberOfLines();
-	
+
 	/**
 	 * @return The text.
 	 */
 	String getText();
-	
+
 	/**
 	 * @param offset
 	 *            Offset.
@@ -73,14 +73,14 @@ public interface ISourceDocument {
 	 * @return text between offset
 	 */
 	String getText(int offset, int endOffset);
-	
+
 	/**
 	 * @param location
 	 *            Location.
 	 * @return text of location
 	 */
 	String getText(ISourceRange location);
-	
+
 	/**
 	 * @param offset
 	 *            Offset.

@@ -225,8 +225,8 @@ public class ScriptorWithGetInterpolants extends Scriptor {
 		public Term[] getInterpolants(final Term[] partition) throws SMTLIBException {
 			final List<Term> currentA = new ArrayList<>();
 			final List<Term> interpolants = new ArrayList<>();
-			for (int i = 0; i < partition.length; ++i) {
-				final List<Term> current = flatten(partition[i]);
+			for (final Term element : partition) {
+				final List<Term> current = flatten(element);
 				currentA.addAll(current);
 				sendInterpolationCommand(currentA.toArray(new Term[currentA.size()]));
 				interpolants.addAll(Arrays.asList(readInterpolants()));

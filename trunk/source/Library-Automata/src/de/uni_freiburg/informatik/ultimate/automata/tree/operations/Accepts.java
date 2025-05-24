@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Mostafa M.A. (mostafa.amin93@gmail.com)
  * Copyright (C) 2014-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 
 /**
  * Operation of a treeAutomaton accepts a given Run.
- * 
+ *
  * @author mostafa (mostafa.amin93@gmail.com)
  *
  * @param <LETTER>
@@ -57,9 +57,8 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 	private final Boolean mResult;
 
 	/***
-	 * Operator to check if accepting a given tree run by a given tree
-	 * automaton.
-	 * 
+	 * Operator to check if accepting a given tree run by a given tree automaton.
+	 *
 	 * @param services
 	 * @param automaton
 	 * @param run
@@ -71,7 +70,7 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 
 	/***
 	 * Operator to check if accepting a given tree by a given tree automaton.
-	 * 
+	 *
 	 * @param services
 	 * @param automaton
 	 * @param run
@@ -94,22 +93,23 @@ public class Accepts<LETTER extends IRankedLetter, STATE> implements IOperation<
 	}
 
 	/**
-	 * 
-	 * @param t a subtree
+	 *
+	 * @param t
+	 *            a subtree
 	 * @return Set of states that the automaton may be in after reading subtree t
 	 */
 	private Set<STATE> checkTree(final Tree<LETTER> t) {
 		final ArrayList<Set<STATE>> statesReachableFromChildren = new ArrayList<>();
 		for (final Tree<LETTER> ch : t.getChildren()) {
-			Set<STATE> childResult = checkTree(ch);
+			final Set<STATE> childResult = checkTree(ch);
 			if (childResult.isEmpty()) {
 				// one of the child subtrees does not have a derivation -- we can reject right here
 				return Collections.emptySet();
 			}
 			statesReachableFromChildren.add(childResult);
 		}
-		
-		final Iterable<TreeAutomatonRule<LETTER, STATE>> rulesForCurrentLetter = 
+
+		final Iterable<TreeAutomatonRule<LETTER, STATE>> rulesForCurrentLetter =
 				mTreeAutomaton.getSuccessors(t.getSymbol());
 
 		if (rulesForCurrentLetter == null) {

@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 public class EqualPermSpeedTest {
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		final int vars = 12;
 		final int cycles = 10000000;
-		
+
 		final int[] map = new int[vars];
 		for (int i = 0; i < vars; ++i) {
 			map[i] = i;
@@ -21,15 +21,15 @@ public class EqualPermSpeedTest {
 			t = System.nanoTime();
 			a.isEqualTo(b);
 			t1 += System.nanoTime() - t;
-			
+
 			t = System.nanoTime();
 			a.isEqualTo(b, map);
 			t2 += System.nanoTime() - t;
 		}
 		final String format = "%15s: %8.2fs%n";
-		System.out.format(format + format, "direct", t1*1e-9, "permutation", t2*1e-9);
-		
+		System.out.format(format + format, "direct", t1 * 1e-9, "permutation", t2 * 1e-9);
+
 		// result: isEqualToPermutation takes approx. 4.8 times longer (without creation of mapping)!
 	}
-	
+
 }

@@ -17,13 +17,11 @@ public class DynamicPatternSettingsStrategyWithBounds extends DynamicPatternSett
 			final int maxRounds, final Set<IProgramVar> allProgramVariables,
 			final Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables, final boolean alwaysStrictAndNonStrictCopies,
 			final boolean useStrictInequalitiesAlternatingly) {
-		super(dimensionsStrat, maxRounds, allProgramVariables,
-				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
+		super(dimensionsStrat, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies,
+				useStrictInequalitiesAlternatingly);
 		mLoc2MaxNumOfConjuncts = new HashMap<>();
 		mLoc2MaxNumOfDisjuncts = new HashMap<>();
 	}
-
-
 
 	@Override
 	public void setNumOfConjunctsForLocation(final IcfgLocation location, final int numOfConjuncts) {
@@ -34,7 +32,6 @@ public class DynamicPatternSettingsStrategyWithBounds extends DynamicPatternSett
 	public void setNumOfDisjunctsForLocation(final IcfgLocation location, final int numOfDisjuncts) {
 		mLoc2MaxNumOfDisjuncts.put(location, numOfDisjuncts);
 	}
-
 
 	@Override
 	public Dnf<AbstractLinearInvariantPattern> getInvariantPatternForLocation(final IcfgLocation location,

@@ -148,13 +148,9 @@ class IndependenceProviderForLoopers<L extends IIcfgTransition<?>> implements IR
 	}
 
 	private ILooperCheck<L> constructCheck() {
-		switch (mType) {
-		case SEMANTIC:
-			return new ILooperCheck.HoareLooperCheck<>(mHtc, mCoverage);
-		case SYNTACTIC:
-			return new ILooperCheck.IndependentLooperCheck<>();
-		default:
-			throw new UnsupportedOperationException("Unknown independence type " + mType);
-		}
+		return switch (mType) {
+		case SEMANTIC -> new ILooperCheck.HoareLooperCheck<>(mHtc, mCoverage);
+		case SYNTACTIC -> new ILooperCheck.IndependentLooperCheck<>();
+		};
 	}
 }

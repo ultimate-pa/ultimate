@@ -43,14 +43,14 @@ public final class PSTACSLBuilder implements IPSTVisitor {
 	 * Counter to detect if we are currently inside a function definition.
 	 */
 	private int mEnteredFunctionDefinitions;
-	
+
 	private PSTACSLBuilder(final ILogger logger) {
 		mLogger = logger;
 	}
-	
+
 	/**
 	 * Expand all ACSL comments within the given PST node.
-	 * 
+	 *
 	 * @param node
 	 *            PST root node to expand nested ACSL comments in
 	 * @param logger
@@ -59,7 +59,7 @@ public final class PSTACSLBuilder implements IPSTVisitor {
 	public static void build(final IPSTNode node, final ILogger logger) {
 		node.accept(new PSTACSLBuilder(logger));
 	}
-	
+
 	@Override
 	public int visit(final IPSTACSLComment acslComment) {
 		// Try to parse it, if it doesn't work just continue
@@ -70,7 +70,7 @@ public final class PSTACSLBuilder implements IPSTVisitor {
 		}
 		return PROCESS_SKIP;
 	}
-	
+
 	@Override
 	public int visit(final IPSTRegularNode node) {
 		if (node.getAstNode() instanceof IASTFunctionDefinition) {
@@ -78,7 +78,7 @@ public final class PSTACSLBuilder implements IPSTVisitor {
 		}
 		return PROCESS_CONTINUE;
 	}
-	
+
 	@Override
 	public int leave(final IPSTRegularNode node) {
 		if (node.getAstNode() instanceof IASTFunctionDefinition) {

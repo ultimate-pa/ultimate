@@ -39,8 +39,7 @@ public class CrocottaEmit extends EmitAstWithVisitors {
 	private static final String TRANSFORMER_NAME = "CrocottaAstTransformer";
 	private static final String ROOT_NAME = "CrocottaQuery";
 
-	private static final Set<String> OTHERS =
-			new HashSet<>(Arrays.asList(new String[] { VISITOR_NAME, TRANSFORMER_NAME }));
+	private static final Set<String> OTHERS = new HashSet<>(Arrays.asList(VISITOR_NAME, TRANSFORMER_NAME));
 
 	@Override
 	protected Set<String> getNonClassicNode() {

@@ -231,7 +231,8 @@ public class ComplementPEATest {
 	}
 
 	public Boolean comparePhases(final Phase phaseA, final Phase phaseB) {
-		return ((phaseA.getStateInvariant() == phaseB.getStateInvariant()) && (phaseA.getClockInvariant() == phaseB.getClockInvariant()));
+		return ((phaseA.getStateInvariant() == phaseB.getStateInvariant())
+				&& (phaseA.getClockInvariant() == phaseB.getClockInvariant()));
 	}
 
 	/**
@@ -350,10 +351,8 @@ public class ComplementPEATest {
 
 		final List<Transition> phase0OutgoingTransitions = phase0.getTransitions();
 		final Map<Phase, CDD> expectedSinkGuard = new HashMap<>();
-		expectedSinkGuard.put(phase0,
-				(BooleanDecision
-						.create("R").prime(ignoreId).negate()
-						.and(RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GTEQ, 7))));
+		expectedSinkGuard.put(phase0, (BooleanDecision.create("R").prime(ignoreId).negate()
+				.and(RangeDecision.create("c0" + PEAComplement.COMPLEMENT_POSTFIX, RangeDecision.OP_GTEQ, 7))));
 		expectedSinkGuard.put(phases.get(1), CDD.FALSE);
 
 		// Check guards of all outgoing transitions from phase 0

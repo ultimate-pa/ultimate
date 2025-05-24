@@ -77,6 +77,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	private final Map<String, Set<IcfgLocation>> mProcError;
 	private final Set<IcfgLocation> mInitialNodes;
 	private final Set<IcfgLocation> mLoopLocations;
+	private final Set<IcfgLocation> mLocationsOfInterest;
 
 	private final transient CfgSmtToolkit mCfgSmtToolkit;
 
@@ -84,7 +85,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final Map<String, Map<DebugIdentifier, IcfgLocation>> programPoints,
 			final Map<String, IcfgLocation> procedureEntries, final Map<String, IcfgLocation> procedureExits,
 			final Map<String, Set<IcfgLocation>> procedureErrors, final Set<IcfgLocation> initialNodes,
-			final Set<IcfgLocation> loopLocations) {
+			final Set<IcfgLocation> loopLocations, final Set<IcfgLocation> locationsOfInterest) {
 		mIdentifier = Objects.requireNonNull(identifier);
 		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
 		mProgramPoints = Objects.requireNonNull(programPoints);
@@ -93,6 +94,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		mProcError = Objects.requireNonNull(procedureErrors);
 		mInitialNodes = Objects.requireNonNull(initialNodes);
 		mLoopLocations = Objects.requireNonNull(loopLocations);
+		mLocationsOfInterest = Objects.requireNonNull(locationsOfInterest);
+
 	}
 
 	/**
@@ -107,8 +110,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 * @param additionalInitialLocations
 	 *            Locations which are also considered initial in the resulting CFG.
 	 * @param loopLocationFilter
-	 * 		      {@link Predicate} that decides which loop locations of the original
-	 *            program should also be loop locations of the path program
+	 *            {@link Predicate} that decides which loop locations of the original program should also be loop
+	 *            locations of the path program
 	 * @return A {@link PathProgramConstructionResult} that contains the {@link PathProgram} and an explicit mapping
 	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
@@ -157,6 +160,11 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	@Override
 	public Set<IcfgLocation> getLoopLocations() {
 		return mLoopLocations;
+	}
+
+	@Override
+	public Set<IcfgLocation> getLocationsOfInterest() {
+		return mLocationsOfInterest;
 	}
 
 	@Override
@@ -216,6 +224,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final Map<String, Set<IcfgLocation>> mProcError;
 		private final Set<IcfgLocation> mInitialNodes;
 		private final Set<IcfgLocation> mLoopLocations;
+		private final Set<IcfgLocation> mLocationsOfInterest;
 		private final Predicate<IcfgLocation> mLoopLocationFilter;
 		private final PathProgramConstructionResult mResult;
 
@@ -246,6 +255,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			mProcError = new LinkedHashMap<>();
 			mInitialNodes = new LinkedHashSet<>();
 			mLoopLocations = new LinkedHashSet<>();
+			mLocationsOfInterest = new LinkedHashSet<>();
 
 			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
 			nonNullTransitions.stream().filter(onlyReturn.negate()).forEach(this::createPathProgramTransition);
@@ -265,13 +275,13 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 							oldCfgSmtToolkit.getIcfgEdgeFactory(), null, oldCfgSmtToolkit.getSmtFunctionsAndAxioms());
 
 			final PathProgram pp = new PathProgram(nonNullIdentifier, newCfgSmtToolkit, mProgramPoints, mProcEntries,
-					mProcExits, mProcError, mInitialNodes, mLoopLocations);
+					mProcExits, mProcError, mInitialNodes, mLoopLocations, mLocationsOfInterest);
 
 			ModelUtils.copyAnnotations(originalIcfg, pp);
 
 			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc, mOldTransition2NewTransition);
-			assert !mResult.getPathProgram().getInitialNodes()
-					.isEmpty() : "You cannot have a path program that does not start at an initial location";
+			assert !mResult.getPathProgram().getInitialNodes().isEmpty()
+					: "You cannot have a path program that does not start at an initial location";
 		}
 
 		private PathProgramConstructionResult getResult() {
@@ -378,6 +388,10 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 			if (mOriginalIcfg.getLoopLocations().contains(loc) && mLoopLocationFilter.test(loc)) {
 				mLoopLocations.add(ppLoc);
+			}
+
+			if (mOriginalIcfg.getLocationsOfInterest().contains(loc)) {
+				mLocationsOfInterest.add(ppLoc);
 			}
 
 			return ppLoc;

@@ -119,7 +119,7 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 		for (final Map<DebugIdentifier, IcfgLocation> prog2pp : rootNode.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
-		return Cfg2Automaton.constructAutomatonWithSPredicates(mServices, rootNode, mPredicateFactoryRc,
-				allNodes, true, mPredicateFactory);
+		return Cfg2Automaton.constructAutomatonWithSPredicates(mServices, rootNode, mPredicateFactoryRc, allNodes, true,
+				mPredicateFactory);
 	}
 }

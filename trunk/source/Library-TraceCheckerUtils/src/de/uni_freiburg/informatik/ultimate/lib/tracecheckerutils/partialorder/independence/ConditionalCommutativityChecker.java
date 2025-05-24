@@ -211,19 +211,16 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final var result = afe.getResult();
 
 		mStatistics.reportTraceCheck(result);
-		switch (result.getCounterexampleFeasibility()) {
-		case UNKNOWN:
-			return new Result<>(ResultType.UNKNOWN_CHECK);
-		case SAT:
-			return new Result<>(ResultType.CONDITION_NOT_SATISFIED);
-		case UNSAT:
+		return switch (result.getCounterexampleFeasibility()) {
+		case UNKNOWN -> new Result<>(ResultType.UNKNOWN_CHECK);
+		case SAT -> new Result<>(ResultType.CONDITION_NOT_SATISFIED);
+		case UNSAT -> {
 			if (!result.somePerfectSequenceFound()) {
-				return new Result<>(ResultType.PROOF_IMPERFECT);
+				yield new Result<>(ResultType.PROOF_IMPERFECT);
 			}
-			return new Result<>(postProcessRefinementResult(result));
-		default:
-			throw new AssertionError("unknown LBool: " + result.getCounterexampleFeasibility());
+			yield new Result<>(postProcessRefinementResult(result));
 		}
+		};
 	}
 
 	// Post-processes the refinement result's trace predicates such that the usage of an additional non-commutativity

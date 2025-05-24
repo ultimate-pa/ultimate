@@ -193,10 +193,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 
 	@Override
 	protected void separateByDifferentSymbols() throws AutomataOperationCanceledException {
-		final Queue<Set<STATE>> queue = new LinkedList<>();
-		for (final Set<STATE> block : mPartition) {
-			queue.add(block);
-		}
+		final Queue<Set<STATE>> queue = new LinkedList<>(mPartition);
 		final boolean hasCalls = !mOperand.getVpAlphabet().getCallAlphabet().isEmpty();
 
 		while (!queue.isEmpty()) {

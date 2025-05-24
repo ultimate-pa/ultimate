@@ -60,7 +60,6 @@ public class IpTcStrategyModuleAbstractInterpretation<LETTER extends IIcfgTransi
 	public IpTcStrategyModuleAbstractInterpretation(final Word<LETTER> counterexample,
 			final IPredicateUnifier predicateUnifier, final IUltimateServiceProvider services, final IIcfg<?> icfg,
 			final PathProgramCache<LETTER> pathProgramCache, final TAPreferences taPrefs) {
-		super();
 		mServices = services;
 		mIcfg = icfg;
 		mPathProgramCache = pathProgramCache;

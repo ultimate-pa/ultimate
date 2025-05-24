@@ -42,7 +42,7 @@ public interface IIcfgTransition<LOC extends IcfgLocation> extends IIcfgElement,
 	LOC getSource();
 
 	/**
-	 * 
+	 *
 	 * @return the target location of this transition
 	 */
 	LOC getTarget();

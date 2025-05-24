@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * Analyzes accepting components.
  * <p>
  * TODO Christian 2016-09-10: There are 5 local variables and 1 field which are never read - bugs?
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -89,7 +89,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param nwars
@@ -157,7 +157,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 	/**
 	 * Computes one nested lasso run per SCC.
-	 * 
+	 *
 	 * @return nested lasso runs
 	 */
 	public List<NestedLassoRun<LETTER, STATE>> computeOneNestedLassoRunPerScc() {
@@ -216,7 +216,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 	/**
 	 * Computes the shorted nested lasso run.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
@@ -292,7 +292,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	/**
 	 * Extension of {@link StronglyConnectedcomponent} that stores an maintains information which is needed by
 	 * {@link NestedWordAutomatonReachableStates} to efficiently computed accepting runs.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param <LETTER>
 	 *            letter type
@@ -321,7 +321,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param nwars
 		 *            nested word automaton with reachable states
 		 */
@@ -406,7 +406,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 	/**
 	 * Factory that constructs new {@link StronglyConnectedComponentWithAcceptanceInformation}.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StronglyConnectedComponentWithAcceptanceInformation_Factory implements
@@ -427,7 +427,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	/**
 	 * Provides for a given StateContiner all StateContainers that are successors of internal transitions, summaries and
 	 * call transitions.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class InSumCaSuccessorProvider implements ISuccessorProvider<StateContainer<LETTER, STATE>> {
@@ -442,7 +442,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 
 		private <E extends IOutgoingTransitionlet<LETTER, STATE>> Iterator<StateContainer<LETTER, STATE>>
 				getStateContainerIterator(final Iterator<E> iterator) {
-			return new Iterator<StateContainer<LETTER, STATE>>() {
+			return new Iterator<>() {
 				@Override
 				public boolean hasNext() {
 					return iterator.hasNext();

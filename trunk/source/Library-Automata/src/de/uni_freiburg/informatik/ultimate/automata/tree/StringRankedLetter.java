@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
+import java.util.Objects;
+
 public class StringRankedLetter implements IRankedLetter {
-	
+
 	private final String mString;
 	private final int mRank;
 
-	public StringRankedLetter(String string, int rank) {
+	public StringRankedLetter(final String string, final int rank) {
 		mString = string;
 		mRank = rank;
 	}
@@ -18,36 +20,37 @@ public class StringRankedLetter implements IRankedLetter {
 	@Override
 	public String toString() {
 		return "#" + mRank + ":" + mString;
-		//return mString + " (#" + mRank + ")";
+		// return mString + " (#" + mRank + ")";
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + mRank;
-		result = prime * result + ((mString == null) ? 0 : mString.hashCode());
-		return result;
+		return Objects.hash(mRank, mString);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		StringRankedLetter other = (StringRankedLetter) obj;
-		if (mRank != other.mRank)
+		}
+		final StringRankedLetter other = (StringRankedLetter) obj;
+		if (mRank != other.mRank) {
 			return false;
+		}
 		if (mString == null) {
-			if (other.mString != null)
+			if (other.mString != null) {
 				return false;
-		} else if (!mString.equals(other.mString))
+			}
+		} else if (!mString.equals(other.mString)) {
 			return false;
+		}
 		return true;
 	}
-	
-	
+
 }

@@ -465,11 +465,11 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.break_loop=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.collection_cloning=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.comparing_on_criteria=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.comparison_statement=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.comparison_statement=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.controlflow_merge=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_functional_interfaces=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop_if_loop_var_used=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop_if_loop_var_used=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_switch_expressions=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.correct_indentation=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.do_while_rather_than_while=false
@@ -553,7 +553,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.strictly_equal_or_different=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringbuffer_to_stringbuilder=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringbuilder=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.stringbuilder_for_local_vars=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.stringbuilder_for_local_vars=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringconcat_stringbuffer_stringbuilder=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringconcat_to_textblock=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.substring=true

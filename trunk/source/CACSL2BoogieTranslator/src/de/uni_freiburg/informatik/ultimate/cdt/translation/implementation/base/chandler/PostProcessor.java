@@ -83,13 +83,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library.FenvLibraryModel;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -197,7 +198,7 @@ public class PostProcessor {
 	 *
 	 * @return a declaration list holding the init() and start() procedure.
 	 */
-	public ArrayList<Declaration> postProcess(final ILocation loc, final IASTNode hook,
+	public List<Declaration> postProcess(final ILocation loc, final IASTNode hook,
 			final List<Statement> additionalInitializations) {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 
@@ -245,7 +246,7 @@ public class PostProcessor {
 					decl.addAll(declareCurrentRoundingModeVar(loc));
 				}
 			}
-			final BvOp[] importantBvOperations = new BvOp[] { BvOp.bvadd, BvOp.bvneg };
+			final BvOp[] importantBvOperations = { BvOp.bvadd, BvOp.bvneg };
 			mExpressionTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantBvOperations);
 		}
 		assert decl.stream().allMatch(Objects::nonNull);
@@ -272,7 +273,7 @@ public class PostProcessor {
 				attributes[1] = new NamedAttribute(loc, "bitsize",
 						new Expression[] { ExpressionFactory.createIntegerLiteral(loc, String.valueOf(bitsize)) });
 				final String identifier = "C_" + cPrimitive.name();
-				final String[] typeParams = new String[0];
+				final String[] typeParams = {};
 				final ASTType astType = mTypeHandler.byteSize2AstType(loc, CPrimitiveCategory.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams, astType));
 			}
@@ -323,7 +324,7 @@ public class PostProcessor {
 								ExpressionFactory.createIntegerLiteral(loc, String.valueOf(indices[1])) });
 			}
 			final String identifier = "C_" + cPrimitive.name();
-			final String[] typeParams = new String[0];
+			final String[] typeParams = {};
 			decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams));
 		}
 		return decls;
@@ -341,7 +342,7 @@ public class PostProcessor {
 			attributesRM[0] = new NamedAttribute(loc, FunctionDeclarations.BUILTIN_IDENTIFIER,
 					new Expression[] { ExpressionFactory.createStringLiteral(loc, smtlibRmIdentifier) });
 		}
-		final String[] typeParamsRM = new String[0];
+		final String[] typeParamsRM = {};
 		decls.add(new TypeDeclaration(loc, attributesRM, false,
 				BitvectorTranslation.ROUNDING_MODE_BOOGIE_TYPE_IDENTIFIER, typeParamsRM));
 
@@ -376,11 +377,10 @@ public class PostProcessor {
 		return decls;
 	}
 
+	// TODO: This function is used to handle the rounding mode. The constants are defined in FenvLibraryModel and the
+	// actual handling of the rounding mode should happen also there, but this was not moved yet (this might also
+	// require some refactoring).
 	private ArrayList<Declaration> createUltimateSetCurrentRoundingProcedure(final ILocation loc, final IASTNode hook) {
-		/*
-		 * Hardcoded to the following constants: FE_DOWNWARD 1024 FE_TONEAREST 0 FE_TOWARDZERO 3072 FE_UPWARD 2048
-		 */
-
 		final String functionName = BitvectorTranslation.ULTIMATE_PROC_SET_CURRENT_ROUNDING_MODE;
 		final String functionArgumentVariableName = "i";
 		final String returnVariableName = "r";
@@ -407,13 +407,13 @@ public class PostProcessor {
 
 		// rounding macros constants
 		final Expression rtzIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(3072));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_TOWARDZERO);
 		final Expression rneIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.ZERO);
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_TONEAREST);
 		final Expression rtpIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(2048));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_UPWARD);
 		final Expression rtnIntegerLiteralExpression =
-				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, BigInteger.valueOf(1024));
+				mTypeSize.constructLiteralForIntegerType(loc, intCPrimitive, FenvLibraryModel.FE_DOWNWARD);
 
 		final IdentifierExpression functionArgumentIdentifierExpression =
 				ExpressionFactory.constructIdentifierExpression(loc, intBoogieType, functionArgumentVariableName,
@@ -508,7 +508,7 @@ public class PostProcessor {
 		final String outInt = "outInt";
 		final VarList realParam =
 				new VarList(ignoreLoc, new String[] {}, new PrimitiveType(ignoreLoc, BoogieType.TYPE_REAL, SFO.REAL));
-		final VarList[] oneRealParam = new VarList[] { realParam };
+		final VarList[] oneRealParam = { realParam };
 		final VarList intParam = new VarList(ignoreLoc, new String[] { outInt },
 				new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, SFO.INT));
 
@@ -676,8 +676,7 @@ public class PostProcessor {
 			}
 			builder.addAuxVars(firstElseRex.getAuxVars());
 
-			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
-			firstElseStmt.addAll(firstElseRex.getStatements());
+			final ArrayList<Statement> firstElseStmt = new ArrayList<>(firstElseRex.getStatements());
 			if (!resultTypeIsVoid) {
 				final AssignmentStatement assignment =
 						StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
@@ -694,8 +693,7 @@ public class PostProcessor {
 				}
 				builder.addAuxVars(currentRex.getAuxVars());
 
-				final ArrayList<Statement> newStmts = new ArrayList<>();
-				newStmts.addAll(currentRex.getStatements());
+				final ArrayList<Statement> newStmts = new ArrayList<>(currentRex.getStatements());
 				if (!resultTypeIsVoid) {
 					final AssignmentStatement assignment =
 							StatementFactory.constructAssignmentStatement(loc, new VariableLHS[] { auxvar.getLhs() },
@@ -946,7 +944,7 @@ public class PostProcessor {
 		if (checkedMethodOutParams.length != 0) {
 			assert checkedMethodOutParams.length == 1;
 			// there is 1(!) return value
-			final CType checkedMethodResultCType = mProcedureManager.getCFunctionType(checkedMethod).getResultType();
+			final ICType checkedMethodResultCType = mProcedureManager.getCFunctionType(checkedMethod).getResultType();
 			final AuxVarInfo checkedMethodReturnAuxVar =
 					mAuxVarInfoBuilder.constructAuxVarInfo(loc, checkedMethodResultCType, SFO.AUXVAR.RETURNED);
 			mSymboltable.addBoogieCIdPair(checkedMethodReturnAuxVar.getExp().getIdentifier(),

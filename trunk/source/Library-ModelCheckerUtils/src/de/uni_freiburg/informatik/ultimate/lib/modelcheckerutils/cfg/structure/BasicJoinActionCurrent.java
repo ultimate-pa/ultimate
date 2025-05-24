@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 
 /**
  * Default implementation of {@link IJoinActionThreadCurrent}.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */

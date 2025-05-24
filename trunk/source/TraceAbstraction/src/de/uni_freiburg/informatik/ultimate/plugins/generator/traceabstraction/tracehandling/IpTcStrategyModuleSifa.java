@@ -55,7 +55,6 @@ public class IpTcStrategyModuleSifa<LETTER extends IIcfgTransition<?>>
 
 	public IpTcStrategyModuleSifa(final IUltimateServiceProvider services, final ILogger logger, final IIcfg<?> icfg,
 			final Word<LETTER> counterexample, final IPredicateUnifier predicateUnifier) {
-		super();
 		mServices = services;
 		mLogger = logger;
 		mIcfg = icfg;

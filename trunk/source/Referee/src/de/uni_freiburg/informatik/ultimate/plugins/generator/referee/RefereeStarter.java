@@ -51,8 +51,8 @@ public class RefereeStarter {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		final boolean allowLoopsWithoutAnnotation = prefs
-				.getBoolean(RefereePreferenceInitializer.LABEL_ALLOW_LOOPS_WITHOUT_ANNOTATION);
+		final boolean allowLoopsWithoutAnnotation =
+				prefs.getBoolean(RefereePreferenceInitializer.LABEL_ALLOW_LOOPS_WITHOUT_ANNOTATION);
 		final InvariantChecker ic = new InvariantChecker(mServices, rcfgRootNode, allowLoopsWithoutAnnotation);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, ic.getResultForUltimateUser());
 		mLogger.info(ic.getResultForUltimateUser().getShortDescription());

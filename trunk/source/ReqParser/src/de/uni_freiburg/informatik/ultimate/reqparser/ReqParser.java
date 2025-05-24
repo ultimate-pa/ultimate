@@ -165,8 +165,8 @@ public class ReqParser implements ISource {
 		checkTypeConflicts(uf.getAllRepresentatives());
 		rtr.addAll(merge(uf));
 
-		final List<PatternType<?>> reqs = patterns.stream()
-				.filter(a -> a != null && !(a instanceof DeclarationPattern)).collect(Collectors.toList());
+		final List<PatternType<?>> reqs = patterns.stream().filter(a -> a != null && !(a instanceof DeclarationPattern))
+				.collect(Collectors.toList());
 		if (reqs.isEmpty()) {
 			return rtr;
 		}

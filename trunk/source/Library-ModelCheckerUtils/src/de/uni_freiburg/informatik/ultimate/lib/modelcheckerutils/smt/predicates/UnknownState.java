@@ -49,13 +49,13 @@ public class UnknownState implements ISLPredicate {
 
 	@Override
 	public String toString() {
-		String result = mSerialNumber + "#";
+		final StringBuilder result = new StringBuilder().append(mSerialNumber).append("#");
 		if (mProgramPoint != null) {
-			result += mProgramPoint.getDebugIdentifier();
+			result.append(mProgramPoint.getDebugIdentifier());
 		} else {
-			result += "unknown";
+			result.append("unknown");
 		}
-		return result;
+		return result.toString();
 	}
 
 	@Override

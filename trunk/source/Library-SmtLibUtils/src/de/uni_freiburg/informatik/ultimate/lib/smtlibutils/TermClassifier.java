@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class TermClassifier extends NonRecursive {
 
 	/**
-	 * Follow the current (rather questionable) definition of SMT-LIB logics where
-	 * `div` and `mod` must not occur in *LIA logics.
+	 * Follow the current (rather questionable) definition of SMT-LIB logics where `div` and `mod` must not occur in
+	 * *LIA logics.
 	 */
 	private static final boolean DIV_MOD_NEVER_LINEAR = false;
 
