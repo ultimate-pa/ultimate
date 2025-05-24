@@ -94,8 +94,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 			// TODO: unsafe
 			final var afterForkLocation = globalImmutableMap
 					.getAbstractLocation((LOC) loc.getOutgoingNodes().getFirst());
-			final var executedFork = singleState.movedTo(loc.getProcedure(), afterForkLocation,
-					(LOC) loc.getOutgoingNodes().getFirst());
+			final var executedFork = singleState.movedTo(loc.getProcedure(), afterForkLocation);
 			final var movedOwnershipLocation = new AbstractLocationState<>(proceduresEntryLoc,
 					executedFork.abstractLocationState());
 			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedOwnership = new GuardedInterferenceDomainState<>(
@@ -154,9 +153,9 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 				initialStates.add(removeLocalVars(forkState));
 			}
 		}
-		final var moved = GuardedStateTransformer.copyToNewStateLocation(mEntryLocs.get(procedure), result);
+//		final var moved = GuardedStateTransformer.copyToNewStateLocation(mEntryLocs.get(procedure), result);
 		final var interferenceDomainDisj = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).getItfApplier().stateAfterInterferences(moved, procedure);
+				.getPostOperator()).getItfApplier().stateAfterInterferences(result, procedure);
 		// TODO: solve better (problem: fork interferences dont enable new interferences during calc, so we go again)
 		final var interferenceDomainDisjRound2 = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier().stateAfterInterferences(interferenceDomainDisj, procedure);

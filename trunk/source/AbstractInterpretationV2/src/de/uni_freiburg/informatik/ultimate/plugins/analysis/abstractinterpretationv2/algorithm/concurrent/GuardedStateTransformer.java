@@ -75,11 +75,10 @@ public final class GuardedStateTransformer {
 	}
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> movedTo(
-			final String threadName, final int newLocation, final LOC newLoc,
+			final String threadName, final int newLocation,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
 		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
-		return DisjunctiveAbstractState
-				.createDisjunction(mapStates(states, s -> s.movedTo(threadName, newLocation, newLoc)));
+		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.movedTo(threadName, newLocation)));
 	}
 
 	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> copyToNewStateLocation(

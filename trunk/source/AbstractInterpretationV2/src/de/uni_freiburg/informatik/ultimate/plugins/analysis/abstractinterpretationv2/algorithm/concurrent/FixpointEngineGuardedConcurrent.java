@@ -69,8 +69,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mEntryLocs = icfg.getProcedureEntryNodes();
 		mThreadModPrefs = threadModPrefs;
 		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
-//		SimpleInterferenceApplier.mReductionMethod = threadModPrefs.locationReduction();
-//		SimpleInterferenceApplier.mReiterateOverStates = threadModPrefs.reiterate();
 		GuardedInterferenceApplier.iterationsReached = 0;
 		mIfcg = icfg;
 		mLocationAbstractionCalculator = new LocationAbstraction<>(mEntryLocs);
@@ -78,15 +76,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
 		if (absMap.maximumOfAll() > threadModPrefs.maxStates()) {
-			if (absMap.maximumOfAll() > LOCATION_TRACK_LIMIT) {
-				mMaxParallelStates = 1;
-			} else {
-				mMaxParallelStates = threadModPrefs.maxStates();
-			}
+			mMaxParallelStates = threadModPrefs.maxStates();
 		} else {
 			mMaxParallelStates = absMap.maximumOfAll();
 		}
-//		params.setMaxParallelStates(1);
 		mDomain = new GuardedInterferenceDomain<>(mIfcg, mUnderlyingDomain, mLogger, mLocationAbstraction,
 				mMaxParallelStates, mMaxInterferenceFixpointUnwindings,
 				new AbstractInterferenceState<>(icfg.getCfgSmtToolkit().getProcedures()));

@@ -69,9 +69,8 @@ public class GuardedInterferenceDomainStateFactory<STATE extends IAbstractState<
 	}
 
 	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> movedTo(final String threadName,
-			final int newLocation, final LOC newLoc,
-			final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states) {
-		return mapStates(states, s -> s.movedTo(threadName, newLocation, newLoc));
+			final int newLocation, final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states) {
+		return mapStates(states, s -> s.movedTo(threadName, newLocation));
 	}
 
 	public Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> setThreadsActive(

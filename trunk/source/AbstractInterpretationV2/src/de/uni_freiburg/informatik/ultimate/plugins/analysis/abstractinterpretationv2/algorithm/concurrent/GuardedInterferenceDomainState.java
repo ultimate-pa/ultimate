@@ -63,15 +63,14 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 			// TODO: unsafe
 			final var newLocc = newState.abstractLocationState().getLocationMap()
 					.getAbstractLocation((LOC) loc.getOutgoingNodes().iterator().next());
-			newState = newState.movedTo(loc.getProcedure(), newLocc, (LOC) loc.getOutgoingNodes().iterator().next());
+			newState = newState.movedTo(loc.getProcedure(), newLocc);
 		}
 		return newState;
 	}
 
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation,
-			final LOC newLoc) {
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation) {
 		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
-				this.abstractLocationState().movedTo(threadName, newLocation, newLoc));
+				this.abstractLocationState().movedTo(threadName, newLocation));
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> copyToNewStateLocation(final LOC newLoc) {

@@ -9,36 +9,35 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 public class AbstractLocationState<LOC extends IcfgLocation> {
 	// global mapping of loc -> int, determined at beginning
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
-	// this states loc and abstract loc
-	private final LOC mLocation;
-	private final int mAbstractLocation;
 	// state of other thread locs, changed by interferences
 	private final AbstractLocationGlobalTracker mLocationTracker;
 
 	public AbstractLocationState(final LOC location, final AbstractLocationMap<LOC> globalMap,
 			final Set<String> threadNameSet) {
-		mLocation = location;
 		mAbstractLocationMap = globalMap;
-		mAbstractLocation = mAbstractLocationMap.getAbstractLocation(location);
 		final var tracker = new AbstractLocationGlobalTracker(threadNameSet, mAbstractLocationMap);
-		mLocationTracker = tracker.movedTo(location.getProcedure(), mAbstractLocation);
+		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
+		mLocationTracker = tracker.movedTo(location.getProcedure(), abstractLocation);
+	}
+
+	public AbstractLocationState(final AbstractLocationMap<LOC> locMap, final AbstractLocationGlobalTracker tracker) {
+		mAbstractLocationMap = locMap;
+		mLocationTracker = new AbstractLocationGlobalTracker(tracker);
 	}
 
 	public AbstractLocationState(final LOC location, final AbstractLocationMap<LOC> locMap,
 			final AbstractLocationGlobalTracker tracker) {
-		mLocation = location;
 		mAbstractLocationMap = locMap;
-		mAbstractLocation = mAbstractLocationMap.getAbstractLocation(location);
 		final var track = new AbstractLocationGlobalTracker(tracker);
-		mLocationTracker = track.movedTo(location.getProcedure(), mAbstractLocation);
+		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
+		mLocationTracker = track.movedTo(location.getProcedure(), abstractLocation);
 	}
 
-	public AbstractLocationState(final LOC loc, final AbstractLocationState<LOC> other) {
+	public AbstractLocationState(final LOC location, final AbstractLocationState<LOC> other) {
 		mAbstractLocationMap = other.mAbstractLocationMap;
-		mLocation = loc;
 		final var track = new AbstractLocationGlobalTracker(other.mLocationTracker);
-		mAbstractLocation = mAbstractLocationMap.getAbstractLocation(loc);
-		mLocationTracker = track.movedTo(mLocation.getProcedure(), mAbstractLocation);
+		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
+		mLocationTracker = track.movedTo(location.getProcedure(), abstractLocation);
 	}
 
 	public AbstractLocationState<LOC> copyToNewState(final LOC newLoc) {
@@ -57,24 +56,14 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return mLocationTracker.isEqualTo(other.mLocationTracker);
 	}
 
-	public LOC getLoc() {
-		return mLocation;
-	}
-
-	public int getintLoc() {
-		return mAbstractLocation;
-	}
-
 	public AbstractLocationState<LOC> union(final AbstractLocationState<LOC> other) {
 		if (other == null || other.getTracker() == null) {
-			return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker);
+			return new AbstractLocationState<>(mAbstractLocationMap, mLocationTracker);
 		}
-		// TODO: shouldnt need to comment this
-		if (mLocation != other.mLocation) {
-			throw new AssertionError(
-					"You are trying to merge states of different locations. Move the location of one to the correct one.");
+		if (this.getTracker() == null) {
+			return new AbstractLocationState<>(mAbstractLocationMap, other.getTracker());
 		}
-		return new AbstractLocationState<>(mLocation, mAbstractLocationMap, mLocationTracker.union(other.getTracker()));
+		return new AbstractLocationState<>(mAbstractLocationMap, mLocationTracker.union(other.getTracker()));
 	}
 
 	public AbstractLocationState<LOC> intersect(final AbstractLocationState<LOC> other) {
@@ -82,19 +71,11 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		if (trackIntersection == null) {
 			return null;
 		}
-		return new AbstractLocationState<>(mLocation, mAbstractLocationMap, trackIntersection);
+		return new AbstractLocationState<>(mAbstractLocationMap, trackIntersection);
 	}
 
-	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocationInt,
-			final LOC newLocation) {
-		if (threadName == mLocation.getProcedure()) {
-			return new AbstractLocationState<>(newLocation, mAbstractLocationMap,
-					mLocationTracker.movedTo(threadName, newLocationInt));
-		}
-		// TODO: newlocation or mlocation ?
-		return new AbstractLocationState<>(mLocation, mAbstractLocationMap,
-				mLocationTracker.movedTo(threadName, newLocationInt));
-
+	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocationInt) {
+		return new AbstractLocationState<>(mAbstractLocationMap, mLocationTracker.movedTo(threadName, newLocationInt));
 	}
 
 	public SubsetResult isSubsetOf(final AbstractLocationState<LOC> other) {
@@ -106,14 +87,11 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		if (other == null) {
 			return false;
 		}
-		if (other.mAbstractLocation != mAbstractLocation) {
-			return false;
-		}
 		return mLocationTracker.isEqualTo(other.mLocationTracker);
 	}
 
-	public String printLocation() {
-		return String.valueOf(mAbstractLocation);
+	public String printLocation(final String sourcethread) {
+		return String.valueOf(mLocationTracker.getLocationForThread(sourcethread));
 	}
 
 	@Override
@@ -121,7 +99,6 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		final StringBuilder s = new StringBuilder();
 		mLocationTracker.threadLocationMap().keySet()
 				.forEach(k -> s.append(k + ":" + mLocationTracker.getLocationForThread(k).toString() + " "));
-		s.append(" My location: " + mAbstractLocation);
 		return s.toString();
 	}
 

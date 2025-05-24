@@ -48,6 +48,7 @@ public class InterferenceApplier {
 								&& s.threadCounter() != null && s.abstractLocationState() != null)
 						.collect(Collectors.toSet()), maxSize);
 		final var intersectionState = filteredStateState.intersect(filteredInterferingState);
+		// throw out false states from intersection
 		final var filtered = DisjunctiveAbstractState.createDisjunction(intersectionState.getStates().stream()
 				.filter(s -> s != null && s.threadCounter() != null && s.abstractLocationState() != null)
 				.collect(Collectors.toSet()), maxSize);
@@ -56,11 +57,8 @@ public class InterferenceApplier {
 			return null;
 		}
 		// postop
-		final var realLocation = GuardedStateTransformer.getAbstractLocationUnion(disjunctiveAbstractState).getLoc();
-		final var postStateBroken = filtered.apply(postOp, action);
+		var postState = filtered.apply(postOp, action);
 		GuardedInterferenceDomain.postoperatorCalls++;
-		// SET TO ORIGINAL LOCATION (apply moves the state as if it is now the location of target state of itf trans
-		var postState = GuardedStateTransformer.copyToNewStateLocation(realLocation, postStateBroken);
 		// TODO: sound?
 		if (postState.isEmpty() || postState.isBottom()) {
 			return null;

@@ -66,10 +66,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyFixpointSingle(
 			final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> startStates,
 			final String ownerThread) {
-		final LOC baseLoc = startStates.iterator().next().getStates().iterator().next().abstractLocationState()
-				.getLoc();
 		final var result = new LinkedHashSet<>(startStates.stream().flatMap(s -> s.getStates().stream()).toList());
-		LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> worklist = new LinkedHashSet<>(result);
+		final LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> worklist = new LinkedHashSet<>(result);
 		int iteration = 1;
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).disAbleInterferences();
 		while (!worklist.isEmpty()) {
@@ -91,7 +89,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				if (post == null) {
 					continue;
 				}
-				final var moved = adjustState(interference, post, baseLoc);
+				final var moved = adjustState(interference, post);
 				if (iteration <= mMaxItf) {
 					addIfNew(result, nextWorklist, moved.getStates());
 				} else {
@@ -103,8 +101,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 						result.size());
 				break;
 			}
-			worklist = nextWorklist.stream().map(s -> s.copyToNewStateLocation(baseLoc))
-					.collect(Collectors.toCollection(LinkedHashSet::new));
+//			worklist = nextWorklist.stream().map(s -> s.copyToNewStateLocation(baseLoc))
+//					.collect(Collectors.toCollection(LinkedHashSet::new));
 			iteration++;
 			if (iteration % 10 == 0) {
 				mLogger.warn("High interference-fixpoint iteration:" + iteration);
@@ -112,27 +110,26 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
 //		if (mReductionMethod.equals("Reduce per location")) {
-//			result = StateReducer.reduceToLocationsSet(result, mMaxParallelStates);
-//			final var reduced = DisjunctiveAbstractState.createDisjunction(result, mMaxParallelStates);
-//			return StateReducer.reduceToLocations(reduced, mMaxParallelStates);
-//
-//		}
+		if (true) {
+			final var reducedSet = StateReducer.reduceToLocationsSet(result);
+			final var reduced = DisjunctiveAbstractState.createDisjunction(reducedSet, mMaxParallelStates);
+			return StateReducer.reduceToLocations(reduced, mMaxParallelStates);
+
+		}
 		final var reduced = DisjunctiveAbstractState.createDisjunction(result, mMaxParallelStates);
 		return reduced;
 	}
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjustState(
 			final InterferenceWithSourceThread<STATE, ACTION, LOC> interference,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> post,
-			final LOC baseLoc) {
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> post) {
 		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved;
 		moved = GuardedStateTransformer.movedTo(interference.interf().action().getPrecedingProcedure(),
-				mAbstractLocationMap.getAbstractLocation(interference.interf().action().getTarget()),
-				interference.interf().action().getTarget(), post);
+				mAbstractLocationMap.getAbstractLocation(interference.interf().action().getTarget()), post);
 		if (interference.interf().action() instanceof final ForkThreadCurrent fork) {
 			moved = GuardedStateTransformer.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()), moved);
 		}
-		moved = GuardedStateTransformer.copyToNewStateLocation(baseLoc, moved);
+//		moved = GuardedStateTransformer.copyToNewStateLocation(baseLoc, moved);
 		return moved;
 	}
 

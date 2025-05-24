@@ -82,10 +82,6 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 					maxCombinations = maxCombinations * mLocationCountMap.get(otherThread);
 				}
 			}
-			// threadcounter
-			if (maxCombinations > 1) {
-				maxCombinations = maxCombinations * mEntryLocs.size() - 1;
-			}
 			mMaxParallelLocationStates.put(thread, maxCombinations);
 		}
 	}
