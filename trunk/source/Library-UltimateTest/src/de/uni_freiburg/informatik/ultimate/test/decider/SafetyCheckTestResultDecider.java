@@ -113,23 +113,14 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				return;
 			}
 			evaluateExpectedResult(expectedResultFinder);
-			final boolean testGeneration = true;
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
 				// we will not evaluate overall result;
 				return;
 			case EXPECTED_RESULT_FOUND:
-				if (testGeneration) {
-					evaluateTestGenerationResult(overallResultDeterminer);
-					return;
-				}
 				compareToOverallResult(expectedResultFinder.getExpectedResult(), overallResultDeterminer);
 				return;
 			case NO_EXPECTED_RESULT_FOUND:
-				if (testGeneration) {
-					evaluateTestGenerationResult(overallResultDeterminer);
-					return;
-				}
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
 				return;
 			default:
@@ -146,18 +137,9 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			mMessage += " UltimateResult: " + overallResultMsg;
 			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
-			case UNSUPPORTED_SYNTAX: {
-				mTestResult = TestResult.FAIL;
-
-				break;
-			}
+			case UNSUPPORTED_SYNTAX:
 			case NO_RESULT:
-				final boolean testGeneration = true;
-				if (testGeneration) {
-					mTestResult = TestResult.SUCCESS;
-				} else {
-					mTestResult = TestResult.FAIL;
-				}
+				mTestResult = TestResult.FAIL;
 				break;
 			case SAFE:
 			case UNSAFE:
@@ -172,32 +154,6 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				break;
 			default:
 				throw new AssertionError("case not implemented: " + overallResult);
-			}
-		}
-
-		private void evaluateTestGenerationResult(
-				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
-			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
-			mCategory = overallResult + " (Expected:UNKNOWN)";
-			mMessage += " Ultimate TestGeneration";
-			switch (overallResult) {
-			case EXCEPTION_OR_ERROR:
-			case UNSUPPORTED_SYNTAX:
-				mTestResult = TestResult.FAIL;
-				break;
-
-			case UNSAFE_DEREF:
-			case UNSAFE_FREE:
-			case UNSAFE_MEMTRACK:
-			case UNSAFE_OVERAPPROXIMATED:
-			case UNKNOWN:
-			case SYNTAX_ERROR:
-			case TIMEOUT:
-				mTestResult = TestResult.UNKNOWN;
-				break;
-			default:
-				mTestResult = TestResult.SUCCESS;
-				break;
 			}
 		}
 

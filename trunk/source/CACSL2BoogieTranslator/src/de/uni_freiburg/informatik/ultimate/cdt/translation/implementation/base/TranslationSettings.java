@@ -30,6 +30,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -82,9 +84,6 @@ public final class TranslationSettings {
 	private final int mStringOverapproximationThreshold;
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 	private final boolean mEnforceIfForConditional;
-	// Test Generation
-	private final boolean mTestGenerationErrorCoverage;
-	private final boolean mTestGenerationBranchCoverage;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -100,15 +99,13 @@ public final class TranslationSettings {
 		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
-		mPointerBaseValidity =
-				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, CheckMode.class);
+		mPointerBaseValidity = ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, CheckMode.class);
 		mPointerTargetFullyAllocated =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, CheckMode.class);
 		// mCheckFreeValid =
 		// prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
-		mCheckPointerSubtractionAndComparisonValidity =
-				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-						CheckMode.class);
+		mCheckPointerSubtractionAndComparisonValidity = ups.getEnum(
+				CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, CheckMode.class);
 		mMemoryModelPreference = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
 		mFpToIeeeBvExtension = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_TO_IEEE_BV_EXTENSION);
 
@@ -117,16 +114,17 @@ public final class TranslationSettings {
 		mInRange = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
 		mCheckArrayAccessOffHeap =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.class);
-		mDivisionByZeroOfIntegerTypes = ups.getEnum(
-				CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.class);
-		mDivisionByZeroOfFloatingTypes = ups.getEnum(
-				CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.class);
+		mDivisionByZeroOfIntegerTypes =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.class);
+		mDivisionByZeroOfFloatingTypes =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.class);
 		mBitpreciseBitfields = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITPRECISE_BITFIELDS);
 		mBitvectorTranslation = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		mOverapproximateFloatingPointOperations =
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mUseConstantArrays = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS);
 		mUseStoreChains = ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_STORE_CHAINS);
+
 		mEnableFesetround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_ENABLE_FESETROUND);
 		mInitialRoundingMode =
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_FP_ROUNDING_MODE_INITIAL, FloatingPointRoundingMode.class);
@@ -137,9 +135,6 @@ public final class TranslationSettings {
 		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
 		mEnforceIfForConditional = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ENFORCE_IF_FOR_CONDITIONAL);
-		// Test Generation
-		mTestGenerationErrorCoverage = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR_COVERAGE);
-		mTestGenerationBranchCoverage = ups.getBoolean(CACSLPreferenceInitializer.LABEL_BRANCH_COVERAGE);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -156,7 +151,7 @@ public final class TranslationSettings {
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
 			final int stringOverapproximationThreshold, final UndefinedFunctionBehaviour undefinedFunctionBehaviour,
-			final boolean enforceIfForConditional, final boolean coverError, final boolean coverBranches) {
+			final boolean enforceIfForConditional) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -188,8 +183,6 @@ public final class TranslationSettings {
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
 		mEnforceIfForConditional = enforceIfForConditional;
-		mTestGenerationErrorCoverage = coverError;
-		mTestGenerationBranchCoverage = coverBranches;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -328,15 +321,6 @@ public final class TranslationSettings {
 		return mEnforceIfForConditional;
 	}
 
-	// TestGeneration
-	public boolean isCoverError() {
-		return mTestGenerationErrorCoverage;
-	}
-
-	public boolean isCoverBranches() {
-		return mTestGenerationBranchCoverage;
-	}
-
 	public TranslationSettings setMemoryModelPreference(final MemoryModel memoryModel) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
@@ -346,8 +330,7 @@ public final class TranslationSettings {
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mUndefinedFunctionBehaviour, mEnforceIfForConditional,
-				mTestGenerationErrorCoverage, mTestGenerationBranchCoverage);
+				mUndefinedFunctionBehaviour, mEnforceIfForConditional);
 	}
 
 	/**
@@ -384,10 +367,7 @@ public final class TranslationSettings {
 
 		@Override
 		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mNewPreferredMemoryModel == null) ? 0 : mNewPreferredMemoryModel.hashCode());
-			return result;
+			return Objects.hash(mNewPreferredMemoryModel);
 		}
 
 		@Override

@@ -58,14 +58,6 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 	private int mPerfectInterpolantSequences = 0;
 	private BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
 
-	// Test Case generation statistics:
-	private int mTraceChecks = 0;
-	private int mTestsExported = 0;
-	private int mReusesTried = 0;
-	private int mInputVectorsExtended = 0;
-	private int UNSAToptimizations = 0;
-	private int mSucessfullReuses = 0;
-
 	private final boolean mCollectInterpolatSequenceStatistics;
 
 	public TraceCheckStatisticsGenerator(final boolean collectInterpolatSequenceStatistics) {
@@ -123,8 +115,8 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	private static long computeLongSumOfIntArray(final long[] arr) {
 		long sum = 0;
-		for (int i = 0; i < arr.length; i++) {
-			sum += arr[i];
+		for (final long element : arr) {
+			sum += element;
 		}
 		return sum;
 	}
@@ -148,57 +140,28 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	@Override
 	public Object getValue(final String key) {
-		final TraceCheckStatisticsDefinitions keyEnum = Enum.valueOf(TraceCheckStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case SsaConstructionTime:
-		case SatisfiabilityAnalysisTime:
-		case InterpolantComputationTime:
+		final TraceCheckStatisticsDefinitions keyEnum = TraceCheckStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case SsaConstructionTime, SatisfiabilityAnalysisTime, InterpolantComputationTime -> {
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case NumberOfCodeBlocks:
-			return mNumberOfCodeBlocks;
-		case NumberOfCodeBlocksAsserted:
-			return mNumberOfCodeBlocksAsserted;
-		case NumberOfCheckSat:
-			return mNumberOfCheckSat;
-		case ConstructedInterpolants:
-			return mConstructedInterpolants;
-		case QuantifiedInterpolants:
-			return mQuantifiedInterpolants;
-		case SizeOfPredicates:
-			return mSizeOfPredicates;
-		case NumberOfNonLiveVariables:
-			return mNumberOfNonLiveVariables;
-		case ConjunctsInSsa:
-			return mConjunctsInSsa;
-		case ConjunctsInUnsatCore:
-			return mConjunctsInUnsatCore;
-		case InterpolantComputations:
-			return mInterpolantComputations;
-		case PerfectInterpolantSequences:
-			return mPerfectInterpolantSequences;
-		case InterpolantCoveringCapability:
-			return mInterpolantCoveringCapability;
-
-		// Test Case Generation:
-		case TraceChecks:
-			return mTraceChecks;
-		case TestsExported:
-			return mTestsExported;
-		case ReusesTried:
-			return mReusesTried;
-		case InputVectorsExtended:
-			return mInputVectorsExtended;
-		case UNSAToptimizations:
-			return UNSAToptimizations;
-		case SucessfullReuses:
-			return mSucessfullReuses;
-		default:
-			throw new AssertionError("unknown data");
 		}
+		case NumberOfCodeBlocks -> mNumberOfCodeBlocks;
+		case NumberOfCodeBlocksAsserted -> mNumberOfCodeBlocksAsserted;
+		case NumberOfCheckSat -> mNumberOfCheckSat;
+		case ConstructedInterpolants -> mConstructedInterpolants;
+		case QuantifiedInterpolants -> mQuantifiedInterpolants;
+		case SizeOfPredicates -> mSizeOfPredicates;
+		case NumberOfNonLiveVariables -> mNumberOfNonLiveVariables;
+		case ConjunctsInSsa -> mConjunctsInSsa;
+		case ConjunctsInUnsatCore -> mConjunctsInUnsatCore;
+		case InterpolantComputations -> mInterpolantComputations;
+		case PerfectInterpolantSequences -> mPerfectInterpolantSequences;
+		case InterpolantCoveringCapability -> mInterpolantCoveringCapability;
+		};
 	}
 
 	@Override
@@ -215,31 +178,6 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	public boolean isCollectingInterpolantSequenceStatistics() {
 		return mCollectInterpolatSequenceStatistics;
-	}
-
-	// Test Case Generation:
-	public void reportTraceChecks() {
-		mTraceChecks++;
-	}
-
-	public void reportTestExported() {
-		mTestsExported++;
-	}
-
-	public void reportReuseTried() {
-		mReusesTried++;
-	}
-
-	public void reportInputVectorsExtended() {
-		mInputVectorsExtended++;
-	}
-
-	public void reportUNSAToptimizations() {
-		UNSAToptimizations++;
-	}
-
-	public void reportSuccessfullReuse() {
-		mSucessfullReuses++;
 	}
 
 }

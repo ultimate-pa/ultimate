@@ -157,8 +157,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				return mThreadResult;
 			}
 
-			final AbstractCegarLoop.AutomatonType automatonType =
-					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
+			final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
+					isCexResult.getSecond(), mCurrentErrorLoc);
 			constructRefinementAutomaton(automatonType);
 			mThreadResult = refineAbstractionInternally();
 		} catch (AutomataLibraryException | ToolchainCanceledException e) {
@@ -168,8 +168,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		return mThreadResult;
 	}
 
-	protected Pair<LBool, IProgramExecution<L, Term>>
-			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(
+			final ITARefinementStrategy<L> strategy) {
 		IStatisticsDataProvider refinementEngineStats = null;
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
@@ -178,8 +178,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
-			final TraceAbstractionRefinementEngine<L> refinementEngine =
-					new TraceAbstractionRefinementEngine<>(getServices(), mLogger, strategy);
+			final TraceAbstractionRefinementEngine<L> refinementEngine = new TraceAbstractionRefinementEngine<>(
+					getServices(), mLogger, strategy);
 			mRefinementResult = refinementEngine.getResult();
 			refinementEngineStats = refinementEngine.getRefinementEngineStatistics();
 
@@ -193,8 +193,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			if (mRefinementResult.providesIcfgProgramExecution()) {
 				rcfgProgramExecution = mRefinementResult.getIcfgProgramExecution();
 			} else {
-				rcfgProgramExecution =
-						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
+				rcfgProgramExecution = TraceCheckUtils
+						.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
 		}
@@ -264,9 +264,9 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
 					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
 
-				final VarAssignmentReuseAnnotation pLocAnnoVA =
-						(VarAssignmentReuseAnnotation) testGoalISL.getProgramPoint().getPayload().getAnnotations()
-								.get(VarAssignmentReuseAnnotation.class.getName());
+				final VarAssignmentReuseAnnotation pLocAnnoVA = (VarAssignmentReuseAnnotation) testGoalISL
+						.getProgramPoint().getPayload().getAnnotations()
+						.get(VarAssignmentReuseAnnotation.class.getName());
 				// If it contains a VA it should contain a TG
 				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
 						.containsKey(TestGoalAnnotation.class.getName());
@@ -282,7 +282,6 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 		}
 
-		mCegarLoopBenchmark.reportErrorAutomatonCreated();
 		// TODO reactivate
 		// final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
 		// mErrorGeneralizationEngine.getResultBeforeEnhancement();
@@ -402,8 +401,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		try {
 			mLogger.debug("WORKER: Start constructing difference for enhancing interpolant automaton in worker");
-			final PowersetDeterminizer<L, IPredicate> psd =
-					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(subtrahend, true,
+					mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
@@ -454,8 +453,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) throws AutomataLibraryException {
-		final RunningTaskInfo runningTaskInfo =
-				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
+		final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
+				subtrahendBeforeEnhancement, automatonType);
 		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 			// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 			// mPredicateFactoryResultChecking, mCounterexample, true);
@@ -480,8 +479,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		// Use all edges of the interpolant automaton that is already constructed as an
 		// initial cache for the Hoare triple checker.
-		final HoareTripleCheckerCache initialCache =
-				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
+		final HoareTripleCheckerCache initialCache = TraceAbstractionUtils
+				.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier(), initialCache);
 	}
@@ -533,20 +532,17 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
-		final boolean conservativeSuccessorCandidateSelection =
-				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
+		final boolean conservativeSuccessorCandidateSelection = enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
 		final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 		return new NondeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
 				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 	}
 
-	private DeterministicInterpolantAutomaton<L>
-			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
-					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-					final InterpolantAutomatonEnhancement enhanceMode) {
-		final boolean conservativeSuccessorCandidateSelection =
-				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
+	private DeterministicInterpolantAutomaton<L> constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 		return new DeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
 				predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);

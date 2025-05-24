@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +34,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -44,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -66,17 +62,11 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.TestGenReuseMode;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -133,7 +123,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final ManagedScript mCfgManagedScript;
 	protected final ManagedScript mTcSmtManager;
 	protected final TraceCheckLock mTraceCheckLock = new TraceCheckLock();
-
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
@@ -158,9 +147,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	protected final AssertCodeBlockOrder mAssertCodeBlockOrder;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	protected final FeasibilityCheckResult mFeasibilityResult;
-
-	final HashMap<String, String> mProcedureToCallLoc = new HashMap<>();
-	private final TestGenReuseMode mTestGenReuseMode;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -205,10 +191,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mLogger = mServices.getLoggingService().getLogger(TraceCheckerUtils.PLUGIN_ID);
 		mCfgManagedScript = csToolkit.getManagedScript();
 		mTcSmtManager = managedScriptTc;
-		// System.out.println("mTcSmtManager: " + mTcSmtManager.getScript().getTheory());
-		// System.out.println("mCfgManagedScript: " + mCfgManagedScript.getScript().getTheory());
-		// System.out.println("MainScript: "
-		// + ((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript().getScript().getTheory());
 		mCsToolkit = csToolkit;
 		mBoogie2SmtSymbolTable = csToolkit.getSymbolTable();
 		mTrace = rv.getTrace();
@@ -227,9 +209,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		mAssertCodeBlockOrder = assertCodeBlockOrder;
 		mTraceCheckBenchmarkGenerator = new TraceCheckStatisticsGenerator(collectInterpolatSequenceStatistics);
 
-		mTestGenReuseMode = RcfgPreferenceInitializer.getPreferences(services)
-				.getEnum(RcfgPreferenceInitializer.LABEL_TEST_GEN_REUSE_MODE, TestGenReuseMode.class);
-
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution<L> icfgProgramExecution = null;
 		FeasibilityCheckResult feasibilityResult = null;
@@ -245,18 +224,9 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					cleanupAndUnlockSolver();
 				}
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
-				if (true) {// TODO !mAAA.mSucessfulReuse) {
-
-					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(mTcSmtManager);
-					if (icfgProgramExecution != null) {
-						providesIcfgProgramExecution = true;
-					}
-				} else {
-					providesIcfgProgramExecution = false;
-					// TODO back to default
-					// icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
-					// if (icfgProgramExecution != null) {
-					// providesIcfgProgramExecution = true;
+				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
+				if (icfgProgramExecution != null) {
+					providesIcfgProgramExecution = true;
 				}
 				mTraceCheckFinished = true;
 			} else if (!feasibilityResult.isSolverCrashed()) {
@@ -347,8 +317,7 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			result = new FeasibilityCheckResult(isSafe, tcru, false);
 		} catch (final SMTLIBException e) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				// there was a cancellation request, probably responsible for
-				// abnormal solver termination
+				// there was a cancellation request, probably responsible for abnormal solver termination
 				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
 						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
 			} else {
@@ -391,10 +360,8 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			case UNKNOWN:
 				final Exception ex = tc.getTraceCheckReasonUnknown().getException();
 				if (ex instanceof ToolchainCanceledException || ex instanceof AutomataOperationCanceledException) {
-					// TODO: 20210701 DD: It might be useful to set a higher
-					// timeout for a TraceCheck here because the
-					// chance of getting a program execution if the previous TC
-					// was already successful is high.
+					// TODO: 20210701 DD: It might be useful to set a higher timeout for a TraceCheck here because the
+					// chance of getting a program execution if the previous TC was already successful is high.
 					throw new ToolchainCanceledException((IRunningTaskStackProvider) ex,
 							new RunningTaskInfo(getClass(), "computing program execution"));
 				}
@@ -414,7 +381,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private IcfgProgramExecution<L> computeRcfgProgramExecution(final NestedSsaBuilder<L> nsb) {
-		final int vaOrder = -1;
 		final RelevantVariables<L> relVars =
 				new RelevantVariables<>(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		final IcfgProgramExecutionBuilder<L> rpeb =
@@ -435,10 +401,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 					rpeb.setBranchEncoders(i, beMapping);
 				}
 			}
-			if (mTrace.getSymbol(i) instanceof Call) {
-				final Call call = (Call) mTrace.getSymbol(i);
-				mProcedureToCallLoc.put(call.getSucceedingProcedure(), call.getSource().toString());
-			}
 		}
 
 		final Function<Term, Term> funGetValue;
@@ -449,128 +411,34 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
-		if (!mTestGenReuseMode.equals(TestGenReuseMode.None)) { // && !mAAA.mSucessfulReuse) { // TODO check for bugs
-			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb, vaOrder);
-			final boolean mExportTests = true;
-			if (mExportTests) {
-				final boolean mExportAllInOneFile = true;
-				final String identifier = "" + rpeb.mTrace.hashCode();
-				exportTest(testV, identifier, mExportAllInOneFile);
-			}
-		} else {
-			for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
-				final IProgramVar bv = entry.getKey();
-				final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-				if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-					for (final var representative : indexedRepresentatives.entrySet()) {
-						final Integer index = representative.getKey();
-						final Term indexedVar = representative.getValue();
-						final Term valueT;
-						try {
-							valueT = funGetValue.apply(indexedVar);
-						} catch (final UnsupportedOperationException uoe) {
-							// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
-							// crash while using SMTInterpol on quantified formulas. See {@link
-							// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
-							// is able to produce values for the sorts `Int` and `Bool` this catch block
-							// should be removed.
-							if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
-								continue;
-							} else {
-								throw uoe;
-							}
+		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+			final IProgramVar bv = entry.getKey();
+			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
+			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+				for (final var representative : indexedRepresentatives.entrySet()) {
+					final Integer index = representative.getKey();
+					final Term indexedVar = representative.getValue();
+					final Term valueT;
+					try {
+						valueT = funGetValue.apply(indexedVar);
+					} catch (final UnsupportedOperationException uoe) {
+						// TODO 2023-10-26 Matthias: This is a workaround that makes sure that we don't
+						// crash while using SMTInterpol on quantified formulas. See {@link
+						// IcfgProgramExecutionBuilder#varValAtPos}. If SMTInterpol
+						// is able to produce values for the sorts `Int` and `Bool` this catch block
+						// should be removed.
+						if (uoe.getMessage().equals("Modelproduction for quantifier theory not implemented.")) {
+							continue;
+						} else {
+							throw uoe;
 						}
-						rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
-
 					}
+					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
 			}
 		}
 		cleanupAndUnlockSolver();
 		return rpeb.getIcfgProgramExecution();
-	}
-
-	// does rpeb.addValueAtVarAssignmentPosition and creates a testVector at the same time
-	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
-			final IcfgProgramExecutionBuilder<L> rpeb, final int vaOrder) {
-		final TestVector testV = new TestVector();
-		final ArrayList<Term> varAssignment = new ArrayList<>();
-		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
-
-		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
-			final IProgramVar bv = entry.getKey();
-			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
-			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
-				boolean evenRepresentative = true;
-				for (final var representative : indexedRepresentatives.entrySet()) {
-					final Integer index = representative.getKey();
-					final Term indexedVar = representative.getValue();
-					final Term valueT = funGetValue.apply(indexedVar);
-					if (indexedVar instanceof ApplicationTerm) {
-						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
-						if (indexedVar.toStringDirect().contains("nondet")) {
-							if (evenRepresentative) {
-								// TODO Not sure if save, but by far the best solution
-								if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
-									final StatementSequence stsq =
-											(StatementSequence) rpeb.mTrace.asList().get(index);
-
-									final Matcher m = Pattern.compile("__VERIFIER_nondet_(\\w*)")
-											.matcher(stsq.getPayload().toString());
-									if (m.find()) {
-										final String type = m.group(1);
-										testV.addValueAssignment(valueT, index, type);
-										final TermTransferrer test = new TermTransferrer(
-												mCfgManagedScript.getScript(), mTcSmtManager.getScript());
-										final Term varEqValue = SmtUtils.binaryEquality(mTcSmtManager.getScript(),
-												test.transform(indexedVar), test.transform(valueT));
-										final Pair<Term, Term> varValuePair = new Pair<>(
-												test.transform(indexedVar), test.transform(valueT));
-										varAssignmentPair.add(varValuePair);
-										varAssignment.add(varEqValue);
-									}
-								}
-								evenRepresentative = !evenRepresentative;
-							} else {
-								evenRepresentative = !evenRepresentative;
-							}
-						}
-					}
-					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
-
-				}
-			}
-		}
-		final boolean vaReuse = false; // TODO deacitave in merge
-		if (vaReuse) {
-			final L stmt = nsb.mSsa.getTrace().getSymbol(nsb.mSsa.getTrace().length() - 1);
-			if (stmt instanceof StatementSequence) {
-				final StatementSequence statementBranch = (StatementSequence) stmt;
-				if (statementBranch.getPayload().getAnnotations()
-						.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-					final VarAssignmentReuseAnnotation vaReuseAnno = (VarAssignmentReuseAnnotation) statementBranch
-							.getPayload().getAnnotations().get(VarAssignmentReuseAnnotation.class.getName());
-
-					vaReuseAnno.mPrecedingProcedure = statementBranch.getPrecedingProcedure();
-					vaReuseAnno.mLocationOfPrecedingProcedure =
-							mProcedureToCallLoc.get(statementBranch.getPrecedingProcedure());
-					//					vaReuseAnno.setVa(varAssignmentPair, vaOrder + 1, mAAA.mVAsInPrefix);
-				}
-			}
-		}
-		return testV;
-	}
-
-	private void exportTest(final TestVector testV, final String identifier, final boolean allInOneFile) {
-		try {
-			if (!testV.isEmpty()) {
-				mTraceCheckBenchmarkGenerator.reportTestExported();
-				TestExporter.getInstance().exportTests(testV, identifier, allInOneFile);
-			}
-		} catch (final Exception e) {
-			// TODO TestGeneration Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {
@@ -642,10 +510,6 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 	protected void cleanupAndUnlockSolver() {
 		mTcSmtManager.echo(mTraceCheckLock, new QuotedObject("finished trace check"));
-		//		if (mAAA.mSucessfulReuse) {
-		//			mTcSmtManager.pop(mTraceCheckLock, 1);
-		//		}
-		//		mAAA.mSucessfulReuse = false;
 		mTcSmtManager.pop(mTraceCheckLock, 1);
 		mTcSmtManager.unlock(mTraceCheckLock);
 	}
@@ -673,10 +537,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 
 		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
 				final boolean solverCrashed) {
-			assert lBool != LBool.UNKNOWN
-					|| reasonUnknown != null : "if result is unknown you have to specify a reason";
-			assert lBool == LBool.UNKNOWN
-					|| reasonUnknown == null : "if result sat/unsat you cannot specify reason for unknown";
+			assert lBool != LBool.UNKNOWN || reasonUnknown != null
+					: "if result is unknown you have to specify a reason";
+			assert lBool == LBool.UNKNOWN || reasonUnknown == null
+					: "if result sat/unsat you cannot specify reason for unknown";
 			mLBool = lBool;
 			mReasonUnknown = reasonUnknown;
 			mSolverCrashed = solverCrashed;

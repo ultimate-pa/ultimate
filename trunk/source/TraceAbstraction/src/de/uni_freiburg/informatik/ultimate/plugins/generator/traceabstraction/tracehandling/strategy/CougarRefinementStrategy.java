@@ -10,8 +10,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpAbStrategyModuleStraightlineAll;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
 public class CougarRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
@@ -22,8 +20,8 @@ public class CougarRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 	}
 
 	@SuppressWarnings("unchecked")
-	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[]
-			createModules(final StrategyFactory<L>.StrategyModuleFactory factory) {
+	static <L extends IIcfgTransition<?>> IIpTcStrategyModule<?, L>[] createModules(
+			final StrategyFactory<L>.StrategyModuleFactory factory) {
 
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
 		rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
@@ -31,9 +29,11 @@ public class CougarRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 	}
 
 	private int getCexLength() {
-		assert super.getInterpolantAutomatonBuilder() instanceof IpAbStrategyModuleStraightlineAll;
-		return ((IpAbStrategyModuleStraightlineAll<?>) super.getInterpolantAutomatonBuilder()).getCounterexample()
-				.length();
+		// TODO get somehow the length of the counterexample
+		// assert super.getInterpolantAutomatonBuilder() instanceof IpAbStrategyModuleStraightlineAll;
+		// return ((IpAbStrategyModuleStraightlineAll<?>)
+		// super.getInterpolantAutomatonBuilder()).getCounterexample().length();
+		return 0;
 	}
 
 	// We do not interpolate in this strategy
@@ -43,12 +43,13 @@ public class CougarRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 		return false;
 	}
 
+	// TODO make mFactory accessible
 	@Override
 	public List<QualifiedTracePredicates> mergeInterpolants(final List<QualifiedTracePredicates> perfectIpps,
 			final List<QualifiedTracePredicates> imperfectIpps) {
 		final List<QualifiedTracePredicates> defaultIpps = new ArrayList<>();
-		final IPredicate pre = mFactory.getDefaultPredicateUnifier().getTruePredicate();
-		final IPredicate post = mFactory.getDefaultPredicateUnifier().getFalsePredicate();
+		final IPredicate pre = null;// mFactory.getDefaultPredicateUnifier().getTruePredicate();
+		final IPredicate post = null;// mFactory.getDefaultPredicateUnifier().getFalsePredicate();
 		final List<IPredicate> trueSequence = new ArrayList<>();
 		for (int i = 0; i < getCexLength(); i++) {
 			trueSequence.add(post);
@@ -62,6 +63,8 @@ public class CougarRefinementStrategy<L extends IIcfgTransition<?>> extends Basi
 
 	@Override
 	public String getName() {
-		return RefinementStrategy.COUGAR.toString();
+		return "COUGAR";
+		// TODO return RefinementStrategy.COUGAR.toString();
 	}
+
 }

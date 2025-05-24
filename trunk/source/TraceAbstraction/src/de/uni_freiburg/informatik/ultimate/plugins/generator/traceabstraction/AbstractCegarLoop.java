@@ -186,10 +186,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 *
 	 * @param services
 	 * @param name
-	 * @param initialAbstraction
-	 *            An automaton such that the recognised language is a superset of the language of the program. The
-	 *            initial abstraction in our implementations will usually be an automaton that has the same graph as the
-	 *            program.
+	 * @param initialAbstraction     An automaton such that the recognised language is a superset of the language of the
+	 *                               program. The initial abstraction in our implementations will usually be an
+	 *                               automaton that has the same graph as the program.
 	 * @param rootNode
 	 * @param csToolkit
 	 * @param predicateFactory
@@ -244,9 +243,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *
-	 *             TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and
-	 *             constructInterpolantAutomaton() after {@link TreeAutomizerCEGAR} does not depend on this class
-	 *             anymore.
+	 *                                            TODO Christian 2016-11-11: Merge the methods
+	 *                                            isCounterexampleFeasible() and constructInterpolantAutomaton() after
+	 *                                            {@link TreeAutomizerCEGAR} does not depend on this class anymore.
 	 */
 	protected abstract Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException;
@@ -370,8 +369,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			abortIfTimeout();
 			initialize();
 		} catch (AutomataOperationCanceledException | ToolchainCanceledException ex) {
-			final RunningTaskInfo runningTaskInfo =
-					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(),
+					"constructing initial abstraction");
 			ex.addRunningTaskInfo(runningTaskInfo);
 			throw ex;
 		} finally {
@@ -470,8 +469,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 							+ destroyedStorables.stream().collect(Collectors.joining(",")));
 				}
 			}
-			mLogger.info("CEGAR Iteration stats: " + ((CegarStatisticsType) mCegarLoopBenchmark.getBenchmarkType())
-					.prettyprintBenchmarkDataNoStopWatch(mCegarLoopBenchmark, true));
 		}
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
 
@@ -552,8 +549,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 		final Result actualResult;
 		if (programExecution != null) {
-			final UnprovabilityReason reasonUnknown =
-					new UnprovabilityReason("unable to decide satisfiability of path constraint");
+			final UnprovabilityReason reasonUnknown = new UnprovabilityReason(
+					"unable to decide satisfiability of path constraint");
 			actualResult = Result.UNKNOWN;
 			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
 		} else {
@@ -764,8 +761,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			return a.compareAuthority(b) ? a : b;
 		}
 
-		public static final Set<Result> USER_LIMIT_RESULTS =
-				EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
+		public static final Set<Result> USER_LIMIT_RESULTS = EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM,
+				USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
 
 		public boolean isLimit() {
 			return this == TIMEOUT || USER_LIMIT_RESULTS.contains(this);
@@ -812,7 +809,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
 			mErrorLocs.stream().filter(elem -> !mResults.containsKey(elem))
-			.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
+					.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
 			return this;
 		}
 
