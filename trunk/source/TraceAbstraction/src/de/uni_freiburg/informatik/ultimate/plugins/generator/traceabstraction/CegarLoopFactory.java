@@ -231,10 +231,11 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					proofProducer, services, Collections.emptyList(), rawFloydHoareAutomataFromFile, mTransitionClazz,
 					stateFactoryForRefinement);
 		case NONE:
+			if (mPrefs.isParallelCegarLoop()) {
+				return new ParallelCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+						proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
+			}
 			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
-					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
-		case PARALLEL:
-			return new ParallelCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 					proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 		default:
 			throw new AssertionError("Unknown Setting: " + mPrefs.getFloydHoareAutomataReuse());
@@ -242,8 +243,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 	}
 
 	private void requireNoReuse(final String analysis) {
-		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
-				&& mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL) {
+		if (mPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 			throw new UnsupportedOperationException("Floyd/Hoare automaton reuse not supported for " + analysis);
 		}
 	}

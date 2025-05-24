@@ -201,9 +201,7 @@ extends AbstractCegarLoop<L, A> {
 			interpolation = InterpolationTechnique.ForwardPredicates;
 		}
 		mInterpolationTechnique = interpolation;
-		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
-				&& taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL;
-
+		mStoreFloydHoareAutomata = taPrefs.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mPredicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
 				mPredicateFactory, computeProof);
@@ -423,7 +421,7 @@ extends AbstractCegarLoop<L, A> {
 		}
 
 		assert accepts(getServices(), mInterpolAutomaton, mCounterexample.getWord(), false)
-				: "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
+		: "Interpolant automaton broken!: " + mCounterexample.getWord() + " not accepted";
 
 		// FIXME (Dominik 2020-12-19): The assertion below is problematic, because it has side-effects!
 		// In particular, NwaFloydHoareValidityCheck calls IncrementalHoareTripleChecker, which in the method

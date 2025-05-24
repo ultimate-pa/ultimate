@@ -98,7 +98,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	 */
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, operand, IHeuristic.getZeroHeuristic());
 	}
 
@@ -127,7 +127,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
-			throws AutomataOperationCanceledException {
+					throws AutomataOperationCanceledException {
 		this(services, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand, startStates,
 				funIsForbiddenState, funIsGoalState, heuristic);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
@@ -300,7 +300,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		mLogger.debug(String.format("Found summaries for %d calls", summaries.size()));
 		mLogger.debug(String.format("Summary size histogram: [%s]",
 				summaries.entrySet().stream().map(a -> a.getValue().size()).sorted((a, b) -> -Integer.compare(a, b))
-						.map(String::valueOf).collect(Collectors.joining(","))));
+				.map(String::valueOf).collect(Collectors.joining(","))));
 	}
 
 	private List<Item> addCostAndSummaries(final List<Item> succs,
@@ -1082,7 +1082,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			return String.format("%8s: {%s} T%s {%s} (g=%f, h=%s, f=%s, s=%d)", mItemType, hier,
 					mLetter == null ? 0 : toStr.apply(mLetter), toStr.apply(mTargetState), mCostSoFar, ecttfh, ectt,
-					mHierPreStates.size());
+							mHierPreStates.size());
 		}
 
 		@Override
@@ -1145,6 +1145,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			case RANDOM_HALF -> IHeuristic.getRandomHeuristicHalf(seed);
 			case SMT_FEATURE_COMPARISON -> IHeuristic.getSmtFeatureHeuristic(scoringMethod);
 			case ZERO -> IHeuristic.getZeroHeuristic();
+			default -> throw new IllegalArgumentException("Unexpected value: " + astarHeuristic);
 			};
 		}
 
@@ -1200,7 +1201,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		}
 
 		static <STATE, LETTER> SmtFeatureHeuristic<STATE, LETTER>
-				getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
+		getSmtFeatureHeuristic(final ScoringMethod scoringMethod) {
 			return new SmtFeatureHeuristic<>(scoringMethod);
 		}
 	}

@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.d
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskFileIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
@@ -221,8 +220,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		// TODO: TaskIdentifier should probably be provided by caller
 		mTaskIdentifier = new SubtaskFileIdentifier(null, mIcfg.getIdentifier() + "_" + name);
 		mResultBuilder = new CegarLoopResultBuilder();
-		// Test-Generation Settings
-		mTestGeneration = mPref.getTestGeneration();
 	}
 
 	/**
@@ -528,30 +525,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	private AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
-
-			if (!mTestGeneration.equals(TestGenerationMode.None)) {
-				final List<?> sequence = mCounterexample.getStateSequence();
-				for (final Object element : sequence) {
-					if (element instanceof ISLPredicate) {
-						final ISLPredicate stmt = (ISLPredicate) element;
-						if (stmt.getProgramPoint().getPayload().getAnnotations()
-								.containsKey(TestGoalAnnotation.class.getName())) {
-							for (final IcfgLocation node : stmt.getProgramPoint().getOutgoingNodes()) {
-								if ((element instanceof ISLPredicate) && node.getPayload().getAnnotations()
-										.containsKey(TestGoalAnnotation.class.getName())) {
-									mResultBuilder.addResult(node, Result.TEST_GENERATION, programExecution, null,
-											null);
-								}
-							}
-
-						}
-
-					}
-				}
-			} else {
-				mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
-			}
-
+			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
 			if (mPref.stopAfterFirstViolation()) {
 				mResultBuilder.addResultForAllRemaining(Result.UNKNOWN);
 			}
@@ -816,7 +790,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
 			mErrorLocs.stream().filter(elem -> !mResults.containsKey(elem))
-					.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
+			.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
 			return this;
 		}
 
@@ -893,8 +867,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final IStatisticsDataProvider cegarLoopBenchmarkGenerator = getCegarLoopBenchmark();
 
 			final List<Pair<AbstractInterpolantAutomaton<L>, IPredicateUnifier>> floydHoareAutomata;
-			if (mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE
-					&& mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.PARALLEL) {
+			if (mPref.getFloydHoareAutomataReuse() != FloydHoareAutomataReuse.NONE) {
 				floydHoareAutomata = new ArrayList<>(getFloydHoareAutomata());
 			} else {
 				floydHoareAutomata = null;

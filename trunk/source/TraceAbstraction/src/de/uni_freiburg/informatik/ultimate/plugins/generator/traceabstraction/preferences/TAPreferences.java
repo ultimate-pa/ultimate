@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.OrderOfErrorLocations;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil.Reflected;
 
 public final class TAPreferences {
@@ -98,6 +97,7 @@ public final class TAPreferences {
 	private final IndependenceSettings mLbeIndependenceSettings;
 
 	private final int mThreadLimit;
+	private final boolean mParallelCegarLoop;
 	public boolean useGoalSetForIsEmpty;
 	public boolean parallelSearchSrategy;
 	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel;
@@ -206,6 +206,7 @@ public final class TAPreferences {
 				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
 
+		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
 		useGoalSetForIsEmpty = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_GOALSET);
 		parallelSearchSrategy = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH);
@@ -581,12 +582,13 @@ public final class TAPreferences {
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
 	}
-	public TestGenerationMode getTestGeneration() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_TEST_GEN_MODE, TestGenerationMode.class);
-	}
 
 	public int getThreadLimit() {
 		return mThreadLimit;
+	}
+
+	public boolean isParallelCegarLoop() {
+		return mParallelCegarLoop;
 	}
 
 }

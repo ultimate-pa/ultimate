@@ -20,8 +20,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.VarAssignmentReuseAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -34,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.Hoa
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
@@ -259,28 +256,28 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
 				mMainThread.getAbstraction(), mIteration);
 		mInterpolAutomaton = null;
-		for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
-			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
-					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-
-				final VarAssignmentReuseAnnotation pLocAnnoVA = (VarAssignmentReuseAnnotation) testGoalISL
-						.getProgramPoint().getPayload().getAnnotations()
-						.get(VarAssignmentReuseAnnotation.class.getName());
-				// If it contains a VA it should contain a TG
-				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.containsKey(TestGoalAnnotation.class.getName());
-				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
-						.getAnnotations().get(TestGoalAnnotation.class.getName());
-
-				// TODO
-				// if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
-				// mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
-				// mAbstraction.internalPredecessors(testGoal));
-				// }
-
-			}
-		}
+//		for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
+//			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+//			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+//					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+//
+//				final VarAssignmentReuseAnnotation pLocAnnoVA = (VarAssignmentReuseAnnotation) testGoalISL
+//						.getProgramPoint().getPayload().getAnnotations()
+//						.get(VarAssignmentReuseAnnotation.class.getName());
+//				// If it contains a VA it should contain a TG
+//				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
+//						.containsKey(TestGoalAnnotation.class.getName());
+//				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
+//						.getAnnotations().get(TestGoalAnnotation.class.getName());
+//
+//				// TODO
+//				// if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
+//				// mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
+//				// mAbstraction.internalPredecessors(testGoal));
+//				// }
+//
+//			}
+//		}
 
 		// TODO reactivate
 		// final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =

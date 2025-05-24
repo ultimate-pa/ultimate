@@ -34,8 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
@@ -177,16 +175,16 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			final IcfgLocation currentErrorLoc, final int module) {
 		// mCsToolkit needs to give new mgdScript for each thread
 
-		final CfgSmtToolkit freshToolKit =
-				mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices, getSolverSettings(iterationServices,
+		final CfgSmtToolkit freshToolKit = mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices,
+				getSolverSettings(iterationServices,
 						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"));
 		// Set the Main Script
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 				.setMainScript(mCsToolkit.getManagedScript());
 
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
-		final Map<TermVariable, IProgramVar> varMap =
-				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
+		final Map<TermVariable, IProgramVar> varMap = ((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable())
+				.getSmtVar2ProgramVarMap();
 
 		for (final TermVariable tv : varMap.keySet()) {
 			((HistoryRecordingScript) freshToolKit.getManagedScript().getScript()).addTermVariableToMap(
@@ -196,13 +194,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 
 		// Create predicateFactory with worker script
-		final WorkerPredicateFactory predicateFactory =
-				new WorkerPredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
+		final WorkerPredicateFactory predicateFactory = new WorkerPredicateFactory(mServices,
+				freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
 
 		// Create PredicateFactoryForInterpolantAutomata with worker script
-		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
-						mComputeHoareAnnotation);
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
+				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation);
 
 		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
 		if (mComputeHoareAnnotation) {
@@ -218,9 +215,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
 
 		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
-		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
-						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+				getServices(), mPref, mInterpolationTechnique, mSimplificationTechnique, freshToolKit, predicateFactory,
+				mIcfg);
 
 		cacheCopy.copyCache(mProgramCache);
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
@@ -449,8 +446,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		for (int module = 0; module < 2; module++) {
 			if (pathProgramStrategy.isActiveModule(module)) {
 				// strategies
-				final CegarWorkerThread<L, A> worker =
-						setUpWorker(iterationServices, currentErrorLoc, pathProgramStrategy.getRunningThreadsOfPP());
+				final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc,
+						pathProgramStrategy.getRunningThreadsOfPP());
 				mWorkerResultQueue.add(executor.submit(worker));
 
 			}
@@ -520,12 +517,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		hoareAnnotationLocs = Collections.emptySet();
 		// }
 
-		final PredicateFactoryRefinement stateFactoryForRefinement =
-				new PredicateFactoryRefinement(getServices(), threadResult.getWorkerMgdScript(),
-						threadResult.getPredicateFactory(), mComputeHoareAnnotation, hoareAnnotationLocs);
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(getServices(),
+				threadResult.getWorkerMgdScript(), threadResult.getPredicateFactory(), mComputeHoareAnnotation,
+				hoareAnnotationLocs);
 		mLogger.info("Difference in Main");
-		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
+		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(mAbstraction, threadResult,
+				stateFactoryForRefinement);
 
 		mAbstraction = diff.getResult();
 
@@ -579,12 +576,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		assert mActiveErrorLocs.contains(currentGoal);
 		// mark test goal as busy/occupied
 		final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
-		final IAnnotations pLocAnno =
-				testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
+//		final IAnnotations pLocAnno =
+//				testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
 		final List<L> trace = mCounterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		// use traceHash as identifier so we can calculate the identifier later
-		mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
+//		mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
 		// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
 	}
 
@@ -657,14 +654,14 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mActiveErrorLocs.clear();
 			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-						.get(TestGoalAnnotation.class.getName());
-				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-					continue;
-				}
-				if (pLocAnno instanceof TestGoalAnnotation) {
-					mActiveErrorLocs.add(testGoal);
-				}
+//				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+//						.get(TestGoalAnnotation.class.getName());
+//				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
+//					continue;
+//				}
+//				if (pLocAnno instanceof TestGoalAnnotation) {
+//					mActiveErrorLocs.add(testGoal);
+//				}
 			}
 			if (mActiveErrorLocs.isEmpty()) {
 				return null;
@@ -773,8 +770,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final SolverMode solverMode = prefs.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 
-		final boolean fakeNonIncrementalScript =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+		final boolean fakeNonIncrementalScript = prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		final boolean dumpSmtScriptToFile = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 		final boolean compressSmtScript = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
@@ -782,24 +779,24 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
-		final boolean dumpUnsatCoreTrackBenchmark =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
+		final boolean dumpUnsatCoreTrackBenchmark = prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
-		final boolean dumpMainTrackBenchmark =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
+		final boolean dumpMainTrackBenchmark = prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
-		final Map<String, String> additionalSmtOptions =
-				prefs.getKeyValueMap(RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
+		final Map<String, String> additionalSmtOptions = prefs
+				.getKeyValueMap(RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 
-		final Logics logicForExternalSolver =
-				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
-						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
-						.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
-						.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
-						.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver)
-						.setSolverMode(solverMode).setAdditionalOptions(additionalSmtOptions);
+		final Logics logicForExternalSolver = Logics
+				.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
+				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
+				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
+				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode)
+				.setAdditionalOptions(additionalSmtOptions);
 
 		return solverSettings;
 	}
@@ -837,20 +834,18 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	 * Automata theoretic minimization of the automaton stored in mAbstraction. Expects that mAbstraction does not have
 	 * dead ends.
 	 *
-	 * @param predicateFactoryRefinement
-	 *            PredicateFactory for the construction of the new (minimized) abstraction.
-	 * @param resultCheckPredFac
-	 *            PredicateFactory used for auxiliary automata used for checking correctness of the result (if
-	 *            assertions are enabled).
+	 * @param predicateFactoryRefinement PredicateFactory for the construction of the new (minimized) abstraction.
+	 * @param resultCheckPredFac         PredicateFactory used for auxiliary automata used for checking correctness of
+	 *                                   the result (if assertions are enabled).
 	 */
 	@Override
 	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
-		final Function<IPredicate, Set<IcfgLocation>> lcsProvider =
-				x -> (x instanceof ISLPredicate ? Collections.singleton(((ISLPredicate) x).getProgramPoint())
-						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
+		final Function<IPredicate, Set<IcfgLocation>> lcsProvider = x -> (x instanceof ISLPredicate
+				? Collections.singleton(((ISLPredicate) x).getProgramPoint())
+				: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
 			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, mComputeHoareAnnotation,

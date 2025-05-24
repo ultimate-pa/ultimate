@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
@@ -186,14 +185,14 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			mLogger.info("Constructing %s automaton for trace of length %s", type, trace.length());
 		}
 
-		// mErrorAutomatonStatisticsGenerator.reportTrace(trace);
-		// mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
+		mErrorAutomatonStatisticsGenerator.reportTrace(trace);
+		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
 
 		try {
 			switch (type) {
 			case SIMPLE_ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new SimpleErrorAutomatonBuilder<>(mServices, predicateFactory,
-						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, counterexample);
+						predicateUnifier, csToolkit, stateFactoryForAutomaton, abstraction, trace);
 				break;
 			case ERROR_AUTOMATON:
 				mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(mServices, predicateFactory, predicateUnifier,
@@ -206,7 +205,6 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			default:
 				throw new IllegalArgumentException("Unknown automaton type: " + type);
 			}
-
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
@@ -215,7 +213,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
 			throw new ToolchainCanceledException(tce, rti);
 		}
-		// mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
+		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 		mErrorTraces.addPrecondition(mErrorAutomatonBuilder.getErrorPrecondition());
 	}
 
@@ -223,7 +221,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 	 * Starts difference time measurement.
 	 */
 	public void startDifference() {
-		// mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
+		mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
 	}
 
 	/**
@@ -242,7 +240,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking, final IRun<L, ?> errorTrace,
 			final boolean prematureTermination) throws AutomataLibraryException {
-		// mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
+		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 		if (!prematureTermination) {
 			if (LOG_EXTENDED_SIZE_INFO) {
 				mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(mServices, mLogger,
@@ -251,7 +249,7 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 			}
 			mErrorTraces.addEnhancementType(mErrorAutomatonStatisticsGenerator.getEnhancement());
 		}
-		// mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 	}
 
 	/**
@@ -449,13 +447,5 @@ public class ErrorGeneralizationEngine<L extends IIcfgTransition<?>> implements 
 
 			mLogger.warn(builder);
 		}
-	}
-
-	public void addCoveredTestGoalToErrorAutomaton(final IPredicate testGoal,
-			final Iterable<IncomingInternalTransition<L, IPredicate>> incomingedge) {
-		assert mErrorAutomatonBuilder instanceof SimpleErrorAutomatonBuilder;
-		((SimpleErrorAutomatonBuilder) mErrorAutomatonBuilder).addCoveredTestGoalToErrorAutomaton(testGoal,
-				incomingedge);
-
 	}
 }

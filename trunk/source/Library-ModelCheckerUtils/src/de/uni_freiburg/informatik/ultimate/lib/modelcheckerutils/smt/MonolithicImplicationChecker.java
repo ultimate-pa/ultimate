@@ -67,9 +67,9 @@ public class MonolithicImplicationChecker {
 	/**
 	 * Check if implication antecedent ==> succedent is valid.
 	 */
-	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormula,
-			final boolean affirmAntecedentNeitherValidNorUnsat, final Term succedent, final Term succedentClosedFormula,
-			final boolean affirmSuccedentNeitherValidNorUnsat) {
+	public Validity checkImplication(final Term antecedent, final Term antecedentClosedFormulaMain,
+			final boolean affirmAntecedentNeitherValidNorUnsat, final Term succedent,
+			final Term succedentClosedFormulaMain, final boolean affirmSuccedentNeitherValidNorUnsat) {
 		if (affirmAntecedentNeitherValidNorUnsat && affirmSuccedentNeitherValidNorUnsat) {
 			final Validity dataflowAnalysisResult = dataflowBasedImplicationCheck(antecedent, succedent);
 			if (dataflowAnalysisResult == Validity.INVALID) {

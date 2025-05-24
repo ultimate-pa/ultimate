@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithFiniteTrace;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
@@ -104,8 +106,7 @@ public class WitnessPrinter implements IOutput {
 	@Override
 	public List<IObserver> getObservers() {
 		if (mMatchingModel) {
-			// we should create this class somewere in cacsl s.t. we get the
-			// correct parameters -- perhaps translation
+			// we should create this class somewere in cacsl s.t. we get the correct parameters -- perhaps translation
 			// service
 			mRCFGCatcher = new RCFGCatcher();
 			return Collections.singletonList(mRCFGCatcher);
@@ -127,48 +128,32 @@ public class WitnessPrinter implements IOutput {
 	@Override
 	public void finish() {
 		// determine if there are true or false witnesses
-		//		final List<IResult> results = mServices.getResultService().getResults().entrySet().stream()
-		//				.flatMap(a -> a.getValue().stream()).collect(Collectors.toList());
-		//		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		//		final boolean createGraphML = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_GRAPHML_WITNESS);
-		//		final boolean createYaml = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_YAML_WITNESS);
-		//
-		//		final List<ResultWitness> witnesses;
-		//		final boolean TestCompMetaFileTODO = false;
-		//		if (TestCompMetaFileTODO) { // TODO
-		//			assert false; //TODO do new after merge
-		//		}
-		//		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)
-		//				|| results.stream().anyMatch(a -> a instanceof DataRaceFoundResult<?, ?, ?>)) {
-		//			mLogger.info("Generating witness for reachability counterexample");
-		//			witnesses = generateReachabilityCounterexampleWitness(results, createGraphML, createYaml);
-		//		} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
-		//			mLogger.info("Generating witness for non-termination counterexample", createGraphML, createYaml);
-		//			witnesses = generateNonTerminationWitness(results, createGraphML, createYaml);
-		//		} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
-		//			mLogger.info("Generating witness for correct program");
-		//			witnesses = generateProofWitness(results, createGraphML, createYaml);
-		//		} else {
-		//			mLogger.info("No result that supports witness generation found");
-		//			witnesses = List.of();
-		//		}
-		//		try {
-		//			new WitnessManager(mLogger, mServices).run(witnesses);
-		//		} catch (IOException | InterruptedException e) {
-		//			throw new RuntimeException(e);
-		//		}
-	}
+		final List<IResult> results = mServices.getResultService().getResults().entrySet().stream()
+				.flatMap(a -> a.getValue().stream()).collect(Collectors.toList());
+		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final boolean createGraphML = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_GRAPHML_WITNESS);
+		final boolean createYaml = ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_YAML_WITNESS);
 
-	// creates a MetaFile with the descriptions necessary for the TestComp
-	private void generateMetaFile(final WitnessManager cexVerifier, final List<IResult> results) throws Exception {
-		final IBacktranslationService backtrans = mServices.getBacktranslationService();
-		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
-		final String filename = ILocation.getAnnotation(root).getFileName();
-		final BacktranslatedCFG<?, IcfgEdge> origCfg =
-				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
-
-		new TestCompMetaFilePrinter<>(backtrans.translateCFG(origCfg), mLogger, mServices).printMetaFile();
-
+		final List<ResultWitness> witnesses;
+		if (results.stream().anyMatch(a -> a instanceof CounterExampleResult<?, ?, ?>)
+				|| results.stream().anyMatch(a -> a instanceof DataRaceFoundResult<?, ?, ?>)) {
+			mLogger.info("Generating witness for reachability counterexample");
+			witnesses = generateReachabilityCounterexampleWitness(results, createGraphML, createYaml);
+		} else if (results.stream().anyMatch(a -> a instanceof LassoShapedNonTerminationArgument<?, ?>)) {
+			mLogger.info("Generating witness for non-termination counterexample", createGraphML, createYaml);
+			witnesses = generateNonTerminationWitness(results, createGraphML, createYaml);
+		} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
+			mLogger.info("Generating witness for correct program");
+			witnesses = generateProofWitness(results, createGraphML, createYaml);
+		} else {
+			mLogger.info("No result that supports witness generation found");
+			witnesses = List.of();
+		}
+		try {
+			new WitnessManager(mLogger, mServices).run(witnesses);
+		} catch (IOException | InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private List<ResultWitness> generateProofWitness(final List<IResult> results, final boolean createGraphML,
@@ -200,10 +185,10 @@ public class WitnessPrinter implements IOutput {
 		final List<ResultWitness> suppliers = new ArrayList<>();
 		final Collection<IResultWithFiniteTrace> cexResults =
 				ResultUtil
-				.filterResults(results,
-						r -> r instanceof CounterExampleResult<?, ?, ?>
-						|| r instanceof DataRaceFoundResult<?, ?, ?>)
-				.stream().map(IResultWithFiniteTrace.class::cast).collect(Collectors.toList());
+						.filterResults(results,
+								r -> r instanceof CounterExampleResult<?, ?, ?>
+										|| r instanceof DataRaceFoundResult<?, ?, ?>)
+						.stream().map(IResultWithFiniteTrace.class::cast).collect(Collectors.toList());
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();

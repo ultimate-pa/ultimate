@@ -130,8 +130,8 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		mInterpolants = null;
 		mStatisticsGenerator = new AcceleratedTraceCheckStatisticsGenerator();
 
-		final TreeMap<Integer, AcceleratedSegment> acceleratedSegments =
-				constructAcceleratedSegments(mServices, mLogger, script, counterexample);
+		final TreeMap<Integer, AcceleratedSegment> acceleratedSegments = constructAcceleratedSegments(mServices,
+				mLogger, script, counterexample);
 		if (acceleratedSegments.isEmpty()) {
 			final TraceCheckSpWp<L> tc = checkTrace(mPrecondition, mPostcondition, counterexample);
 			mIsTraceCorrect = tc.isCorrect();
@@ -163,8 +163,8 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			switch (tc.isCorrect()) {
 			case SAT:
 				final IcfgProgramExecution<L> pe = tc.getRcfgProgramExecution();
-				mFeasibleProgramExecution =
-						constructProgramExecution(counterexample.getWord(), acceleratedSegments, pe);
+				mFeasibleProgramExecution = constructProgramExecution(counterexample.getWord(), acceleratedSegments,
+						pe);
 				break;
 			case UNKNOWN:
 				mReasonUnknown = tc.getTraceCheckReasonUnknown();
@@ -197,20 +197,20 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 			assert entry.getKey() == entry.getValue().getStartPosition();
 			// Interpolants since last loop, including the last loop's postcondition and the
 			// next loop's precondition
-			final List<IPredicate> intermediateInterpolants =
-					interpolantsForAcceleratedTrace.subList(result.size() - offset, aseg.getStartPosition() - offset);
+			final List<IPredicate> intermediateInterpolants = interpolantsForAcceleratedTrace
+					.subList(result.size() - offset, aseg.getStartPosition() - offset);
 			result.addAll(intermediateInterpolants);
 			assert result.size() == aseg.getStartPosition();
 			final IPredicate precondition = interpolantsForAcceleratedTrace.get(aseg.getStartPosition() - offset - 1);
 			final IPredicate postcondition = interpolantsForAcceleratedTrace.get(aseg.getStartPosition() - offset);
 			// Run for the trace from the first letter (inclusive) to the last letter
 			// (inclusive) of the loop body
-			final NestedWord<L> subWord =
-					counterexample.getWord().getSubWord(aseg.getStartPosition(), aseg.getEndPosition() + 1);
+			final NestedWord<L> subWord = counterexample.getWord().getSubWord(aseg.getStartPosition(),
+					aseg.getEndPosition() + 1);
 			final List<Object> subCCS = counterexample.getControlConfigurations().subList(aseg.getStartPosition(),
 					aseg.getEndPosition() + 2);
-			final TraceCheckSpWp<L> inter =
-					checkTrace(precondition, postcondition, new Counterexample<>(subWord, subCCS));
+			final TraceCheckSpWp<L> inter = checkTrace(precondition, postcondition,
+					new Counterexample<>(subWord, subCCS));
 			if (inter.isCorrect() != LBool.UNSAT) {
 				throw new UnsupportedOperationException("Body trace check " + inter.isCorrect());
 			}
@@ -232,11 +232,6 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 
 	private TraceCheckSpWp<L> checkTrace(final IPredicate precondition, final IPredicate postcondition,
 			final Counterexample<L> counterexample) {
-		final TraceCheckSpWp<L> tc = new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<>(), counterexample,
-				mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
-				mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
-				mPredicateUnifier, InterpolationTechnique.ForwardPredicates, constructManagedScript(),
-				SimplificationTechnique.SIMPLIFY_DDA, mPrefs.collectInterpolantStatistics());
 		final TraceCheckSpWp<L> tc = new TraceCheckSpWp<>(precondition, postcondition, new TreeMap<>(), counterexample,
 				mPrefs.getCfgSmtToolkit(), mPrefs.getAssertCodeBlockOrder(), mPrefs.getUnsatCores(),
 				mPrefs.getUseLiveVariables(), mServices, mPrefs.computeCounterexample(), mPredicateFactory,
@@ -329,8 +324,8 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	private TreeMap<Integer, AcceleratedSegment> constructAcceleratedSegments(final IUltimateServiceProvider services,
 			final ILogger logger, final ManagedScript mgdScript, final Counterexample<L> counterexample) {
 		final TreeMap<Integer, AcceleratedSegment> result = new TreeMap<>();
-		final HashTreeRelation<Object, Integer> similarProgramPoints =
-				findSimilarProgramPoints(counterexample.getControlConfigurations());
+		final HashTreeRelation<Object, Integer> similarProgramPoints = findSimilarProgramPoints(
+				counterexample.getControlConfigurations());
 		final TreeRelation<Integer, Integer> loopPositions = computeMaximalCrossFreeLoopPositions(similarProgramPoints);
 
 		for (int i = 0; i < counterexample.length() + 1; i++) {
@@ -342,7 +337,7 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 				mLogger.info(
 						String.format("Found repeated program point %s. Trying to accelerate segment from %s to %s",
 								counterexample.getControlConfigurations().get(i), i, nextPosition));
-				final UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
+				UnmodifiableTransFormula transitiveClosure = accelerate(services, logger, mgdScript, subWord);
 				mStatisticsGenerator.reportAccelerationAttempt();
 				if (transitiveClosure != null) {
 					transitiveClosure = TransFormulaUtils.transferTransformula(mgdScript, transitiveClosure);
@@ -367,8 +362,8 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 	 * Compute a subset of the loop position relation. In this subset no pair should cross (if you consider the elements
 	 * a edges of a graph).
 	 */
-	private static TreeRelation<Integer, Integer>
-			computeMaximalCrossFreeLoopPositions(final HashTreeRelation<Object, Integer> similarProgramPoints) {
+	private static TreeRelation<Integer, Integer> computeMaximalCrossFreeLoopPositions(
+			final HashTreeRelation<Object, Integer> similarProgramPoints) {
 		final TreeRelation<Integer, Integer> similarPosRel = new TreeRelation<>();
 		for (final Entry<Object, TreeSet<Integer>> entry : similarProgramPoints.entrySet()) {
 			final TreeSet<Integer> positionsOfLoc = entry.getValue();
@@ -417,16 +412,16 @@ public class AcceleratedTraceCheck<L extends IIcfgTransition<?>> implements IInt
 		if (!subWord.hasEmptyNestingRelation()) {
 			return null;
 		}
-		final List<UnmodifiableTransFormula> transformulasMain =
-				subWord.asList().stream().map(L::getTransformula).collect(Collectors.toList());
+		final List<UnmodifiableTransFormula> transformulasMain = subWord.asList().stream().map(L::getTransformula)
+				.collect(Collectors.toList());
 
 		final List<UnmodifiableTransFormula> transformulas = new ArrayList<>();
 		transformulasMain.forEach((tf) -> transformulas.add(TransFormulaUtils.transferTransformula(mgdScript, tf)));
 
 		final UnmodifiableTransFormula sequentialComposition = TransFormulaUtils.sequentialComposition(logger, services,
 				mgdScript, true, true, false, SimplificationTechnique.SIMPLIFY_DDA2, transformulas);
-		final JordanLoopAccelerationResult jla =
-				JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript, sequentialComposition, true);
+		final JordanLoopAccelerationResult jla = JordanLoopAcceleration.accelerateLoop(mServices, mMgdScript,
+				sequentialComposition, true);
 		final JordanLoopAccelerationStatisticsGenerator stat = jla.getJordanLoopAccelerationStatistics();
 		final StatisticsData stats = new StatisticsData();
 		stats.aggregateBenchmarkData(stat);
