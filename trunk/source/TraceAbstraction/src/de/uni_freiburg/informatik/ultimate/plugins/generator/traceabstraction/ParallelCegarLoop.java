@@ -209,7 +209,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation, hoareAnnotationLocs);
 
-		// copy everything TODO: copy service, all globals at the end of this method
+		// We dont need to copy service and Logger
 		// final TAPreferences tap = new TAPreferences(mServices);
 		// final ILogger dummyLogger = ILogger.getDummyLogger();
 		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
@@ -226,12 +226,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
 		final var counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
 
-		// TODO deal with parallel
-
 		final HashSet<L> pathProgramRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
 
 		final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
-		// TODO only increase cache if module == 0, need new constuct strategy
+
 		final ITARefinementStrategy<L> strategy;
 		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
 			// setup the strategy from getRefinementStrategy() such that the factory has the modules
@@ -240,12 +238,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 					mPref.getRefinementStrategy(), mProgramCache, parallelStrategy);
 		} else {
+			// setup up a default strategy for example CAMEL
 			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 					mPref.getRefinementStrategy(), mProgramCache);
 		}
-		// create a new strategy that has only one module, the one we want to use for this worker
 
 		// start worker
 		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
@@ -673,18 +671,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		/*
 		 * Optimization that ensures we find a trace to a not yet targeted test goal / error loc
 		 */
+		// TODO readd Test-Case generation
 		if (useGoalSetForIsEmpty) {
 			mActiveErrorLocs.clear();
 			for (final IPredicate testGoal : mAbstraction.getFinalStates()) {
 				final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-//				final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
-//						.get(TestGoalAnnotation.class.getName());
-//				if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
-//					continue;
-//				}
-//				if (pLocAnno instanceof TestGoalAnnotation) {
-//					mActiveErrorLocs.add(testGoal);
-//				}
+				// final IAnnotations pLocAnno = testGoalISL.getProgramPoint().getPayload().getAnnotations()
+				// .get(TestGoalAnnotation.class.getName());
+				// if (mInActiveErrorLocs.containsValue(((TestGoalAnnotation) pLocAnno).mId)) {
+				// continue;
+				// }
+				// if (pLocAnno instanceof TestGoalAnnotation) {
+				// mActiveErrorLocs.add(testGoal);
+				// }
 			}
 			if (mActiveErrorLocs.isEmpty()) {
 				return null;
