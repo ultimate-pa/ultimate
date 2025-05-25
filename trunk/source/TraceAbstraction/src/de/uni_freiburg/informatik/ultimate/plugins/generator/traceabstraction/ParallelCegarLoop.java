@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy.WorkerGeneralizationMode;
 
 public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
@@ -194,8 +195,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 
 		// Create predicateFactory with worker script
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices,
-				freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, freshToolKit.getManagedScript(),
+				freshToolKit.getSymbolTable());
 
 		// Create PredicateFactoryForInterpolantAutomata with worker script
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
@@ -228,28 +229,30 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final HashSet<L> pathProgramRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
 
-		final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
-
 		final ITARefinementStrategy<L> strategy;
 		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
+			final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
 			// setup the strategy from getRefinementStrategy() such that the factory has the modules
 			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
 					mPref.getRefinementStrategy(), mProgramCache, parallelStrategy);
-		} else {
-			// setup up a default strategy for example CAMEL
-			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getRefinementStrategy(), mProgramCache);
-		}
 
+			// start worker
+			return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
+					mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
+					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
+					currentErrorLoc, mRootNode, this, parallelStrategy.generalize());
+		}
+		// setup up a default strategy for example CAMEL
+		strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), predicateFactoryInterpolantAutomata,
+				getPreconditionProvider(), getPostconditionProvider(), mPref.getRefinementStrategy(), mProgramCache);
 		// start worker
 		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
-				currentErrorLoc, mRootNode, this, parallelStrategy.generalize());
+				currentErrorLoc, mRootNode, this, WorkerGeneralizationMode.YES);
 	}
 
 	/*
@@ -419,6 +422,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 	}
 
+	/*
+	 * When we reach this method, we will always start a new worker.
+	 */
 	private void startWorker() {
 		mLogger.info("Main: Starting Thread");
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
@@ -426,22 +432,21 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mServices = iterationServices;
 		final ExecutorService executor;
 		final HashSet<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
-
-		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
-			mLogger.info("Old PP SIZE " + mPpStrategyMap.size());
-			final ParallelRefinementStrategy<L> strategy = new ParallelRefinementStrategy<>(mLogger, ppRepresentative,
-					mThreadLimit);
-			strategy.setRunningThreadsOfPP(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
-			mPpStrategyMap.put(ppRepresentative, strategy);
-			updateExecutorSizes();
-		}
-		final ParallelRefinementStrategy<L> pathProgramStrategy = mPpStrategyMap.get(ppRepresentative);
-		executor = pathProgramStrategy.getExecutor();
-
-		assert (!executor.isTerminated());
-
-		// starts a @BasicRefinementStrategy with the modules provided by @ParallelRefinementStrategy
 		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
+			if (!mPpStrategyMap.containsKey(ppRepresentative)) {
+				final ParallelRefinementStrategy<L> strategy = new ParallelRefinementStrategy<>(mLogger,
+						ppRepresentative, mThreadLimit);
+				strategy.setRunningThreadsOfPP(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
+				mPpStrategyMap.put(ppRepresentative, strategy);
+				updateExecutorSizes();
+			}
+			final ParallelRefinementStrategy<L> pathProgramStrategy = mPpStrategyMap.get(ppRepresentative);
+			executor = pathProgramStrategy.getExecutor();
+
+			assert (!executor.isTerminated());
+
+			// starts a @BasicRefinementStrategy with the modules provided by @ParallelRefinementStrategy
+
 			// here we can determine how many threads / checks we want per counterexample
 			for (int module = 0; module < 1; module++) {
 				// strategies
@@ -572,16 +577,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				mostRunningThreads = strategy.getExecutor().getActiveCount();
 			}
 		}
+		int threadLimit = mThreadLimit;
 		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
 			if (mostRunningThreads == strategy.getExecutor().getActiveCount()) {
-
 				strategy.updateExecutorSizes(newSize + remainder);
 				// set remainder to 0 after its used
+				threadLimit = threadLimit - (newSize + remainder);
 				remainder = 0;
 			} else {
 				strategy.updateExecutorSizes(newSize);
+				threadLimit = threadLimit - newSize;
 			}
 		}
+		assert threadLimit <= 0; // ensure we use all available cores!
 		mLogger.info("newSize " + newSize);
 		mLogger.info("Old. " + mRunningThreads);
 		mRunningThreads = 0;
@@ -600,12 +608,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		assert mActiveErrorLocs.contains(currentGoal);
 		// mark test goal as busy/occupied
 		final ISLPredicate testGoalISL = (ISLPredicate) currentGoal;
-//		final IAnnotations pLocAnno =
-//				testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
+		// final IAnnotations pLocAnno =
+		// testGoalISL.getProgramPoint().getPayload().getAnnotations().get(TestGoalAnnotation.class.getName());
 		final List<L> trace = mCounterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		// use traceHash as identifier so we can calculate the identifier later
-//		mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
+		// mInActiveErrorLocs.put(traceHash, ((TestGoalAnnotation) pLocAnno).mId);
 		// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
 	}
 
