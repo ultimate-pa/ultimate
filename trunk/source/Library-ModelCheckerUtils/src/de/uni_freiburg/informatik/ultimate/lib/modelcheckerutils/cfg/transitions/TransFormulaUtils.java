@@ -194,8 +194,6 @@ public final class TransFormulaUtils {
 					newOutVar = mgdScript.constructFreshTermVariable(var.getGloballyUniqueId(),
 							((HistoryRecordingScript) script).transferSortToWorker(var.getTermVariable().getSort()));
 				}
-
-				// TODO Transfer outVar and newOutVar
 				newOutVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(newOutVar);
 				outVar = (TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(outVar);
 				assert outVar.getTheory().equals(script.getTheory());

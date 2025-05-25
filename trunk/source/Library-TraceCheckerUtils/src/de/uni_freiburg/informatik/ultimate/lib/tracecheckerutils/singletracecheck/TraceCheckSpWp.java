@@ -163,17 +163,17 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 			} catch (final ToolchainCanceledException ex) {
 				throw ex;
 			} catch (final Throwable ex) {
-				actualInterpolationComputationStatus =
-						new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH, ex);
+				actualInterpolationComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CRASH,
+						ex);
 			}
 			mInterpolantComputationStatus = actualInterpolationComputationStatus;
 		} else if (result == LBool.SAT) {
 			mInterpolantComputationStatus = new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
 		} else {
-			mInterpolantComputationStatus =
-					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
+			mInterpolantComputationStatus = new InterpolantComputationStatus(
+					ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
-		//		mTcSmtManager.getScript().exit();
+		// mTcSmtManager.getScript().exit();
 	}
 
 	@Override
@@ -194,7 +194,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	public boolean wasBackwardsPredicatesComputationRequested() {
 		return mConstructBackwardInterpolantSequence == ConstructBackwardSequence.YES
 				|| mConstructBackwardInterpolantSequence == ConstructBackwardSequence.IF_FP_WAS_NOT_PERFECT
-				&& !isForwardSequencePerfect();
+						&& !isForwardSequencePerfect();
 	}
 
 	public boolean wasBackwardSequenceConstructed() {
@@ -263,7 +263,7 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core! trace length " + mTrace.length()
-		+ " unsat-core size " + unsatCore.size();
+				+ " unsat-core size " + unsatCore.size();
 
 		final Set<IProgramVar>[] liveVariables;
 		if (USE_LIVE_VARIABLES_INSTEAD_OF_RELEVANT_VARIABLES) {
@@ -323,8 +323,8 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 				final IterativePredicateTransformer<L> spt = new IterativePredicateTransformer<>(mPredicateFactory,
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mBoogie2SmtSymbolTable);
-				mInterpolantsBp =
-						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
+				mInterpolantsBp = spt
+						.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
 						.getPredicates();
 
 				assert TraceCheckUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
@@ -381,15 +381,15 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 	/**
 	 * Construct representation of the trace formula that contains only the conjuncts that occur in the unsat core.
 	 */
-	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate>
-	constructRelevantTransFormulas(final Set<Term> unsatCore) {
+	private NestedFormulas<L, UnmodifiableTransFormula, IPredicate> constructRelevantTransFormulas(
+			final Set<Term> unsatCore) {
 		final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rtf;
 		return switch (mUnsatCores) {
 		case IGNORE -> new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(), mPrecondition, mPostcondition,
 				mPendingContexts, mCsToolkit.getOldVarsAssignmentCache(), false);
 		case CONJUNCT_LEVEL ->
-				new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
-						mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
+			new RelevantTransFormulas<>(mNestedFormulas, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
+					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		case STATEMENT_LEVEL -> {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
@@ -501,8 +501,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 		public LiveVariablesPostprocessorForward(final Set<IProgramVar>[] relevantVars) {
 			mRelevantVars = relevantVars;
 		}
-
-
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {

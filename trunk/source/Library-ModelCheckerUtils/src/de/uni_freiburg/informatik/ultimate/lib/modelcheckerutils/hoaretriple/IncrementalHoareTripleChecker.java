@@ -568,19 +568,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker {
 	public static Term constructPostcondFormula(final IPredicate p, final IInternalAction action,
 			final ModifiableGlobalsTable mgt, final ManagedScript mgdScript, final Object lock) {
 		final Set<IProgramVar> assignedVars = action.getTransformula().getAssignedVars();
-
 		final Term predicateFormula = p.getFormula();
-		/*
-		 * Warning, WorkerPredicateFactory without term transferrer produces worker predicates
-		 * Thus after synchro we need them to be moved to main script
-		 *
-		 * Maybe we can change IPredicate to deal with these cases
-		 */
-		if (((HistoryRecordingScript) mgdScript.getScript()).mAfterSynchronisation) {
-			assert p.getFormula().getTheory()
-					.equals(((HistoryRecordingScript) mgdScript.getScript()).getMainScript().getScript().getTheory());
-		}
-
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, predicateFormula, mgdScript, lock);
 		final String succProc = action.getSucceedingProcedure();
 		final Set<IProgramNonOldVar> modifiableGlobals = mgt.getModifiedBoogieVars(succProc);

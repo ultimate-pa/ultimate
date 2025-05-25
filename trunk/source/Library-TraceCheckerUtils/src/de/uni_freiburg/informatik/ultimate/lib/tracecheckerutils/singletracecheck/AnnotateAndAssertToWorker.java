@@ -5,18 +5,17 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheck.TraceCheckLock;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAssertConjunctsOfCodeBlocks<L> {
 
-	final TermTransferrer mTf;
+	HistoryRecordingScript mHScript;
 
 	/*
 	 * Does the same as AnnotateAndAssertConjunctsOfCodeBlocks
-	 * But, everything we get from the nestedSSA will go through termtransferrrer
+	 * But, everything we get from the nestedSSA will go through the TermTransferrer,
 	 * who transfers from main to worker script
 	 */
 	public AnnotateAndAssertToWorker(final ManagedScript mgdScriptTc, final TraceCheckLock scriptLockOwner,
@@ -26,15 +25,14 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 		super(mgdScriptTc, scriptLockOwner, nestedSSA, nestedFormulas, logger, mgdScriptCfg);
 		// This class should only be called from a worker
 		assert ((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null;
-		mTf = new TermTransferrer(((HistoryRecordingScript) mMgdScript.getScript()).getMainScript().getScript(),
-				mMgdScript.getScript());
+		mHScript = ((HistoryRecordingScript) mMgdScript.getScript());
 	}
 
 	@Override
 	protected Term annotateAndAssertPrecondition() {
 		final String name = super.precondAnnotation();
 		final Term original = mNestedFormulas.getPrecondition().getFormula();
-		final Term indexed = mTf.transform(mSSA.getPrecondition());
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getPrecondition());
 		return super.annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -42,7 +40,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 	protected Term annotateAndAssertPostcondition() {
 		final String name = super.postcondAnnotation();
 		final Term original = mNestedFormulas.getPostcondition().getFormula();
-		final Term indexed = mScript.term("not", mTf.transform(mSSA.getPostcondition()));
+		final Term indexed = mHScript.term("not", mHScript.transferTermToWorker(mSSA.getPostcondition()));
 		return super.annotateAndAssertConjunction(name, original, indexed);
 	}
 
@@ -56,7 +54,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 		}
 
 		final Term original = mNestedFormulas.getFormulaFromNonCallPos(position).getFormula();
-		final Term indexed = mTf.transform(mSSA.getFormulaFromNonCallPos(position));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getFormulaFromNonCallPos(position));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -64,7 +62,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 	protected Term annotateAndAssertLocalVarAssignemntCall(final int position) {
 		final String name = super.localVarAssignemntCallAnnotation(position);
 		final Term original = mNestedFormulas.getLocalVarAssignment(position).getFormula();
-		final Term indexed = mTf.transform(mSSA.getLocalVarAssignment(position));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getLocalVarAssignment(position));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -72,7 +70,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 	protected Term annotateAndAssertGlobalVarAssignemntCall(final int position) {
 		final String name = super.globalVarAssignemntAnnotation(position);
 		final Term original = mNestedFormulas.getGlobalVarAssignment(position).getFormula();
-		final Term indexed = mTf.transform(mSSA.getGlobalVarAssignment(position));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getGlobalVarAssignment(position));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -80,7 +78,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 	protected Term annotateAndAssertOldVarAssignemntCall(final int position) {
 		final String name = super.oldVarAssignemntCallAnnotation(position);
 		final Term original = mNestedFormulas.getOldVarAssignment(position).getFormula();
-		final Term indexed = mTf.transform(mSSA.getOldVarAssignment(position));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getOldVarAssignment(position));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -88,7 +86,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 	protected Term annotateAndAssertPendingContext(final int positionOfPendingContext, final int pendingContextCode) {
 		final String name = super.pendingContextAnnotation(pendingContextCode);
 		final Term original = mNestedFormulas.getPendingContext(positionOfPendingContext).getFormula();
-		final Term indexed = mTf.transform(mSSA.getPendingContext(positionOfPendingContext));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getPendingContext(positionOfPendingContext));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -97,7 +95,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 			final int pendingContextCode) {
 		final String name = super.localVarAssignemntPendingReturnAnnotation(pendingContextCode);
 		final Term original = mNestedFormulas.getLocalVarAssignment(positionOfPendingReturn).getFormula();
-		final Term indexed = mTf.transform(mSSA.getLocalVarAssignment(positionOfPendingReturn));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getLocalVarAssignment(positionOfPendingReturn));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
@@ -106,7 +104,7 @@ public class AnnotateAndAssertToWorker<L extends IAction> extends AnnotateAndAss
 			final int pendingContextCode) {
 		final String name = super.oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
 		final Term original = mNestedFormulas.getOldVarAssignment(positionOfPendingReturn).getFormula();
-		final Term indexed = mTf.transform(mSSA.getOldVarAssignment(positionOfPendingReturn));
+		final Term indexed = mHScript.transferTermToWorker(mSSA.getOldVarAssignment(positionOfPendingReturn));
 		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 }
