@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -121,7 +122,8 @@ public class TypeSortTranslator {
 		}
 	}
 
-	public IBoogieType getType(final Sort sort) {
+	public IBoogieType getType(Sort sort) {
+		sort = ((HistoryRecordingScript) mScript).transferSortToWorker(sort);
 		IBoogieType type = mSort2Type.get(sort);
 		if (type == null) {
 			// TODO Matthias: The following special treatment of arrays is only
