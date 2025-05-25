@@ -112,33 +112,15 @@ public final class Union<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE
 			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
-		// Check if Both automata are disjoint
-		final Intersect<LETTER, STATE> intersect = new Intersect<>(mServices, stateFactory, mFstOperand, mSndOperand);
-		assert intersect.checkResult(stateFactory);
-		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<>(mServices, intersect.getResult());
-
-		boolean correct = true;
 		final IDoubleDeckerAutomaton<LETTER, STATE> resMinusFst =
 				new Difference<>(mServices, stateFactory, mResult, mFstOperand).getResult();
 		final IDoubleDeckerAutomaton<LETTER, STATE> resMinusSnd =
 				new Difference<>(mServices, stateFactory, mResult, mSndOperand).getResult();
-
-		// If disjoint ...
-		if (emptinessCheck.getResult()) {
-			correct = new IsIncluded<>(mServices, stateFactory, mSndOperand, resMinusFst).getResult();
-			assert correct;
-			correct = correct && new IsIncluded<>(mServices, stateFactory, mFstOperand, resMinusSnd).getResult();
-			assert correct;
-		} else {
-			if (new IsIncluded<>(mServices, stateFactory, mFstOperand, mSndOperand).getResult()) {
-				correct = new IsEmpty<>(mServices, resMinusFst).getResult();
-				assert correct;
-			}
-			if (new IsIncluded<>(mServices, stateFactory, mSndOperand, mFstOperand).getResult()) {
-				correct = new IsEmpty<>(mServices, resMinusSnd).getResult();
-				assert correct;
-			}
-		}
+		boolean correct;
+		correct = new IsIncluded<>(mServices, stateFactory, mSndOperand, resMinusFst).getResult();
+		assert correct;
+		correct = correct && new IsIncluded<>(mServices, stateFactory, mFstOperand, resMinusSnd).getResult();
+		assert correct;
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);

@@ -554,11 +554,6 @@ public class TraceCheckSpWp<L extends IAction> extends InterpolatingTraceCheck<L
 
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
-			// Here we had a tf, maybe
-			// final ManagedScript script = mPredicateUnifier.getPredicateFactory().mMgdScript;
-			// final TermTransferrer tf = new TermTransferrer(
-			// ((HistoryRecordingScript) script.getScript()).getMainScript().getScript(), script.getScript());
-			// final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(tf.transform(pred.getFormula()));
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(pred.getFormula());
 			return unified;
 		}

@@ -355,11 +355,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 		mPredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, tvp.getVars());
 		final Term withoutAnnotation = stripAnnotation(term);
-
-		for (final Term key : mTerm2Predicates.keySet()) {
-			assert key.getTheory().equals(mMgdScript.getScript().getTheory());
-		}
-
 		{
 			IPredicate p = mTerm2Predicates.get(withoutAnnotation);
 
@@ -374,15 +369,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				assert !mTerm2Predicates.containsKey(stripAnnotation(termWorker));
 			}
 		}
-
 		final Term commuNF = new CommuhashNormalForm(mServices, mScript).transform(withoutAnnotation);
-
-		// was Main from here on
-
-		for (final Term key : mTerm2Predicates.keySet()) {
-			assert key.getTheory().equals(mMgdScript.getScript().getTheory());
-		}
-
 		{
 			IPredicate p = mTerm2Predicates.get(commuNF);
 			if (p != null) {
@@ -402,9 +389,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 			mPredicateUnifierBenchmarkGenerator.stopTime();
 			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
-
-		// Wokrer from here on
-
 		assert !SmtUtils.isTrueLiteral(commuNF) : "illegal predicate: true";
 		assert !SmtUtils.isFalseLiteral(commuNF) : "illegal predicate: false";
 		assert !mTerm2Predicates.containsKey(commuNF);
@@ -420,9 +404,6 @@ public class PredicateUnifier implements IPredicateUnifier {
 				throw tce;
 			}
 		}
-
-		// was Main from here on
-
 		final IPredicate result =
 				predicatePostProcessor.apply(constructNewPredicate(simplifiedTerm, originalPredicate));
 		if (pc.isEquivalentToExistingPredicatesWithGtQuantifiers()) {
@@ -431,13 +412,11 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
 		}
-
 		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
 		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
 		mPredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
 		mPredicateUnifierBenchmarkGenerator.stopTime();
-
 		return result;
 	}
 

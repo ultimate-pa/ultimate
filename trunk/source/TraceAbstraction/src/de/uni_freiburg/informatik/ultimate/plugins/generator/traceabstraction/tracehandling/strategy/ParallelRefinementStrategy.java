@@ -62,7 +62,7 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	public void reportImperfectSequence(final IUltimateServiceProvider iUltimateServiceProvider,
 			final PredicateFactoryRefinement stateFactory,
 			final INestedWordAutomaton<L, IPredicate> newImperfectInterpolantAutomaton)
-			throws AutomataLibraryException {
+					throws AutomataLibraryException {
 		if (mImperfectInterpolantAutomaton == null) {
 			mImperfectInterpolantAutomaton = newImperfectInterpolantAutomaton;
 		} else {
@@ -85,15 +85,15 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	public INestedWordAutomaton<L, IPredicate> createUnionOfInterpolantAutomata(final AutomataLibraryServices services,
 			PredicateFactoryRefinement stateFactory,
 			final INestedWordAutomaton<L, IPredicate> newImperfectInterpolantAutomaton)
-			throws AutomataLibraryException {
+					throws AutomataLibraryException {
 		stateFactory = (PredicateFactoryRefinement) newImperfectInterpolantAutomaton.getStateFactory();
 		// assert stateFactory.equals(mImperfectInterpolantAutomaton.getStateFactory());
 		// final IntersectDD<L, IPredicate> in = new IntersectDD<>(services, stateFactory,
 		// newImperfectInterpolantAutomaton, mImperfectInterpolantAutomaton);
 		// in.checkResult(stateFactory);
 
-		final Union<L, IPredicate> union =
-				new Union<>(services, stateFactory, newImperfectInterpolantAutomaton, mImperfectInterpolantAutomaton);
+		final Union<L, IPredicate> union = null; // TODO union for nwa
+		// new Union<>(services, stateFactory, newImperfectInterpolantAutomaton, mImperfectInterpolantAutomaton);
 
 		assert union.checkResult(stateFactory);
 

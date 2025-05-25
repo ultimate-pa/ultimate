@@ -55,7 +55,7 @@ public class ManagedScript {
 	protected final IUltimateServiceProvider mServices;
 	protected final Script mScript;
 	protected final ILogger mLogger;
-	protected VariableManager mVariableManager;
+	protected final VariableManager mVariableManager;
 	private final SkolemFunctionManager mSkolemFunctionManager;
 
 	private Object mLockOwner;

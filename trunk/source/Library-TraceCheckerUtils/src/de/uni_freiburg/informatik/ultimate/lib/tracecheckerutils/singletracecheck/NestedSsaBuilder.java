@@ -1,29 +1,24 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de) Copyright (C) 2010-2015 Matthias Heizmann
+ * (heizmann@informatik.uni-freiburg.de) Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceCheckerUtils Library.
  *
- * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify it under the terms of
+ * the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
  *
- * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
+ * Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Lesser General Public License along with the ULTIMATE TraceCheckerUtils
+ * Library. If not, see <http://www.gnu.org/licenses/>.
  *
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
- * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
- * to convey the resulting work.
+ * Additional permission under GNU GPL version 3 section 7: If you modify the ULTIMATE TraceCheckerUtils Library, or any
+ * covered work, by linking or combining it with Eclipse RCP (or a modified version of Eclipse RCP), containing parts
+ * covered by the terms of the Eclipse Public License, the licensors of the ULTIMATE TraceCheckerUtils Library grant you
+ * additional permission to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
@@ -96,7 +91,6 @@ public class NestedSsaBuilder<L extends IAction> {
 	private final ILogger mLogger;
 
 	private final Script mTcScript;
-	private final Script mCfgWorkerScript;
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the moment.
 	 */
@@ -150,7 +144,6 @@ public class NestedSsaBuilder<L extends IAction> {
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> nestedTransFormulas, final ILogger logger) {
 		mLogger = logger;
 		mTcScript = managedTcScript.getScript();
-		mCfgWorkerScript = cfgSmtToolkit.getManagedScript().getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = cfgSmtToolkit.getModifiableGlobalsTable();
 		mSsa = new ModifiableNestedFormulas<>(nestedTransFormulas.getCounterexample(), new TreeMap<Integer, Term>());
@@ -181,8 +174,8 @@ public class NestedSsaBuilder<L extends IAction> {
 		for (int i = numberPendingContexts - 1; i >= 0; i--) {
 			final int pendingReturnPosition = pendingReturns[i];
 			mPendingContext2PendingReturn.put(mStartOfCallingContext, pendingReturnPosition);
-			final IIcfgReturnTransition<?, ?> ret =
-					(IIcfgReturnTransition<?, ?>) mFormulas.getTrace().getSymbol(pendingReturnPosition);
+			final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) mFormulas.getTrace()
+					.getSymbol(pendingReturnPosition);
 			final IIcfgCallTransition<?> correspondingCall = ret.getCorrespondingCall();
 			mCurrentProcedure = correspondingCall.getPrecedingProcedure();
 
@@ -465,24 +458,14 @@ public class NestedSsaBuilder<L extends IAction> {
 		if (bv instanceof IProgramConst) {
 			constant = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
 		} else {
-			// TODO ugly solution, important, that the sort we obtain here is a tc script sort. thats not guaranteed by
-			// term transferrers
-			final Sort sort = transferFromMainToTc(transferToCurrentScriptIfNecessary(bv.getTermVariable())).getSort();
+			// Need the sort from the worker script
+			final Sort sort = ((HistoryRecordingScript) mTcScript)
+					.transferTermToWorker(transferToCurrentScriptIfNecessary(bv.getTermVariable())).getSort();
 			constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), sort, index, mIndexedConstants,
 					mTcScript);
 		}
 		index2constant.put(index, constant);
 		return constant;
-	}
-
-	private Term transferFromMainToTc(final Term term) {
-		Term result = term;
-		if ((((HistoryRecordingScript) mTcScript).getMainScript() != null)) {
-			final TermTransferrer tf =
-					new TermTransferrer(((HistoryRecordingScript) mTcScript).getMainScript().getScript(), mTcScript);
-			result = tf.transform(term);
-		}
-		return result;
 	}
 
 	/**
@@ -553,16 +536,6 @@ public class NestedSsaBuilder<L extends IAction> {
 			mFormula = transferToCurrentScriptIfNecessary(pred.getFormula());
 		}
 
-		private Term transferFromMainToTc(final Term term) {
-			Term result = term;
-			if ((((HistoryRecordingScript) mTcScript).getMainScript() != null) && mTF != null) {
-				final TermTransferrer tf = new TermTransferrer(
-						((HistoryRecordingScript) mTcScript).getMainScript().getScript(), mTcScript);
-				result = tf.transform(term);
-			}
-			return result;
-		}
-
 		public void versionInVars() {
 			for (final IProgramVar bv : mTF.getInVars().keySet()) {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(mTF.getInVars().get(bv));
@@ -625,13 +598,13 @@ public class NestedSsaBuilder<L extends IAction> {
 		}
 
 		public Term getVersioneeredTerm() {
-			final HashMap<Term, Term> transferredSubsitutionMap = new HashMap<Term, Term>();
+			final HashMap<Term, Term> transferredSubsitutionMap = new HashMap<>();
 			for (final Term entry : mSubstitutionMapping.keySet()) {
-				transferredSubsitutionMap.put(transferFromMainToTc(entry),
-						transferFromMainToTc(mSubstitutionMapping.get(entry)));
+				transferredSubsitutionMap.put(((HistoryRecordingScript) mTcScript).transferTermToWorker(entry),
+						((HistoryRecordingScript) mTcScript).transferTermToWorker(mSubstitutionMapping.get(entry)));
 			}
-			final Term result =
-					PureSubstitution.apply(mTcScript, transferredSubsitutionMap, transferFromMainToTc(mFormula));
+			final Term result = PureSubstitution.apply(mTcScript, transferredSubsitutionMap,
+					((HistoryRecordingScript) mTcScript).transferTermToWorker(mFormula));
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term: "
 					+ Arrays.stream(result.getFreeVars()).map(a -> a.toString()).collect(Collectors.joining(","));
 			return result;

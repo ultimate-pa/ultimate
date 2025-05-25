@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -320,9 +320,6 @@ public class TransFormulaBuilder {
 			mOutVars = transferMap(script.getScript(), mOutVars);
 			mAuxVars = transferSet(script.getScript(), mAuxVars);
 			mBranchEncoders = transferSet(script.getScript(), mBranchEncoders);
-
-		} else {
-			return;
 		}
 	}
 

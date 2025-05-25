@@ -85,8 +85,8 @@ public class IcfgProgramExecutionBuilder<L extends IAction> {
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(position);
 			final String callee = call.getSucceedingProcedure();
 			if (bv.isGlobal()) {
-				final Set<IProgramNonOldVar> modGlobals = mModifiableGlobalVariableManager
-						.getModifiedBoogieVars(callee);
+				final Set<IProgramNonOldVar> modGlobals =
+						mModifiableGlobalVariableManager.getModifiedBoogieVars(callee);
 				if (bv instanceof IProgramNonOldVar) {
 					result = modGlobals.contains(bv);
 				} else if (bv instanceof IProgramOldVar) {
