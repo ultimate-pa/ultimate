@@ -16,13 +16,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrderType;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IIpTcStrategyModule;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 
+/**
+ * This class provides a framework for parallel strategies.
+ * There is one instance of this class per path program
+ * It provides an executioner for its path program
+ * It provides a modules depending how often we have seen this path program
+ * and on the mode we ware in (int or bit-precise)
+ *
+ * @author Max Barth (max.barth@lmu.de)
+ */
 public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
-
 	ArrayList<IIpTcStrategyModule> mModules = new ArrayList<>();
 	boolean[] mActiveModules;
 	Integer[] mPriorities;
@@ -122,8 +133,23 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	 * Trying different Assertion orders is more promising then trying different solvers
 	 */
 	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory) {
+
+		final TermClassifier tc = factory.getTermClassifierForTrace();
+		final boolean integerMode = tc.getOccuringSortNames().contains("Int")
+				|| tc.getOccuringSortNames().contains("Real");
+
+		if (integerMode) {
+			return getIntegerModule(factory);
+		} else {
+			return getBitVectorModule(factory, tc);
+		}
+
+	}
+
+	private IIpTcStrategyModule<?, L>[] getBitVectorModule(final StrategyFactory<L>.StrategyModuleFactory factory,
+			final TermClassifier tc) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		mRunningThreadForPP = mRunningThreadForPP % 9;
+		mRunningThreadForPP = mRunningThreadForPP % 6;
 		switch (mRunningThreadForPP) {
 		case 1:
 			if (!mLoopAccelerationWasTried) {
@@ -132,6 +158,37 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 				break;
 			}
 			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
+			break;
+		case 2:
+			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			break;
+		case 3:
+			rtr.add(factory.createIpTcStrategyModuleMathsat(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			break;
+		case 4:
+			rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			break;
+		default:
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
+			break;
+		}
+		assert rtr.size() == 1;
+		mRunningThreadForPP += 1;
+		return rtr.toArray(new IIpTcStrategyModule[1]);
+	}
+
+	private IIpTcStrategyModule<?, L>[] getIntegerModule(final StrategyFactory<L>.StrategyModuleFactory factory) {
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
+		mRunningThreadForPP = mRunningThreadForPP % 6;
+		switch (mRunningThreadForPP) {
+		case 1:
+			if (!mLoopAccelerationWasTried) {
+				rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
+				mLoopAccelerationWasTried = true;
+				break;
+			}
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_NestedInterpolation,
+					new AssertCodeBlockOrder(AssertCodeBlockOrderType.SMT_FEATURE_HEURISTIC)));
 			break;
 		case 5:
 			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));

@@ -76,6 +76,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy.WorkerGeneralizationMode;
 
+/**
+ * A CEGAR loop based on the NWA CEGAR loop.
+ * It executes each tracecheck in a new thread called worker
+ *
+ * This loop, only searches for counterexamples and updates the abstraction.
+ * The generalization of interpolant automata is done by the workers
+ *
+ * @author Max Barth (max.barth@lmu.de)
+ */
 public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
 
@@ -590,14 +599,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			}
 		}
 		assert threadLimit <= 0; // ensure we use all available cores!
-		mLogger.info("newSize " + newSize);
-		mLogger.info("Old. " + mRunningThreads);
 		mRunningThreads = 0;
 		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
 			mRunningThreads += strategy.getExecutor().getActiveCount();
-			mLogger.info("Active " + strategy.getExecutor().getActiveCount());
 		}
-		mLogger.info(mRunningThreads);
 		mActiveExecutors = mPpStrategyMap.size();
 	}
 
