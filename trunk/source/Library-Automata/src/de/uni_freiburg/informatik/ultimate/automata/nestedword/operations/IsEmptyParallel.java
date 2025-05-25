@@ -61,12 +61,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  *
  * Uses recursion for backtracking
  *
+ * Non-terminating if every existing counterexample is in the set but the state space is infinite.
+ *
+ * TODO: Has issues with recursive function calls, sometimes finds path that doesnt exist.
+ * -> for now we check isAccepted after the search to find these cases
+ *
+ * TODO: non recursive, have fun
+ *
  * @author Max Barth (Max.Barth@lmu.de)
  *
  * @param <LETTER>
- *            letter type
+ *                 letter type
  * @param <STATE>
- *            state type
+ *                 state type
  */
 public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE> {
 
@@ -291,6 +298,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	/*
 	 * We are less strict here and increase already if the succ occurs in the counterexample no matter the position
+	 *
+	 * Might save CPU time but not good, we want to use multiple thread per PathProgram
 	 */
 	private boolean increaseScoreNoLoops(final NestedRun<LETTER, ?> counterexample, final STATE succ,
 			final LETTER symbol, final int position) {
@@ -317,7 +326,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScoreNoLoops(counterexample, succ, symbol, position)) {
+			if (increaseScoreDefault(counterexample, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -334,7 +343,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScoreNoLoops(counterexample, succ, symbol, position)) {
+			if (increaseScoreDefault(counterexample, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -351,7 +360,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScoreNoLoops(counterexample, succ, symbol, position)) {
+			if (increaseScoreDefault(counterexample, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -361,13 +370,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				true);
 	}
 
-	/*
-	 * pick the outgoing transition we want to explore next
-	 *
-	 * do we return a priority list?
-	 *
-	 *
-	 * Wir brauchen eine funktion die uns für alle succ eine rheinfolge gibt in welcher wir explorieren Auch für start
+	/**
+	 * Sort the outgoing transitions by how many @param counterexamples cover them.
+	 * The least has highest priority.
 	 *
 	 */
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
@@ -579,7 +584,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			if (runToGoal != null) {
 				for (final Integer cexHash : set) {
 					if (cexHash == runToGoal.getWord().asList().hashCode()) {
-						throw new AssertionError();
+						throw new AssertionError("Not a fresh counterexample!");
 					}
 				}
 				return runToGoal;

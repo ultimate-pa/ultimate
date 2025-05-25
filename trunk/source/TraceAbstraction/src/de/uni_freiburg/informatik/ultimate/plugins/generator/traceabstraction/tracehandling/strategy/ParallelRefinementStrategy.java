@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -25,14 +24,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	ArrayList<IIpTcStrategyModule> mModules = new ArrayList<>();
-	boolean[] mActiveModules; // if mActiveModules[3] = true than a thread uses mModules[3]
+	boolean[] mActiveModules;
 	Integer[] mPriorities;
 	ThreadGroup mThreadGroup;
 	ThreadPoolExecutor mExecutor;
 	Set<L> mPathProgramRepresentative; // Needs to be a Set of words
 	int mRunningThreadForPP = 0;
 	protected final ILogger mLogger;
-	boolean mLoopAccelerationWasTried = true;
+	boolean mLoopAccelerationWasTried = false; // Default is false, we want to accelerate once per PP
 	int mImperfectSequencesSoFar = 0;
 	int mExecutorSize = 0;
 	INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
@@ -42,8 +41,9 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	}
 
 	/*
-	 * call getStrategyForWorker() to get the strategy that we want to execute. This class maintains the overview of our
-	 * parallel strategy. We can give any array of tracechecks and make it a parallel strategy
+	 * call getStrategyForWorker() to get the strategy that we want to execute.
+	 * This class maintains the overview of our parallel strategy.
+	 * We can give any array of tracechecks and make it a parallel strategy
 	 */
 	public ParallelRefinementStrategy(final ILogger logger, final Set<L> pathProgramRepresentative,
 			final int threadLimit) {
@@ -59,22 +59,25 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	}
 
+
 	public void reportImperfectSequence(final IUltimateServiceProvider iUltimateServiceProvider,
 			final PredicateFactoryRefinement stateFactory,
 			final INestedWordAutomaton<L, IPredicate> newImperfectInterpolantAutomaton)
 					throws AutomataLibraryException {
-		if (mImperfectInterpolantAutomaton == null) {
-			mImperfectInterpolantAutomaton = newImperfectInterpolantAutomaton;
-		} else {
-			mImperfectInterpolantAutomaton =
-					createUnionOfInterpolantAutomata(new AutomataLibraryServices(iUltimateServiceProvider),
-							stateFactory, newImperfectInterpolantAutomaton);
-		}
+		// if (mImperfectInterpolantAutomaton == null) {
+		// mImperfectInterpolantAutomaton = newImperfectInterpolantAutomaton;
+		// } else {
+		// mImperfectInterpolantAutomaton =
+		// createUnionOfInterpolantAutomata(new AutomataLibraryServices(iUltimateServiceProvider),
+		// stateFactory, newImperfectInterpolantAutomaton);
+		// }
 		mImperfectSequencesSoFar += 1;
 	}
 
 	/**
-	 * TODO debug TODO use
+	 * TODO When we have a NWA Union that is capable of unionizing two automata from different scripts,
+	 * we can collect interpolant automata from imperfect sequences here.
+	 * Then generalize their union as soon as we have a certain amount collected.
 	 *
 	 * @param services
 	 * @param stateFactory
@@ -101,39 +104,41 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	}
 
 	/*
-	 * default always generalize since we dont have the union yet
+	 * TODO in the future we want to generalize only if the sequence was perfect or
+	 *  we have collected a certain amount of imperfect sequences in a union automaton
 	 */
 	public WorkerGeneralizationMode generalize() {
 		final boolean condition = mImperfectSequencesSoFar >= 1;
 		mImperfectSequencesSoFar = 0;
-		return WorkerGeneralizationMode.ONLYIFPERFECT;
+		// TODO so far we have to generalize in worker otherwise we crash
+		return WorkerGeneralizationMode.YES;
 	}
 
 	/*
-	 * returns one module for one worker TODO: For SV-Comp settings / evlautions 1 size thread pool, queue (craig,
-	 * forward backward) then(craig, acceleration)
+	 * Returns modules depending on the amount of times we have seen this path program.
+	 * TODO: For find best SV-Comp setting that doesnt need to much CPU time
 	 *
-	 * Craig is basically our quick check?
-	 *
-	 * Still we want to kill all threads if one sequence is perfect
+	 * We want to do loop acceleration exactly once per PathProgram
+	 * Trying different Assertion orders is more promising then trying different solvers
 	 */
-	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory, int module) {
+	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		module = module % 2;
-		switch (module) {
-		case 0:
-			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
-			break;
+		mRunningThreadForPP = mRunningThreadForPP % 9;
+		switch (mRunningThreadForPP) {
 		case 1:
 			if (!mLoopAccelerationWasTried) {
 				rtr.add(factory.createIpTcStrategyModuleAcceleratedTraceCheck());
 				mLoopAccelerationWasTried = true;
-			} else {
-				rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+				break;
 			}
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
+			break;
+		case 5:
+			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 			break;
 		default:
-			throw new AssertionError("Unknown Module");
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
+			break;
 		}
 		assert rtr.size() == 1;
 		mRunningThreadForPP += 1;
@@ -152,12 +157,23 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	}
 
-	public ExecutorService getExecutor() {
+	/*
+	 * Every PathProgram has its own executor
+	 */
+	public ThreadPoolExecutor getExecutor() {
 		return mExecutor;
 	}
 
+	/*
+	 * Tracks how many threads are currently running belonging to this PathProgram
+	 * Determines the next module
+	 */
 	public int getRunningThreadsOfPP() {
 		return mRunningThreadForPP;
+	}
+
+	public void setRunningThreadsOfPP(final int ppSeenThisManyTimesBefore) {
+		mRunningThreadForPP = ppSeenThisManyTimesBefore;
 	}
 
 	// not used atm
@@ -165,6 +181,14 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		return true;
 	}
 
+	/*
+	 * Every PathProgram has its own executor
+	 * its sice is dynamically changed to threadlimit / #activeExecutors
+	 *
+	 * Basically the more pathprograms we check in parallel the smaller is the executor size for each
+	 * This helps us to distribute the work better between pathprogram, but it is upon our search
+	 * to actually find multiple pathprograms
+	 */
 	public void updateExecutorSizes(final int newSize) {
 		mExecutorSize = newSize;
 		mExecutor.setCorePoolSize(newSize);

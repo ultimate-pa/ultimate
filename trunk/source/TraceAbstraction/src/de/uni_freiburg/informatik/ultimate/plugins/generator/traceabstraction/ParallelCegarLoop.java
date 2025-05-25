@@ -109,6 +109,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private Integer mCountBfsFoundCex = 1;
 	private final Integer mCountIsEmptyParallel = 0;
 	private Integer maxActiveThreads = 0;
+	private Integer mActiveExecutors = 0;
 	private final long mSearchTime = 0;
 	private int mIterationsWithMaxThreads = 0;
 	private int mIterationsWithOneThread = 0;
@@ -172,7 +173,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	 * sets up the worker with its own cfg script and its own RefinementStrategy
 	 */
 	private CegarWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
-			final IcfgLocation currentErrorLoc, final int module) {
+			final IcfgLocation currentErrorLoc) {
 		// mCsToolkit needs to give new mgdScript for each thread
 
 		final CfgSmtToolkit freshToolKit = mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices,
@@ -233,18 +234,17 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
 		// TODO only increase cache if module == 0, need new constuct strategy
 		final ITARefinementStrategy<L> strategy;
-		if (module == -1) { // TODO better case distiction
-			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getRefinementStrategy(), mProgramCache);
-		} else {
-
+		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
 			// setup the strategy from getRefinementStrategy() such that the factory has the modules
 			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
 					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
 					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-					mPref.getRefinementStrategy(), mProgramCache, parallelStrategy, module);
+					mPref.getRefinementStrategy(), mProgramCache, parallelStrategy);
+		} else {
+			strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+					new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+					predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+					mPref.getRefinementStrategy(), mProgramCache);
 		}
 		// create a new strategy that has only one module, the one we want to use for this worker
 
@@ -389,10 +389,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		mLogger.info("BFS: " + mCountBfsFoundCex);
 		mLogger.info("IsEmptyParallel: " + mCountIsEmptyParallel);
 		mLogger.info("ActiveThreads: " + maxActiveThreads);
+		mLogger.info("ActiveExecutorsForPathPrograms: " + mActiveExecutors);
 		mLogger.info("IterationsWithMaxThreads: " + mIterationsWithMaxThreads);
 		mLogger.info("IterationsWithONEThread: " + mIterationsWithOneThread);
 		mLogger.info("SearchTime: " + mSearchTime);
 		mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
+
 	}
 
 	private boolean isSafeThenTerminate() throws AutomataOperationCanceledException {
@@ -425,44 +427,36 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 		mServices = iterationServices;
-		final RefinementStrategy strategyType;
 		final ExecutorService executor;
 		final HashSet<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
 
 		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
-			mPpStrategyMap.put(ppRepresentative,
-					new ParallelRefinementStrategy<>(mLogger, ppRepresentative, mThreadLimit));
+			mLogger.info("Old PP SIZE " + mPpStrategyMap.size());
+			final ParallelRefinementStrategy<L> strategy = new ParallelRefinementStrategy<>(mLogger, ppRepresentative,
+					mThreadLimit);
+			strategy.setRunningThreadsOfPP(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
+			mPpStrategyMap.put(ppRepresentative, strategy);
 			updateExecutorSizes();
-			mRunningThreads += 1;
 		}
 		final ParallelRefinementStrategy<L> pathProgramStrategy = mPpStrategyMap.get(ppRepresentative);
 		executor = pathProgramStrategy.getExecutor();
 
-		assert (!executor.isTerminated());// {
+		assert (!executor.isTerminated());
 
-		// setting how many thread we want to start per counterexample.
-		// Plan 2 threads one is always craig on interpol as quickecheckr
-
-		for (int module = 0; module < 2; module++) {
-			if (pathProgramStrategy.isActiveModule(module)) {
+		// starts a @BasicRefinementStrategy with the modules provided by @ParallelRefinementStrategy
+		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
+			// here we can determine how many threads / checks we want per counterexample
+			for (int module = 0; module < 1; module++) {
 				// strategies
-				final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc,
-						pathProgramStrategy.getRunningThreadsOfPP());
+				final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
 				mWorkerResultQueue.add(executor.submit(worker));
-
+				mRunningThreads += 1;
 			}
+		} else {
+			final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
+			mWorkerResultQueue.add(mExec.submit(worker));
+			mRunningThreads += 1;
 		}
-		// } else {
-		// final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc, -1);
-		// mWorkerResultQueue.add(mExec.submit(worker));
-		// mRunningThreads += 1;
-		// }
-		// strategies
-		// final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
-		// worker is a Callable and is called here
-		// mExec.submit(worker);
-		// mWorkerResultQueue.add(executor.submit(worker));
-		// mRunningThreads += 1;
 		mCounterexamplesChecked += 1;
 		// add mCounterexample to list such that we dont get it twice in our search
 		addCounterexampleToSet((NestedRun<L, ?>) mCounterexample);
@@ -536,25 +530,32 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO it can be that we have multiple perfect sequences and the pp is already removed from the map
 		if (threadResult.wasPerfect() && mPpStrategyMap.containsKey(pathProgramRepresentative)) {
 			assert mPpStrategyMap.containsKey(pathProgramRepresentative);
+			mLogger.info("Old PP SIZE " + mPpStrategyMap.size());
 			mPpStrategyMap.get(pathProgramRepresentative).getExecutor().shutdown();
 			mPpStrategyMap.remove(pathProgramRepresentative);
 			updateExecutorSizes();
-			mRunningThreads -= 1;
 		} else if (mPpStrategyMap.containsKey(pathProgramRepresentative)) {
 			mPpStrategyMap.get(pathProgramRepresentative).reportImperfectSequence(getServices(),
 					stateFactoryForRefinement, mAbstraction);
 		}
-
+		mRunningThreads -= 1;
 		// Kill the worker script
 		((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
 
 		// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
+		// Was too expensive, lead to unwanted synchronizations
 		mLogger.info("Refinement done.");
 	}
 
 	/*
-	 * We update the threadlimits of all executors that we have. The new Value is the mThreadLimit divided by the
-	 * current path programs. Ideally every executor has already multiple threads sheduled
+	 * We update the threadlimits of all executors that we have.
+	 * The new Value is the mThreadLimit divided by the current path programs.
+	 * Ideally every executor has already multiple threads scheduled.
+	 *
+	 * We also update the amount of running threads, since the decrease in since
+	 * will prevent threads from being executed that might have been executed before.
+	 *
+	 * IMPORTANT update mRunningThreads !after, not before this method is called.
 	 */
 	private void updateExecutorSizes() {
 		if (mPpStrategyMap.isEmpty()) {
@@ -564,9 +565,32 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		if (newSize == 0) {
 			newSize += 1;
 		}
+		int remainder = mThreadLimit - newSize * mPpStrategyMap.size();
+		// One of the Executor with most running threads gets the remainder
+		int mostRunningThreads = 0;
 		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
-			strategy.updateExecutorSizes(newSize);
+			if (mostRunningThreads < strategy.getExecutor().getActiveCount()) {
+				mostRunningThreads = strategy.getExecutor().getActiveCount();
+			}
 		}
+		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
+			if (mostRunningThreads == strategy.getExecutor().getActiveCount()) {
+				strategy.updateExecutorSizes(newSize + remainder);
+				// set remainder to 0 after its used
+				remainder = 0;
+			} else {
+				strategy.updateExecutorSizes(newSize);
+			}
+		}
+		mLogger.info("newSize " + newSize);
+		mLogger.info("Old. " + mRunningThreads);
+		mRunningThreads = 0;
+		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
+			mRunningThreads += strategy.getExecutor().getActiveCount();
+			mLogger.info("Active " + strategy.getExecutor().getActiveCount());
+		}
+		mLogger.info(mRunningThreads);
+		mActiveExecutors = mPpStrategyMap.size();
 	}
 
 	private void updateActiveTestGoals() {

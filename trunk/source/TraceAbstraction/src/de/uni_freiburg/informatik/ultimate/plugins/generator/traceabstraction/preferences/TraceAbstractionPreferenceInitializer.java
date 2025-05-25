@@ -947,7 +947,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Use loop acceleration in combination with the fixed preferences
 		 */
-		ACCELERATED_TRACE_CHECK
+		ACCELERATED_TRACE_CHECK,
+
+		/**
+		 * Applies the @ParallelRefinmentStrategy choosing between different modules from other strategies
+		 */
+		PARALLEL
 	}
 
 	/**
