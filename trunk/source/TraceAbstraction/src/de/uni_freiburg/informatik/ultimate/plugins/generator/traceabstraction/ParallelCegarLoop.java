@@ -527,7 +527,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// TODO it can be that we have multiple perfect sequences and the pp is already removed from the map
 		if (threadResult.wasPerfect() && mPpStrategyMap.containsKey(pathProgramRepresentative)) {
 			assert mPpStrategyMap.containsKey(pathProgramRepresentative);
-			mLogger.info("Old PP SIZE " + mPpStrategyMap.size());
 			mPpStrategyMap.get(pathProgramRepresentative).getExecutor().shutdown();
 			mPpStrategyMap.remove(pathProgramRepresentative);
 			updateExecutorSizes();
@@ -562,7 +561,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		if (newSize == 0) {
 			newSize += 1;
 		}
-		int remainder = mThreadLimit - newSize * mPpStrategyMap.size();
+		int remainder = mThreadLimit - (newSize * mPpStrategyMap.size());
+		if (remainder < 0) {
+			remainder = 0;
+		}
 		// One of the Executor with most running threads gets the remainder
 		int mostRunningThreads = 0;
 		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
@@ -572,6 +574,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
 			if (mostRunningThreads == strategy.getExecutor().getActiveCount()) {
+
 				strategy.updateExecutorSizes(newSize + remainder);
 				// set remainder to 0 after its used
 				remainder = 0;
