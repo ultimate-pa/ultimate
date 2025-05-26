@@ -145,7 +145,7 @@ public final class TranslationSettings {
 			final CheckMode pointerBaseValidity, final CheckMode pointerTargetFullyAllocated,
 			final CheckMode checkPointerSubtractionAndComparisonValidity, final MemoryModel memoryModelPreference,
 			final boolean fpToIeeeBvExtension, final boolean smtBoolArraysWorkaround, final String checkedMethod,
-			final boolean checkErrorFunction, final boolean checkSvcompErrorFunction,
+			final boolean checkErrorFunction, final boolean checkAssertions,
 			final boolean isSvcompMemtrackCompatibilityMode, final boolean checkAllocationPurity,
 			final boolean checkMemoryLeakInMain, final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
@@ -169,7 +169,7 @@ public final class TranslationSettings {
 		mSmtBoolArraysWorkaround = smtBoolArraysWorkaround;
 		mEntryMethod = checkedMethod;
 		mCheckErrorFunction = checkErrorFunction;
-		mCheckAssertions = checkSvcompErrorFunction;
+		mCheckAssertions = checkAssertions;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
 		mCheckAllocationPurity = checkAllocationPurity;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
