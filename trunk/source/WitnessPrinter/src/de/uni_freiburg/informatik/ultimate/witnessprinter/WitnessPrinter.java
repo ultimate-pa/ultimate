@@ -145,6 +145,10 @@ public class WitnessPrinter implements IOutput {
 		} else if (results.stream().anyMatch(a -> a instanceof AllSpecificationsHoldResult)) {
 			mLogger.info("Generating witness for correct program");
 			witnesses = generateProofWitness(results, createGraphML, createYaml);
+		} else if (ups.getBoolean(PreferenceInitializer.LABEL_GENERATE_TEST_COMP_META_FILE)) {
+			mLogger.info("Generating MetaFile for TestComp Reults");
+			generateTestCompMetaFile();
+			witnesses = List.of();
 		} else {
 			mLogger.info("No result that supports witness generation found");
 			witnesses = List.of();
@@ -153,6 +157,21 @@ public class WitnessPrinter implements IOutput {
 			new WitnessManager(mLogger, mServices).run(witnesses);
 		} catch (IOException | InterruptedException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	// creates a MetaFile with the descriptions necessary for the TestComp
+	// For TestComp we do the witness print Toolchain before the analysis, so that we have a MetaFile in case of timeout
+	private void generateTestCompMetaFile() {
+		final IBacktranslationService backtrans = mServices.getBacktranslationService();
+		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
+		final String filename = ILocation.getAnnotation(root).getFileName();
+		final BacktranslatedCFG<?, IcfgEdge> origCfg = new BacktranslatedCFG<>(filename,
+				IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
+		try {
+			new TestCompMetaFilePrinter<>(backtrans.translateCFG(origCfg), mLogger, mServices).printMetaFile();
+		} catch (final Exception e) {
+			throw new AssertionError(e);
 		}
 	}
 

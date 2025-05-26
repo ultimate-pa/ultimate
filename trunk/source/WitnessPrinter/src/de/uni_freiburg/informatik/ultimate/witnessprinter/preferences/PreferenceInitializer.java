@@ -107,6 +107,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_YAML_FORMAT_VERSION = "YAML Format version";
 	private static final String VALUE_YAML_FORMAT_VERSION = "2.0";
 
+	// test generation
+	public static final String LABEL_GENERATE_TEST_COMP_META_FILE = "Test Comp Meta File";
+	private static final boolean VALUE_GENERATE_TEST_COMP_META_FILE = false;
+
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -156,7 +160,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER, UNUSED_GRAPH_DATA,
 								"Write the value of this option to the witness graph data attribute \"Producer\"",
-								PreferenceType.String)) };
+								PreferenceType.String)),
+				// test generation
+				new UltimatePreferenceItem<>(LABEL_GENERATE_TEST_COMP_META_FILE, VALUE_GENERATE_TEST_COMP_META_FILE,
+						PreferenceType.Boolean) };
 	}
 
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
