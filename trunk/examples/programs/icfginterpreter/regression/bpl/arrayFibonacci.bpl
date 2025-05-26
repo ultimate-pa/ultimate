@@ -1,3 +1,4 @@
+// #Safe
 // Works with SequenceOfStatements setting
 
 procedure main() {

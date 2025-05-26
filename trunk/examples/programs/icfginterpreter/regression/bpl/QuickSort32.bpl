@@ -1,3 +1,4 @@
+// #Safe
 // Works with SequenceOfStatements setting
 // based on https://de.wikipedia.org/wiki/Quicksort#Iteratives_Quicksort
 

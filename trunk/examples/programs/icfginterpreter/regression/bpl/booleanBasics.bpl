@@ -1,3 +1,4 @@
+// #Safe
 // Works with OneNontrivialStatement
 
 var a : bool;
