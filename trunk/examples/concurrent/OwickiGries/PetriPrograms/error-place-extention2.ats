@@ -1,0 +1,57 @@
+// Simple test for computation of Owicki-Gries annotation where the error may occur, where an error place falsly gets extended into (non-initial) "equivalent" territories of the product empire
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//@ variables (x Int) (y Int) (z Int)
+
+//@ semantics [1] {x} (= x z)
+//@ semantics [2] {y} (= y z)
+//@ semantics [3] { } (distinct x 1)
+//@ semantics [4] { } (distinct y 1)
+//@ semantics [5] {z} (= z 1)
+
+
+PetriNet program = (
+  alphabet    = { "[1]" "[2]" "[3]" "[4]" "[5]" },
+  places      = { "l0" "l1" "l2" "l3" "e" },
+  transitions = {
+    ({ "l0" } "[5]" { "l1" })
+    ({ "l1" } "[1]" { "l2" })
+    ({ "l1" } "[2]" { "l3" })
+    ({ "l2" } "[3]" { "e" })
+    ({ "l3" } "[4]" { "e" })
+  },
+  initialMarking = { "l0" },
+  acceptingPlaces = { "e" }
+);
+
+FiniteAutomaton proof1 = (
+     alphabet      = { "[1]" "[2]" "[3]" "[4]" "[5]" },
+     states        = { "true" "(= z 1)" "(= x 1)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+         ("true"    "[5]" "(= z 1)")
+         ("(= z 1)"    "[1]" "(= x 1)")
+         ("(= z 1)"    "[2]" "(= z 1)")
+         ("(= z 1)"    "[3]" "(= z 1)")
+         ("(= z 1)"    "[4]" "(= z 1)")
+         ("(= z 1)"    "[5]" "(= z 1)")
+         ("(= x 1)" "[3]" "false")
+     }
+);
+
+FiniteAutomaton proof2 = (
+     alphabet      = { "[1]" "[2]" "[3]" "[4]" "[5]" },
+     states        = { "true" "(= z 1)" "(= y 1)" "false" },
+     initialStates = { "true" },
+     finalStates   = { "false" },
+     transitions   = {
+         ("true"    "[5]" "(= z 1)")
+         ("(= z 1)"    "[1]" "(= z 1)")
+         ("(= z 1)"    "[2]" "(= y 1)")
+         ("(= z 1)"    "[3]" "(= z 1)")
+         ("(= z 1)"    "[4]" "(= z 1)")
+         ("(= z 1)"    "[5]" "(= z 1)")
+         ("(= y 1)" "[4]" "false")
+     }
+);
