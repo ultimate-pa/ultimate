@@ -11,6 +11,6 @@ extern long long __VERIFIER_nondet_longlong();
 
 int main() {
 	long long x = __VERIFIER_nondet_longlong();
-  long long res = x > INT_MIN && x < INT_MAX ? x * x : -1;
+  long long res = x > INT_MIN && x < INT_MAX ? INT_MAX * x : LLONG_MAX;
 	return 0;
 }
