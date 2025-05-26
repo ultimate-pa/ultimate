@@ -57,11 +57,14 @@ data_race_found_string = "DataRaceFoundResult"
 data_race_error_path_begin_string = "The following path leads to a data race"
 referee_valid_proof_string = "AnnotationCheckResult: Annotation is a valid proof of correctness."
 referee_invalid_proof_string = "AnnotationCheckResult: Annotation is not a valid proof of correctness."
-
+testGen_string = "TestGeneration"
 
 class _PropParser:
     prop_regex = re.compile(
         r"^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$", re.MULTILINE
+    )
+    prop_regex_testcomp = re.compile(
+        r"^\s*COVER\s*\(\s*init\s*\((.*)\)\s*,\s*FQL\((.*)\)\s*\)\s*$", re.MULTILINE
     )
     funid_regex = re.compile(r"\s*(\S*)\s*\(.*\)")
     word_regex = re.compile(r"\b[^\W\d_]+\b")
@@ -89,6 +92,8 @@ class _PropParser:
         self.ltlformula = None
         self.mem_cleanup = False
         self.data_race = False
+        self.cover_error = False
+        self.cover_edges = False
 
         for match in self.prop_regex.finditer(self.content):
             init, formula = match.groups()
@@ -138,6 +143,26 @@ class _PropParser:
             else:
                 raise RuntimeError("The formula {0} is unknown".format(formula))
 
+        for match in self.prop_regex_testcomp.finditer(self.content):
+            init, formula = match.groups()
+
+            fun_match = self.funid_regex.match(init)
+            if not fun_match:
+                raise RuntimeError("No init specified in this check")
+            if self.init and self.init != fun_match.group(1):
+                raise RuntimeError(
+                    "We do not support multiple and different init functions (have seen {0} and {1}".format(
+                        self.init, fun_match.group(1)
+                    )
+                )
+            self.init = fun_match.group(1)
+            if formula == "COVER EDGES(@CALL(reach_error))":
+                self.cover_error = True
+            elif formula == "COVER EDGES(@DECISIONEDGE)":
+                self.cover_edges = True
+            else:
+                raise RuntimeError("The formula {0} is unknown".format(formula))
+
     def get_init_method(self):
         return self.init
 
@@ -176,7 +201,13 @@ class _PropParser:
 
     def is_data_race(self):
         return self.data_race
+    
+    def is_cover_error(self):
+        return self.cover_error
 
+    def is_cover_edges(self):
+        return self.cover_edges
+    
 
 class _AbortButPrint(Exception):
     def __init__(self, value):
@@ -420,6 +451,12 @@ def run_ultimate(ultimate_call, prop, verbose=False):
                     blank_lines += 1
                 else:
                     reading_error_path = False
+        elif prop.is_cover_error():
+            if line.find(testGen_string) != -1:
+                result = "DONE"
+        elif prop.is_cover_edges():
+            if line.find(testGen_string) != -1:
+                result = "DONE"
         else:
             if line.find(safety_string) != -1 or line.find(all_spec_string) != -1:
                 result = "TRUE"
@@ -919,6 +956,12 @@ def create_settings_search_string(prop, architecture):
     elif prop.is_data_race():
         print("Checking for data races")
         settings_search_string = "DataRace"
+    elif prop.is_cover_error():
+        print("Generating Tests to Cover Error")
+        settings_search_string = "CoverError"
+    elif prop.is_cover_edges():
+        print("Generating Tests to Cover Branches")
+        settings_search_string = "CoverEdges" 
     else:
         print("Checking for ERROR reachability")
         settings_search_string = "Reach"
@@ -938,6 +981,10 @@ def get_toolchain_path(prop, witnessmode):
         search_string = "*MemDerefMemtrack.xml"
     elif prop.is_ltl():
         search_string = "*LTL.xml"
+    elif prop.is_cover_error():
+        search_string = "*CoverError.xml"
+    elif prop. is_cover_edges():
+        search_string = "*CoverEdges.xml"
     else:
         search_string = "*Reach.xml"
 
