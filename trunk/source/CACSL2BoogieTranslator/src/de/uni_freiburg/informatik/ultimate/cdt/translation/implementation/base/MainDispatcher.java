@@ -30,7 +30,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -338,7 +337,7 @@ public class MainDispatcher implements IDispatcher {
 	}
 
 	@Override
-	public NextACSL nextACSLStatement() throws ParseException {
+	public NextACSL nextACSLStatement() {
 		DecoratorNode current;
 		if (mNextACSLBuffer != null) {
 			current = mNextACSLBuffer;

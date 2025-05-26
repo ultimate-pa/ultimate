@@ -35,7 +35,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.math.BigInteger;
-import java.text.ParseException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2571,14 +2570,8 @@ public class CHandler {
 				throw new UnsupportedOperationException("Not yet implemented " + preS.toString());
 			}
 		}
-		final ILocation loc = mLocationFactory.createCLocation(node);
 		if (!mIsPrerun) {
-			try {
-				mAcsl = main.nextACSLStatement();
-			} catch (final ParseException e1) {
-				final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-				mReporter.unsupportedSyntax(loc, msg);
-			}
+			mAcsl = main.nextACSLStatement();
 
 			final ExpressionResultBuilder acslResultBuilder = new ExpressionResultBuilder();
 			// TODO(thrax): Check if decl should be passed as null or not.
@@ -3467,13 +3460,7 @@ public class CHandler {
 					final LTLExpressionExtractor extractor = new LTLExpressionExtractor();
 					extractor.run(globAcsl);
 					mGlobAcslExtractors.add(extractor);
-					try {
-						mAcsl = main.nextACSLStatement();
-					} catch (final ParseException e1) {
-						final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-						final ILocation loc = mLocationFactory.createCLocation(parent);
-						mReporter.unsupportedSyntax(loc, msg);
-					}
+					mAcsl = main.nextACSLStatement();
 				}
 				if (globAcsl instanceof CodeAnnotStmt) {
 					final CodeStatement codeStmt = ((CodeAnnotStmt) globAcsl).getCodeStmt();
@@ -3517,14 +3504,7 @@ public class CHandler {
 					resultBuilder.addStatements(
 							CTranslationUtil.createHavocsForAuxVars(((ExpressionResult) acslResult).getAuxVars()));
 				}
-
-				try {
-					mAcsl = main.nextACSLStatement();
-				} catch (final ParseException e1) {
-					final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-					final ILocation loc = mLocationFactory.createCLocation(parent);
-					mReporter.unsupportedSyntax(loc, msg);
-				}
+				mAcsl = main.nextACSLStatement();
 			}
 
 			// ELSE:
@@ -3559,14 +3539,7 @@ public class CHandler {
 					mContract.add(acslNode);
 				}
 			}
-			try {
-				mAcsl = main.nextACSLStatement();
-			} catch (final ParseException e1) {
-				final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-				final ILocation loc = mLocationFactory.createCLocation(parent);
-				mReporter.unsupportedSyntax(loc, msg);
-			}
-
+			mAcsl = main.nextACSLStatement();
 		}
 	}
 
