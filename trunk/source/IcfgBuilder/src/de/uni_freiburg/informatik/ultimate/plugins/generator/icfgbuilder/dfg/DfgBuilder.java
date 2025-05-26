@@ -92,11 +92,13 @@ public class DfgBuilder {
 			}
 			final Set<IProgramVar> OutVars = transformula.getOutVars().keySet();
 			for (final IProgramVar programVar : OutVars) {
-				if (transformula.getInVars().get(programVar) != null) {
+				if (transformula.getInVars().get(programVar) == null) {
 					defMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
 				}
 			}
 		}
+		System.out.println("def Map " + defMap.toString());
+		System.out.println("use map " + useMap.toString());
 	}
 
 	private void generateEdges() {
@@ -112,6 +114,8 @@ public class DfgBuilder {
 	}
 
 	private Set<DFGNode> searchNeighbors(final DFGNode node, final IProgramVar programVar) {
+		System.out
+				.println("Searching Neighbors for Node " + node.toString() + " , ProgramVar " + programVar.toString());
 		final Set<DFGNode> children = new HashSet<>();
 		final IcfgEdge edge = node.getCorrespondingDFGEdge();
 		final Set<IcfgEdge> visited = new HashSet<>();

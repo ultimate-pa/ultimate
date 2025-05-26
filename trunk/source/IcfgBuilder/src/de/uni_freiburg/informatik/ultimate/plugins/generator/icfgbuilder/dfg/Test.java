@@ -12,6 +12,8 @@ public class Test {
 			final DfgContainer dfg = dfgBuilder.buildDfg(icfgLocation);
 			System.out.println("PRINTING EDGERELATION");
 			System.out.println(dfg.getEdgeRelation().toString());
+			System.out.println("LENGTH OF NODE LIST");
+			System.out.println(dfg.getNodeList().size());
 			System.out.println("ERFLOG");
 
 		}
