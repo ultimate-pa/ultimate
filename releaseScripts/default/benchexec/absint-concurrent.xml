@@ -22,11 +22,6 @@
     <option name="--abstractinterpretationv2.location.abstraction.method">Split only at Guards</option>
   </rundefinition>
 
-  <rundefinition name="Split only at Guards (single state)">
-    <option name="--abstractinterpretationv2.location.abstraction.method">Split only at Guards</option>
-    <option name="--abstractinterpretationv2.maximum.states.in.upper.concurrent.fixpointengine">1</option>
-  </rundefinition>
-
   <rundefinition name="Mutex Guard and Vars Splitting">
     <option name="--abstractinterpretationv2.location.abstraction.method">Mutex Guard and Vars Splitting</option>
   </rundefinition>
