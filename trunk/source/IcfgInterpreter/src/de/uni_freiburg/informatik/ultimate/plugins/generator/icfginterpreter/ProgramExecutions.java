@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgProgramExecution;
@@ -14,28 +15,24 @@ public final class ProgramExecutions<L extends IAction> extends BasePayloadConta
 	}
 
 	public enum ExecutionTermintionReason {
-		/** Execution has not been terminated yet */
-		unterminated,
-		/** Execution arrived at leaf of ICFG that is not an error location */
-		reachedExit,
-		/** Execution arrived at leaf of ICFG that is an error location */
-		reachedError,
-		/** Execution ended at node where all outgoing edges cannot be fulfilled */
-		noEdgeAllowed,
-		/** Execution ended on edge that could not be translated */
-		edgeUnusble,
-		/** Execution ended when an unsupported term was evaluated */
-		unsopportedOperation
+		/** Execution arrived at location where no next edge of ICFG can be taken, it is not an error location */
+		REACHED_EXIT,
+		/** Execution arrived at error location of ICFG */
+		REACHED_ERROR,
+		/** Execution ended when an unsupported term was evaluated / not translatable edge was encountered */
+		REACHED_UNSUPPORTED,
+		/** Execution was interrupted after reaching max length given in settings */
+		EXECUTION_TOO_LONG
 	}
 
 	// TODO: Also include the reason why the executions ended (no outgoing transitions, error, unsupported feature...)
-	private final Collection<Pair<IcfgProgramExecution<L>, ExecutionTermintionReason>> mExecutions;
+	private final Map<ExecutionTermintionReason, List<IcfgProgramExecution<L>>> mExecutions;
 
-	public ProgramExecutions(final Collection<Pair<IcfgProgramExecution<L>, ExecutionTermintionReason>> executions) {
+	public ProgramExecutions(final Map<ExecutionTermintionReason, List<IcfgProgramExecution<L>>> executions) {
 		mExecutions = executions;
 	}
 
-	public Collection<Pair<IcfgProgramExecution<L>, ExecutionTermintionReason>> getExecutions() {
+	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<L>>> getExecutions() {
 		return mExecutions;
 	}
 }

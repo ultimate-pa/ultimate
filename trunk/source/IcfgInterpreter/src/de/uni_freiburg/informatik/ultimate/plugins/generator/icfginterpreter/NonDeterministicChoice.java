@@ -24,6 +24,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
 public interface NonDeterministicChoice {
 	NonDeterministicChoice newInstance(long seed);
 
+	NonDeterministicChoice makeVariant(long offset);
+
 	<T> T chooseEdge(List<T> edges);
 
 	/**

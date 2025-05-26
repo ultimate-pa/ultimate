@@ -20,12 +20,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
 
 public class InterpretedIcfgEdge {
 	private final Term mGuard;
 	private final Update[] mUpdates;
 	private final IcfgEdge mEdge;
 	private final Set<TermVariable> mAuxVars;
+	private final boolean mHasHavoc;
 
 	public InterpretedIcfgEdge(final Term guard, final Update[] updateVariants, final IcfgEdge edge,
 			final Set<TermVariable> auxVars) {
@@ -33,6 +35,18 @@ public class InterpretedIcfgEdge {
 		mUpdates = updateVariants;
 		mEdge = edge;
 		mAuxVars = auxVars;
+		boolean hasHavoc = false;
+		for (final Update update : mUpdates) {
+			if (update instanceof HavocUpdate) {
+				hasHavoc = true;
+				break;
+			}
+		}
+		mHasHavoc = hasHavoc;
+	}
+
+	public boolean hasHavoc() {
+		return mHasHavoc;
 	}
 
 	public IcfgLocation getTarget() {
@@ -81,6 +95,7 @@ public class InterpretedIcfgEdge {
 			out.append("\n\t").append(update.toString());
 		}
 
+		out.append("\n Original edge: ").append(mEdge.toString());
 		return out.toString();
 	}
 

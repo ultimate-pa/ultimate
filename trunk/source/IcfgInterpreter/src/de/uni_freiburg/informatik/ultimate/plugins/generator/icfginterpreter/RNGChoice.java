@@ -69,6 +69,16 @@ public class RNGChoice implements NonDeterministicChoice {
 	}
 
 	@Override
+	public NonDeterministicChoice makeVariant(final long offset) {
+		try {
+			return new RNGChoice(mSeed + offset);
+		} catch (final Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	@Override
 	public <T> T chooseEdge(final List<T> edges) {
 		return edges.get((int) chooseElement(edges.size()));
 	}
