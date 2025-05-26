@@ -3,6 +3,7 @@
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper" />
   <option name="--full-output" />
+  <option name="-ea" />
   <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
   <option name="--abstractinterpretationv2.abstract.domain">OctagonDomain</option>
