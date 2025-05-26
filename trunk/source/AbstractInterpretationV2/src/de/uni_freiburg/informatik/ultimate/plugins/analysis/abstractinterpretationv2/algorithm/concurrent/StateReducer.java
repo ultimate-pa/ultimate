@@ -44,7 +44,7 @@ public class StateReducer {
 		return result;
 	}
 
-	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceToLocationsSet(
+	public static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> reduceToLocationsSet(
 			final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> states) {
 		final List<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = new HashSet<>();

@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadOther;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
 		implements IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> {
@@ -28,10 +31,11 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
 	private final GuardedInterferenceApplier<STATE, ACTION, LOC> mItfApplier;
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
-//	private final static Map<Pair<IAbstractState<?>, IIcfgTransition<?>>, Collection<? extends IAbstractState<?>>> mCacheMap = new HashMap<>();
+	private final static Map<Pair<IAbstractState<?>, IIcfgTransition<?>>, Collection<? extends IAbstractState<?>>> mCacheMap = new HashMap<>();
 
 	private final int mMaxParallelStates;
 	private boolean mApplyInterferences = true;
+	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
 
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
@@ -44,6 +48,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				maxParallelStates, interferences);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 		mMaxParallelStates = maxParallelStates;
+		mInterferences = interferences;
 	}
 
 	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
@@ -72,9 +77,9 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				: oldstate;
 
 		// 1. normal poststate
-		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
-//		final var states = (Collection<STATE>) mCacheMap.computeIfAbsent(new Pair<>(newState.state(), transition),
-//				x -> mUnderlyingPostOp.apply((STATE) x.getFirst(), (ACTION) x.getSecond()));
+//		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
+		final var states = (Collection<STATE>) mCacheMap.computeIfAbsent(new Pair<>(newState.state(), transition),
+				x -> mUnderlyingPostOp.apply((STATE) x.getFirst(), (ACTION) x.getSecond()));
 
 		// adjust abstract location according to new location
 		final var guardedStates = states.stream().filter(s -> !s.isBottom())
@@ -85,6 +90,14 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		if (!mApplyInterferences) {
 			return guardedStates;
 		}
+		// 2. apply interferences
+//		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> statesAfterInterferences = new HashSet<>();
+//		for (final Interference<STATE, ACTION, LOC> interference : mInterferences.getAllInterferences()) {
+//			final var interfered = guardedStates.stream()
+//					.flatMap(s -> mItfApplier.applyInterferencesToState(s, interference).stream()).toList();
+//			statesAfterInterferences.addAll(interfered);
+//		}
+//		final var afterItfs = DisjunctiveAbstractState.createDisjunction(statesAfterInterferences, mMaxParallelStates);
 		// 2. apply interferences
 		final var afterItfs = mItfApplier.stateAfterInterferences(
 				DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates), mCurrentThreadName);

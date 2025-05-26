@@ -39,7 +39,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	}
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
-			final String procedure) {
+			final String procedure, final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
 		final var allForkLocs = new HashSet<LOC>();
 		var result = combineForkingStates(procedure, allForkLocs);
 		if (result != null) {
@@ -49,7 +49,8 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 			} else {
 				result = GuardedStateTransformer.setThreadsActive(List.of(procedure), result);
 			}
-			final var forkedInitialState = constructForkedInitialState(result, procedure, multipleThreads);
+			final var forkedInitialState = constructForkedInitialState(result, procedure, multipleThreads,
+					interferences);
 			return forkedInitialState;
 		}
 		// no forking threads, construct fresh state (must be main/start-thread)
@@ -59,12 +60,6 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> combineForkingStates(
 			final String procedure, final HashSet<LOC> allForkLocs) {
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkStates = new HashSet<>();
-//		for (final IIcfgForkTransitionThreadCurrent<IcfgLocation> fork : mIcfg.getCfgSmtToolkit()
-//				.getConcurrencyInformation().getThreadInstanceMap().keySet()) {
-//			if (!fork.getNameOfForkedProcedure().equals(procedure)) {
-//				continue;
-//			}
-//			final LOC loc = (LOC) fork.getSource();
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> state = mStateStorage
 					.getAbstractState(loc);
@@ -139,7 +134,8 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> constructForkedInitialState(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result,
-			final String procedure, final boolean multipleThreads) {
+			final String procedure, final boolean multipleThreads,
+			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkStates = result.getStates();
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> initialStates = new HashSet<>();
 		for (final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> forkState : forkStates) {
@@ -153,13 +149,10 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 				initialStates.add(removeLocalVars(forkState));
 			}
 		}
-//		final var moved = GuardedStateTransformer.copyToNewStateLocation(mEntryLocs.get(procedure), result);
-		final var interferenceDomainDisj = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).getItfApplier().stateAfterInterferences(result, procedure);
-		// TODO: solve better (problem: fork interferences dont enable new interferences during calc, so we go again)
-		final var interferenceDomainDisjRound2 = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).getItfApplier().stateAfterInterferences(interferenceDomainDisj, procedure);
-		return interferenceDomainDisjRound2;
+		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
+				.getPostOperator()).getItfApplier();
+		final var interferenceDomainDisj = applier.stateAfterInterferences(result, procedure);
+		return interferenceDomainDisj;
 	}
 
 	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> removeLocalVars(

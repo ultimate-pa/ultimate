@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,7 +13,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
+public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
+		implements IInterferenceRepository<STATE, ACTION, LOC> {
 	private final Map<String, Map<ACTION, Interference<STATE, ACTION, LOC>>> mInterferenceMap;
 
 	public AbstractInterferenceState(final Set<String> threadNames) {
@@ -29,19 +31,16 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		});
 	}
 
+	@Override
 	public Set<Interference<STATE, ACTION, LOC>> getInterferencesForThread(final String threadName) {
 		final var inner = mInterferenceMap.get(threadName);
 		return inner == null ? Set.of() : new HashSet<>(inner.values());
 	}
 
-	public Interference<STATE, ACTION, LOC> getInterferencesForThreadAction(final String threadName,
-			final ACTION edge) {
-		final var itf = mInterferenceMap.get(threadName).get(edge);
-		return itf;
-	}
-
-	public void addInterference(final String procedure, final Interference<STATE, ACTION, LOC> itf) {
-		addInterference(procedure, itf.action(), itf.disjState());
+	@Override
+	public void addInterference(final Interference<STATE, ACTION, LOC> interference) {
+		addInterference(interference.action().getSource().getProcedure(), interference.action(),
+				interference.disjState());
 	}
 
 	public void addInterference(final String threadName, final ACTION action,
@@ -54,29 +53,42 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		threadMap.put(action, newItf);
 	}
 
+	@Override
+	public Collection<Interference<STATE, ACTION, LOC>> getAllInterferences() {
+		return mInterferenceMap.values().stream().flatMap(m -> m.values().stream()).toList();
+	}
+
+	public Interference<STATE, ACTION, LOC> getInterferencesForThreadAction(final String threadName,
+			final ACTION edge) {
+		final var itf = mInterferenceMap.get(threadName).get(edge);
+		return itf;
+	}
+
 	public void clear() {
 		mInterferenceMap.clear();
 	}
 
-	public boolean isSubsetOf(final AbstractInterferenceState<STATE, ACTION, LOC> other) {
+	@Override
+	public SubsetResult isSubsetOf(final IInterferenceRepository<STATE, ACTION, LOC> other) {
 		for (final var pair : mInterferenceMap.entrySet()) {
-			final var otherThreadMap = other.mInterferenceMap.get(pair.getKey());
+			final var otherState = (AbstractInterferenceState<STATE, ACTION, LOC>) other;
+			final var otherThreadMap = otherState.mInterferenceMap.get(pair.getKey());
 			if (otherThreadMap == null) {
-				return false;
+				return SubsetResult.NONE;
 			}
 			for (final var actionItfPair : pair.getValue().entrySet()) {
 				final var otherItf = otherThreadMap.get(actionItfPair.getKey());
 				if (otherItf == null || actionItfPair.getValue().disjState() == null) {
-					return false;
+					return SubsetResult.NONE;
 				}
 				final var first = (actionItfPair.getValue().disjState());
 				final var second = (otherItf.disjState());
 				if (first.isSubsetOf(second) == SubsetResult.NONE) {
-					return false;
+					return SubsetResult.NONE;
 				}
 			}
 		}
-		return true;
+		return SubsetResult.NON_STRICT;
 	}
 
 	public Set<String> interferenceStrings() {
@@ -85,4 +97,5 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 						.map(i -> "Thread " + e.getKey() + ": " + i.action() + (i.disjState())))
 				.collect(Collectors.toSet());
 	}
+
 }

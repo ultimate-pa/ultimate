@@ -33,8 +33,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<LOC, Integer> mMutexVarSplitMap;
 	private final Map<LOC, Integer> mMutexVarSplitMapWithExitMarked;
 	final Map<String, Set<IProgramVar>> mWrittenByThread = new HashMap<>();
+	private boolean mSeenGuard;
 
 	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
+		mSeenGuard = false;
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		mScript = mManagedScript.getScript();
 		mIcfg = icfg;
@@ -44,6 +46,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			mWrittenByThread.put(thread, new HashSet<>());
 		}
 		mMutexVarSplitMap = broadMutexSplitting(false);
+		mSeenGuard = false;
 		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
 	}
 
@@ -105,9 +108,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
 				final var outgoing = loc.getOutgoingEdges();
-				if (shouldDifferentiate(outgoing)) {
+				if (shouldDifferentiate(outgoing) && !mSeenGuard) {
 					mutexVarsIProgramVarrs.addAll(getGuardVars(outgoing));
 					mutexGuardToVarsMap.put(loc, getGuardVars(outgoing));
+					mSeenGuard = true;
 				}
 				final var writtenGlobals = outgoing.stream()
 						.flatMap(e -> e.getTransformula().getOutVars().keySet().stream()).filter(mGlobals::contains)

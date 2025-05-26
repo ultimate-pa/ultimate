@@ -46,7 +46,7 @@ public class InterferenceCreator {
 						continue;
 					}
 					final var interference = computeInterference(precise, preState, edge, unionOp, maxSize);
-					result.addInterference(entryLoc.getProcedure(), interference);
+					result.addInterference(interference);
 				}
 			}
 		}

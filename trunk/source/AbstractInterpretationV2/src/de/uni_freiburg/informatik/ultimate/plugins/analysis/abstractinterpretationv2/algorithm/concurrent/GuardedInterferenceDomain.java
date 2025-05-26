@@ -24,6 +24,8 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	int locationCounter = 0;
 	public boolean mWiden = false;
 	public static int postoperatorCalls;
+	public static int disjCacheHits;
+	public static int applierCacheHits;
 	public static int totalInnerInterferenceIterations;
 	public static int maxStatesInOneItf;
 
@@ -39,6 +41,8 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 		postoperatorCalls = 0;
 		totalInnerInterferenceIterations = 0;
 		maxStatesInOneItf = 0;
+		disjCacheHits = 0;
+		applierCacheHits = 0;
 	}
 
 	public AbstractLocationMap<LOC> getAbstractLocationMap() {

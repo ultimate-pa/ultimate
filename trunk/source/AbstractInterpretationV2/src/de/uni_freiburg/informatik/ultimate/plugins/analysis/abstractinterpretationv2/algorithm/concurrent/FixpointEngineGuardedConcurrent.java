@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.Disjunct
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -97,7 +98,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		mInterferenceWideningOperator = new InterferenceWideningOperator<>(mDomain.getWideningOperator());
 	}
 
-	private record concStatistics(int postOpCalls, int totalInnerIterations, int maxStatesOneItf) {
+	private record concStatistics(int postOpCalls, int disjCacheHits, int applierCacheHits, int totalInnerIterations,
+			int maxStatesOneItf) {
 	}
 
 	@Override
@@ -143,12 +145,11 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private void calculateFixpoint(final Script script) {
 		mIteration = 1;
-		var stats = new concStatistics(0, 0, 0);
+		var stats = new concStatistics(0, 0, 0, 0, 0);
 		final var reachableErrorLocations = new LinkedHashSet<LOC>();
 		var interferences = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				mIfcg.getCfgSmtToolkit().getProcedures());
 		while (true) {
-//			mLogger.info("\n");
 			mLogger.info("Starting thread modular fixpoint engine iteration " + mIteration);
 			// TODO: for debugging, remove later
 			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
@@ -156,6 +157,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 				final var fixpointEngine = createNewUnderlyingFixpointEngine(procedure, interferences);
 				final var threadResult = fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
 				stats = new concStatistics(stats.postOpCalls + GuardedInterferenceDomain.postoperatorCalls,
+						stats.disjCacheHits + GuardedInterferenceDomain.disjCacheHits,
+						stats.applierCacheHits + GuardedInterferenceDomain.applierCacheHits,
 						stats.totalInnerIterations + GuardedInterferenceDomain.totalInnerInterferenceIterations,
 						stats.maxStatesOneItf + GuardedInterferenceDomain.maxStatesInOneItf);
 				resultSet.put(procedure, threadResult);
@@ -164,8 +167,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 			final var newInterferences = computeNewInterferences();
 			final var newMaybeWidened = updateOrWidenInterferences(interferences, newInterferences);
-			final boolean fixpointReached = newMaybeWidened.isSubsetOf(interferences);
-			if (fixpointReached) {
+			final SubsetResult fixpointReached = newMaybeWidened.isSubsetOf(interferences);
+			if (fixpointReached != SubsetResult.NONE) {
 				mPrinter.printResults(mLogger, mIteration, resultSet, mEntryLocs, mDomain.getAbstractLocationMap(),
 						script);
 				mLogger.info("maxStates used: " + mMaxParallelStates);
@@ -174,6 +177,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 							+ mLocationAbstraction.maxParallelOtherLocationsOf(thread));
 				}
 				mLogger.info("Interference postOp calls:" + stats.postOpCalls());
+				mLogger.info("DisjState cache hits:" + stats.disjCacheHits());
+				mLogger.info("Applier cache hits(no diff, addvars):" + stats.applierCacheHits());
 				mLogger.info("Total inner interference Iterations:" + stats.totalInnerIterations());
 				mLogger.info("max states explored dduring one ITF fixpoint: " + stats.maxStatesOneItf());
 				break;
@@ -194,8 +199,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		final var initialFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates,
 				newDomain, mEntryLocs, mIfcg);
 		final var paramsWithInterferences = mParams.setStorage(mStateStorage.copy())
-				.setVariableProvider(
-						new InterferingVariableProvider<>(mVarProvider, initialFactory.getInitialState(procedure)))
+				.setVariableProvider(new InterferingVariableProvider<>(mVarProvider,
+						initialFactory.getInitialState(procedure, interferences)))
 				.setDomain(newDomain);
 		final var fixpointEngine = mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
 		return fixpointEngine;
