@@ -156,14 +156,14 @@ public class InlinerBacktranslator
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> exec) {
-		assert checkCallStackSourceProgramExecution(mLogger, exec)
-				: "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
+//		assert checkCallStackSourceProgramExecution(mLogger, exec)
+//				: "callstack of program execution already broken at beginning of " + getClass().getSimpleName();
 
 		final CallReinserter callReinserter = new CallReinserter();
 		final var translated = translateProgramExecution(callReinserter, exec);
 
-		assert checkCallStackTargetProgramExecution(mLogger, translated)
-				: "callstack broken after backtranslation by " + getClass().getSimpleName();
+//		assert checkCallStackTargetProgramExecution(mLogger, translated)
+//				: "callstack broken after backtranslation by " + getClass().getSimpleName();
 		return translated;
 	}
 

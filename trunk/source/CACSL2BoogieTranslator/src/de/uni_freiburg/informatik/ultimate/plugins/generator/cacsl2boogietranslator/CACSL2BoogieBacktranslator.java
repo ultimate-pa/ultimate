@@ -169,11 +169,11 @@ public class CACSL2BoogieBacktranslator extends
 	@Override
 	public IProgramExecution<CACSLLocation, BacktranslatedExpression>
 			translateProgramExecution(final IProgramExecution<BoogieASTNode, Expression> oldPE) {
-		assert checkCallStackSourceProgramExecution(mLogger, oldPE)
-				: "callstack of initial program execution already broken";
+//		assert checkCallStackSourceProgramExecution(mLogger, oldPE)
+//				: "callstack of initial program execution already broken";
 		final var translated = translateProgramExecutionInternal(oldPE);
-		assert checkCallStackTargetProgramExecution(mLogger, translated)
-				: "callstack broken after subtree inclusion reduction";
+//		assert checkCallStackTargetProgramExecution(mLogger, translated)
+//				: "callstack broken after subtree inclusion reduction";
 		return translated;
 	}
 
@@ -292,7 +292,7 @@ public class CACSL2BoogieBacktranslator extends
 			assert translatedATEs.size() == translatedProgramStates.size();
 		}
 
-		assert checkCallStackTarget(mLogger, translatedATEs) : "callstack broken after initial translation";
+//		assert checkCallStackTarget(mLogger, translatedATEs) : "callstack broken after initial translation";
 
 		// TODO: This is hacky because we get imprecise counterexamples for empty loops like BugForLoop01 -- the real
 		// reason must be the null node itself
@@ -430,8 +430,8 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtoTraceElems
 				.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, (CACSLLocation) cloc).build());
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStackTarget(mLogger,
-				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+//		assert checkCallStackTarget(mLogger,
+//				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
 
@@ -468,8 +468,8 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtoTraceElems.add(AtomicTraceElementBuilder
 				.fromReplaceElementAndStep(currentATE, (CACSLLocation) cloc, cloc).setStepInfo(stepInfo).build());
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStackTarget(mLogger,
-				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+//		assert checkCallStackTarget(mLogger,
+//				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
 

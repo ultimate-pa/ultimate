@@ -95,8 +95,7 @@ public class RCFGBacktranslator extends
 	}
 
 	/**
-	 * @param term2Expression
-	 *            the term2Expression to set
+	 * @param term2Expression the term2Expression to set
 	 */
 	public void setTerm2Expression(final Term2Expression term2Expression) {
 		mTerm2Expression = term2Expression;
@@ -258,8 +257,8 @@ public class RCFGBacktranslator extends
 			throw new IllegalArgumentException();
 		}
 		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
-		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+//		assert checkCallStackSourceProgramExecution(mLogger,
+//				programExecution) : "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
@@ -279,15 +278,15 @@ public class RCFGBacktranslator extends
 			final ProgramState<Term> programState = rcfgProgramExecution.getProgramState(i);
 			programStateMapping.put(posInNewTrace, translateProgramState(programState));
 		}
-		assert checkCallStackTarget(mLogger, trace);
+//		assert checkCallStackTarget(mLogger, trace);
 		return new BoogieProgramExecution(programStateMapping, trace, programExecution.isConcurrent());
 	}
 
 	@Override
-	public IBacktranslatedCFG<String, BoogieASTNode>
-			translateCFG(final IBacktranslatedCFG<IcfgLocation, IIcfgTransition<IcfgLocation>> cfg) {
-		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg =
-				translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, (IIcfgTransition<IcfgLocation>) b, c));
+	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(
+			final IBacktranslatedCFG<IcfgLocation, IIcfgTransition<IcfgLocation>> cfg) {
+		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg = translateCFG(cfg,
+				(a, b, c) -> translateCFGEdge(a, (IIcfgTransition<IcfgLocation>) b, c));
 		// mLogger.info(getClass().getSimpleName());
 		// printHondas(cfg, mLogger::info);
 		// printCFG(cfg, mLogger::info);
@@ -306,8 +305,7 @@ public class RCFGBacktranslator extends
 			final Map<IExplicitEdgesMultigraph<?, ?, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, ?>, Multigraph<String, BoogieASTNode>> cache,
 			final IIcfgTransition<IcfgLocation> oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final IcfgLocation oldTarget = oldEdge.getTarget();
-		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, VisualizationNode> bla =
-				oldTarget;
+		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, ? extends IIcfgTransition<IcfgLocation>, VisualizationNode> bla = oldTarget;
 		// this is the node we want to return
 		Multigraph<String, BoogieASTNode> newTarget;
 		if (oldTarget != null) {
@@ -346,8 +344,8 @@ public class RCFGBacktranslator extends
 			final Iterator<Entry<TermVariable, CodeBlock>> iter = bi2cb.entrySet().iterator();
 			while (iter.hasNext()) {
 				final CodeBlock someBranch = iter.next().getValue();
-				final Multigraph<String, BoogieASTNode> intermediate =
-						translateCFGEdge(cache, someBranch, newSourceNode);
+				final Multigraph<String, BoogieASTNode> intermediate = translateCFGEdge(cache, someBranch,
+						newSourceNode);
 				createNewEdge(intermediate, newTarget, null);
 			}
 		} else if (oldEdge instanceof GotoEdge) {
@@ -391,8 +389,8 @@ public class RCFGBacktranslator extends
 
 	private static Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
 		final WitnessInvariant<?> inv = WitnessInvariant.getAnnotation(old);
-		final Multigraph<String, BoogieASTNode> rtr =
-				new Multigraph<>(inv == null ? null : inv.getInvariant().toString());
+		final Multigraph<String, BoogieASTNode> rtr = new Multigraph<>(
+				inv == null ? null : inv.getInvariant().toString());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}

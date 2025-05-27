@@ -85,28 +85,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 					continue;
 				}
 				final var disj = DisjunctiveAbstractState.createDisjunction(interferable, mMaxParallelStates);
-				DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> post;
-				final Pair<IAbstractState<?>, InterferenceWithSourceThread<?, ?, ?>> itfStatePair = new Pair<>(disj,
-						interference);
-				@SuppressWarnings("unchecked")
-				final var cached = (DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>) mCacheMap
-						.get(itfStatePair);
-				if (cached != null) {
-					GuardedInterferenceDomain.disjCacheHits++;
-					post = cached;
-				} else {
-					post = InterferenceApplier.applyInterferenceToSTATEsingle(interference.interf().disjState(),
-							interference.interf().action(), disj, mPostOp, mMaxParallelStates);
-					mCacheMap.put(itfStatePair, post);
-				}
 
-//				final var post = (DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>) mCacheMap
-//						.computeIfAbsent(new Pair<>(disj, interference),
-//								x -> InterferenceApplier.applyInterferenceToSTATEsingle(
-//										interference.interf().disjState(), interference.interf().action(), disj,
-//										mPostOp, mMaxParallelStates));
-//				final var post = InterferenceApplier.applyInterferenceToSTATEsingle(interference.interf().disjState(),
-//						interference.interf().action(), disj, mPostOp, mMaxParallelStates);
+				final var post = InterferenceApplier.applyInterferenceToSTATEsingle(interference.interf().disjState(),
+						interference.interf().action(), disj, mPostOp, mMaxParallelStates);
 				if (post == null) {
 					continue;
 				}

@@ -77,9 +77,9 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				: oldstate;
 
 		// 1. normal poststate
-//		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
-		final var states = (Collection<STATE>) mCacheMap.computeIfAbsent(new Pair<>(newState.state(), transition),
-				x -> mUnderlyingPostOp.apply((STATE) x.getFirst(), (ACTION) x.getSecond()));
+		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
+//		final var states = (Collection<STATE>) mCacheMap.computeIfAbsent(new Pair<>(newState.state(), transition),
+//				x -> mUnderlyingPostOp.apply((STATE) x.getFirst(), (ACTION) x.getSecond()));
 
 		// adjust abstract location according to new location
 		final var guardedStates = states.stream().filter(s -> !s.isBottom())
@@ -90,14 +90,6 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		if (!mApplyInterferences) {
 			return guardedStates;
 		}
-		// 2. apply interferences
-//		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> statesAfterInterferences = new HashSet<>();
-//		for (final Interference<STATE, ACTION, LOC> interference : mInterferences.getAllInterferences()) {
-//			final var interfered = guardedStates.stream()
-//					.flatMap(s -> mItfApplier.applyInterferencesToState(s, interference).stream()).toList();
-//			statesAfterInterferences.addAll(interfered);
-//		}
-//		final var afterItfs = DisjunctiveAbstractState.createDisjunction(statesAfterInterferences, mMaxParallelStates);
 		// 2. apply interferences
 		final var afterItfs = mItfApplier.stateAfterInterferences(
 				DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates), mCurrentThreadName);
