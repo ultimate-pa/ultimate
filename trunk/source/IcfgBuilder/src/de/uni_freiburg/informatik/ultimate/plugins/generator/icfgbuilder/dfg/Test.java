@@ -1,21 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.dfg;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 public class Test {
-	public static void test(final BoogieIcfgContainer icfg) {
-		System.out.println("TEST");
-		for (final BoogieIcfgLocation icfgLocation : icfg.getInitialNodes()) {
-			System.out.println(icfgLocation.getOutgoingEdges().toString());
-			final DfgBuilder dfgBuilder = new DfgBuilder();
-			final DfgContainer dfg = dfgBuilder.buildDfg(icfgLocation);
-			System.out.println("PRINTING EDGERELATION");
-			System.out.println(dfg.getEdgeRelation().toString());
-			System.out.println("LENGTH OF NODE LIST");
-			System.out.println(dfg.getNodeList().size());
-			System.out.println("ERFLOG");
-
+	public static void test(final BoogieIcfgContainer icfg, final ILogger logger) {
+		for (final BoogieIcfgLocation initialNode : icfg.getInitialNodes()) {
+			logger.info("Building Dfg for InitialNode: " + initialNode);
+			final DfgContainer dfg = DfgBuilder.buildDfg(initialNode, logger);
+			logger.info("Obtained Dfg");
+			logger.debug("EdgeRelation: " + dfg.getEdgeRelation().toString());
+			logger.debug("Length of Nodelist: " + dfg.getNodeList().size());
 		}
 	}
 

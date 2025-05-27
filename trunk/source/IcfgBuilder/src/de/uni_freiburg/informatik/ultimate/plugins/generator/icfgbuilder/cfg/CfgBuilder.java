@@ -336,7 +336,7 @@ public class CfgBuilder {
 		ModelUtils.copyAnnotations(unit, icfg);
 		mLogger.info("Removed " + mRemovedAssumeTrueStatements + " assume(true) statements.");
 
-		Test.test(icfg);
+		Test.test(icfg, mLogger);
 		return icfg;
 	}
 

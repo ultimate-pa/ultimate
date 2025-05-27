@@ -5,19 +5,19 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class DfgContainer {
-	private final HashRelation<DFGNode, DFGNode> edgeRelation;
-	private final Set<DFGNode> nodeList;
+	private final HashRelation<DfgNode, DfgNode> edgeRelation;
+	private final Set<DfgNode> nodeList;
 
-	public DfgContainer(final HashRelation<DFGNode, DFGNode> edgeRelation, final Set<DFGNode> nodeList) {
+	public DfgContainer(final HashRelation<DfgNode, DfgNode> edgeRelation, final Set<DfgNode> nodeList) {
 		this.edgeRelation = edgeRelation;
 		this.nodeList = nodeList;
 	}
 
-	public Set<DFGNode> getNodeList() {
+	public Set<DfgNode> getNodeList() {
 		return nodeList;
 	}
 
-	public HashRelation<DFGNode, DFGNode> getEdgeRelation() {
+	public HashRelation<DfgNode, DfgNode> getEdgeRelation() {
 		return edgeRelation;
 	}
 }
