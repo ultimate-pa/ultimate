@@ -191,7 +191,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 			return state;
 		}
 		final var territory = state.territory;
-		final Set<Region<P>> territoryRegions = new HashSet<>(territory.getRegions());
+		final var territoryRegions = new HashSet<>(territory.getRegions());
 		final var extendedRegions = new HashSet<Region<P>>();
 		for (final Region<P> region : territory.getRegions()) {
 			final var matchingTransitions = findMatchingTransitions(region, transitions);
@@ -299,9 +299,9 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	}
 
 	// TODO use ImmutableSet for bystanders
-	public record State<L, P>(Territory<P> territory, IPredicate law, Set<Region<P>> bystanders, int hash) {
+	public record State<L, P>(Territory<P, Region<P>> territory, IPredicate law, Set<Region<P>> bystanders, int hash) {
 		// Convenience constructor that computes the correct hash code. Always use this constructor.
-		public State(final Territory<P> territory, final IPredicate law, final Set<Region<P>> bystanders) {
+		public State(final Territory<P, Region<P>> territory, final IPredicate law, final Set<Region<P>> bystanders) {
 			this(territory, law, bystanders, Objects.hash(territory, law, bystanders));
 		}
 

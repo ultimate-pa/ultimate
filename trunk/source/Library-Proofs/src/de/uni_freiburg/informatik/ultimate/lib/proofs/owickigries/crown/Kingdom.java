@@ -187,9 +187,10 @@ public final class Kingdom<PLACE, LETTER> {
 	 *
 	 * @return Territory containing all Regions corresponding to the Realms in Kingdom
 	 */
-	public Territory<PLACE> toTerritory() {
+	public Territory<PLACE, Region<PLACE>> toTerritory() {
 		final ImmutableSet<Region<PLACE>> regions =
-				mKingdom.stream().map((Function<? super Realm<PLACE, LETTER>, ? extends Region<PLACE>>) Realm::toRegion).collect(ImmutableSet.collector());
+				mKingdom.stream().map((Function<? super Realm<PLACE, LETTER>, ? extends Region<PLACE>>) Realm::toRegion)
+						.collect(ImmutableSet.collector());
 		return new Territory<>(regions);
 	}
 

@@ -93,7 +93,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 
 	private Validity checkValidity() {
 
-		final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories =
+		final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> initialTerritories =
 				mEmpireAnnotation.getMarkingTerritories(Marking.initial(mNet));
 		if (checkInitialTerritories(initialTerritories) != Validity.VALID) {
 			return Validity.INVALID;
@@ -107,13 +107,14 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.VALID;
 	}
 
-	private Validity checkInitialTerritories(final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories) {
+	private Validity
+			checkInitialTerritories(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> initialTerritories) {
 		if (initialTerritories.isEmpty()) {
 			mLogger.warn("Empire annotation does not contain any initial Territory");
 			return Validity.INVALID;
 		}
 		final IPredicate trueIPredicate = mFactory.and();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : initialTerritories) {
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : initialTerritories) {
 			final Set<IPredicate> lawSet = mEmpireAnnotation.getLawSet(pair.getFirst());
 			if (mImplicationChecker.checkImplication(trueIPredicate, false, mFactory.and(lawSet),
 					false) != Validity.VALID) {
@@ -125,10 +126,11 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.VALID;
 	}
 
-	private Validity checkSuccessorValidity(final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories) {
-		final Set<Pair<Territory<PLACE>, IPredicate>> visitedPairs = new HashSet<>();
-		final var queue = new ArrayDeque<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : initialTerritories) {
+	private Validity
+			checkSuccessorValidity(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> initialTerritories) {
+		final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> visitedPairs = new HashSet<>();
+		final var queue = new ArrayDeque<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>();
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : initialTerritories) {
 			queue.offer(pair);
 		}
 		while (!queue.isEmpty()) {
@@ -159,7 +161,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 				if (!hoareValidity) {
 					return Validity.INVALID;
 				}
-				for (final Pair<Territory<PLACE>, IPredicate> pair2 : successorPairs) {
+				for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair2 : successorPairs) {
 					queue.offer(pair2);
 				}
 			}
@@ -169,7 +171,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 
 	private Validity checkAcceptingPlaces() {
 		final var acceptingPlaces = mNet.getAcceptingPlaces();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
 			if (DataStructureUtils.haveEmptyIntersection(territory.getPlaces(), acceptingPlaces)) {
@@ -192,7 +194,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 	}
 
 	private Validity checkContradiction(final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition,
-			final Territory<PLACE> territory) {
+			final Territory<PLACE, Region<PLACE>> territory) {
 		// final var transPredicate = mFactory.orT(transition.getSymbol().getTransformula().getFormula());
 		// if (mImplicationChecker.checkImplication(lawConjunction, false, transPredicate, false) != Validity.VALID) {
 		// return Validity.VALID;
@@ -203,7 +205,7 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.VALID;
 	}
 
-	private Validity checkAllReachable(final Set<Pair<Territory<PLACE>, IPredicate>> visitedPairs) {
+	private Validity checkAllReachable(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> visitedPairs) {
 		if (visitedPairs.equals(mEmpireAnnotation.getEmpire())) {
 			return Validity.VALID;
 		}
@@ -212,9 +214,9 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.INVALID;
 	}
 
-	private boolean checkHoareValidity(final Set<Pair<Territory<PLACE>, IPredicate>> successorPairs,
+	private boolean checkHoareValidity(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> successorPairs,
 			final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition) {
-		for (final Pair<Territory<PLACE>, IPredicate> succPair : successorPairs) {
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> succPair : successorPairs) {
 			final var valid = checkHoareTriple(lawConjunction, succPair.getSecond(), transition);
 			if (!valid) {
 				mLogger.warn("Invalid Hoare Triple\n \tprecondition %s \taction %s \tpostcondition %s", lawConjunction,
@@ -225,11 +227,12 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return true;
 	}
 
-	List<Pair<Territory<PLACE>, IPredicate>> getStrongSuccessors(
-			final Set<Pair<Territory<PLACE>, IPredicate>> successorPairs, final IPredicate lawConjunction,
-			final Transition<LETTER, PLACE> transition, final Pair<Territory<PLACE>, IPredicate> pair) {
-		final var result = new ArrayList<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> succPair : successorPairs) {
+	List<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> getStrongSuccessors(
+			final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> successorPairs,
+			final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition,
+			final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair) {
+		final var result = new ArrayList<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>();
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> succPair : successorPairs) {
 			final var valid = checkHoareTriple(lawConjunction, succPair.getSecond(), transition);
 			if (valid) {
 				result.add(succPair);
@@ -238,10 +241,10 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return result;
 	}
 
-	private Set<Pair<Territory<PLACE>, IPredicate>> getEquivalentTerritories(final Transition<LETTER, PLACE> transition,
-			final Set<Region<PLACE>> bystanders) {
-		final var result = new HashSet<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
+	private Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>
+			getEquivalentTerritories(final Transition<LETTER, PLACE> transition, final Set<Region<PLACE>> bystanders) {
+		final var result = new HashSet<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>();
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
 			if (!territory.getRegions().containsAll(bystanders) || !territory.enables(transition)) {
@@ -252,9 +255,9 @@ public class EmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return result;
 	}
 
-	private IPredicate getLawConjunction(final Set<Pair<Territory<PLACE>, IPredicate>> pairs) {
-		final Set<IPredicate> lawSet = pairs.stream()
-				.map((Function<? super Pair<Territory<PLACE>, IPredicate>, ? extends IPredicate>) Pair::getSecond)
+	private IPredicate getLawConjunction(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> pairs) {
+		final Set<IPredicate> lawSet = pairs.stream().map(
+				(Function<? super Pair<Territory<PLACE, Region<PLACE>>, IPredicate>, ? extends IPredicate>) Pair::getSecond)
 				.collect(Collectors.toSet());
 		return mFactory.and(lawSet);
 	}

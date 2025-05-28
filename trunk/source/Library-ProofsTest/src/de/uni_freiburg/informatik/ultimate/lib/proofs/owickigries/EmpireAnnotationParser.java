@@ -89,9 +89,9 @@ public class EmpireAnnotationParser<P> {
 		return result;
 	}
 
-	private Set<Pair<Territory<P>, IPredicate>> parseLaw(final List<Map<String, Object>> lawDefs,
+	private Set<Pair<Territory<P, Region<P>>, IPredicate>> parseLaw(final List<Map<String, Object>> lawDefs,
 			final Map<String, Region<P>> namedRegions) {
-		final var result = new HashSet<Pair<Territory<P>, IPredicate>>();
+		final var result = new HashSet<Pair<Territory<P, Region<P>>, IPredicate>>();
 
 		for (final var mapping : lawDefs) {
 			final var territoryDef = (List<Object>) mapping.get(TERRITORY);
@@ -105,7 +105,8 @@ public class EmpireAnnotationParser<P> {
 		return result;
 	}
 
-	private Territory<P> parseTerritory(final List<Object> territoryDef, final Map<String, Region<P>> namedRegions) {
+	private Territory<P, Region<P>> parseTerritory(final List<Object> territoryDef,
+			final Map<String, Region<P>> namedRegions) {
 		final var regions = new HashSet<Region<P>>();
 		for (final var regionSyntax : territoryDef) {
 			Region<P> region;

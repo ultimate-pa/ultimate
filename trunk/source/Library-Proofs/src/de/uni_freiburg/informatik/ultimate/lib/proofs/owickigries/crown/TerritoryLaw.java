@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 
 /**
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territo
  *            The type of places in the Petri program
  */
 class TerritoryLaw<PLACE> {
-	private final Territory<PLACE> mTerritory;
+	private final Territory<PLACE, Region<PLACE>> mTerritory;
 	private IPredicate mLaw;
 	private final BasicPredicateFactory mFactory;
 	private final Function<PLACE, IPredicate> mPlaceToAssertion;
@@ -61,7 +62,7 @@ class TerritoryLaw<PLACE> {
 	 * @param factory
 	 *            Factory for IPredicate operations
 	 */
-	public TerritoryLaw(final Territory<PLACE> territory, final KingdomLaw<PLACE, ?> rookLaw,
+	public TerritoryLaw(final Territory<PLACE, Region<PLACE>> territory, final KingdomLaw<PLACE, ?> rookLaw,
 			final Function<PLACE, IPredicate> placeToAssertion, final BasicPredicateFactory factory) {
 		mTerritory = territory;
 		mFactory = factory;
@@ -95,7 +96,7 @@ class TerritoryLaw<PLACE> {
 		mLaw = mFactory.or(mLaw, rookAssertion);
 	}
 
-	public Territory<PLACE> getTerritory() {
+	public Territory<PLACE, Region<PLACE>> getTerritory() {
 		return mTerritory;
 	}
 

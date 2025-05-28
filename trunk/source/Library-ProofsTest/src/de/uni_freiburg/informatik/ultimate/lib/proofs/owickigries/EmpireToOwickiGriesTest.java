@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
@@ -75,7 +76,7 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 				(Function<? super NestedWordAutomaton<SimpleAction, IPredicate>, ? extends Set<IPredicate>>) NestedWordAutomaton::getStates)
 				.flatMap(Set::stream).collect(Collectors.toSet());
 		final var predicatePlaceMap = new HashMap<IPredicate, Set<IPredicate>>();
-		for (final Pair<Territory<IPredicate>, IPredicate> pair : empire.getEmpire()) {
+		for (final Pair<Territory<IPredicate, Region<IPredicate>>, IPredicate> pair : empire.getEmpire()) {
 			final var law = pair.getSecond();
 			for (final IPredicate iPredicate : assertionPlaces) {
 				if (law.getFormula().equals(iPredicate.getFormula())) {

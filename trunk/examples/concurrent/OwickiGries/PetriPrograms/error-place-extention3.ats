@@ -20,7 +20,7 @@ PetriNet program = (
     ({ "l3" } "[3]" { "e" })
   },
   initialMarking = { "l0" },
-  acceptingPlaces = { "e" }s
+  acceptingPlaces = { "e" }
 );
 
 FiniteAutomaton proof1 = (

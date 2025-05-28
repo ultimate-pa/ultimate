@@ -92,7 +92,7 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 
 	private Validity checkValidity() {
 
-		final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories =
+		final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> initialTerritories =
 				mEmpireAnnotation.getMarkingTerritories(Marking.initial(mNet));
 		if (checkInitialTerritories(initialTerritories) != Validity.VALID) {
 			return Validity.INVALID;
@@ -106,13 +106,14 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.VALID;
 	}
 
-	private Validity checkInitialTerritories(final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories) {
+	private Validity
+			checkInitialTerritories(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> initialTerritories) {
 		if (initialTerritories.isEmpty()) {
 			mLogger.warn("Empire annotation does not contain any initial Territory");
 			return Validity.INVALID;
 		}
 		final IPredicate trueIPredicate = mFactory.and();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : initialTerritories) {
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : initialTerritories) {
 			final Set<IPredicate> lawSet = mEmpireAnnotation.getLawSet(pair.getFirst());
 			if (mImplicationChecker.checkImplication(trueIPredicate, false, mFactory.and(lawSet),
 					false) == Validity.VALID) {
@@ -123,10 +124,11 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.INVALID;
 	}
 
-	private Validity checkSuccessorValidity(final Set<Pair<Territory<PLACE>, IPredicate>> initialTerritories) {
-		final Set<Pair<Territory<PLACE>, IPredicate>> visitedPairs = new HashSet<>();
-		final var queue = new ArrayDeque<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : initialTerritories) {
+	private Validity
+			checkSuccessorValidity(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> initialTerritories) {
+		final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> visitedPairs = new HashSet<>();
+		final var queue = new ArrayDeque<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>();
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : initialTerritories) {
 			queue.offer(pair);
 		}
 		while (!queue.isEmpty()) {
@@ -157,7 +159,7 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 							transition.getSymbol().getTransformula());
 					return Validity.INVALID;
 				}
-				for (final Pair<Territory<PLACE>, IPredicate> pair2 : successorPairs) {
+				for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair2 : successorPairs) {
 					queue.offer(pair2);
 				}
 			}
@@ -167,7 +169,7 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 
 	private Validity checkAcceptingPlaces() {
 		final var acceptingPlaces = mNet.getAcceptingPlaces();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : mEmpireAnnotation.getEmpire()) {
 			final var territory = pair.getFirst();
 			final var law = pair.getSecond();
 			if (DataStructureUtils.haveEmptyIntersection(territory.getPlaces(), acceptingPlaces)) {
@@ -190,7 +192,7 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 	}
 
 	private Validity checkContradiction(final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition,
-			final Territory<PLACE> territory) {
+			final Territory<PLACE, Region<PLACE>> territory) {
 		// final var transPredicate = mFactory.orT(transition.getSymbol().getTransformula().getFormula());
 		// if (mImplicationChecker.checkImplication(lawConjunction, false, transPredicate, false) != Validity.VALID) {
 		// return Validity.VALID;
@@ -201,7 +203,7 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.VALID;
 	}
 
-	private Validity checkAllReachable(final Set<Pair<Territory<PLACE>, IPredicate>> visitedPairs) {
+	private Validity checkAllReachable(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> visitedPairs) {
 		if (visitedPairs.equals(mEmpireAnnotation.getEmpire())) {
 			return Validity.VALID;
 		}
@@ -210,9 +212,9 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return Validity.INVALID;
 	}
 
-	private boolean checkHoareValidity(final Set<Pair<Territory<PLACE>, IPredicate>> successorPairs,
+	private boolean checkHoareValidity(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> successorPairs,
 			final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition) {
-		for (final Pair<Territory<PLACE>, IPredicate> succPair : successorPairs) {
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> succPair : successorPairs) {
 			final var valid = checkHoareTriple(lawConjunction, succPair.getSecond(), transition);
 			if (valid) {
 				return true;
@@ -221,11 +223,12 @@ public class DisjunctiveEmpireValidityCheck<PLACE, LETTER extends IAction> {
 		return false;
 	}
 
-	List<Pair<Territory<PLACE>, IPredicate>> getStrongSuccessors(
-			final Set<Pair<Territory<PLACE>, IPredicate>> successorPairs, final IPredicate lawConjunction,
-			final Transition<LETTER, PLACE> transition, final Pair<Territory<PLACE>, IPredicate> pair) {
-		final var result = new ArrayList<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> succPair : successorPairs) {
+	List<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> getStrongSuccessors(
+			final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> successorPairs,
+			final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition,
+			final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair) {
+		final var result = new ArrayList<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>();
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> succPair : successorPairs) {
 			final var valid = checkHoareTriple(lawConjunction, succPair.getSecond(), transition);
 			if (valid) {
 				result.add(succPair);

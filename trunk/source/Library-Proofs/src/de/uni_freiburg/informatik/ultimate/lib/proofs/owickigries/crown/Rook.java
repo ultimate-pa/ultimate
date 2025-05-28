@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
@@ -255,7 +256,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return True if all Rooks Territories are equal
 	 */
 	public static <P, L> boolean getRooksTerritoryEquality(final Set<Rook<P, L>> rooks) {
-		final Set<Territory<P>> rookTerritories =
+		final Set<Territory<P, Region<P>>> rookTerritories =
 				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
 		return rookTerritories.size() == 1;
 	}
@@ -273,7 +274,7 @@ public final class Rook<PLACE, LETTER> {
 	 * @return True if all Territories are unique
 	 */
 	public static <P, L> boolean getRooksTerritoriesUnique(final Set<Rook<P, L>> rooks) {
-		final Set<Territory<P>> rookTerritories =
+		final Set<Territory<P, Region<P>>> rookTerritories =
 				rooks.stream().map(rook -> rook.getKingdom().toTerritory()).collect(Collectors.toSet());
 		return rookTerritories.size() == rooks.size();
 	}

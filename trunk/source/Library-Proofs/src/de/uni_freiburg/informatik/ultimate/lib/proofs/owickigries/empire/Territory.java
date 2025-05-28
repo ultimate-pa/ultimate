@@ -52,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            The type of places in the Petri net
  */
-public final class Territory<PLACE> {
-	private final ImmutableSet<Region<PLACE>> mRegions;
+public final class Territory<P, R extends Region<P>> {
+	private final ImmutableSet<R> mRegions;
 
 	// Cached set of places in the territory. This is computed on-demand in #getPlaces().
-	private ImmutableSet<PLACE> mPlaces;
+	private ImmutableSet<P> mPlaces;
 
 	/**
 	 * Creates a new territory.
@@ -68,7 +68,7 @@ public final class Territory<PLACE> {
 	 * @param regions
 	 *            the set of regions constituting the territory
 	 */
-	public Territory(final ImmutableSet<Region<PLACE>> regions) {
+	public Territory(final ImmutableSet<R> regions) {
 		assert !regions.isEmpty() : "cannot create an empty territory";
 		mRegions = regions;
 	}
@@ -76,14 +76,14 @@ public final class Territory<PLACE> {
 	/**
 	 * @return the regions constituting this territory
 	 */
-	public ImmutableSet<Region<PLACE>> getRegions() {
+	public ImmutableSet<R> getRegions() {
 		return mRegions;
 	}
 
 	/**
 	 * @return the set of all places in this territory, which corresponds to the union of its regions.
 	 */
-	public ImmutableSet<PLACE> getPlaces() {
+	public ImmutableSet<P> getPlaces() {
 		if (mPlaces == null) {
 			mPlaces = mRegions.stream().flatMap(r -> r.getPlaces().stream()).collect(ImmutableSet.collector());
 		}
@@ -97,7 +97,7 @@ public final class Territory<PLACE> {
 	 *            the place to check
 	 * @return {@code true} if one of the regions in this territory contains the place, {@code false} otherwise
 	 */
-	public boolean containsPlace(final PLACE place) {
+	public boolean containsPlace(final P place) {
 		return getPlaces().contains(place);
 	}
 
@@ -111,23 +111,23 @@ public final class Territory<PLACE> {
 	 *
 	 * @return the territory's treaty
 	 */
-	public Set<Marking<PLACE>> getTreaty() {
-		final Set<Marking<PLACE>> treatySet = new HashSet<>();
-		final Set<Region<PLACE>> territoryRegions = new HashSet<>(mRegions);
+	public Set<Marking<P>> getTreaty() {
+		final Set<Marking<P>> treatySet = new HashSet<>();
+		final Set<R> territoryRegions = new HashSet<>(mRegions);
 		getAllMarkings(territoryRegions, new HashSet<>(), treatySet);
 		return treatySet;
 	}
 
-	private void getAllMarkings(final Set<Region<PLACE>> remainingTerritory, final Set<PLACE> currentMarking,
-			final Set<Marking<PLACE>> treaty) {
+	private void getAllMarkings(final Set<R> remainingTerritory, final Set<P> currentMarking,
+			final Set<Marking<P>> treaty) {
 		if (remainingTerritory.isEmpty()) {
 			treaty.add(new Marking<>(ImmutableSet.of(currentMarking)));
 			return;
 		}
-		final Region<PLACE> currentRegion = remainingTerritory.iterator().next();
+		final R currentRegion = remainingTerritory.iterator().next();
 		remainingTerritory.remove(currentRegion);
 
-		for (final PLACE place : currentRegion.getPlaces()) {
+		for (final P place : currentRegion.getPlaces()) {
 			currentMarking.add(place);
 			getAllMarkings(new HashSet<>(remainingTerritory), new HashSet<>(currentMarking), treaty);
 			currentMarking.remove(place);
@@ -155,7 +155,7 @@ public final class Territory<PLACE> {
 	 *            the territory for which subsumption should be checked
 	 * @return {@code true} if this territory subsumes the given territory, {@code false} otherwise
 	 */
-	public boolean subsumes(final Territory<PLACE> subsumee) {
+	public boolean subsumes(final Territory<P, R> subsumee) {
 		final var bigRegions = new HashSet<>(getRegions());
 		for (final var smallRegion : subsumee.getRegions()) {
 			final var it = bigRegions.iterator();
@@ -185,12 +185,12 @@ public final class Territory<PLACE> {
 	 *            the marking for which membership in the treaty should be checked
 	 * @return {@code true} if this territory's treaty contains the given marking, {@code false} otherwise
 	 */
-	public boolean containsMarking(final Marking<PLACE> marking) {
-		final Set<Region<PLACE>> regions = new HashSet<>(getRegions());
+	public boolean containsMarking(final Marking<P> marking) {
+		final Set<R> regions = new HashSet<>(getRegions());
 		if (marking.size() != regions.size()) {
 			return false;
 		}
-		for (final PLACE place : marking.getPlaces()) {
+		for (final P place : marking.getPlaces()) {
 			var found = false;
 			final var it = regions.iterator();
 			while (!found && it.hasNext()) {
@@ -216,7 +216,7 @@ public final class Territory<PLACE> {
 	 *            the transition for which enabledness is checked
 	 * @return {@code true} if this territory enables the given transition, {@code false} otherwise
 	 */
-	public boolean enables(final Transition<?, PLACE> transition) {
+	public boolean enables(final Transition<?, P> transition) {
 		final var regions = new HashSet<>(getRegions());
 		final var predecessors = transition.getPredecessors();
 		for (final var place : predecessors) {
@@ -247,7 +247,7 @@ public final class Territory<PLACE> {
 	 *            A Petri net (containing all places of this territory) whose enabled transitions shall be collected
 	 * @return a stream of all transitions enabled in some marking represented by this territory
 	 */
-	public <L> Stream<Transition<L, PLACE>> getEnabledTransitions(final IPetriNet<L, PLACE> net) {
+	public <L> Stream<Transition<L, P>> getEnabledTransitions(final IPetriNet<L, P> net) {
 		return net.getSuccessorTransitionProviders(getPlaces(), getPlaces()).stream()
 				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t));
 	}
@@ -273,7 +273,7 @@ public final class Territory<PLACE> {
 	 * @return {@code true} if {@code otherTerritory} is a successor of this territory for {@code transition},
 	 *         {@code false} otherwise
 	 */
-	public boolean isSuccessor(final Territory<PLACE> otherTerritory, final Transition<?, PLACE> transition) {
+	public boolean isSuccessor(final Territory<P, R> otherTerritory, final Transition<?, P> transition) {
 		final var bystanders = getBystanders(transition);
 		final var successorPlaces = transition.getSuccessors();
 		if (!otherTerritory.getRegions().containsAll(bystanders)
@@ -285,7 +285,7 @@ public final class Territory<PLACE> {
 		if (potentialSuccessors.size() != successorPlaces.size()) {
 			return false;
 		}
-		for (final PLACE succPlace : successorPlaces) {
+		for (final P succPlace : successorPlaces) {
 			final var succRegions =
 					potentialSuccessors.stream().filter(r -> r.contains(succPlace)).collect(Collectors.toSet());
 			if (succRegions.size() != 1) {
@@ -305,7 +305,7 @@ public final class Territory<PLACE> {
 	 *            A transition enabled by this territory
 	 * @return the set of bystander regions
 	 */
-	public Set<Region<PLACE>> getBystanders(final Transition<?, PLACE> transition) {
+	public Set<R> getBystanders(final Transition<?, P> transition) {
 		assert enables(transition) : "Territory does not enable the given transition";
 		final var predecessors = transition.getPredecessors();
 		return mRegions.stream().filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
@@ -319,14 +319,14 @@ public final class Territory<PLACE> {
 	 *            a set of places
 	 * @return the set of corresponding regions
 	 */
-	public Set<Region<PLACE>> getPlacesRegions(final Set<PLACE> places) {
+	public Set<R> getPlacesRegions(final Set<P> places) {
 		return mRegions.stream().filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), places))
 				.collect(Collectors.toSet());
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
-		return this == obj || (obj instanceof final Territory<?> other && mRegions.equals(other.getRegions()));
+		return this == obj || obj instanceof final Territory<?, ?> other && mRegions.equals(other.getRegions());
 	}
 
 	@Override

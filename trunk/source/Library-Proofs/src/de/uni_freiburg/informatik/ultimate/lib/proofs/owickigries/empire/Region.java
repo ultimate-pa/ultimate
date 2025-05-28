@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  * @param <PLACE>
  *            The type of places in the Petri program
  */
-public final class Region<PLACE> {
+public class Region<PLACE> {
 	private final ImmutableSet<PLACE> mRegion;
 	private final LazyInt mHash;
 
@@ -108,7 +108,7 @@ public final class Region<PLACE> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return obj == this || (obj instanceof final Region<?> other && mRegion.equals(other.getPlaces()));
+		return obj == this || obj instanceof final Region<?> other && mRegion.equals(other.getPlaces());
 	}
 
 	@Override

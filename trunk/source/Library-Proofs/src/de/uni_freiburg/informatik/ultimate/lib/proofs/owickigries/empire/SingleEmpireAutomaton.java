@@ -310,10 +310,10 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 	}
 
 	// TODO use ImmutableSet for bystanders
-	public record State<L, P>(Territory<P> territory, IPredicate law, IPredicate fullLaw, Set<Region<P>> bystanders,
-			int hash) {
+	public record State<L, P>(Territory<P, Region<P>> territory, IPredicate law, IPredicate fullLaw,
+			Set<Region<P>> bystanders, int hash) {
 		// Convenience constructor that computes the correct hash code. Always use this constructor.
-		public State(final Territory<P> territory, final IPredicate law, final IPredicate fullLaw,
+		public State(final Territory<P, Region<P>> territory, final IPredicate law, final IPredicate fullLaw,
 				final Set<Region<P>> bystanders) {
 			this(territory, law, fullLaw, bystanders, Objects.hash(territory, law, bystanders));
 		}

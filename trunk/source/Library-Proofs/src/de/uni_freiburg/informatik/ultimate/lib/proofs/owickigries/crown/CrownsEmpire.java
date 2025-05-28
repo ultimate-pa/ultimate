@@ -73,10 +73,11 @@ public class CrownsEmpire<PLACE, LETTER> {
 		mStatistics.reportEmpire(mEmpireAnnotation);
 	}
 
-	private Map<Territory<PLACE>, IPredicate>
-			getTerritoryIPredicateMap(final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories) {
-		final HashMap<Territory<PLACE>, IPredicate> territoryIPredicateMap = new HashMap<>();
-		for (final Map.Entry<Territory<PLACE>, TerritoryLaw<PLACE>> entry : crownsTerritories.entrySet()) {
+	private Map<Territory<PLACE, Region<PLACE>>, IPredicate> getTerritoryIPredicateMap(
+			final HashMap<Territory<PLACE, Region<PLACE>>, TerritoryLaw<PLACE>> crownsTerritories) {
+		final HashMap<Territory<PLACE, Region<PLACE>>, IPredicate> territoryIPredicateMap = new HashMap<>();
+		for (final Map.Entry<Territory<PLACE, Region<PLACE>>, TerritoryLaw<PLACE>> entry : crownsTerritories
+				.entrySet()) {
 			territoryIPredicateMap.put(entry.getKey(), entry.getValue().getLaw());
 		}
 		return territoryIPredicateMap;
@@ -84,9 +85,9 @@ public class CrownsEmpire<PLACE, LETTER> {
 
 	private EmpireAnnotation<PLACE> constructEmpireAnnotation(final BasicPredicateFactory factory,
 			final Function<PLACE, IPredicate> placeToAssertion) {
-		final HashMap<Territory<PLACE>, TerritoryLaw<PLACE>> crownsTerritories = new HashMap<>();
+		final HashMap<Territory<PLACE, Region<PLACE>>, TerritoryLaw<PLACE>> crownsTerritories = new HashMap<>();
 		for (final Rook<PLACE, LETTER> rook : mCrown.getRooks()) {
-			final Territory<PLACE> rookTerritory = rook.getKingdom().toTerritory();
+			final Territory<PLACE, Region<PLACE>> rookTerritory = rook.getKingdom().toTerritory();
 			if (!crownsTerritories.containsKey(rookTerritory)) {
 				final TerritoryLaw<PLACE> law =
 						new TerritoryLaw<>(rookTerritory, rook.getLaw(), placeToAssertion, factory);
@@ -97,7 +98,8 @@ public class CrownsEmpire<PLACE, LETTER> {
 			law.addRooksAssertion(rook.getLaw());
 			crownsTerritories.put(rookTerritory, law);
 		}
-		final Map<Territory<PLACE>, IPredicate> territoryIPredicateMap = getTerritoryIPredicateMap(crownsTerritories);
+		final Map<Territory<PLACE, Region<PLACE>>, IPredicate> territoryIPredicateMap =
+				getTerritoryIPredicateMap(crownsTerritories);
 		return new EmpireAnnotation<>(territoryIPredicateMap);
 	}
 

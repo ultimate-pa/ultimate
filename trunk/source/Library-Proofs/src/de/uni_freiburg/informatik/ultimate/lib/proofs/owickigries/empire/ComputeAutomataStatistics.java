@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ComputeAutomataStatistics<L, P> {
 	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
 	private final Set<Region<P>> mRegions;
-	private final Set<Pair<Territory<P>, IPredicate>> mUniquePairs;
+	private final Set<Pair<Territory<P, Region<P>>, IPredicate>> mUniquePairs;
 	private final long mNumberOfTerritories;
 
 	public ComputeAutomataStatistics(
@@ -79,7 +79,7 @@ public class ComputeAutomataStatistics<L, P> {
 		return mRegions;
 	}
 
-	public Set<Territory<P>> getTerritories() {
+	public Set<Territory<P, Region<P>>> getTerritories() {
 		return mUniquePairs.stream().map(Pair::getFirst).collect(Collectors.toSet());
 	}
 }

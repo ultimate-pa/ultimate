@@ -177,7 +177,7 @@ public class EmpireAutomatonValidityCheck<PLACE, LETTER extends IAction> {
 	}
 
 	private Validity checkContradiction(final IPredicate lawConjunction, final Transition<LETTER, PLACE> transition,
-			final Territory<PLACE> territory) {
+			final Territory<PLACE, Region<PLACE>> territory) {
 		if (!checkHoareTriple(lawConjunction, mFactory.or(), transition)) {
 			return Validity.INVALID;
 		}

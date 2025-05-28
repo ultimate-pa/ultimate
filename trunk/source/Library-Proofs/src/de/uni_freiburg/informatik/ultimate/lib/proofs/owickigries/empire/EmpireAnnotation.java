@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            The type of program statements
  */
 public class EmpireAnnotation<PLACE> {
-	private final Set<Pair<Territory<PLACE>, IPredicate>> mEmpire;
+	private final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> mEmpire;
 
 	/**
 	 * Construct the Empire Annotation with given Territories and Law
@@ -56,11 +56,11 @@ public class EmpireAnnotation<PLACE> {
 	 * @param territoryLawMap
 	 *            Map from Territory to corresponding IPredicate Law object
 	 */
-	public EmpireAnnotation(final Set<Pair<Territory<PLACE>, IPredicate>> territoryLawPairs) {
+	public EmpireAnnotation(final Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> territoryLawPairs) {
 		mEmpire = territoryLawPairs;
 	}
 
-	public EmpireAnnotation(final Map<Territory<PLACE>, IPredicate> lawMap) {
+	public EmpireAnnotation(final Map<Territory<PLACE, Region<PLACE>>, IPredicate> lawMap) {
 		mEmpire = lawMap.entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toSet());
 	}
 
@@ -73,8 +73,10 @@ public class EmpireAnnotation<PLACE> {
 		return mEmpire.stream().flatMap(p -> p.getFirst().getRegions().stream()).collect(Collectors.toSet());
 	}
 
-	public Set<Territory<PLACE>> getTerritories() {
-		return Collections.unmodifiableSet(mEmpire.stream().map((Function<? super Pair<Territory<PLACE>, IPredicate>, ? extends Territory<PLACE>>) Pair::getFirst).collect(Collectors.toSet()));
+	public Set<Territory<PLACE, Region<PLACE>>> getTerritories() {
+		return Collections.unmodifiableSet(mEmpire.stream().map(
+				(Function<? super Pair<Territory<PLACE, Region<PLACE>>, IPredicate>, ? extends Territory<PLACE, Region<PLACE>>>) Pair::getFirst)
+				.collect(Collectors.toSet()));
 	}
 
 	/**
@@ -85,7 +87,7 @@ public class EmpireAnnotation<PLACE> {
 	 *            Territory to determine the outlander for
 	 * @return Outlander of the Empire wrt. territory
 	 */
-	public Set<Region<PLACE>> getOutlanderRegions(final Territory<PLACE> territory) {
+	public Set<Region<PLACE>> getOutlanderRegions(final Territory<PLACE, Region<PLACE>> territory) {
 		final Set<Region<PLACE>> outRegions = DataStructureUtils.difference(getColony(), territory.getRegions());
 		final Set<Region<PLACE>> outlanderRegions = new HashSet<>();
 		final Set<PLACE> places = territory.getPlaces();
@@ -104,8 +106,9 @@ public class EmpireAnnotation<PLACE> {
 	 *            Territory of which the Law should be returned.
 	 * @return Law corresponding to territory.
 	 */
-	public Set<IPredicate> getLawSet(final Territory<PLACE> territory) {
-		return mEmpire.stream().filter(p -> p.getFirst().equals(territory)).map((Function<? super Pair<Territory<PLACE>, IPredicate>, ? extends IPredicate>) Pair::getSecond)
+	public Set<IPredicate> getLawSet(final Territory<PLACE, Region<PLACE>> territory) {
+		return mEmpire.stream().filter(p -> p.getFirst().equals(territory)).map(
+				(Function<? super Pair<Territory<PLACE, Region<PLACE>>, IPredicate>, ? extends IPredicate>) Pair::getSecond)
 				.collect(Collectors.toSet());
 	}
 
@@ -115,7 +118,7 @@ public class EmpireAnnotation<PLACE> {
 	 * @param marking
 	 * @return Set of Territories containing the Marking
 	 */
-	public Set<Pair<Territory<PLACE>, IPredicate>> getMarkingTerritories(final Marking<PLACE> marking) {
+	public Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> getMarkingTerritories(final Marking<PLACE> marking) {
 		return mEmpire.stream().filter(p -> p.getFirst().containsMarking(marking)).collect(Collectors.toSet());
 	}
 
@@ -131,10 +134,10 @@ public class EmpireAnnotation<PLACE> {
 	 *            Successor places of the transition
 	 * @return Set of all successor (territory, law)-pairs
 	 */
-	public Set<Pair<Territory<PLACE>, IPredicate>> getSuccessorPairs(final Set<Region<PLACE>> bystanders,
+	public Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> getSuccessorPairs(final Set<Region<PLACE>> bystanders,
 			final Set<PLACE> successorPlaces) {
-		final var result = new HashSet<Pair<Territory<PLACE>, IPredicate>>();
-		for (final Pair<Territory<PLACE>, IPredicate> pair : mEmpire) {
+		final var result = new HashSet<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>>();
+		for (final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair : mEmpire) {
 			final var territory = pair.getFirst();
 			if (!territory.getRegions().containsAll(bystanders)
 					|| !territory.getPlaces().containsAll(successorPlaces)) {
@@ -162,7 +165,7 @@ public class EmpireAnnotation<PLACE> {
 		return result;
 	}
 
-	public Set<Pair<Territory<PLACE>, IPredicate>> getEmpire() {
+	public Set<Pair<Territory<PLACE, Region<PLACE>>, IPredicate>> getEmpire() {
 		return mEmpire;
 	}
 

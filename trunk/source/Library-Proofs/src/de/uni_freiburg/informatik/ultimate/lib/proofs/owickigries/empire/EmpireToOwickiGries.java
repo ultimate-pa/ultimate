@@ -79,7 +79,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 
 	private final DefaultIcfgSymbolTable mSymbolTable;
 	private final Map<Region<PLACE>, IProgramVar> mGhostVariables;
-	private final Map<Territory<PLACE>, IPredicate> mTerritoryFormulaMap = new HashMap<>();
+	private final Map<Territory<PLACE, Region<PLACE>>, IPredicate> mTerritoryFormulaMap = new HashMap<>();
 
 	private final OwickiGriesAnnotation<Transition<LETTER, PLACE>, PLACE, Marking<PLACE>> mOwickiGriesAnnotation;
 
@@ -195,7 +195,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return initAssignments;
 	}
 
-	private Term computeTerritoryTerm(final Territory<PLACE> territory) {
+	private Term computeTerritoryTerm(final Territory<PLACE, Region<PLACE>> territory) {
 		final Set<Term> positiveClauses =
 				mGhostVariables.keySet().stream().filter(r -> territory.getRegions().contains(r))
 						.map(r -> mGhostVariables.get(r).getTerm()).collect(Collectors.toSet());
@@ -205,7 +205,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return SmtUtils.and(mScript, DataStructureUtils.union(positiveClauses, negativeClauses));
 	}
 
-	private IPredicate getTerritoryFormula(final Territory<PLACE> territory) {
+	private IPredicate getTerritoryFormula(final Territory<PLACE, Region<PLACE>> territory) {
 		return mTerritoryFormulaMap.computeIfAbsent(territory, t -> mFactory.newPredicate(computeTerritoryTerm(t)));
 	}
 
@@ -221,14 +221,14 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 		return mFactory.and(regionTerm, disjunction, implications);
 	}
 
-	private Set<Territory<PLACE>> getPlacesTerritories(final PLACE place) {
+	private Set<Territory<PLACE, Region<PLACE>>> getPlacesTerritories(final PLACE place) {
 		return mEmpireAnnotation.getTerritories().stream().filter(t -> t.getPlaces().contains(place))
 				.collect(Collectors.toSet());
 	}
 
 	IPredicate getTerritoryImplications() {
 		final Set<IPredicate> implicationSet = new HashSet<>();
-		for (final Territory<PLACE> territory : mEmpireAnnotation.getTerritories()) {
+		for (final Territory<PLACE, Region<PLACE>> territory : mEmpireAnnotation.getTerritories()) {
 			final IPredicate territoryImplication = mFactory.or(mFactory.not(getTerritoryFormula(territory)),
 					mFactory.and(mEmpireAnnotation.getLawSet(territory)));
 			implicationSet.add(territoryImplication);
@@ -247,7 +247,7 @@ public class EmpireToOwickiGries<LETTER, PLACE> {
 	}
 
 	IPredicate getPlacesTerritoryFormula(final PLACE place) {
-		final Set<Territory<PLACE>> placesTerritories = getPlacesTerritories(place);
+		final Set<Territory<PLACE, Region<PLACE>>> placesTerritories = getPlacesTerritories(place);
 		final Set<IPredicate> placesTerritoriesFormula =
 				placesTerritories.stream().map(t -> getTerritoryFormula(t)).collect(Collectors.toSet());
 		return mFactory.or(placesTerritoriesFormula);

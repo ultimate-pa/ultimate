@@ -108,7 +108,7 @@ public class EmpireComputation<L, P> {
 		return statistics;
 	}
 
-	private Set<Pair<Territory<P>, IPredicate>> symbolicExecution() {
+	private Set<Pair<Territory<P, Region<P>>, IPredicate>> symbolicExecution() {
 		final var queue = new ArrayDeque<GraphNode<P>>();
 		final var resultNodes = new HashSet<GraphNode<P>>();
 
@@ -136,7 +136,7 @@ public class EmpireComputation<L, P> {
 					DataStructureUtils.difference(extendingTransitions, necessaryBridgeTransitions);
 			var subsumes = false;
 			for (final var transition : simpleExtendingTransitions) {
-				final Pair<Territory<P>, IPredicate> successor = getExtensionPair(pair, transition);
+				final Pair<Territory<P, Region<P>>, IPredicate> successor = getExtensionPair(pair, transition);
 				if (successor == null) {
 					continue;
 				}
@@ -214,7 +214,8 @@ public class EmpireComputation<L, P> {
 		return new GraphNode<>(pair);
 	}
 
-	private Set<Transition<L, P>> getEnabledTransitions(final Territory<P> territory, final IPredicate lawPlace) {
+	private Set<Transition<L, P>> getEnabledTransitions(final Territory<P, Region<P>> territory,
+			final IPredicate lawPlace) {
 		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
 		final var notBotTransitions = new HashSet<Transition<L, P>>();
 		for (final Transition<L, P> transition : enabledTransitions) {
@@ -233,7 +234,7 @@ public class EmpireComputation<L, P> {
 	}
 
 	private Region<P> findMatchingRegion(final Collection<Region<P>> candidates, final P place,
-			final Territory<P> territory) {
+			final Territory<P, Region<P>> territory) {
 		Region<P> chosen = null;
 		for (final var region : candidates) {
 			if (isNegativelyCorelated(region, place)) {
@@ -266,8 +267,8 @@ public class EmpireComputation<L, P> {
 				&& region.getPlaces().stream().allMatch(p -> mCoRelation.getPlacesCorelation(place, p));
 	}
 
-	private Pair<Territory<P>, IPredicate> getExtensionPair(final Pair<Territory<P>, IPredicate> pair,
-			final Transition<L, P> transition) {
+	private Pair<Territory<P, Region<P>>, IPredicate>
+			getExtensionPair(final Pair<Territory<P, Region<P>>, IPredicate> pair, final Transition<L, P> transition) {
 		final var territory = pair.getFirst();
 		final var law = pair.getSecond();
 		final var regions = territory.getBystanders(transition);
@@ -279,7 +280,7 @@ public class EmpireComputation<L, P> {
 		return new Pair<>(newTerritory, law);
 	}
 
-	private Set<Region<P>> extendRegions(final Territory<P> territory, final IPredicate lawPlace,
+	private Set<Region<P>> extendRegions(final Territory<P, Region<P>> territory, final IPredicate lawPlace,
 			final IPredicate newLawPlace, final Set<P> predecessors, final Set<P> successors,
 			final Set<Region<P>> remainingRegions) {
 		final Set<Region<P>> extendedRegions = new HashSet<>();
@@ -297,8 +298,8 @@ public class EmpireComputation<L, P> {
 		return extendedRegions;
 	}
 
-	private Pair<Territory<P>, IPredicate> getReplacementPair(final Pair<Territory<P>, IPredicate> pair,
-			final Transition<L, P> transition) {
+	private Pair<Territory<P, Region<P>>, IPredicate> getReplacementPair(
+			final Pair<Territory<P, Region<P>>, IPredicate> pair, final Transition<L, P> transition) {
 		final var territory = pair.getFirst();
 		final var lawPlace = pair.getSecond();
 		final var successors = transition.getSuccessors();
@@ -327,7 +328,7 @@ public class EmpireComputation<L, P> {
 		return regions;
 	}
 
-	private boolean isExtendingTransition(final Territory<P> territory, final IPredicate lawPlace,
+	private boolean isExtendingTransition(final Territory<P, Region<P>> territory, final IPredicate lawPlace,
 			final IPredicate newLawPlace, final Transition<L, P> transition) {
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();

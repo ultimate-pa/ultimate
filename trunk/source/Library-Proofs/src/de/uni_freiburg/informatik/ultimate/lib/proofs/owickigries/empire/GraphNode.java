@@ -37,20 +37,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class GraphNode<PLACE> {
-	private final Pair<Territory<PLACE>, IPredicate> mPair;
+	private final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> mPair;
 	private final Set<Region<PLACE>> mBridgeBystanders;
 
-	public GraphNode(final Pair<Territory<PLACE>, IPredicate> pair, final Set<Region<PLACE>> bystanders) {
+	public GraphNode(final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair,
+			final Set<Region<PLACE>> bystanders) {
 		mPair = pair;
 		mBridgeBystanders = bystanders;
 	}
 
-	public GraphNode(final Pair<Territory<PLACE>, IPredicate> pair) {
+	public GraphNode(final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair) {
 		mPair = pair;
 		mBridgeBystanders = Collections.emptySet();
 	}
 
-	public <L> GraphNode(final Pair<Territory<PLACE>, IPredicate> pair, final Transition<L, PLACE> transition) {
+	public <L> GraphNode(final Pair<Territory<PLACE, Region<PLACE>>, IPredicate> pair,
+			final Transition<L, PLACE> transition) {
 		mPair = pair;
 		mBridgeBystanders = getTransitionBystanders(transition);
 	}
@@ -91,7 +93,7 @@ public class GraphNode<PLACE> {
 				.anyMatch(bystander -> !DataStructureUtils.haveEmptyIntersection(bystander.getPlaces(), predecessors));
 	}
 
-	public Pair<Territory<PLACE>, IPredicate> getPair() {
+	public Pair<Territory<PLACE, Region<PLACE>>, IPredicate> getPair() {
 		return mPair;
 	}
 
