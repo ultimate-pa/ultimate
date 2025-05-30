@@ -81,6 +81,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
 //		final var states = (Collection<STATE>) mCacheMap.computeIfAbsent(new Pair<>(newState.state(), transition),
 //				x -> mUnderlyingPostOp.apply((STATE) x.getFirst(), (ACTION) x.getSecond()));
+		final var intermediateVariables = states.stream().flatMap(s -> s.getVariables().stream())
+				.collect(Collectors.toSet());
 
 		// adjust abstract location according to new location
 		final var guardedStates = states.stream().filter(s -> !s.isBottom())
@@ -97,8 +99,11 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		// TODO: should be moved during interferencecomputation?
 		final var moved = GuardedStateTransformer.copyToNewStateLocation(transition.getTarget(), afterItfs);
 		final var newVariables = moved.getVariables();
-		if (!moved.isBottom() && !oldVariables.equals(newVariables)) {
+		if (!moved.isBottom() && !oldVariables.equals(intermediateVariables)) {
 			throw new IllegalStateException("Post should not change variables");
+		}
+		if (!moved.isBottom() && !oldVariables.equals(newVariables)) {
+			throw new IllegalStateException("Interferences should not change variables");
 		}
 		return moved.getStates();
 	}

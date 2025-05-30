@@ -9,6 +9,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -29,13 +30,15 @@ public class StateReducer {
 		final List<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> toProcess = new ArrayList<>(states);
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> result = new HashSet<>();
 		while (!toProcess.isEmpty()) {
-			GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> base = toProcess.remove(toProcess.size() - 1);
+			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> base = toProcess
+					.remove(toProcess.size() - 1);
 			final ListIterator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> it = toProcess
 					.listIterator();
 			while (it.hasNext()) {
 				final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> candidate = it.next();
-				if (base.abstractLocationState().isEqualTo(candidate.abstractLocationState())) {
-					base = base.union(candidate);
+				final var sameAbstractLocation = base.abstractLocationState()
+						.isEqualTo(candidate.abstractLocationState());
+				if (candidate.state().isSubsetOf(base.state()) != SubsetResult.NONE && sameAbstractLocation) {
 					it.remove();
 				}
 			}
