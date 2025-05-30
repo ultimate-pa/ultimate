@@ -114,9 +114,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
-		final var reduced = StateReducer.reduceToLocationsSet(result);
-//		final var reducedDisj = DisjunctiveAbstractState.createDisjunction(result, mMaxParallelStates);
-		final var reducedDisj = DisjunctiveAbstractState.createDisjunction(reduced, mMaxParallelStates);
+//		final var reduced = StateReducer.reduceToLocationsSet(result);
+		final var reducedDisj = DisjunctiveAbstractState.createDisjunction(result, mMaxParallelStates);
+//		final var reducedDisj = DisjunctiveAbstractState.createDisjunction(reduced, mMaxParallelStates);
 		return reducedDisj;
 	}
 

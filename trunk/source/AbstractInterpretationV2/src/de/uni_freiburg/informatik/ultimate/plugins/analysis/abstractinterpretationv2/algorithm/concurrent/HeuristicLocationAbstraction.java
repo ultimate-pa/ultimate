@@ -33,10 +33,8 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	private final Map<LOC, Integer> mMutexVarSplitMap;
 	private final Map<LOC, Integer> mMutexVarSplitMapWithExitMarked;
 	final Map<String, Set<IProgramVar>> mWrittenByThread = new HashMap<>();
-	private boolean mSeenGuard;
 
 	public HeuristicLocationAbstraction(final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
-		mSeenGuard = false;
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
 		mScript = mManagedScript.getScript();
 		mIcfg = icfg;
@@ -46,7 +44,6 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			mWrittenByThread.put(thread, new HashSet<>());
 		}
 		mMutexVarSplitMap = broadMutexSplitting(false);
-		mSeenGuard = false;
 		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
 	}
 
@@ -71,6 +68,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		final var mutexGuardToVarsMap = computeMutexVars();
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
 		for (final String thread : mEntryLocs.keySet()) {
+			boolean seenOneGuard = false;
 			final Set<LOC> seenGuards = new HashSet<>();
 			final var entryLoc = mEntryLocs.get(thread);
 			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
@@ -83,9 +81,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 				if (mutexGuardToVarsMap.containsKey(loc)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 					if (!respectAfterGuard) {
-						seenGuards.add(loc);
+						seenOneGuard = true;
+//						seenGuards.add(loc);
 					}
-				} else if (seenGuards.isEmpty()
+				} else if (!seenOneGuard
 						&& containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap, seenGuards)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 				} else {
@@ -108,10 +107,9 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
 				final var outgoing = loc.getOutgoingEdges();
-				if (shouldDifferentiate(outgoing) && !mSeenGuard) {
+				if (shouldDifferentiate(outgoing)) {
 					mutexVarsIProgramVarrs.addAll(getGuardVars(outgoing));
 					mutexGuardToVarsMap.put(loc, getGuardVars(outgoing));
-					mSeenGuard = true;
 				}
 				final var writtenGlobals = outgoing.stream()
 						.flatMap(e -> e.getTransformula().getOutVars().keySet().stream()).filter(mGlobals::contains)

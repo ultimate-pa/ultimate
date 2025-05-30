@@ -66,6 +66,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	@Override
 	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
+		final var oldVariables = oldstate.getVariables();
 		if (oldstate.isStateBottom()) {
 			return List.of(oldstate);
 		}
@@ -95,6 +96,10 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates), mCurrentThreadName);
 		// TODO: should be moved during interferencecomputation?
 		final var moved = GuardedStateTransformer.copyToNewStateLocation(transition.getTarget(), afterItfs);
+		final var newVariables = moved.getVariables();
+		if (!moved.isBottom() && !oldVariables.equals(newVariables)) {
+			throw new IllegalStateException("Post should not change variables");
+		}
 		return moved.getStates();
 	}
 
