@@ -324,6 +324,12 @@ public final class Territory<P, R extends Region<P>> {
 				.collect(Collectors.toSet());
 	}
 
+	public R getPlaceRegion(final P place) {
+		assert containsPlace(place) : "No region contains the place";
+		final var regionset = mRegions.stream().filter(r -> r.contains(place)).collect(Collectors.toSet());
+		return DataStructureUtils.getOneAndOnly(regionset, "Region");
+	}
+
 	@Override
 	public boolean equals(final Object obj) {
 		return this == obj || obj instanceof final Territory<?, ?> other && mRegions.equals(other.getRegions());
