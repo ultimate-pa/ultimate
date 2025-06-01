@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -23,5 +24,15 @@ public class BooleanRestriction extends Restriction<BoolValue> {
 		}
 
 		return inEqual.toString();
+	}
+
+	@Override
+	public BooleanRestriction combine(final Restriction<?> other) {
+		if (other instanceof final BooleanRestriction br) {
+			final HashSet<BoolValue> inEquals = new HashSet<>(mInequal);
+			inEquals.addAll(br.mInequal);
+			return new BooleanRestriction(inEquals);
+		}
+		return this;
 	}
 }

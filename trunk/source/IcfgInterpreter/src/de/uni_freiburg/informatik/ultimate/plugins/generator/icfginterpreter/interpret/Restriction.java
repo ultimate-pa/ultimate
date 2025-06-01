@@ -22,6 +22,14 @@ public abstract class Restriction<T> {
 		return mInequal;
 	}
 
+	/**
+	 * Combine two restrictions. Returns this if other is not a restriction of the same type.
+	 *
+	 * @param other
+	 * @return
+	 */
+	public abstract Restriction<T> combine(Restriction<?> other);
+
 	@Override
 	public abstract String toString();
 }

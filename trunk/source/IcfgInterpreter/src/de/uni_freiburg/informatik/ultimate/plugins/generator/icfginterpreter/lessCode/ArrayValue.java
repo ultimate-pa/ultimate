@@ -2,11 +2,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -14,28 +16,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Non
 
 public class ArrayValue implements Value {
 	private final Map<Value, Value> mValue;
-	private final String mUniqueIdentifier;
 	private final Sort mSort;
 
-	public ArrayValue(final Map<Value, Value> value, final String uniqueIdentifier, final Sort sort) {
+	public ArrayValue(final Map<Value, Value> value, final Sort sort) {
 		mValue = value;
-		mUniqueIdentifier = uniqueIdentifier;
 		mSort = sort;
 	}
 
 	public ArrayValue store(final Value key, final Value value) {
 		final HashMap<Value, Value> out = new HashMap<>(mValue);
 		out.put(key, value);
-		return new ArrayValue(out, mUniqueIdentifier, mSort);
+		return new ArrayValue(out, mSort);
 	}
 
 	public Value select(final Value key, final NonDeterministicChoice ndc) {
 		if (mValue.containsKey(key)) {
 			return mValue.get(key);
 		}
-		// TODO change NDC to return Value once this implementation is the only one used
-		// final Object value = ndc.havocArrayEntry(mSort, mUniqueIdentifier, key);
-		return null;
+		final Sort valueSort = mSort.getArguments()[1];
+		final Value out = ndc.havoc(valueSort, null);
+		// TODO Update state to add havoced entries in previous iterations
+		mValue.put(key, out);
+		return out;
 	}
 
 	@Override
@@ -55,7 +57,7 @@ public class ArrayValue implements Value {
 	public String toString() {
 		final ArrayList<Entry<Value, Value>> list = new ArrayList<>(mValue.entrySet());
 
-		Collections.sort(list, (entry1, entry2) -> entry1.getKey().compareTo(entry2.getKey()));
+		Collections.sort(list, Comparator.comparing(Entry<Value, Value>::getKey));
 
 		final List<String> lines = list.stream().map((entry) -> entry.getKey() + " -> " + entry.getValue()).toList();
 
@@ -66,6 +68,17 @@ public class ArrayValue implements Value {
 	public Term toTerm(final Script script) {
 		return null;
 		// TODO convert arrays
+	}
+
+	public Map<Term, Term> makeOutValues(final Script script, final Term array) {
+		final Map<Term, Term> arrayValues = new HashMap<>();// new Term[mValue.size()];
+
+		for (final Entry<Value, Value> value : mValue.entrySet()) {
+			final Term selectIndex = SmtUtils.select(script, array, value.getKey().toTerm(script));
+			arrayValues.put(selectIndex, value.getValue().toTerm(script));
+		}
+
+		return arrayValues;
 	}
 
 	@Override
@@ -100,9 +113,5 @@ public class ArrayValue implements Value {
 
 	public Sort getSort() {
 		return mSort;
-	}
-
-	public String getUniqueIdentifier() {
-		return mUniqueIdentifier;
 	}
 }

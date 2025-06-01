@@ -18,10 +18,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Equation.SolvedEquation;
 
 public interface Update extends ITermProvider {
-	Value makeValue(Map<Term, Value> state, NonDeterministicChoice ndc);
+	void update(Map<Term, Value> state, NonDeterministicChoice ndc, Map<Term, Restriction<?>> havocRestrictions);
 
 	TermVariable getVariable();
 
@@ -36,8 +37,9 @@ public interface Update extends ITermProvider {
 		}
 
 		@Override
-		public Value makeValue(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
-			return TermEvaluator.evaluate(state, mValue, ndc);
+		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+				final Map<Term, Restriction<?>> havocRestrictions) {
+			state.put(mProgramVar, TermEvaluator.evaluate(state, mValue, ndc, havocRestrictions));
 		}
 
 		@Override
@@ -121,18 +123,18 @@ public interface Update extends ITermProvider {
 			}
 			switch (term.getSort().getName()) {
 			case SMTLIBConstants.BOOL:
-				final BoolValue boolValue = (BoolValue) TermEvaluator.evaluate(null, term, null);
+				final BoolValue boolValue = (BoolValue) TermEvaluator.evaluate(null, term, null, null);
 				term = term.getTheory().constant(boolValue.getValue(), term.getTheory().getBooleanSort());
 				break;
 			case SMTLIBConstants.INT:
-				final IntValue intValue = (IntValue) TermEvaluator.evaluate(null, term, null);
+				final IntValue intValue = (IntValue) TermEvaluator.evaluate(null, term, null, null);
 				term = term.getTheory().constant(intValue.getValue(), term.getTheory().getNumericSort());
 				break;
 			case SMTLIBConstants.ARRAY:
 				// No array constants
 				break;
 			case SMTLIBConstants.BITVEC:
-				final BitVecValue bitVecValue = (BitVecValue) TermEvaluator.evaluate(null, term, null);
+				final BitVecValue bitVecValue = (BitVecValue) TermEvaluator.evaluate(null, term, null, null);
 				term = term.getTheory().constant(bitVecValue.getValue(), term.getTheory().getNumericSort());
 				break;
 			}
@@ -140,29 +142,32 @@ public interface Update extends ITermProvider {
 			return term;
 		}
 
-		@Override
-		public Value makeValue(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+		private Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+				final Map<Term, Restriction<?>> havocRestrictions) {
 			switch (mProgramVar.getSort().getName()) {
 			// TODO Add Array and BitVec
 			case SMTLIBConstants.BOOL:
 				final HashSet<BoolValue> inEqualBools = new HashSet<>();
 
 				for (final Term inEqual : mInEqual) {
-					inEqualBools.add((BoolValue) TermEvaluator.evaluate(state, inEqual, ndc));
+					inEqualBools.add((BoolValue) TermEvaluator.evaluate(state, inEqual, ndc, havocRestrictions));
 				}
 
-				return ndc.havocBool(new BooleanRestriction(inEqualBools));
+				return new BooleanRestriction(inEqualBools);
+
 			case SMTLIBConstants.INT:
+			case SMTLIBConstants.BITVEC:
 				if (mInEqual.size() + mLessEq.size() + mGreaterEq.size() == 0) {
-					return ndc.havocInt(null);
+					return null;
 				}
 
 				IntValue maximum = null;
 				if (mLessEq.size() > 0) {
 					final Iterator<Term> lessEqlIter = mLessEq.iterator();
-					maximum = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc);
+					maximum = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc, havocRestrictions);
 					while (lessEqlIter.hasNext()) {
-						final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc);
+						final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, lessEqlIter.next(), ndc,
+								havocRestrictions);
 						if (nextValue.compareTo(maximum) < 0) {
 							maximum = nextValue;
 						}
@@ -172,9 +177,10 @@ public interface Update extends ITermProvider {
 				IntValue minimum = null;
 				if (mGreaterEq.size() > 0) {
 					final Iterator<Term> greaterEqlIter = mGreaterEq.iterator();
-					minimum = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc);
+					minimum = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc, havocRestrictions);
 					while (greaterEqlIter.hasNext()) {
-						final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc);
+						final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, greaterEqlIter.next(), ndc,
+								havocRestrictions);
 						if (minimum.compareTo(nextValue) < 0) {
 							minimum = nextValue;
 						}
@@ -184,7 +190,8 @@ public interface Update extends ITermProvider {
 				final Set<IntValue> inEqualInts = new HashSet<>();
 				final Iterator<Term> inEqualIter = mInEqual.iterator();
 				while (inEqualIter.hasNext()) {
-					final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, inEqualIter.next(), ndc);
+					final IntValue nextValue = (IntValue) TermEvaluator.evaluate(state, inEqualIter.next(), ndc,
+							havocRestrictions);
 					if ((minimum == null || minimum.compareTo(nextValue) <= 0)
 							&& (maximum == null || nextValue.compareTo(maximum) <= 0)) {
 						inEqualInts.add(nextValue);
@@ -193,10 +200,29 @@ public interface Update extends ITermProvider {
 
 				final IntegerRestriction restriction = new IntegerRestriction(inEqualInts, minimum, maximum);
 
-				return ndc.havocInt(restriction);
+				return restriction;
 			default:
 				return null;
 			}
+		}
+
+		@Override
+		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+				final Map<Term, Restriction<?>> havocRestrictions) {
+			// Is havoced when variable is used
+
+			final Restriction<?> existingRestriction = havocRestrictions.remove(mProgramVar);
+			Restriction<?> newRestriction;
+
+			if (existingRestriction != null) {
+				newRestriction = existingRestriction.combine(getRestriction(state, ndc, havocRestrictions));
+			} else {
+				newRestriction = getRestriction(state, ndc, havocRestrictions);
+			}
+
+			havocRestrictions.put(mProgramVar, newRestriction);
+
+			state.remove(mProgramVar);
 		}
 
 		@Override

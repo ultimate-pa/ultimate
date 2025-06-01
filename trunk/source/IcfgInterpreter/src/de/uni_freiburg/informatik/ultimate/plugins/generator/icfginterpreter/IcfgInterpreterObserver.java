@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -62,11 +61,8 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			// * SmtUtils.toDnf
 			// * mLogger can be used for output (e.g., for debugging)
 			try {
-				final Random random = new Random();
-				final long seed = random.nextLong();
 				final ExecutionProducer producer = new ExecutionProducer(icfg, mServices);
-				mExecutions = producer.makeExecutions(mLogger, new Random(seed));
-				producer.makeExecutions(mLogger, new Random(seed));
+				mExecutions = producer.makeExecutions(mLogger);
 			} catch (final Exception e) {
 				final ByteArrayOutputStream bs = new ByteArrayOutputStream();
 				final PrintStream message = new PrintStream(bs);

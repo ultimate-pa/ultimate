@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.le
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
 
@@ -61,11 +61,12 @@ public class InterpretedIcfgEdge {
 		return mEdge;
 	}
 
-	public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+	public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+			final Map<Term, Restriction<?>> havocRestrictions) {
 		final HashMap<Term, Value> out = new HashMap<>(state);
 
 		for (final Update update : mUpdates) {
-			out.put(update.getVariable(), update.makeValue(out, ndc));
+			update.update(out, ndc, havocRestrictions);
 		}
 
 		for (final TermVariable auxVar : mAuxVars) {
@@ -75,8 +76,9 @@ public class InterpretedIcfgEdge {
 		return out;
 	}
 
-	public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
-		return ((BoolValue) TermEvaluator.evaluate(state, mGuard, ndc)).getValue();
+	public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+			final Map<Term, Restriction<?>> havocRestrictions) {
+		return ((BoolValue) TermEvaluator.evaluate(state, mGuard, ndc, havocRestrictions)).getValue();
 	}
 
 	@Override
@@ -114,16 +116,18 @@ public class InterpretedIcfgEdge {
 
 	public static class UntranslatableIcfgEdge extends InterpretedIcfgEdge {
 		public UntranslatableIcfgEdge(final IcfgEdge edge) {
-			super(edge.getTransformula().getFormula().getTheory().mTrue, new Update[0], edge, new HashSet<>());
+			super(edge.getTransformula().getFormula().getTheory().mTrue, new Update[0], edge, Set.of());
 		}
 
 		@Override
-		public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+		public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+				final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}
 
 		@Override
-		public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+		public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+				final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}
 	}

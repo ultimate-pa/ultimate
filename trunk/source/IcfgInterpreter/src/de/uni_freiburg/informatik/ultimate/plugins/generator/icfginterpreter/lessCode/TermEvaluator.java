@@ -17,14 +17,21 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 
 public class TermEvaluator {
-	public static Value evaluate(final Map<Term, Value> state, final Term term, final NonDeterministicChoice ndc) {
+	public static Value evaluate(final Map<Term, Value> state, final Term term, final NonDeterministicChoice ndc,
+			final Map<Term, Restriction<?>> havocRestrictions) {
 		switch (term) {
 		case final ApplicationTerm a:
-			return evaluateApplicationTerm(state, a, ndc);
+			return evaluateApplicationTerm(state, a, ndc, havocRestrictions);
 		case final TermVariable tv:
-			return state.get(tv);
+			Value value = state.get(tv);
+			if (value == null) {
+				value = ndc.havoc(tv.getSort(), havocRestrictions.remove(tv));
+				state.put(tv, value);
+			}
+			return value;
 		case final ConstantTerm ct:
 			return evaluateConstantTerm(ct);
 		default:
@@ -59,8 +66,9 @@ public class TermEvaluator {
 	}
 
 	private static Value evaluateApplicationTerm(final Map<Term, Value> state, final ApplicationTerm aTerm,
-			final NonDeterministicChoice ndc) {
-		final Stream<Value> params = Arrays.stream(aTerm.getParameters()).map(x -> evaluate(state, x, ndc));
+			final NonDeterministicChoice ndc, final Map<Term, Restriction<?>> havocRestrictions) {
+		final Stream<Value> params = Arrays.stream(aTerm.getParameters())
+				.map(x -> evaluate(state, x, ndc, havocRestrictions));
 		Iterator<Value> iter;
 		IntValue intValue;
 		Value value;

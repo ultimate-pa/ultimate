@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.Equations;
@@ -46,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.Settings;
 
 public class ExecutionProducer {
 	private final HashMap<String, Set<IcfgLocation>> mErrorMap;
@@ -104,10 +104,14 @@ public class ExecutionProducer {
 		mErrorMap = getErrorLocations(mIcfg);
 	}
 
-	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(final ILogger logger,
-			final Random random) throws Exception {
+	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(final ILogger logger)
+			throws Exception {
 
 		IcfgInterpreterPreferences.updatePreferences();
+
+		final int seed = IcfgInterpreterPreferences.getPreferences()
+				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_SEED.toString());
+
 		final int testExecutionCount = Math.max(1, IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTIONS_PER_ENTRYPOINT.toString()));
 
@@ -120,20 +124,22 @@ public class ExecutionProducer {
 		executionMaxLength = Math.max(0, IcfgInterpreterPreferences.getPreferences()
 				.getInt(IcfgInterpreterPreferences.SettingLabel.EXECUTION_MAX_LENGTH.toString()));
 
+		final int bitsHavoced = Math.max(4, IcfgInterpreterPreferences.getPreferences()
+				.getInt(IcfgInterpreterPreferences.SettingLabel.BITS_HAVOCED.toString()));
+
 		logger.info("Creating " + testExecutionCount + " executions per initial node.");
 
 		final Set<? extends IcfgLocation> initialNodes = mIcfg.getInitialNodes();
-		final NonDeterministicChoice ndc = Settings.getSettings().getNDC();
+
+		final NonDeterministicChoice ndc = new NonDeterministicChoice(seed, bitsHavoced);
 
 		final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> executions = new HashMap<>();
 
 		final long startTime = System.nanoTime();
 		for (final IcfgLocation node : initialNodes) {
 			for (int i = 0; i < testExecutionCount; i++) {
-				final long seed = random.nextLong();
-				final NonDeterministicChoice ndcInstance = ndc.newInstance(seed);
 				final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> newExecutions = makeExecutions(
-						ndcInstance, node);
+						ndc, node);
 				for (final ExecutionTermintionReason reason : newExecutions.keySet()) {
 					// executions.getOrDefault(executions, null)
 					final List<IcfgProgramExecution<IcfgEdge>> executionList = executions.getOrDefault(reason,
@@ -169,6 +175,7 @@ public class ExecutionProducer {
 				.toList();
 
 		final Set<TermVariable> auxVars = formula.getAuxVars();
+
 		if (!Arrays.asList(formula.getFormula().getFreeVars()).stream().anyMatch((var) -> outVars.contains(var))) {
 			// This term contains no information that is needed in updates or all updates are havocs.
 			// (The formula contains no OutVar that is assigned)
@@ -463,7 +470,7 @@ public class ExecutionProducer {
 			}
 			switch (programVar.getSort().getName()) {
 			case SMTLIBConstants.ARRAY:
-				state.put(termVar, ndc.newArray(programVar.getSort(), termVar.getName(), null));
+				state.put(termVar, ndc.newArray(programVar.getSort()));
 				break;
 			case SMTLIBConstants.BITVEC:
 				final int length = Util.getBitVecLength(programVar.getSort());
@@ -484,7 +491,14 @@ public class ExecutionProducer {
 		final HashMap<Term, Term> out = new HashMap<>();
 
 		for (final Entry<Term, Value> entry : state.entrySet()) {
-			out.put(entry.getKey(), entry.getValue().toTerm(mngScript.getScript()));
+			switch (entry.getValue()) {
+			case final ArrayValue av:
+				out.putAll(av.makeOutValues(mngScript.getScript(), entry.getKey()));
+				break;
+			default:
+				out.put(entry.getKey(), entry.getValue().toTerm(mngScript.getScript()));
+				break;
+			}
 		}
 
 		return out;
@@ -495,7 +509,7 @@ public class ExecutionProducer {
 		final HashMap<Term, Value> state = makeState(ndc);
 
 		final ArrayDeque<PartialExecution> executions = new ArrayDeque<>();
-		executions.add(new PartialExecution(source, ndc.clone(), List.of(), List.of(state), null));
+		executions.add(new PartialExecution(source, ndc, List.of(), List.of(state), new HashMap<>(), null));
 
 		final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> out = new HashMap<>();
 
@@ -529,7 +543,7 @@ public class ExecutionProducer {
 
 			for (final InterpretedIcfgEdge nextEdge : nextEdges) {
 				try {
-					if (nextEdge.guard(stateReference, execution.ndc.clone())) {
+					if (nextEdge.guard(stateReference, execution.ndc, execution.havocBounds)) {
 						availableEdges.add(nextEdge);
 					}
 				} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
@@ -560,9 +574,8 @@ public class ExecutionProducer {
 					}
 
 					try {
-						final NonDeterministicChoice ndcVariant = execution.ndc.makeVariant(i);
-						final Map<Term, Value> nextState = nextEdge.update(stateReference, ndcVariant);
-						executions.addLast(execution.addStep(nextEdge.getEdge(), nextState, ndcVariant));
+						final Map<Term, Value> nextState = nextEdge.update(stateReference, ndc, execution.havocBounds);
+						executions.addLast(execution.addStep(nextEdge.getEdge(), nextState, ndc));
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 						final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
 						printExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
@@ -597,17 +610,17 @@ public class ExecutionProducer {
 	}
 
 	private record PartialExecution(IcfgLocation currentLocation, NonDeterministicChoice ndc, List<IcfgEdge> edges,
-			List<Map<Term, Value>> states, ExecutionTermintionReason status) {
+			List<Map<Term, Value>> states, Map<Term, Restriction<?>> havocBounds, ExecutionTermintionReason status) {
 		public Map<Term, Value> getCurrentState() {
 			return states.getLast();
 		}
 
 		public PartialExecution finish(final ExecutionTermintionReason reason) {
-			return new PartialExecution(currentLocation, ndc.clone(), edges, states, reason);
+			return new PartialExecution(currentLocation, ndc, edges, states, havocBounds, reason);
 		}
 
 		public PartialExecution addStep(final IcfgEdge edge, final Map<Term, Value> state) {
-			return addStep(edge, state, ndc.clone());
+			return addStep(edge, state, ndc);
 		}
 
 		public PartialExecution addStep(final IcfgEdge edge, final Map<Term, Value> state,
@@ -619,7 +632,8 @@ public class ExecutionProducer {
 			newEdges.add(edge);
 			final List<Map<Term, Value>> newStates = new ArrayList<>(states());
 			newStates.add(state);
-			return new PartialExecution(edge.getTarget(), mNDC, newEdges, newStates, status);
+			return new PartialExecution(edge.getTarget(), mNDC, newEdges, newStates, new HashMap<>(havocBounds),
+					status);
 		}
 	}
 

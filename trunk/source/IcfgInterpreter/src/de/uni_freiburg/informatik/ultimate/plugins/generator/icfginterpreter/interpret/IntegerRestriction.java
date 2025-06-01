@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret;
 
 import java.math.BigInteger;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
 
@@ -53,5 +55,43 @@ public class IntegerRestriction extends Restriction<IntValue> {
 
 		return (mMinimum == null ? "-infinity" : mMinimum) + " <= n <= " + (mMaximum == null ? "infinity" : mMaximum)
 				+ inEqual.toString();
+	}
+
+	/**
+	 * If a is null, returns b and vice versa. <br>
+	 * Otherwise, gets the first element if the comparator is true, the second if it is false.
+	 *
+	 * @return
+	 */
+	private static <T> T compareNull(final T a, final T b, final BiFunction<T, T, Boolean> comparator) {
+		if (a != null && b != null) {
+			return comparator.apply(a, b) ? a : b;
+		}
+
+		return (a != null) ? a : b;
+	}
+
+	@Override
+	public IntegerRestriction combine(final Restriction<?> other) {
+		if (other instanceof final IntegerRestriction br) {
+
+			final IntValue newMin = compareNull(mMinimum, br.mMinimum, (a, b) -> a.compareTo(b) >= 0);
+			final IntValue newMax = compareNull(mMaximum, br.mMaximum, (a, b) -> a.compareTo(b) <= 0);
+
+			final HashSet<IntValue> inEquals = new HashSet<>(mInequal);
+			inEquals.addAll(br.mInequal);
+
+			final HashSet<IntValue> cappedEquals = new HashSet<>();
+
+			for (final IntValue inEqual : inEquals) {
+				if ((newMin == null || newMin.compareTo(inEqual) <= 0)
+						&& (newMax == null || inEqual.compareTo(newMax) <= 0)) {
+					cappedEquals.add(inEqual);
+				}
+			}
+
+			return new IntegerRestriction(cappedEquals, newMin, newMax);
+		}
+		return this;
 	}
 }

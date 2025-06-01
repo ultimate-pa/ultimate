@@ -1,11 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
+import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItemGroup;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.ArrayRestriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BitVectorRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
@@ -21,12 +26,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.les
  * There should be a constructor for this class that has no parameters. An instance created this way will be used to
  * make the instances that will actually be used via {@link #newInstance(long)}
  */
-public interface NonDeterministicChoice {
-	NonDeterministicChoice newInstance(long seed);
+public class NonDeterministicChoice {
+	private final Random mRandom;
+	private final int mHavocBits;
 
-	NonDeterministicChoice makeVariant(long offset);
+	public NonDeterministicChoice(final long seed, final int havocBits) {
+		mRandom = new Random(seed);
+		mHavocBits = havocBits;
+	}
 
-	<T> T chooseEdge(List<T> edges);
+	public <T> T chooseEdge(final List<T> edges) {
+		return edges.get(mRandom.nextInt(0, edges.size()));
+	}
 
 	/**
 	 * Select a non-deterministic value in the range defined by the domain for the given variable.
@@ -34,41 +45,85 @@ public interface NonDeterministicChoice {
 	 * @param possibleValues
 	 * @return
 	 */
-	default Value havoc(final Value previousValue, final Restriction<?> possibleValues) {
-		switch (previousValue) {
-		case final ArrayValue av:
-			return newArray(av.getSort(), av.getUniqueIdentifier(), (ArrayRestriction) possibleValues);
-		case final BitVecValue bv:
-			return havocBitVector(bv.getLength(), (BitVectorRestriction) possibleValues);
-		case final BoolValue bv:
-			return havocBool((BooleanRestriction) possibleValues);
-		case final IntValue iv:
+	public Value havoc(final Sort sort, final Restriction<?> possibleValues) {
+		switch (sort.getName()) {
+		case SMTLIBConstants.ARRAY:
+			return new ArrayValue(new HashMap<>(), sort);
+		case SMTLIBConstants.INT:
 			return havocInt((IntegerRestriction) possibleValues);
+		case SMTLIBConstants.BITVEC:
+			final int length = Util.getBitVecLength(sort);
+			return havocBitVector(length, (IntegerRestriction) possibleValues);
+		case SMTLIBConstants.BOOL:
+			return havocBool((BooleanRestriction) possibleValues);
 		default:
 			return null;
 		}
 	}
 
-	IntValue havocInt(IntegerRestriction values);
+	public IntValue havocInt(final IntegerRestriction values) {
+		final int length = mRandom.nextInt(2, mHavocBits);
+		return havocInt(values, length);
+	}
 
-	BoolValue havocBool(BooleanRestriction values);
+	private IntValue havocInt(final IntegerRestriction values, final int length) {
+		IntValue randBigInt = new IntValue(new BigInteger(length, mRandom));
 
-	BitVecValue havocBitVector(int length, BitVectorRestriction values);
+		if (values == null) {
+			// unrestricted
+			return randBigInt;
+		}
 
-	/**
-	 * Called when an array entry is read where no value has been stored with
-	 * {@link SMTArray#store(Object, Object)}.<br>
-	 * Return a value as indicated by {@link SMTArray#valueType}.<br>
-	 * One instance (same seed) of this class should always return the same value for the same (array, index) pair.
-	 *
-	 * @param type
-	 * @return
-	 */
-	Value havocArrayEntry(ArrayValue smtArray, Value index);
+		final IntValue minimum = values.getMinimum();
+		final IntValue maximum = values.getMaximum();
+		final IntValue valueCount = values.getValueCount();
+		final Set<IntValue> inEqual = values.getInequal();
 
-	ArrayValue newArray(Sort sort, String uniqueIdentifier, ArrayRestriction values);
+		if (minimum != null && randBigInt.compareTo(minimum) < 0) {
+			randBigInt = randBigInt.add(minimum);
+		}
+		if (valueCount != null && randBigInt.compareTo(valueCount) >= 0) {
+			randBigInt = randBigInt.mod(valueCount).add(minimum);
+		}
+		while (inEqual.contains(randBigInt)) {
+			randBigInt = randBigInt.add(IntValue.ONE);
+			if (maximum != null && randBigInt.compareTo(maximum) >= 0) {
+				randBigInt = minimum;
+			}
+		}
+		return randBigInt;
+	}
 
-	UltimatePreferenceItemGroup getImplementationSettings();
+	public BoolValue havocBool(final BooleanRestriction values) {
+		if (values != null && values.getInequal().size() == 1) {
+			// can only be the value that is not in the inequalities
+			return new BoolValue(values.getInequal().contains(BoolValue.mFalse));
+		}
+		// can be false or true (either both allowed or neither)
+		return new BoolValue(mRandom.nextBoolean());
+	}
 
-	NonDeterministicChoice clone();
+	public BitVecValue havocBitVector(final int length, final IntegerRestriction values) {
+		return new BitVecValue(havocInt(values, length).getValue(), length);
+	}
+
+	@SuppressWarnings("static-method")
+	public ArrayValue newArray(final Sort sort) {
+		return new ArrayValue(new HashMap<>(), sort);
+	}
+
+	public UltimatePreferenceItemGroup getImplementationSettings() {
+		return new UltimatePreferenceItemGroup(getClass().getSimpleName(),
+				new UltimatePreferenceItem<>(MAX_INT_HAVOC_LABEL, Integer.MAX_VALUE, MAX_INT_HAVOC_HINT,
+						PreferenceType.Integer),
+				new UltimatePreferenceItem<>(MIN_INT_HAVOC_LABEL, Integer.MIN_VALUE, MIN_INT_HAVOC_HINT,
+						PreferenceType.Integer));
+	}
+
+	public static String MAX_INT_HAVOC_LABEL = "Maximum havoc integer value";
+	public static String MAX_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
+			+ "\nHas to be more than the minimum option.";
+	public static String MIN_INT_HAVOC_LABEL = "Minimum havoc integer value";
+	public static String MIN_INT_HAVOC_HINT = "Any value between Integer.MIN_VALUE and Integer.MAX_VALUE."
+			+ "\nHas to be less than the maximum option.";
 }
