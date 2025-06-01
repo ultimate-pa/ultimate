@@ -49,19 +49,19 @@ public class DirectedEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Dir
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mNet;
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProof;
 
 	private final State<L, P> mInitialState;
 
 	public DirectedEmpireAutomaton(final IPetriNet<L, P> net,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> proof,
 			final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
-		mProduct = product;
+		mProof = proof;
 
 		// Construct initial state
-		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
+		final var initialLaw = DataStructureUtils.getOneAndOnly(mProof.getInitialStates(), "initial law place");
 		final var regions = getInitialRegions();
 		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw, Collections.emptySet());
 		mInitialState = getMarkedSuccessor(state);
@@ -198,7 +198,7 @@ public class DirectedEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Dir
 	}
 
 	private IPredicate getSuccessorLaw(final IPredicate law, final Transition<L, P> transition) {
-		final var succLaw = mProduct.internalSuccessors(law, transition.getSymbol());
+		final var succLaw = mProof.internalSuccessors(law, transition.getSymbol());
 		if (succLaw.iterator().hasNext()) {
 			return DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
 		}

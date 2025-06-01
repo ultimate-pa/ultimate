@@ -169,4 +169,17 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
 		}
 	}
+
+	public static final class DirectedLegalFocusOG extends OGProofProducerTest {
+		@Override
+		protected IPetriNetProofProducer<SimpleAction, IPredicate>
+				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
+			return new DirectedLegalFocusOwickiGries<>(mServices, program, createCsToolkit());
+		}
+
+		@Override
+		protected OwickiGriesSettings getSettings() {
+			return new OwickiGriesSettings(OwickiGriesComputation.DIR_LEGAL_FOCUS, false, false);
+		}
+	}
 }

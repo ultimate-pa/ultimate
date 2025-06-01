@@ -67,6 +67,7 @@ public class ConnectedRegion<L, P> extends Region<P> {
 				.reduce((r1, r2) -> new HashSet<>(DataStructureUtils.intersection(r1, r2)));
 		final var jointPlaces = intersection.orElse(new HashSet<>());
 		final var regionPlaces = new HashSet<P>();
+		regionPlaces.add(startingPlace);
 		final var queue = new ArrayDeque<P>();
 		queue.offer(startingPlace);
 		final var visited = new HashSet<P>();

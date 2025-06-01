@@ -86,9 +86,10 @@ public class DirectedEmpireProduct<L, P> {
 
 	private INestedWordAutomaton<Transition<L, P>, ProductState<L, P>> constructProductAutomaton() {
 		final var alphabet = new VpAlphabet<>(mNet.getTransitions());
-		final var product = new NestedWordAutomaton<Transition<L, P>, ProductState<L, P>>(
-				new AutomataLibraryServices(mServices), alphabet, null);
+		final var product = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet,
+				() -> new ProductState<L, P>(null, null));
 		final var init = constructInitialState();
+		product.addState(true, false, init);
 		final var queue = new ArrayDeque<ProductState<L, P>>();
 		queue.add(init);
 		while (!queue.isEmpty()) {
@@ -98,6 +99,9 @@ public class DirectedEmpireProduct<L, P> {
 			for (final Transition<L, P> transition : enabledTransitions) {
 				final var succState = getSuccessorProductState(currentState.productStates, transition,
 						currentState.intersectionTerritory.getBystanders(transition));
+				if (succState == null) {
+					continue;
+				}
 				if (!product.getStates().contains(succState)) {
 					product.addState(false, false, succState);
 					queue.offer(succState);
@@ -114,6 +118,9 @@ public class DirectedEmpireProduct<L, P> {
 		for (int i = 0; i < states.size(); i++) {
 			final var state = states.get(i);
 			final var succIter = mEmpires.get(i).internalSuccessors(state, transition);
+			if (!succIter.iterator().hasNext()) {
+				return null;
+			}
 			final var succ = DataStructureUtils.getOneAndOnly(succIter, "Successor state");
 			succStates.add(succ.getSucc());
 		}
