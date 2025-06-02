@@ -38,34 +38,10 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 		return mAbstractLocationState;
 	}
 
-	public boolean equalThreadTracking(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-		return mAbstractLocationState.equalThreadTracking(other.mAbstractLocationState);
-
-	}
-
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initializeLocation(final LOC location,
 			final AbstractLocationMap<LOC> globalMap, final Set<String> threadNames) {
 		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
 				new AbstractLocationState<>(location, globalMap, threadNames));
-	}
-
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initWithGiven(final LOC location,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-		return new GuardedInterferenceDomainState<>(other.state(), other.threadCounter(),
-				new AbstractLocationState<>(location, other.mAbstractLocationState));
-	}
-
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> initializeLocation(final LOC location,
-			final AbstractLocationMap<LOC> globalMap, final Set<String> threadNames, final Set<LOC> forkLocs) {
-		GuardedInterferenceDomainState<STATE, ACTION, LOC> newState = new GuardedInterferenceDomainState<>(this.state(),
-				this.threadCounter(), new AbstractLocationState<>(location, globalMap, threadNames));
-		for (final LOC loc : forkLocs) {
-			// TODO: unsafe
-			final var newLocc = newState.abstractLocationState().getLocationMap()
-					.getAbstractLocation((LOC) loc.getOutgoingNodes().iterator().next());
-			newState = newState.movedTo(loc.getProcedure(), newLocc);
-		}
-		return newState;
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation) {
@@ -87,24 +63,6 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsInf(final Collection<String> forkingStrings) {
 		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setInf(forkingStrings));
 		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
-	}
-
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> incrementThread(final String thread) {
-		final var newThreadcounter = this.threadCounter().incrementThread(thread);
-		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
-	}
-
-	public boolean isEqual(final GuardedInterferenceDomainState<STATE, ACTION, LOC> other) {
-		if (!other.state().isEqualTo(this.state())) {
-			return false;
-		}
-		if (!other.threadCounter().isEqualTo(this.threadCounter())) {
-			return false;
-		}
-		if (!other.abstractLocationState().isEqualTo(this.abstractLocationState())) {
-			return false;
-		}
-		return true;
 	}
 
 	@Override

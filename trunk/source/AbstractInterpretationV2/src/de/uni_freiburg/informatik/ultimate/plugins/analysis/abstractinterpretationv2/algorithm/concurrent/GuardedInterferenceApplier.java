@@ -1,10 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
@@ -27,7 +24,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private final int mMaxParallelStates;
 	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
 	private final InterferenceUtils<STATE, ACTION, LOC> mItfUtils;
-	private final static Map<Pair<IAbstractState<?>, InterferenceWithSourceThread<?, ?, ?>>, IAbstractState<?>> mCacheMap = new HashMap<>();
 
 	public static int iterationsReached = 0;
 	private Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> mAllInterfs;
@@ -44,6 +40,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mMaxItf = maxItf;
 		mMaxParallelStates = maxParallelStates;
 		iterationsReached = 0;
+		// TODO: why needed
 		mPostOp = mGuardedInterferenceDomain.getPostOperator();
 		mAllInterfs = new HashSet<>();
 		mItfUtils = new InterferenceUtils<>();
@@ -68,6 +65,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyFixpointSingle(
 			final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> startStates,
 			final String ownerThread) {
+		final InterferenceApplier<STATE, ACTION, LOC> itfApplier = new InterferenceApplier<>();
 		final var result = new LinkedHashSet<>(startStates.stream().flatMap(s -> s.getStates().stream()).toList());
 		LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> worklist = new LinkedHashSet<>(result);
 		int iteration = 1;
@@ -86,7 +84,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				}
 				final var disj = DisjunctiveAbstractState.createDisjunction(interferable, mMaxParallelStates);
 
-				final var post = InterferenceApplier.applyInterferenceToSTATEsingle(interference.interf().disjState(),
+				final var post = itfApplier.applyInterferenceToDisjState(interference.interf().disjState(),
 						interference.interf().action(), disj, mPostOp, mMaxParallelStates);
 				if (post == null) {
 					continue;
@@ -114,9 +112,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
-		final var reduced = StateReducer.reduceToLocationsSet(result);
-		final var reducedDisj = DisjunctiveAbstractState.createDisjunction(reduced, mMaxParallelStates);
-		return reducedDisj;
+		final var resultDisj = DisjunctiveAbstractState.createDisjunction(result, mMaxParallelStates);
+		return resultDisj;
 	}
 
 	private void addIfNew(final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
@@ -133,8 +130,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 					subsumedByExisting = true;
 					break;
 				}
-				final SubsetResult dir2 = existing.isSubsetOf(potentialNewState);
-				if (dir2 == SubsetResult.STRICT) {
+				final SubsetResult reverseSubsetRes = existing.isSubsetOf(potentialNewState);
+				if (reverseSubsetRes == SubsetResult.STRICT) {
 					it.remove();
 				}
 			}

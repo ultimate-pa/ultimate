@@ -1,12 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class LocationAbstraction<LOC extends IcfgLocation> {
@@ -25,18 +23,14 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
 		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
-		case "Fully precise" ->
-			new AbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
 		case "Split only at Guards" -> mHeuristicLocationAbstraction.computeMine();
 		case "Mutex Guard and Vars Splitting" -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		case "Mutex Guard and Vars Splitting no Cutoff" -> mHeuristicLocationAbstraction.mutexVarSplittingNoCutoff();
+		case "Fully precise" ->
+			new AbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
 		default -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		};
 		return absMap;
-	}
-
-	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
-		return mHeuristicLocationAbstraction.shouldDifferentiate(outgoing);
 	}
 
 	private int getAndIncrementThreadLocationCounter(final String thread) {

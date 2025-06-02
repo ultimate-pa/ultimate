@@ -80,12 +80,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 			LiveVariableDomain.class.getSimpleName(), SMTTheoryDomain.class.getSimpleName(),
 			PoormanAbstractDomain.class.getSimpleName() };
 
-	public static final String[] THREAD_MODULAR_METHOD = { "Old", "New" };
-	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Fully precise", "Split only at Guards",
-			"Mutex Guard and Vars Splitting", "Mutex Guard and Vars Splitting no Cutoff" };
-	public static final String[] VALUES_LOCATION_REDUCTION = { "None", "Reduce per location" };
+	public static final String[] VALUES_LOCATION_ABSTRACTION = { "Singleton", "Split only at Guards",
+			"Mutex Guard and Vars Splitting", "Mutex Guard and Vars Splitting no Cutoff", "Fully precise" };
 	public static final Boolean DEF_PRECISE_INTERFERENCE_PRESTATE = false;
-	public static final Boolean DEF_REITERATE_OVER_STATES = false;
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_MAX_PARALLEL_STATES = "Parallel states before merging";
@@ -115,13 +112,10 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	private static final Boolean DEF_USE_FUTURE_RCFG = false;
 	private static final String TOOLTIP_USE_FUTURE_RCFG = "Instead of analysing Boogie, analyse transition formulas if run as stand-alone plugin (experimental)";
 
-	public static final String LABEL_THREAD_MODULAR_METHOD = "Implemented method";
 	public static final String LABEL_LOCATION_ABSTRACTION = "Location Abstraction Method";
 	public static final String LABEL_PRECISE_INTERFERENCE_PRESTATES = "Precise Interference Prestates";
-	public static final String LABEL_LOCATION_REDUCTION = "Location Reduction used";
 	public static final String LABEL_MAXIMUM_ITF_RECURSION_DEPTH = "Maximum ITF iterations before widening";
 	public static final String LABEL_MAXIMUM_PARALLEL_STATES_CONC = "Maximum states in upper Concurrent Fixpointengine";
-	public static final String LABEL_REITERATE_OVER_STATES = "Reiterate over already seen states during fixpoint computation";
 
 	public AbsIntPrefInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -166,16 +160,10 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		// Abstract Location Container
 		final UltimatePreferenceItemContainer concurrencyContainer = new UltimatePreferenceItemContainer(
 				"Concurrency settings");
-		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_THREAD_MODULAR_METHOD, THREAD_MODULAR_METHOD[1],
-				PreferenceType.Combo, THREAD_MODULAR_METHOD));
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_ABSTRACTION,
 				VALUES_LOCATION_ABSTRACTION[0], PreferenceType.Combo, VALUES_LOCATION_ABSTRACTION));
-		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_LOCATION_REDUCTION,
-				VALUES_LOCATION_REDUCTION[0], PreferenceType.Combo, VALUES_LOCATION_REDUCTION));
 		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_PRECISE_INTERFERENCE_PRESTATES,
 				DEF_PRECISE_INTERFERENCE_PRESTATE, "", PreferenceType.Boolean));
-		concurrencyContainer.addItem(new UltimatePreferenceItem<>(LABEL_REITERATE_OVER_STATES,
-				DEF_REITERATE_OVER_STATES, "", PreferenceType.Boolean));
 		concurrencyContainer
 				.addItem(new UltimatePreferenceItem<>(LABEL_MAXIMUM_PARALLEL_STATES_CONC, DEF_MAXSTATES_CONC,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));

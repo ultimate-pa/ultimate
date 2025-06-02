@@ -21,8 +21,8 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
 
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
-	int locationCounter = 0;
 	public boolean mWiden = false;
+
 	public static int postoperatorCalls;
 	public static int disjCacheHits;
 	public static int applierCacheHits;
@@ -47,14 +47,6 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 
 	public AbstractLocationMap<LOC> getAbstractLocationMap() {
 		return mAbstractLocationMap;
-	}
-
-	public IAbstractDomain<STATE, ACTION> getUnderlyingDomain() {
-		return mUnderlyingDomain;
-	}
-
-	public ThreadInstanceCounterFactory threadInstanceCounterFactory() {
-		return mThreadInstanceCounterFactory;
 	}
 
 	@Override

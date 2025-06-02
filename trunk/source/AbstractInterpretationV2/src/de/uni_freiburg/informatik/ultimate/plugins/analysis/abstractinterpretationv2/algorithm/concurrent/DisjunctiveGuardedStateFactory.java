@@ -8,7 +8,9 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgForkTransitionThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -23,7 +25,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	private final ConcurrentIcfgAnalyzer<ACTION, LOC> mAnalyzer;
 	private final int mMaxParallelStates;
 	private final Map<String, ? extends LOC> mEntryLocs;
-	private final IIcfg<? extends LOC> mIcfg;
+	final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mForksInLoop;
 
 	public DisjunctiveGuardedStateFactory(
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> stateStorage,
@@ -35,7 +37,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		mMaxParallelStates = maxStates;
 		mDomain = domain;
 		mEntryLocs = entryLocs;
-		mIcfg = icfg;
+		mForksInLoop = IcfgUtils.getForksInLoop(icfg);
 	}
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
@@ -61,8 +63,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 			final String procedure, final HashSet<LOC> allForkLocs) {
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkStates = new HashSet<>();
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> state = mStateStorage
-					.getAbstractState(loc);
+			final var state = mStateStorage.getAbstractState(loc);
 			if (state == null) {
 				return null;
 			}
@@ -106,10 +107,10 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 			forks++;
 			for (final IcfgEdge forkEdge : forkLoc.getOutgoingEdges()) {
 				if (forkEdge instanceof final ForkThreadCurrent fork1) {
-					final boolean circular = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-							.getPostOperator()).isCircular(fork1);
+					final boolean circular = mForksInLoop.contains(fork1);
 					if (circular) {
 						isCircular = true;
+						break;
 					}
 				}
 			}

@@ -22,7 +22,7 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 	public AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> calcWidenedInterferences(
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> oldInterferences,
 			final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> newInterferences,
-			final Set<String> threadNames, final int maxSize) {
+			final Set<String> threadNames) {
 
 		final Set<String> threads = threadNames;
 		final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> result = new AbstractInterferenceState<>(threads);

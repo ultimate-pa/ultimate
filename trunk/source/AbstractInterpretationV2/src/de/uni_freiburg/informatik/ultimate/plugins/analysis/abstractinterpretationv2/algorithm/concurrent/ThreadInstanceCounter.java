@@ -33,16 +33,6 @@ public class ThreadInstanceCounter {
 		return new HashMap<>(mThreadInstances);
 	}
 
-	public ThreadInstanceCounter incrementThread(final String threadName) {
-		if (mThreadInstances.get(threadName) == null) {
-			throw new IllegalArgumentException("Trying to increment thread which does not exist: " + threadName);
-		}
-		final var newInstances = new HashMap<>(mThreadInstances);
-		final int newCount = Math.min(2, mThreadInstances.get(threadName) + 1);
-		newInstances.put(threadName, newCount);
-		return new ThreadInstanceCounter(newInstances);
-	}
-
 	public ThreadInstanceCounter setActive(final Collection<String> threadName) {
 		final var newInstanceMap = new HashMap<>(mThreadInstances);
 		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) < 1)

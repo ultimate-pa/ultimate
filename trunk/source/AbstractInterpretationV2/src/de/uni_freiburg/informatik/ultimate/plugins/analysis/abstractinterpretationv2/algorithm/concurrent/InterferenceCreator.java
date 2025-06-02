@@ -29,7 +29,6 @@ public class InterferenceCreator {
 		} else {
 			precise = true;
 		}
-		final var unionOp = new GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC>();
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
 		for (final LOC entryLoc : mEntryLocs.values()) {
@@ -45,7 +44,7 @@ public class InterferenceCreator {
 					if (preState == null) {
 						continue;
 					}
-					final var interference = computeInterference(precise, preState, edge, unionOp, maxSize);
+					final var interference = computeInterference(precise, preState, edge, maxSize);
 					result.addInterference(interference);
 				}
 			}
@@ -56,8 +55,7 @@ public class InterferenceCreator {
 	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Interference<UNDERLYINGSTATE, ACTION, LOC> computeInterference(
 			final boolean precise,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
-			final IcfgEdge edge, final GuardedStateUnionOperator<UNDERLYINGSTATE, ACTION, LOC> unionOp,
-			final int maxSize) {
+			final IcfgEdge edge, final int maxSize) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
 		if (precise) {
 			interference = new Interference<>((ACTION) edge, preState);

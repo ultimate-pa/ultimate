@@ -9,65 +9,67 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
-public class InterferenceApplier {
+public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToSTATEsingle(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disjunctiveAbstractState,
+	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToDisjState(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferingState,
 			final ACTION action,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> statesThatCanBeInterferedbyItf,
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> targetState,
 			final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> postOp,
 			final int maxSize) {
 
-		// Add variables to both states to be able to intersect
-		var interferingState = disjunctiveAbstractState;
-		var stateState = statesThatCanBeInterferedbyItf;
-		final var missingLocals = DataStructureUtils.difference(stateState.getVariables(),
-				interferingState.getVariables());
-		final var missingLocals2 = DataStructureUtils.difference(interferingState.getVariables(),
-				stateState.getVariables());
-		if (stateState.isBottom() || interferingState.isBottom()) {
+		if (targetState.isBottom() || interferingState.isBottom()) {
 			return null;
 		}
-		if (!missingLocals2.isEmpty()) {
-			stateState = stateState.addVariables(missingLocals2);
-		}
-		if (!missingLocals.isEmpty()) {
-			interferingState = interferingState.addVariables(missingLocals);
-		}
-		if (stateState.isBottom() || interferingState.isBottom()) {
-			return null;
-		}
-		final var filteredStateState = DisjunctiveAbstractState
-				.createDisjunction(stateState
-						.getStates().stream().filter(s -> !(s.state().isBottom()) && s != null
-								&& s.threadCounter() != null && s.abstractLocationState() != null)
-						.collect(Collectors.toSet()), maxSize);
-		final var filteredInterferingState = DisjunctiveAbstractState
-				.createDisjunction(interferingState
-						.getStates().stream().filter(s -> !(s.state().isBottom()) && s != null
-								&& s.threadCounter() != null && s.abstractLocationState() != null)
-						.collect(Collectors.toSet()), maxSize);
-		final var intersectionState = filteredStateState.intersect(filteredInterferingState);
-		// throw out false states from intersection
-		final var filtered = DisjunctiveAbstractState.createDisjunction(intersectionState.getStates().stream()
-				.filter(s -> s != null && s.threadCounter() != null && s.abstractLocationState() != null)
-				.collect(Collectors.toSet()), maxSize);
+		// Add local variables to both states to be able to intersect
+		final var adjustedTarget = adjustStateForIntersection(targetState, interferingState, maxSize);
+		final var adjustedInterferer = adjustStateForIntersection(interferingState, targetState, maxSize);
 
+		final var intersectionState = adjustedTarget.intersect(adjustedInterferer);
+
+		// throw out false states from intersection
+		final var filtered = filterStates(intersectionState, maxSize);
 		if (filtered.getStates().size() == 0 || filtered.isBottom()) {
 			return null;
 		}
 		// postop
 		var postState = filtered.apply(postOp, action);
 		GuardedInterferenceDomain.postoperatorCalls++;
+
 		// TODO: sound?
 		if (postState.isEmpty() || postState.isBottom()) {
 			return null;
 		}
-		// remove local variables of other state locations we used in postop
-		if (!missingLocals2.isEmpty()) {
-			postState = postState.removeVariables(missingLocals2);
+		// remove local variables of other state we added earlier
+		final var missingLocals = DataStructureUtils.difference(targetState.getVariables(),
+				interferingState.getVariables());
+		if (!missingLocals.isEmpty()) {
+			postState = postState.removeVariables(missingLocals);
 		}
 		return postState;
+	}
+
+	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjustStateForIntersection(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjustee,
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> target,
+			final int maxSize) {
+		final var missingLocals = DataStructureUtils.difference(adjustee.getVariables(), target.getVariables());
+		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjusteeWithForeignLocals;
+		if (!missingLocals.isEmpty()) {
+			adjusteeWithForeignLocals = adjustee.addVariables(missingLocals);
+		} else {
+			adjusteeWithForeignLocals = adjustee;
+		}
+		final var filteredState = filterStates(adjusteeWithForeignLocals, maxSize);
+		return filteredState;
+	}
+
+	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> filterStates(
+			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> filterMe,
+			final int maxSize) {
+		return DisjunctiveAbstractState.createDisjunction(filterMe.getStates().stream().filter(
+				s -> s != null && !s.isBottom() && s.threadCounter() != null && s.abstractLocationState() != null)
+				.collect(Collectors.toSet()), maxSize);
 	}
 
 }

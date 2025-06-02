@@ -22,15 +22,6 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		threadNames.forEach(t -> mInterferenceMap.put(t, new HashMap<>()));
 	}
 
-	public AbstractInterferenceState(final AbstractInterferenceState<STATE, ACTION, LOC> other) {
-		mInterferenceMap = new HashMap<>();
-		other.mInterferenceMap.forEach((thread, map) -> {
-			final var copy = new HashMap<ACTION, Interference<STATE, ACTION, LOC>>();
-			map.forEach(copy::put);
-			mInterferenceMap.put(thread, copy);
-		});
-	}
-
 	@Override
 	public Set<Interference<STATE, ACTION, LOC>> getInterferencesForThread(final String threadName) {
 		final var inner = mInterferenceMap.get(threadName);
@@ -53,19 +44,16 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		threadMap.put(action, newItf);
 	}
 
+	public Set<String> interferenceStrings() {
+		return mInterferenceMap.entrySet().stream()
+				.flatMap(e -> e.getValue().values().stream()
+						.map(i -> "Thread " + e.getKey() + ": " + i.action() + (i.disjState())))
+				.collect(Collectors.toSet());
+	}
+
 	@Override
 	public Collection<Interference<STATE, ACTION, LOC>> getAllInterferences() {
 		return mInterferenceMap.values().stream().flatMap(m -> m.values().stream()).toList();
-	}
-
-	public Interference<STATE, ACTION, LOC> getInterferencesForThreadAction(final String threadName,
-			final ACTION edge) {
-		final var itf = mInterferenceMap.get(threadName).get(edge);
-		return itf;
-	}
-
-	public void clear() {
-		mInterferenceMap.clear();
 	}
 
 	@Override
@@ -90,12 +78,4 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 		}
 		return SubsetResult.NON_STRICT;
 	}
-
-	public Set<String> interferenceStrings() {
-		return mInterferenceMap.entrySet().stream()
-				.flatMap(e -> e.getValue().values().stream()
-						.map(i -> "Thread " + e.getKey() + ": " + i.action() + (i.disjState())))
-				.collect(Collectors.toSet());
-	}
-
 }

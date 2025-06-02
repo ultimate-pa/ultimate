@@ -62,6 +62,9 @@ public class AbstractLocationGlobalTracker {
 			if (intersection == null) {
 				return null;
 			}
+			if (intersection.isEmpty()) {
+				return null;
+			}
 			newMap.put(key, intersection);
 		}
 		return new AbstractLocationGlobalTracker(newMap);

@@ -20,11 +20,6 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		mLocationTracker = tracker.movedTo(location.getProcedure(), abstractLocation);
 	}
 
-	public AbstractLocationState(final AbstractLocationMap<LOC> locMap, final AbstractLocationGlobalTracker tracker) {
-		mAbstractLocationMap = locMap;
-		mLocationTracker = new AbstractLocationGlobalTracker(tracker);
-	}
-
 	public AbstractLocationState(final LOC location, final AbstractLocationMap<LOC> locMap,
 			final AbstractLocationGlobalTracker tracker) {
 		mAbstractLocationMap = locMap;
@@ -40,8 +35,9 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		mLocationTracker = track.movedTo(location.getProcedure(), abstractLocation);
 	}
 
-	public AbstractLocationState<LOC> copyToNewState(final LOC newLoc) {
-		return new AbstractLocationState<>(newLoc, mAbstractLocationMap, mLocationTracker);
+	public AbstractLocationState(final AbstractLocationMap<LOC> locMap, final AbstractLocationGlobalTracker tracker) {
+		mAbstractLocationMap = locMap;
+		mLocationTracker = new AbstractLocationGlobalTracker(tracker);
 	}
 
 	public AbstractLocationGlobalTracker getTracker() {
@@ -50,10 +46,6 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 
 	public AbstractLocationMap<LOC> getLocationMap() {
 		return mAbstractLocationMap;
-	}
-
-	public boolean equalThreadTracking(final AbstractLocationState<LOC> other) {
-		return mLocationTracker.isEqualTo(other.mLocationTracker);
 	}
 
 	public AbstractLocationState<LOC> union(final AbstractLocationState<LOC> other) {
@@ -74,6 +66,10 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return new AbstractLocationState<>(mAbstractLocationMap, trackIntersection);
 	}
 
+	public AbstractLocationState<LOC> copyToNewState(final LOC newLoc) {
+		return new AbstractLocationState<>(newLoc, mAbstractLocationMap, mLocationTracker);
+	}
+
 	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocationInt) {
 		return new AbstractLocationState<>(mAbstractLocationMap, mLocationTracker.movedTo(threadName, newLocationInt));
 	}
@@ -88,10 +84,6 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 			return false;
 		}
 		return mLocationTracker.isEqualTo(other.mLocationTracker);
-	}
-
-	public String printLocation(final String sourcethread) {
-		return String.valueOf(mLocationTracker.getLocationForThread(sourcethread));
 	}
 
 	@Override

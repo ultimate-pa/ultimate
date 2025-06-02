@@ -114,7 +114,6 @@ public final class AbstractInterpreter {
 			final IUltimateServiceProvider services) {
 		if (IcfgUtils.isConcurrent(root)) {
 			final IPreferenceProvider prefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
-			final String method = prefs.getString(AbsIntPrefInitializer.LABEL_THREAD_MODULAR_METHOD);
 			final ThreadModularAbsintPrefs threadModPrefs = getThreadModPrefs(prefs);
 			final IFixpointEngineFactory<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> factory = (
 					final FixpointEngineParameters<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> p) -> new FixpointEngine<>(
@@ -130,15 +129,11 @@ public final class AbstractInterpreter {
 	}
 
 	private static ThreadModularAbsintPrefs getThreadModPrefs(final IPreferenceProvider prefs) {
-		final var method = prefs.getString(AbsIntPrefInitializer.LABEL_THREAD_MODULAR_METHOD);
 		final var locationAbstraction = prefs.getString(AbsIntPrefInitializer.LABEL_LOCATION_ABSTRACTION);
 		final var interferencePrestates = prefs.getString(AbsIntPrefInitializer.LABEL_PRECISE_INTERFERENCE_PRESTATES);
-		final var locationReduction = prefs.getString(AbsIntPrefInitializer.LABEL_LOCATION_REDUCTION);
-		final var reiterate = prefs.getBoolean(AbsIntPrefInitializer.LABEL_REITERATE_OVER_STATES);
 		final var maxStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_PARALLEL_STATES_CONC);
 		final var maxItf = prefs.getInt(AbsIntPrefInitializer.LABEL_MAXIMUM_ITF_RECURSION_DEPTH);
-		return new ThreadModularAbsintPrefs(method, locationAbstraction, interferencePrestates, locationReduction,
-				reiterate, maxStates, maxItf);
+		return new ThreadModularAbsintPrefs(locationAbstraction, interferencePrestates, maxStates, maxItf);
 	}
 
 	/**
