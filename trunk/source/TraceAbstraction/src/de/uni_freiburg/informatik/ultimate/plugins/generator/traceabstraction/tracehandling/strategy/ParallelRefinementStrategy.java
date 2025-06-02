@@ -43,7 +43,7 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	final Set<L> mPathProgramRepresentative; // Needs to be a Set of words
 	int mRunningThreadForPP = 0;
 	protected final ILogger mLogger;
-	boolean mLoopAccelerationWasTried = false; // Default is false, we want to accelerate once per PP
+	boolean mLoopAccelerationWasTried = true; // Default is false, we want to accelerate once per PP
 	int mImperfectSequencesSoFar = 0;
 	int mExecutorSize = 0;
 	final INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
