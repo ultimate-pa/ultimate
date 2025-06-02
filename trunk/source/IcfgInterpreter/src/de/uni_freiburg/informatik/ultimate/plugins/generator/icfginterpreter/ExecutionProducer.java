@@ -575,7 +575,7 @@ public class ExecutionProducer {
 
 					try {
 						final Map<Term, Value> nextState = nextEdge.update(stateReference, ndc, execution.havocBounds);
-						executions.addLast(execution.addStep(nextEdge.getEdge(), nextState, ndc));
+						executions.addLast(execution.addStep(nextEdge.getEdge(), nextState));
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 						final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
 						printExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
@@ -619,20 +619,36 @@ public class ExecutionProducer {
 			return new PartialExecution(currentLocation, ndc, edges, states, havocBounds, reason);
 		}
 
-		public PartialExecution addStep(final IcfgEdge edge, final Map<Term, Value> state) {
-			return addStep(edge, state, ndc);
-		}
-
-		public PartialExecution addStep(final IcfgEdge edge, final Map<Term, Value> state,
-				final NonDeterministicChoice mNDC) {
+		public PartialExecution addStep(final IcfgEdge nextEdge, final Map<Term, Value> nextState) {
 			if (status != null) {
 				throw new AssertionError("Cannot add steps to finished Execution.");
 			}
 			final List<IcfgEdge> newEdges = new ArrayList<>(edges());
-			newEdges.add(edge);
+			newEdges.add(nextEdge);
 			final List<Map<Term, Value>> newStates = new ArrayList<>(states());
-			newStates.add(state);
-			return new PartialExecution(edge.getTarget(), mNDC, newEdges, newStates, new HashMap<>(havocBounds),
+
+			// TODO Propagate back havoced variables (does not yet support havoced array entries)
+			int index = newStates.size() - 1;
+			Map<Term, Value> previousState = newStates.get(index);
+			final Set<Term> currentVars = new HashSet<>(nextState.keySet());
+			while (!previousState.keySet().containsAll(currentVars)) {
+				for (final Term variable : currentVars) {
+					if (!previousState.containsKey(variable)) {
+						previousState.put(variable, nextState.get(variable));
+					} else {
+						currentVars.remove(variable);
+					}
+				}
+
+				index--;
+				if (index < 0) {
+					break;
+				}
+				previousState = newStates.get(index);
+			}
+
+			newStates.add(nextState);
+			return new PartialExecution(nextEdge.getTarget(), ndc, newEdges, newStates, new HashMap<>(havocBounds),
 					status);
 		}
 	}
