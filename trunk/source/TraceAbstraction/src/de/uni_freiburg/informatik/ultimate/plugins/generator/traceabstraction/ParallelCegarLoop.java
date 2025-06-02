@@ -101,8 +101,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	BlockingQueue<Future<WorkerThreadResult<L, A>>> mWorkerResultQueue = new LinkedBlockingQueue<>();
 
 	// Strategies
-	private final HashMap<Integer, NestedRun<L, ?>> mAllCounterexamples = new HashMap<>();
+	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
+	private final Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = Collections.emptySet();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
+	private boolean mVisitLoopsOnlyOnce = true; // a strategy where we focus on spread before pathprograms
 
 	// Testing Strategies
 	private final boolean useGoalSetForIsEmpty;
@@ -171,6 +173,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// mECS = new ExecutorCompletionService<>(mExec);
 
 		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
+		mVisitLoopsOnlyOnce = mPref.mVisitLoopsOnlyOnce;
 		// mParallelSearchSrategy = mPref.parallelSearchSrategy;
 
 		Thread.currentThread().setName("Main Cegar Thread");
@@ -445,6 +448,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			if (!mPpStrategyMap.containsKey(ppRepresentative)) {
 				final ParallelRefinementStrategy<L> strategy = new ParallelRefinementStrategy<>(mLogger,
 						ppRepresentative, mThreadLimit);
+				strategy.quickCheckIf(mVisitLoopsOnlyOnce);
 				strategy.setRunningThreadsOfPP(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
 				mPpStrategyMap.put(ppRepresentative, strategy);
 				updateExecutorSizes();
@@ -505,14 +509,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// mInterations equals the amount of refinements
 		mCegarLoopBenchmark.announceNextIteration();
 
-		final List<L> trace = threadResult.getCounterexample().getWord().asList();
-		final int traceHash = trace.hashCode();
-		mLogger.info("Subtrahend traceHash: " + traceHash);
-
-		// Only remove after the counterexample is no longer in the abstraction
-		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
-			mAllCounterexamples.remove(traceHash);
-		}
+		removeCounterexampleToSet(threadResult.getCounterexample());
 
 		final Set<IcfgLocation> hoareAnnotationLocs;
 		// if (mComputeHoareAnnotation) {
@@ -622,16 +619,36 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// WARNING all goals can be in mInActiveErrorLocs, but we are not done yet!!
 	}
 
+	// If we fail in only loop mode, we use our resources on pathprograms (differen assertion orders)
+	private void changeToNotVisistLoopsOnlyOnceMode() {
+		mVisitLoopsOnlyOnce = false;
+		for (final int hash : mCounterexamplesToBeRemovedFromActiveCexMap) {
+			mActiveCounterexamples.remove(hash);
+		}
+	}
+
 	/*
 	 * Only add a counterexample if it is being checked by a thread otherwise we are unsound
 	 */
 	private void addCounterexampleToSet(final NestedRun<L, ?> counterexample) {
 		final List<L> trace = counterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
-		if (mAllCounterexamples.containsKey(traceHash)) {
+		if (mActiveCounterexamples.containsKey(traceHash)) {
 			throw new AssertionError("IsEmpty(Parallel) Found the same counterexample twice!");
 		}
-		mAllCounterexamples.put(traceHash, counterexample);
+		mActiveCounterexamples.put(traceHash, counterexample);
+	}
+
+	private void removeCounterexampleToSet(final IRun<L, ?> run) {
+		final List<L> trace = run.getWord().asList();
+		final int traceHash = trace.hashCode();
+		mLogger.info("Subtrahend traceHash: " + traceHash);
+		// Only remove after the counterexample is no longer in the abstraction
+		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel && !mVisitLoopsOnlyOnce) {
+			mActiveCounterexamples.remove(traceHash);
+		} else {
+			mCounterexamplesToBeRemovedFromActiveCexMap.add(traceHash);
+		}
 	}
 
 	/*
@@ -649,7 +666,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		case PARALLEL:
 			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
 					mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-					IsEmpty.SearchStrategy.BFS, mAllCounterexamples);
+					IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
 		default:
 			return new IsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction, mAbstraction.getInitialStates(),
 					Collections.emptySet(), Collections.emptySet(), strategy);
@@ -670,7 +687,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		if (run != null) {
 			final List<L> trace = run.getWord().asList();
 			final int traceHash = trace.hashCode();
-			if (mAllCounterexamples.containsKey(traceHash)) {
+			if (mActiveCounterexamples.containsKey(traceHash)) {
 				fresh = false;
 			}
 			return correct && fresh;
@@ -714,6 +731,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 				mLogger.info("Found new Counterexample via IsEmptyParallel!");
 				return search.getNestedRun();
 			}
+			// If we fail in only loop mode, we use our resources on pathprograms (differen assertion orders)
+			changeToNotVisistLoopsOnlyOnceMode();
 			mLogger.info("Did not Find a Counterexample!");
 			mCountFailedToFindCex += 1;
 			assert mRunningThreads > 0;
@@ -731,6 +750,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mLogger.info("Found new Counterexample via IsEmptyParallel!");
 			return search.getNestedRun();
 		}
+		changeToNotVisistLoopsOnlyOnceMode();
 		search = getSearch(IsEmpty.SearchStrategy.DFS, possibleEndPoints);
 		if (isSearchCorrectAndTraceFresh(search)) {
 			mLogger.info("Found new Counterexample via DFS!");

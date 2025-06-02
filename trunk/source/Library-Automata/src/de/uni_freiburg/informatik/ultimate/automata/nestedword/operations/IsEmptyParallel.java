@@ -84,6 +84,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private int mCountRecursionSteps = 0; // To prevent stack overflows
 	private int countFailedRunConstruction = 0;
 	private boolean mTimedout = false;
+	private boolean mVisitLoopsOnlyOnce = false;
 
 	/**
 	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
@@ -106,12 +107,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	public IsEmptyParallel(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
-			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, ?>> counterexamples)
+			final SearchStrategy strategy, final HashMap<Integer, NestedRun<LETTER, ?>> counterexamples,
+			final boolean visitLoopsOnlyOnce)
 			throws AutomataOperationCanceledException {
 		super(services, operand, startStates, forbiddenStates, goalStates, goalStateIsAcceptingState, strategy, true);
 
 		// BFS or DFS for search when we call IsEmpty at the end of parallel search
 		assert mStrategy.equals(SearchStrategy.BFS);
+		mVisitLoopsOnlyOnce = visitLoopsOnlyOnce;
 
 		mStart = System.nanoTime() / 1000000000;
 		mTimeOut = mStart + 50000; // 5 sec timeout atm
@@ -128,7 +131,6 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-
 	}
 
 	/**
@@ -273,6 +275,19 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		return new PQState(currentScore, returnPred, symbol, succ, state, activeCounterexamples, false, true);
 	}
 
+	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE succ, final LETTER symbol,
+			final int position) {
+		if (mVisitLoopsOnlyOnce) {
+			return increaseScoreNoLoops(counterexample, succ, symbol, position);
+		}
+		return increaseScoreDefault(counterexample, succ, symbol, position);
+	}
+
+	/**
+	 * increases the score only if a previous counterexample took this edge *
+	 * AND @position is equal to the position of the @succ in the counterexample
+	 * (Prefixes match)
+	 */
 	private boolean increaseScoreDefault(final NestedRun<LETTER, ?> counterexample, final STATE succ,
 			final LETTER symbol, final int position) {
 		if (counterexample.getLength() > position) {
@@ -326,7 +341,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScoreDefault(counterexample, succ, symbol, position)) {
+			if (increaseScore(counterexample, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -343,7 +358,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScoreDefault(counterexample, succ, symbol, position)) {
+			if (increaseScore(counterexample, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -360,7 +375,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScoreDefault(counterexample, succ, symbol, position)) {
+			if (increaseScore(counterexample, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}

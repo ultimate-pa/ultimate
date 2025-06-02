@@ -34,18 +34,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  * @author Max Barth (max.barth@lmu.de)
  */
 public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
-	ArrayList<IIpTcStrategyModule> mModules = new ArrayList<>();
+	final ArrayList<IIpTcStrategyModule> mModules = new ArrayList<>();
 	boolean[] mActiveModules;
 	Integer[] mPriorities;
 	ThreadGroup mThreadGroup;
-	ThreadPoolExecutor mExecutor;
-	Set<L> mPathProgramRepresentative; // Needs to be a Set of words
+	final ThreadPoolExecutor mExecutor;
+	final Set<L> mPathProgramRepresentative; // Needs to be a Set of words
 	int mRunningThreadForPP = 0;
 	protected final ILogger mLogger;
 	boolean mLoopAccelerationWasTried = false; // Default is false, we want to accelerate once per PP
 	int mImperfectSequencesSoFar = 0;
 	int mExecutorSize = 0;
-	INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
+	final INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
+	boolean mQuickCheck = false;
 
 	public enum WorkerGeneralizationMode {
 		YES, NO, ONLYIFPERFECT
@@ -133,6 +134,11 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	 * Trying different Assertion orders is more promising then trying different solvers
 	 */
 	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory) {
+		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
+		if (mQuickCheck) {
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
+			return rtr.toArray(new IIpTcStrategyModule[1]);
+		}
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final boolean integerMode = tc.getOccuringSortNames().contains("Int")
@@ -253,6 +259,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	public int getExecutorSize() {
 		return mExecutorSize;
+	}
+
+	public void quickCheckIf(final boolean visitLoopsOnlyOnce) {
+		mQuickCheck = visitLoopsOnlyOnce;
 	}
 }
 

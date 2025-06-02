@@ -96,12 +96,14 @@ public final class TAPreferences {
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
 
+	// Parallel Trace Abstraction Settings
 	private final int mThreadLimit;
 	private final boolean mParallelCegarLoop;
 	public boolean useGoalSetForIsEmpty;
 	public boolean parallelSearchSrategy;
 	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel;
 	public boolean minimizeAbstractionPerWorker;
+	public boolean mVisitLoopsOnlyOnce;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -214,6 +216,7 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		minimizeAbstractionPerWorker =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
+		mVisitLoopsOnlyOnce = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VISIT_LOOPS_ONLY_ONCE);
 	}
 
 	/**
@@ -591,4 +594,7 @@ public final class TAPreferences {
 		return mParallelCegarLoop;
 	}
 
+	public boolean visitLoopsOnlyOnce() {
+		return mVisitLoopsOnlyOnce;
+	}
 }

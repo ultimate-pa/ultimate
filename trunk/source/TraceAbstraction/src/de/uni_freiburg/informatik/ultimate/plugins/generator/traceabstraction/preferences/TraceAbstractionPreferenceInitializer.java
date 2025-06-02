@@ -467,6 +467,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
 	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER = "Minimize Abstraction every time a worker is done";
 	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = false;
+	public static final String LABEL_VISIT_LOOPS_ONLY_ONCE = "Initially visit loops only once";
+	public static final boolean DEF_VISIT_LOOPS_ONLY_ONCE = false;
 
 	/**
 	 * Constructor.
@@ -755,6 +757,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH, DEF_PARALLELSEARCH, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_VISIT_LOOPS_ONLY_ONCE, DEF_VISIT_LOOPS_ONLY_ONCE,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
