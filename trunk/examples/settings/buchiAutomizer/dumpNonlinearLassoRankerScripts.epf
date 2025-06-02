@@ -17,11 +17,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=LARGE_BLOCK
 #Sat May 03 03:33:13 CEST 2014
 file_export_version=3.0
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Remove\ goto\ edges\ from\ RCFG=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder=0.0.1
 #Sat May 03 03:33:13 CEST 2014
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Dump\ SMT\ script\ to\ file=true
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
