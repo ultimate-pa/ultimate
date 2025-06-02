@@ -41,8 +41,8 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 			return null;
 		}
 		// remove local variables of other state we added earlier
-		final var missingLocals = DataStructureUtils.difference(targetState.getVariables(),
-				interferingState.getVariables());
+		final var missingLocals = DataStructureUtils.difference(interferingState.getVariables(),
+				targetState.getVariables());
 		if (!missingLocals.isEmpty()) {
 			postState = postState.removeVariables(missingLocals);
 		}
@@ -53,7 +53,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjustee,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> target,
 			final int maxSize) {
-		final var missingLocals = DataStructureUtils.difference(adjustee.getVariables(), target.getVariables());
+		final var missingLocals = DataStructureUtils.difference(target.getVariables(), adjustee.getVariables());
 		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjusteeWithForeignLocals;
 		if (!missingLocals.isEmpty()) {
 			adjusteeWithForeignLocals = adjustee.addVariables(missingLocals);

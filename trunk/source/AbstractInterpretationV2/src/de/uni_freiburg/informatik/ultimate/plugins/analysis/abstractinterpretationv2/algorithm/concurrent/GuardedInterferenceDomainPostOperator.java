@@ -80,9 +80,12 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				.collect(Collectors.toSet());
 
 		// adjust abstract location according to new location
-		final var guardedStates = states.stream().filter(s -> !s.isBottom())
-				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newState.threadCounter(),
-						newState.abstractLocationState().copyToNewState(transition.getTarget())))
+		final var guardedStates = states
+				.stream().filter(s -> !s.isBottom()).map(
+						s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newState.threadCounter(),
+								newState.abstractLocationState().movedTo(mCurrentThreadName,
+										oldstate.abstractLocationState().getLocationMap()
+												.getAbstractLocation(transition.getTarget()))))
 				.collect(Collectors.toSet());
 
 		if (!mApplyInterferences) {
