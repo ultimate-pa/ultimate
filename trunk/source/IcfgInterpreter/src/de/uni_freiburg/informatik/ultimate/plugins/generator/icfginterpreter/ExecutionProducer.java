@@ -517,7 +517,7 @@ public class ExecutionProducer {
 			final PartialExecution execution = executions.pop();
 
 			if (executionMaxLength != 0 && execution.edges.size() >= executionMaxLength) {
-				printExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out);
 				continue;
 			}
 
@@ -527,13 +527,13 @@ public class ExecutionProducer {
 
 			final IcfgLocation currentLocation = execution.currentLocation;
 			if (mErrorMap.getOrDefault(currentLocation.getProcedure(), new HashSet<>()).contains(currentLocation)) {
-				printExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_ERROR), out);
 				continue;
 			}
 
 			if (nextEdges.size() == 0) {
 				// No edges exist from the current vertex
-				printExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
 				continue;
 			}
 
@@ -549,14 +549,14 @@ public class ExecutionProducer {
 				} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 					unsupportedFound = true;
 					final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
-					printExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
+					finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
 				}
 			}
 
 			// No guard was true
 			if ((availableEdges.size() == 0) && !unsupportedFound) {
 				// There were no edges that failed due to not being implemented
-				printExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
 			}
 
 			for (final InterpretedIcfgEdge nextEdge : availableEdges) {
@@ -578,7 +578,7 @@ public class ExecutionProducer {
 						executions.addLast(execution.addStep(nextEdge.getEdge(), nextState));
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 						final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
-						printExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
+						finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
 					}
 
 				}
@@ -588,7 +588,7 @@ public class ExecutionProducer {
 		return out;
 	}
 
-	private void printExecution(final PartialExecution execution,
+	private void finalizeExecution(final PartialExecution execution,
 			final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> outMap) {
 		// Execution must be finished
 		assert execution.status != null;
@@ -632,13 +632,15 @@ public class ExecutionProducer {
 			Map<Term, Value> previousState = newStates.get(index);
 			final Set<Term> currentVars = new HashSet<>(nextState.keySet());
 			while (!previousState.keySet().containsAll(currentVars)) {
+				final Set<Term> finishedVars = new HashSet<>();
 				for (final Term variable : currentVars) {
 					if (!previousState.containsKey(variable)) {
 						previousState.put(variable, nextState.get(variable));
 					} else {
-						currentVars.remove(variable);
+						finishedVars.add(variable);
 					}
 				}
+				currentVars.removeAll(finishedVars);
 
 				index--;
 				if (index < 0) {

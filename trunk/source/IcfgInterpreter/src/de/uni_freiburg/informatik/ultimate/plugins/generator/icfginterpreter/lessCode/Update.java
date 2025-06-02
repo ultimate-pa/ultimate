@@ -27,62 +27,62 @@ public interface Update extends ITermProvider {
 	TermVariable getVariable();
 
 	public static class AssignmentUpdate implements Update {
-		private final TermVariable mProgramVar;
+		private final TermVariable mTermVar;
 		private final Term mValue;
 
 		public AssignmentUpdate(final TermVariable programVar, final Term value) {
 			assert programVar.getSort().equals(value.getSort());
-			mProgramVar = programVar;
+			mTermVar = programVar;
 			mValue = value;
 		}
 
 		@Override
 		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
-			state.put(mProgramVar, TermEvaluator.evaluate(state, mValue, ndc, havocRestrictions));
+			state.put(mTermVar, TermEvaluator.evaluate(state, mValue, ndc, havocRestrictions));
 		}
 
 		@Override
 		public TermVariable getVariable() {
-			return mProgramVar;
+			return mTermVar;
 		}
 
 		@Override
 		public String toString() {
-			return mProgramVar + " := " + mValue.toStringDirect();
+			return mTermVar + " := " + mValue.toStringDirect();
 		}
 
 		@Override
 		public boolean equals(final Object b) {
 			if (b instanceof final AssignmentUpdate update) {
-				return mProgramVar.equals(update.mProgramVar) && mValue.equals(update.mValue);
+				return mTermVar.equals(update.mTermVar) && mValue.equals(update.mValue);
 			}
 			return false;
 		}
 
 		@Override
 		public int hashCode() {
-			return mProgramVar.hashCode() * 31 + mValue.hashCode();
+			return mTermVar.hashCode() * 31 + mValue.hashCode();
 		}
 
 		@Override
 		public Term toTerm(final Script script) {
-			return SmtUtils.binaryEquality(script, mProgramVar, mValue);
+			return SmtUtils.binaryEquality(script, mTermVar, mValue);
 		}
 	}
 
 	public static class HavocUpdate implements Update {
-		private final TermVariable mProgramVar;
+		private final TermVariable mTermVar;
 		private final HashSet<Term> mLessEq;
 		private final HashSet<Term> mGreaterEq;
 		private final HashSet<Term> mInEqual;
 
 		public HavocUpdate(final TermVariable programVar, final List<SolvedEquation> equations) {
-			mProgramVar = programVar;
+			mTermVar = programVar;
 			mLessEq = new HashSet<>();
 			mGreaterEq = new HashSet<>();
 			mInEqual = new HashSet<>();
-			final Theory theory = mProgramVar.getTheory();
+			final Theory theory = mTermVar.getTheory();
 			final Term one = theory.constant(BigInteger.ONE, theory.getNumericSort());
 
 			for (final SolvedEquation equation : equations) {
@@ -144,8 +144,7 @@ public interface Update extends ITermProvider {
 
 		private Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
-			switch (mProgramVar.getSort().getName()) {
-			// TODO Add Array and BitVec
+			switch (mTermVar.getSort().getName()) {
 			case SMTLIBConstants.BOOL:
 				final HashSet<BoolValue> inEqualBools = new HashSet<>();
 
@@ -209,9 +208,7 @@ public interface Update extends ITermProvider {
 		@Override
 		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
-			// Is havoced when variable is used
-
-			final Restriction<?> existingRestriction = havocRestrictions.remove(mProgramVar);
+			final Restriction<?> existingRestriction = havocRestrictions.remove(mTermVar);
 			Restriction<?> newRestriction;
 
 			if (existingRestriction != null) {
@@ -220,14 +217,14 @@ public interface Update extends ITermProvider {
 				newRestriction = getRestriction(state, ndc, havocRestrictions);
 			}
 
-			havocRestrictions.put(mProgramVar, newRestriction);
-
-			state.remove(mProgramVar);
+			// Is havoced when (and only if) variable is read
+			havocRestrictions.put(mTermVar, newRestriction);
+			state.remove(mTermVar);
 		}
 
 		@Override
 		public TermVariable getVariable() {
-			return mProgramVar;
+			return mTermVar;
 		}
 
 		@Override
@@ -249,13 +246,13 @@ public interface Update extends ITermProvider {
 						+ "}");
 			}
 
-			return mProgramVar + " := havoc(" + String.join("; ", types) + ")";
+			return mTermVar + " := havoc(" + String.join("; ", types) + ")";
 		}
 
 		@Override
 		public boolean equals(final Object b) {
 			if (b instanceof final HavocUpdate update) {
-				return mProgramVar.equals(update.mProgramVar) && mInEqual.equals(update.mInEqual)
+				return mTermVar.equals(update.mTermVar) && mInEqual.equals(update.mInEqual)
 						&& mGreaterEq.equals(update.mGreaterEq) && mLessEq.equals(update.mLessEq);
 			}
 			return false;
@@ -263,7 +260,7 @@ public interface Update extends ITermProvider {
 
 		@Override
 		public int hashCode() {
-			return (((mProgramVar.hashCode() * 31 + mInEqual.hashCode()) * 31 + mGreaterEq.hashCode()) * 31
+			return (((mTermVar.hashCode() * 31 + mInEqual.hashCode()) * 31 + mGreaterEq.hashCode()) * 31
 					+ mLessEq.hashCode()) * 31;
 		}
 
@@ -272,15 +269,15 @@ public interface Update extends ITermProvider {
 			final List<Term> equations = new ArrayList<>();
 
 			for (final Term neq : mInEqual) {
-				return SmtUtils.distinct(script, mProgramVar, neq);
+				return SmtUtils.distinct(script, mTermVar, neq);
 			}
 
 			for (final Term geq : mGreaterEq) {
-				return SmtUtils.geq(script, mProgramVar, geq);
+				return SmtUtils.geq(script, mTermVar, geq);
 			}
 
 			for (final Term leq : mLessEq) {
-				return SmtUtils.leq(script, mProgramVar, leq);
+				return SmtUtils.leq(script, mTermVar, leq);
 			}
 
 			return SmtUtils.and(script, equations);

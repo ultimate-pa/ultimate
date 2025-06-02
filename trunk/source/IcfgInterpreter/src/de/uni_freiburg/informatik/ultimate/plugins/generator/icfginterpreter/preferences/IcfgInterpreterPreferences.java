@@ -56,7 +56,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		EXECUTION_SEED("Seed to base non-determinsim on"),
 		EXECUTIONS_PER_ENTRYPOINT("Number of differing executions to generate per program entry point"),
 		VARIANTS_PER_HAVOC_EDGE("Number of differing executions to create when taking an edge with havoc"),
-		EXECUTION_MAX_LENGTH("How many edges shouldbe taken before the execution is terminated early? (0 for never)"),
+		EXECUTION_MAX_LENGTH("How many edges should be taken before the execution is terminated early? (0 for never)"),
 		EXECUTIONS_QUEUED("Number of unfinished executions to store before disregarding new ones"),
 		BITS_HAVOCED("Number of bits to havoc for integers. (Bounds of the ICFG take priority over this setting.)");
 

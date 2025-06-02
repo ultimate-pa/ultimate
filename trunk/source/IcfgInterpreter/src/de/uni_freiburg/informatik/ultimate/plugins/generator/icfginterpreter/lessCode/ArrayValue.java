@@ -66,12 +66,49 @@ public class ArrayValue implements Value {
 
 	@Override
 	public Term toTerm(final Script script) {
-		return null;
-		// TODO convert arrays
+		// TODO make new array term if there is none
+		return toTermSelect(script, null);
+	}
+
+	/**
+	 * Returns and term of ((select array key) = value)
+	 *
+	 * @param script
+	 * @param array
+	 * @return
+	 */
+	public Term toTermSelect(final Script script, final Term array) {
+		final Map<Term, Term> values = makeOutValues(script, array);
+
+		final List<Term> conjuncts = new ArrayList<>();
+		for (final Entry<Term, Term> entry : values.entrySet()) {
+			conjuncts.add(SmtUtils.equality(script, entry.getKey(), entry.getValue()));
+		}
+
+		return SmtUtils.and(script, conjuncts);
+	}
+
+	/**
+	 * Returns store(store(array key value) key value)...
+	 *
+	 * @param script
+	 * @param array
+	 * @return
+	 */
+	public Term toTermStore(final Script script, final Term array) {
+		Term storeArray = array;
+
+		for (final Entry<Value, Value> entry : mValue.entrySet()) {
+			storeArray = SmtUtils.store(script, storeArray, entry.getKey().toTerm(script),
+					entry.getValue().toTerm(script));
+
+		}
+
+		return storeArray;
 	}
 
 	public Map<Term, Term> makeOutValues(final Script script, final Term array) {
-		final Map<Term, Term> arrayValues = new HashMap<>();// new Term[mValue.size()];
+		final Map<Term, Term> arrayValues = new HashMap<>();
 
 		for (final Entry<Value, Value> value : mValue.entrySet()) {
 			final Term selectIndex = SmtUtils.select(script, array, value.getKey().toTerm(script));
