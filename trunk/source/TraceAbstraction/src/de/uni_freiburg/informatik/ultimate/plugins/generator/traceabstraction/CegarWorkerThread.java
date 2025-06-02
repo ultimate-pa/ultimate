@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -34,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -48,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpTcStrategyModuleAcceleratedTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
@@ -154,8 +157,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				return mThreadResult;
 			}
 
-			final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
-					isCexResult.getSecond(), mCurrentErrorLoc);
+			final AbstractCegarLoop.AutomatonType automatonType =
+					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 			constructRefinementAutomaton(automatonType);
 			mThreadResult = refineAbstractionInternally();
 		} catch (AutomataLibraryException | ToolchainCanceledException e) {
@@ -165,8 +168,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		return mThreadResult;
 	}
 
-	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(
-			final ITARefinementStrategy<L> strategy) {
+	protected Pair<LBool, IProgramExecution<L, Term>>
+			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
 		IStatisticsDataProvider refinementEngineStats = null;
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
@@ -175,8 +178,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
 
-			final TraceAbstractionRefinementEngine<L> refinementEngine = new TraceAbstractionRefinementEngine<>(
-					getServices(), mLogger, strategy);
+			final TraceAbstractionRefinementEngine<L> refinementEngine =
+					new TraceAbstractionRefinementEngine<>(getServices(), mLogger, strategy);
 			mRefinementResult = refinementEngine.getResult();
 			refinementEngineStats = refinementEngine.getRefinementEngineStatistics();
 
@@ -190,8 +193,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			if (mRefinementResult.providesIcfgProgramExecution()) {
 				rcfgProgramExecution = mRefinementResult.getIcfgProgramExecution();
 			} else {
-				rcfgProgramExecution = TraceCheckUtils
-						.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
+				rcfgProgramExecution =
+						TraceCheckUtils.computeSomeIcfgProgramExecutionWithoutValues(mCounterexample.getWord());
 			}
 
 		}
@@ -215,13 +218,22 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		if (isCounterexampleFeasible != Script.LBool.UNKNOWN) {
 			return AbstractCegarLoop.AutomatonType.INTERPOLANT;
 		}
-		final Result actualResult;
+		Result actualResult;
 		if (programExecution != null) {
-			throw new AssertionError("TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
-			// final UnprovabilityReason reasonUnknown =
-			// new UnprovabilityReason("unable to decide satisfiability of path constraint");
-			// actualResult = Result.UNKNOWN;
-			// mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
+			boolean wasAccelerationmodule = false;
+			for (final ITraceCheckStrategyModule<L, ?> module : mStrategy.getTraceCheckModules()) {
+				if (module instanceof IpTcStrategyModuleAcceleratedTraceCheck) {
+					wasAccelerationmodule = true;
+					final UnprovabilityReason reasonUnknown =
+							new UnprovabilityReason("unable to decide satisfiability of path constraint");
+					actualResult = Result.UNKNOWN;
+					mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
+				}
+			}
+			if (!wasAccelerationmodule) {
+				throw new AssertionError(
+						"TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
+			}
 		}
 		actualResult = Result.TIMEOUT;
 		mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
@@ -256,28 +268,28 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
 				mMainThread.getAbstraction(), mIteration);
 		mInterpolAutomaton = null;
-//		for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
-//			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
-//			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
-//					.containsKey(VarAssignmentReuseAnnotation.class.getName())) {
-//
-//				final VarAssignmentReuseAnnotation pLocAnnoVA = (VarAssignmentReuseAnnotation) testGoalISL
-//						.getProgramPoint().getPayload().getAnnotations()
-//						.get(VarAssignmentReuseAnnotation.class.getName());
-//				// If it contains a VA it should contain a TG
-//				assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
-//						.containsKey(TestGoalAnnotation.class.getName());
-//				final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
-//						.getAnnotations().get(TestGoalAnnotation.class.getName());
-//
-//				// TODO
-//				// if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
-//				// mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
-//				// mAbstraction.internalPredecessors(testGoal));
-//				// }
-//
-//			}
-//		}
+		// for (final IPredicate testGoal : mMainThread.getAbstraction().getFinalStates()) {
+		// final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+		// if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+		// .containsKey(VarAssignmentReuseAnnotation.class.getName())) {
+		//
+		// final VarAssignmentReuseAnnotation pLocAnnoVA = (VarAssignmentReuseAnnotation) testGoalISL
+		// .getProgramPoint().getPayload().getAnnotations()
+		// .get(VarAssignmentReuseAnnotation.class.getName());
+		// // If it contains a VA it should contain a TG
+		// assert testGoalISL.getProgramPoint().getPayload().getAnnotations()
+		// .containsKey(TestGoalAnnotation.class.getName());
+		// final TestGoalAnnotation pLocAnnoTG = (TestGoalAnnotation) testGoalISL.getProgramPoint().getPayload()
+		// .getAnnotations().get(TestGoalAnnotation.class.getName());
+		//
+		// // TODO
+		// // if (!pLocAnnoVA.mIsActiveTestGoal || mTestGoalWorkingSet.contains(pLocAnnoTG.mId)) {
+		// // mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton(testGoal,
+		// // mAbstraction.internalPredecessors(testGoal));
+		// // }
+		//
+		// }
+		// }
 
 		// TODO reactivate
 		// final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
@@ -398,8 +410,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		try {
 			mLogger.debug("WORKER: Start constructing difference for enhancing interpolant automaton in worker");
-			final PowersetDeterminizer<L, IPredicate> psd = new PowersetDeterminizer<>(subtrahend, true,
-					mPredicateFactoryInterpolantAutomata);
+			final PowersetDeterminizer<L, IPredicate> psd =
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<L, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
@@ -450,8 +462,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> subtrahendBeforeEnhancement,
 			final AutomatonType automatonType) throws AutomataLibraryException {
-		final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
-				subtrahendBeforeEnhancement, automatonType);
+		final RunningTaskInfo runningTaskInfo =
+				getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend, subtrahendBeforeEnhancement, automatonType);
 		if (mErrorGeneralizationEngine.hasAutomatonInIteration(mIteration)) {
 			// mErrorGeneralizationEngine.stopDifference(minuend, mPredicateFactoryInterpolantAutomata,
 			// mPredicateFactoryResultChecking, mCounterexample, true);
@@ -476,8 +488,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 		// Use all edges of the interpolant automaton that is already constructed as an
 		// initial cache for the Hoare triple checker.
-		final HoareTripleCheckerCache initialCache = TraceAbstractionUtils
-				.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
+		final HoareTripleCheckerCache initialCache =
+				TraceAbstractionUtils.extractHoareTriplesfromAutomaton(mRefinementResult.getInfeasibilityProof());
 		return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
 				mPref.getHoareTripleChecks(), mCsToolkit, mRefinementResult.getPredicateUnifier(), initialCache);
 	}
@@ -529,17 +541,20 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
-		final boolean conservativeSuccessorCandidateSelection = enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
 		final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 		return new NondeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
 				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 	}
 
-	private DeterministicInterpolantAutomaton<L> constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
-			final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
-			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
-			final InterpolantAutomatonEnhancement enhanceMode) {
-		final boolean conservativeSuccessorCandidateSelection = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
+	private DeterministicInterpolantAutomaton<L>
+			constructInterpolantAutomatonForOnDemandEnhancementPredicateAbstraction(
+					final NestedWordAutomaton<L, IPredicate> inputInterpolantAutomaton,
+					final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
+					final InterpolantAutomatonEnhancement enhanceMode) {
+		final boolean conservativeSuccessorCandidateSelection =
+				enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 		final boolean cannibalize = enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 		return new DeterministicInterpolantAutomaton<>(getServices(), mCsToolkit, htc, inputInterpolantAutomaton,
 				predicateUnifier, conservativeSuccessorCandidateSelection, cannibalize);

@@ -87,7 +87,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.FloydHoareAutomataReuse;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.TestGenerationMode;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.ReflectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -113,8 +112,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected final SimplificationTechnique mSimplificationTechnique;
 
 	final Set<IPredicate> mNotReachedLongTraceStates = new HashSet<>();
-	private final long TraceCeckTime = 0;
-	private final long ExportedTestVectors = 0;
+
 	/**
 	 * Interprocedural control flow graph.
 	 */
@@ -164,8 +162,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 */
 	protected NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
 
-	protected TestGenerationMode mTestGeneration;
-
 	// used for debugging only
 	protected IAutomaton<L, IPredicate> mArtifactAutomaton;
 
@@ -191,9 +187,10 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 *
 	 * @param services
 	 * @param name
-	 * @param initialAbstraction     An automaton such that the recognised language is a superset of the language of the
-	 *                               program. The initial abstraction in our implementations will usually be an
-	 *                               automaton that has the same graph as the program.
+	 * @param initialAbstraction
+	 *            An automaton such that the recognised language is a superset of the language of the program. The
+	 *            initial abstraction in our implementations will usually be an automaton that has the same graph as the
+	 *            program.
 	 * @param rootNode
 	 * @param csToolkit
 	 * @param predicateFactory
@@ -246,9 +243,9 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	 *
 	 * @throws AutomataOperationCanceledException
 	 *
-	 *                                            TODO Christian 2016-11-11: Merge the methods
-	 *                                            isCounterexampleFeasible() and constructInterpolantAutomaton() after
-	 *                                            {@link TreeAutomizerCEGAR} does not depend on this class anymore.
+	 *             TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and
+	 *             constructInterpolantAutomaton() after {@link TreeAutomizerCEGAR} does not depend on this class
+	 *             anymore.
 	 */
 	protected abstract Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible()
 			throws AutomataOperationCanceledException;
@@ -372,8 +369,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			abortIfTimeout();
 			initialize();
 		} catch (AutomataOperationCanceledException | ToolchainCanceledException ex) {
-			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(this.getClass(),
-					"constructing initial abstraction");
+			final RunningTaskInfo runningTaskInfo =
+					new RunningTaskInfo(this.getClass(), "constructing initial abstraction");
 			ex.addRunningTaskInfo(runningTaskInfo);
 			throw ex;
 		} finally {
@@ -423,17 +420,14 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 				try {
 					final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible();
-					if (isCexResult.getFirst() != Script.LBool.UNSAT
-							|| !mTestGeneration.equals(TestGenerationMode.SearchMultiGoal)) {
-						// TestGen, LongTrace ignores UNSAT traces
-						final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
-								isCexResult.getSecond(), currentErrorLoc);
-						if (mPref.stopAfterFirstViolation() && automatonType != AutomatonType.INTERPOLANT) {
-							return;
-						}
-						constructRefinementAutomaton(automatonType);
-						refineAbstractionInternal(automatonType);
+					final AutomatonType automatonType = processFeasibilityCheckResult(isCexResult.getFirst(),
+							isCexResult.getSecond(), currentErrorLoc);
+					if (mPref.stopAfterFirstViolation() && automatonType != AutomatonType.INTERPOLANT) {
+						return;
 					}
+					constructRefinementAutomaton(automatonType);
+					refineAbstractionInternal(automatonType);
+
 				} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
 					mServices = updateTimeBudget(currentErrorLoc, parentServices, iterationServices);
 					updateBudget = false;
@@ -446,13 +440,11 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 					mResultBuilder.addResult(currentErrorLoc, result,
 							IcfgProgramExecution.create(mCounterexample.getWord().asList(), Collections.emptyMap()), e,
 							null);
-
 					mLogger.warn("Local analysis aborted during iteration targeting %s because %s: %s", currentErrorLoc,
 							result, e.printRunningTaskMessage());
 					final long remainingTime = mServices.getProgressMonitorService().remainingTime();
 					if (remainingTime == 0 || mResultBuilder.remainingErrorLocs() <= 0) {
-						// if we do not have anymore time or any more error
-						// locations, end
+						// if we do not have anymore time or any more error locations, end
 						return;
 					}
 					mLogger.warn("Still %s and %s left, trying to recover",
@@ -481,7 +473,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			}
 		}
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
-
 	}
 
 	private void refineAbstractionInternal(final AutomatonType automatonType)
@@ -536,8 +527,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		}
 		final Result actualResult;
 		if (programExecution != null) {
-			final UnprovabilityReason reasonUnknown = new UnprovabilityReason(
-					"unable to decide satisfiability of path constraint");
+			final UnprovabilityReason reasonUnknown =
+					new UnprovabilityReason("unable to decide satisfiability of path constraint");
 			actualResult = Result.UNKNOWN;
 			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
 		} else {
@@ -716,12 +707,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		/**
 		 * The user-specified limit for the amount of analysis attempts per path program was hit
 		 */
-		USER_LIMIT_PATH_PROGRAM(4),
-
-		/**
-		 * Test Generation Terminated
-		 */
-		TEST_GENERATION(4);
+		USER_LIMIT_PATH_PROGRAM(4);
 
 		private final int mHierarchy;
 
@@ -748,8 +734,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			return a.compareAuthority(b) ? a : b;
 		}
 
-		public static final Set<Result> USER_LIMIT_RESULTS = EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM,
-				USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
+		public static final Set<Result> USER_LIMIT_RESULTS =
+				EnumSet.of(USER_LIMIT_ITERATIONS, USER_LIMIT_PATH_PROGRAM, USER_LIMIT_TIME, USER_LIMIT_TRACEHISTOGRAM);
 
 		public boolean isLimit() {
 			return this == TIMEOUT || USER_LIMIT_RESULTS.contains(this);
@@ -779,7 +765,6 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	}
 
 	protected final class CegarLoopResultBuilder {
-		// TODO result for test generation
 		private final Map<IcfgLocation, CegarLoopLocalResult<L>> mResults = new LinkedHashMap<>();
 
 		public CegarLoopResultBuilder addResultForAllRemaining(final Result result) {
@@ -790,7 +775,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 				final IProgramExecution<L, Term> rcfgProgramExecution, final IRunningTaskStackProvider rtsp,
 				final UnprovabilityReason reasonUnknown) {
 			mErrorLocs.stream().filter(elem -> !mResults.containsKey(elem))
-			.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
+					.forEachOrdered(a -> addResult(a, result, rcfgProgramExecution, rtsp, reasonUnknown));
 			return this;
 		}
 
