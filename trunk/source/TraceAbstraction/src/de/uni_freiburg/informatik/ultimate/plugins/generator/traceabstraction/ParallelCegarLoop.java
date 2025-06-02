@@ -750,12 +750,19 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mLogger.info("Found new Counterexample via IsEmptyParallel!");
 			return search.getNestedRun();
 		}
-		changeToNotVisistLoopsOnlyOnceMode();
-		search = getSearch(IsEmpty.SearchStrategy.DFS, possibleEndPoints);
-		if (isSearchCorrectAndTraceFresh(search)) {
-			mLogger.info("Found new Counterexample via DFS!");
-			return search.getNestedRun();
+		if (mVisitLoopsOnlyOnce) {
+			changeToNotVisistLoopsOnlyOnceMode();
+			search = getSearch(IsEmpty.SearchStrategy.PARALLEL, possibleEndPoints);
+			if (isSearchCorrectAndTraceFresh(search)) {
+				mLogger.info("Found new Counterexample via IsEmptyParallel!");
+				return search.getNestedRun();
+			}
 		}
+		// search = getSearch(IsEmpty.SearchStrategy.DFS, possibleEndPoints);
+		// if (isSearchCorrectAndTraceFresh(search)) {
+		// mLogger.info("Found new Counterexample via DFS!");
+		// return search.getNestedRun();
+		// }
 
 		mLogger.info("Did not Find a Counterexample!");
 		mCountFailedToFindCex += 1;
