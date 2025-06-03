@@ -9,6 +9,7 @@
   <option name="--abstractinterpretationv2.abstract.domain">OctagonDomain</option>
   <option name="--abstractinterpretationv2.abstract.domain.for.rcfg-of-the-future">PoormanAbstractDomain</option>
   <option name="--abstractinterpretationv2.use.the.rcfg-of-the-future.interface">true</option>
+  <option name="--rcfgbuilder.future-live.optimization">false</option>
 
   <rundefinition name="Singleton">
     <option name="--abstractinterpretationv2.location.abstraction.method">Singleton</option>
