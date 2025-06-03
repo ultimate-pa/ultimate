@@ -10,7 +10,7 @@ import sys
 from webinterface.build_all_settings import build_all_settings
 from webinterface.copy_examples import clean_examples, copy_examples
 from webinterface.refresh_index import refresh_index
-from webinterface.externals import get_jekyll_cli, get_ultimate_cli, get_bundle_cli
+from webinterface.externals import get_jekyll_cli, get_ultimate_cli, ensure_bundle_install
 
 
 SCRIPT_DIR = os.path.dirname(__file__)
@@ -35,7 +35,6 @@ def parse_args() -> argparse.Namespace:
 
 
 def run_jekyll(production_build=False):
-    subprocess.run(get_bundle_cli() + ["install"], check=True)
     subprocess.run(get_jekyll_cli() + ["clean"], check=True)
 
     baseurl_params = ["--baseurl", "/"] if production_build else []
@@ -58,6 +57,7 @@ def build(production_build=False, skip_settings=False):
     # check if external tools are available
     if not skip_settings:
         get_ultimate_cli()
+    ensure_bundle_install()
     get_jekyll_cli()
 
     # create settings JSON for webinterface

@@ -37,6 +37,8 @@ def get_bundle_cli() -> list[str]:
         raise ValueError("'bundle' binary not found in PATH")
     return [bin]
 
+def ensure_bundle_install():
+    subprocess.run(get_bundle_cli() + ["install"], check=True)
 
 @cache
 def get_jekyll_cli() -> list[str]:
