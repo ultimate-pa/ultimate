@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -97,12 +96,8 @@ public abstract class ExpressionTranslation {
 		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
 
 		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
-		case IdentityAxiom:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
 		case NonBijectiveMapping:
 			yield new NonBijectiveMapping(this, mTypeSizes);
-		case NutzBijection:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
 		case Overapproximate:
 			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
 		};

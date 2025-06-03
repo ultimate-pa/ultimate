@@ -204,7 +204,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public enum PointerIntegerConversion {
-		Overapproximate, NonBijectiveMapping, NutzBijection, IdentityAxiom,
+		Overapproximate, NonBijectiveMapping,
 	}
 
 	public enum FloatingPointRoundingMode {
