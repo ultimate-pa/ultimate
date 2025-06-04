@@ -138,6 +138,29 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String LABEL_COLOR_FATAL = "Fatal log message color";
 	public static final String DEFAULT_VALUE_COLOR_FATAL = "255,85,85";
 
+	// Result files
+	public static final String LABEL_RESULT_FILE_NAME = "Name of the result file";
+	private static final String DESC_RESULT_FILE_NAME = "File name without file extension. The file extension as "
+			+ "well as the number of result files is determined by the enabled file formats for the result output.";
+	private static final String VALUE_RESULT_FILE_NAME = "ultimate";
+
+	public static final String LABEL_RESULT_FILE_DIR = "Directory of the result file";
+	private static final String DESC_RESULT_FILE_DIR =
+			"Directory where the result file will be stored. The default directory is the instance location.";
+	private static final String VALUE_RESULT_FILE_DIR;
+
+	public static final String LABEL_GENERATE_JSON_FILE = "Generate JSON result file";
+	private static final String DESC_GENERATE_JSON_FILE = "Output the results in JSON file format";
+	private static final boolean VALUE_GENERATE_JSON_FILE = false;
+
+	public static final String LABEL_GENERATE_YAML_FILE = "Generate YAML result file";
+	private static final String DESC_GENERATE_YAML_FILE = "Output the results in YAML file format";
+	private static final boolean VALUE_GENERATE_YAML_FILE = false;
+
+	public static final String LABEL_GENERATE_SARIF_FILE = "Generate SARIF result file";
+	private static final String DESC_GENERATE_SARIF_FILE = "Output the results in SARIF file format";
+	private static final boolean VALUE_GENERATE_SARIF_FILE = false;
+
 	// Model manager
 	public static final String LABEL_DROP_MODELS = "Drop models when Ultimate exits";
 	public static final boolean VALUE_DROP_MODELS = true;
@@ -197,8 +220,10 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		final String instLoc = RcpUtils.getInstanceLocationPath();
 		if (instLoc == null) {
 			VALUE_LOGFILE_DIR = tmpDir;
+			VALUE_RESULT_FILE_DIR = tmpDir;
 		} else {
 			VALUE_LOGFILE_DIR = instLoc;
+			VALUE_RESULT_FILE_DIR = instLoc;
 		}
 		VALUE_TMP_DIRECTORY = tmpDir;
 	}
@@ -217,31 +242,16 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
-
-		final UltimatePreferenceItemContainer pluginSpecificLevels =
-				new UltimatePreferenceItemContainer("Plugin-specific log levels");
-
-		final List<String> plugins =
-				new ArrayList<>(Arrays.stream(UltimateCore.getPluginNames()).collect(Collectors.toSet()));
-		Collections.sort(plugins);
-		for (final String plugin : plugins) {
-			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugin),
-					InheritableLogLevel.INHERITED, PreferenceType.Combo, InheritableLogLevel.values()));
-		}
-
 		return new BaseUltimatePreferenceItem[] {
-				// container
-				pluginSpecificLevels,
+				// Plugin-specific log levels
+				getPluginLogLevelsPreferences(),
+
+				// Plugin results
+				getPluginResultsPreferences(),
 
 				// Core
 				new UltimatePreferenceItem<>(LABEL_SHOWUSABLEPARSER, VALUE_SHOWUSABLEPARSER_DEFAULT,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_SHOWRESULTNOTIFIERPOPUP, VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_BENCHMARK, VALUE_BENCHMARK_DEFAULT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_LONG_RESULT, VALUE_LONG_RESULT_DEFAULT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_PRINT_STATISTICS_RESULTS, VALUE_PRINT_STATISTICS_RESULTS,
-						DESC_PRINT_STATISTICS_RESULTS, PreferenceType.Boolean),
 
 				// Log files
 				new UltimatePreferenceItemGroup("Logfile", DESC_LOGFILE,
@@ -288,6 +298,50 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, Integer.MAX_VALUE)), };
 	}
 
+	private static UltimatePreferenceItemContainer getPluginLogLevelsPreferences() {
+		final UltimatePreferenceItemContainer pluginSpecificLevels =
+				new UltimatePreferenceItemContainer("Plugin-specific log levels");
+
+		final List<String> plugins =
+				new ArrayList<>(Arrays.stream(UltimateCore.getPluginNames()).collect(Collectors.toSet()));
+		Collections.sort(plugins);
+		for (final String plugin : plugins) {
+			pluginSpecificLevels.addItem(new UltimatePreferenceItem<>(getLabelLogLevelForSpecificPlugin(plugin),
+					InheritableLogLevel.INHERITED, PreferenceType.Combo, InheritableLogLevel.values()));
+		}
+
+		return pluginSpecificLevels;
+	}
+
+	private static UltimatePreferenceItemContainer getPluginResultsPreferences() {
+		return new UltimatePreferenceItemContainer("Plugin results",
+				new UltimatePreferenceItemGroup("Display",
+						new UltimatePreferenceItem<>(LABEL_SHOWRESULTNOTIFIERPOPUP,
+								VALUE_SHOWRESULTNOTIFIERPOPUP_DEFAULT, PreferenceType.Boolean)),
+
+				new UltimatePreferenceItemGroup("Filter",
+						new UltimatePreferenceItem<>(LABEL_BENCHMARK, VALUE_BENCHMARK_DEFAULT, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_LONG_RESULT, VALUE_LONG_RESULT_DEFAULT,
+								PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_PRINT_STATISTICS_RESULTS, VALUE_PRINT_STATISTICS_RESULTS,
+								DESC_PRINT_STATISTICS_RESULTS, PreferenceType.Boolean)),
+
+				new UltimatePreferenceItemGroup("Output",
+						// Output file name and directory
+						new UltimatePreferenceItem<>(LABEL_RESULT_FILE_NAME, VALUE_RESULT_FILE_NAME,
+								DESC_RESULT_FILE_NAME, PreferenceType.String),
+						new UltimatePreferenceItem<>(LABEL_RESULT_FILE_DIR, VALUE_RESULT_FILE_DIR, DESC_RESULT_FILE_DIR,
+								PreferenceType.Directory),
+						// Output file formats
+						new UltimatePreferenceItem<>(LABEL_GENERATE_JSON_FILE, VALUE_GENERATE_JSON_FILE,
+								DESC_GENERATE_JSON_FILE, PreferenceType.Boolean, new FileFormatNotSupportedValidator()),
+						new UltimatePreferenceItem<>(LABEL_GENERATE_YAML_FILE, VALUE_GENERATE_YAML_FILE,
+								DESC_GENERATE_YAML_FILE, PreferenceType.Boolean, new FileFormatNotSupportedValidator()),
+						new UltimatePreferenceItem<>(LABEL_GENERATE_SARIF_FILE, VALUE_GENERATE_SARIF_FILE,
+								DESC_GENERATE_SARIF_FILE, PreferenceType.Boolean,
+								new FileFormatNotSupportedValidator())));
+	}
+
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
 		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
@@ -307,6 +361,28 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 		@Override
 		public String getInvalidValueErrorMessage(final String value) {
 			return INVALID_LOGLEVEL;
+		}
+	}
+
+	/**
+	 * Preference validator that reports an error if a result output file format is enabled but not implemented.
+	 */
+	private static final class FileFormatNotSupportedValidator implements IUltimatePreferenceItemValidator<Boolean> {
+
+		@Override
+		public boolean isValid(final Boolean value) {
+			if (value) {
+				// Report an error if result output file format is enabled.
+				return false;
+			}
+
+			// Do not report any error if result output file format is disabled.
+			return true;
+		}
+
+		@Override
+		public String getInvalidValueErrorMessage(final Boolean value) {
+			return "Output file format for results is not implemented yet";
 		}
 	}
 }
