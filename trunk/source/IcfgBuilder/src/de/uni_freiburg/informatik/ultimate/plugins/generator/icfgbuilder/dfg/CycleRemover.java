@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -17,15 +18,20 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 public class CycleRemover {
 
-	public static List<IcfgEdge> computeFeedbackVertexSet(final DfgContainer dfg, final ILogger logger) {
+	// computes the feedback vertex Set for the given Dfg. Returns a List of IcfgEdges that can be removed in the
+	// original Trace. Returns empty Set if no cycles are found.
+
+	public static Set<IcfgEdge> computeFeedbackVertexSet(final DfgContainer dfg, final ILogger logger) {
 		if (isCyclic(dfg, logger)) {
 			logger.debug("Cycles found");
-			logger.debug(feedbackVertexBruteForce(dfg, logger));
-			logger.debug("Erfolg, found Nodes");
-		} else {
-			logger.debug("No cycles found");
+			final Set<DfgNode> fvs = feedbackVertexBruteForce(dfg, logger);
+			final Set<IcfgEdge> fvsEdges = fvs.stream().map(node -> node.getCorrespondingDFGEdge())
+					.collect(Collectors.toSet());
+			logger.debug("Found Edges to remove: " + fvsEdges);
+			return fvsEdges;
 		}
-		return null;
+		logger.debug("No cycles found. Returning empty Set");
+		return new HashSet<>();
 	}
 
 	// returns whether the given Dfg is cyclic, if the number of SCCs of the Dfg are the trivial size then it is not
@@ -69,8 +75,8 @@ public class CycleRemover {
 		return null;
 	}
 
-	// maybe refactorn so i dont have to clone and just delete and add nodes directly on the copied
-	// edgerelation/nodelist?
+	// clones the given Dfg
+	// TODO maybe remove/refactor to work on copied edgeRelation/nodelist?
 	private static DfgContainer cloneDfg(final DfgContainer originalDfg) {
 		final Set<DfgNode> newNodeList = new HashSet<>(originalDfg.getNodeList());
 		final HashRelation<DfgNode, DfgNode> originalEdges = originalDfg.getEdgeRelation();
