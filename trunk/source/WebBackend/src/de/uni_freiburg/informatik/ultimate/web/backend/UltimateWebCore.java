@@ -3,13 +3,17 @@ package de.uni_freiburg.informatik.ultimate.web.backend;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
@@ -25,6 +29,9 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.SettingsManager;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainManager;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.UltimateCore;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.convert.IResultConverter;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.convert.ResultConverterFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.convert.ResultOutputFormat;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
@@ -40,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.web.backend.dto.ApiResponse;
 import de.uni_freiburg.informatik.ultimate.web.backend.dto.ErrorResponse;
 import de.uni_freiburg.informatik.ultimate.web.backend.dto.GenericResponse;
@@ -307,6 +315,12 @@ public class UltimateWebCore implements ICore<RunDefinition>, IController<RunDef
 	}
 
 	@Override
+	public Map<String, List<Entry<String, Object>>> getDiffPreferencesPerPlugin() {
+		return Arrays.stream(getRegisteredUltimatePluginIDs()).collect(Collectors.toMap(pluginId -> pluginId,
+				pluginId -> new ArrayList<>(new RcpPreferenceProvider(pluginId).getDeltaPreferences().entrySet())));
+	}
+
+	@Override
 	public ILoggingService getCoreLoggingService() {
 		return mLoggingService;
 	}
@@ -377,6 +391,14 @@ public class UltimateWebCore implements ICore<RunDefinition>, IController<RunDef
 	public IToolchainData<RunDefinition> prerun(final IToolchain<RunDefinition> toolchain) {
 		final IToolchainData<RunDefinition> tcData = toolchain.getCurrentToolchainData();
 		return tcData.replaceServices(addUserSettings(toolchain));
+	}
+
+	@Override
+	public void outputToolchainResults(final IToolchain<RunDefinition> toolchain,
+			final Map<String, List<IResult>> results) {
+		final IResultConverter converter = ResultConverterFactory.create(ResultOutputFormat.SARIF);
+		final String sarifJson = converter.convert(toolchain, this, results);
+		// TODO: Send sarifJson output back to the client
 	}
 
 	@Override

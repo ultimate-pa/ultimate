@@ -67,6 +67,7 @@ public class WebBackendToolchainJob extends DefaultToolchainJob {
 			tpm.worked(1);
 
 			final ReturnCode tcReturnCode = mToolchain.processToolchain(tpm);
+			// TODO: Remove explicit storing of toolchain results in Job
 			storeToolchainResult(tcReturnCode, null);
 			return convert(tcReturnCode);
 		} catch (final Throwable e) {

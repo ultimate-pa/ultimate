@@ -11,12 +11,16 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
  de.uni_freiburg.informatik.ultimate.core.lib.observers,
  de.uni_freiburg.informatik.ultimate.core.lib.preferences,
  de.uni_freiburg.informatik.ultimate.core.lib.results,
+ de.uni_freiburg.informatik.ultimate.core.lib.results.convert,
+ de.uni_freiburg.informatik.ultimate.core.lib.serialize,
  de.uni_freiburg.informatik.ultimate.core.lib.toolchain,
  de.uni_freiburg.informatik.ultimate.core.lib.translation,
  de.uni_freiburg.informatik.ultimate.core.lib.util
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.lib.util,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
- org.glassfish.hk2.osgi-resource-locator
+ org.glassfish.hk2.osgi-resource-locator,
+ com.google.gson,
+ org.yaml.snakeyaml
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.lib.core
 Import-Package: org.glassfish.jaxb.core.v2

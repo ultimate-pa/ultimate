@@ -36,8 +36,11 @@ import java.util.Dictionary;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -67,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
@@ -270,6 +274,12 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	public String[] getRegisteredUltimatePluginIDs() {
 		final List<String> rtr = mPluginFactory.getPluginIds();
 		return rtr.toArray(new String[rtr.size()]);
+	}
+
+	@Override
+	public Map<String, List<Entry<String, Object>>> getDiffPreferencesPerPlugin() {
+		return Arrays.stream(getRegisteredUltimatePluginIDs()).collect(Collectors.toMap(pluginId -> pluginId,
+				pluginId -> new ArrayList<>(new RcpPreferenceProvider(pluginId).getDeltaPreferences().entrySet())));
 	}
 
 	@Override

@@ -299,6 +299,12 @@ public class UltimateEliminatorController implements IController<RunDefinition> 
 	}
 
 	@Override
+	public void outputToolchainResults(final IToolchain<RunDefinition> toolchain,
+			final Map<String, List<IResult>> results) {
+		// not implemented yet
+	}
+
+	@Override
 	public void displayToolchainResults(final IToolchain<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		final ResultSummarizer summarizer = new ResultSummarizer(results);

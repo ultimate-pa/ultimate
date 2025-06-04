@@ -95,6 +95,19 @@ public interface IController<T> extends IUltimatePlugin {
 	IToolchainData<T> prerun(IToolchain<T> toolchain);
 
 	/**
+	 * After a toolchain is executed, {@link ICore} calls this method so that the controller may output the results of
+	 * the toolchain.
+	 *
+	 * @param toolchain
+	 *            The toolchain from which the results are taken.
+	 * @param plugins
+	 *            The plugins that are part of the toolchain.
+	 * @param results
+	 *            The actual results.
+	 */
+	void outputToolchainResults(IToolchain<T> toolchain, Map<String, List<IResult>> results);
+
+	/**
 	 * After a toolchain is executed, {@link ICore} calls this method so that the controller may display the results of
 	 * the toolchain to the user.
 	 *

@@ -352,7 +352,9 @@ public class ToolchainManager {
 					results = ResultUtil.filterResultMap(resultService.getResults(),
 							p -> !(p instanceof StatisticsResult<?>));
 				}
+
 				ResultUtil.logResults(controllerLogger, results, appendCompleteLongDescription);
+				mCurrentController.outputToolchainResults(this, resultService.getResults());
 				mCurrentController.displayToolchainResults(this, resultService.getResults());
 				mModelManager.removeAll();
 				mToolchainWalker.endToolchain();

@@ -43,6 +43,9 @@ import org.eclipse.ui.PlatformUI;
 import org.xml.sax.SAXException;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.convert.IResultConverter;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.convert.ResultConverterFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.convert.ResultOutputFormat;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
@@ -180,6 +183,19 @@ public class GuiController implements IController<RunDefinition> {
 	@Override
 	public String getPluginID() {
 		return PLUGIN_ID;
+	}
+
+	@Override
+	public void outputToolchainResults(final IToolchain<RunDefinition> toolchain,
+			final Map<String, List<IResult>> results) {
+		// not implemented yet
+		final IResultConverter converter = ResultConverterFactory.create(ResultOutputFormat.JSON);
+		final String simpleJson = converter.convert(toolchain, mCore, results);
+		System.out.println(simpleJson);
+
+		final IResultConverter convertery = ResultConverterFactory.create(ResultOutputFormat.YAML);
+		final String simpleYml = convertery.convert(toolchain, mCore, results);
+		System.out.println(simpleYml);
 	}
 
 	@Override

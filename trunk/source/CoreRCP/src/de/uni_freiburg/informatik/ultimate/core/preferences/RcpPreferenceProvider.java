@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.core.preferences;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -38,6 +37,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UnknownFormatConversionException;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -330,11 +330,12 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 	}
 
 	/**
-	 * Get an array of strings were each entry represents all preferences that differ from their default values.
+	 * Get a map of preferences that differ from their default values.
 	 */
-	public String[] getDeltaPreferencesStrings() {
-		final List<String> rtr = new ArrayList<>();
+	public Map<String, Object> getDeltaPreferences() {
+		final Map<String, Object> rtr = new HashMap<>();
 		final String fallback = "NO DEFAULT SET";
+
 		try {
 			final IEclipsePreferences defaults = getDefault();
 			final IEclipsePreferences instance = getInstance();
@@ -342,14 +343,22 @@ public class RcpPreferenceProvider implements IPreferenceProvider {
 				final String defaultValue = defaults.get(defaultKey, fallback);
 				final String currentValue = instance.get(defaultKey, defaultValue);
 				if (!currentValue.equals(defaultValue)) {
-					rtr.add(defaultKey + "=" + currentValue);
+					rtr.put(defaultKey, currentValue);
 				}
 			}
 		} catch (final BackingStoreException e) {
 			throw new PreferenceException(mPluginID, e);
 		}
 
-		return rtr.toArray(new String[rtr.size()]);
+		return rtr;
+	}
+
+	/**
+	 * Get an array of all preferences that differ from their default values.
+	 */
+	public List<String> getDeltaPreferencesStrings() {
+		return getDeltaPreferences().entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue())
+				.collect(Collectors.toList());
 	}
 
 	/**

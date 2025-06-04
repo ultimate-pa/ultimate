@@ -29,6 +29,9 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.xml.sax.SAXException;
 
@@ -119,6 +122,13 @@ public interface ICore<T> {
 	 * plugins.
 	 */
 	String[] getRegisteredUltimatePluginIDs();
+
+	/**
+	 * Get the preferences per plugin that differ from their defaults.
+	 *
+	 * @return Map of preferences per plugin that differ from their defaults.
+	 */
+	Map<String, List<Entry<String, Object>>> getDiffPreferencesPerPlugin();
 
 	/**
 	 * Get the core logging service. This service can be different from toolchain logging services because multiple

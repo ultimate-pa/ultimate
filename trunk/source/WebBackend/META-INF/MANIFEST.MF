@@ -19,5 +19,6 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
  javax.servlet-api,
  org.ops4j.pax.logging.pax-logging-api,
  org.ops4j.pax.logging.pax-logging-log4j2,
- com.google.gson
+ com.google.gson,
+ de.uni_freiburg.informatik.ultimate.lib.core
 Export-Package: de.uni_freiburg.informatik.ultimate.web.backend

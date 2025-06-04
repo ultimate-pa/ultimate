@@ -32,6 +32,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -145,8 +146,8 @@ public final class SettingsManager {
 		boolean isSomePluginDifferent = false;
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final String pluginId = plugin.getPluginID();
-			final String[] delta = new RcpPreferenceProvider(pluginId).getDeltaPreferencesStrings();
-			if (delta != null && delta.length > 0) {
+			final List<String> delta = new RcpPreferenceProvider(pluginId).getDeltaPreferencesStrings();
+			if (delta != null && delta.size() > 0) {
 				isSomePluginDifferent = true;
 				mLogger.info("Preferences of " + plugin.getPluginName() + " differ from their defaults:");
 				for (final String setting : delta) {
