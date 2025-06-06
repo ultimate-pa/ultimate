@@ -1112,28 +1112,4 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
 
-	/**
-	 * Differnt modes of Test Generation
-	 *
-	 * @author Max Barth (Max.Barth@gmx.de)
-	 */
-	public enum TestGenerationMode {
-		/**
-		 * No Test Generation.
-		 */
-		None,
-		/**
-		 * Standart Test Generation for Model Checkers
-		 */
-		Standard,
-		/**
-		 * Use the A* to search a trace that covers multiple test goals. Ignore the trace if it is UNSAT
-		 */
-		SearchMultiGoal,
-		/**
-		 * Does NOT ignore the trace if it is UNSAT.
-		 */
-		NaiveMultiGoal
-	}
-
 }
