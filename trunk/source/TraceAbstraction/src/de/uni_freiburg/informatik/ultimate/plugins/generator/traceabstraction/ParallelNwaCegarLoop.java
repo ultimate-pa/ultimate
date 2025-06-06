@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  *
  * @author Max Barth (max.barth@lmu.de)
  */
-public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		extends NwaCegarLoop<L> {
 
 	boolean mComputeHoareAnnotation;
@@ -153,7 +153,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * @param stateFactoryForRefinement
 	 */
 
-	public ParallelNWACegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
+	public ParallelNwaCegarLoop(final DebugIdentifier name, final INestedWordAutomaton<L, IPredicate> initialAbstraction,
 			final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs, final Set<? extends IcfgLocation> errorLocs,
 			final NwaHoareProofProducer<L> proofProducer, final IUltimateServiceProvider services,
@@ -184,7 +184,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	/*
 	 * sets up the worker with its own cfg script and its own RefinementStrategy
 	 */
-	private CegarNWAWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
+	private CegarNwaWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
 			final IcfgLocation currentErrorLoc) {
 		// mCsToolkit needs to give new mgdScript for each thread
 
@@ -251,7 +251,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mPref.getRefinementStrategy(), mProgramCache, parallelStrategy);
 
 			// start worker
-			return new CegarNWAWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
+			return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 					mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
 					currentErrorLoc, mRootNode, this, parallelStrategy.generalize(), mWorkerResultQueue);
@@ -261,7 +261,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), predicateFactoryInterpolantAutomata,
 				getPreconditionProvider(), getPostconditionProvider(), mPref.getRefinementStrategy(), mProgramCache);
 		// start worker
-		return new CegarNWAWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
+		return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
 				currentErrorLoc, mRootNode, this, WorkerGeneralizationMode.YES, mWorkerResultQueue);
@@ -442,7 +442,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		// here we can determine how many threads / checks we want per counterexample
 		for (int module = 0; module < mThreadsPerCex; module++) {
-			final CegarNWAWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
+			final CegarNwaWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
 			executor.submit(worker);
 			mRunningThreads += 1;
 			if (!strategyProvidesAModulesForEachThread(mPref.getRefinementStrategy())) {
