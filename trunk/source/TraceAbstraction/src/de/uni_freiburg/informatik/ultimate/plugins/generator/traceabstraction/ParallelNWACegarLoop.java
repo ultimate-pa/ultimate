@@ -104,7 +104,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	// Strategies
 	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
-	private final Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = Collections.emptySet();
+	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = Collections.emptySet();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
 	private boolean mVisitLoopsOnlyOnce = true; // a strategy where we focus on spread before pathprograms
 
@@ -531,7 +531,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// mInterations equals the amount of refinements
 		mCegarLoopBenchmark.announceNextIteration();
 
-		removeCounterexampleToSet(threadResult.getCounterexample());
+		removeCounterexampleFromSet(threadResult.getCounterexample());
 
 		final Set<IcfgLocation> hoareAnnotationLocs;
 		// if (mComputeHoareAnnotation) {
@@ -657,6 +657,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		for (final int hash : mCounterexamplesToBeRemovedFromActiveCexMap) {
 			mActiveCounterexamples.remove(hash);
 		}
+		mCounterexamplesToBeRemovedFromActiveCexMap = null;
 	}
 
 	/*
@@ -671,7 +672,7 @@ public class ParallelNWACegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mActiveCounterexamples.put(traceHash, counterexample);
 	}
 
-	private void removeCounterexampleToSet(final IRun<L, ?> run) {
+	private void removeCounterexampleFromSet(final IRun<L, ?> run) {
 		final List<L> trace = run.getWord().asList();
 		final int traceHash = trace.hashCode();
 		mLogger.info("Subtrahend traceHash: " + traceHash);
