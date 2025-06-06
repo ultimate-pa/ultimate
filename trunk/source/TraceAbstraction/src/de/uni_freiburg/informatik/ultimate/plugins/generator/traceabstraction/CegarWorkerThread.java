@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -92,6 +93,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 	boolean mComputeHoareAnnotation;
 
 	private WorkerThreadResult<L, A> mThreadResult = null;
+	BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
+
 	private final ITARefinementStrategy<L> mStrategy;
 	private final IcfgLocation mCurrentErrorLoc;
 
@@ -114,7 +117,8 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
-			final ParallelCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization) {
+			final ParallelCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
+			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults) {
 
 		mLogger = logger;
 		mPref = pref;
@@ -139,10 +143,11 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
 		mMainThread = mainThread;
 		mGeneralize = generalization;
+		mBlockingQueueForResults = blockingQueueForResults;
 	}
 
 	@Override
-	public WorkerThreadResult<L, A> call() {
+	public WorkerThreadResult<L, A> call() throws InterruptedException {
 		final List<L> trace = mCounterexample.getWord().asList();
 		final int traceHash = trace.hashCode();
 		mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
@@ -165,6 +170,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			throw new AssertionError("WorkerThread Failed: " + e);
 		}
 		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
+		mBlockingQueueForResults.put(mThreadResult);
 		return mThreadResult;
 	}
 

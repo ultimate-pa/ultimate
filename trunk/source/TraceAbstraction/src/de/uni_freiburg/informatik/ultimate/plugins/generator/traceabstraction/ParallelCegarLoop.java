@@ -9,10 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -99,7 +97,10 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private int mRunningThreads = 0;
 
 	// private final CompletionService<WorkerThreadResult<L, A>> mECS;
-	BlockingQueue<Future<WorkerThreadResult<L, A>>> mWorkerResultQueue = new LinkedBlockingQueue<>();
+	BlockingQueue<WorkerThreadResult<L, A>> mWorkerResultQueue = new LinkedBlockingQueue<>();
+
+	// need global program cache, but worker need to get copy otherwise we synchronize
+	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
 	// Strategies
 	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
@@ -125,9 +126,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	private final long mSearchTime = 0;
 	private int mIterationsWithMaxThreads = 0;
 	private int mIterationsWithOneThread = 0;
-	private int mExceptionInWorker = 0;
-	// need global program cache, but worker need to get copy otherwise we synchronize
-	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
+	private final int mExceptionInWorker = 0;
 
 	/**
 	 *
@@ -176,7 +175,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
 		mVisitLoopsOnlyOnce = mPref.mVisitLoopsOnlyOnce;
-		// mParallelSearchSrategy = mPref.parallelSearchSrategy;
 
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
@@ -190,16 +188,16 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			final IcfgLocation currentErrorLoc) {
 		// mCsToolkit needs to give new mgdScript for each thread
 
-		final CfgSmtToolkit freshToolKit =
-				mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices, getSolverSettings(iterationServices,
+		final CfgSmtToolkit freshToolKit = mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices,
+				getSolverSettings(iterationServices,
 						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"));
 		// Set the Main Script
 		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
 				.setMainScript(mCsToolkit.getManagedScript());
 
 		// Fill the map from worker tv to main tv so we can obtain boogievars later
-		final Map<TermVariable, IProgramVar> varMap =
-				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
+		final Map<TermVariable, IProgramVar> varMap = ((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable())
+				.getSmtVar2ProgramVarMap();
 
 		for (final TermVariable tv : varMap.keySet()) {
 			((HistoryRecordingScript) freshToolKit.getManagedScript().getScript()).addTermVariableToMap(
@@ -209,13 +207,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		}
 
 		// Create predicateFactory with worker script
-		final PredicateFactory predicateFactory =
-				new PredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, freshToolKit.getManagedScript(),
+				freshToolKit.getSymbolTable());
 
 		// Create PredicateFactoryForInterpolantAutomata with worker script
-		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
-						mComputeHoareAnnotation);
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(
+				freshToolKit.getManagedScript(), predicateFactory, mComputeHoareAnnotation);
 
 		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
 		if (mComputeHoareAnnotation) {
@@ -231,9 +228,9 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
 
 		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
-		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
-						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
+				getServices(), mPref, mInterpolationTechnique, mSimplificationTechnique, freshToolKit, predicateFactory,
+				mIcfg);
 
 		cacheCopy.copyCache(mProgramCache);
 		final StrategyFactory<L> strategyFactory = new StrategyFactory<>(mLogger, mPref, taCheckAndRefinementPrefs,
@@ -257,7 +254,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 					mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 					predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
-					currentErrorLoc, mRootNode, this, parallelStrategy.generalize());
+					currentErrorLoc, mRootNode, this, parallelStrategy.generalize(), mWorkerResultQueue);
 		}
 		// setup up a default strategy for example CAMEL
 		strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
@@ -267,7 +264,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		return new CegarWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
-				currentErrorLoc, mRootNode, this, WorkerGeneralizationMode.YES);
+				currentErrorLoc, mRootNode, this, WorkerGeneralizationMode.YES, mWorkerResultQueue);
 	}
 
 	/*
@@ -290,95 +287,84 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 			mLogger.info(String.format("=== Iteration %s ===", mIteration));
 
 			try {
-				try {
-					// we sleep if not: thread or counterexample is available
-					Future<WorkerThreadResult<L, A>> doneFuture = getWorkerResult(didntFindCexLastIteration);
+				// we sleep if not: thread or counterexample is available
+				WorkerThreadResult<L, A> workerResult = getWorkerResult(didntFindCexLastIteration);
 
-					// go through all done Futures
-					while (doneFuture != null) {
-						try {
-							final WorkerThreadResult<L, A> workerResult = doneFuture.get();
-							mLogger.info("Main: A Thread is Done");
+				// go through all done Futures
+				while (workerResult != null) {
+					try {
+						mLogger.info("Main: A Thread is Done");
 
-							// If Error automaton terminate immediately
-							if (mPref.stopAfterFirstViolation()
-									&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
-								shutDownAndDestroy(mDestroyEverything);
-								return;
-							}
-
-							// Only for test case generation
-							updateTestGoalSet(workerResult);
-
-							mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
-
-							// Refine abstraction
-							mLogger.info("Refining Abstraction");
-							mRefinementsDone += 1;
-							refinement(workerResult);
-							abstractionWasRefined = true;
-
-							// Not sure if necessary
-							workerResult.garbageCollect();
-
-							// If new abstraction is empty terminate immediately
-							if (isSafeThenTerminate()) {
-								return;
-							}
-
-						} catch (final ExecutionException | InterruptedException e) {
-							e.printStackTrace();
-							mLogger.warn("Trace Check Failed!!");
-							mExceptionInWorker += 1;
-							doneFuture.exceptionNow();
-							// mExec.shutdownNow();
-							// throw new AutomataLibraryException(null, e.getMessage());
-						} catch (final CancellationException e) {
-							mLogger.warn("Worker was cancelled!");
-						} finally {
-
+						// If Error automaton terminate immediately
+						if (mPref.stopAfterFirstViolation()
+								&& workerResult.getAutomatonType().equals(AutomatonType.ERROR)) {
+							shutDownAndDestroy(mDestroyEverything);
+							return;
 						}
-						doneFuture = mWorkerResultQueue.poll();
+
+						// Only for test case generation
+						updateTestGoalSet(workerResult);
+
+						mLogger.info("Worker Automaton Type: " + workerResult.getAutomatonType());
+
+						// Refine abstraction
+						mLogger.info("Refining Abstraction");
+						mRefinementsDone += 1;
+
+						assert mRefinementsDone <= mCounterexamplesChecked * mThreadsPerCex;
+
+						refinement(workerResult);
+						abstractionWasRefined = true;
+
+						// Not sure if necessary
+						workerResult.garbageCollect();
+
+						// If new abstraction is empty terminate immediately
+						if (isSafeThenTerminate()) {
+							return;
+						}
+
+					} catch (final CancellationException e) {
+						mLogger.warn("Worker was cancelled!");
+					} finally {
+
 					}
-
-					assert doneFuture == null;
-
-				} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
-					// TODO deal with UNKNOWN
-					throw e;
-				} catch (final InterruptedException e1) {
-					// TODO Auto-generated catch block, not used atm
-					e1.printStackTrace();
+					workerResult = mWorkerResultQueue.poll();
 				}
+				mLogger.info("No more worker results to process");
+				assert workerResult == null;
 
-				if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker) {
-					minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
-				}
-
-				// need a new counterexample if the last one was used
-				// or the abstraction was refined and we hope to find a better one
-				// dont search for counterexamples unnecessarily BUSY WAITING!
-				if ((mCounterexample == null && !didntFindCexLastIteration) || abstractionWasRefined) {
-					mLogger.info("Searching for Counterexample");
-					mCounterexample = searchForErrorTrace(false);
-					if (mCounterexample == null) {
-						didntFindCexLastIteration = true;
-					}
-				}
-
-				// Doesnt Need to come before search because of initial counterexample, we skip search
-				// mCounterexample can be null if no counterexample was found, but threads are still running
-				while (mRunningThreads < mThreadLimit && mCounterexample != null) {
-					startWorker();
-					// mCounterexample is being checked, make sure next thread gets a new one
-					mCounterexample = searchForErrorTrace(true);
-				}
-
-				updateAndPrintStatistics();
-			} finally {
-
+			} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
+				// TODO deal with UNKNOWN
+				throw e;
+			} catch (final InterruptedException ie) {
+				ie.printStackTrace();
+				mLogger.warn("Worker was interrupted!");
+			}
+			if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker) {
+				minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
 			}
 
+			// need a new counterexample if the last one was used
+			// or the abstraction was refined and we hope to find a better one
+			// dont search for counterexamples unnecessarily BUSY WAITING!
+			if ((mCounterexample == null && !didntFindCexLastIteration) || abstractionWasRefined) {
+				mLogger.info("Searching for Counterexample");
+				mCounterexample = searchForErrorTrace(false);
+				if (mCounterexample == null) {
+					didntFindCexLastIteration = true;
+				}
+			}
+
+			// Doesnt Need to come before search because of initial counterexample, we skip search
+			// mCounterexample can be null if no counterexample was found, but threads are still running
+			while (mRunningThreads < mThreadLimit && mCounterexample != null) {
+				startWorker();
+				// mCounterexample is being checked, make sure next thread gets a new one
+				mCounterexample = searchForErrorTrace(true);
+			}
+
+			updateAndPrintStatistics();
 		}
 		mExec.shutdownNow();
 		mResultBuilder.addResultForAllRemaining(Result.USER_LIMIT_ITERATIONS);
@@ -414,6 +400,7 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 	private boolean isSafeThenTerminate() throws AutomataOperationCanceledException {
 		// If IsEmpty says its empty, then we can terminate even if threads are still running
+		mLogger.info("Checking if program is safe");
 		if (super.isAbstractionEmpty() || mAbstraction.size() == 0) {
 			mResultBuilder.addResultForAllRemaining(Result.SAFE);
 			shutDownAndDestroy(mDestroyEverything);
@@ -456,9 +443,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		// here we can determine how many threads / checks we want per counterexample
 		for (int module = 0; module < mThreadsPerCex; module++) {
 			final CegarWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
-			mWorkerResultQueue.add(executor.submit(worker));
+			executor.submit(worker);
 			mRunningThreads += 1;
 			if (!strategyProvidesAModulesForEachThread(mPref.getRefinementStrategy())) {
+				break;
+			}
+			if (mVisitLoopsOnlyOnce) {
 				break;
 			}
 		}
@@ -494,8 +484,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		final ExecutorService executor;
 		final HashSet<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
 		if (!mPpStrategyMap.containsKey(ppRepresentative)) {
-			final ParallelRefinementStrategy<L> strategy =
-					new ParallelRefinementStrategy<>(mLogger, ppRepresentative, mThreadLimit);
+			final ParallelRefinementStrategy<L> strategy = new ParallelRefinementStrategy<>(mLogger, ppRepresentative,
+					mThreadLimit);
 			strategy.quickCheckIf(mVisitLoopsOnlyOnce);
 			strategy.setRunningThreadsOfPP(mProgramCache.getPathProgramCount(mCounterexample.getWord()));
 			mPpStrategyMap.put(ppRepresentative, strategy);
@@ -508,10 +498,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		return executor;
 	}
 
-	private Future<WorkerThreadResult<L, A>> getWorkerResult(final boolean didntFindCexLastIteration)
+	private WorkerThreadResult<L, A> getWorkerResult(final boolean didntFindCexLastIteration)
 			throws InterruptedException {
-		Future<WorkerThreadResult<L, A>> doneFuture = null;
-		if (mRunningThreads == mThreadLimit || didntFindCexLastIteration) {
+		WorkerThreadResult<L, A> doneFuture = null;
+
+		if (mRunningThreads >= mThreadLimit || didntFindCexLastIteration
+				|| (mWorkerResultQueue.isEmpty() && mRunningThreads > 0)) {
 			assert mRunningThreads > 0;
 			mLogger.info("All threads busy, going to sleep.");
 			// No busy waiting via BlockingQueue
@@ -520,7 +512,6 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		} else {
 			doneFuture = mWorkerResultQueue.poll();
 		}
-
 		return doneFuture;
 	}
 
@@ -550,12 +541,12 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 		hoareAnnotationLocs = Collections.emptySet();
 		// }
 
-		final PredicateFactoryRefinement stateFactoryForRefinement =
-				new PredicateFactoryRefinement(getServices(), threadResult.getWorkerMgdScript(),
-						threadResult.getPredicateFactory(), mComputeHoareAnnotation, hoareAnnotationLocs);
+		final PredicateFactoryRefinement stateFactoryForRefinement = new PredicateFactoryRefinement(getServices(),
+				threadResult.getWorkerMgdScript(), threadResult.getPredicateFactory(), mComputeHoareAnnotation,
+				hoareAnnotationLocs);
 		mLogger.info("Difference in Main");
-		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff =
-				computeAutomataDifference(mAbstraction, threadResult, stateFactoryForRefinement);
+		final IOpWithDelayedDeadEndRemoval<L, IPredicate> diff = computeAutomataDifference(mAbstraction, threadResult,
+				stateFactoryForRefinement);
 
 		mAbstraction = diff.getResult();
 
@@ -876,8 +867,8 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final SolverMode solverMode = prefs.getEnum(RcfgPreferenceInitializer.LABEL_SOLVER, SolverMode.class);
 
-		final boolean fakeNonIncrementalScript =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
+		final boolean fakeNonIncrementalScript = prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_FAKE_NON_INCREMENTAL_SCRIPT);
 
 		final boolean dumpSmtScriptToFile = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_TO_FILE);
 		final boolean compressSmtScript = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_COMPRESS_SMT_DUMP_FILE);
@@ -885,24 +876,24 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 
 		final String commandExternalSolver = prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_COMMAND);
 
-		final boolean dumpUnsatCoreTrackBenchmark =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
+		final boolean dumpUnsatCoreTrackBenchmark = prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_UNSAT_CORE_BENCHMARK);
 
-		final boolean dumpMainTrackBenchmark =
-				prefs.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
+		final boolean dumpMainTrackBenchmark = prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DUMP_MAIN_TRACK_BENCHMARK);
 
-		final Map<String, String> additionalSmtOptions =
-				prefs.getKeyValueMap(RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
+		final Map<String, String> additionalSmtOptions = prefs
+				.getKeyValueMap(RcfgPreferenceInitializer.LABEL_ADDITIONAL_SMT_OPTIONS);
 
-		final Logics logicForExternalSolver =
-				Logics.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
-		final SolverSettings solverSettings =
-				SolverBuilder.constructSolverSettings().setUseFakeIncrementalScript(fakeNonIncrementalScript)
-						.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
-						.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
-						.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
-						.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver)
-						.setSolverMode(solverMode).setAdditionalOptions(additionalSmtOptions);
+		final Logics logicForExternalSolver = Logics
+				.valueOf(prefs.getString(RcfgPreferenceInitializer.LABEL_EXT_SOLVER_LOGIC));
+		final SolverSettings solverSettings = SolverBuilder.constructSolverSettings()
+				.setUseFakeIncrementalScript(fakeNonIncrementalScript)
+				.setDumpSmtScriptToFile(dumpSmtScriptToFile, pathOfDumpedScript, filename, compressSmtScript)
+				.setDumpUnsatCoreTrackBenchmark(dumpUnsatCoreTrackBenchmark)
+				.setDumpMainTrackBenchmark(dumpMainTrackBenchmark)
+				.setUseExternalSolver(true, commandExternalSolver, logicForExternalSolver).setSolverMode(solverMode)
+				.setAdditionalOptions(additionalSmtOptions);
 
 		return solverSettings;
 	}
@@ -941,19 +932,20 @@ public class ParallelCegarLoop<L extends IIcfgTransition<?>, A extends IAutomato
 	 * dead ends.
 	 *
 	 * @param predicateFactoryRefinement
-	 *            PredicateFactory for the construction of the new (minimized) abstraction.
+	 *                                   PredicateFactory for the construction of the new (minimized) abstraction.
 	 * @param resultCheckPredFac
-	 *            PredicateFactory used for auxiliary automata used for checking correctness of the result (if
-	 *            assertions are enabled).
+	 *                                   PredicateFactory used for auxiliary automata used for checking correctness of
+	 *                                   the result (if
+	 *                                   assertions are enabled).
 	 */
 	@Override
 	protected void minimizeAbstraction(final PredicateFactoryRefinement predicateFactoryRefinement,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 
-		final Function<IPredicate, Set<IcfgLocation>> lcsProvider =
-				x -> (x instanceof ISLPredicate ? Collections.singleton(((ISLPredicate) x).getProgramPoint())
-						: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
+		final Function<IPredicate, Set<IcfgLocation>> lcsProvider = x -> (x instanceof ISLPredicate
+				? Collections.singleton(((ISLPredicate) x).getProgramPoint())
+				: new HashSet<>(Arrays.asList(((IMLPredicate) x).getProgramPoints())));
 		AutomataMinimization<Set<IcfgLocation>, IPredicate, L> am;
 		try {
 			am = new AutomataMinimization<>(getServices(), mAbstraction, minimization, mComputeHoareAnnotation,

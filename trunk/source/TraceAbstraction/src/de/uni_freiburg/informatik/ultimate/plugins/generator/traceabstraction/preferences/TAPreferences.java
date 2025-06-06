@@ -213,7 +213,6 @@ public final class TAPreferences {
 		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
 		mThreadLimitPerCex = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREAD_LIMIT_PER_CEX);
 		useGoalSetForIsEmpty = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_GOALSET);
-		parallelSearchSrategy = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH);
 		considerOnlyActiveCounterexamplesInIsEmptyParallel =
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
 		minimizeAbstractionPerWorker =
