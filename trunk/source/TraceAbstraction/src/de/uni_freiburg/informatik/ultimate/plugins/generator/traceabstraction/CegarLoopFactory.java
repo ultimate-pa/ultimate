@@ -232,7 +232,7 @@ public class CegarLoopFactory<L extends IIcfgTransition<?>> {
 					stateFactoryForRefinement);
 		case NONE:
 			if (mPrefs.isParallelCegarLoop()) {
-				return new ParallelCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
+				return new ParallelNWACegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,
 						proofProducer, services, mTransitionClazz, stateFactoryForRefinement);
 			}
 			return new NwaCegarLoop<>(name, abstraction, root, csToolkit, predicateFactory, mPrefs, errorLocs,

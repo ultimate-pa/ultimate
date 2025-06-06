@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+public class CegarNWAWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
 		implements Callable<WorkerThreadResult<L, A>> {
 
 	private final ILogger mLogger;
@@ -105,11 +105,11 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 
 	// Globals for Difference (Interpolant Automaton Enhancement)
 	protected static final boolean REMOVE_DEAD_ENDS = true;
-	private final ParallelCegarLoop<L, A> mMainThread;
+	private final ParallelNWACegarLoop<L, A> mMainThread;
 
 	private final WorkerGeneralizationMode mGeneralize;
 
-	public CegarWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
+	public CegarNWAWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
 			final int iteration, final CegarLoopResultBuilder resultBuilder,
 			final CegarLoopStatisticsGenerator statistcs, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final StrategyFactory<L> strategyFactory,
@@ -117,7 +117,7 @@ public class CegarWorkerThread<L extends IIcfgTransition<?>, A extends IAutomato
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
-			final ParallelCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
+			final ParallelNWACegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults) {
 
 		mLogger = logger;
