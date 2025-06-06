@@ -272,7 +272,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			assert consistent : "is theory symbol";
 			nonTheoryConstantTerms.add((ApplicationTerm) ((HistoryRecordingScript) mMgdScript.getScript())
 					.transferTermToWorker(programConsts.getDefaultConstant()));
-			// assert mFormula.getTheory().equals(programConsts.getDefaultConstant().getTheory());
 			consistent &= constantsInFormula.contains(((HistoryRecordingScript) mMgdScript.getScript())
 					.transferTermToWorker(programConsts.getDefaultConstant()));
 			assert consistent : "not in formula";
