@@ -445,11 +445,11 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		return new AnnotateAndAssertCodeBlocks<>(mTcSmtManager, mTraceCheckLock, ssa, mLogger);
 	}
 
-	private Term getValue(final Term term) {
+	protected Term getValue(final Term term) {
 		return SmtUtils.getValues(mTcSmtManager.getScript(), Collections.singleton(term)).get(term);
 	}
 
-	private static Boolean getBooleanValue(final Term term) {
+	protected static Boolean getBooleanValue(final Term term) {
 		Boolean result;
 		if (SmtUtils.isTrueLiteral(term)) {
 			result = Boolean.TRUE;

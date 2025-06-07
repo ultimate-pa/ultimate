@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class IcfgProgramExecutionBuilder<L extends IAction> {
 
 	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
-	private final NestedWord<L> mTrace;
+	public final NestedWord<L> mTrace;
 	private final Map<IProgramVar, Map<Integer, Term>> mVar2Pos2Value;
 	private final RelevantVariables<L> mRelevantVariables;
 	private IcfgProgramExecution<L> mIcfgProgramExecution;
@@ -104,7 +104,7 @@ public class IcfgProgramExecutionBuilder<L extends IAction> {
 		return result;
 	}
 
-	void addValueAtVarAssignmentPosition(final IProgramVar bv, final int index, final Term value) {
+	public void addValueAtVarAssignmentPosition(final IProgramVar bv, final int index, final Term value) {
 		assert index >= -1;
 		assert index == -1 || isReAssigned(bv, index) : "oldVar in procedure where it is not modified?";
 		final Map<Integer, Term> pos2value = mVar2Pos2Value.computeIfAbsent(bv, a -> new HashMap<>());

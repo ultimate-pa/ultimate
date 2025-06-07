@@ -57,6 +57,8 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 	private int mInterpolantComputations = 0;
 	private int mPerfectInterpolantSequences = 0;
 	private BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
+	// TestGeneration
+	private int mTestsExported = 0;
 
 	private final boolean mCollectInterpolatSequenceStatistics;
 
@@ -161,6 +163,7 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 		case InterpolantComputations -> mInterpolantComputations;
 		case PerfectInterpolantSequences -> mPerfectInterpolantSequences;
 		case InterpolantCoveringCapability -> mInterpolantCoveringCapability;
+		case TestsExported -> mTestsExported;
 		};
 	}
 
@@ -178,6 +181,10 @@ public class TraceCheckStatisticsGenerator extends StatisticsGeneratorWithStopwa
 
 	public boolean isCollectingInterpolantSequenceStatistics() {
 		return mCollectInterpolatSequenceStatistics;
+	}
+
+	public void reportTestExported() {
+		mTestsExported++;
 	}
 
 }

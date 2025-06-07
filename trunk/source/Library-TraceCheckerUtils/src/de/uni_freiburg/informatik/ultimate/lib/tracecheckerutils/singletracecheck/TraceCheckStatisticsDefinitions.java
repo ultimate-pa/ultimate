@@ -64,7 +64,8 @@ public enum TraceCheckStatisticsDefinitions implements IStatisticsElement {
 	PerfectInterpolantSequences(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),
 
 	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.DEFAULT_AGGREGATION,
-			StatisticsType.DATA_BEFORE_KEY),;
+			StatisticsType.DATA_BEFORE_KEY),
+	TestsExported(Integer.class, StatisticsType.INTEGER_ADDITION, StatisticsType.DATA_BEFORE_KEY),;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
