@@ -405,6 +405,11 @@ public class CHandler {
 	private boolean mIsConcurrent;
 	private boolean mHasThreadLocalVars;
 
+	// Test Generation
+	private final boolean mTestGenerationErrorCoverage;
+	private final boolean mTestGenerationBranchCoverage;
+	private final int mTestGoalCount = 0;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -487,6 +492,8 @@ public class CHandler {
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 
 		mIsInLibraryMode = false;
+		mTestGenerationErrorCoverage = mSettings.isCoverError();
+		mTestGenerationBranchCoverage = mSettings.isCoverBranches();
 	}
 
 	/**
@@ -580,6 +587,8 @@ public class CHandler {
 				mMemoryHandler, mInitHandler, mFunctionHandler, this);
 		mIsInLibraryMode = !prerunCHandler.mProcedureManager.hasProcedure(mSettings.getEntryMethod());
 		copyGlobalsFromPrerun(prerunCHandler.mSymbolTable);
+		mTestGenerationErrorCoverage = mSettings.isCoverError();
+		mTestGenerationBranchCoverage = mSettings.isCoverBranches();
 	}
 
 	private void copyGlobalsFromPrerun(final FlatSymbolTable prerunSymbolTable) {

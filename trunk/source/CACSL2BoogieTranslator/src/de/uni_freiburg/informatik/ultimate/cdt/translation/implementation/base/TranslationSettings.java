@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.TestCoverageCriteria;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UndefinedFunctionBehaviour;
 
 /**
@@ -84,6 +85,9 @@ public final class TranslationSettings {
 	private final int mStringOverapproximationThreshold;
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 	private final boolean mEnforceIfForConditional;
+
+	// Test Generation
+	private final TestCoverageCriteria mTestCoverageCriteria;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -135,6 +139,9 @@ public final class TranslationSettings {
 		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
 		mEnforceIfForConditional = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ENFORCE_IF_FOR_CONDITIONAL);
+
+		mTestCoverageCriteria = ups.getEnum(CACSLPreferenceInitializer.LABEL_COVERAGE_CRITERIA,
+				TestCoverageCriteria.class);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -151,7 +158,7 @@ public final class TranslationSettings {
 			final boolean useConstantArrays, final boolean useStoreChains, final boolean enableFesetround,
 			final FloatingPointRoundingMode initialRoundingMode, final boolean adaptMemoryModelResolutionOnPointerCasts,
 			final int stringOverapproximationThreshold, final UndefinedFunctionBehaviour undefinedFunctionBehaviour,
-			final boolean enforceIfForConditional) {
+			final boolean enforceIfForConditional, final TestCoverageCriteria testCoverageCriteria) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -183,6 +190,7 @@ public final class TranslationSettings {
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
 		mEnforceIfForConditional = enforceIfForConditional;
+		mTestCoverageCriteria = testCoverageCriteria;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -330,7 +338,15 @@ public final class TranslationSettings {
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mUndefinedFunctionBehaviour, mEnforceIfForConditional);
+				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mTestCoverageCriteria);
+	}
+
+	public boolean isCoverBranches() {
+		return mTestCoverageCriteria.equals(TestCoverageCriteria.COVER_BRANCHES);
+	}
+
+	public boolean isCoverError() {
+		return mTestCoverageCriteria.equals(TestCoverageCriteria.COVER_ERROR);
 	}
 
 	/**

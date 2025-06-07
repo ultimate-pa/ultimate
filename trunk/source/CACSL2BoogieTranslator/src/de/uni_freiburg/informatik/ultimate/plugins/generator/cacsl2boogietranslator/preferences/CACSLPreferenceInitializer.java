@@ -148,6 +148,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"If this setting is enabled, we try to translate conditional expressions to if-statements in Boogie. "
 					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
 
+	// Test Generation
+	public static final String LABEL_COVERAGE_CRITERIA = "Coverage Criteria for Test-case generation";
+
+	public enum TestCoverageCriteria {
+		COVER_BRANCHES, COVER_ERROR, NONE
+	}
+
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
 	}
@@ -347,6 +354,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false,
 								"Only for benchmarking -- do not use", PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false,
-								DESC_ENFORCE_IF_FOR_CONDITIONAL, PreferenceType.Boolean)) };
+								DESC_ENFORCE_IF_FOR_CONDITIONAL, PreferenceType.Boolean)),
+				new UltimatePreferenceItemGroup("Test Case Generation", new UltimatePreferenceItem<>(
+						LABEL_COVERAGE_CRITERIA, false, PreferenceType.Combo, TestCoverageCriteria.values())) };
 	}
 }
