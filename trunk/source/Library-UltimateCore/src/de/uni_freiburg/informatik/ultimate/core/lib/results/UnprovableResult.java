@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *            Type of expression
  */
 public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
+		implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
 
 	private final Check mCheckedSpecification;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
@@ -103,7 +103,8 @@ implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
 
 		// programExecution may be null
 		mProgramExecution = programExecution;
-		mProgramExecutionAsString = null; // Not yet supported in Parallel
+		mProgramExecutionAsString = mProgramExecution == null ? null
+				: translatorSequence.translateProgramExecution(mProgramExecution).toString();
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 	}
 
@@ -126,7 +127,7 @@ implements IResultWithFiniteTrace<TE, E>, IFailedAnalysisResult {
 			sb.append(CoreUtil.getPlatformLineSeparator());
 			sb.append("Possible FailurePath: ");
 			sb.append(CoreUtil.getPlatformLineSeparator());
-			// sb.append(getProgramExecutionAsString()); // TODO sort can come from wrong script
+			sb.append(mProgramExecutionAsString);
 		}
 		return sb.toString();
 	}

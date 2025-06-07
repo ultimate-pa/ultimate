@@ -82,7 +82,7 @@ implements IResultWithFiniteTrace<TE, E>, IResultWithCheck {
 		mCheckedSpecification = Check.getAnnotation(position);
 		mProgramExecution = pe;
 		mFailurePath = ResultUtil.getLocationSequence(pe);
-		mProgramExecutionAsString = null;// translatorSequence.translateProgramExecution(mProgramExecution).toString();
+		mProgramExecutionAsString = translatorSequence.translateProgramExecution(mProgramExecution).toString();
 	}
 
 	/**
@@ -132,8 +132,7 @@ implements IResultWithFiniteTrace<TE, E>, IResultWithCheck {
 			sb.append(" The dash (-) means that the statement's code block is irrelevant.)");
 			sb.append(CoreUtil.getPlatformLineSeparator());
 		}
-		// TODO probably need to map back from worker to main here, future work!
-		// sb.append(getProgramExecutionAsString());
+		sb.append(getProgramExecutionAsString());
 		return sb.toString();
 	}
 
