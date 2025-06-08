@@ -310,6 +310,7 @@ public class CfgBuilder {
 		case LoopFreeBlock:
 			new LargeBlockEncoding(mServices, mIcfg, mCbf, InternalLbeMode.ALL);
 			break;
+		case SequenceOfStatementsBreakOnNondet: // Needed for Test case generation
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
 		case SingleStatement:
@@ -987,6 +988,15 @@ public class CfgBuilder {
 					return (StatementSequence) currentElement;
 				} else {
 					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st);
+				}
+			case SequenceOfStatementsBreakOnNondet:
+				if (st instanceof HavocStatement) {
+					if (st.getPayload().toString().contains("__VERIFIER_nondet_")) {
+						return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st);
+					}
+				} else {
+					addStatementToStatementSequence(st, (StatementSequence) currentElement);
+					return (StatementSequence) currentElement;
 				}
 			case SingleStatement:
 				if (currentElement instanceof StatementSequence) {

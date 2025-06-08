@@ -177,6 +177,10 @@ public enum Spec {
 			"the set of constraint Horn clauses is satisfiable",
 			"the set of constraint Horn clauses is unsatisfiable"),
 
+	TEST_GOAL_ANNOTATION(Group.PROGRAM,
+			"test goal was reached",
+			"test goal cannot be reached"),
+
 	/*-------------------------------------------------------------------------------------------------------------
 	 * Requirement specification types.
 	 *-----------------------------------------------------------------------------------------------------------*/

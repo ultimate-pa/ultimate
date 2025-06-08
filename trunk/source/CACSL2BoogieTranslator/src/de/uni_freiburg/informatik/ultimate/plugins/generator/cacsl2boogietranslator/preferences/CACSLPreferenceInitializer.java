@@ -356,6 +356,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false,
 								DESC_ENFORCE_IF_FOR_CONDITIONAL, PreferenceType.Boolean)),
 				new UltimatePreferenceItemGroup("Test Case Generation", new UltimatePreferenceItem<>(
-						LABEL_COVERAGE_CRITERIA, false, PreferenceType.Combo, TestCoverageCriteria.values())) };
+						LABEL_COVERAGE_CRITERIA, TestCoverageCriteria.NONE, PreferenceType.Combo,
+						TestCoverageCriteria.values())) };
 	}
 }

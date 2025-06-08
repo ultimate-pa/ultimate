@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.CheckMessageProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 
@@ -284,6 +286,10 @@ public class FunctionModelHelper {
 				new Expression[] { new StringLiteral(loc, check.toString()), new StringLiteral(loc, functionName) }) },
 				expr);
 		check.annotate(st);
+		if (CHandler.mTestGenerationErrorCoverage) {
+			final TestGoalAnnotation tg = new TestGoalAnnotation(1);
+			tg.annotate(st);
+		}
 		if (checkMemoryleakInMain && mSvcompMemtrackCompatibilityMode) {
 			new Overapprox("memtrack", loc).annotate(st);
 		}

@@ -129,6 +129,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -242,9 +243,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
@@ -406,9 +410,9 @@ public class CHandler {
 	private boolean mHasThreadLocalVars;
 
 	// Test Generation
-	private final boolean mTestGenerationErrorCoverage;
-	private final boolean mTestGenerationBranchCoverage;
-	private final int mTestGoalCount = 0;
+	public static boolean mTestGenerationErrorCoverage = false;
+	public static boolean mTestGenerationBranchCoverage = false;
+	public static int mTestGoalCount = 0;
 
 	/**
 	 * Constructor for CHandler in pre-run mode.
@@ -1306,6 +1310,7 @@ public class CHandler {
 		opPositive = mExprResultTransformer.switchToRValue(opPositive, loc, node);
 		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getNegativeResultExpression());
 		opNegative = mExprResultTransformer.switchToRValue(opNegative, loc, node);
+		// Test Goals for Branch Coverage are added in CExpressionHandler
 		return mCExpressionTranslator.handleConditionalOperator(loc, opCondition, opPositive, opNegative, node);
 	}
 
@@ -1855,7 +1860,7 @@ public class CHandler {
 		final List<HavocStatement> havocs = CTranslationUtil.createHavocsForAuxVars(condResult.getAuxVars());
 
 		final Result thenResult = main.dispatch(node.getThenClause());
-		final List<Statement> thenStmt = new ArrayList<>();
+		final ArrayList<Statement> thenStmt = new ArrayList<>();
 		thenStmt.addAll(havocs);
 		if (thenResult instanceof ExpressionResult) {
 			final ExpressionResult re = (ExpressionResult) thenResult;
@@ -1874,7 +1879,7 @@ public class CHandler {
 			}
 		}
 
-		final List<Statement> elseStmt = new ArrayList<>();
+		final ArrayList<Statement> elseStmt = new ArrayList<>();
 		elseStmt.addAll(havocs);
 		if (node.getElseClause() != null) {
 			final Result elseResult = main.dispatch(node.getElseClause());
@@ -1896,13 +1901,33 @@ public class CHandler {
 		assert thenStmt != null;
 		assert elseStmt != null;
 		// TODO : handle if(pointer), if(pointer==NULL) and if(pointer==0)
-		final IfStatement ifStmt = new IfStatement(loc, cond.getValue(),
-				thenStmt.toArray(new Statement[thenStmt.size()]), elseStmt.toArray(new Statement[elseStmt.size()]));
+		final IfStatement ifStmt;
+		if (mTestGenerationBranchCoverage) {
+			ifStmt = getIfStmtWithTestGoal(loc, cond, thenStmt, elseStmt);
+		} else {
+			ifStmt = new IfStatement(loc, cond.getValue(), thenStmt.toArray(new Statement[thenStmt.size()]),
+					elseStmt.toArray(new Statement[elseStmt.size()]));
+		}
 		for (final Overapprox overapprItem : overappr) {
 			overapprItem.annotate(ifStmt);
 		}
 		stmt.add(ifStmt);
 		return new ExpressionResult(stmt, null, decl, Collections.emptySet(), overappr);
+	}
+
+	private IfStatement getIfStmtWithTestGoal(final ILocation loc, final RValue cond,
+			final ArrayList<Statement> thenStmt, final ArrayList<Statement> elseStmt) {
+		// Some weird special case where we have this if statement in our benchmarks, but it does nothing?
+		if (loc.toString().contains("C: if (0) ; else __assert_fail")) {
+			return new IfStatement(loc, cond.getValue(), thenStmt.toArray(new Statement[thenStmt.size()]),
+					elseStmt.toArray(new Statement[elseStmt.size()]));
+		}
+
+		final ArrayList<Statement> thenArray = addTestGoalToStmtSequence(thenStmt, loc);
+		final ArrayList<Statement> elseArray = addTestGoalToStmtSequence(elseStmt, loc);
+
+		return new IfStatement(loc, cond.getValue(), thenArray.toArray(new Statement[thenArray.size()]),
+				elseArray.toArray(new Statement[elseArray.size()]));
 	}
 
 	public Result visit(final IDispatcher main, final IASTTypeIdInitializerExpression node) {
@@ -2463,6 +2488,9 @@ public class CHandler {
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 				ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
+					if (mTestGenerationBranchCoverage) {
+						ifBlock = addTestGoalToStmtSequence(ifBlock, loc);
+					}
 					final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 							ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 					for (final Overapprox overapprItem : caseExpression.getOverapprs()) {
@@ -2518,6 +2546,9 @@ public class CHandler {
 		}
 		if (locC != null) {
 			assert cond != null;
+			if (mTestGenerationBranchCoverage) {
+				ifBlock = addTestGoalToStmtSequence(ifBlock, loc);
+			}
 			final IfStatement ifStmt = new IfStatement(locC, switchAuxvar.getExp(),
 					ifBlock.toArray(new Statement[ifBlock.size()]), new Statement[0]);
 			for (final Overapprox overapprItem : resultBuilder.getOverappr()) {
@@ -3725,11 +3756,43 @@ public class CHandler {
 		// C and Boogie.
 		// Make sure to havoc all aux-vars that are created from the translation of cond (in the if and else branches)
 		final Statement[] havocs = CTranslationUtil.createHavocsForAuxVars(cond.getAuxVars()).toArray(Statement[]::new);
-		final IfStatement ifStmt = new IfStatement(loc, cond.getLrValue().getValue(), havocs,
+		final IfStatement ifStmt;
+		if (mTestGenerationBranchCoverage) {
+			final ArrayList<Statement> havocsList = new ArrayList<>(Arrays.asList(havocs));
+			final ArrayList<Statement> concatList = new ArrayList<>(
+					Arrays.asList(DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) })));
+			final ArrayList<Statement> thenArray = addTestGoalToStmtSequence(havocsList, loc);
+			final ArrayList<Statement> elseArray = addTestGoalToStmtSequence(concatList, loc);
+
+			ifStmt = new IfStatement(loc, cond.getLrValue().getValue(),
+					thenArray.toArray(new Statement[thenArray.size()]),
+					elseArray.toArray(new Statement[elseArray.size()]));
+
+		} else {
+			ifStmt = new IfStatement(loc, cond.getLrValue().getValue(), havocs,
 				DataStructureUtils.concat(havocs, new Statement[] { new BreakStatement(loc) }));
+		}
 		cond.getOverapprs().forEach(oa -> oa.annotate(ifStmt));
 		result.add(ifStmt);
 		return result;
+	}
+
+	private static ArrayList<Statement> addTestGoalToStmtSequence(final ArrayList<Statement> statementSequence,
+			final ILocation loc) {
+		final ArrayList<Statement> stmtArrayList = new ArrayList<>();
+		final Check chk = new Check(Spec.TEST_GOAL_ANNOTATION);
+
+		final Statement assertFalseThen = new AssertStatement(loc,
+				ExpressionFactory.createBooleanLiteral(loc, false));
+		final TestGoalAnnotation tg1 = new TestGoalAnnotation(mTestGoalCount);
+
+		mTestGoalCount += 1;
+		tg1.annotate(assertFalseThen);
+		chk.annotate(assertFalseThen);
+		stmtArrayList.add(assertFalseThen);
+		stmtArrayList.addAll(statementSequence);
+		return stmtArrayList;
+
 	}
 
 	private Result buildLoopResult(final IDispatcher main, final IASTStatement node, final Expression cond,

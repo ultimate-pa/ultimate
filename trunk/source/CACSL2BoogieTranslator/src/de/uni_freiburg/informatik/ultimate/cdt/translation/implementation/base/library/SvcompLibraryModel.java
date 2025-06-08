@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -220,8 +221,14 @@ public class SvcompLibraryModel implements ILibraryModel {
 	private Result handleErrorFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
-		final Statement st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.ERROR_FUNCTION,
-				falseLiteral);
+		final Statement st;
+		if (CHandler.mTestGenerationErrorCoverage) {
+			st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.ERROR_FUNCTION,
+					falseLiteral);
+		} else {
+			st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.TEST_GOAL_ANNOTATION,
+					falseLiteral);
+		}
 		return new ExpressionResult(Collections.singletonList(st), null);
 	}
 
