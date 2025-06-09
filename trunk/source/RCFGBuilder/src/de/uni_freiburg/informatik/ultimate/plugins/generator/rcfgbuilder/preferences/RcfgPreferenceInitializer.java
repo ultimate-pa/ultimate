@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock;
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsBreakOnNondet;
 
 		public boolean isConcurrencySafe() {
 			switch (this) {
@@ -51,6 +51,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				return true;
 			case SequenceOfStatements:
 			case LoopFreeBlock:
+			case SequenceOfStatementsBreakOnNondet:
 				return false;
 			default:
 				throw new IllegalArgumentException(

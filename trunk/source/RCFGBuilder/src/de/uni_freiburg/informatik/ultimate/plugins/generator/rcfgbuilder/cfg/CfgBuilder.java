@@ -287,6 +287,7 @@ public class CfgBuilder {
 			break;
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
+		case SequenceOfStatementsBreakOnNondet:
 		case SingleStatement:
 			final var internalMode = mCtxSwitchOnlyAtAtomicBoundaries && IcfgUtils.isConcurrent(mIcfg)
 					? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
@@ -1157,6 +1158,14 @@ public class CfgBuilder {
 				switch (mCodeBlockSize) {
 				case LoopFreeBlock:
 				case SequenceOfStatements:
+					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
+					break;
+				case SequenceOfStatementsBreakOnNondet:
+					if ((st instanceof HavocStatement) && st.getPayload().toString().contains("__VERIFIER_nondet_")) {
+						endCurrentStatementSequence(st);
+						startNewStatementSequenceAndAddStatement(st);
+						break;
+					}
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 					break;
 				case OneNontrivialStatement:

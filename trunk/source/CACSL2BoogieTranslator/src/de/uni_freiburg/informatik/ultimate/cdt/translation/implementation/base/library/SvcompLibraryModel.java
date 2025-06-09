@@ -223,10 +223,10 @@ public class SvcompLibraryModel implements ILibraryModel {
 		final Expression falseLiteral = ExpressionFactory.createBooleanLiteral(loc, false);
 		final Statement st;
 		if (CHandler.mTestGenerationErrorCoverage) {
-			st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.ERROR_FUNCTION,
+			st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.TEST_GOAL_ANNOTATION,
 					falseLiteral);
 		} else {
-			st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.TEST_GOAL_ANNOTATION,
+			st = mHelper.createAnnotatedAssertOrAssume(loc, name, mCheckErrorFunction, Spec.ERROR_FUNCTION,
 					falseLiteral);
 		}
 		return new ExpressionResult(Collections.singletonList(st), null);
