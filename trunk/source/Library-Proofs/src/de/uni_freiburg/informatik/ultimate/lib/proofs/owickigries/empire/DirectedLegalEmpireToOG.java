@@ -135,6 +135,7 @@ public class DirectedLegalEmpireToOG<L, P> {
 		for (final P place : mNet.getPlaces()) {
 			final var states = mProductAutomaton.getStates().stream()
 					.filter(s -> s.intersectionTerritory().containsPlace(place)).collect(Collectors.toSet());
+			final var noError = noErrorPlaceInStates(place, states);
 			assert noErrorPlaceInStates(place, states) : "Accepting place in intersection of the states";
 			final var disjuncts = new ArrayList<Term>();
 			for (final ProductState<L, P> state : states) {

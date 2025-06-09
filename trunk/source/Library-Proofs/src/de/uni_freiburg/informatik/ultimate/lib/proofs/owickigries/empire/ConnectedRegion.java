@@ -32,16 +32,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.util.LazyInt;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
 public class ConnectedRegion<L, P> extends Region<P> {
 
 	private final ImmutableSet<Transition<L, P>> mTransitions;
+	private final LazyInt mHash;
 
 	public ConnectedRegion(final ImmutableSet<P> region, final ImmutableSet<Transition<L, P>> transitions) {
 		super(region);
 		mTransitions = transitions;
+		mHash = new LazyInt(region::hashCode);
 	}
 
 	/**
@@ -61,11 +64,13 @@ public class ConnectedRegion<L, P> extends Region<P> {
 
 	public static <L, P> Region<P> intersectConnectedRegions(final Set<ConnectedRegion<L, P>> connectedRegions,
 			final P startingPlace) {
-		final var transitions =
-				connectedRegions.stream().flatMap(r -> r.getTransitions().stream()).collect(Collectors.toSet());
+		final var transitionIntersection = connectedRegions.stream().map(r -> new HashSet<>(r.getTransitions()))
+				.reduce((t1, t2) -> new HashSet<>(DataStructureUtils.intersection(t1, t2)));
+		final var transitions = transitionIntersection.orElse(new HashSet<>());
 		final var intersection = connectedRegions.stream().map(r -> new HashSet<>(r.getPlaces()))
 				.reduce((r1, r2) -> new HashSet<>(DataStructureUtils.intersection(r1, r2)));
 		final var jointPlaces = intersection.orElse(new HashSet<>());
+		assert !jointPlaces.isEmpty() : "No common place";
 		final var regionPlaces = new HashSet<P>();
 		regionPlaces.add(startingPlace);
 		final var queue = new ArrayDeque<P>();
@@ -94,5 +99,18 @@ public class ConnectedRegion<L, P> extends Region<P> {
 
 	public ImmutableSet<Transition<L, P>> getTransitions() {
 		return mTransitions;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		return obj == this || obj instanceof final ConnectedRegion<?, ?> other && getPlaces().equals(other.getPlaces())
+				&& mTransitions.equals(other.getTransitions());
+	}
+
+	@Override
+	public int hashCode() {
+		// Hash code is cached for performance reasons. Regions are almost always used in sets (typically, HashSets)
+		// such as territories, and each hash code computation requires an iteration over the set of places.
+		return mHash.get();
 	}
 }
