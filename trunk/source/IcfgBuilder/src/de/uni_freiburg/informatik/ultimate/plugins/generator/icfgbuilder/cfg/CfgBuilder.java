@@ -310,9 +310,9 @@ public class CfgBuilder {
 		case LoopFreeBlock:
 			new LargeBlockEncoding(mServices, mIcfg, mCbf, InternalLbeMode.ALL);
 			break;
-		case SequenceOfStatementsBreakOnNondet: // Needed for Test case generation
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
+		case SequenceOfStatementsBreakOnNondet:
 		case SingleStatement:
 			final var internalMode = mCtxSwitchOnlyAtAtomicBoundaries && IcfgUtils.isConcurrent(mIcfg)
 					? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
@@ -854,7 +854,8 @@ public class CfgBuilder {
 			// remove end node for LoopFreeBlock and SequenceOfStatements, if it only has
 			// one incoming edge and one
 			// outgoing edge
-			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
+			if ((mCodeBlockSize == CodeBlockSize.LoopFreeBlock || mCodeBlockSize == CodeBlockSize.SequenceOfStatements
+					|| mCodeBlockSize == CodeBlockSize.SequenceOfStatements)
 					&& loc.getIncomingEdges().size() == 1 && loc.getOutgoingEdges().size() == 1
 					&& !mConditionalStarts.contains(loc) && !mLabel2LocNodes.containsValue(loc)) {
 				final IcfgEdge edgeBefore = loc.getIncomingEdges().get(0);
@@ -990,14 +991,14 @@ public class CfgBuilder {
 					return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st);
 				}
 			case SequenceOfStatementsBreakOnNondet:
-				if (st instanceof HavocStatement) {
-					if (st.getPayload().toString().contains("__VERIFIER_nondet_")) {
-						return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st);
-					}
-				} else {
+				if ((st instanceof HavocStatement) && st.getPayload().toString().contains("__VERIFIER_nondet_")) {
+					return singleBlockToMaintainInput((BoogieIcfgLocation) currentElement, st);
+				}
+				if (currentElement instanceof StatementSequence) {
 					addStatementToStatementSequence(st, (StatementSequence) currentElement);
 					return (StatementSequence) currentElement;
 				}
+				return startNewStatementSequenceAndAddStatement((BoogieIcfgLocation) currentElement, st);
 			case SingleStatement:
 				if (currentElement instanceof StatementSequence) {
 					if (((StatementSequence) currentElement).getStatements().isEmpty()) {
@@ -1309,6 +1310,13 @@ public class CfgBuilder {
 			ModelUtils.copyAnnotations(st, codeBlock);
 			mEdges.add(codeBlock);
 			return codeBlock;
+		}
+
+		private StatementSequence singleBlockToMaintainInput(final BoogieIcfgLocation currentLocation,
+				final Statement st) {
+			final StatementSequence sequence = startNewStatementSequenceAndAddStatement(currentLocation, st);
+			endStatementSequence(sequence, st);
+			return sequence;
 		}
 
 		private StatementSequence startNewStatementSequence(final BoogieIcfgLocation currentLocation) {
