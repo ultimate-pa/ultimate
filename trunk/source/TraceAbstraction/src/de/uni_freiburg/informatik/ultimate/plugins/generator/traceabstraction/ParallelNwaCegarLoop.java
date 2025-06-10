@@ -632,9 +632,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			}
 		}
 		assert threadLimit <= 0; // ensure we use all available cores!
-		mRunningThreads = 0;
+
+		// TODO this does not work, if we have running threads on mExec
+		// mRunningThreads = 0;
 		for (final ParallelRefinementStrategy<L> strategy : mPpStrategyMap.values()) {
-			mRunningThreads += strategy.getExecutor().getActiveCount();
+			// mRunningThreads += strategy.getExecutor().getActiveCount();
 		}
 		mActiveExecutors = mPpStrategyMap.size();
 	}
