@@ -22,16 +22,37 @@ public class CycleRemover {
 	// original Trace. Returns empty Set if no cycles are found.
 
 	public static Set<IcfgEdge> computeFeedbackVertexSet(final DfgContainer dfg, final ILogger logger) {
+		final Set<IcfgEdge> fvsHeuristic = computeFeedbackVertexHeuristic(dfg, logger);
+		logger.info("Heuristic FVS found: Size: " + fvsHeuristic.size() + "and fvs = " + fvsHeuristic);
+
 		if (isCyclic(dfg, logger)) {
 			logger.debug("Cycles found");
 			final Set<DfgNode> fvs = feedbackVertexBruteForce(dfg, logger);
 			final Set<IcfgEdge> fvsEdges = fvs.stream().map(node -> node.getCorrespondingDFGEdge())
 					.collect(Collectors.toSet());
-			logger.debug("Found Edges to remove: " + fvsEdges);
+			logger.info("Found Edges to remove:" + fvsEdges.size() + "and fvs = " + fvsEdges);
+			logger.info("Heuristic is Same as optimal? " + fvsHeuristic.equals(fvsEdges));
 			return fvsEdges;
 		}
 		logger.debug("No cycles found. Returning empty Set");
 		return new HashSet<>();
+	}
+
+	private static Set<IcfgEdge> computeFeedbackVertexHeuristic(final DfgContainer dfg, final ILogger logger) {
+		final ISuccessorProvider<DfgNode> successors = node -> {
+			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
+			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
+		};
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
+				successors, new DefaultStronglyConnectedComponentFactory<>(), dfg.getNodeList().size(),
+				dfg.getNodeList());
+		final Set<IcfgEdge> fvs = new HashSet<>();
+		for (final StronglyConnectedComponent<DfgNode> ball : scc.getBalls()) {
+			// choose just any node of the ball
+			final DfgNode node = ball.getNodes().iterator().next();
+			fvs.add(node.getCorrespondingDFGEdge());
+		}
+		return fvs;
 	}
 
 	// returns whether the given Dfg is cyclic, if the number of SCCs of the Dfg are the trivial size then it is not
@@ -57,6 +78,7 @@ public class CycleRemover {
 		final Set<DfgNode> bestSolution;
 		// try all subsets in increasing size
 		for (int size = 1; size <= n; size++) {
+			logger.info(size);
 			final List<List<DfgNode>> subsets = generateSubsetsOfSize(nodeList, size);
 			for (final List<DfgNode> subset : subsets) {
 				final DfgContainer cloned = cloneDfg(originalDfg);
@@ -94,14 +116,14 @@ public class CycleRemover {
 
 	// helper function to recursively generate all subsets of size "size"
 	private static void backtrack(final List<DfgNode> nodeList, final int size, final int index,
-			final ArrayList current, final List<List<DfgNode>> result) {
+			final ArrayList<DfgNode> current, final List<List<DfgNode>> result) {
 		if (current.size() == size) {
 			result.add(new ArrayList<>(current));
 			return;
 		}
 		for (int i = index; i < nodeList.size(); i++) {
 			current.add(nodeList.get(i));
-			backtrack(nodeList, size, index + 1, current, result);
+			backtrack(nodeList, size, i + 1, current, result);
 			current.remove(current.size() - 1);
 		}
 
