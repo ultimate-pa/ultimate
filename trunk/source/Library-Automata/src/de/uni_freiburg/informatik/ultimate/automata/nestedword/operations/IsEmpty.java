@@ -236,15 +236,6 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 				true, strategy);
 	}
 
-
-	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates,
-			final SearchStrategy strategy) throws AutomataOperationCanceledException {
-		this(services, operand, startStates, forbiddenStates, goalStates, goalStates == null, strategy);
-		assert operand.getStates().containsAll(startStates) : "unknown states";
-		assert operand.getStates().containsAll(goalStates) : "unknown states";
-	}
-
 	/**
 	 * Constructor that is not restricted to emptiness checks. The set of startStates defines where the run that we
 	 * search has to start. The set of forbiddenStates defines states that the run must not visit. The set of goalStates
@@ -424,7 +415,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	/**
 	 * @return true iff the state pair (state,stateK) was already visited.
 	 */
-	private boolean wasVisited(final STATE state, final STATE stateK) {
+	protected boolean wasVisited(final STATE state, final STATE stateK) {
 		final Set<STATE> callPreds = mVisitedPairs.get(state);
 		if (callPreds == null) {
 			return false;
@@ -599,7 +590,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 * Store for a state pair (succ,succK) in the reachability graph information about the predecessor (state,stateK)
 	 * under a return transition and a run of length two from state to succ. Store also succK to mreturnPredStateK.
 	 */
-	private void addRunInformationReturn(final STATE succ, final STATE succK, final LETTER symbol, final STATE state,
+	protected void addRunInformationReturn(final STATE succ, final STATE succK, final LETTER symbol, final STATE state,
 			final STATE stateK) {
 		Map<STATE, NestedRun<LETTER, STATE>> succK2SubRun = mReturnSubRun.get(succ);
 		Map<STATE, STATE> succK2PredStateK = mReturnPredStateK.get(succ);

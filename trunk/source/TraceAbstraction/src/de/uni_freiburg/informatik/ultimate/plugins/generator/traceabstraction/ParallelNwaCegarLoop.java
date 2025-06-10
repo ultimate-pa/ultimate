@@ -104,7 +104,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	// Strategies
 	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
-	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = Collections.emptySet();
+	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
 	private boolean mVisitLoopsOnlyOnce = true; // a strategy where we focus on spread before pathprograms
 
@@ -687,6 +687,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel && !mVisitLoopsOnlyOnce) {
 			mActiveCounterexamples.remove(traceHash);
 		} else {
+			if(mCounterexamplesToBeRemovedFromActiveCexMap == null) {
+				return;
+			}
 			mCounterexamplesToBeRemovedFromActiveCexMap.add(traceHash);
 		}
 	}
@@ -708,8 +711,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
 					IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
 		default:
-			return new IsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction, mAbstraction.getInitialStates(),
-					Collections.emptySet(), Collections.emptySet(), strategy);
+			return new IsEmpty<>(new AutomataLibraryServices(getServices()), mAbstraction, strategy);
 		}
 	}
 

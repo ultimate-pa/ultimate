@@ -217,6 +217,24 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	}
 
 	@Override
+	protected void getAcceptingRunHelperReturn(final STATE state, final STATE stateK) {
+		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand.returnSuccessorsGivenHier(state,
+				stateK)) {
+			final LETTER symbol = transition.getLetter();
+			final STATE succ = transition.getSucc();
+			if (mForbiddenStates.contains(succ)) {
+				continue;
+			}
+			for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
+				if (!wasVisited(succ, stateKk)) {
+					enqueueAndMarkVisited(succ, stateKk);
+					addRunInformationReturn(succ, stateKk, symbol, state, stateK);
+				}
+			}
+		}
+	}
+
+	@Override
 	protected Set<STATE> getCallStatesOfCallState(final STATE callState) {
 		Set<STATE> callStatesOfCallStates = mVisitedPairs.get(callState);
 		if (callStatesOfCallStates == null) {
@@ -552,13 +570,15 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 				NestedRun<LETTER, STATE> run = null;
 				addToCurrentPrefix(succ);
 				if (startpq.isCall()) {
+					markCallVisited(state, succ);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(state, succ), startpq.getCounterexamplesUnderConsideration());
 
 					if (runToGoal != null) {
 						run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
+					} else {
+						unmarkCall(state, succ);
 					}
-					// unmarkCall(state, stateK);
 				} else if (startpq.isReturn()) {
 					addSummary(stateK, succ, state, symbol);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
