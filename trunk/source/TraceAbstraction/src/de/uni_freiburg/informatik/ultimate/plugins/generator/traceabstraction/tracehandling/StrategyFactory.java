@@ -223,7 +223,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
 				counterexample, precondition, postcondition, predicateUnifier, abstraction, emptyStackFactory);
 		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
-
+		assert prs != null;
 		return new BasicRefinementStrategy<>(strategyModuleFactory, prs.getModule(strategyModuleFactory),
 				strategyModuleFactory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
 	}

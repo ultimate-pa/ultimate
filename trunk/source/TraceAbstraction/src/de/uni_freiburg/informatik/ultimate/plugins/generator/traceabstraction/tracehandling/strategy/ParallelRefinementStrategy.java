@@ -48,6 +48,7 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	int mExecutorSize = 0;
 	final INestedWordAutomaton<L, IPredicate> mImperfectInterpolantAutomaton = null;
 	boolean mQuickCheck = false;
+	boolean mFixExecutorSize = true;
 
 	public enum WorkerGeneralizationMode {
 		YES, NO, ONLYIFPERFECT
@@ -156,7 +157,6 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	private IIpTcStrategyModule<?, L>[] getBitVectorModule(final StrategyFactory<L>.StrategyModuleFactory factory,
 			final TermClassifier tc) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		mRunningThreadForPP = mRunningThreadForPP % 6;
 		final boolean hasFloats = RefinementStrategyUtils.hasFloats(tc);
 		switch (mRunningThreadForPP) {
 		case 1:
@@ -171,6 +171,9 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		case 4:
 		case 5:
 		default:
+			updateExecutorSizes(1);
+			mFixExecutorSize = true;
+			// TODO we might want to scale down on operation if we already tried all assertion orders
 			if (!hasFloats) {
 				rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
 				rtr.add(factory.createIpTcStrategyModuleCVC4(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
@@ -192,7 +195,6 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	private IIpTcStrategyModule<?, L>[] getIntegerModule(final StrategyFactory<L>.StrategyModuleFactory factory) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		mRunningThreadForPP = mRunningThreadForPP % 6;
 		switch (mRunningThreadForPP) {
 		case 1:
 			if (!mLoopAccelerationWasTried) {
@@ -207,9 +209,13 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 		case 3:
 		case 4:
 		case 5:
-		default:
 			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
 			rtr.add(factory.createIpTcStrategyModuleZ3(InterpolationTechnique.FPandBPonlyIfFpWasNotPerfect));
+			break;
+		default:
+			updateExecutorSizes(1);
+			mFixExecutorSize = true;
+			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
 			break;
 		}
 		assert rtr.size() >= 1;
@@ -260,6 +266,9 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	 * but it is upon our search to actually find multiple pathprograms
 	 */
 	public void updateExecutorSizes(final int newSize) {
+		if (mFixExecutorSize) {
+			return;
+		}
 		mExecutorSize = newSize;
 		mExecutor.setCorePoolSize(newSize);
 	}
@@ -270,6 +279,10 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 
 	public void quickCheckIf(final boolean visitLoopsOnlyOnce) {
 		mQuickCheck = visitLoopsOnlyOnce;
+	}
+
+	public boolean stillHasNewModules() {
+		return !mFixExecutorSize;
 	}
 }
 

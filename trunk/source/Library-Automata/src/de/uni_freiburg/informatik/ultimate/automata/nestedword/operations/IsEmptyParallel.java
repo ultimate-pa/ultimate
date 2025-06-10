@@ -84,7 +84,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private int mCountRecursionSteps = 0; // To prevent stack overflows
 	private int countFailedRunConstruction = 0;
 	private boolean mTimedout = false;
-	private boolean mVisitLoopsOnlyOnce = false;
+	private boolean mNoLoopsMode = false;
+	private final Set<STATE> mCurrentPrefix = new HashSet<>();
 
 	/**
 	 * HashMap used for parallel trace abstraction Maps TraceHash to Trace, has an entry for every counterexample
@@ -114,7 +115,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 		// BFS or DFS for search when we call IsEmpty at the end of parallel search
 		assert mStrategy.equals(SearchStrategy.BFS);
-		mVisitLoopsOnlyOnce = visitLoopsOnlyOnce;
+		mNoLoopsMode = visitLoopsOnlyOnce;
 
 		mStart = System.nanoTime() / 1000000000;
 		mTimeOut = mStart + 50000; // 5 sec timeout atm
@@ -277,7 +278,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE succ, final LETTER symbol,
 			final int position) {
-		if (mVisitLoopsOnlyOnce) {
+		if (mNoLoopsMode) { // TODO this is bad we want a real no loop tracking and actually disalow loops for
+									// real
 			return increaseScoreNoLoops(counterexample, succ, symbol, position);
 		}
 		return increaseScoreDefault(counterexample, succ, symbol, position);
@@ -408,14 +410,14 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ))) {
+			if ((!mForbiddenStates.contains(succ)) && notInPrefixOfCurrentSearch(succ)) {
 				pq.add(getSuccOfInternal(transition, position, state, stateK, counterexamples));
 			}
 		}
 
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ))) {
+			if ((!mForbiddenStates.contains(succ)) && notInPrefixOfCurrentSearch(succ)) {
 				pq.add(getSuccOfCall(transition, position, state, stateK, counterexamples));
 			}
 		}
@@ -428,13 +430,23 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand.returnSuccessorsGivenHier(state,
 				stateK)) {
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ))) {
+			if ((!mForbiddenStates.contains(succ)) && notInPrefixOfCurrentSearch(succ)) {
 				for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
 					pq.add(getSuccOfReturn(transition, position, state, stateKk, counterexamples));
 				}
 			}
 		}
 		return pq;
+	}
+
+	/*
+	 * True, if we visited this state before during our search and it is in the prefix we currently consider
+	 */
+	private boolean notInPrefixOfCurrentSearch(final STATE succ) {
+		if (!mNoLoopsMode) {
+			return true;
+		}
+		return !mCurrentPrefix.contains(succ);
 	}
 
 	private PriorityQueue<PQState> pickStartToExplore(final Collection<STATE> states, final Set<Integer> set) {
@@ -538,8 +550,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 				NestedRun<LETTER, STATE> runToGoal;
 				NestedRun<LETTER, STATE> run = null;
+				addToCurrentPrefix(succ);
 				if (startpq.isCall()) {
-					markCallVisited(state, stateK);
 					runToGoal = constructRunFromStateToNextBranch(positionOfThisSubSearch,
 							new DoubleDecker<>(state, succ), startpq.getCounterexamplesUnderConsideration());
 
@@ -573,12 +585,27 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 					countFailedRunConstruction += 1;
 				}
+				removeFromCurrentPrefix(succ);
 			}
 		} else {
 			throw new AssertionError(); // should be handled before
 		}
 		mCountRecursionSteps -= 1;
 		return null;
+	}
+
+	private void addToCurrentPrefix(final STATE successor) {
+		if (!mNoLoopsMode) {
+			return;
+		}
+		mCurrentPrefix.add(successor);
+	}
+
+	private void removeFromCurrentPrefix(final STATE successor) {
+		if (!mNoLoopsMode) {
+			return;
+		}
+		mCurrentPrefix.remove(successor);
 	}
 
 	/**

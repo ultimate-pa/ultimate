@@ -445,7 +445,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final CegarNwaWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
 			executor.submit(worker);
 			mRunningThreads += 1;
-			if (!strategyProvidesAModulesForEachThread(mPref.getRefinementStrategy())) {
+			final HashSet<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
+			if (!strategyProvidesAModulesForEachThread(mPref.getRefinementStrategy(),
+					mPpStrategyMap.get(ppRepresentative))) {
 				break;
 			}
 			if (mVisitLoopsOnlyOnce) {
@@ -464,9 +466,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 *
 	 * should return false in any case where all worker threads would do the same.
 	 */
-	private static boolean strategyProvidesAModulesForEachThread(final RefinementStrategy refinementStrategy) {
+	private static boolean strategyProvidesAModulesForEachThread(final RefinementStrategy refinementStrategy,
+			final ParallelRefinementStrategy ppStrategy) {
 		switch (refinementStrategy) {
 		case PARALLEL:
+			return ppStrategy.stillHasNewModules();
 		case CAMEL:
 		case FOX:
 		case WOLF:
@@ -654,6 +658,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	// If we fail in only loop mode, we use our resources on pathprograms (differen assertion orders)
 	private void changeToNotVisistLoopsOnlyOnceMode() {
 		mVisitLoopsOnlyOnce = false;
+		if (mCounterexamplesToBeRemovedFromActiveCexMap == null) {
+			return;
+		}
 		for (final int hash : mCounterexamplesToBeRemovedFromActiveCexMap) {
 			mActiveCounterexamples.remove(hash);
 		}
