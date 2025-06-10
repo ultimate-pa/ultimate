@@ -40,7 +40,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
 		mLogger = logger;
 		mUnderlyingPostOp = postOp;
-		mItfApplier = new GuardedInterferenceApplier<>(logger, postOp, relationalInterferingDomain, globalMap, maxItf,
+		mItfApplier = new GuardedInterferenceApplier<>(logger, relationalInterferingDomain, globalMap, maxItf,
 				maxParallelStates, interferences);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 		mMaxParallelStates = maxParallelStates;
@@ -89,8 +89,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			return guardedStates;
 		}
 		// 2. apply interferences
-		final var afterItfs = mItfApplier.stateAfterInterferences(
-				DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates), mCurrentThreadName);
+		final var disj = DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates);
+		final var afterItfs = mItfApplier.stateAfterInterferences(disj, mCurrentThreadName);
 		// TODO: should be moved during interferencecomputation?
 		final var moved = GuardedStateTransformer.copyToNewStateLocation(transition.getTarget(), afterItfs);
 		return moved.getStates();

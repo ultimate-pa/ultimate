@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,8 +28,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	public static int iterationsReached = 0;
 	private Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> mAllInterfs;
 	private IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> mPostOp;
+	private final Map<InterferenceWithSourceThread<STATE, ACTION, LOC>, Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> mSeenStatesMap;
 
-	public GuardedInterferenceApplier(final ILogger logger, final IAbstractPostOperator<STATE, ACTION> postOp,
+	public GuardedInterferenceApplier(final ILogger logger,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
 			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
@@ -44,6 +45,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mPostOp = mGuardedInterferenceDomain.getPostOperator();
 		mAllInterfs = new HashSet<>();
 		mItfUtils = new InterferenceUtils<>();
+		mSeenStatesMap = new HashMap<>();
 	}
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
@@ -57,28 +59,38 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		if (validInterferenceThreadPairs.isEmpty()) {
 			return result;
 		}
+		mSeenStatesMap.clear();
+		for (final var itf : validInterferenceThreadPairs) {
+			if (mSeenStatesMap.get(itf) == null) {
+				mSeenStatesMap.put(itf, new HashSet<>());
+			}
+		}
 		mAllInterfs = validInterferenceThreadPairs;
 		mPostOp = mGuardedInterferenceDomain.getPostOperator();
-		return applyFixpointSingle(Set.of(result), ownerThread);
+		return applyFixpointSingle(result, ownerThread);
 	}
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyFixpointSingle(
-			final Set<DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> startStates,
+			DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
 			final String ownerThread) {
 		final InterferenceApplier<STATE, ACTION, LOC> itfApplier = new InterferenceApplier<>();
-		final var result = new LinkedHashSet<>(startStates.stream().flatMap(s -> s.getStates().stream()).toList());
-		LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> worklist = new LinkedHashSet<>(result);
-		int iteration = 1;
+		int iteration = 0;
+		boolean changed = true;
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).disAbleInterferences();
-		while (!worklist.isEmpty()) {
-			final LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> nextWorklist = new LinkedHashSet<>();
+		while (changed) {
+			iteration++;
+			if (iteration % 10 == 0) {
+				mLogger.warn("High interference-fixpoint iteration:" + iteration);
+			}
+			final var oldResult = result;
 			for (final var interference : mAllInterfs) {
 				GuardedInterferenceDomain.totalInnerInterferenceIterations++;
 				final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferable;
-				interferable = worklist
-						.stream().filter(s -> mItfUtils.stateIsInterferableBy(s, ownerThread,
-								interference.sourceThread(), interference.interf(), mAbstractLocationMap))
+				interferable = result.getStates().stream().filter(s -> !mSeenStatesMap.get(interference).contains(s))
+						.filter(s -> mItfUtils.stateIsInterferableBy(s, ownerThread, interference.sourceThread(),
+								interference.interf(), mAbstractLocationMap))
 						.collect(Collectors.toSet());
+				mSeenStatesMap.get(interference).addAll(interferable);
 				if (interferable.isEmpty()) {
 					continue;
 				}
@@ -95,88 +107,24 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 					moved = GuardedStateTransformer.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()), post);
 				}
 				if (iteration <= mMaxItf) {
-					addIfNew(result, nextWorklist, moved.getStates());
+					result = result.union(moved);
 				} else {
-					widenAndAddIfNew(result, nextWorklist, moved.getStates());
+					result = result.widen(mGuardedInterferenceDomain.getWideningOperator(), moved);
 				}
 			}
-			if (nextWorklist.isEmpty()) {
-				GuardedInterferenceDomain.maxStatesInOneItf = Math.max(GuardedInterferenceDomain.maxStatesInOneItf,
-						result.size());
-				break;
+			if (result.isSubsetOf(oldResult).equals(SubsetResult.NONE)) {
+				changed = true;
+			} else {
+				changed = false;
 			}
-			worklist = nextWorklist;
-			iteration++;
-			if (iteration % 10 == 0) {
-				mLogger.warn("High interference-fixpoint iteration:" + iteration);
+			if (!changed) {
+				GuardedInterferenceDomain.maxStatesInOneItf = Math.max(GuardedInterferenceDomain.maxStatesInOneItf,
+						result.getStates().size());
+				break;
 			}
 		}
 		((GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mPostOp).enableInterferences();
-		final var resultDisj = DisjunctiveAbstractState.createDisjunction(result, mMaxParallelStates);
-		return resultDisj;
-	}
-
-	private void addIfNew(final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
-			final LinkedHashSet<GuardedInterferenceDomainState<STATE, ACTION, LOC>> nextWorklist,
-			final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved) {
-
-		for (final var potentialNewState : moved) {
-			boolean subsumedByExisting = false;
-			final Iterator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> it = result.iterator();
-			while (it.hasNext()) {
-				final var existing = it.next();
-				final SubsetResult subsetRes = potentialNewState.isSubsetOf(existing);
-				if (!(subsetRes == SubsetResult.NONE)) {
-					subsumedByExisting = true;
-					break;
-				}
-				final SubsetResult reverseSubsetRes = existing.isSubsetOf(potentialNewState);
-				if (reverseSubsetRes == SubsetResult.STRICT) {
-					it.remove();
-				}
-			}
-			if (!subsumedByExisting) {
-				result.add(potentialNewState);
-				nextWorklist.add(potentialNewState);
-			}
-		}
-	}
-
-	private void widenAndAddIfNew(final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
-			final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> nextWorklist,
-			final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> moved) {
-		final var widenOp = mGuardedInterferenceDomain.getWideningOperator();
-		for (GuardedInterferenceDomainState<STATE, ACTION, LOC> potentialNewState : moved) {
-			boolean changed = true;
-
-			while (changed && potentialNewState != null) {
-				changed = false;
-				for (final var it = result.iterator(); it.hasNext();) {
-					final var existing = it.next();
-					final var widened = widenOp.apply(existing, potentialNewState);
-					if (!widened.isEqualTo(existing)) {
-						it.remove();
-						potentialNewState = widened;
-						changed = true;
-						break;
-					}
-					final SubsetResult subsetRes = potentialNewState.isSubsetOf(existing);
-					// useless new state, throw away
-					if (!(subsetRes == SubsetResult.NONE)) {
-						potentialNewState = null;
-						break;
-					}
-					if (existing.isSubsetOf(potentialNewState) == SubsetResult.STRICT) {
-						it.remove();
-						changed = true;
-					}
-				}
-			}
-			if (potentialNewState != null) {
-				result.add(potentialNewState);
-				nextWorklist.add(potentialNewState);
-			}
-		}
+		return result;
 	}
 
 }

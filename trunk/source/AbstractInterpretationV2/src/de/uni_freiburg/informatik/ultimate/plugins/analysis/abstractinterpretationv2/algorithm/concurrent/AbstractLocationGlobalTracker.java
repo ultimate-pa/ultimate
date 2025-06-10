@@ -79,7 +79,7 @@ public class AbstractLocationGlobalTracker {
 				return SubsetResult.NONE;
 			}
 			if (!Objects.equals(leftSet, rightSet)) {
-				overall = overall.min(SubsetResult.STRICT);
+				overall = SubsetResult.STRICT;
 			}
 		}
 		return overall;
