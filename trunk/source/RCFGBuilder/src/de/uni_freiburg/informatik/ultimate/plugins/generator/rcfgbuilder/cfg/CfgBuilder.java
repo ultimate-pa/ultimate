@@ -1164,6 +1164,7 @@ public class CfgBuilder {
 					if ((st instanceof HavocStatement) && st.getPayload().toString().contains("__VERIFIER_nondet_")) {
 						endCurrentStatementSequence(st);
 						startNewStatementSequenceAndAddStatement(st);
+						endCurrentStatementSequence(st);
 						break;
 					}
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
@@ -1336,7 +1337,8 @@ public class CfgBuilder {
 			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 
-			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
+			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock
+					|| mCodeBlockSize == CodeBlockSize.SequenceOfStatementsBreakOnNondet)
 					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					startNewStatementSequenceAndAddStatement(st);
