@@ -2149,7 +2149,7 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
-		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
 			// add nothing
 			return Collections.emptyList();
 		}
@@ -2200,10 +2200,10 @@ public class MemoryHandler {
 		final Expression offsetInAllocatedRange =
 				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.CHECK) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 			isFreeRequires = false;
 		} else {
-			assert mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.ASSUME;
+			assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME;
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
@@ -2229,7 +2229,7 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
-		if (mSettings.getPointerBaseValidityMode() == CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
 			// add nothing
 			return Collections.emptyList();
 		}
@@ -2238,10 +2238,10 @@ public class MemoryHandler {
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
 		final boolean isFreeRequires;
-		if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
+		if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 			isFreeRequires = false;
 		} else {
-			assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME;
+			assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME;
 			isFreeRequires = true;
 		}
 		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
@@ -3312,23 +3312,23 @@ public class MemoryHandler {
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
 		final List<Statement> result = new ArrayList<>();
-		if (mSettings.getPointerBaseValidityMode() != CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() != CheckMode.IGNORE) {
 
 			// valid[s.base]
 			final Expression validBase = constructPointerBaseValidityCheckExpr(loc, pointerValue);
 
-			if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
+			if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, validBase);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
-				assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME : "missed a case?";
+				assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME : "missed a case?";
 				final Statement assume = new AssumeStatement(loc, validBase);
 				result.add(assume);
 			}
 		}
-		if (mSettings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE) {
+		if (mSettings.checkPointerDerefValidity() != CheckMode.IGNORE) {
 
 			// s.offset < length[s.base])
 			final Expression offsetSmallerLength = mExpressionTranslation.constructBinaryComparisonIntegerExpression(
@@ -3349,13 +3349,13 @@ public class MemoryHandler {
 					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
 							offsetNonnegative);
-			if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
+			if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
 				chk.annotate(assertion);
 				result.add(assertion);
 			} else {
-				assert mSettings.getPointerBaseValidityMode() == CheckMode.ASSUME : "missed a case?";
+				assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME : "missed a case?";
 				final Statement assume = new AssumeStatement(loc, aAndB);
 				result.add(assume);
 			}
