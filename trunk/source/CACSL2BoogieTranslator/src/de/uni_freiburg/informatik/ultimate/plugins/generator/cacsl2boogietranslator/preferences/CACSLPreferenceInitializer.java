@@ -57,8 +57,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String DESC_CHECK_ASSERTIONS =
 			"Check if the assertions from assert.h (currently supported: assert, static_assert, _Static_assert, "
 					+ "__assert_fail, __assert_func) never fail.";
-	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
-	public static final String LABEL_CHECK_POINTER_ALLOC = "Pointer to allocated memory at dereference";
+	public static final String LABEL_CHECK_POINTER_DEREF_VALIDITY = "Pointer dereference validity";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
 			"Check for the main procedure if all allocated memory was freed";
@@ -70,7 +69,6 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "main procedure.";
 	public static final String LABEL_MEMORY_MODEL = "Memory model";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
-	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
 	public static final String LABEL_BITPRECISE_BITFIELDS = "Bitprecise bitfields";
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY =
@@ -272,11 +270,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								PreferenceType.String),
 						new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 								PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, CheckMode.CHECK,
-								PreferenceType.Combo, CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_ALLOC, CheckMode.CHECK, PreferenceType.Combo,
-								CheckMode.values()),
-						new UltimatePreferenceItem<>(LABEL_CHECK_ARRAYACCESSOFFHEAP, CheckMode.CHECK,
+						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.CHECK,
 								PreferenceType.Combo, CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
