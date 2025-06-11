@@ -152,7 +152,8 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		}
 		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier();
-		final var interferenceDomainDisj = applier.stateAfterInterferences(result, procedure);
+		final var cleanedStart = DisjunctiveAbstractState.createDisjunction(initialStates, mMaxParallelStates);
+		final var interferenceDomainDisj = applier.stateAfterInterferences(cleanedStart, procedure);
 		return interferenceDomainDisj;
 	}
 
