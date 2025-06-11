@@ -185,20 +185,20 @@ public class AtomicTraceElement<TE> {
 		return mThreadId != null;
 	}
 
-	public int getThreadId() {
-		return mThreadId.intValue();
+	public Integer getThreadId() {
+		return mThreadId;
 	}
 
 	public boolean isMainThread() {
 		return mThreadId.intValue() == 0;
 	}
 
-	public int getForkedThreadId() {
-		return mForkedThreadId.intValue();
+	public Integer getForkedThreadId() {
+		return mForkedThreadId;
 	}
 
-	public int getJoinedThreadId() {
-		return mJoinedThreadId.intValue();
+	public Integer getJoinedThreadId() {
+		return mJoinedThreadId;
 	}
 
 	public IRelevanceInformation getRelevanceInformation() {
@@ -405,7 +405,7 @@ public class AtomicTraceElement<TE> {
 			return this;
 		}
 
-		public AtomicTraceElementBuilder<TE> setThreadId(final int threadId) {
+		public AtomicTraceElementBuilder<TE> setThreadId(final Integer threadId) {
 			mThreadId = threadId;
 			return this;
 		}
@@ -414,12 +414,12 @@ public class AtomicTraceElement<TE> {
 			return mForkedThreadId;
 		}
 
-		public AtomicTraceElementBuilder<TE> setForkedThreadId(final int threadId) {
+		public AtomicTraceElementBuilder<TE> setForkedThreadId(final Integer threadId) {
 			mForkedThreadId = threadId;
 			return this;
 		}
 
-		public AtomicTraceElementBuilder<TE> setJoinedThreadId(final int threadId) {
+		public AtomicTraceElementBuilder<TE> setJoinedThreadId(final Integer threadId) {
 			mJoinedThreadId = threadId;
 			return this;
 		}
