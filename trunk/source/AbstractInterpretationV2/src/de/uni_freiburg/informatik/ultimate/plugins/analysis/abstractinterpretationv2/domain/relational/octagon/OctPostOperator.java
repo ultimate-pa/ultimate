@@ -151,9 +151,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 	}
 
 	public List<OctDomainState> joinDownToMax(List<OctDomainState> states) {
-		if (states.size() <= mMaxParallelStates) {
-			return states;
-		}
 		states = removeBottomStates(states);
 		if (states.size() <= mMaxParallelStates) {
 			return states;
