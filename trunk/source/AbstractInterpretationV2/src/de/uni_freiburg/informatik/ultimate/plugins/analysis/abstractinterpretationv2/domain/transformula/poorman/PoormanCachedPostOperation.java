@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.poorman.util.TermConjunctEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>> {
 
@@ -134,7 +135,7 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 	private HavocStatement constructBoogieHavocStatementOfUnmappedOutVars() {
 		// Variable occurs in inVars, but not in outVars
 		final Set<TermVariable> hvcVar = mTransformula.getInVars().entrySet().stream()
-				.filter(entry -> !mTransformula.getOutVars().keySet().contains(entry.getKey()))
+				.filter(entry -> !mTransformula.getOutVars().containsKey(entry.getKey()))
 				.map(entry -> entry.getValue()).collect(Collectors.toSet());
 
 		assert hvcVar != null;
@@ -294,8 +295,7 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 	protected PoormanAbstractState<BACKING> prepareState(final PoormanAbstractState<BACKING> input) {
 
 		// Add temporary variables to the symbol table
-		final Set<IProgramVarOrConst> tempVars = new HashSet<>();
-		tempVars.addAll(mRenamedInVars.values());
+		final Set<IProgramVarOrConst> tempVars = new HashSet<>(mRenamedInVars.values());
 		tempVars.addAll(mNewOutVars);
 		tempVars.addAll(mNewAuxVars);
 		mBoogie2SmtSymbolTable
@@ -308,8 +308,8 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 		return mEvaluator.computePost(preState);
 	}
 
-	protected Collection<PoormanAbstractState<BACKING>>
-			restoreOriginalStateVariables(final Collection<BACKING> states) {
+	protected Collection<PoormanAbstractState<BACKING>> restoreOriginalStateVariables(final Collection<BACKING> states,
+			final Set<IProgramVarOrConst> variables) {
 		Collection<BACKING> postPostStates = new HashSet<>();
 		if (mHavocPostCodeBlock != null) {
 			for (final BACKING postState : states) {
@@ -345,8 +345,11 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 							.anyMatch(out -> var.getGloballyUniqueId().equals(out.getGloballyUniqueId())))
 					.collect(Collectors.toSet());
 
-			final BACKING newBackingState = state.removeVariables(removeOverwrittenOuts).removeVariables(mInAuxVars)
+			final BACKING tmpBackingState = state.removeVariables(removeOverwrittenOuts).removeVariables(mInAuxVars)
 					.renameVariables(mOutVarRenaming);
+
+			final BACKING newBackingState = tmpBackingState
+					.addVariables(DataStructureUtils.difference(variables, tmpBackingState.getVariables()));
 
 			returnList.add(new PoormanAbstractState<>(mServices, mBackingDomain, newBackingState));
 		}

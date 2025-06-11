@@ -128,7 +128,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 		final BasicPredicateFactory pf = new BasicPredicateFactory(mServices, mManagedScript, mIcfgSymbolTable);
 		final IPredicate predFromState = pf.newPredicate(stateAsTerm);
 		final Term spTerm = predicateTransformer.strongestPostcondition(predFromState, transition.getTransformula());
-		final Term spNoQuantTerm = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript, SimplificationTechnique.SIMPLIFY_QUICK, spTerm);
+		final Term spNoQuantTerm = PartialQuantifierElimination.eliminateCompat(mServices, mManagedScript,
+				SimplificationTechnique.SIMPLIFY_QUICK, spTerm);
 		if (DEBUG_QUANTIFIERS) {
 			final TermClassifier tc = new TermClassifier();
 			tc.checkTerm(spNoQuantTerm);
@@ -211,7 +212,8 @@ public class PoormansAbstractPostOperator<BACKING extends IAbstractState<BACKING
 			final UnmodifiableTransFormula transformula) {
 		final PoormanCachedPostOperation<BACKING> cachedOperation = getCachedOperation(transformula);
 		final PoormanAbstractState<BACKING> preState = cachedOperation.prepareState(oldstate);
-		return cachedOperation.restoreOriginalStateVariables(cachedOperation.applyPost(preState));
+		return cachedOperation.restoreOriginalStateVariables(cachedOperation.applyPost(preState),
+				oldstate.getVariables());
 	}
 
 	/**
