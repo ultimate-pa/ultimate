@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.SingleEmpireAutomaton.State;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ModularEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -65,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class LegalEmpireToOG<L, P> {
@@ -76,16 +74,15 @@ public class LegalEmpireToOG<L, P> {
 	private final Script mScript;
 
 	private final BasicPredicateFactory mFactory;
-	private final NestedWordAutomatonReachableStates<Transition<L, P>, List<State<L, P>>> mProductAutomaton;
+	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
 	private final IProgramVar mGhostVariable;
-	private final Map<List<State<L, P>>, Term> mStateTerms;
-	private final HashRelation<List<State<L, P>>, P> mStateToPlaces;
+	private final Map<State<L, P>, Term> mStateTerms;
 	private final LegalFocus<L, P> mLegalFocus;
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
 	public LegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final INwaOutgoingTransitionProvider<Transition<L, P>, List<State<L, P>>> empireProduct,
+			final INwaOutgoingTransitionProvider<Transition<L, P>, State<L, P>> empire,
 			final LegalFocus<L, P> legalFocus,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		mNet = net;
@@ -101,14 +98,12 @@ public class LegalEmpireToOG<L, P> {
 		final var logger = services.getLoggingService().getLogger(getClass());
 		try {
 			logger.info("Exploring product empire...");
-			mProductAutomaton =
-					new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empireProduct);
-			logger.info("Product empire has %s", mProductAutomaton.sizeInformation());
+			mEmpireAutomaton = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empire);
+			logger.info("Product empire has %s", mEmpireAutomaton.sizeInformation());
 		} catch (final AutomataOperationCanceledException aoce) {
 			throw new ToolchainCanceledException(aoce,
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
 		}
-		mStateToPlaces = getStatePlaces();
 		mStateTerms = getStateTerms();
 		final Map<P, IPredicate> formulaMapping = getFormulaMap();
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
@@ -136,16 +131,18 @@ public class LegalEmpireToOG<L, P> {
 	 */
 	private Map<P, IPredicate> getFormulaMap() {
 		final Map<P, IPredicate> formulaMap = new HashMap<>();
+		final var empireStates = mEmpireAutomaton.getStates();
 		for (final P place : mNet.getPlaces()) {
-			final var states = mStateToPlaces.entrySet().stream().filter(p -> p.getValue().contains(place))
-					.map(Entry::getKey).collect(Collectors.toSet());
+			final var states =
+					empireStates.stream().filter(s -> s.territory().containsPlace(place)).collect(Collectors.toSet());
 			assert noErrorPlaceInStates(place, states) : "Accepting place in intersection of the states";
 			final var disjuncts = new ArrayList<Term>();
-			for (final List<State<L, P>> stateList : states) {
+			for (final State<L, P> state : states) {
+				final var placeRegion = state.territory().getPlaceRegion(place);
 				final var conjuncts = new ArrayList<Term>();
-				conjuncts.add(SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), mStateTerms.get(stateList)));
-				final var focusedLaws = stateList.stream().filter(s -> mLegalFocus.isFocused(place, s))
-						.map(s -> s.law().getFormula()).toList();
+				conjuncts.add(SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), mStateTerms.get(state)));
+				final var focusedLaws = mLegalFocus.getFocusedLaws(state, placeRegion).stream()
+						.map(IPredicate::getFormula).collect(Collectors.toList());
 				conjuncts.addAll(focusedLaws);
 				final var conjunction = SmtUtils.and(mScript, conjuncts);
 				disjuncts.add(conjunction);
@@ -155,7 +152,7 @@ public class LegalEmpireToOG<L, P> {
 		return formulaMap;
 	}
 
-	private boolean noErrorPlaceInStates(final P place, final Set<List<State<L, P>>> states) {
+	private boolean noErrorPlaceInStates(final P place, final Set<State<L, P>> states) {
 		return mNet.isAccepting(place) && !states.isEmpty() ? false : true;
 	}
 
@@ -174,17 +171,17 @@ public class LegalEmpireToOG<L, P> {
 	}
 
 	private GhostUpdate getTransitionAssignment(final Transition<L, P> transition) {
-		final var states = mProductAutomaton.getStates();
+		final var states = mEmpireAutomaton.getStates();
 		final var enablingStates =
-				states.stream().filter(s -> mProductAutomaton.internalSuccessors(s, transition).iterator().hasNext())
+				states.stream().filter(s -> mEmpireAutomaton.internalSuccessors(s, transition).iterator().hasNext())
 						.collect(Collectors.toSet());
 		if (enablingStates.isEmpty()) {
 			return null;
 		}
 
-		final var pairs = new HashSet<Pair<List<State<L, P>>, List<State<L, P>>>>();
-		for (final List<State<L, P>> state : enablingStates) {
-			final var successors = mProductAutomaton.internalSuccessors(state, transition).iterator();
+		final var pairs = new HashSet<Pair<State<L, P>, State<L, P>>>();
+		for (final State<L, P> state : enablingStates) {
+			final var successors = mEmpireAutomaton.internalSuccessors(state, transition).iterator();
 			if (successors.hasNext()) {
 				final var succ = successors.next();
 				pairs.add(new Pair<>(state, succ.getSucc()));
@@ -201,7 +198,7 @@ public class LegalEmpireToOG<L, P> {
 		return new GhostUpdate(Map.of(mGhostVariable, term));
 	}
 
-	private Term getGhostUpdateTerm(final List<Pair<List<State<L, P>>, List<State<L, P>>>> statePairs) {
+	private Term getGhostUpdateTerm(final List<Pair<State<L, P>, State<L, P>>> statePairs) {
 		Term updateTerm;
 		final var pair = statePairs.get(0);
 		final var pred = pair.getFirst();
@@ -216,11 +213,11 @@ public class LegalEmpireToOG<L, P> {
 		return updateTerm;
 	}
 
-	private Map<List<State<L, P>>, Term> getStateTerms() {
-		final var stateTerms = new LinkedHashMap<List<State<L, P>>, Term>();
+	private Map<State<L, P>, Term> getStateTerms() {
+		final var stateTerms = new LinkedHashMap<State<L, P>, Term>();
 
 		var num = 1;
-		for (final List<State<L, P>> state : mProductAutomaton.getStates()) {
+		for (final State<L, P> state : mEmpireAutomaton.getStates()) {
 			stateTerms.put(state, mScript.numeral(String.valueOf(num)));
 			num++;
 		}
@@ -228,26 +225,12 @@ public class LegalEmpireToOG<L, P> {
 		return stateTerms;
 	}
 
-	private HashRelation<List<State<L, P>>, P> getStatePlaces() {
-		final var stateToPlaces = new HashRelation<List<State<L, P>>, P>();
-		final var states = mProductAutomaton.getStates();
-		for (final List<State<L, P>> list : states) {
-			final var intersection =
-					list.stream().<Set<P>> map(s -> s.territory().getPlaces()).reduce(DataStructureUtils::intersection);
-			assert intersection.isPresent() : "Places of the state list is empty";
-			final var interOrEmpty = intersection.orElseThrow();
-			stateToPlaces.addAllPairs(list, interOrEmpty);
-		}
-
-		return stateToPlaces;
-	}
-
 	/**
 	 * @return Map of ghost variable to its init assignment (which is the numeral of the init state)
 	 */
 	private Map<IProgramVar, Term> getGhostInitAssignment() {
 		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
-		final var initState = DataStructureUtils.getOneAndOnly(mProductAutomaton.getInitialStates(), "initial state");
+		final var initState = DataStructureUtils.getOneAndOnly(mEmpireAutomaton.getInitialStates(), "initial state");
 		initAssignments.put(mGhostVariable, mStateTerms.get(initState));
 		return initAssignments;
 	}

@@ -1,34 +1,9 @@
-/*
- * Copyright (C) 2025 Matthias Zumkeller
- * Copyright (C) 2025 University of Freiburg
- *
- * This file is part of the ULTIMATE Proofs Library.
- *
- * The ULTIMATE Proofs Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ULTIMATE Proofs Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Proofs Library. If not, see <http://www.gnu.org/licenses/>.
- *
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Proofs Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
- * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE Proofs Library grant you additional permission
- * to convey the resulting work.
- */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,37 +20,33 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
-public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, SingleEmpireAutomaton.State<L, P>> {
+public class ModularEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, ModularEmpireAutomaton.State<L, P>> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mNet;
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProof;
+	private final INwaOutgoingLetterAndTransitionProvider<L, List<IPredicate>> mProduct;
+	private final Map<List<IPredicate>, IPredicate> mListToPredicate;
 
 	private final State<L, P> mInitialState;
 
-	public SingleEmpireAutomaton(final IPetriNet<L, P> net,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> proof,
-			final IUltimateServiceProvider services) {
+	public ModularEmpireAutomaton(final IPetriNet<L, P> net,
+			final INwaOutgoingLetterAndTransitionProvider<L, List<IPredicate>> product,
+			final Map<List<IPredicate>, IPredicate> listPredicateMap, final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
 		mProduct = product;
-		mProof = proof;
+		mListToPredicate = listPredicateMap;
 
-		mLogger.info(product);
 		// Construct initial state
-		final var initialLaw = DataStructureUtils.getOneAndOnly(proof.getInitialStates(), "initial law place");
-		final var initialFullLaw = DataStructureUtils.getOneAndOnly(product.getInitialStates(), "initial law place");
+		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
 		final var regions = mNet.getInitialPlaces().stream().map(Region::singleton).collect(ImmutableSet.collector());
-		final State<L, P> state =
-				new State<>(new Territory<>(regions), initialLaw, initialFullLaw, Collections.emptySet());
+		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw, Collections.emptySet());
 		mInitialState = getMarkedSuccessor(state);
 	}
 
 	@Override
 	public IPredicate getLaw(final State<L, P> state) {
-		return state.law();
+		return mListToPredicate.get(state.laws());
 	}
 
 	@Override
@@ -103,33 +74,6 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
 	 * successor law must be false.
 	 */
-	public boolean isFinal2(final State<L, P> state) {
-		final var successors = internalSuccessors(state);
-		final var succStates = new HashSet<State<L, P>>();
-		for (final OutgoingInternalTransition<Transition<L, P>, State<L, P>> outgoingInternalTransition : successors) {
-			final var succState = outgoingInternalTransition.getSucc();
-			succStates.add(succState);
-			if (state != succState) {
-				return false;
-			}
-		}
-		final var territory = state.territory();
-		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
-		if (succStates.size() < enabledTransitions.size()) {
-			final var falseSuccessors = enabledTransitions.stream()
-					.anyMatch(t -> SmtUtils.isFalseLiteral(getSuccessorLaw(state, t, false).getFormula()));
-			assert falseSuccessors
-					: "There exists no successor for an enabled transition, but the successor law is not false";
-		}
-		// Check if there is at least one enabled transition, for which state has no successor
-		return succStates.size() < enabledTransitions.size();
-	}
-
-	/**
-	 * Determines a state s as final, if it contains an error place and the law is false, OR if there exists at least
-	 * one transition in enabled(territory(s)), for which there is no successor in the automaton. In this case, the
-	 * successor law must be false.
-	 */
 	@Override
 	public boolean isFinal(final State<L, P> state) {
 		final var territory = state.territory();
@@ -137,7 +81,8 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 		for (final Transition<L, P> transition : enabledTransitions) {
 			final var succ = internalSuccessors(state, transition);
 			if (!succ.iterator().hasNext()) {
-				assert SmtUtils.isFalseLiteral(getSuccessorLaw(state, transition, false).getFormula())
+				assert SmtUtils
+						.isFalseLiteral(mListToPredicate.get(getSuccessorLaw(state.laws(), transition)).getFormula())
 						: "There is no successor, but the law is not false";
 				return true;
 			}
@@ -169,14 +114,14 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 		if (!state.territory().enables(letter)) {
 			return List.of();
 		}
-		if (isExtendingTransition(state, letter) && isCycle(state, letter)) {
+		if (isExtendingTransition(state.laws(), letter) && isCycle(state, letter)) {
 			return List.of(new OutgoingInternalTransition<>(letter, state));
 		}
 
 		// step 2: compute the "direct" successor state for the given transition
 		final var directSucc = getReplacementSuccessor(state, letter);
-		final var succLaw = directSucc.law;
-		if (SmtUtils.isFalseLiteral(succLaw.getFormula())) {
+		final var succLaw = directSucc.laws();
+		if (SmtUtils.isFalseLiteral(mListToPredicate.get(succLaw).getFormula())) {
 			return List.of();
 		}
 
@@ -193,7 +138,7 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 			return state;
 		}
 		final var territory = state.territory;
-		final Set<Region<P>> territoryRegions = new HashSet<>(territory.getRegions());
+		final var territoryRegions = new HashSet<>(territory.getRegions());
 		final var extendedRegions = new HashSet<Region<P>>();
 		for (final Region<P> region : territory.getRegions()) {
 			final var matchingTransitions = findMatchingTransitions(region, transitions);
@@ -208,7 +153,7 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 		}
 		final var newTerritory =
 				new Territory<>(ImmutableSet.of(DataStructureUtils.union(extendedRegions, territoryRegions)));
-		return new State<>(newTerritory, state.law, state.fullLaw, state.bystanders);
+		return new State<>(newTerritory, state.laws(), state.bystanders);
 	}
 
 	private Set<Transition<L, P>> findMatchingTransitions(final Region<P> region,
@@ -225,39 +170,29 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 
 	private Set<Transition<L, P>> getEnabledTransitions(final State<L, P> state) {
 		return state.territory().getEnabledTransitions(mNet)
-				.filter(transition -> !SmtUtils.isFalseLiteral(getSuccessorLaw(state, transition, false).getFormula()))
+				.filter(transition -> !SmtUtils
+						.isFalseLiteral(mListToPredicate.get(getSuccessorLaw(state.laws(), transition)).getFormula()))
 				.collect(Collectors.toSet());
 	}
 
-	private IPredicate getSuccessorLaw(final State<L, P> state, final Transition<L, P> transition,
-			final boolean fullLaw) {
-		Iterable<OutgoingInternalTransition<L, IPredicate>> succLaw;
-		final var law = fullLaw ? state.fullLaw() : state.law();
-		if (fullLaw) {
-			succLaw = mProduct.internalSuccessors(law, transition.getSymbol());
-		} else {
-			succLaw = mProof.internalSuccessors(law, transition.getSymbol());
-		}
-
-		// TODO Better solution for the case, that the product automaton has no successor
-
-		if (fullLaw && !succLaw.iterator().hasNext()) {
-			return law;
+	private List<IPredicate> getSuccessorLaw(final List<IPredicate> laws, final Transition<L, P> transition) {
+		final var succLaw = mProduct.internalSuccessors(laws, transition.getSymbol());
+		if (!succLaw.iterator().hasNext()) {
+			return laws;
 		}
 		return DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
 	}
 
-	private boolean isExtendingTransition(final State<L, P> state, final Transition<L, P> transition) {
-		final var fullLawPlace = state.fullLaw();
-		final IPredicate newLawPlace = getSuccessorLaw(state, transition, true);
+	private boolean isExtendingTransition(final List<IPredicate> laws, final Transition<L, P> transition) {
+		final List<IPredicate> newLawPlace = getSuccessorLaw(laws, transition);
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
-		return fullLawPlace == newLawPlace && predecessors.size() == 1 && successors.size() == 1;
+		return laws == newLawPlace && predecessors.size() == 1 && successors.size() == 1;
 	}
 
 	private Set<Transition<L, P>> getExtendingTransitions(final State<L, P> state,
 			final Set<Transition<L, P>> transitions) {
-		return transitions.stream().filter(transition -> isExtendingTransition(state, transition))
+		return transitions.stream().filter(transition -> isExtendingTransition(state.laws(), transition))
 				.collect(Collectors.toSet());
 	}
 
@@ -273,8 +208,8 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 
 	private boolean isCycle(final State<L, P> state, final Transition<L, P> transition) {
 		final var territory = state.territory;
-		final var law = state.law;
-		if (!territory.enables(transition) || !isExtendingTransition(state, transition)) {
+		final var laws = state.laws();
+		if (!territory.enables(transition) || !isExtendingTransition(laws, transition)) {
 			return false;
 		}
 		return territory.getPlaces().containsAll(transition.getSuccessors());
@@ -293,12 +228,11 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 	}
 
 	private State<L, P> getReplacementSuccessor(final State<L, P> state, final Transition<L, P> transition) {
-		final IPredicate newLawPlace = getSuccessorLaw(state, transition, false);
-		final IPredicate newFullLawPlace = getSuccessorLaw(state, transition, true);
+		final List<IPredicate> newLawPlace = getSuccessorLaw(state.laws(), transition);
 		final Set<Region<P>> newBystanders = state.territory().getBystanders(transition);
 		final var regions = replaceRegions(transition, newBystanders);
 		final var newTerritory = new Territory<>(ImmutableSet.of(regions));
-		return new State<>(newTerritory, newLawPlace, newFullLawPlace, newBystanders);
+		return new State<>(newTerritory, newLawPlace, newBystanders);
 	}
 
 	private Set<Region<P>> replaceRegions(final Transition<L, P> transition, final Set<Region<P>> bystanders) {
@@ -310,12 +244,12 @@ public class SingleEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Singl
 	}
 
 	// TODO use ImmutableSet for bystanders
-	public record State<L, P>(Territory<P, Region<P>> territory, IPredicate law, IPredicate fullLaw,
-			Set<Region<P>> bystanders, int hash) {
+	public record State<L, P>(Territory<P, Region<P>> territory, List<IPredicate> laws, Set<Region<P>> bystanders,
+			int hash) {
 		// Convenience constructor that computes the correct hash code. Always use this constructor.
-		public State(final Territory<P, Region<P>> territory, final IPredicate law, final IPredicate fullLaw,
+		public State(final Territory<P, Region<P>> territory, final List<IPredicate> laws,
 				final Set<Region<P>> bystanders) {
-			this(territory, law, fullLaw, bystanders, Objects.hash(territory, law, bystanders));
+			this(territory, laws, bystanders, Objects.hash(territory, laws, bystanders));
 		}
 
 		@Override
