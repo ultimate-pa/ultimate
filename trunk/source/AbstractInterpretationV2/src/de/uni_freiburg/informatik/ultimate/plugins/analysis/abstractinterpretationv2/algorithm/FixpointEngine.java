@@ -256,12 +256,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 		mResult.getBenchmark().countPostApplication();
 
 		assert postState != null;
-		// TODO: remove and uncomment assert after tests
-		if (!assertIsPostSound(preState, currentAction, preStateWithFreshVariables, hierachicalPreState, postState)) {
-			throw new IllegalStateException("Post is unsound");
-		}
-//		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, hierachicalPreState, postState)
-//				: "Post is unsound";
+		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, hierachicalPreState, postState)
+				: "Post is unsound";
 
 		// check if we enter or leave a scope and act accordingly (saving summaries, creating new scope storages, etc.)
 		postState = prepareScope(currentItem, postState);
