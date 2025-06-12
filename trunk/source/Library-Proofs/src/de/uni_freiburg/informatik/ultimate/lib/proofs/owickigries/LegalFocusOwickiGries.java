@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ILegalFocusFunction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalEmpireToOG;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ModularEmpireAutomaton;
@@ -161,11 +162,11 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 			mStatistics.stopEmpireComputation();
 		}
 
-		final LegalFocus<L, P> legalFocus;
+		final ILegalFocusFunction<State<L, P>, P> legalFocus;
 		mStatistics.startFocusComputation();
 		try {
 			mLogger.info("Computing focus ...");
-			legalFocus = mUseTrivialFocus ? new TrivialLegalFocus<>(mProgram)
+			legalFocus = mUseTrivialFocus ? new TrivialLegalFocus<>()
 					: new LegalFocus<>(empireAutomaton, mProgram, mProofProduct, mNumProofs);
 		} finally {
 			mStatistics.stopFocusComputation();
@@ -282,33 +283,19 @@ public class LegalFocusOwickiGries<L extends IAction, P> implements IPetriNetPro
 	private LegalEmpireToOG<L, P> getOwickiGriesAnnotation(
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire,
-			final LegalFocus<L, P> legalFocus) {
+			final ILegalFocusFunction<State<L, P>, P> legalFocus) {
 		return new LegalEmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures, empire, legalFocus,
 				possibleInterferences);
 	}
 
-	// Extending the LegalFocus class like this is a hack.
-	// TODO Refactor focus so that different implementations of some common interface can be passed to this class.
-	private static final class TrivialLegalFocus<L, P> extends LegalFocus<L, P> {
-		public TrivialLegalFocus(final IPetriNet<L, P> net) {
-			super(net);
-		}
-
-		@Override
-		public Set<Region<P>> getLegalFocus(final State<L, P> state, final Integer lawIndex) {
-			return state.territory().getRegions();
-		}
-
-		@Override
-		public boolean isFocused(final P place, final State<L, P> state, final Integer lawIndex) {
-			return state.territory().containsPlace(place);
-		}
-
+	private static final class TrivialLegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
 		@Override
 		public List<IPredicate> getFocusedLaws(final State<L, P> state, final Region<P> region) {
 			if (state.territory().getRegions().contains(region)) {
 				return state.laws();
 			}
+
+			// TODO Is it allowed to pass such a region? If not, it may be better to throw an exception here.
 			return List.of();
 		}
 	}

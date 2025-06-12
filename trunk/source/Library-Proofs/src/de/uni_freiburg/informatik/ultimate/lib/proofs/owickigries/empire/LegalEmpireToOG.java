@@ -77,13 +77,13 @@ public class LegalEmpireToOG<L, P> {
 	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
 	private final IProgramVar mGhostVariable;
 	private final Map<State<L, P>, Term> mStateTerms;
-	private final LegalFocus<L, P> mLegalFocus;
+	private final ILegalFocusFunction<State<L, P>, P> mLegalFocus;
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
 	public LegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
 			final INwaOutgoingTransitionProvider<Transition<L, P>, State<L, P>> empire,
-			final LegalFocus<L, P> legalFocus,
+			final ILegalFocusFunction<State<L, P>, P> legalFocus,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		mNet = net;
 		mManagedScript = mgdScript;
@@ -140,10 +140,15 @@ public class LegalEmpireToOG<L, P> {
 			for (final State<L, P> state : states) {
 				final var placeRegion = state.territory().getPlaceRegion(place);
 				final var conjuncts = new ArrayList<Term>();
-				conjuncts.add(SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), mStateTerms.get(state)));
+
+				final Term ghostEquation =
+						SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), mStateTerms.get(state));
+				conjuncts.add(ghostEquation);
+
 				final var focusedLaws = mLegalFocus.getFocusedLaws(state, placeRegion).stream()
 						.map(IPredicate::getFormula).collect(Collectors.toList());
 				conjuncts.addAll(focusedLaws);
+
 				final var conjunction = SmtUtils.and(mScript, conjuncts);
 				disjuncts.add(conjunction);
 			}

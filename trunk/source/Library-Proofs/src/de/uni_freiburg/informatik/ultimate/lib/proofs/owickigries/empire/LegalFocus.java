@@ -20,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class LegalFocus<L, P> {
+public class LegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
 	private final HashRelation<Pair<State<L, P>, Integer>, Region<P>> mLegalFocus;
 	private final IPetriNet<L, P> mNet;
 	private final INwaOutgoingLetterAndTransitionProvider<L, List<IPredicate>> mProduct;
@@ -33,13 +33,6 @@ public class LegalFocus<L, P> {
 		mProduct = product;
 		mNumLaws = numLaws;
 		mLegalFocus = computeLegalFocus(empire);
-	}
-
-	public LegalFocus(final IPetriNet<L, P> net) {
-		mNet = net;
-		mProduct = null;
-		mNumLaws = 0;
-		mLegalFocus = new HashRelation<>();
 	}
 
 	private HashRelation<Pair<State<L, P>, Integer>, Region<P>>
@@ -143,6 +136,7 @@ public class LegalFocus<L, P> {
 		return legalFocus.stream().anyMatch(r -> r.contains(place));
 	}
 
+	@Override
 	public List<IPredicate> getFocusedLaws(final State<L, P> state, final Region<P> region) {
 		final List<IPredicate> focusedLaws = new ArrayList<>();
 		final var laws = state.laws();
