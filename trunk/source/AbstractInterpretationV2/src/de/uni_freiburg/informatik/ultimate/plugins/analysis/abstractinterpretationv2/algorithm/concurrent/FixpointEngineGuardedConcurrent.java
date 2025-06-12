@@ -143,10 +143,10 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			final var newInterferences = computeNewInterferences();
 			final var newMaybeWidened = updateOrWidenInterferences(interferences, newInterferences);
 			final SubsetResult fixpointReached = newMaybeWidened.isSubsetOf(interferences);
-//			if (fixpointReached != SubsetResult.NONE) {
+			if (fixpointReached != SubsetResult.NONE) {
 //				printResultSTatistics(resultSet, script, stats);
-//				break;
-//			}
+				break;
+			}
 			interferences = newMaybeWidened;
 //			printInterferenceLog(interferences);
 			mIteration++;
