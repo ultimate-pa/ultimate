@@ -58,6 +58,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"Check if the assertions from assert.h (currently supported: assert, static_assert, _Static_assert, "
 					+ "__assert_fail, __assert_func) never fail.";
 	public static final String LABEL_CHECK_POINTER_DEREF_VALIDITY = "Pointer dereference validity";
+	public static final String DESC_CHECK_POINTER_DEREF_VALIDITY =
+			"If set to CHECK, we analyze for each pointer dereference or array access whether the memory at the target address is allocated. If set to ASSUME, we presume that all such memory accesses are valid. If this assumption does not hold, the analysis becomes unsound — not just for this property, but for other properties as well. If set to IGNORE, the analyzer performs no checks and makes no assumptions regarding the validity of memory accesses through pointers or arrays.";
 	public static final String LABEL_CHECK_FREE_VALID = "Check if freed pointer was valid";
 	public static final String LABEL_CHECK_MEMORY_LEAK_IN_MAIN =
 			"Check for the main procedure if all allocated memory was freed";
@@ -271,7 +273,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_CHECK_ASSERTIONS, false, DESC_CHECK_ASSERTIONS,
 								PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.CHECK,
-								PreferenceType.Combo, CheckMode.values()),
+								DESC_CHECK_POINTER_DEREF_VALIDITY, PreferenceType.Combo, CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_FREE_VALID, true, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CHECK_MEMORY_LEAK_IN_MAIN, false, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
