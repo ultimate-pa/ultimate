@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -132,24 +131,24 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		while (true) {
 			mLogger.info("Starting thread modular fixpoint engine iteration " + mIteration);
 			// TODO: for debugging, remove later
-			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
+//			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
 				final var fixpointEngine = createNewUnderlyingFixpointEngine(procedure, interferences);
 				final var threadResult = fixpointEngine.run(Set.of(mEntryLocs.get(procedure)), script);
 				stats = updateStatistics(stats);
-				resultSet.put(procedure, threadResult);
+//				resultSet.put(procedure, threadResult);
 				updateStateStorageAndCounterexamples(threadResult, reachableErrorLocations);
 			}
 
 			final var newInterferences = computeNewInterferences();
 			final var newMaybeWidened = updateOrWidenInterferences(interferences, newInterferences);
 			final SubsetResult fixpointReached = newMaybeWidened.isSubsetOf(interferences);
-			if (fixpointReached != SubsetResult.NONE) {
-				printResultSTatistics(resultSet, script, stats);
-				break;
-			}
+//			if (fixpointReached != SubsetResult.NONE) {
+//				printResultSTatistics(resultSet, script, stats);
+//				break;
+//			}
 			interferences = newMaybeWidened;
-			printInterferenceLog(interferences);
+//			printInterferenceLog(interferences);
 			mIteration++;
 		}
 	}
