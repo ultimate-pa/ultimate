@@ -21,10 +21,10 @@
 						</goals>
 						<configuration>
 							<sourceDirectory>
-								${project.basedir}/src/de.uni_freiburg.informatik.ultimate.llvmir.parser
+								${project.basedir}/src/de/uni_freiburg/informatik/ultimate/llvmir/parser
 							</sourceDirectory>
 							<outputDirectory>
-								${project.basedir}/src/de.uni_freiburg.informatik.ultimate.llvmir.parser
+								${project.basedir}/src/de/uni_freiburg/informatik/ultimate/llvmir/parser
 							</outputDirectory>
 							<visitor>true</visitor>
 							<listener>true</listener>
