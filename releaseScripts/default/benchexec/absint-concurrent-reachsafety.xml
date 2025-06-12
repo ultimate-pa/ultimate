@@ -2,7 +2,6 @@
 <benchmark tool="ultimateautomizer" memlimit="8GB" timelimit="90" hardtimelimit="90" cpuCores="2">
   <resultfiles></resultfiles>
   <option name="--force-no-wrapper" />
-  <option name="--full-output" />
   <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AbstractInterpretationCInline.xml</option>
   <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/automizer/svcomp-Reach-32bit-Automizer_Default.epf</option>
   <option name="--abstractinterpretationv2.abstract.domain">OctagonDomain</option>
@@ -10,32 +9,27 @@
   <option name="--abstractinterpretationv2.use.the.rcfg-of-the-future.interface">true</option>
   <option name="--rcfgbuilder.future-live.optimization">false</option>
 
-  <rundefinition name="Singleton">
+  <rundefinition name="singleton">
     <option name="--abstractinterpretationv2.location.abstraction.method">Singleton</option>
   </rundefinition>
 
-  <rundefinition name="Fully precise">
-    <option name="--abstractinterpretationv2.location.abstraction.method">Fully precise</option>
+  <rundefinition name="fully-precise">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Fully precise"</option>
   </rundefinition>
 
-  <rundefinition name="Split only at Guards">
-    <option name="--abstractinterpretationv2.location.abstraction.method">Split only at Guards</option>
+  <rundefinition name="guard-splitting">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Split only at Guards"</option>
   </rundefinition>
 
-  <rundefinition name="Mutex Guard and Vars Splitting">
-    <option name="--abstractinterpretationv2.location.abstraction.method">Mutex Guard and Vars Splitting</option>
+  <rundefinition name="mutex-guard-splitting">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Mutex Guard and Vars Splitting"</option>
   </rundefinition>
 
-  <rundefinition name="Mutex Guard and Vars Splitting no Cutoff">
-    <option name="--abstractinterpretationv2.location.abstraction.method">Mutex Guard and Vars Splitting no Cutoff</option>
+  <rundefinition name="mutex-guard-splitting-no-cutoff">
+    <option name="--abstractinterpretationv2.location.abstraction.method">"Mutex Guard and Vars Splitting no Cutoff"</option>
   </rundefinition>
 
-  <tasks name="canary">
-    <include>${benchmark_path}/../../../trunk/examples/svcomp/weaver/parallel-misc-2-unrolled-atomic.wvr.yml</include>
-    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
-  </tasks>
-
-  <tasks name="SVCOMP-ConcurrencySafety-Main">
+  <tasks name="SVCOMP-Concurrency">
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
