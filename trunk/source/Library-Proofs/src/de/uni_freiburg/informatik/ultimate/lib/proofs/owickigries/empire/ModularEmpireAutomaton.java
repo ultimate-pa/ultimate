@@ -184,10 +184,11 @@ public class ModularEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Modu
 	}
 
 	private boolean isExtendingTransition(final List<IPredicate> laws, final Transition<L, P> transition) {
-		final List<IPredicate> newLawPlace = getSuccessorLaw(laws, transition);
+		final List<IPredicate> newLaw = getSuccessorLaw(laws, transition);
 		final var predecessors = transition.getPredecessors();
 		final var successors = transition.getSuccessors();
-		return laws == newLawPlace && predecessors.size() == 1 && successors.size() == 1;
+		return mListToPredicate.get(laws) == mListToPredicate.get(newLaw) && predecessors.size() == 1
+				&& successors.size() == 1;
 	}
 
 	private Set<Transition<L, P>> getExtendingTransitions(final State<L, P> state,

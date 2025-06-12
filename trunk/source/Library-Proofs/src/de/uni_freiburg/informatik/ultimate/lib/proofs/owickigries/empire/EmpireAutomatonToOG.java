@@ -91,10 +91,11 @@ public class EmpireAutomatonToOG<L, P> {
 		final var newSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		newSymbolTable.add(mGhostVariable);
 		mFactory = new BasicPredicateFactory(services, mManagedScript, newSymbolTable);
-
+		final var logger = services.getLoggingService().getLogger(getClass());
 		try {
 			mEmpireAutomaton =
 					new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empireAutomaton);
+			logger.info("Product empire has %s", mEmpireAutomaton.sizeInformation());
 		} catch (final AutomataOperationCanceledException aoce) {
 			throw new ToolchainCanceledException(aoce,
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));

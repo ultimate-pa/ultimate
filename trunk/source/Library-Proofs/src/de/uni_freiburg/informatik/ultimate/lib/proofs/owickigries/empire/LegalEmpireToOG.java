@@ -97,9 +97,9 @@ public class LegalEmpireToOG<L, P> {
 
 		final var logger = services.getLoggingService().getLogger(getClass());
 		try {
-			logger.info("Exploring product empire...");
+			logger.info("Exploring empire...");
 			mEmpireAutomaton = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empire);
-			logger.info("Product empire has %s", mEmpireAutomaton.sizeInformation());
+			logger.info("Empire has %s", mEmpireAutomaton.sizeInformation());
 		} catch (final AutomataOperationCanceledException aoce) {
 			throw new ToolchainCanceledException(aoce,
 					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
