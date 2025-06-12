@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IcfgTransformer library.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 /**
  * Replaces variables that have a used defined type by variables that have type Int. We detect these variables by their
  * Sort. If a term does not have an "internal" Sort, it originates from a user defined type.
- * 
+ *
  * @author Matthias Heizmann
  */
 public class RewriteUserDefinedTypes extends RewriteTermVariables {
@@ -47,7 +47,7 @@ public class RewriteUserDefinedTypes extends RewriteTermVariables {
 
 	/**
 	 * Create a new RewriteBooleans preprocessor
-	 * 
+	 *
 	 * @param rankVarCollector
 	 *            collecting the new in- and outVars
 	 * @param script
@@ -94,7 +94,7 @@ public class RewriteUserDefinedTypes extends RewriteTermVariables {
 	 * TODO: at the moment we us the old definition. This is a problem if the variable indeed occurs in a ranking
 	 * function. Solution: For each type we have to introduce an auxiliary uninterpreted function toInt(). We will then
 	 * return toInt(definition).
-	 * 
+	 *
 	 */
 	@Override
 	protected Term constructNewDefinitionForRankVar(final IProgramVar oldRankVar) {

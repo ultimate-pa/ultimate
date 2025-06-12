@@ -149,9 +149,10 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Collection<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		final int numberOfErrorLocs = errNodesOfAllProc.size();
 		mLogger.info(String.format(
-				"Applying trace abstraction to ICFG %s that has %s procedures, %s locations, %s initial locations, %s loop locations, and %s error locations.",
+				"Applying trace abstraction to ICFG %s that has %d procedures, %d locations, %d edges, %d initial locations, %d loop locations, and %d error locations.",
 				icfg.getIdentifier(), icfg.getProcedureEntryNodes().size(), IcfgUtils.getNumberOfLocations(icfg),
-				icfg.getInitialNodes().size(), icfg.getLoopLocations().size(), numberOfErrorLocs));
+				IcfgUtils.getNumberOfEdges(icfg), icfg.getInitialNodes().size(), icfg.getLoopLocations().size(),
+				numberOfErrorLocs));
 		if (numberOfErrorLocs <= 0) {
 			final AllSpecificationsHoldResult result = AllSpecificationsHoldResult
 					.createAllSpecificationsHoldResult(Activator.PLUGIN_NAME, numberOfErrorLocs);
@@ -208,12 +209,12 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 	}
 
 	private void logSettings() {
-		String settings = "Automizer settings:";
-		settings += " Hoare:" + mPrefs.getHoareSettings().getHoarePositions();
-		settings += " " + (mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
-		settings += " Interpolation:" + mPrefs.interpolation();
-		settings += " Determinization: " + mPrefs.interpolantAutomatonEnhancement();
-		mLogger.info(settings);
+		final StringBuilder settings = new StringBuilder("Automizer settings:");
+		settings.append(" Hoare:").append(mPrefs.getHoareSettings().getHoarePositions());
+		settings.append(" ").append(mPrefs.differenceSenwa() ? "SeNWA" : "NWA");
+		settings.append(" Interpolation:").append(mPrefs.interpolation());
+		settings.append(" Determinization: ").append(mPrefs.interpolantAutomatonEnhancement());
+		mLogger.info(settings.toString());
 	}
 
 	/**
@@ -383,21 +384,19 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 		final Set<IcfgLocation> errNodesOfAllProc = IcfgUtils.getErrorLocations(icfg);
 		if (restartBehaviour == CegarRestartBehaviour.ONE_CEGAR_PER_ERROR_LOCATION) {
 			Stream<IcfgLocation> errorLocs = errNodesOfAllProc.stream();
-			if (mIsConcurrent && mPrefs.getOrderOfErrorLocations() == OrderOfErrorLocations.PROGRAM_FIRST) {
-				switch (mPrefs.getOrderOfErrorLocations()) {
-				case PROGRAM_FIRST:
-					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
-					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(x),
-							isInsufficientThreadsLocation(y)));
-					break;
-				case INSUFFICIENT_FIRST:
-					// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations first
-					errorLocs = errorLocs.sorted((x, y) -> Boolean.compare(isInsufficientThreadsLocation(y),
-							isInsufficientThreadsLocation(x)));
-					break;
-				default:
-					break;
-				}
+			if (mIsConcurrent) {
+				errorLocs = switch (mPrefs.getOrderOfErrorLocations()) {
+				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations last
+				case PROGRAM_FIRST -> errorLocs.sorted(
+						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(x), isInsufficientThreadsLocation(y)));
+
+				// Sort the errorLocs by their type, i.e. isInsufficientThreadsLocations first
+				case INSUFFICIENT_FIRST -> errorLocs.sorted(
+						(x, y) -> Boolean.compare(isInsufficientThreadsLocation(y), isInsufficientThreadsLocation(x)));
+
+				// no sorting
+				case TOGETHER -> errorLocs;
+				};
 			}
 			return errorLocs.map(x -> new Pair<>(x.getDebugIdentifier(), Set.of(x))).collect(Collectors.toList());
 		}

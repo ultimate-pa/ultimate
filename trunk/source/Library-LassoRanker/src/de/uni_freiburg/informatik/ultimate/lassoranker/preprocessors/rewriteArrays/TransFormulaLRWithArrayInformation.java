@@ -110,9 +110,9 @@ public class TransFormulaLRWithArrayInformation {
 	private final ReplacementVarFactory mReplacementVarFactory;
 
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellInVars =
-			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
+			new NestedMap2<>();
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars =
-			new NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation>();
+			new NestedMap2<>();
 
 	private Map<Term, Term> mInVars2OutVars;
 	private Map<Term, Term> mOutVars2InVars;
@@ -143,9 +143,9 @@ public class TransFormulaLRWithArrayInformation {
 			dnf = SmtUtils.simplify(mScript, dnf, mServices, simplificationTechnique);
 			final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
 			sunnf = new Term[disjuncts.length];
-			mArrayUpdates = new ArrayList<List<ArrayUpdate>>(disjuncts.length);
-			mArrayReads = new ArrayList<List<MultiDimensionalSelect>>(disjuncts.length);
-			mArrayEqualities = new ArrayList<List<ArrayEquality>>(disjuncts.length);
+			mArrayUpdates = new ArrayList<>(disjuncts.length);
+			mArrayReads = new ArrayList<>(disjuncts.length);
+			mArrayEqualities = new ArrayList<>(disjuncts.length);
 			mArrayGenealogy = new ArrayGenealogy[disjuncts.length];
 			final FreshAuxVarGenerator favg = new FreshAuxVarGenerator(mReplacementVarFactory);
 			final SingleUpdateNormalFormTransformer[] sunfts = new SingleUpdateNormalFormTransformer[disjuncts.length];
@@ -162,8 +162,9 @@ public class TransFormulaLRWithArrayInformation {
 				mArrayGenealogy[i] = new ArrayGenealogy(mTransFormulaLR, mArrayEqualities.get(i), mArrayUpdates.get(i),
 						mArrayReads.get(i));
 			}
-			assert !RewriteArrays2.ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkSunftranformation(services, mLogger,
-					mScript, boogie2smt, mArrayEqualities, sunfts) : "error in sunftransformation";
+			assert !RewriteArrays2.ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED
+					|| checkSunftranformation(services, mLogger, mScript, boogie2smt, mArrayEqualities, sunfts)
+					: "error in sunftransformation";
 			constructSubstitutions();
 			final HashRelation<TermVariable, ArrayIndex> foreignIndices;
 			if (stem == null) {
@@ -180,9 +181,8 @@ public class TransFormulaLRWithArrayInformation {
 	private boolean checkSunftranformation(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript ftvc, final IIcfgSymbolTable boogie2smt,
 			final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
-		final ModifiableTransFormula afterSunft =
-				constructTransFormulaLRWInSunf(services, mSimplificationTechnique, logger, ftvc,
-						mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
+		final ModifiableTransFormula afterSunft = constructTransFormulaLRWInSunf(services, mSimplificationTechnique,
+				logger, ftvc, mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
 		final LBool notStronger = ModifiableTransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft,
 				mScript, boogie2smt);
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {
@@ -223,7 +223,7 @@ public class TransFormulaLRWithArrayInformation {
 
 	private ArrayIndex computeForeignIndex(final IProgramVar arrayRv, final ArrayIndex index,
 			final Map<TermVariable, IProgramVar> termVariableToRankVarMappingForIndex) {
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<TermVariable, IProgramVar> foreigntv2rv : termVariableToRankVarMappingForIndex.entrySet()) {
 			if (!mTransFormulaLR.getInVars().containsKey(foreigntv2rv.getValue())) {
 				addForeignInVarAndOutVar(foreigntv2rv.getValue());
@@ -250,7 +250,7 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private HashRelation<TermVariable, TermVariable> computeArrayFirstGeneration2Instances() {
-		final HashRelation<TermVariable, TermVariable> result = new HashRelation<TermVariable, TermVariable>();
+		final HashRelation<TermVariable, TermVariable> result = new HashRelation<>();
 		for (int i = 0; i < numberOfDisjuncts(); i++) {
 			for (final TermVariable instance : mArrayGenealogy[i].getInstances()) {
 				final TermVariable firstGeneration = mArrayGenealogy[i].getProgenitor(instance);
@@ -320,17 +320,16 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private class ArrayGenealogy {
-		Map<ArrayGeneration, ArrayGeneration> mGeneration2OriginalGeneration =
-				new HashMap<ArrayGeneration, ArrayGeneration>();
+		Map<ArrayGeneration, ArrayGeneration> mGeneration2OriginalGeneration = new HashMap<>();
 
-		Map<TermVariable, TermVariable> mInstance2Representative = new HashMap<TermVariable, TermVariable>();
+		Map<TermVariable, TermVariable> mInstance2Representative = new HashMap<>();
 
 		/**
 		 * If array a2 is defined as a2 = ("store", a1, index, value) we call a1 the parent generation of a2.
 		 */
-		Map<ArrayGeneration, ArrayGeneration> mParentGeneration = new HashMap<ArrayGeneration, ArrayGeneration>();
+		Map<ArrayGeneration, ArrayGeneration> mParentGeneration = new HashMap<>();
 
-		Map<TermVariable, ArrayGeneration> mArray2Generation = new HashMap<TermVariable, ArrayGeneration>();
+		Map<TermVariable, ArrayGeneration> mArray2Generation = new HashMap<>();
 
 		List<ArrayGeneration> mArrayGenerations = new ArrayList<>();
 
@@ -505,8 +504,8 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private void constructSubstitutions() {
-		final Map<Term, Term> in2outMapping = new HashMap<Term, Term>();
-		final Map<Term, Term> out2inMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> in2outMapping = new HashMap<>();
+		final Map<Term, Term> out2inMapping = new HashMap<>();
 		for (final IProgramVar rv : mTransFormulaLR.getInVars().keySet()) {
 			final Term inVar = mTransFormulaLR.getInVars().get(rv);
 			assert inVar != null;
@@ -525,7 +524,7 @@ public class TransFormulaLRWithArrayInformation {
 		public IndexCollector(final ModifiableTransFormula tf,
 				final HashRelation<TermVariable, ArrayIndex> foreignIndices) {
 			mTransFormula = tf;
-			mArrayFirstGeneration2Indices = new HashRelation<Term, ArrayIndex>();
+			mArrayFirstGeneration2Indices = new HashRelation<>();
 			for (int i = 0; i < sunnf.length; i++) {
 				for (final ArrayUpdate au : mArrayUpdates.get(i)) {
 					final TermVariable firstGeneration =
@@ -611,7 +610,7 @@ public class TransFormulaLRWithArrayInformation {
 		private boolean allVariablesOccurInFormula(final ArrayIndex index,
 				final ModifiableTransFormula transFormulaLR) {
 			final HashSet<TermVariable> varsInTransFormula =
-					new HashSet<TermVariable>(Arrays.asList(transFormulaLR.getFormula().getFreeVars()));
+					new HashSet<>(Arrays.asList(transFormulaLR.getFormula().getFreeVars()));
 			for (final Term term : index) {
 				for (final TermVariable tv : term.getFreeVars()) {
 					if (!varsInTransFormula.contains(tv)) {
@@ -720,7 +719,7 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private TermVariable computeOutVarInstance(final TermVariable arrayInstance) {
-		if (mOutVars2InVars.keySet().contains(arrayInstance)) {
+		if (mOutVars2InVars.containsKey(arrayInstance)) {
 			return arrayInstance;
 		} else {
 			final TermVariable result = (TermVariable) mInVars2OutVars.get(arrayInstance);
@@ -741,8 +740,8 @@ public class TransFormulaLRWithArrayInformation {
 
 	public boolean requiresRepVar(final TermVariable arrayInstance, final ArrayIndex index) {
 		// check if arrayInstance is inVar or outVar and if all indices are inVars or outVars
-		if (getTransFormulaLR().getOutVarsReverseMapping().keySet().contains(arrayInstance)
-				|| getTransFormulaLR().getInVarsReverseMapping().keySet().contains(arrayInstance)) {
+		if (getTransFormulaLR().getOutVarsReverseMapping().containsKey(arrayInstance)
+				|| getTransFormulaLR().getInVarsReverseMapping().containsKey(arrayInstance)) {
 			return ModifiableTransFormulaUtils.allVariablesAreVisible(index, getTransFormulaLR());
 		} else {
 			return false;
@@ -770,11 +769,11 @@ public class TransFormulaLRWithArrayInformation {
 	}
 
 	private static ModifiableTransFormula constructTransFormulaLRWInSunf(final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique, final ILogger logger,
-			final ManagedScript ftvc, final ReplacementVarFactory repVarFactory, final Script script,
-			final ModifiableTransFormula tf, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer... sunfts) {
+			final SimplificationTechnique simplificationTechnique, final ILogger logger, final ManagedScript ftvc,
+			final ReplacementVarFactory repVarFactory, final Script script, final ModifiableTransFormula tf,
+			final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer... sunfts) {
 		final ModifiableTransFormula result = new ModifiableTransFormula(tf);
-		final List<Term> disjuncts = new ArrayList<Term>();
+		final List<Term> disjuncts = new ArrayList<>();
 		assert arrayEqualities.size() == sunfts.length;
 		for (int i = 0; i < sunfts.length; i++) {
 			final List<Term> conjuncts = new ArrayList<>();
@@ -788,9 +787,9 @@ public class TransFormulaLRWithArrayInformation {
 			Term disjunct = SmtUtils.and(script, conjuncts);
 			final Set<TermVariable> auxVars = new HashSet<>(sunfts[i].getAuxVars());
 			disjunct = PartialQuantifierElimination.eliminate(services, ftvc, disjunct, simplificationTechnique);
-//
-//					PartialQuantifierElimination.elim(ftvc, QuantifiedFormula.EXISTS, auxVars, disjunct, services,
-//					logger, simplificationTechnique, xnfConversionTechnique);
+			//
+			// PartialQuantifierElimination.elim(ftvc, QuantifiedFormula.EXISTS, auxVars, disjunct, services,
+			// logger, simplificationTechnique, xnfConversionTechnique);
 			disjuncts.add(disjunct);
 			result.addAuxVars(auxVars);
 		}

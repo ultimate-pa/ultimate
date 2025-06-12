@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IRSDependencies plug-in.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IRSDependencies plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
@@ -73,12 +73,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 
 public class UseDefVisitor extends SimpleRCFGVisitor {
 
-	public UseDefVisitor(ILogger logger) {
+	public UseDefVisitor(final ILogger logger) {
 		super(logger);
 	}
 
 	@Override
-	public void pre(IcfgEdge edge) {
+	public void pre(final IcfgEdge edge) {
 		super.pre(edge);
 		final UseDefSequence annot = new UseDefSequence();
 		if (edge instanceof StatementSequence) {
@@ -86,8 +86,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 				annot.Sequence.add(processStatement(s));
 			}
 		} else if (edge instanceof Call) {
-			annot.Sequence.add(processStatement(((Call) edge)
-					.getCallStatement()));
+			annot.Sequence.add(processStatement(((Call) edge).getCallStatement()));
 		} else if (edge instanceof GotoEdge) {
 			mLogger.info("Ignoring GotoEdge edge " + edge);
 			return;
@@ -100,19 +99,14 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 		} else if (edge instanceof SequentialComposition) {
 			mLogger.info("Ignoring SequentialComposition edge " + edge);
 			return;
-		} else if (edge instanceof StatementSequence) {
-			mLogger.info("Ignoring StatementSequence edge " + edge);
-			return;
 		} else if (edge instanceof Summary) {
 			mLogger.info("Ignoring summary edge " + edge);
 			return;
-
 		} else if (edge instanceof RootEdge) {
 			mLogger.info("Ignoring root edge " + edge);
 			return;
 		} else {
-			mLogger.debug("Unknown edge type: "
-					+ edge.getClass().getCanonicalName() + " " + edge);
+			mLogger.debug("Unknown edge type: " + edge.getClass().getCanonicalName() + " " + edge);
 			return;
 		}
 
@@ -120,7 +114,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 
 	}
 
-	private UseDefSet processStatement(Statement stmt) {
+	private UseDefSet processStatement(final Statement stmt) {
 		UseDefSet uds = new UseDefSet();
 		if (stmt instanceof AssignmentStatement) {
 			final AssignmentStatement assign = (AssignmentStatement) stmt;
@@ -188,12 +182,11 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 
 			return uds;
 		}
-		mLogger.debug("Unknown statement type: "
-				+ stmt.getClass().getCanonicalName() + " " + stmt);
+		mLogger.debug("Unknown statement type: " + stmt.getClass().getCanonicalName() + " " + stmt);
 		return uds;
 	}
 
-	private UseDefSet processExpression(Expression exp) {
+	private UseDefSet processExpression(final Expression exp) {
 		UseDefSet uds = new UseDefSet();
 		if (exp instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexp = (ArrayAccessExpression) exp;
@@ -206,8 +199,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 
 		} else if (exp instanceof BinaryExpression) {
 			final BinaryExpression bexp = (BinaryExpression) exp;
-			return processExpression(bexp.getLeft()).merge(
-					processExpression(bexp.getRight()));
+			return processExpression(bexp.getLeft()).merge(processExpression(bexp.getRight()));
 
 		} else if (exp instanceof BitvecLiteral) {
 			return uds;
@@ -218,8 +210,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 
 		} else if (exp instanceof FunctionApplication) {
-			for (final Expression argument : ((FunctionApplication) exp)
-					.getArguments()) {
+			for (final Expression argument : ((FunctionApplication) exp).getArguments()) {
 				uds = uds.merge(processExpression(argument));
 			}
 			return uds;
@@ -257,12 +248,11 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 		}
 
-		mLogger.debug("Unknown expression type: "
-				+ exp.getClass().getCanonicalName() + " " + exp);
+		mLogger.debug("Unknown expression type: " + exp.getClass().getCanonicalName() + " " + exp);
 		return uds;
 	}
 
-	private UseDefSet processLeftHandSide(LeftHandSide lhs) {
+	private UseDefSet processLeftHandSide(final LeftHandSide lhs) {
 		final UseDefSet uds = new UseDefSet();
 		if (lhs instanceof ArrayLHS) {
 
@@ -273,8 +263,7 @@ public class UseDefVisitor extends SimpleRCFGVisitor {
 			return uds;
 		}
 
-		mLogger.debug("Unknown LeftHandSide type: "
-				+ lhs.getClass().getCanonicalName() + " " + lhs);
+		mLogger.debug("Unknown LeftHandSide type: " + lhs.getClass().getCanonicalName() + " " + lhs);
 		return uds;
 	}
 

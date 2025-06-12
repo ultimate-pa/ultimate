@@ -59,7 +59,6 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 	 * Default constructor that will be called by the Ultimate test framework.
 	 */
 	public C2BoogieRegressionTestSuite() {
-		super();
 		mTimeout = DEFAULT_TIMEOUT_MILLIS;
 		mRootFolder = ROOT_FOLDER;
 		mFiletypesToConsider = new String[] { ".c" };
@@ -79,7 +78,7 @@ public class C2BoogieRegressionTestSuite extends AbstractRegressionTestSuite {
 
 		final File root = getRootFolder(ROOT_FOLDER);
 
-		Collection<File> files = TestUtil.getFiles(root, new String[] { ".bpl" });
+		Collection<File> files = TestUtil.getFiles(root, ".bpl");
 		files = TestUtil.filterFiles(files, TEMPORARY_BOOGIE_FILENAME_PATTERN);
 
 		if (files.isEmpty()) {

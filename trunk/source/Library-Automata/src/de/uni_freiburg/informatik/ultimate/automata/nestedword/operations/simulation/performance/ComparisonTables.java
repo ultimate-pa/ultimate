@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Utility class that offers methods which create comparison tables for performance analyze.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class ComparisonTables {
@@ -58,7 +58,7 @@ public final class ComparisonTables {
 	/**
 	 * Factor that, if multiplied with, converts seconds to milliseconds.
 	 */
-	public static final int SECONDS_TO_MILLIS = 1000;
+	public static final long SECONDS_TO_MILLIS = 1000L;
 	/**
 	 * Decimal places to round duration of a method to.
 	 */
@@ -79,7 +79,7 @@ public final class ComparisonTables {
 	/**
 	 * Creates a table that holds information about the actual work the algorithm needs to do for each simulation type
 	 * averaged over all automata instances respectively.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -98,20 +98,22 @@ public final class ComparisonTables {
 				calcSimToPerformances(performanceEntries);
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS";
-		header += separator + CountingMeasure.BUCHI_STATES;
+		final StringBuilder header = new StringBuilder("TYPE").append(separator).append("USED_SCCS");
+		header.append(separator).append(CountingMeasure.BUCHI_STATES);
 		// Work measure
-		header += separator + CountingMeasure.SIMULATION_STEPS + " / " + CountingMeasure.GAMEGRAPH_VERTICES;
-		header += separator + TimeMeasure.OVERALL;
-		header += separator + CountingMeasure.SIMULATION_STEPS;
-		header += separator + CountingMeasure.GAMEGRAPH_VERTICES;
-		header += separator + CountingMeasure.REMOVED_STATES;
-		table.add(header);
+		header.append(separator).append(CountingMeasure.SIMULATION_STEPS).append(" / ")
+				.append(CountingMeasure.GAMEGRAPH_VERTICES);
+		header.append(separator).append(TimeMeasure.OVERALL);
+		header.append(separator).append(CountingMeasure.SIMULATION_STEPS);
+		header.append(separator).append(CountingMeasure.GAMEGRAPH_VERTICES);
+		header.append(separator).append(CountingMeasure.REMOVED_STATES);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final Entry<Pair<SimulationOrMinimizationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
 				.entrySet()) {
-			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+			final StringBuilder row = new StringBuilder().append(entry.getKey().getFirst()).append(separator)
+					.append(entry.getKey().getSecond());
 
 			// Amount of Buechi states
 			int sumOfAllValuesForBuechiStates = 0;
@@ -129,7 +131,7 @@ public final class ComparisonTables {
 			if (averageOfValuesForBuechiStates == 0) {
 				valueAsString = NO_VALUE;
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Work measure
 			int sumOfAllValuesForSimSteps = 0;
@@ -160,7 +162,7 @@ public final class ComparisonTables {
 				valueAsString = Float.toString(
 						roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates, DECIMAL_PLACES));
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Overall time
 			long sumOfAllValuesForOverallTime = 0;
@@ -180,21 +182,21 @@ public final class ComparisonTables {
 				final float valueInSeconds = millisToSeconds(averageOfValuesForOverallTime);
 				valueAsString = Float.toString(valueInSeconds);
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Simulation steps
 			valueAsString = Long.toString(averageOfValuesForSimSteps);
 			if (averageOfValuesForSimSteps == 0) {
 				valueAsString = NO_VALUE;
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Gamegraph states
 			valueAsString = Long.toString(averageOfValuesForGraphStates);
 			if (averageOfValuesForGraphStates == 0) {
 				valueAsString = NO_VALUE;
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Amount of removed states
 			int sumOfAllValuesForRemovedStates = 0;
@@ -212,9 +214,9 @@ public final class ComparisonTables {
 			if (averageOfValuesForRemovedStates == 0) {
 				valueAsString = NO_VALUE;
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
-			table.add(row);
+			table.add(row.toString());
 		}
 
 		return table;
@@ -223,7 +225,7 @@ public final class ComparisonTables {
 	/**
 	 * Creates a table that holds the full comparison data for each simulation type averaged over all automata instances
 	 * respectively.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -254,18 +256,18 @@ public final class ComparisonTables {
 				calcSimToPerformances(performanceEntries);
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS";
+		final StringBuilder header = new StringBuilder("TYPE").append(separator).append("USED_SCCS");
 		final Pair<Set<TimeMeasure>, Set<CountingMeasure>> headerMeasures =
 				ComparisonTables.getCompleteHeaderMeasures(performanceEntries);
 		final Set<TimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final TimeMeasure measure : timeMeasures) {
-			header += separator + measure;
+			header.append(separator).append(measure);
 		}
 		final Set<CountingMeasure> countingMeasures = headerMeasures.getSecond();
 		for (final CountingMeasure measure : countingMeasures) {
-			header += separator + measure;
+			header.append(separator).append(measure);
 		}
-		table.add(header);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final Entry<Pair<SimulationOrMinimizationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
@@ -276,7 +278,8 @@ public final class ComparisonTables {
 				continue;
 			}
 
-			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+			final StringBuilder row = new StringBuilder().append(entry.getKey().getFirst()).append(separator)
+					.append(entry.getKey().getSecond());
 
 			final Map<SimulationPerformance, Boolean> ignoreThisPerformance = new HashMap<>();
 			if (filtered || filterOnlyNwa) {
@@ -327,7 +330,7 @@ public final class ComparisonTables {
 					valueAsString = Float.toString(valueInSeconds);
 				}
 
-				row += separator + valueAsString;
+				row.append(separator).append(valueAsString);
 
 			}
 			for (final CountingMeasure measure : countingMeasures) {
@@ -360,9 +363,9 @@ public final class ComparisonTables {
 						}
 					}
 				}
-				row += separator + valueAsString;
+				row.append(separator).append(valueAsString);
 			}
-			table.add(row);
+			table.add(row.toString());
 		}
 
 		return table;
@@ -371,7 +374,7 @@ public final class ComparisonTables {
 	/**
 	 * Creates a table that holds the full comparison data for each simulation type averaged over all directories of the
 	 * automata instances respectively.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -402,18 +405,19 @@ public final class ComparisonTables {
 				calcDirAndSimToPerformances(performanceEntries);
 
 		// Header of table
-		String header = "DIRECTORY" + separator + "TYPE" + separator + "USED_SCCS";
+		final StringBuilder header =
+				new StringBuilder("DIRECTORY").append(separator).append("TYPE").append(separator).append("USED_SCCS");
 		final Pair<Set<TimeMeasure>, Set<CountingMeasure>> headerMeasures =
 				ComparisonTables.getCompleteHeaderMeasures(performanceEntries);
 		final Set<TimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final TimeMeasure measure : timeMeasures) {
-			header += separator + measure;
+			header.append(separator).append(measure);
 		}
 		final Set<CountingMeasure> countingMeasures = headerMeasures.getSecond();
 		for (final CountingMeasure measure : countingMeasures) {
-			header += separator + measure;
+			header.append(separator).append(measure);
 		}
-		table.add(header);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final String directory : directoryAndSimulationToPerformances.keySet()) {
@@ -426,7 +430,8 @@ public final class ComparisonTables {
 					continue;
 				}
 
-				String row = directory + separator + entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+				final StringBuilder row = new StringBuilder().append(directory).append(separator)
+						.append(entry.getKey().getFirst()).append(separator).append(entry.getKey().getSecond());
 
 				final Map<SimulationPerformance, Boolean> ignoreThisPerformance = new HashMap<>();
 				if (filtered || filterOnlyNwa) {
@@ -477,7 +482,7 @@ public final class ComparisonTables {
 						valueAsString = Float.toString(valueInSeconds);
 					}
 
-					row += separator + valueAsString;
+					row.append(separator).append(valueAsString);
 
 				}
 				for (final CountingMeasure measure : countingMeasures) {
@@ -510,9 +515,9 @@ public final class ComparisonTables {
 							}
 						}
 					}
-					row += separator + valueAsString;
+					row.append(separator).append(valueAsString);
 				}
-				table.add(row);
+				table.add(row.toString());
 			}
 		}
 
@@ -522,7 +527,7 @@ public final class ComparisonTables {
 	/**
 	 * Creates a table that holds the time partitioning for each simulation type averaged over all automata instances
 	 * respectively. The work measure gets calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -541,26 +546,27 @@ public final class ComparisonTables {
 				calcSimToPerformances(performanceEntries);
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS";
+		final StringBuilder header = new StringBuilder("TYPE").append(separator).append("USED_SCCS");
 		// Amount of Buechi states
-		header += separator + CountingMeasure.BUCHI_STATES;
+		header.append(separator).append(CountingMeasure.BUCHI_STATES);
 		// Overall time first
-		header += separator + TimeMeasure.OVERALL;
+		header.append(separator).append(TimeMeasure.OVERALL);
 		// Other time measures
 		final Pair<Set<TimeMeasure>, Set<CountingMeasure>> headerMeasures =
 				ComparisonTables.getCompleteHeaderMeasures(performanceEntries);
 		final Set<TimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final TimeMeasure measure : timeMeasures) {
 			if (!measure.equals(TimeMeasure.OVERALL)) {
-				header += separator + measure;
+				header.append(separator).append(measure);
 			}
 		}
-		table.add(header);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final Entry<Pair<SimulationOrMinimizationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
 				.entrySet()) {
-			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+			final StringBuilder row = new StringBuilder().append(entry.getKey().getFirst()).append(separator)
+					.append(entry.getKey().getSecond());
 
 			// Amount of Buechi states
 			int sumOfAllValuesForBuechiStates = 0;
@@ -578,7 +584,7 @@ public final class ComparisonTables {
 			if (averageOfValuesForBuechiStates == 0) {
 				valueAsString = NO_VALUE;
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Overall time first
 			long sumOfAllValuesForOverallTime = 0;
@@ -598,7 +604,7 @@ public final class ComparisonTables {
 				final float valueInSeconds = millisToSeconds(averageOfValuesForOverallTime);
 				valueAsString = Float.toString(valueInSeconds);
 			}
-			row += separator + valueAsString;
+			row.append(separator).append(valueAsString);
 
 			// Other time measures
 			for (final TimeMeasure measure : timeMeasures) {
@@ -626,10 +632,10 @@ public final class ComparisonTables {
 						valueAsString = Integer.toString(averageOfPercentages);
 					}
 				}
-				row += separator + valueAsString;
+				row.append(separator).append(valueAsString);
 
 			}
-			table.add(row);
+			table.add(row.toString());
 		}
 
 		return table;
@@ -638,7 +644,7 @@ public final class ComparisonTables {
 	/**
 	 * Creates a table that holds information about the actual work the algorithm needs to do for each automata instance
 	 * respectively. The work measure gets calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -653,17 +659,18 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header =
-				"NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
-		header += separator + CountingMeasure.BUCHI_STATES;
+		final StringBuilder header = new StringBuilder("NAME").append(separator).append("TYPE").append(separator)
+				.append("USED_SCCS").append(separator).append("TIMED_OUT").append(separator).append("OOM");
+		header.append(separator).append(CountingMeasure.BUCHI_STATES);
 		// Work measure
-		header += separator + CountingMeasure.SIMULATION_STEPS + " / " + CountingMeasure.GAMEGRAPH_VERTICES;
-		header += separator + TimeMeasure.OVERALL;
-		header += separator + CountingMeasure.SIMULATION_STEPS;
-		header += separator + CountingMeasure.GAMEGRAPH_VERTICES;
-		header += separator + CountingMeasure.REMOVED_STATES;
+		header.append(separator).append(CountingMeasure.SIMULATION_STEPS).append(" / ")
+				.append(CountingMeasure.GAMEGRAPH_VERTICES);
+		header.append(separator).append(TimeMeasure.OVERALL);
+		header.append(separator).append(CountingMeasure.SIMULATION_STEPS);
+		header.append(separator).append(CountingMeasure.GAMEGRAPH_VERTICES);
+		header.append(separator).append(CountingMeasure.REMOVED_STATES);
 
-		table.add(header);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
@@ -672,8 +679,10 @@ public final class ComparisonTables {
 				final String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = name + separator + type + separator + performanceOfSimulation.isUsingSccs() + separator
-						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
+				final StringBuilder row = new StringBuilder().append(name).append(separator).append(type)
+						.append(separator).append(performanceOfSimulation.isUsingSccs()).append(separator)
+						.append(performanceOfSimulation.hasTimedOut()).append(separator)
+						.append(performanceOfSimulation.isOutOfMemory());
 
 				// Variable fields
 
@@ -683,7 +692,7 @@ public final class ComparisonTables {
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = NO_VALUE;
 				}
-				row += separator + buechiStatesAsString;
+				row.append(separator).append(buechiStatesAsString);
 
 				// Work measure
 				final int simSteps = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
@@ -696,7 +705,7 @@ public final class ComparisonTables {
 				} else {
 					workMeasureAsString = Float.toString(roundTo((simSteps + 0.0) / graphStates, DECIMAL_PLACES));
 				}
-				row += separator + workMeasureAsString;
+				row.append(separator).append(workMeasureAsString);
 
 				// Overall time
 				final long value =
@@ -709,7 +718,7 @@ public final class ComparisonTables {
 					final float valueInSeconds = millisToSeconds(value);
 					valueAsString = Float.toString(valueInSeconds);
 				}
-				row += separator + valueAsString;
+				row.append(separator).append(valueAsString);
 
 				// Simulation steps
 				String simStepsAsString;
@@ -718,14 +727,14 @@ public final class ComparisonTables {
 				} else {
 					simStepsAsString = Integer.toString(simSteps);
 				}
-				row += separator + simStepsAsString;
+				row.append(separator).append(simStepsAsString);
 
 				// Amount of Gamegraph states
 				String graphStatesAsString = Integer.toString(graphStates);
 				if (graphStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					graphStatesAsString = NO_VALUE;
 				}
-				row += separator + graphStatesAsString;
+				row.append(separator).append(graphStatesAsString);
 
 				// Removed states
 				final int removedStates =
@@ -734,9 +743,9 @@ public final class ComparisonTables {
 				if (removedStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					removedStatesAsString = NO_VALUE;
 				}
-				row += separator + removedStatesAsString;
+				row.append(separator).append(removedStatesAsString);
 
-				table.add(row);
+				table.add(row.toString());
 			}
 			// Add empty row to delimit the performance entry
 			table.add("");
@@ -748,7 +757,7 @@ public final class ComparisonTables {
 	/**
 	 * Creates a table that holds the full comparison data for each automata instance respectively, but only for the
 	 * given simulation type.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -775,19 +784,19 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header =
-				"NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
+		final StringBuilder header = new StringBuilder("NAME").append(separator).append("TYPE").append(separator)
+				.append("USED_SCCS").append(separator).append("TIMED_OUT").append(separator).append("OOM");
 		final Pair<Set<TimeMeasure>, Set<CountingMeasure>> headerMeasures =
 				ComparisonTables.getCompleteHeaderMeasures(performanceEntries);
 		final Set<TimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final TimeMeasure measure : timeMeasures) {
-			header += separator + measure;
+			header.append(separator).append(measure);
 		}
 		final Set<CountingMeasure> countingMeasures = headerMeasures.getSecond();
 		for (final CountingMeasure measure : countingMeasures) {
-			header += separator + measure;
+			header.append(separator).append(measure);
 		}
-		table.add(header);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
@@ -820,8 +829,10 @@ public final class ComparisonTables {
 				}
 
 				// Fix fields
-				String row = name + separator + type + separator + performanceOfSimulation.isUsingSccs() + separator
-						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
+				final StringBuilder row = new StringBuilder().append(name).append(separator).append(type)
+						.append(separator).append(performanceOfSimulation.isUsingSccs()).append(separator)
+						.append(performanceOfSimulation.hasTimedOut()).append(separator)
+						.append(performanceOfSimulation.isOutOfMemory());
 
 				// Variable fields
 				for (final TimeMeasure measure : timeMeasures) {
@@ -836,7 +847,7 @@ public final class ComparisonTables {
 						valueAsString = Float.toString(valueInSeconds);
 					}
 
-					row += separator + valueAsString;
+					row.append(separator).append(valueAsString);
 				}
 				for (final CountingMeasure measure : countingMeasures) {
 					final int value = performanceOfSimulation.getCountingMeasureResult(measure);
@@ -852,9 +863,9 @@ public final class ComparisonTables {
 							}
 						}
 					}
-					row += separator + valueAsString;
+					row.append(separator).append(valueAsString);
 				}
-				table.add(row);
+				table.add(row.toString());
 			}
 			if (simulationType == null) {
 				// Add empty row to delimit the performance entry
@@ -867,7 +878,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Creates a table that holds the time partitioning for each automata instance respectively.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
@@ -882,22 +893,22 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header =
-				"NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
+		final StringBuilder header = new StringBuilder("NAME").append(separator).append("TYPE").append(separator)
+				.append("USED_SCCS").append(separator).append("TIMED_OUT").append(separator).append("OOM");
 		// Amount of Buechi states
-		header += separator + CountingMeasure.BUCHI_STATES;
+		header.append(separator).append(CountingMeasure.BUCHI_STATES);
 		// Overall time first
-		header += separator + TimeMeasure.OVERALL;
+		header.append(separator).append(TimeMeasure.OVERALL);
 		// Other time measures
 		final Pair<Set<TimeMeasure>, Set<CountingMeasure>> headerMeasures =
 				ComparisonTables.getCompleteHeaderMeasures(performanceEntries);
 		final Set<TimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final TimeMeasure measure : timeMeasures) {
 			if (!measure.equals(TimeMeasure.OVERALL)) {
-				header += separator + measure + "(%)";
+				header.append(separator).append(measure).append("(%)");
 			}
 		}
-		table.add(header);
+		table.add(header.toString());
 
 		// Rows of table
 		for (final LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
@@ -906,8 +917,10 @@ public final class ComparisonTables {
 				final String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = name + separator + type + separator + performanceOfSimulation.isUsingSccs() + separator
-						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
+				final StringBuilder row = new StringBuilder().append(name).append(separator).append(type)
+						.append(separator).append(performanceOfSimulation.isUsingSccs()).append(separator)
+						.append(performanceOfSimulation.hasTimedOut()).append(separator)
+						.append(performanceOfSimulation.isOutOfMemory());
 
 				// Variable fields
 
@@ -919,7 +932,7 @@ public final class ComparisonTables {
 				} else {
 					buechiStatesAsString = Integer.toString(buechiStates);
 				}
-				row += separator + buechiStatesAsString;
+				row.append(separator).append(buechiStatesAsString);
 
 				// Overall time first
 				long value =
@@ -934,7 +947,7 @@ public final class ComparisonTables {
 					valueAsString = Float.toString(valueInSeconds);
 					overallTime = value;
 				}
-				row += separator + valueAsString;
+				row.append(separator).append(valueAsString);
 
 				// Other time measures
 				for (final TimeMeasure measure : timeMeasures) {
@@ -956,9 +969,9 @@ public final class ComparisonTables {
 						}
 					}
 
-					row += separator + valueAsString;
+					row.append(separator).append(valueAsString);
 				}
-				table.add(row);
+				table.add(row.toString());
 			}
 			// Add empty row to delimit the performance entry
 			table.add("");
@@ -969,7 +982,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Creates a table that holds all names of automata where the overall time needed was greater than one second.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
@@ -1008,7 +1021,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Creates a table that holds all names of automata where no method could remove states.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
@@ -1047,7 +1060,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Creates a table that holds all names of automata where the amount of states is small, i.e. less than 20.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
@@ -1086,7 +1099,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Creates a table that holds all names of automata where at least one method timed out.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
@@ -1124,7 +1137,7 @@ public final class ComparisonTables {
 	/**
 	 * Converts a given long value, representing milliseconds, to seconds and rounds it to {@link #DECIMAL_PLACES}
 	 * places after the decimal.
-	 * 
+	 *
 	 * @param millis
 	 *            Value, representing milliseconds, that should be converted
 	 * @return The given value in seconds, rounded to two places after the decimal.
@@ -1135,7 +1148,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Converts a given float value, representing seconds, to milliseconds.
-	 * 
+	 *
 	 * @param seconds
 	 *            Value, representing seconds, that should be converted
 	 * @return The given value in milliseconds.
@@ -1147,7 +1160,7 @@ public final class ComparisonTables {
 	/**
 	 * Processes a given performance list into a sorted map structure. A performance entry is completely ignored if one
 	 * simulation of it had a timeout.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            List of performances to process
 	 * @return Performance entries in a sorted map structure
@@ -1209,7 +1222,7 @@ public final class ComparisonTables {
 	/**
 	 * Processes a given performance list into a sorted map structure. A performance entry is completely ignored if one
 	 * simulation of it had a timeout.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            List of performances to process
 	 * @return Performance entries in a sorted map structure
@@ -1258,7 +1271,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Converts the given value to a double format if the given measure is a transition density measure.
-	 * 
+	 *
 	 * @param measure
 	 *            Current measure
 	 * @param sumOfAllValues
@@ -1284,7 +1297,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Gets all time and counting measures where at least one performance entry has a value for.
-	 * 
+	 *
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @return All time and counting measures where at least one performance entry has a value for
@@ -1307,7 +1320,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Returns the percentage a given value has to a given full percentage.
-	 * 
+	 *
 	 * @param value
 	 *            Value to calculate percentage for
 	 * @param fullPercentage
@@ -1320,7 +1333,7 @@ public final class ComparisonTables {
 
 	/**
 	 * Rounds a given value to a given scale.
-	 * 
+	 *
 	 * @param value
 	 *            Value to round
 	 * @param scale
@@ -1328,7 +1341,7 @@ public final class ComparisonTables {
 	 * @return The rounded value
 	 */
 	private static float roundTo(final double value, final int scale) {
-		BigDecimal valueAsBigDecimal = new BigDecimal(value);
+		BigDecimal valueAsBigDecimal = BigDecimal.valueOf(value);
 		valueAsBigDecimal = valueAsBigDecimal.setScale(scale, RoundingMode.HALF_UP);
 		return valueAsBigDecimal.floatValue();
 	}

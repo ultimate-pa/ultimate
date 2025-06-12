@@ -49,7 +49,7 @@ public class HcLocationVar implements IHcReplacementVar {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof HcLocationVar)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final HcLocationVar other = (HcLocationVar) obj;

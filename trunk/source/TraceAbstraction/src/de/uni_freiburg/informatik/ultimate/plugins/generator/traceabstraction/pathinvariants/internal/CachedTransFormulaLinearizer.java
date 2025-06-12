@@ -165,9 +165,8 @@ public class CachedTransFormulaLinearizer {
 				new RewriteBooleans(mReplacementVarFactory, mCsToolkit.getManagedScript()), new RewriteIte(),
 				new RewriteUserDefinedTypes(mReplacementVarFactory, mCsToolkit.getManagedScript()),
 				new RewriteEquality(), new SimplifyPreprocessor(mServices, mSimplificationTechnique),
-				new DNF(mServices),
-				new SimplifyPreprocessor(mServices, mSimplificationTechnique), new RewriteTrueFalse(),
-				new RemoveNegation(), new RewriteStrictInequalities(), };
+				new DNF(mServices), new SimplifyPreprocessor(mServices, mSimplificationTechnique),
+				new RewriteTrueFalse(), new RemoveNegation(), new RewriteStrictInequalities(), };
 	}
 
 }

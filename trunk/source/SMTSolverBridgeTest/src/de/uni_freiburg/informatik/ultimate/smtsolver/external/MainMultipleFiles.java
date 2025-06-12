@@ -58,7 +58,8 @@ public class MainMultipleFiles {
 
 		String filename;
 		if (paramctr < param.length) {
-			filename = param[paramctr++];
+			filename = param[paramctr];
+			paramctr++;
 		} else {
 			filename = "<stdin>";
 		}
@@ -75,8 +76,8 @@ public class MainMultipleFiles {
 			return;
 		}
 		int count = 0;
-		for (int i = 0; i < files.size(); i++) {
-			if (files.get(i).contains(".svn")) {
+		for (final String file : files) {
+			if (file.contains(".svn")) {
 				continue;
 			}
 
@@ -140,12 +141,12 @@ public class MainMultipleFiles {
 				}
 			}
 
-			System.out.println("\n--- Checking " + files.get(i) + "\n");
+			System.out.println("\n--- Checking " + file + "\n");
 
 			final OptionMap optionMap = new OptionMap(logProxy);
 			final ParseEnvironment parseEnv = new ParseEnvironment(benchmark, optionMap);
 			try {
-				parseEnv.parseScript(files.get(i));
+				parseEnv.parseScript(file);
 			} catch (final SMTLIBException exc) {
 				parseEnv.printError(exc.getMessage());
 			}
@@ -160,11 +161,11 @@ public class MainMultipleFiles {
 			return files;
 		}
 		final File[] children = path.listFiles();
-		for (int i = 0; i < children.length; i++) {
-			if (children[i].isFile()) {
-				files.add(children[i].toString());
+		for (final File child : children) {
+			if (child.isFile()) {
+				files.add(child.toString());
 			} else {
-				final File sub = new File(children[i].toString());
+				final File sub = new File(child.toString());
 				files.addAll(getFiles(sub));
 			}
 		}

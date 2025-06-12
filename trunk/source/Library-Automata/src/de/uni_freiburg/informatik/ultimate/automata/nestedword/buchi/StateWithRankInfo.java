@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
+import java.util.Objects;
+
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
@@ -58,7 +60,6 @@ public class StateWithRankInfo<STATE> {
 	 *            {@code true} iff the state is in O
 	 */
 	public StateWithRankInfo(final STATE state, final int rank, final boolean inO) {
-		super();
 		mState = state;
 		if (rank < 0) {
 			throw new IllegalArgumentException("rank has to be nonnegative");
@@ -78,7 +79,6 @@ public class StateWithRankInfo<STATE> {
 	 *            state
 	 */
 	public StateWithRankInfo(final STATE state) {
-		super();
 		mState = state;
 		mRank = NO_RANK;
 		mInO = false;
@@ -105,12 +105,7 @@ public class StateWithRankInfo<STATE> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (mInO ? 1231 : 1237);
-		result = prime * result + mRank;
-		result = prime * result + ((mState == null) ? 0 : mState.hashCode());
-		return result;
+		return Objects.hash(mInO, mRank, mState);
 	}
 
 	@Override

@@ -36,8 +36,8 @@ import java.util.Set;
  */
 public interface ISuccessorTransitionProvider<LETTER, PLACE> {
 
-	public Set<PLACE> getPredecessorPlaces();
+	Set<PLACE> getPredecessorPlaces();
 
-	public Collection<Transition<LETTER, PLACE>> getTransitions();
+	Collection<Transition<LETTER, PLACE>> getTransitions();
 
 }

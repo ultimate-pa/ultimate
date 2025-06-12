@@ -52,7 +52,7 @@ public class HcLocalVar implements IHcReplacementVar {
 		if (this == obj) {
 			return true;
 		}
-		if (!(obj instanceof HcLocalVar)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final HcLocalVar other = (HcLocalVar) obj;

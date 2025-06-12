@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ArrayIndexEqualityUtils {
 
 	/**
-	 * Add equality information for term that are obtained from context by only
-	 * looking at (dis)eqality terms.
+	 * Add equality information for term that are obtained from context by only looking at (dis)eqality terms.
 	 *
 	 * @return
 	 * @return true if an inconsitency was detected
@@ -95,14 +94,14 @@ public class ArrayIndexEqualityUtils {
 		boolean inconsistencyDetected = false;
 		for (final MultiDimensionalSelect selectTerm : selectTerms) {
 			for (final Term entry : selectTerm.getIndex()) {
-				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, entry,
-						equalityInformation);
+				inconsistencyDetected |=
+						addComplimentaryEqualityInformation(script, quantifier, context, entry, equalityInformation);
 				if (inconsistencyDetected) {
 					return null;
 				}
 			}
-			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, selectTerm.toTerm(script),
-					equalityInformation);
+			inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
+					selectTerm.toTerm(script), equalityInformation);
 			if (inconsistencyDetected) {
 				return null;
 			}
@@ -111,16 +110,16 @@ public class ArrayIndexEqualityUtils {
 		for (final MultiDimensionalNestedStore arrayStore : stores) {
 			for (final ArrayIndex ai : arrayStore.getIndices()) {
 				for (final Term entry : ai) {
-					inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
-							entry, equalityInformation);
+					inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context, entry,
+							equalityInformation);
 					if (inconsistencyDetected) {
 						return null;
 					}
 				}
 			}
 			for (final Term value : arrayStore.getValues()) {
-				inconsistencyDetected |= addComplimentaryEqualityInformation(script, quantifier, context,
-						value, equalityInformation);
+				inconsistencyDetected |=
+						addComplimentaryEqualityInformation(script, quantifier, context, value, equalityInformation);
 				if (inconsistencyDetected) {
 					return null;
 				}
@@ -129,8 +128,8 @@ public class ArrayIndexEqualityUtils {
 		return equalityInformation;
 	}
 
-	static ThreeValuedEquivalenceRelation<Term> analyzeIndexEqualities(final Script script, final ArrayIndex selectIndex,
-			final ArrayIndex storeIndex, final int quantifier, final Term[] context) {
+	static ThreeValuedEquivalenceRelation<Term> analyzeIndexEqualities(final Script script,
+			final ArrayIndex selectIndex, final ArrayIndex storeIndex, final int quantifier, final Term[] context) {
 		final ThreeValuedEquivalenceRelation<Term> tver = new ThreeValuedEquivalenceRelation<>();
 		for (final Term term : selectIndex) {
 			addComplimentaryEqualityInformation(script, quantifier, context, term, tver);

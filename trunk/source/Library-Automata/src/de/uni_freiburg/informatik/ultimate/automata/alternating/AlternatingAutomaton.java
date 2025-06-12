@@ -187,57 +187,59 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 
 	@Override
 	public String toString() {
-		String text = "[AlternatingAutomaton\n\tAlphabet = {";
+		final StringBuilder text = new StringBuilder("[AlternatingAutomaton\n\tAlphabet = {");
 		final Iterator<LETTER> letterIterator = mAlphabet.iterator();
 		int r = 0;
 		while (letterIterator.hasNext()) {
 			if (r != 0) {
-				text += ", ";
+				text.append(", ");
 			}
-			text += letterIterator.next();
+			text.append(letterIterator.next());
 			r++;
 		}
-		text += "}\n\tStates = {";
+		text.append("}\n\tStates = {");
 		for (int i = 0; i < mStates.size(); i++) {
 			if (i != 0) {
-				text += ", ";
+				text.append(", ");
 			}
-			text += mStates.get(i);
+			text.append(mStates.get(i));
 		}
-		text += "}\n\tFinalStates = {";
+		text.append("}\n\tFinalStates = {");
 		r = 0;
 		for (int i = 0; i < mStates.size(); i++) {
 			if (mFinalStatesBitVector.get(i)) {
 				if (r != 0) {
-					text += ", ";
+					text.append(", ");
 				}
-				text += mStates.get(i);
+				text.append(mStates.get(i));
 				r++;
 			}
 		}
-		text += "}\n\tAcceptingFunction = " + mAcceptingFunction.toString(mStates) + "\n\tTransistions = {\n";
+		text.append("}\n\tAcceptingFunction = ").append(mAcceptingFunction.toString(mStates))
+				.append("\n\tTransistions = {\n");
 		r = 0;
 		for (final Entry<LETTER, BooleanExpression[]> entry : mTransitionFunction.entrySet()) {
-			text += "\t\t" + entry.getKey() + " => {\n";
+			text.append("\t\t").append(entry.getKey()).append(" => {\n");
 			int z = 0;
 			for (int i = 0; i < mStates.size(); i++) {
 				if (entry.getValue()[i] != null) {
 					if (z != 0) {
-						text += ",\n";
+						text.append(",\n");
 					}
-					text += "\t\t\t" + mStates.get(i) + " => " + entry.getValue()[i].toString(mStates);
+					text.append("\t\t\t").append(mStates.get(i)).append(" => ")
+							.append(entry.getValue()[i].toString(mStates));
 					z++;
 				}
 			}
-			text += "\n\t\t}";
+			text.append("\n\t\t}");
 			if (r != (mTransitionFunction.size() - 1)) {
-				text += ",";
+				text.append(",");
 			}
-			text += "\n";
+			text.append("\n");
 			r++;
 		}
-		text += "\t}\n]";
-		return text;
+		text.append("\t}\n]");
+		return text.toString();
 	}
 
 	@Override

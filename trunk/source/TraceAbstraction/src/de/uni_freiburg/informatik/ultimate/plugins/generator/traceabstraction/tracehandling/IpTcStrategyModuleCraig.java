@@ -72,11 +72,11 @@ public abstract class IpTcStrategyModuleCraig<LETTER extends IIcfgTransition<?>>
 
 		final boolean instantiateArrayExt = true;
 		final boolean innerRecursiveNestedInterpolationCall = false;
-		return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<Integer, IPredicate>(),
-				mCounterexample, mServices, mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory,
-				mPredicateUnifier, assertionOrder, mPrefs.computeCounterexample(),
-				mPrefs.collectInterpolantStatistics(), interpolationTechnique, instantiateArrayExt,
-				simplificationTechnique, innerRecursiveNestedInterpolationCall);
+		return new InterpolatingTraceCheckCraig<>(mPrecondition, mPostcondition, new TreeMap<>(), mCounterexample,
+				mServices, mPrefs.getCfgSmtToolkit(), managedScript, mPredicateFactory, mPredicateUnifier,
+				assertionOrder, mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics(),
+				interpolationTechnique, instantiateArrayExt, simplificationTechnique,
+				innerRecursiveNestedInterpolationCall);
 	}
 
 	protected abstract ManagedScript constructManagedScript();

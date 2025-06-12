@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <br/>
  * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
  * <b>q1 fair simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of buechi automaton
@@ -82,7 +82,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * <p>
 	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
 	 * return alphabet.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -110,7 +110,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.fair.FairGameGraph#generateBuchiAutomatonFromGraph()
 	 */
@@ -129,7 +129,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
@@ -141,7 +141,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#getGlobalInfinity()
 	 */
@@ -158,7 +158,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#getPriority(de.uni_freiburg.informatik.ultimate
 	 * .automata.nwalibrary.operations.buchiReduction.vertices.Vertex)
@@ -178,7 +178,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * Returns if the given vertex, interpreted as (q0, q1), represents a simulation where q1 direct simulates q0.<br/>
 	 * This needs a previous made direct simulation and usage of the method
 	 * {@link #rememberAndClearDirectSimulationResults()} in order to work.
-	 * 
+	 *
 	 * @param vertex
 	 *            The vertex of interest
 	 * @return True if vertex, interpreted as (q0, q1), represents a simulation where q1 direct simulates q0, false if
@@ -213,7 +213,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 
 	/**
 	 * Returns if the game graph currently mimics the behavior of a DirectGameGraph or a FairGameGraph.
-	 * 
+	 *
 	 * @return True if the game graph currently mimics the behavior of a DirectGameGraph, false if it mimics a
 	 *         FairGameGraph.
 	 */

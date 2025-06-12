@@ -6,9 +6,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 
 /**
- * Looks for a VariableLHS with a global variable inside a given LHS.
- * Returns such a VariableLHS if it exists, null otherwise.
- * Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
+ * Looks for a VariableLHS with a global variable inside a given LHS. Returns such a VariableLHS if it exists, null
+ * otherwise. Note that this will crash if the VariableLHS does not contain a DeclarationInformation.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *

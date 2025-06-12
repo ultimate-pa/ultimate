@@ -87,7 +87,6 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	public SccComputation(final ILogger logger, final ISuccessorProvider<NODE> successorProvider,
 			final IStronglyConnectedComponentFactory<NODE, COMP> sccFac, final int numberOfAllNodes,
 			final Set<NODE> startNodes) {
-		super();
 		mLogger = logger;
 		mSccFactory = sccFac;
 		mSuccessorProvider = successorProvider;
@@ -126,8 +125,8 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	 * The result of this method is the projection of the input graph of this class instance to the SCCs computed by
 	 * this class.
 	 *
-	 * I.e. let G be the input graph for this class instance, the the result of this method represents this graph:
-	 *  { (scc1, scc2) | exists x, y. x in scc1, y in scc2, (x, y) in G, scc1 != scc2 }
+	 * I.e. let G be the input graph for this class instance, the the result of this method represents this graph: {
+	 * (scc1, scc2) | exists x, y. x in scc1, y in scc2, (x, y) in G, scc1 != scc2 }
 	 *
 	 * @return
 	 */
@@ -170,11 +169,11 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 
 	/***
 	 * Get all components root components
+	 *
 	 * @return
 	 */
 	public Collection<COMP> getRootComponents() {
-		final Set<COMP> res = new HashSet<>();
-		res.addAll(getSCCs());
+		final Set<COMP> res = new HashSet<>(getSCCs());
 		final ISuccessorProvider<COMP> componentsSuccessors = getComponentsSuccessorsProvider();
 		for (final COMP comp : getSCCs()) {
 			for (final COMP next : CombinatoricsUtils.iterateAll(componentsSuccessors.getSuccessors(comp))) {
@@ -186,6 +185,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 
 	/***
 	 * Get all the leaf components of the SCC directed-acyclic graph
+	 *
 	 * @return
 	 */
 	public Collection<COMP> getLeafComponents() {
@@ -211,7 +211,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		while (!stk.isEmpty()) {
 			final COMP top = stk.pop();
 			boolean hasNext = false;
-			for (final Iterator<COMP> it = componentsSuccessors.getSuccessors(top); it.hasNext(); ) {
+			for (final Iterator<COMP> it = componentsSuccessors.getSuccessors(top); it.hasNext();) {
 				final COMP nxt = it.next();
 				if (!visited.contains(nxt)) {
 					visited.add(nxt);
@@ -226,7 +226,6 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		return res;
 	}
 
-
 	public Collection<NODE> getLeafNodes() {
 		final Set<NODE> res = new HashSet<>();
 		for (final COMP comp : getLeafComponents()) {
@@ -235,13 +234,11 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		return res;
 	}
 
-
 	public Collection<NODE> getLeafNodes(final NODE root) {
 		final Set<NODE> res = new HashSet<>();
 		res.add(root);
 		return getLeafNodes(res);
 	}
-
 
 	public Collection<NODE> getLeafNodes(final Iterable<NODE> root) {
 		final Collection<COMP> comps = getLeafComponents(root);
@@ -251,6 +248,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		}
 		return res;
 	}
+
 	/**
 	 * @return a {@link Collection} of "ball" SCCs. A ball SCC is a SCC with at least one edge. I.e., this method
 	 *         returns the subset of {@link #getSCCs()} that excludes all trivial SCCs that consist of only one vertex
@@ -274,7 +272,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 		mIndices.put(v, mIndex);
 		mLowLinks.put(v, mIndex);
 		mIndex++;
-		this.mNoScc.push(v);
+		mNoScc.push(v);
 
 		final Iterator<NODE> it = mSuccessorProvider.getSuccessors(v);
 		while (it.hasNext()) {

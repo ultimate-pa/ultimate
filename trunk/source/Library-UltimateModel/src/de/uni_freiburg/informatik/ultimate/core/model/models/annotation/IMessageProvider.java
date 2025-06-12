@@ -30,17 +30,17 @@ import java.util.function.Supplier;
 
 /**
  * Message provider interface returning messages for {@link Spec}s.
- * 
+ *
  * @author Manuel Bentele
  */
 public interface IMessageProvider {
 
 	/**
 	 * Returns a positive default message for a given {@link Spec}.
-	 * 
+	 *
 	 * @param spec
 	 *            a specification that is checked.
-	 * 
+	 *
 	 * @return positive default message for the given {@code spec}.
 	 */
 	default String getDefaultPositiveMessage(final Spec spec) {
@@ -49,10 +49,10 @@ public interface IMessageProvider {
 
 	/**
 	 * Returns a negative default message for a given {@link Spec}.
-	 * 
+	 *
 	 * @param spec
 	 *            a specification that is checked.
-	 * 
+	 *
 	 * @return negative default message for the given {@code spec}.
 	 */
 	default String getDefaultNegativeMessage(final Spec spec) {
@@ -61,7 +61,7 @@ public interface IMessageProvider {
 
 	/**
 	 * Register a custom positive message supplier for a given {@link Spec}.
-	 * 
+	 *
 	 * @param spec
 	 *            a specification that is checked and whose message is overwritten.
 	 * @param msgProviderFunc
@@ -71,7 +71,7 @@ public interface IMessageProvider {
 
 	/**
 	 * Register a custom negative message supplier for a given {@link Spec} specification.
-	 * 
+	 *
 	 * @param spec
 	 *            a specification that is checked and whose message is overwritten.
 	 * @param msgProviderFunc
@@ -81,12 +81,12 @@ public interface IMessageProvider {
 
 	/**
 	 * Returns a positive message for a given {@link Spec} specification.
-	 * 
+	 *
 	 * @param spec
 	 *            a specification that is checked.
-	 * 
+	 *
 	 * @return positive message for the given {@code spec}.
-	 * 
+	 *
 	 * @implNote This function considers messages after post-processing, i.e. custom message overwrites for specific
 	 *           {@link Spec}s through {@link #registerPositiveMessageOverride(Spec, Supplier)} are considered as well
 	 *           as positive default messages. Default messages can be obtained by
@@ -96,12 +96,12 @@ public interface IMessageProvider {
 
 	/**
 	 * Returns a negative message for a given {@link Spec} specification.
-	 * 
+	 *
 	 * @param spec
 	 *            a specification that is checked.
-	 * 
+	 *
 	 * @return negative message for the given {@code spec}.
-	 * 
+	 *
 	 * @implNote This function considers messages after post-processing, i.e. custom message overwrites for specific
 	 *           {@link Spec}s through {@link #registerNegativeMessageOverride(Spec, Supplier)} are considered as well
 	 *           as negative default messages. Default messages can be obtained by

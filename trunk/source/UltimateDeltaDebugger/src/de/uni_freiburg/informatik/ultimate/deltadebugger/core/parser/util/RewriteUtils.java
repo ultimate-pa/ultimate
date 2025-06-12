@@ -64,15 +64,15 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
  */
 public final class RewriteUtils {
 	private static final int MAX_PRETTY_PRINTED_LENGTH = 10_000;
-	
+
 	private RewriteUtils() {
 		// utility class
 	}
-	
+
 	/**
 	 * Pretty print source code using the CDT code formatter. Seems to work without workspace and/or OSGi, but can cause
-	 * extreme lags/freezes for larger inputs.
-	 * Maybe this should be removed by something that removes redundant whitespace.
+	 * extreme lags/freezes for larger inputs. Maybe this should be removed by something that removes redundant
+	 * whitespace.
 	 *
 	 * @param input
 	 *            source code
@@ -85,7 +85,7 @@ public final class RewriteUtils {
 		if (input.length() > MAX_PRETTY_PRINTED_LENGTH) {
 			return removeMultipleEmptyLines(input);
 		}
-		
+
 		final Map<String, String> options = DefaultCodeFormatterConstants.getDefaultSettings();
 		final CodeFormatter formatter = ToolFactory.createDefaultCodeFormatter(options);
 		final TextEdit edits = formatter.format(CodeFormatter.K_TRANSLATION_UNIT, input, 0, input.length(), 0, null);
@@ -97,7 +97,7 @@ public final class RewriteUtils {
 			return input;
 		}
 	}
-	
+
 	/**
 	 * Deleting certain nodes from the source text may require a replacement with a whitespace to ensure that no
 	 * enclosing tokens are joined.
@@ -117,7 +117,7 @@ public final class RewriteUtils {
 		// just use a space anywhere for now.
 		return " ";
 	}
-	
+
 	/**
 	 * @param input
 	 *            Input string.
@@ -126,7 +126,7 @@ public final class RewriteUtils {
 	public static String removeMultipleEmptyLines(final String input) {
 		return input.replaceAll("(?m)^(\\s*\r?\n){2,}", "\n");
 	}
-	
+
 	/**
 	 * Checks if the given replacement string is the same as the existing source text and would not have any effect.
 	 *
@@ -144,12 +144,12 @@ public final class RewriteUtils {
 		final String rhs = replacementString.replaceAll("\\s+", " ");
 		return lhs.equals(rhs);
 	}
-	
+
 	/**
 	 * If any replacement already matches the current source text, skip ALL the other alternatives, not just the one
 	 * that matches. This is important to not endlessly switch between two alternatives that are both possible in
 	 * repeated HDD applications.
-	 * 
+	 *
 	 * @param node
 	 *            PST node to be replacement
 	 * @param replacementStrings
@@ -167,7 +167,7 @@ public final class RewriteUtils {
 		}
 		return validReplacements;
 	}
-	
+
 	/**
 	 * @param expression
 	 *            AST expression.
@@ -182,22 +182,22 @@ public final class RewriteUtils {
 				return Arrays.asList("\"\"");
 			}
 		}
-		
+
 		// Prefer single element arrays over zero sized arrays
 		if (expression.getPropertyInParent() == IASTArrayModifier.CONSTANT_EXPRESSION) {
 			return Arrays.asList("1", "0");
 		}
-				
+
 		final IType expressionType = expression.getExpressionType();
 		if (expressionType instanceof IBasicType) {
 			return Arrays.asList("0", "1");
 		} else if (expressionType instanceof IPointerType) {
 			return Arrays.asList("0");
 		}
-		
+
 		return Collections.emptyList();
 	}
-	
+
 	/**
 	 * @param rewriter
 	 *            Source rewriter.
@@ -207,7 +207,7 @@ public final class RewriteUtils {
 	public static void deleteNodeText(final SourceRewriter rewriter, final IPSTNode node) {
 		rewriter.replace(node, getDeletionStringWithWhitespaces(node));
 	}
-	
+
 	/**
 	 * @param rewriter
 	 *            Source rewriter.
@@ -238,12 +238,12 @@ public final class RewriteUtils {
 
 	/**
 	 * Checks for statements and declarations that need a ";" in order to be deleted.
-	 * 
+	 *
 	 * @param node
 	 *            PST node.
 	 * @return String to use for deletion.
 	 */
-	public static String getReplacementStringForSafeDeletion(IPSTNode node) {
+	public static String getReplacementStringForSafeDeletion(final IPSTNode node) {
 		final IASTNode astNode = node.getAstNode();
 		if ((astNode instanceof IASTStatement && isStatementRequired((IASTStatement) astNode))
 				|| (astNode instanceof IASTSimpleDeclaration && isSemicolonRequired((IASTSimpleDeclaration) astNode))) {
@@ -251,5 +251,5 @@ public final class RewriteUtils {
 		}
 		return getDeletionStringWithWhitespaces(node);
 	}
-	
+
 }

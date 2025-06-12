@@ -27,29 +27,32 @@
 package de.uni_freiburg.informatik.ultimate.lib.sifa;
 
 /**
- * Worklist which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>.
- * The order in which items are inserted into the queue is up to each class implementing this interface.
+ * Worklist which saves pairs of generic entries (W, I) where W is called <i>work</i> I is called <i>input</i>. The
+ * order in which items are inserted into the queue is up to each class implementing this interface.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <W> Type of the work entries
- * @param <I> Type of the input entries
+ * @param <W>
+ *            Type of the work entries
+ * @param <I>
+ *            Type of the input entries
  */
 public interface IWorklistWithInputs<W, I> {
 
 	/**
-	 * Adds or updates an entry.
-	 * If {@code work} is already queued, its old and new input are merged and its position is kept.
-	 * If {@code work} is new to this queue, adds it to the tail.
+	 * Adds or updates an entry. If {@code work} is already queued, its old and new input are merged and its position is
+	 * kept. If {@code work} is new to this queue, adds it to the tail.
 	 *
-	 * @param work Work entry
-	 * @param addInput Input for work entry
+	 * @param work
+	 *            Work entry
+	 * @param addInput
+	 *            Input for work entry
 	 */
 	void add(W work, I addInput);
 
 	/**
-	 * If this queue contains entries, removes the next entry.
-	 * The removed entry can be queried with {@link #getWork()} and {@link #getInput()}.
+	 * If this queue contains entries, removes the next entry. The removed entry can be queried with {@link #getWork()}
+	 * and {@link #getInput()}.
 	 * <p>
 	 * Calling advance on an empty worklist has no effect.
 	 *

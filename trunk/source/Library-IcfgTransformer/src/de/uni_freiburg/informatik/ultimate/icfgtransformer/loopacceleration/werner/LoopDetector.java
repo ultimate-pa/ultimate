@@ -441,7 +441,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			final Backbone backbone = possibleBackbones.pop();
 
 			visited.addAll(backbone.getNodes());
-			Boolean done = false;
+			boolean done = false;
 
 			/**
 			 * using a DFS approach. Add a new edge to the backbone if the loopHead can be reached over it.
@@ -525,8 +525,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		UnmodifiableTransFormula loopFormula = (UnmodifiableTransFormula) backbones.getFirst().getFormula();
 		for (final Backbone backbone : backbones) {
 			path.addAll(backbone.getPath());
-			loopFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false,
-					false, loopFormula, (UnmodifiableTransFormula) backbone.getFormula());
+			loopFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, mScript, null, false, false,
+					loopFormula, (UnmodifiableTransFormula) backbone.getFormula());
 		}
 		return new Pair<>(loopFormula, path);
 	}

@@ -32,7 +32,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;

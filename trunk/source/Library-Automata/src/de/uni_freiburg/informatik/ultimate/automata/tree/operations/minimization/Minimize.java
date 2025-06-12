@@ -90,7 +90,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree)
 			throws AutomataOperationCanceledException {
 		super(services);
-		this.mOperand = tree;
+		mOperand = tree;
 		try {
 			mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) new Totalize<>(services, factory, tree).getResult();
 		} catch (final AutomataOperationCanceledException e) {
@@ -131,10 +131,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	 */
 	private boolean replacable(final STATE s1, final STATE s2, final TreeAutomatonRule<LETTER, STATE> rule,
 			final DisjointSets<STATE> worklist) {
-		final ArrayList<STATE> src = new ArrayList<>();
-		for (final STATE st : rule.getSource()) {
-			src.add(st);
-		}
+		final ArrayList<STATE> src = new ArrayList<>(rule.getSource());
 		for (int idx = 0; idx < src.size(); ++idx) {
 			if (src.get(idx) != s1) {
 				continue;
@@ -201,8 +198,8 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			oldWorklist = worklist;
 
 			worklist = new DisjointSets<>(mTreeAutomaton.getStates());
-			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt
-					.hasNext();) {
+			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator();
+					partitionsIt.hasNext();) {
 				final Set<STATE> partition = partitionsIt.next();
 				final ArrayList<STATE> states = new ArrayList<>();
 				for (final Iterator<STATE> it = partition.iterator(); it.hasNext();) {
@@ -241,7 +238,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			res.addRule(
 					new TreeAutomatonRule<>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
-		//return res;
+		// return res;
 		return removeUnreachables(res);
 
 	}
@@ -273,10 +270,7 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 			// no new reachable states
 		} while (!worklist.equals(oldWorklist));
 
-		final Set<STATE> visited = new HashSet<>();
-		// All reachable nodes from initial states.
-		visited.addAll(worklist);
-
+		final Set<STATE> visited = new HashSet<>(worklist);
 		worklist.clear();
 		oldWorklist.clear();
 		for (final STATE st : visited) {
@@ -334,19 +328,18 @@ public class Minimize<LETTER extends IRankedLetter, STATE> extends GeneralOperat
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
+	 * @see de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.
 	 * uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
 	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// Check language equivalence between input and result automaton
-		final IsEquivalent<LETTER, STATE> equivalenceCheck = new IsEquivalent<>(this.mServices, this.mStateFactory,
-				this.mOperand, this.mResult);
-		final boolean isEquivalent = equivalenceCheck.getResult().booleanValue();
+		final IsEquivalent<LETTER, STATE> equivalenceCheck =
+				new IsEquivalent<>(mServices, mStateFactory, mOperand, mResult);
+		final boolean isEquivalent = equivalenceCheck.getResult();
 
-		if (!isEquivalent && this.mLogger.isInfoEnabled()) {
-			this.mLogger.info("Counterexample: " + equivalenceCheck.getCounterexample().get());
+		if (!isEquivalent && mLogger.isInfoEnabled()) {
+			mLogger.info("Counterexample: " + equivalenceCheck.getCounterexample().get());
 		}
 
 		// TODO Also check whether the automaton is minimal

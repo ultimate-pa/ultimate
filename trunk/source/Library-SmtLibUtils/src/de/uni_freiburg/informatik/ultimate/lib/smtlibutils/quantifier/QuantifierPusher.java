@@ -653,16 +653,14 @@ public class QuantifierPusher extends TermTransformer {
 			elimtechniques.add(new XnfPlr(mgdScript, services));
 			elimtechniques.add(new XnfDer(mgdScript, services));
 			elimtechniques.add(new XnfIrd(mgdScript, services));
-			elimtechniques
-					.add(new XnfTir(mgdScript, services));
+			elimtechniques.add(new XnfTir(mgdScript, services));
 			elimtechniques.add(new XnfUpd(mgdScript, services));
 			break;
 		case NO_UPD:
 			elimtechniques.add(new XnfPlr(mgdScript, services));
 			elimtechniques.add(new XnfDer(mgdScript, services));
 			elimtechniques.add(new XnfIrd(mgdScript, services));
-			elimtechniques
-					.add(new XnfTir(mgdScript, services));
+			elimtechniques.add(new XnfTir(mgdScript, services));
 			break;
 		case ONLY_DER:
 			elimtechniques.add(new XnfDer(mgdScript, services));

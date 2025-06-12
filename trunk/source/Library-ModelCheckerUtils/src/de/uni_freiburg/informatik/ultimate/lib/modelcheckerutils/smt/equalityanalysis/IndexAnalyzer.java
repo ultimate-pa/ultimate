@@ -84,7 +84,6 @@ public class IndexAnalyzer {
 			final ModifiableTransFormula tf, final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
 			final ManagedScript mgdScript) {
-		super();
 		mLogger = logger;
 		mTerm = term;
 		mSymbolTable = symbolTable;
@@ -284,8 +283,8 @@ public class IndexAnalyzer {
 
 	private static boolean allVarsOccurInFormula(final Doubleton<Term> doubleton,
 			final Term termWithAdditionalInvariants) {
-		final Set<TermVariable> freeVarsInDoubleton = new HashSet<>();
-		freeVarsInDoubleton.addAll(Arrays.asList(doubleton.getOneElement().getFreeVars()));
+		final Set<TermVariable> freeVarsInDoubleton =
+				new HashSet<>(Arrays.asList(doubleton.getOneElement().getFreeVars()));
 		freeVarsInDoubleton.addAll(Arrays.asList(doubleton.getOtherElement().getFreeVars()));
 		final Set<TermVariable> freeVarsInFormula =
 				new HashSet<>(Arrays.asList(termWithAdditionalInvariants.getFreeVars()));

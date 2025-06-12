@@ -36,25 +36,23 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.IntSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncsb.util.UtilIntSet;
 
-
-
 public class BuchiWa implements IBuchiWa {
 
 	private final IntSet mInitStates;
-	
+
 	private final IntSet mFinalStates;
-	
+
 	private final List<IStateWa> mStates;
-	
+
 	private final int mAlphabetSize;
-		
-	public BuchiWa(int alphabetSize) {
-		this.mAlphabetSize = alphabetSize;
-		this.mInitStates  = UtilIntSet.newIntSet();
-		this.mFinalStates = UtilIntSet.newIntSet();
-		this.mStates = new ArrayList<>();
+
+	public BuchiWa(final int alphabetSize) {
+		mAlphabetSize = alphabetSize;
+		mInitStates = UtilIntSet.newIntSet();
+		mFinalStates = UtilIntSet.newIntSet();
+		mStates = new ArrayList<>();
 	}
-	
+
 	@Override
 	public int getAlphabetSize() {
 		return mAlphabetSize;
@@ -62,28 +60,28 @@ public class BuchiWa implements IBuchiWa {
 
 	@Override
 	public IStateWa addState() {
-		int id = mStates.size();
+		final int id = mStates.size();
 		mStates.add(makeState(id));
 		return mStates.get(id);
 	}
-	
+
 	@Override
-	public IStateWa makeState(int id) {
+	public IStateWa makeState(final int id) {
 		return new StateWa(id);
 	}
-	
+
 	/** should keep it safe */
 	@Override
-	public int addState(IStateWa state) {
-		int id = mStates.size();
+	public int addState(final IStateWa state) {
+		final int id = mStates.size();
 		mStates.add(state);
 		return id;
 	}
 
 	@Override
-	public IStateWa getState(int id) {
+	public IStateWa getState(final int id) {
 		assert id < mStates.size();
-		if(id < mStates.size()) {
+		if (id < mStates.size()) {
 			return mStates.get(id);
 		}
 		return null;
@@ -95,22 +93,22 @@ public class BuchiWa implements IBuchiWa {
 	}
 
 	@Override
-	public boolean isInitial(int id) {
+	public boolean isInitial(final int id) {
 		return mInitStates.get(id);
 	}
 
 	@Override
-	public boolean isFinal(int id) {
+	public boolean isFinal(final int id) {
 		return mFinalStates.get(id);
 	}
 
 	@Override
-	public void setInitial(int id) {
+	public void setInitial(final int id) {
 		mInitStates.set(id);
 	}
 
 	@Override
-	public void setFinal(int id) {
+	public void setFinal(final int id) {
 		mFinalStates.set(id);
 	}
 
@@ -128,21 +126,22 @@ public class BuchiWa implements IBuchiWa {
 	public int getStateSize() {
 		return mStates.size();
 	}
-	
+
+	@Override
 	public String toString() {
 		return toDot();
 	}
 
 	@Override
-	public IntSet getSuccessors(int state, int letter) {
+	public IntSet getSuccessors(final int state, final int letter) {
 		return mStates.get(state).getSuccessors(letter);
 	}
 
 	protected Acc acc;
-	
+
 	@Override
 	public Acc getAcceptance() {
-		if(acc == null) {
+		if (acc == null) {
 			acc = new AccBuchi(mFinalStates);
 		}
 		return acc;
@@ -150,15 +149,15 @@ public class BuchiWa implements IBuchiWa {
 
 	@Override
 	public void makeComplete() {
-		IStateWa deadState = addState();
-		for(final IStateWa state : mStates) {
-            for (int letter = 0; letter < getAlphabetSize(); letter ++) {
-            	IntSet succs = state.getSuccessors(letter);
-            	if(succs.cardinality() == 0) {
-            		state.addSuccessor(letter, deadState.getId());
-            	}
-            }
-        }
+		final IStateWa deadState = addState();
+		for (final IStateWa state : mStates) {
+			for (int letter = 0; letter < getAlphabetSize(); letter++) {
+				final IntSet succs = state.getSuccessors(letter);
+				if (succs.cardinality() == 0) {
+					state.addSuccessor(letter, deadState.getId());
+				}
+			}
+		}
 	}
 
 }

@@ -48,7 +48,8 @@ public class ContractResult extends Result {
 	/**
 	 * Constructor.
 	 *
-	 * @param specs a specification array.
+	 * @param specs
+	 *            a specification array.
 	 */
 	public ContractResult(final Specification[] specs) {
 		super(null);
@@ -58,6 +59,5 @@ public class ContractResult extends Result {
 	public Specification[] getSpecs() {
 		return specs;
 	}
-
 
 }

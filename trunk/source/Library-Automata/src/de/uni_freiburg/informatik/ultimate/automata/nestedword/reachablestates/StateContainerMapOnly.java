@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * Contains STATES and information of transitions.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -79,14 +79,12 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 	private Map<LETTER, Map<STATE, Set<STATE>>> mReturnOut = new HashMap<>();
 
 	/*
-	/**
-	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs.
+	 * /** Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map HierPREs -> LETTERs -> LinPREs
+	 * -> SUCCs.
 	 */
 	/*
-	private final Map<LETTER,Map<STATE,Set<STATE>>> mReturnSummary =
-			new HashMap<LETTER,Map<STATE,Set<STATE>>>();
-	*/
+	 * private final Map<LETTER,Map<STATE,Set<STATE>>> mReturnSummary = new HashMap<LETTER,Map<STATE,Set<STATE>>>();
+	 */
 
 	/**
 	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map SUCCs -> LETTERs -> HierPREs ->
@@ -334,7 +332,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final LETTER letter) {
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -367,7 +365,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all IncomingInternalTransition of succ. Iterates over all incoming internal letters and uses
 		 * the iterators returned by internalPredecessors(letter, succ)
 		 */
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<IncomingInternalTransition<LETTER, STATE>> mCurrentIterator;
@@ -414,7 +412,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final LETTER letter) {
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -447,7 +445,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all IncomingCallTransition of succ. Iterates over all incoming call letters and uses the
 		 * iterators returned by callPredecessors(letter, succ)
 		 */
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<IncomingCallTransition<LETTER, STATE>> mCurrentIterator;
@@ -494,7 +492,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE hier, final LETTER letter) {
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -530,7 +528,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
 		 * iterators returned by returnPredecessors(hier, letter, succ)
 		 */
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<STATE> mHierIterator;
 			private STATE mCurrentHier;
 			private Iterator<IncomingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -581,7 +579,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
 		 * iterators returned by returnPredecessors(letter, succ)
 		 */
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<IncomingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -628,7 +626,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final LETTER letter) {
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -661,7 +659,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all OutgoingInternalTransition of state. Iterates over all outgoing internal letters and uses
 		 * the iterators returned by internalSuccessors(state, letter)
 		 */
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
@@ -708,7 +706,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final LETTER letter) {
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -741,7 +739,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all OutgoingCallTransition of state. Iterates over all outgoing call letters and uses the
 		 * iterators returned by callSuccessors(state, letter)
 		 */
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingCallTransition<LETTER, STATE>> mCurrentIterator;
@@ -788,7 +786,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE hier, final LETTER letter) {
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -824,7 +822,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
 		 * iterators returned by returnSuccecessors(state, letter)
 		 */
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<STATE> mHierIterator;
 			private STATE mCurrentHier;
 			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -875,7 +873,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
 		 * iterators returned by returnSuccessors(state, letter)
 		 */
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -926,7 +924,7 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 		 * Iterates over all OutgoingReturnTransition of state with hierarchical successor hier. Iterates over all
 		 * outgoing return letters and uses the iterators returned by returnSuccecessors(state, hier, letter)
 		 */
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;

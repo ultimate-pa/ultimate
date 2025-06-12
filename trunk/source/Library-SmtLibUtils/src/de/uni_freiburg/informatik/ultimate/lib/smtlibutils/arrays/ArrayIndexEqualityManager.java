@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Plication;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -69,7 +69,6 @@ public class ArrayIndexEqualityManager {
 
 	public ArrayIndexEqualityManager(final ThreeValuedEquivalenceRelation<Term> tver, final Term context,
 			final int quantifier, final ILogger logger, final ManagedScript mgdScript) {
-		super();
 		mTver = tver;
 		mContext = context;
 		mQuantifier = quantifier;
@@ -98,8 +97,8 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * Find out if the HashRelation mAlreadyCheckedBySolver stores only Terms that
-	 * are representatives of the ThreeValuedEquivalenceRelation.
+	 * Find out if the HashRelation mAlreadyCheckedBySolver stores only Terms that are representatives of the
+	 * ThreeValuedEquivalenceRelation.
 	 */
 	boolean alreadyCheckedUsesRepresenatives() {
 		for (final Term t : mAlreadyCheckedBySolver.getDomain()) {
@@ -194,9 +193,8 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * Report to the ThreeValuedEquivalenceRelation that both input Terms are
-	 * equivalent. As a consequence, equivalence classes will be merged. This method
-	 * also updates the mAlreadyCheckedBySolver HashRelation in order to maintain
+	 * Report to the ThreeValuedEquivalenceRelation that both input Terms are equivalent. As a consequence, equivalence
+	 * classes will be merged. This method also updates the mAlreadyCheckedBySolver HashRelation in order to maintain
 	 * the class invariant that mAlreadyCheckedBySolver stores only representatives.
 	 */
 	private void reportEquality(final Term index1, final Term index2) {
@@ -385,27 +383,25 @@ public class ArrayIndexEqualityManager {
 	}
 
 	/**
-	 * Given one "reference index" idx_ref, a list of indices idx1,...,idxn and two
-	 * values val1, val2, construct the following formula.
+	 * Given one "reference index" idx_ref, a list of indices idx1,...,idxn and two values val1, val2, construct the
+	 * following formula.
 	 *
 	 * <ul>
-	 * <li>(idx == luidx1 ∨ ... ∨ idx == idxn ∨ idx != uidx ∨ (select arrRes idx) ==
-	 * uval) for existential quantifier and
-	 * <li>(idx != luidx1 ∧ ... ∧ idx != idxn ∧ idx == uidx ∧ (select arrRes idx) !=
-	 * uval) for universal quantifier
+	 * <li>(idx == luidx1 ∨ ... ∨ idx == idxn ∨ idx != uidx ∨ (select arrRes idx) == uval) for existential quantifier
+	 * and
+	 * <li>(idx != luidx1 ∧ ... ∧ idx != idxn ∧ idx == uidx ∧ (select arrRes idx) != uval) for universal quantifier
 	 * </ul>
 	 *
 	 * @param laterUpdateIndices
-	 *            indices that occur later in the nested stores, outermost at the
-	 *            last position
+	 *            indices that occur later in the nested stores, outermost at the last position
 	 */
 	private Term constructNestedStoreUpdateConstraintForOnePosition(final Script script, final int quantifier,
 			final Term arrayRes, final ArrayIndex idx, final List<ArrayIndex> laterUpdateIndices,
 			final ArrayIndex updateIndex, final Term updateValue) {
 		final List<Term> correspondingFiniteJuncts = laterUpdateIndices.stream()
 				.map(x -> constructDerRelation(script, quantifier, idx, x)).collect(Collectors.toList());
-		final Term correspondingFiniteJunction = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
-				correspondingFiniteJuncts);
+		final Term correspondingFiniteJunction =
+				QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier, correspondingFiniteJuncts);
 		if (correspondingFiniteJunction == QuantifierUtils.getAbsorbingElement(script, quantifier)) {
 			// already true (resp. false), no need to construct remaining
 			// disjuncts (resp. conjuncts)
@@ -413,8 +409,8 @@ public class ArrayIndexEqualityManager {
 		}
 		final Term idxAntiDerUidx = constructAntiDerRelation(script, quantifier, idx, updateIndex);
 		final MultiDimensionalSelect idxCellOfArrayRes = new MultiDimensionalSelect(arrayRes, idx);
-		final Term updateValueDerRelation = constructDerRelation(script, quantifier, idxCellOfArrayRes.toTerm(script),
-				updateValue);
+		final Term updateValueDerRelation =
+				constructDerRelation(script, quantifier, idxCellOfArrayRes.toTerm(script), updateValue);
 		final Term result = QuantifierUtils.applyCorrespondingFiniteConnective(script, quantifier,
 				correspondingFiniteJunction, idxAntiDerUidx, updateValueDerRelation);
 		return result;

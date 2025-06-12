@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.test;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */

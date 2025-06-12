@@ -576,10 +576,10 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 
 	private static boolean assertValidNestedWord(final Object[] word, final int[] nestingRelation) {
-		assert word.length == nestingRelation.length : "The nesting relation must contain one entry for each letter "
-				+ "in the word.";
-		assert nestingRelationValuesInRange(nestingRelation) : "The nesting relation may only contain -2, plus "
-				+ "infinity, minus infinity, or natural numbers.";
+		assert word.length == nestingRelation.length
+				: "The nesting relation must contain one entry for each letter " + "in the word.";
+		assert nestingRelationValuesInRange(nestingRelation)
+				: "The nesting relation may only contain -2, plus " + "infinity, minus infinity, or natural numbers.";
 		assert nestingRelationSymmetricNestingEdges(nestingRelation) : "If nestingRelation[i]=k, then "
 				+ "nestingRelation[k]=i or nestingRelation[i] is either -2, plus infinity, or minus infinity.";
 		assert nestingEdgesDoNotCross(nestingRelation) : "Nesting edges must not cross.";
@@ -606,8 +606,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 	}
 
 	/**
-	 * Check whether the nesting relation is empty, i.e., check whether there are
-	 * only internal positions.
+	 * Check whether the nesting relation is empty, i.e., check whether there are only internal positions.
 	 */
 	public boolean hasEmptyNestingRelation() {
 		for (int i = 0; i < mWord.length; i++) {

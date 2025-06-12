@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.yaml.WitnessEntry;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 public class YamlCorrectnessWitnessGenerator {
-	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "exists", "forall" };
+	private static final String[] ACSL_SUBSTRING = { "\\old", "\\result", "exists", "forall", "\\at" };
 
 	private final ILogger mLogger;
 	private final IIcfg<? extends IcfgLocation> mIcfg;

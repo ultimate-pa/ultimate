@@ -86,7 +86,7 @@ public class CddToSmt {
 
 	public Term toSmt(final Expression expr) {
 		final SingleTermResult result = mBoogieToSmt.getExpression2Term().translateToTerm(mIdentifierTranslators, expr);
-		return result.getTerm();
+		return result.term();
 	}
 
 	public Term toSmt(final CDD cdd) {

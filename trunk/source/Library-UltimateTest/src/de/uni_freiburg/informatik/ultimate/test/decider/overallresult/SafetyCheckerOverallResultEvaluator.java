@@ -76,7 +76,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		}
 		//@formatter:off
 		//categories are ordered by priority, with the first being the lowest
-		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = new SafetyCheckerOverallResult[] {
+		final SafetyCheckerOverallResult[] categoriesOrderedBySignificance = {
 				SafetyCheckerOverallResult.VALID_ANNOTATION,
 				SafetyCheckerOverallResult.SAFE,
 				SafetyCheckerOverallResult.TIMEOUT,

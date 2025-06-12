@@ -136,58 +136,34 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	@Override
 	public Object getValue(final String key) {
-		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
-		switch (keyEnum) {
-		case OverallTime:
-		case EmptinessCheckTime:
-		case AutomataDifference:
-		case DeadEndRemovalTime:
-		case HoareAnnotationTime:
-		case BasicInterpolantAutomatonTime:
-		case InitialAbstractionConstructionTime:
-		case DumpTime:
+		final CegarLoopStatisticsDefinitions keyEnum = CegarLoopStatisticsDefinitions.valueOf(key);
+		return switch (keyEnum) {
+		case OverallTime, EmptinessCheckTime, AutomataDifference, DeadEndRemovalTime, HoareAnnotationTime,
+				BasicInterpolantAutomatonTime, InitialAbstractionConstructionTime, DumpTime -> {
 			try {
-				return getElapsedTime(key);
+				yield getElapsedTime(key);
 			} catch (final StopwatchStillRunningException e) {
 				throw new AssertionError("clock still running: " + key);
 			}
-		case HoareTripleCheckerStatistics:
-			return mEcData;
-		case ReuseStatistics:
-			return mReuseStats;
-		case PredicateUnifierStatistics:
-			return mPredicateUnifierData;
-		case traceCheckStatistics:
-			return mTcData;
-		case InterpolantConsolidationStatistics:
-			return mInterpolantConsolidationBenchmarks;
-		case PathInvariantsStatistics:
-			return mPathInvariantsStatistics;
-		case TotalInterpolationStatistics:
-			return mTiData;
-		case OverallIterations:
-			return mIterations;
-		case TraceHistogramMax:
-			return mTraceHistogramMaximum;
-		case PathProgramHistogramMax:
-			return mPathProgramHistogramMaximum;
-		case BiggestAbstraction:
-			return mBiggestAbstraction;
-		case InterpolantAutomatonStates:
-			return mInterpolantAutomatonStates;
-		case InterpolantCoveringCapability:
-			return mBCI;
-		case AutomataMinimizationStatistics:
-			return mAmData;
-		case HoareAnnotationStatistics:
-			return mHoareAnnotationData;
-		case RefinementEngineStatistics:
-			return mRefinementEngineStatistics;
-		case ConComCheckerStatistics:
-			return mConComCheckerStatistics;
-		default:
-			throw new AssertionError("unknown data");
 		}
+		case HoareTripleCheckerStatistics -> mEcData;
+		case ReuseStatistics -> mReuseStats;
+		case PredicateUnifierStatistics -> mPredicateUnifierData;
+		case traceCheckStatistics -> mTcData;
+		case InterpolantConsolidationStatistics -> mInterpolantConsolidationBenchmarks;
+		case PathInvariantsStatistics -> mPathInvariantsStatistics;
+		case TotalInterpolationStatistics -> mTiData;
+		case OverallIterations -> mIterations;
+		case TraceHistogramMax -> mTraceHistogramMaximum;
+		case PathProgramHistogramMax -> mPathProgramHistogramMaximum;
+		case BiggestAbstraction -> mBiggestAbstraction;
+		case InterpolantAutomatonStates -> mInterpolantAutomatonStates;
+		case InterpolantCoveringCapability -> mBCI;
+		case AutomataMinimizationStatistics -> mAmData;
+		case HoareAnnotationStatistics -> mHoareAnnotationData;
+		case RefinementEngineStatistics -> mRefinementEngineStatistics;
+		case ConComCheckerStatistics -> mConComCheckerStatistics;
+		};
 	}
 
 	@Override

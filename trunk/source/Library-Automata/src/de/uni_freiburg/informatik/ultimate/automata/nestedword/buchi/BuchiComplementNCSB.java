@@ -46,27 +46,27 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Buchi Complementation based on the following paper: <br>
- * 2016TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing
- * Semi-deterministic Büchi Automata <br>
+ * 2016TACAS - Blahoudek,Heizmann,Schewe,Strejček,Tsai - Complementing Semi-deterministic Büchi Automata <br>
  * The "lazy S optimization" is explained in the following paper <br>
- * 2018PLDI - Chen,Heizmann,Lengál,Li,Tsai,Turrini,Zhang - Advanced
- * automata-based algorithms for program termination checking <br>
+ * 2018PLDI - Chen,Heizmann,Lengál,Li,Tsai,Turrini,Zhang - Advanced automata-based algorithms for program termination
+ * checking <br>
  * This algorithm is only sound for semi-deterministic Büchi automata.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <LETTER> letter type
- * @param <STATE>  state type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final boolean mCompareResultToLazy3Algorithm = false;
 
-
 	public BuchiComplementNCSB(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
-			final boolean lazySOptimization) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean lazySOptimization)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
@@ -103,7 +103,7 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		boolean correct = true;
 		if (mCompareResultToLazy3Algorithm) {
-			final NestedWordAutomatonReachableStates<LETTER, STATE> lazy3 = new BuchiComplementNCSBLazy3<LETTER, STATE>(mServices,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> lazy3 = new BuchiComplementNCSBLazy3<>(mServices,
 					(IBuchiComplementNcsbStateFactory<STATE>) stateFactory, mOperand).getResult();
 			final int numberOfTransitionsLazy3 = new NumberOfTransitions<>(mServices, lazy3).getResult();
 			final int numberOfTransitionsResult = new NumberOfTransitions<>(mServices, getResult()).getResult();
@@ -114,7 +114,8 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 						mOperand.size(), mResult.size(), numberOfTransitionsResult, lazy3.size(),
 						numberOfTransitionsLazy3));
 			}
-			correct &= (new NumberOfTransitions<>(mServices, lazy3).getResult().equals(new NumberOfTransitions<>(mServices, getResult()).getResult()));
+			correct &= (new NumberOfTransitions<>(mServices, lazy3).getResult()
+					.equals(new NumberOfTransitions<>(mServices, getResult()).getResult()));
 			if (!correct) {
 				throw new AssertionError(String.format(
 						"Inconsistent number of transitions. Input: %s states, output: %s states, %s transitions, lazy3: %s states, %s transitions",
@@ -138,9 +139,9 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
 		/*
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-		*/
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 * lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		 */
 		for (int i = 0; i < 11; ++i) {
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 1, i));
 			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 2, i));
@@ -157,8 +158,6 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 			assert correct;
 		}
 
-
-
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mOperand, mResult);
@@ -170,8 +169,8 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean underApproximationOfComplement)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		boolean correct;

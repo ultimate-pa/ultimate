@@ -164,14 +164,13 @@ public enum StatisticsType {
 	 */
 	DETERMINIZED_GAME_AUTOMATON_STATES,
 	/**
-	 * Number of transitions for which we checked if there are corresponding events
-	 * that have to be added to the possible extensions.
+	 * Number of transitions for which we checked if there are corresponding events that have to be added to the
+	 * possible extensions.
 	 */
 	EXTENSION_CANDIDATES_TOTAL,
 	/**
-	 * Number of transitions for which we checked if there are corresponding events
-	 * that have to be added to the possible extensions, but we could not find such
-	 * an event.
+	 * Number of transitions for which we checked if there are corresponding events that have to be added to the
+	 * possible extensions, but we could not find such an event.
 	 */
 	EXTENSION_CANDIDATES_USELESS,
 	/**
@@ -185,8 +184,8 @@ public enum StatisticsType {
 	 */
 	FAILED_TRANSREMOVE_ATTEMPTS,
 	/**
-	 * Number of comparisons between configurations where sizes and transition IDs
-	 * are not sufficient and we have to do a check based on the Foata normal form.
+	 * Number of comparisons between configurations where sizes and transition IDs are not sufficient and we have to do
+	 * a check based on the Foata normal form.
 	 */
 	FOATA_NORMAL_FORM_COMPARISONS,
 	/**
@@ -235,15 +234,13 @@ public enum StatisticsType {
 	 */
 	NUMBER_CONDITIONS,
 	/**
-	 * Number of pairs of conditions for which we checked whether they are in
-	 * co-relation while computing the unfolding of a Petri net and the response
-	 * was NO.
+	 * Number of pairs of conditions for which we checked whether they are in co-relation while computing the unfolding
+	 * of a Petri net and the response was NO.
 	 */
 	NUMBER_CO_RELATION_QUERIES_NO,
 	/**
-	 * Number of pairs of conditions for which we checked whether they are in
-	 * co-relation while computing the unfolding of a Petri net and the response
-	 * was YES.
+	 * Number of pairs of conditions for which we checked whether they are in co-relation while computing the unfolding
+	 * of a Petri net and the response was YES.
 	 */
 	NUMBER_CO_RELATION_QUERIES_YES,
 	/**
@@ -287,8 +284,8 @@ public enum StatisticsType {
 	 */
 	PETRI_ALPHABET,
 	/**
-	 * Size of the flow relation / number of edges inside a Petri net
-	 * that is used as the minuend of a difference operation.
+	 * Size of the flow relation / number of edges inside a Petri net that is used as the minuend of a difference
+	 * operation.
 	 */
 	PETRI_DIFFERENCE_MINUEND_FLOW,
 	/**
@@ -300,8 +297,8 @@ public enum StatisticsType {
 	 */
 	PETRI_DIFFERENCE_MINUEND_TRANSITIONS,
 	/**
-	 * Number of letters in subtrahend's alphabet that are
-	 * used more often to label non-self-loops than self-loops in subtrahend.
+	 * Number of letters in subtrahend's alphabet that are used more often to label non-self-loops than self-loops in
+	 * subtrahend.
 	 */
 	PETRI_DIFFERENCE_SUBTRAHEND_LETTERS_WITH_MORE_CHANGERS_THAN_LOOPERS,
 	/**
@@ -346,8 +343,8 @@ public enum StatisticsType {
 	 */
 	REMOVED_TRANSITIONS,
 	/**
-	 * Number of conditions that we used to check if the condition is a restrictor
-	 * for a given element of the flow relation.
+	 * Number of conditions that we used to check if the condition is a restrictor for a given element of the flow
+	 * relation.
 	 */
 	RESTRICTOR_CONDITION_CHECKS,
 	/**
@@ -545,7 +542,7 @@ public enum StatisticsType {
 	 */
 	TRANSITIONS_INTERNAL_OUTPUT,
 	/**
-	 * Total number of transitions  (call+internal+return).
+	 * Total number of transitions (call+internal+return).
 	 */
 	TRANSITIONS_OUTPUT,
 	/**
@@ -566,10 +563,3 @@ public enum StatisticsType {
 	TRANSITIONS_RETURN_OUTPUT,
 
 }
-
-
-
-
-
-
-

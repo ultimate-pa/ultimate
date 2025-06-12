@@ -177,7 +177,7 @@ public class ConditionalCommutativityCounterexampleChecker<L extends IAction> {
 			case UNKNOWN_CHECK:
 			case CONDITION_NOT_SATISFIED:
 				// Cache as hopeless and avoid any repeated checks.
-				mLogger.info("Commutativity condition check vielded %s. Marking as hopeless.", checkResult.getType());
+				mLogger.info("Commutativity condition check yielded %s. Marking as hopeless.", checkResult.getType());
 				mHopelessConditionChecks.add(triple);
 				break;
 

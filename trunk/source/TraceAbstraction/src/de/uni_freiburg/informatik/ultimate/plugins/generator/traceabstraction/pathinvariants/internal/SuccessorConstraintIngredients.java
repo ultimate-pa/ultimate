@@ -54,7 +54,6 @@ public class SuccessorConstraintIngredients<IPT> {
 
 	public SuccessorConstraintIngredients(final IcfgLocation sourceLocation,
 			final Set<IProgramVar> variablesForSourcePattern, final IPT invStart) {
-		super();
 		mSourceLocation = sourceLocation;
 		mVariablesForSourcePattern = variablesForSourcePattern;
 		mInvStart = invStart;
@@ -86,7 +85,7 @@ public class SuccessorConstraintIngredients<IPT> {
 	public Set<TransitionConstraintIngredients<IPT>> buildTransitionConstraintIngredients() {
 		final Set<TransitionConstraintIngredients<IPT>> result = new HashSet<>();
 		for (final Entry<IcfgEdge, IPT> entry : mEdge2TargetInv.entrySet()) {
-			result.add(new TransitionConstraintIngredients<IPT>(mInvStart, entry.getValue(), mSourceLocation,
+			result.add(new TransitionConstraintIngredients<>(mInvStart, entry.getValue(), mSourceLocation,
 					entry.getKey().getTarget(), mVariablesForSourcePattern,
 					mEdge2VariablesForTargetPattern.get(entry.getKey()), entry.getKey().getTransformula()));
 

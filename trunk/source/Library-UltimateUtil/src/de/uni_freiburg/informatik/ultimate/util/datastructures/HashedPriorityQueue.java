@@ -65,9 +65,7 @@ public class HashedPriorityQueue<E> implements Queue<E>, Set<E>, Collection<E> {
 			return null;
 		}
 		final int hash = obj.hashCode();
-		final Iterator<E> iter = mQueue.iterator();
-		while (iter.hasNext()) {
-			final E current = iter.next();
+		for (final E current : mQueue) {
 			if (current.hashCode() == hash) {
 				return current;
 			}

@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeHash
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ArrayIndexBasedCostEstimation {
-	private final MultiElementCounter<Doubleton<ArrayIndex>> mIndexDoubleton2Occurrence = new MultiElementCounter<Doubleton<ArrayIndex>>();
-	private final MultiElementCounter<TermVariable> mEliminatee2Cost = new MultiElementCounter<TermVariable>();
+	private final MultiElementCounter<Doubleton<ArrayIndex>> mIndexDoubleton2Occurrence = new MultiElementCounter<>();
+	private final MultiElementCounter<TermVariable> mEliminatee2Cost = new MultiElementCounter<>();
 	private final TreeHashRelation<Integer, TermVariable> mCost2Eliminatee;
 	private final TreeHashRelation<Integer, Doubleton<ArrayIndex>> mOccurrence2Doubletons;
 	private final int mOccurrenceMaximum;
@@ -54,8 +54,7 @@ public class ArrayIndexBasedCostEstimation {
 
 	/**
 	 * @param forbiddenVariables
-	 *            Variables that must not occur in the index entry pairs that are
-	 *            used to propose a case split
+	 *            Variables that must not occur in the index entry pairs that are used to propose a case split
 	 */
 	public ArrayIndexBasedCostEstimation(final Script script, final ArrayIndexEqualityManager aiem,
 			final Set<TermVariable> eliminatees, final Term term, final Set<TermVariable> forbiddenVariables) {
@@ -69,8 +68,8 @@ public class ArrayIndexBasedCostEstimation {
 			mProposedCaseSplitDoubleton = null;
 		} else {
 			mOccurrenceMaximum = mOccurrence2Doubletons.descendingDomain().iterator().next();
-			mProposedCaseSplitDoubleton = computeProposedCaseSplitDoubleton(aiem, forbiddenVariables, mOccurrence2Doubletons,
-					mOccurrenceMaximum);
+			mProposedCaseSplitDoubleton = computeProposedCaseSplitDoubleton(aiem, forbiddenVariables,
+					mOccurrence2Doubletons, mOccurrenceMaximum);
 		}
 	}
 
@@ -81,17 +80,17 @@ public class ArrayIndexBasedCostEstimation {
 			for (int i = 0; i < indexDoubleton.getOneElement().size(); i++) {
 				final Term entry1 = indexDoubleton.getOneElement().get(i);
 				final Term entry2 = indexDoubleton.getOtherElement().get(i);
-//				if (Collections.disjoint(forbiddenVariables, Arrays.asList(entry1.getFreeVars())) &&
-//						Collections.disjoint(forbiddenVariables, Arrays.asList(entry2.getFreeVars()))) {
-					final EqualityStatus es = aiem.checkEqualityStatus(entry1, entry2);
-					if (es == EqualityStatus.UNKNOWN) {
-						return new Doubleton<Term>(entry1, entry2);
+				// if (Collections.disjoint(forbiddenVariables, Arrays.asList(entry1.getFreeVars())) &&
+				// Collections.disjoint(forbiddenVariables, Arrays.asList(entry2.getFreeVars()))) {
+				final EqualityStatus es = aiem.checkEqualityStatus(entry1, entry2);
+				if (es == EqualityStatus.UNKNOWN) {
+					return new Doubleton<>(entry1, entry2);
 
-					}
-//				}
+				}
+				// }
 			}
 		}
-//		return null;
+		// return null;
 		throw new AssertionError("all values known");
 	}
 
@@ -116,8 +115,8 @@ public class ArrayIndexBasedCostEstimation {
 		return result;
 	}
 
-	private static TreeHashRelation<Integer, Doubleton<ArrayIndex>> computeOccurrence2Doubletons(
-			final MultiElementCounter<Doubleton<ArrayIndex>> indexDoubleton2Occurrence) {
+	private static TreeHashRelation<Integer, Doubleton<ArrayIndex>>
+			computeOccurrence2Doubletons(final MultiElementCounter<Doubleton<ArrayIndex>> indexDoubleton2Occurrence) {
 		final TreeHashRelation<Integer, Doubleton<ArrayIndex>> result = new TreeHashRelation<>();
 		for (final Doubleton<ArrayIndex> elem : indexDoubleton2Occurrence.getElements()) {
 			result.addPair(indexDoubleton2Occurrence.getNumber(elem), elem);
@@ -127,8 +126,8 @@ public class ArrayIndexBasedCostEstimation {
 
 	private void computeCostEstimation(final Script script, final ArrayIndexEqualityManager aiem, final Term term,
 			final TermVariable eliminatee) {
-		final ArrayOccurrenceAnalysis aoa = new ArrayOccurrenceAnalysis(script, term, eliminatee)
-				.downgradeDimensionsIfNecessary(script);
+		final ArrayOccurrenceAnalysis aoa =
+				new ArrayOccurrenceAnalysis(script, term, eliminatee).downgradeDimensionsIfNecessary(script);
 
 		final Set<ArrayIndex> selectIndicesIntroducedBySos = new HashSet<>();
 		final List<MultiDimensionalSelectOverNestedStore> arraySelectOverStores = aoa.getArraySelectOverStores();
@@ -150,22 +149,20 @@ public class ArrayIndexBasedCostEstimation {
 				final ArrayIndex indexJ = selectIndicesAsList.get(j);
 				final int costForPair = analyzeCosts(aiem, indexI, indexJ);
 				if (costForPair != 0) {
-					mIndexDoubleton2Occurrence.increment(new Doubleton<ArrayIndex>(indexI, indexJ), costForPair);
+					mIndexDoubleton2Occurrence.increment(new Doubleton<>(indexI, indexJ), costForPair);
 					mEliminatee2Cost.increment(eliminatee, costForPair);
 				}
 
 			}
 		}
-		final Set<ArrayIndex> storeIndices = ArrayOccurrenceAnalysis
-				.extractNestedStoreIndices(aoa.getNestedArrayStores());
+		final Set<ArrayIndex> storeIndices =
+				ArrayOccurrenceAnalysis.extractNestedStoreIndices(aoa.getNestedArrayStores());
 		final List<ArrayIndex> storeIndicesAsList = new ArrayList<>(storeIndices);
-		for (int i = 0; i < storeIndicesAsList.size(); i++) {
-			for (int j = 0; j < selectIndicesAsList.size(); j++) {
-				final ArrayIndex indexI = storeIndicesAsList.get(i);
-				final ArrayIndex indexJ = selectIndicesAsList.get(j);
+		for (final ArrayIndex indexI : storeIndicesAsList) {
+			for (final ArrayIndex indexJ : selectIndicesAsList) {
 				final int costForPair = analyzeCosts(aiem, indexI, indexJ);
 				if (costForPair != 0) {
-					mIndexDoubleton2Occurrence.increment(new Doubleton<ArrayIndex>(indexI, indexJ), costForPair);
+					mIndexDoubleton2Occurrence.increment(new Doubleton<>(indexI, indexJ), costForPair);
 					mEliminatee2Cost.increment(eliminatee, costForPair);
 				}
 			}
@@ -195,7 +192,7 @@ public class ArrayIndexBasedCostEstimation {
 			case NOT_EQUAL:
 				break;
 			case UNKNOWN:
-				mIndexDoubleton2Occurrence.increment(new Doubleton<ArrayIndex>(selectIdx, nsi.get(i)));
+				mIndexDoubleton2Occurrence.increment(new Doubleton<>(selectIdx, nsi.get(i)));
 				break;
 			default:
 				throw new AssertionError();

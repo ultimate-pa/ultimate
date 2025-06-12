@@ -287,21 +287,21 @@ public class DebugFileWriterDietsch {
 	}
 
 	private String getLetter(int i) {
-		String rtr = "";
+		final StringBuilder rtr = new StringBuilder();
 
 		while (i > 26) {
-			rtr = rtr + "A";
+			rtr.append("A");
 			i = i - 26;
 		}
 
-		return rtr + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(i);
+		return rtr.append("ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(i)).toString();
 	}
 
 	private void writeLargerTextFile(final String aFileName, final StringBuilder sb) throws IOException {
 		final Path path = Paths.get(aFileName);
 		mLogger.debug("Writing " + path.toString());
-		final BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8);
-		writer.write(sb.toString());
-		writer.close();
+		try (final BufferedWriter writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+			writer.write(sb.toString());
+		}
 	}
 }

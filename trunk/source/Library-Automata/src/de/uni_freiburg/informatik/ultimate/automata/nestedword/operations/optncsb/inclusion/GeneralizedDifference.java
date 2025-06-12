@@ -48,8 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class GeneralizedDifference<LETTER, STATE>
-		extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class GeneralizedDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
@@ -57,8 +56,8 @@ public class GeneralizedDifference<LETTER, STATE>
 	private final ISinkStateFactory<STATE> mStateFactory;
 	private ComplementDeterministicNwa<LETTER, STATE> mSndComplemented;
 	protected AbstractGeneralizedAutomatonReachableStates<LETTER, STATE> mResult;
-	private GeneralizedBuchiIntersectNwa<LETTER, STATE> mIntersect; 
-	
+	private GeneralizedBuchiIntersectNwa<LETTER, STATE> mIntersect;
+
 	public <SF extends ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedDifference(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
@@ -81,9 +80,9 @@ public class GeneralizedDifference<LETTER, STATE>
 		}
 	}
 
-	private <SF extends IIntersectionStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void computeDifference(
-			final SF stateFactory) throws AutomataLibraryException {
-		
+	private <SF extends IIntersectionStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+			void computeDifference(final SF stateFactory) throws AutomataLibraryException {
+
 		if (hasSeveralInitialStates(mSndOperand)) {
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Subtrahend was not deterministic. Computing result with determinization.");
@@ -92,7 +91,7 @@ public class GeneralizedDifference<LETTER, STATE>
 			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory, true);
 
 			mSndComplemented = new ComplementDeterministicNwa<>(sndTotalized);
-		    mIntersect = new GeneralizedBuchiIntersectNwa<>(mFstOperand, mSndComplemented, stateFactory);
+			mIntersect = new GeneralizedBuchiIntersectNwa<>(mFstOperand, mSndComplemented, stateFactory);
 			mResult = new GeneralizedNestedWordAutomatonReachableStates<>(mServices, mIntersect);
 			if (!sndTotalized.nonDeterminismInInputDetected()) {
 				if (mLogger.isInfoEnabled()) {
@@ -107,13 +106,13 @@ public class GeneralizedDifference<LETTER, STATE>
 		// computation of Hoare annotation in Trace Abstraction is incorrect if
 		// automaton is not total
 		final boolean makeAutomatonTotal = true;
-		DeterminizeNwa<LETTER, STATE> sndDeterminized = new DeterminizeNwa<>(mServices, mSndOperand, mStateDeterminizer, mStateFactory, null,
-				makeAutomatonTotal);
+		final DeterminizeNwa<LETTER, STATE> sndDeterminized = new DeterminizeNwa<>(mServices, mSndOperand,
+				mStateDeterminizer, mStateFactory, null, makeAutomatonTotal);
 		mSndComplemented = new ComplementDeterministicNwa<>(sndDeterminized);
-	    mIntersect = new GeneralizedBuchiIntersectNwa<>(mFstOperand, mSndComplemented, stateFactory);
+		mIntersect = new GeneralizedBuchiIntersectNwa<>(mFstOperand, mSndComplemented, stateFactory);
 		mResult = new GeneralizedNestedWordAutomatonReachableStates<>(mServices, mIntersect);
 	}
-	
+
 	private boolean hasSeveralInitialStates(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		final Iterator<STATE> iterator = automaton.getInitialStates().iterator();
 		if (!iterator.hasNext()) {
@@ -134,10 +133,10 @@ public class GeneralizedDifference<LETTER, STATE>
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondComplemented() {
 		return mSndComplemented;
-	} 
+	}
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {

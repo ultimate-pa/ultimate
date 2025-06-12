@@ -64,11 +64,10 @@ public class RelevantVariables<L extends IAction> {
 	@SuppressWarnings("unchecked")
 	public RelevantVariables(final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> traceWithFormulas,
 			final ModifiableGlobalsTable modifiableGlobalsTable) {
-		super();
 		mModifiableGlobals = modifiableGlobalsTable;
 		mTraceWithFormulas = traceWithFormulas;
-		mNestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getCounterexample(),
-				new TreeMap<Integer, IPredicate>(), traceWithFormulas);
+		mNestedConstraintAnalysis =
+				new NestedConstraintAnalysis(traceWithFormulas.getCounterexample(), new TreeMap<>(), traceWithFormulas);
 		mOccurrence = new VariableOccurrence();
 		mForwardRelevantVariables = new Set[mTraceWithFormulas.getTrace().length() + 1];
 		computeForwardRelevantVariables();
@@ -342,10 +341,8 @@ public class RelevantVariables<L extends IAction> {
 					} else {
 						bnov = (IProgramNonOldVar) bv;
 					}
-					if (!mModifiableGlobals.isModifiable(bnov, proc)) {
-						if (occursBetween(bnov, startPos, endPos)) {
-							nonModifiableSet.add(bnov);
-						}
+					if (!mModifiableGlobals.isModifiable(bnov, proc) && occursBetween(bnov, startPos, endPos)) {
+						nonModifiableSet.add(bnov);
 					}
 				}
 			}
@@ -399,10 +396,8 @@ public class RelevantVariables<L extends IAction> {
 		final Iterator<IProgramVar> it = alternativeResult.iterator();
 		while (it.hasNext()) {
 			final IProgramVar bv = it.next();
-			if (bv instanceof IProgramNonOldVar) {
-				if (mModifiableGlobals.isModifiable((IProgramNonOldVar) bv, callee)) {
-					it.remove();
-				}
+			if ((bv instanceof IProgramNonOldVar) && mModifiableGlobals.isModifiable((IProgramNonOldVar) bv, callee)) {
+				it.remove();
 			}
 		}
 
@@ -446,10 +441,8 @@ public class RelevantVariables<L extends IAction> {
 
 		// add all global vars that are relevant before the return
 		for (final IProgramVar bv : returnPredRv) {
-			if (bv instanceof IProgramNonOldVar) {
-				if (!returnTF.isHavocedOut(bv) && true) {
-					result.add(bv);
-				}
+			if ((bv instanceof IProgramNonOldVar) && (!returnTF.isHavocedOut(bv) && true)) {
+				result.add(bv);
 			}
 		}
 		// add all vars that are assigned by the call
@@ -611,7 +604,7 @@ public class RelevantVariables<L extends IAction> {
 
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramVar bv : returnPredRv) {
-			if (!returnTF.getOutVars().keySet().contains(bv) && !globalVarAssignment.getAssignedVars().contains(bv)) {
+			if (!returnTF.getOutVars().containsKey(bv) && !globalVarAssignment.getAssignedVars().contains(bv)) {
 				result.add(bv);
 			}
 		}
@@ -657,13 +650,10 @@ public class RelevantVariables<L extends IAction> {
 		final ConstraintAnalysis localVarAssignmentCa = mNestedConstraintAnalysis.getLocalVarAssignment(posOfCall);
 		alternativeResult.addAll(localVarAssignmentCa.getConstraintIn());
 
-		final Set<IProgramVar> result = new HashSet<>();
-		result.addAll(localVarAssignment.getInVars().keySet());
+		final Set<IProgramVar> result = new HashSet<>(localVarAssignment.getInVars().keySet());
 		for (final IProgramVar bv : callPredRv) {
-			if (bv instanceof IProgramNonOldVar) {
-				if (!isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
-					result.add(bv);
-				}
+			if ((bv instanceof IProgramNonOldVar) && !isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
+				result.add(bv);
 			}
 		}
 
@@ -764,7 +754,6 @@ public class RelevantVariables<L extends IAction> {
 		private final Set<TermVariable> mFreeVars;
 
 		public ConstraintAnalysis(final UnmodifiableTransFormula transFormula) {
-			super();
 			mTransFormula = transFormula;
 			mFreeVars = new HashSet<>(Arrays.asList(transFormula.getFormula().getFreeVars()));
 			analyze();

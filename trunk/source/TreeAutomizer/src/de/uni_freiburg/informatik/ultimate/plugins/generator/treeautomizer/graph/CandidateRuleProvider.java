@@ -46,13 +46,10 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationC
  */
 public class CandidateRuleProvider {
 
-
-
 	private final Set<TreeAutomatonRule<HornClause, IPredicate>> mCandidateRules;
 
 	/**
-	 * Triggers computation of candidate rules.
-	 * Result can be obtained via getter method.
+	 * Triggers computation of candidate rules. Result can be obtained via getter method.
 	 *
 	 * @param originalTreeRun
 	 * @param hcSymbolsToInterpolants
@@ -66,14 +63,13 @@ public class CandidateRuleProvider {
 			for (final TreeAutomatonRule<HornClause, IPredicate> rule : originalTreeRun.getSuccessors(src)) {
 				if (rule.getDest().equals(hoareTripleChecker.getFalsePredicate())) {
 					/*
-					 * Rule of the form "... -> False"
-					 * Finding a new destination would be useless.
+					 * Rule of the form "... -> False" Finding a new destination would be useless.
 					 */
 					continue;
 				}
 				for (final IPredicate dest : originalTreeRun.getStates()) {
 					if (hoareTripleChecker.check(rule.getSource(), rule.getLetter(), dest) == Validity.VALID) {
-						mCandidateRules.add(new TreeAutomatonRule<HornClause, IPredicate>(rule.getLetter(), rule.getSource(), dest));
+						mCandidateRules.add(new TreeAutomatonRule<>(rule.getLetter(), rule.getSource(), dest));
 					}
 				}
 			}

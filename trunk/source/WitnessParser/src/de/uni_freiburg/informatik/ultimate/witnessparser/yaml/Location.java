@@ -66,7 +66,7 @@ public class Location {
 
 	@Override
 	public String toString() {
-		return "(" + mFileName + ", L" + mLine + "-" + mColumn + ")";
+		return "(L" + mLine + "-" + mColumn + ")";
 	}
 
 	@Override

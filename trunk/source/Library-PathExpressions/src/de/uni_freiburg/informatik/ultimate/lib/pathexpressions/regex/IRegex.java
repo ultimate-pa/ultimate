@@ -33,7 +33,8 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 /**
  * Used to represent regular expressions.
  *
- * @param <L> Type of letters that are used inside regex literals
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public interface IRegex<L> {
 

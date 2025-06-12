@@ -91,12 +91,10 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 	private final IUltimateServiceProvider mServices;
 
-
 	/**
 	 * prefix of heap arrays (copied from class "SFO" in C to Boogie translation)
 	 */
 	public static final String MEMORY = "#memory";
-
 
 	/**
 	 * Default constructor.
@@ -120,8 +118,8 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	public HeapSepIcfgTransformer(final ILogger logger, final IUltimateServiceProvider services,
 			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory,
-			final IcfgTransformationBacktranslator backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
+			final IcfgTransformationBacktranslator backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final IProgramNonOldVar validArray) {
 		assert logger != null;
@@ -133,7 +131,7 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		mSettings = new HeapSepSettings();
 
 		// TODO: complete, make nicer..
-//		final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
+		// final List<String> heapArrayNames = Arrays.asList("#memory_int", "memory_$Pointer$");
 		mHeapArrays = originalIcfg.getCfgSmtToolkit().getSymbolTable().getGlobals().stream()
 				.filter(pvoc -> pvoc.getGloballyUniqueId().startsWith(MEMORY)).collect(Collectors.toList());
 
@@ -147,14 +145,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	/**
 	 * Steps in the transformation:
 	 * <ul>
-	 *  <li> two options for preprocessing
-	 *   <ol>
-	 *    <li> execute the ArrayIndexExposer: transform the input Icfg into an Icfg with additional "freeze-variables"
-	 *    <li> introduce the "memloc"-array
-	 *   </ol>
-	 *  <li> run the equality analysis (VPDomain/map equality domain) on the preprocessed Icfg
-	 *  <li> compute an array partitioning according to the analysis result
-	 *  <li> transform the input Icfg into an Icfg where the arrays have been split
+	 * <li>two options for preprocessing
+	 * <ol>
+	 * <li>execute the ArrayIndexExposer: transform the input Icfg into an Icfg with additional "freeze-variables"
+	 * <li>introduce the "memloc"-array
+	 * </ol>
+	 * <li>run the equality analysis (VPDomain/map equality domain) on the preprocessed Icfg
+	 * <li>compute an array partitioning according to the analysis result
+	 * <li>transform the input Icfg into an Icfg where the arrays have been split
 	 * </ul>
 	 *
 	 * @param originalIcfg
@@ -169,20 +167,20 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 */
 	private void computeResult(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final ReplacementVarFactory replacementVarFactory,
-			final IcfgTransformationBacktranslator heapSepBacktranslationTracker,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
+			final IcfgTransformationBacktranslator heapSepBacktranslationTracker, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider,
 			final IProgramNonOldVar validArray) {
 
 		if (mSettings.isDumpPrograms()) {
-//			CFG2NestedWordAutomaton.printIcfg(mServices, originalIcfg);
+			// CFG2NestedWordAutomaton.printIcfg(mServices, originalIcfg);
 		}
 
 		final ILocationFactory<OUTLOC, OUTLOC> outToOutLocFac =
 				(ILocationFactory<OUTLOC, OUTLOC>) createIcfgLocationToIcfgLocationFactory();
 
 		final ComputeStoreInfosAndArrayGroups<INLOC> csiiaag =
-					new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays, mMgdScript);
+				new ComputeStoreInfosAndArrayGroups<>(originalIcfg, mHeapArrays, mMgdScript);
 		final MemlocArrayManager locArrayManager = csiiaag.getLocArrayManager();
 
 		/*
@@ -190,32 +188,27 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		 */
 		final IIcfg<OUTLOC> preprocessedIcfg;
 
-
 		mLogger.info("Heap separator: starting loc-array-style preprocessing");
 
 		/*
-		 * add the memloc array updates to each transition with an array update
-		 * the values the memloc array is set to are location literals, those are pairwise different by axiom
+		 * add the memloc array updates to each transition with an array update the values the memloc array is set to
+		 * are location literals, those are pairwise different by axiom
 		 */
 		final IIcfg<OUTLOC> icfgWithMemlocUpdates;
 		final Map<IcfgEdge, IcfgEdge> originalEdgeToTransformedEdgeMapping = new HashMap<>();
 		{
 			final MemlocArrayUpdaterTransformulaTransformer<INLOC, OUTLOC> mauit =
-					new MemlocArrayUpdaterTransformulaTransformer<>(
-							mServices,
-							mLogger,
-							originalIcfg.getCfgSmtToolkit(),
-							locArrayManager,
-							mHeapArrays, csiiaag.getEdgeToPositionToLocUpdateInfo());
+					new MemlocArrayUpdaterTransformulaTransformer<>(mServices, mLogger, originalIcfg.getCfgSmtToolkit(),
+							locArrayManager, mHeapArrays, csiiaag.getEdgeToPositionToLocUpdateInfo());
 
-			final IcfgTransformationBacktranslator preprocBtt = new IcfgTransformationBacktranslator(IcfgEdge.class,
-					Term.class, mLogger);
+			final IcfgTransformationBacktranslator preprocBtt =
+					new IcfgTransformationBacktranslator(IcfgEdge.class, Term.class, mLogger);
 
 			final IcfgTransformer<INLOC, OUTLOC> icgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 					preprocBtt, outLocationClass, "icfg_with_locarrays", mauit);
 
-//			originalEdgeToTransformedEdgeMapping =
-//					icgtf.getOriginalEdgeToTransformedEdgeMapping();
+			// originalEdgeToTransformedEdgeMapping =
+			// icgtf.getOriginalEdgeToTransformedEdgeMapping();
 			icfgWithMemlocUpdates = icgtf.getResult();
 
 			for (final Entry<IIcfgTransition<IcfgLocation>, IIcfgTransition<IcfgLocation>> entry : preprocBtt
@@ -225,37 +218,26 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 
 			locArrayManager.freeze();
 			mLogger.info("finished MemlocArrayUpdater");
-//			mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
-//					" location literals (each corresponds to one heap write)");
+			// mLogger.info("finished MemlocArrayUpdater, created " + mauit.getLocationLiterals().size() +
+			// " location literals (each corresponds to one heap write)");
 		}
 
-
-
-
 		/*
-		 * Add initialization code for the memloc arrays.
-		 * Each memloc array is initialized with a constant array. The value of the constant array is a memloc
-		 * literal that is different from all other memloc literals we use.
+		 * Add initialization code for the memloc arrays. Each memloc array is initialized with a constant array. The
+		 * value of the constant array is a memloc literal that is different from all other memloc literals we use.
 		 */
 		IIcfg<OUTLOC> icfgWMemlocInitialized;
 		{
 
 			final ComputeMemlocInitializingTransformula mlit =
-					new ComputeMemlocInitializingTransformula(locArrayManager, validArray, mSettings,
-							mMgdScript);
+					new ComputeMemlocInitializingTransformula(locArrayManager, validArray, mSettings, mMgdScript);
 
 			final AddInitializingEdgesIcfgTransformer<OUTLOC, OUTLOC> initTf =
-					new AddInitializingEdgesIcfgTransformer<>(mLogger,
-							icfgWithMemlocUpdates.getCfgSmtToolkit(),
-							outToOutLocFac,
-							heapSepBacktranslationTracker,
-							outLocationClass,
-							icfgWithMemlocUpdates,
-							mlit.getResult(),
-							"icfg_with_initialized_loc_arrays");
+					new AddInitializingEdgesIcfgTransformer<>(mLogger, icfgWithMemlocUpdates.getCfgSmtToolkit(),
+							outToOutLocFac, heapSepBacktranslationTracker, outLocationClass, icfgWithMemlocUpdates,
+							mlit.getResult(), "icfg_with_initialized_loc_arrays");
 
 			icfgWMemlocInitialized = initTf.getResult();
-
 
 			final Set<IProgramConst> locLiterals = new HashSet<>();
 			locLiterals.addAll(csiiaag.getLocLiterals());
@@ -265,33 +247,31 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 			{
 				equalityProvider.announceAdditionalLiterals(locLiterals);
 
-				final Set<Term> literalTerms = locLiterals.stream()
-						.map(pvoc -> pvoc.getTerm())
-						.collect(Collectors.toSet());
-				assert mSettings.isAssertFreezeVarLitDisequalitiesIntoScript() !=
-						 mSettings.isAddLiteralDisequalitiesAsAxioms() : "exactly one solution for literals in script "
-						 		+ "should be enabled";
+				final Set<Term> literalTerms =
+						locLiterals.stream().map(pvoc -> pvoc.getTerm()).collect(Collectors.toSet());
+				assert mSettings.isAssertFreezeVarLitDisequalitiesIntoScript() != mSettings
+						.isAddLiteralDisequalitiesAsAxioms()
+						: "exactly one solution for literals in script " + "should be enabled";
 				if (mSettings.isAssertFreezeVarLitDisequalitiesIntoScript()) {
 					assertLiteralDisequalitiesIntoScript(literalTerms);
 				}
 				if (mSettings.isAddLiteralDisequalitiesAsAxioms()) {
 
-					final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
-							CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(),
-									literalTerms));
-					icfgWMemlocInitialized = new AxiomsAdderIcfgTransformer<>( mLogger,
-							"icfg_with_memloc_updates_and_literal_axioms", outLocationClass,
-							icfgWithMemlocUpdates, outToOutLocFac, heapSepBacktranslationTracker, allLiteralDisequalities)
-							.getResult();
+					final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(), CongruenceClosureSmtUtils
+							.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(), literalTerms));
+					icfgWMemlocInitialized = new AxiomsAdderIcfgTransformer<>(mLogger,
+							"icfg_with_memloc_updates_and_literal_axioms", outLocationClass, icfgWithMemlocUpdates,
+							outToOutLocFac, heapSepBacktranslationTracker, allLiteralDisequalities).getResult();
 				}
 			}
 			preprocessedIcfg = icfgWMemlocInitialized;
 		}
 		mLogger.info("finished preprocessing for the equality analysis");
 
-//		mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
+		// mLogger.debug("storeIndexInfoToLocLiteral: " + DataStructureUtils.prettyPrint(storeIndexInfoToLocLiteral));
 
-//		mLogger.debug("edgeToIndexToStoreInfo: " + DataStructureUtils.prettyPrint(edgeToStoreToArrayGroupToStoreInfo));
+		// mLogger.debug("edgeToIndexToStoreInfo: " +
+		// DataStructureUtils.prettyPrint(edgeToStoreToArrayGroupToStoreInfo));
 
 		/*
 		 * 2. run the equality analysis
@@ -299,37 +279,33 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		{
 
 			/*
-			 * tracked arrays are
-			 *  - the loc arrays, because we want information about them
-			 *  - the valid array, because it is important in order for inferring that malloc always returns fresh
-			 *   (valid) values
+			 * tracked arrays are - the loc arrays, because we want information about them - the valid array, because it
+			 * is important in order for inferring that malloc always returns fresh (valid) values
 			 */
 			final List<String> trackedArraySubstrings = new ArrayList<>();
 			trackedArraySubstrings.add(MemlocArrayManager.LOC_ARRAY_PREFIX);
 			trackedArraySubstrings.add("valid");
-//			trackedArraySubstrings.add("rep");
+			// trackedArraySubstrings.add("rep");
 
 			equalityProvider.setTrackedArrays(trackedArraySubstrings);
 			equalityProvider.preprocess(preprocessedIcfg);
 			mLogger.info("finished equality analysis");
 		}
 
-
 		/*
 		 * 3a.
 		 */
-		final FindSelects findSelects = new FindSelects(mLogger, mMgdScript, mHeapArrays,
-				mStatistics, csiiaag);
+		final FindSelects findSelects = new FindSelects(mLogger, mMgdScript, mHeapArrays, mStatistics, csiiaag);
 		new IcfgEdgeIterator(originalIcfg).forEachRemaining(edge -> findSelects.processEdge(edge));
-//		new IcfgEdgeIterator(preprocessedIcfg).forEachRemaining(edge -> findSelects.processEdge(edge));
+		// new IcfgEdgeIterator(preprocessedIcfg).forEachRemaining(edge -> findSelects.processEdge(edge));
 		findSelects.finish();
 		mLogger.info("Finished detection of select terms (\"array reads\")");
-//		mLogger.info("  array groups: " + DataStructureUtils.prettyPrint(
-//				new HashSet<>(findSelects.getArrayToArrayGroup().values())));
-//		mLogger.info("  select infos: " + DataStructureUtils.prettyPrint(findSelects.getSelectInfos()));
+		// mLogger.info(" array groups: " + DataStructureUtils.prettyPrint(
+		// new HashSet<>(findSelects.getArrayToArrayGroup().values())));
+		// mLogger.info(" select infos: " + DataStructureUtils.prettyPrint(findSelects.getSelectInfos()));
 
-		final HeapPartitionManager partitionManager = new HeapPartitionManager(mLogger, mMgdScript,
-				mHeapArrays, mStatistics, locArrayManager, csiiaag);
+		final HeapPartitionManager partitionManager =
+				new HeapPartitionManager(mLogger, mMgdScript, mHeapArrays, mStatistics, locArrayManager, csiiaag);
 
 		/*
 		 * 3b. compute an array partitioning
@@ -342,29 +318,23 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		partitionManager.finish();
 
 		/*
-		 * 4. Execute the transformer that splits up the arrays according to the result from the equality analysis.
-		 *  Note that this transformation is done on the original input Icfg, not on the output of the
-		 *  ArrayIndexExposer, which we ran the equality analysis on.
+		 * 4. Execute the transformer that splits up the arrays according to the result from the equality analysis. Note
+		 * that this transformation is done on the original input Icfg, not on the output of the ArrayIndexExposer,
+		 * which we ran the equality analysis on.
 		 */
 		final PartitionProjectionTransitionTransformer<INLOC, OUTLOC> heapSeparatingTransformer =
 				new PartitionProjectionTransitionTransformer<>(mLogger,
-						partitionManager.getSelectInfoToDimensionToLocationBlock(),
-						csiiaag,
-						mHeapArrays,
-						mStatistics,
+						partitionManager.getSelectInfoToDimensionToLocationBlock(), csiiaag, mHeapArrays, mStatistics,
 						originalIcfg.getCfgSmtToolkit());
 		final IcfgTransformer<INLOC, OUTLOC> icfgtf = new IcfgTransformer<>(mLogger, originalIcfg, funLocFac,
 				heapSepBacktranslationTracker, outLocationClass, "memPartitionedIcfg", heapSeparatingTransformer);
 		mResultIcfg = icfgtf.getResult();
 	}
 
-
-
 	public void assertLiteralDisequalitiesIntoScript(final Set<Term> literalTerms) {
 		mMgdScript.lock(this);
-		final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(),
-				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
-						mMgdScript.getScript(), literalTerms));
+		final Term allLiteralDisequalities = SmtUtils.and(mMgdScript.getScript(), CongruenceClosureSmtUtils
+				.createDisequalityTermsForNonTheoryLiterals(mMgdScript.getScript(), literalTerms));
 		mMgdScript.assertTerm(this, allLiteralDisequalities);
 		mMgdScript.unlock(this);
 	}
@@ -380,12 +350,14 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 	 * @param equalityProvider
 	 * @return
 	 */
-	private IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final IcfgEdge edge, //final EdgeInfo edgeInfo,
+	private IEqualityProvidingIntermediateState getEqualityProvidingIntermediateState(final IcfgEdge edge, // final
+																											// EdgeInfo
+																											// edgeInfo,
 			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
-//		final IEqualityProvidingIntermediateState result =
-//				equalityProvider.getEqualityProvidingIntermediateState(edge);
-////				equalityProvider.getEqualityProvidingIntermediateState(edgeInfo.getEdge());
-//		return result;
+		// final IEqualityProvidingIntermediateState result =
+		// equalityProvider.getEqualityProvidingIntermediateState(edge);
+		//// equalityProvider.getEqualityProvidingIntermediateState(edgeInfo.getEdge());
+		// return result;
 		return equalityProvider.getEqualityProvidingIntermediateState(edge);
 	}
 
@@ -394,20 +366,19 @@ public class HeapSepIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends I
 		return mResultIcfg;
 	}
 
-
 	public HeapSeparatorBenchmark getStatistics() {
 		return mStatistics;
 	}
 
 	/**
-	 * (almost) a copy from IcfgTransformationObserver
-	 *  --> should probably replace this with a less ad-hoc solution some time
+	 * (almost) a copy from IcfgTransformationObserver --> should probably replace this with a less ad-hoc solution some
+	 * time
 	 *
 	 * @return
 	 */
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createIcfgLocationToIcfgLocationFactory() {
 		return (oldLocation, debugIdentifier, procedure) -> {
-				final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, procedure,
+			final BoogieIcfgLocation rtr = new BoogieIcfgLocation(debugIdentifier, procedure,
 					oldLocation.isErrorLocation(), oldLocation.getBoogieASTNode());
 			ModelUtils.copyAnnotations(oldLocation, rtr);
 			return rtr;

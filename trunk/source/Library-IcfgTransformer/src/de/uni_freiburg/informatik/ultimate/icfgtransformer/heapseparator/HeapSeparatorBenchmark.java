@@ -42,7 +42,6 @@ public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 
 	private final NestedMap2<ArrayGroup, HeapSeparatorStatistics, Number> mPerArrayInfo = new NestedMap2<>();
 
-
 	@Override
 	protected void generateColumnTitlesAndResults() {
 		if (mAlreadyGeneratedColumnTitlesAndResults) {
@@ -72,7 +71,7 @@ public class HeapSeparatorBenchmark extends BenchmarkWithCounters {
 			}
 		}
 
-//		mAlreadyGeneratedColumnTitlesAndResults = true; // done by super
+		// mAlreadyGeneratedColumnTitlesAndResults = true; // done by super
 
 	}
 

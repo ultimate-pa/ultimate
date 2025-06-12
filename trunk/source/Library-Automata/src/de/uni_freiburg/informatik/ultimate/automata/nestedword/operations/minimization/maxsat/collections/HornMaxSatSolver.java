@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann <heizmann@informatik.uni-freiburg.de>
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * the following sense. If you replace one false-assignment to a variable by a true-assignment then the resulting
  * mapping is not a valid assignment any more. There is no guarantee that this locally optimal solution does not have to
  * be a globally optimal solution (which is a solution in which the number of true-assigned variables is maximal).
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V>
  *            Kind of objects that are used as variables.
@@ -50,7 +50,7 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 */
@@ -72,7 +72,7 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		} else {
 			positiveAtoms = (V[]) new Object[] { positiveAtom };
 		}
-		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
+		final Clause<V> clause = new Clause<>(this, positiveAtoms, negativeAtoms);
 
 		if (clause.isEquivalentToTrue()) {
 			mClauses++;
@@ -109,8 +109,8 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		final Boolean result = mVariablesIrrevocablySet.get(var);
-		assert (result == null)
-				|| (!mVariablesTemporarilySet.containsKey(var)) : "Unsynchronized assignment data structures.";
+		assert (result == null) || (!mVariablesTemporarilySet.containsKey(var))
+				: "Unsynchronized assignment data structures.";
 		return result;
 	}
 
@@ -131,14 +131,14 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		assert mVariables.contains(var) : "unknown variable";
 		assert !mVariablesIrrevocablySet.containsKey(var) : "variable already set";
-//		assert checkClausesConsistent() : "clauses inconsistent";
+		// assert checkClausesConsistent() : "clauses inconsistent";
 		final Boolean oldStatus = mVariablesTemporarilySet.put(var, newStatus);
 		if (oldStatus != null) {
 			throw new IllegalArgumentException("variable already set " + var);
 		}
 		mPropagatees.remove(var);
 		reEvaluateStatusOfAllClauses(var);
-//		assert checkClausesConsistent() : "clauses inconsistent";
+		// assert checkClausesConsistent() : "clauses inconsistent";
 	}
 
 	@Override

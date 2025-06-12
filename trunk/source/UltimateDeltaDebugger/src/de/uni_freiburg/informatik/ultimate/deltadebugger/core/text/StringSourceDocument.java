@@ -34,10 +34,10 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class StringSourceDocument implements ISourceDocument {
 	private static final int TAB_WIDTH = 4;
-	
+
 	private final String mText;
 	private final AtomicReference<int[]> mLazyNewLineOffsets = new AtomicReference<>(null);
-	
+
 	/**
 	 * @param text
 	 *            Text.
@@ -45,7 +45,7 @@ public class StringSourceDocument implements ISourceDocument {
 	public StringSourceDocument(final String text) {
 		mText = Objects.requireNonNull(text);
 	}
-	
+
 	/**
 	 * @param text
 	 *            Text.
@@ -62,7 +62,7 @@ public class StringSourceDocument implements ISourceDocument {
 			offsets[i] = nextLineStart;
 		}
 	}
-	
+
 	/**
 	 * @param text
 	 *            Text.
@@ -77,7 +77,7 @@ public class StringSourceDocument implements ISourceDocument {
 			}
 		}
 	}
-	
+
 	@Override
 	public int getColumnNumber(final int offset) {
 		final int startOffset = getLineOffset(getLineNumber(offset));
@@ -86,15 +86,15 @@ public class StringSourceDocument implements ISourceDocument {
 		for (int i = startOffset; i != offset; ++i) {
 			result += mText.charAt(i) == '\t' ? TAB_WIDTH : 1;
 		}
-		
+
 		return result;
 	}
-	
+
 	@Override
 	public int getLength() {
 		return mText.length();
 	}
-	
+
 	@Override
 	public int getLineNumber(final int offset) {
 		final int index = Arrays.binarySearch(getNewLineOffsets(), offset);
@@ -103,7 +103,7 @@ public class StringSourceDocument implements ISourceDocument {
 		}
 		return index + 1;
 	}
-	
+
 	@Override
 	public int getLineOffset(final int lineNumber) {
 		final int[] newLineOffsets = getNewLineOffsets();
@@ -112,7 +112,7 @@ public class StringSourceDocument implements ISourceDocument {
 		}
 		return lineNumber == 1 ? 0 : (newLineOffsets[lineNumber - 2] + 1);
 	}
-	
+
 	protected int[] getNewLineOffsets() {
 		int[] newLineOffsets = mLazyNewLineOffsets.get();
 		if (newLineOffsets == null) {
@@ -121,34 +121,34 @@ public class StringSourceDocument implements ISourceDocument {
 		}
 		return newLineOffsets;
 	}
-	
+
 	@Override
 	public int getNumberOfLines() {
 		return getNewLineOffsets().length + 1;
 	}
-	
+
 	@Override
 	public String getText() {
 		return mText;
 	}
-	
+
 	@Override
 	public String getText(final int offset, final int endOffset) {
 		return mText.substring(offset, endOffset);
 	}
-	
+
 	@Override
 	public String getText(final ISourceRange location) {
 		return getText(location.offset(), location.endOffset());
 	}
-	
+
 	@Override
 	public ISourceRange newSourceRange(final int offset, final int endOffset) {
 		if (offset < 0 || offset > endOffset || endOffset > mText.length()) {
 			throw new IndexOutOfBoundsException(
 					"offset = " + offset + ", endOffset = " + endOffset + ", getLength() = " + getLength());
 		}
-		
+
 		// Create an object with a more useful toString() for easier debugging
 		return new SourceRange(offset, endOffset);
 	}
@@ -160,7 +160,7 @@ public class StringSourceDocument implements ISourceDocument {
 		SourceRange(final int offset, final int endOffset) {
 			super(offset, endOffset);
 		}
-		
+
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();

@@ -100,5 +100,4 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	// .computeTermVarsProc(term, csToolkit.getBoogie2Smt()));
 	// }
 
-
 }

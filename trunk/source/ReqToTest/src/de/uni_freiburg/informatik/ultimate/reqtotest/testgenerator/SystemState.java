@@ -12,37 +12,37 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class SystemState extends ProgramState<Expression> {
-	
-	private final float mTime;
-	private final Map<String,  Collection<Expression>> mIdentToValues = new HashMap<>();
 
-	public SystemState(Map<Expression, Collection<Expression>> variable2Values, float time) {
+	private final float mTime;
+	private final Map<String, Collection<Expression>> mIdentToValues = new HashMap<>();
+
+	public SystemState(final Map<Expression, Collection<Expression>> variable2Values, final float time) {
 		super(variable2Values, Expression.class);
 		mTime = time;
-		for(Expression v : variable2Values.keySet()) {
-			mIdentToValues.put(((IdentifierExpression)v).getIdentifier(), variable2Values.get(v));
+		for (final Expression v : variable2Values.keySet()) {
+			mIdentToValues.put(((IdentifierExpression) v).getIdentifier(), variable2Values.get(v));
 		}
 	}
-	
-	public Collection<Expression> getValues(String ident){
+
+	public Collection<Expression> getValues(final String ident) {
 		return mIdentToValues.get(ident);
 	}
-	
+
 	public float getTimeStep() {
 		return mTime;
 	}
-	
-	public String getVarSetToValueSet(Set<TermVariable> varSet) {
-		StringBuilder sb = new StringBuilder();
-		for(TermVariable var: varSet) {
+
+	public String getVarSetToValueSet(final Set<TermVariable> varSet) {
+		final StringBuilder sb = new StringBuilder();
+		for (final TermVariable var : varSet) {
 			sb.append(String.format(var.getName()));
 			sb.append(" := ");
-			for(Expression expr: getValues(var.getName())){
+			for (final Expression expr : getValues(var.getName())) {
 				sb.append(BoogiePrettyPrinter.print(expr));
 			}
 			sb.append(", ");
 		}
 		return sb.toString();
 	}
-	
+
 }

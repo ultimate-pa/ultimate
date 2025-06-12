@@ -59,7 +59,7 @@ public final class ASTNodeUtils {
 	private ASTNodeUtils() {
 		// utility class
 	}
-	
+
 	/**
 	 * @param astNode
 	 *            AST node.
@@ -79,7 +79,7 @@ public final class ASTNodeUtils {
 		}
 		return new IASTNode[0];
 	}
-	
+
 	/**
 	 * @param astNode
 	 *            AST node.
@@ -99,7 +99,7 @@ public final class ASTNodeUtils {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * @param node
 	 *            AST node.
@@ -110,7 +110,7 @@ public final class ASTNodeUtils {
 				|| node instanceof IASTPreprocessorIfndefStatement || node instanceof IASTPreprocessorElseStatement
 				|| node instanceof IASTPreprocessorElifStatement || node instanceof IASTPreprocessorEndifStatement;
 	}
-	
+
 	/**
 	 * @param node
 	 *            AST node.
@@ -128,10 +128,10 @@ public final class ASTNodeUtils {
 		} else if (node instanceof IASTPreprocessorElifStatement) {
 			return ((IASTPreprocessorElifStatement) node).taken();
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * @param simpleDeclaration
 	 *            AST simple declaration.
@@ -140,7 +140,7 @@ public final class ASTNodeUtils {
 	public static boolean hasReferences(final IASTSimpleDeclaration simpleDeclaration) {
 		return Arrays.stream(simpleDeclaration.getDeclarators()).anyMatch(ASTNodeUtils::hasReferences);
 	}
-	
+
 	/**
 	 * @param functionDefinition
 	 *            AST function definition.
@@ -149,7 +149,7 @@ public final class ASTNodeUtils {
 	public static boolean hasReferences(final IASTFunctionDefinition functionDefinition) {
 		return hasReferences(functionDefinition.getDeclarator());
 	}
-	
+
 	/**
 	 * @param macroDefintion
 	 *            AST macro definition.
@@ -159,7 +159,7 @@ public final class ASTNodeUtils {
 		final IASTName astName = macroDefintion.getName();
 		return astName != null && hasReferences(astName);
 	}
-	
+
 	/**
 	 * @param declarator
 	 *            AST declarator.
@@ -179,7 +179,7 @@ public final class ASTNodeUtils {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @param astName
 	 *            AST name.
@@ -190,8 +190,8 @@ public final class ASTNodeUtils {
 		final IASTName[] names = astName.getTranslationUnit().getReferences(binding);
 		return names.length != 0;
 	}
-	
-	public static boolean isFunctionPrototype(IASTSimpleDeclaration declaration) {
+
+	public static boolean isFunctionPrototype(final IASTSimpleDeclaration declaration) {
 		final IASTDeclSpecifier declSpecifier = declaration.getDeclSpecifier();
 		if (declSpecifier.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
 			return false;
@@ -217,12 +217,12 @@ public final class ASTNodeUtils {
 		return false;
 	}
 
-	public static boolean isTypedef(IASTSimpleDeclaration declaration) {
+	public static boolean isTypedef(final IASTSimpleDeclaration declaration) {
 		final IASTDeclSpecifier declSpecifier = declaration.getDeclSpecifier();
 		return declSpecifier.getStorageClass() == IASTDeclSpecifier.sc_typedef;
 	}
 
-	public static IASTName getNestedDeclaratorName(IASTDeclarator declarator) {
+	public static IASTName getNestedDeclaratorName(final IASTDeclarator declarator) {
 		IASTDeclarator current = declarator;
 		while (current.getNestedDeclarator() != null) {
 			current = current.getNestedDeclarator();
@@ -232,7 +232,7 @@ public final class ASTNodeUtils {
 
 	public static List<Integer> getRequiredDeclSpecifierTokens(final IASTDeclSpecifier declSpecifier) {
 		final List<Integer> requiredTokens = new ArrayList<>();
-		int storageClass = declSpecifier.getStorageClass();
+		final int storageClass = declSpecifier.getStorageClass();
 		switch (storageClass) {
 		case IASTDeclSpecifier.sc_typedef:
 			requiredTokens.add(IToken.t_typedef);

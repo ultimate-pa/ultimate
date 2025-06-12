@@ -304,7 +304,6 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 		private final Map<Term, Term> mBacktranslation;
 
 		public VariableTranslation(final String varSuffix) {
-			super();
 			mVarSuffix = varSuffix;
 			mBacktranslation = new HashMap<>();
 			mILocalProgramVarCC = new ConstructionCache<>(new IValueConstruction<ILocalProgramVar, ILocalProgramVar>() {
@@ -338,20 +337,14 @@ public final class BvToIntTransformulaTransformer implements ITransformulaTransf
 						}
 
 					});
-			mIProgramConstCC = new ConstructionCache<IProgramConst, IProgramConst>(
-					new IValueConstruction<IProgramConst, IProgramConst>() {
-
-						@Override
-						public IProgramConst constructValue(final IProgramConst oldPv) {
-							final String newIdentifier = oldPv.getIdentifier() + mVarSuffix;
-							final Sort newSort = mSortTranslation.apply(oldPv.getSort());
-							mMgdScript.declareFun(null, newIdentifier, new Sort[0], newSort);
-							final ApplicationTerm newSmtConstant =
-									(ApplicationTerm) mMgdScript.term(null, newIdentifier);
-							mBacktranslation.put(newSmtConstant, oldPv.getDefaultConstant());
-							return new ProgramConst(newIdentifier, newSmtConstant, false);
-						}
-					});
+			mIProgramConstCC = new ConstructionCache<>(oldPv -> {
+				final String newIdentifier = oldPv.getIdentifier() + mVarSuffix;
+				final Sort newSort = mSortTranslation.apply(oldPv.getSort());
+				mMgdScript.declareFun(null, newIdentifier, new Sort[0], newSort);
+				final ApplicationTerm newSmtConstant = (ApplicationTerm) mMgdScript.term(null, newIdentifier);
+				mBacktranslation.put(newSmtConstant, oldPv.getDefaultConstant());
+				return new ProgramConst(newIdentifier, newSmtConstant, false);
+			});
 		}
 
 		public ILocalProgramVar getOrConstruct(final ILocalProgramVar key) {

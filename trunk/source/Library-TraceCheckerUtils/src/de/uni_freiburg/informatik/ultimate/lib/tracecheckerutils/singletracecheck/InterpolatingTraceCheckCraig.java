@@ -295,8 +295,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 				mSimplificationTechnique, mPrecondition, mPostcondition);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
-				mLogger) : "invalid Hoare triple in tree interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger)
+				: "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
 
@@ -316,8 +316,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		}
 
 		final List<Integer> outerNonPendingCallPositions = computeOutermostNonPendingCallPosition(mTrace);
-		final Set<Integer> skippedInnerProcedurePositions = computeSkippedInnerProcedurePositions(mTrace,
-				outerNonPendingCallPositions);
+		final Set<Integer> skippedInnerProcedurePositions =
+				computeSkippedInnerProcedurePositions(mTrace, outerNonPendingCallPositions);
 
 		final NestedInterpolantsBuilder<L> nib = new NestedInterpolantsBuilder<>(mTcSmtManager, mTraceCheckLock,
 				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
@@ -402,8 +402,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 		}
 
 		assert TraceCheckUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace, mPrecondition,
-				mPostcondition, mPendingContexts, "Craig", mCsToolkit,
-				mLogger) : "invalid Hoare triple in nested interpolants";
+				mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger)
+				: "invalid Hoare triple in nested interpolants";
 	}
 
 	private static <L> List<Integer> computeOutermostNonPendingCallPosition(final NestedWord<L> trace) {
@@ -422,9 +422,8 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 	}
 
 	/**
-	 * Positions where we want to omit the computation of interpolants because we
-	 * compute the interpolant later in a recursive interpolation call. We include
-	 * the position of the call (no interpolant after the call) and exclude the
+	 * Positions where we want to omit the computation of interpolants because we compute the interpolant later in a
+	 * recursive interpolation call. We include the position of the call (no interpolant after the call) and exclude the
 	 * position of the return (we want interpolant directly after return).
 	 */
 	private static <L> Set<Integer> computeSkippedInnerProcedurePositions(final NestedWord<L> trace,

@@ -104,7 +104,7 @@ public class IcfgPetrifier {
 		ProcedureMultiplier.duplicateProcedures(mServices, mPetrifiedIcfg, instances, mBacktranslator,
 				threadInstanceMap, forks, joins);
 		fillErrorNodeMap(threadInstanceMap.keySet(), inUseErrorNodeMap);
-		inUseErrorNodeMap.values().forEach(x -> mPetrifiedIcfg.addLocation(x, false, true, false, false, false));
+		inUseErrorNodeMap.values().forEach(x -> mPetrifiedIcfg.addLocation(x, false, true, false, false, false, false));
 		adder.connectThreadInstances(mPetrifiedIcfg, forks, joins, threadInstanceMap, inUseErrorNodeMap,
 				mBacktranslator);
 

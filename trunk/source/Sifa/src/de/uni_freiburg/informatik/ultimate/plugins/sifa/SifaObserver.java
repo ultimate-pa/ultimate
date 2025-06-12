@@ -114,12 +114,13 @@ public class SifaObserver extends BaseObserver {
 		if (predEqBottom.isTrueForAbstraction()) {
 			result = new PositiveResult<>(Activator.PLUGIN_ID, loiPred.getKey(), mServices.getBacktranslationService());
 		} else {
-			String msg = "Over-approximation of reachable states at this location is " + loiPred.getValue();
+			final StringBuilder msg = new StringBuilder("Over-approximation of reachable states at this location is ")
+					.append(loiPred.getValue());
 			if (predEqBottom.wasAbstracted()) {
-				msg += "\nFinal emptiness check over-approximated again to " + predEqBottom.getLhs();
+				msg.append("\nFinal emptiness check over-approximated again to ").append(predEqBottom.getLhs());
 			}
 			result = new UnprovableResult<>(Activator.PLUGIN_ID, loiPred.getKey(),
-					mServices.getBacktranslationService(), IcfgProgramExecution.create(IcfgEdge.class), msg);
+					mServices.getBacktranslationService(), IcfgProgramExecution.create(IcfgEdge.class), msg.toString());
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		return predEqBottom.isTrueForAbstraction();

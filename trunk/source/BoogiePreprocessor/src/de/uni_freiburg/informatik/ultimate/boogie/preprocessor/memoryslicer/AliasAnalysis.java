@@ -95,7 +95,6 @@ public class AliasAnalysis {
 	private final HashRelation<String, PointerBase> mProcedureToWritePointers = new HashRelation<>();
 
 	public AliasAnalysis(final AddressStoreFactory asfac, final Map<String, Procedure> map) {
-		super();
 		mAsfac = asfac;
 		mWriteAddresses = new HashSet<>();
 		mAccessAddresses = new HashSet<>();
@@ -141,39 +140,39 @@ public class AliasAnalysis {
 
 	private void processStatementList(final MayAlias ma, final Statement[] sts) {
 		for (final Statement st : sts) {
-			if (st instanceof GotoStatement) {
+			switch (st) {
+			case final GotoStatement gotoStmt -> {
 				// do nothing
-			} else if (st instanceof Label) {
+			}
+			case final Label label -> {
 				// do nothing
-			} else if (st instanceof CallStatement) {
-				processCallStatement(ma, (CallStatement) st);
-			} else if (st instanceof AssignmentStatement) {
-				processAssignmentStatement(ma, (AssignmentStatement) st);
-			} else if (st instanceof AssumeStatement) {
-				processAssumeStatement(ma, (AssumeStatement) st);
-			} else if (st instanceof AssertStatement) {
-				processAssertStatement(ma, (AssertStatement) st);
-			} else if (st instanceof HavocStatement) {
+			}
+			case final HavocStatement havocStmt -> {
 				// do nothing
-			} else if (st instanceof ReturnStatement) {
+			}
+			case final ReturnStatement returnStmt -> {
 				// do nothing
-			} else if (st instanceof BreakStatement) {
+			}
+			case final BreakStatement breakStmt -> {
 				// do nothing
-			} else if (st instanceof IfStatement) {
-				analyzeExpression(ma, ((IfStatement) st).getCondition());
-				processStatementList(ma, ((IfStatement) st).getThenPart());
-				processStatementList(ma, ((IfStatement) st).getElsePart());
-			} else if (st instanceof WhileStatement) {
-				analyzeExpression(ma, ((WhileStatement) st).getCondition());
-				processStatementList(ma, ((WhileStatement) st).getBody());
-			} else if (st instanceof ForkStatement) {
-				processForkStatement(ma, (ForkStatement) st);
-			} else if (st instanceof JoinStatement) {
-				processJoinStatement(ma, (JoinStatement) st);
-			} else if (st instanceof AtomicStatement) {
-				processStatementList(ma, ((AtomicStatement) st).getBody());
-			} else {
-				throw new MemorySliceException("Unsuppored " + st);
+			}
+
+			case final CallStatement call -> processCallStatement(ma, call);
+			case final AssignmentStatement assignStmt -> processAssignmentStatement(ma, assignStmt);
+			case final AssumeStatement assumeStmt -> processAssumeStatement(ma, assumeStmt);
+			case final AssertStatement assertStmt -> processAssertStatement(ma, assertStmt);
+			case final IfStatement ifStmt -> {
+				analyzeExpression(ma, ifStmt.getCondition());
+				processStatementList(ma, ifStmt.getThenPart());
+				processStatementList(ma, ifStmt.getElsePart());
+			}
+			case final WhileStatement whileStmt -> {
+				analyzeExpression(ma, whileStmt.getCondition());
+				processStatementList(ma, whileStmt.getBody());
+			}
+			case final ForkStatement fork -> processForkStatement(ma, fork);
+			case final JoinStatement join -> processJoinStatement(ma, join);
+			case final AtomicStatement atomicStmt -> processStatementList(ma, atomicStmt.getBody());
 			}
 		}
 	}
@@ -182,28 +181,26 @@ public class AliasAnalysis {
 		for (final Expression arg : st.getThreadID()) {
 			analyzeExpression(ma, arg);
 		}
-		if (st.getLhs().length != 0) {
-			if (isPointerType(st.getLhs()[0].getType())) {
-				final PointerBase returnOfJoin = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
-				ma.addPointerBase(mAsfac, returnOfJoin);
-				// return value of join could potentially alias with the return values of all
-				// procedures that have matching out params (one outParam which is a pointer)
-				for (final Entry<String, Procedure> entry : mProcedureToImplementation.entrySet()) {
-					final Procedure proc = entry.getValue();
-					final VarList[] outParams = proc.getOutParams();
-					if (outParams.length == 1) {
-						final VarList outParam = outParams[0];
-						if (isPointerType(outParam.getType().getBoogieType())) {
-							final StorageClass sc;
-							if (proc.getSpecification() == null) {
-								sc = StorageClass.IMPLEMENTATION_OUTPARAM;
-							} else {
-								sc = StorageClass.PROC_FUNC_OUTPARAM;
-							}
-							final PointerBase outParamPointer = extractPointerBaseFromVarlist(mAsfac, outParam,
-									new DeclarationInformation(sc, proc.getIdentifier()));
-							ma.reportEquivalence(mAsfac, returnOfJoin, outParamPointer);
+		if ((st.getLhs().length != 0) && isPointerType(st.getLhs()[0].getType())) {
+			final PointerBase returnOfJoin = extractPointerBaseFromVariableLhs(mAsfac, st.getLhs()[0]);
+			ma.addPointerBase(mAsfac, returnOfJoin);
+			// return value of join could potentially alias with the return values of all
+			// procedures that have matching out params (one outParam which is a pointer)
+			for (final Entry<String, Procedure> entry : mProcedureToImplementation.entrySet()) {
+				final Procedure proc = entry.getValue();
+				final VarList[] outParams = proc.getOutParams();
+				if (outParams.length == 1) {
+					final VarList outParam = outParams[0];
+					if (isPointerType(outParam.getType().getBoogieType())) {
+						final StorageClass sc;
+						if (proc.getSpecification() == null) {
+							sc = StorageClass.IMPLEMENTATION_OUTPARAM;
+						} else {
+							sc = StorageClass.PROC_FUNC_OUTPARAM;
 						}
+						final PointerBase outParamPointer = extractPointerBaseFromVarlist(mAsfac, outParam,
+								new DeclarationInformation(sc, proc.getIdentifier()));
+						ma.reportEquivalence(mAsfac, returnOfJoin, outParamPointer);
 					}
 				}
 			}
@@ -372,8 +369,7 @@ public class AliasAnalysis {
 			final IfThenElseExpression ite = (IfThenElseExpression) unzipped;
 			final List<PointerBase> res1 = extractPointerBasesFromPointer(mAsfac, ite.getThenPart());
 			final List<PointerBase> res2 = extractPointerBasesFromPointer(mAsfac, ite.getElsePart());
-			final List<PointerBase> result = new ArrayList<>();
-			result.addAll(res1);
+			final List<PointerBase> result = new ArrayList<>(res1);
 			result.addAll(res2);
 			return result;
 		} else {
@@ -443,10 +439,9 @@ public class AliasAnalysis {
 		}
 		if (realType instanceof BoogieStructType) {
 			final BoogieStructType bst = (BoogieStructType) realType;
-			if (bst.getFieldCount() == 2) {
-				if (bst.getFieldIds()[0].equals("base") && bst.getFieldIds()[1].equals("offset")) {
-					return true;
-				}
+			if ((bst.getFieldCount() == 2)
+					&& (bst.getFieldIds()[0].equals("base") && bst.getFieldIds()[1].equals("offset"))) {
+				return true;
 			}
 		}
 		return false;
@@ -598,15 +593,15 @@ public class AliasAnalysis {
 			}
 		} else {
 			// do nothing
-//			throw new MemorySliceException("unsupported method " + st.getMethodName());
+			// throw new MemorySliceException("unsupported method " + st.getMethodName());
 		}
 	}
 
 	private PointerBase extractPointerBaseFromVariableLhs(final AddressStoreFactory asfac,
 			final VariableLHS variableLHS) {
 		assert (isPointerType(variableLHS.getType()));
-		final PointerBase pb = mAsfac.getPointerBase(variableLHS.getIdentifier(),
-				variableLHS.getDeclarationInformation());
+		final PointerBase pb =
+				mAsfac.getPointerBase(variableLHS.getIdentifier(), variableLHS.getDeclarationInformation());
 		return pb;
 	}
 
@@ -633,14 +628,12 @@ public class AliasAnalysis {
 
 		@Override
 		protected void visit(final BinaryExpression expr) {
-			if (expr.getOperator() == BinaryExpression.Operator.COMPEQ) {
-				if (isPointerType(expr.getLeft().getType())) {
-					final List<PointerBase> left = extractPointerBasesFromPointer(mAsfac, expr.getLeft());
-					final List<PointerBase> right = extractPointerBasesFromPointer(mAsfac, expr.getRight());
-					for (final PointerBase l : left) {
-						for (final PointerBase r : right) {
-							mMa.reportEquivalence(mAsfac, l, r);
-						}
+			if ((expr.getOperator() == BinaryExpression.Operator.COMPEQ) && isPointerType(expr.getLeft().getType())) {
+				final List<PointerBase> left = extractPointerBasesFromPointer(mAsfac, expr.getLeft());
+				final List<PointerBase> right = extractPointerBasesFromPointer(mAsfac, expr.getRight());
+				for (final PointerBase l : left) {
+					for (final PointerBase r : right) {
+						mMa.reportEquivalence(mAsfac, l, r);
 					}
 				}
 			}

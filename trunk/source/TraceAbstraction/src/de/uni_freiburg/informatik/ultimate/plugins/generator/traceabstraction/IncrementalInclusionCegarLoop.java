@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -99,85 +98,40 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 	@Override
 	protected void initialize() throws AutomataLibraryException {
 		super.initialize();
-		switch (mLanguageOperation) {
-		case DIFFERENCE:
-			throw new AssertionError("wrong cegar loop for this");
-		case INCREMENTAL_INCLUSION_VIA_DIFFERENCE: {
-			mInclusionCheck = new InclusionViaDifference<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mPredicateFactoryInterpolantAutomata, mAbstraction);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_2: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck2<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemoval<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<>(
-					new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<>(
-					new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS_MULTIPLECE: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck =
-					new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<>(
-							new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction,
-							empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_3: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck3<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_3_2: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck3_2<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_4: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck4<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_4_2: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck4_2<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_5: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck5<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		case INCREMENTAL_INCLUSION_5_2: {
-			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> empty = Collections.emptyList();
-			mInclusionCheck = new IncrementalInclusionCheck5_2<>(new AutomataLibraryServices(getServices()),
-					mStateFactoryForRefinement, mAbstraction, empty);
-		}
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		mInclusionCheck = switch (mLanguageOperation) {
+		case DIFFERENCE -> throw new AssertionError("wrong cegar loop for this");
+		case INCREMENTAL_INCLUSION_VIA_DIFFERENCE ->
+				new InclusionViaDifference<>(new AutomataLibraryServices(getServices()), mStateFactoryForRefinement,
+						mPredicateFactoryInterpolantAutomata, mAbstraction);
+		case INCREMENTAL_INCLUSION_2 -> new IncrementalInclusionCheck2<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE ->
+				new IncrementalInclusionCheck2DeadEndRemoval<>(new AutomataLibraryServices(getServices()),
+						mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN ->
+				new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<>(new AutomataLibraryServices(getServices()),
+						mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS ->
+				new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<>(
+						new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction,
+						Collections.emptyList());
+		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS_MULTIPLECE ->
+				new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<>(
+						new AutomataLibraryServices(getServices()), mStateFactoryForRefinement, mAbstraction,
+						Collections.emptyList());
+		case INCREMENTAL_INCLUSION_3 -> new IncrementalInclusionCheck3<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_3_2 -> new IncrementalInclusionCheck3_2<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_4 -> new IncrementalInclusionCheck4<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_4_2 -> new IncrementalInclusionCheck4_2<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_5 -> new IncrementalInclusionCheck5<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		case INCREMENTAL_INCLUSION_5_2 -> new IncrementalInclusionCheck5_2<>(new AutomataLibraryServices(getServices()),
+				mStateFactoryForRefinement, mAbstraction, Collections.emptyList());
+		};
 	}
 
 	@Override
@@ -249,7 +203,7 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			case NO_SECOND_CHANCE:
 			case EAGER_CONSERVATIVE: {
 				final boolean conservativeSuccessorCandidateSelection =
-						mPref.interpolantAutomatonEnhancement() == mPref.interpolantAutomatonEnhancement();
+						mPref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
 				final boolean secondChance =
 						mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 				final NondeterministicInterpolantAutomaton<L> nondet =
@@ -300,11 +254,10 @@ public class IncrementalInclusionCegarLoop<L extends IIcfgTransition<?>> extends
 			ia.switchToReadonlyMode();
 		}
 		if (mPref.dumpAutomata()) {
-			for (int i = 0; i < mInterpolantAutomata.size(); i++) {
+			for (final AbstractInterpolantAutomaton<L> element : mInterpolantAutomata) {
 				final String filename =
 						"EnhancedInterpolantAutomaton_WhoseConstructionWasStartedIn_Iteration" + getIteration();
-				super.writeAutomatonToFile(mInterpolantAutomata.get(i), filename);
-				mInterpolantAutomata.get(i);
+				super.writeAutomatonToFile(element, filename);
 			}
 		}
 	}

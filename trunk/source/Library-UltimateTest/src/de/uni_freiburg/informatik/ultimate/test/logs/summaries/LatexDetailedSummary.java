@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -176,12 +177,9 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			final PartitionedResults resultsPerFolder =
-					partitionResults(
-							results.All.stream()
-									.filter(entry -> Arrays.stream(entry.getKey().getInput())
-											.anyMatch(a -> a.getParent().endsWith(suffix)))
-									.collect(Collectors.toList()));
+			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
+					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
+					.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size(), additionalTableHeaders);
 		}
@@ -272,7 +270,7 @@ public class LatexDetailedSummary extends LatexSummary {
 		final List<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
 				.filter(a -> files.contains(a.getKey().getInputFileNames())).collect(Collectors.toList());
 
-		Collections.sort(results, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+		Collections.sort(results, Comparator.comparing(Entry<UltimateRunDefinition, ExtendedResult>::getKey));
 
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final String sep = " & ";

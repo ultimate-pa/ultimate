@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctLiteralWideningOperator implements IAbstractStateBinaryOperator<OctDomainState>, WideningStepSupplier {
-	
+
 	/**
 	 * Widening steps.
 	 * <p>
@@ -67,19 +67,19 @@ public class OctLiteralWideningOperator implements IAbstractStateBinaryOperator<
 	public OctLiteralWideningOperator(final Collection<BigDecimal> numberLiterals) {
 		wideningSteps = new TreeSet<>(); // removes duplicates using method "compareTo"
 		for (final BigDecimal literal : numberLiterals) {
-			
+
 			final BigDecimal literal2 = literal.add(literal); // literal * 2, since octagons store interval bounds * 2
-			
+
 			wideningSteps.add(new OctValue(literal));
 			wideningSteps.add(new OctValue(literal2));
-			
+
 			// negative literals are usually represented as UnaryExpression[ARITHNEG,<literal>]
 			// => negation signs get lost during literal collection
 			wideningSteps.add(new OctValue(literal.negate()));
 			wideningSteps.add(new OctValue(literal2.negate()));
 		}
 	}
-	
+
 	@Override
 	public OctValue nextWideningStep(final OctValue val) {
 		final OctValue ceil = wideningSteps.ceiling(val);
@@ -90,5 +90,5 @@ public class OctLiteralWideningOperator implements IAbstractStateBinaryOperator<
 	public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 		return first.widen(second, (m, n) -> m.widenStepwise(n, this));
 	}
-	
+
 }

@@ -592,8 +592,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE>, ACTION, VARDECL
 			final ACTION currentAction, final DisjunctiveAbstractState<STATE> pendingPostState) {
 		final LOC target = mTransitionProvider.getTarget(currentAction);
 		final DisjunctiveAbstractState<STATE> oldPostState = currentStateStorage.getAbstractState(target);
-		assert oldPostState == null || Objects.equals(pendingPostState.getVariables(),
-				oldPostState.getVariables()) : "States in the same scope have different variables";
+		assert oldPostState == null || Objects.equals(pendingPostState.getVariables(), oldPostState.getVariables())
+				: "States in the same scope have different variables";
 		if (pendingPostState == oldPostState || pendingPostState.isSubsetOf(oldPostState) != SubsetResult.NONE) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessagePostIsSubsumed(pendingPostState, oldPostState));

@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 /*
  * Author: Matthias Heizmann
  * Date: 2022-09-24

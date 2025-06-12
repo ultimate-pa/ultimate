@@ -61,7 +61,6 @@ public class IcfgProgramExecutionBuilder<L extends IAction> {
 	@SuppressWarnings("unchecked")
 	public IcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable, final NestedWord<L> trace,
 			final RelevantVariables<L> relevantVariables) {
-		super();
 		mModifiableGlobalVariableManager = modifiableGlobalsTable;
 		mTrace = trace;
 		mVar2Pos2Value = new HashMap<>();

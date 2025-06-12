@@ -4,22 +4,22 @@
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -57,17 +57,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
-	/*_______________________________________________________________________*\
-	\* FIELDS / ATTRIBUTES                                                   */
+	/*
+	 * _______________________________________________________________________*\ \* FIELDS / ATTRIBUTES
+	 */
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final boolean mIsDeterministic;
 
-	/*_______________________________________________________________________*\
-	\* CONSTRUCTORS                                                          */
+	/*
+	 * _______________________________________________________________________*\ \* CONSTRUCTORS
+	 */
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -86,8 +88,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		mIsDeterministic = isDeterministic();
 		startMessageDebug();
 
-		final ArrayList<STATE> states = new ArrayList<>();
-		states.addAll(mOperand.getStates());
+		final ArrayList<STATE> states = new ArrayList<>(mOperand.getStates());
 		final boolean[][] table = initializeTable(states);
 		calculateTable(states, table);
 
@@ -100,8 +101,9 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		printExitMessage();
 	}
 
-	/*_______________________________________________________________________*\
-	\* METHODS                                                               */
+	/*
+	 * _______________________________________________________________________*\ \* METHODS
+	 */
 
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
@@ -116,7 +118,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Calculate, where in the table to set markers.
-	 * 
+	 *
 	 * @param states
 	 *            the states
 	 * @param alphabet
@@ -165,7 +167,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Mark the table at (i, j) and (j, i).
-	 * 
+	 *
 	 * @param table
 	 *            the table to mark
 	 * @param i
@@ -180,7 +182,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Get successor for state i and symbol s.
-	 * 
+	 *
 	 * @param states
 	 *            the states.
 	 * @param alphabet
@@ -202,7 +204,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Initialize the table.
-	 * 
+	 *
 	 * @param states
 	 *            the states
 	 * @return the initialized table
@@ -224,7 +226,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Generate the resulting automaton.
-	 * 
+	 *
 	 * @param states
 	 *            the states
 	 * @param alphabet
@@ -281,7 +283,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Print the table.
-	 * 
+	 *
 	 * @param t
 	 *            table
 	 * @param st
@@ -290,8 +292,8 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	private void printTable(final ArrayList<STATE> st, final boolean[][] t) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(" \t");
-		for (int i = 0; i < st.size(); i++) {
-			sb.append(st.get(i) + "\t");
+		for (final STATE element : st) {
+			sb.append(element + "\t");
 		}
 		mLogger.debug(sb.toString());
 		sb = new StringBuilder();
@@ -307,7 +309,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Print transitions of this nwa.
-	 * 
+	 *
 	 * @param nwa
 	 *            nested word automaton
 	 */
@@ -326,7 +328,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	/**
 	 * Set markers in the table.
-	 * 
+	 *
 	 * @param f
 	 *            first successor array
 	 * @param s
@@ -365,8 +367,9 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		return false;
 	}
 
-	/*_______________________________________________________________________*\
-	\* OVERRIDDEN METHODS                                                    */
+	/*
+	 * _______________________________________________________________________*\ \* OVERRIDDEN METHODS
+	 */
 
 	private void startMessageDebug() {
 		final StringBuilder msg = new StringBuilder("Start ");
@@ -394,6 +397,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 		mLogger.info(msg.toString());
 	}
 
-	/*_______________________________________________________________________*\
-	\* GETTERS AND SETTERS                                                   */
+	/*
+	 * _______________________________________________________________________*\ \* GETTERS AND SETTERS
+	 */
 }

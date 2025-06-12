@@ -50,10 +50,10 @@ public class BenchmarkRecord {
 	public static boolean includeDiffTransition() {
 		return true;
 	}
-	
+
 	public static boolean canDump() {
-		File f = new File("machine.conf");
-		if(f.exists()) { 
+		final File f = new File("machine.conf");
+		if (f.exists()) {
 			return true;
 		}
 		return false;
@@ -63,7 +63,7 @@ public class BenchmarkRecord {
 
 	}
 
-	private static enum AutomatonType {
+	private enum AutomatonType {
 		NBA, SDBA, DBA, FA;
 
 		@Override
@@ -136,14 +136,16 @@ public class BenchmarkRecord {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void addDiffComparison(final int numOfStatesOfBA, final int numOfStatesOfGBA, final int numOfStatesOfGBA2BA) {
+
+	public static void addDiffComparison(final int numOfStatesOfBA, final int numOfStatesOfGBA,
+			final int numOfStatesOfGBA2BA) {
 		if (mOutputFile == null) {
 			return;
 		}
 		try {
 			mOutput = new PrintWriter(new BufferedWriter(new FileWriter(mOutputFile, true)));
-			mOutput.print("( BA:" + numOfStatesOfBA + ", GBA: " + numOfStatesOfGBA + ", GBA2BA: " + numOfStatesOfGBA2BA + "), ");
+			mOutput.print("( BA:" + numOfStatesOfBA + ", GBA: " + numOfStatesOfGBA + ", GBA2BA: " + numOfStatesOfGBA2BA
+					+ "), ");
 			mOutput.close();
 		} catch (final IOException e) {
 			e.printStackTrace();

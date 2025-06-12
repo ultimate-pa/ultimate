@@ -53,16 +53,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LETTER, STATE> {
 
 	/**
-	 * Elements of this enum are used to define when an individual state (resp.
-	 * {@link DoubleDecker}) inside a macro state is a candidate for a voluntary
-	 * decrease from an even to an odd rank. Note that voluntary rank decreases are
+	 * Elements of this enum are used to define when an individual state (resp. {@link DoubleDecker}) inside a macro
+	 * state is a candidate for a voluntary decrease from an even to an odd rank. Note that voluntary rank decreases are
 	 * implicitly restricted to states that are non-accepting.
 	 *
 	 */
 	public enum VoluntaryRankDecrease {
 		/**
-		 * All predecessor of the individual state (resp.
-		 * {@link DoubleDecker}) that have an even rank are accepting.
+		 * All predecessor of the individual state (resp. {@link DoubleDecker}) that have an even rank are accepting.
 		 */
 		ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
 		/**
@@ -70,9 +68,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		 */
 		PREDECESSOR_HAS_EMPTY_O,
 		/**
-		 * The individual state (resp. {@link DoubleDecker}) would be in the set O of
-		 * the macro state. Hence a decrease the rank ensures that the state can escape
-		 * from the set O.
+		 * The individual state (resp. {@link DoubleDecker}) would be in the set O of the macro state. Hence a decrease
+		 * the rank ensures that the state can escape from the set O.
 		 */
 		ALLOWS_O_ESCAPE,
 		/**
@@ -80,38 +77,36 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		 */
 		ALLOWS_O_ESCAPE_AND_ALL_EVEN_PREDECESSORS_ARE_ACCEPTING,
 		/**
-		 * No additional restriction to the implicit restrictions for voluntary rank
-		 * decreases.
+		 * No additional restriction to the implicit restrictions for voluntary rank decreases.
 		 */
 		ALWAYS,
 	}
 
-
 	protected final LevelRankingState<LETTER, STATE> mPredecessorLrs;
 	private final boolean mPredecessorLrsIsPowersetComponent;
-	protected final HashRelation3<StateWithRankInfo<STATE>, STATE, DoubleDecker<StateWithRankInfo<STATE>>> mPredecessors = new HashRelation3<>();
+	protected final HashRelation3<StateWithRankInfo<STATE>, STATE, DoubleDecker<StateWithRankInfo<STATE>>> mPredecessors =
+			new HashRelation3<>();
 
-	public static <LETTER, STATE> boolean areAllEvenPredecessorsAccepting(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
+	public static <LETTER, STATE> boolean areAllEvenPredecessorsAccepting(
+			final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
 		if (lrc instanceof LevelRankingConstraintDrdCheck) {
-			return ((LevelRankingConstraintDrdCheck<LETTER, STATE>) lrc).nonAcceptingPredecessorsWithEvenRanksIsEmpty(dd.getDown(), dd.getUp().getState());
+			return ((LevelRankingConstraintDrdCheck<LETTER, STATE>) lrc)
+					.nonAcceptingPredecessorsWithEvenRanksIsEmpty(dd.getDown(), dd.getUp().getState());
 		} else {
 			throw new UnsupportedOperationException("information unavailable");
 		}
 
 	}
 
-	public static <LETTER, STATE> boolean predecessorHasEmptyO(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
+	public static <LETTER, STATE> boolean predecessorHasEmptyO(final DoubleDecker<StateWithRankInfo<STATE>> dd,
+			final LevelRankingConstraint<LETTER, STATE> lrc) {
 		return lrc.predecessorHasEmptyO();
 	}
 
-	public static <LETTER, STATE> boolean allowsOEscape(final DoubleDecker<StateWithRankInfo<STATE>> dd, final LevelRankingConstraint<LETTER, STATE> lrc) {
+	public static <LETTER, STATE> boolean allowsOEscape(final DoubleDecker<StateWithRankInfo<STATE>> dd,
+			final LevelRankingConstraint<LETTER, STATE> lrc) {
 		return lrc.inO(dd.getDown(), dd.getUp().getState());
 	}
-
-
-
-
-
 
 	protected final boolean mPredecessorOwasEmpty;
 
@@ -127,8 +122,6 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * LevelRankingGenerator.
 	 */
 	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mSomePredecessorWasAccepting = new HashSet<>();
-
-
 
 	public boolean predecessorHasEmptyO() {
 		return mPredecessorOwasEmpty;
@@ -149,7 +142,6 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * Constructor for the constraint that is only satisfied by the non accepting sink state.
 	 */
 	public LevelRankingConstraint() {
-		super();
 		mPredecessorOwasEmpty = false;
 		mUserDefinedMaxRank = -1;
 		mUseDoubleDeckers = true;
@@ -198,7 +190,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			final StateWithRankInfo<STATE> hierDown, final StateWithRankInfo<STATE> hierUp) {
 		if (state.getDownStates().isEmpty()) {
 			return;
-			//throw new AssertionError();
+			// throw new AssertionError();
 		}
 		StateWithRankInfo<STATE> downState;
 		if (mUseDoubleDeckers) {
@@ -228,16 +220,14 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					hierUp.getState(), symbol)) {
 				// equality intended here
 				assert mUseDoubleDeckers || hierDown == mOperand.getEmptyStackState();
-				addConstraint(hierDown, trans.getSucc(),
-						new DoubleDecker<StateWithRankInfo<STATE>>(downState, stateUp));
+				addConstraint(hierDown, trans.getSucc(), new DoubleDecker<>(downState, stateUp));
 			}
 		}
 	}
 
 	/**
-	 * Add constraint to the double decker (down,up). This constraints are only
-	 * obtained from incoming transitions. Further constraints (odd rank only
-	 * allowed for non-finals or state in o if not odd) are added later.
+	 * Add constraint to the double decker (down,up). This constraints are only obtained from incoming transitions.
+	 * Further constraints (odd rank only allowed for non-finals or state in o if not odd) are added later.
 	 */
 	protected void addConstraint(final StateWithRankInfo<STATE> downState, final STATE upState,
 			final DoubleDecker<StateWithRankInfo<STATE>> predDD) {
@@ -288,23 +278,24 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		return mSomePredecessorWasAccepting;
 	}
 
-//	public List<DoubleDecker<StateWithRankInfo<STATE>>> getDoubleDeckersEligibleForVoluntaryRankDecrease(
-//			boolean voluntaryRankDecreaseOnlyIfPredecessorWasAccepting,
-//			boolean volutaryRankDecreaseOnlyIfEnablesEscapeFromO) {
-//		ArrayList<DoubleDecker<StateWithRankInfo<STATE>>> result = new ArrayList();
-//		if (voluntaryRankDecreaseOnlyIfPredecessorWasAccepting) {
-//			for (DoubleDecker<StateWithRankInfo<STATE>> dd : mPredecessorWasAccepting) {
-//				boolean isElibi
-//			}
-//		} else {
-//			throw new UnsupportedOperationException("unsupported. However not required for any good complementation");
-//		}
-//		return result;
-//	}
+	// public List<DoubleDecker<StateWithRankInfo<STATE>>> getDoubleDeckersEligibleForVoluntaryRankDecrease(
+	// boolean voluntaryRankDecreaseOnlyIfPredecessorWasAccepting,
+	// boolean volutaryRankDecreaseOnlyIfEnablesEscapeFromO) {
+	// ArrayList<DoubleDecker<StateWithRankInfo<STATE>>> result = new ArrayList();
+	// if (voluntaryRankDecreaseOnlyIfPredecessorWasAccepting) {
+	// for (DoubleDecker<StateWithRankInfo<STATE>> dd : mPredecessorWasAccepting) {
+	// boolean isElibi
+	// }
+	// } else {
+	// throw new UnsupportedOperationException("unsupported. However not required for any good complementation");
+	// }
+	// return result;
+	// }
 
-	private boolean isEligibleForVoluntaryRankDecrease(final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
-			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO, final boolean omitConfluenceEnforcedDelayedRankDecrease,
-			final DoubleDecker<StateWithRankInfo<STATE>> dd) {
+	private boolean isEligibleForVoluntaryRankDecrease(
+			final boolean voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting,
+			final boolean voluntaryRankDecreaseOnlyIfEnablesEscapeFromO,
+			final boolean omitConfluenceEnforcedDelayedRankDecrease, final DoubleDecker<StateWithRankInfo<STATE>> dd) {
 		if (omitConfluenceEnforcedDelayedRankDecrease) {
 			throw new AssertionError("unable to check, use subclass");
 		}
@@ -316,8 +307,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		// optimization used in all effective complementations: do voluntary
 		// decrease only immediately after some predecessor was visiting an accepting
 		// state
-		isEligible &= (!voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting
-				|| mSomePredecessorWasAccepting.contains(dd));
+		isEligible &=
+				(!voluntaryRankDecreaseOnlyIfSomePredecessorWasAccepting || mSomePredecessorWasAccepting.contains(dd));
 		// optimization used in some effective complementations: do voluntary
 		// decrease only for states that would be in the set O if we would
 		// not decrease their rank to an odd rank.
@@ -330,14 +321,12 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			final STATE upState) {
 		final Set<Integer> result = new HashSet<>();
 		for (final DoubleDecker<StateWithRankInfo<STATE>> pred : mPredecessors.projectToTrd(downState, upState)) {
-			if (isEven(pred.getUp().getRank())) {
-				if (!mOperand.isFinal(pred.getUp().getState()) && pred.getUp().isInO()) {
-					return false;
-				}
+			if (isEven(pred.getUp().getRank())
+					&& (!mOperand.isFinal(pred.getUp().getState()) && pred.getUp().isInO())) {
+				return false;
 			}
 		}
 		return true;
 	}
-
 
 }

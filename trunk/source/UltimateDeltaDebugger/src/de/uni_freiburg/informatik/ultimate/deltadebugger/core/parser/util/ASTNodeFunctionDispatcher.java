@@ -135,18 +135,17 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 
 /**
  * Contains the instanceof mess that is necessary to detect the actual runtime type of an IASTNode and call the correct
- * overload of an IASTNodeFunction object.
- * Note: The idea of this class is to move the complexity out of the rest of the code, that needs to detect the runtime
- * type of an IASTNode.
+ * overload of an IASTNodeFunction object. Note: The idea of this class is to move the complexity out of the rest of the
+ * code, that needs to detect the runtime type of an IASTNode.
  * <p>
  * The Cyclomatic Complexity (and other complexity metrics) cannot be reduced without artificially obfuscating the code.
- * 
+ *
  * @param <T>
  *            function return type
  */
 public final class ASTNodeFunctionDispatcher<T> {
 	private final IASTNodeFunction<T> mFunc;
-	
+
 	/**
 	 * @param func
 	 *            AST node function.
@@ -154,7 +153,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 	public ASTNodeFunctionDispatcher(final IASTNodeFunction<T> func) {
 		mFunc = func;
 	}
-	
+
 	/**
 	 * @param arrayModifier
 	 *            AST array modifier.
@@ -166,7 +165,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 		}
 		return mFunc.on(arrayModifier);
 	}
-	
+
 	/**
 	 * @param attributeSpecifier
 	 *            AST attribute specifier.
@@ -178,7 +177,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 		}
 		return mFunc.on(attributeSpecifier);
 	}
-	
+
 	/**
 	 * @param declaration
 	 *            AST declaration.
@@ -197,7 +196,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(declaration);
 		}
 	}
-	
+
 	/**
 	 * @param declarator
 	 *            AST declarator.
@@ -220,7 +219,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(declarator);
 		}
 	}
-	
+
 	/**
 	 * @param declSpecifier
 	 *            AST declaration specifier.
@@ -241,7 +240,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(declSpecifier);
 		}
 	}
-	
+
 	/**
 	 * @param expression
 	 *            AST expression.
@@ -283,7 +282,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(expression);
 		}
 	}
-	
+
 	/**
 	 * @param initializer
 	 *            AST initializer.
@@ -300,7 +299,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(initializer);
 		}
 	}
-	
+
 	/**
 	 * @param name
 	 *            AST name.
@@ -315,7 +314,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 		}
 		return mFunc.on(name);
 	}
-	
+
 	/**
 	 * Invokes the function on the actual node type.
 	 *
@@ -373,7 +372,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(node);
 		}
 	}
-	
+
 	/**
 	 * @param pointerOperator
 	 *            AST pointer operator.
@@ -388,7 +387,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 		}
 		return mFunc.on(pointerOperator);
 	}
-	
+
 	/**
 	 * @param preprocessorStatement
 	 *            AST preprocessor statement.
@@ -428,7 +427,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(preprocessorStatement);
 		}
 	}
-	
+
 	/**
 	 * @param statement
 	 *            AST statement.
@@ -476,7 +475,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(statement);
 		}
 	}
-	
+
 	/**
 	 * @param token
 	 *            AST token.
@@ -488,7 +487,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 		}
 		return mFunc.on(token);
 	}
-	
+
 	/**
 	 * @param typeId
 	 *            AST type ID.
@@ -500,7 +499,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 		}
 		return mFunc.on(typeId);
 	}
-	
+
 	/**
 	 * @param castDesignator
 	 *            CAST designator.
@@ -517,12 +516,12 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(castDesignator);
 		}
 	}
-	
+
 	/**
 	 * Invokes the function by using an ASTVisitor instead of multiple instanceof checks in order to detect the first
-	 * first level of subtypes faster.
-	 * Note that this is not the default implementation of dispatch(), because calling IASTNode.accept() is not
-	 * guaranteed to be concurency safe. The caller has to explicitly decide if calling IASTNode methods is safe.
+	 * first level of subtypes faster. Note that this is not the default implementation of dispatch(), because calling
+	 * IASTNode.accept() is not guaranteed to be concurency safe. The caller has to explicitly decide if calling
+	 * IASTNode methods is safe.
 	 *
 	 * @param node
 	 *            node to call the function for
@@ -531,14 +530,14 @@ public final class ASTNodeFunctionDispatcher<T> {
 	public T dispatchByVisitor(final IASTNode node) {
 		return new DispatchVisitor(node).dispatchByVisitor();
 	}
-	
+
 	/**
 	 * Visitor for dispatching.
 	 */
 	private final class DispatchVisitor extends ASTVisitor {
 		private final IASTNode mExpectedNode;
 		private Optional<T> mResult = Optional.empty();
-		
+
 		DispatchVisitor(final IASTNode expectedNode) {
 			// Visit everything that can be visited to get exactly one call to
 			// visit whenever possible
@@ -547,12 +546,12 @@ public final class ASTNodeFunctionDispatcher<T> {
 			includeInactiveNodes = true;
 			shouldVisitImplicitNames = true;
 			shouldVisitTokens = true;
-			
+
 			// We need to make sure that the visit() overload is actually called
 			// for the node we want and not a child, though
 			mExpectedNode = expectedNode;
 		}
-		
+
 		/**
 		 * @return Dispatch result.
 		 */
@@ -560,7 +559,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			mExpectedNode.accept(this);
 			return mResult.orElseGet(this::dispatchNonVisitedNode);
 		}
-		
+
 		private T dispatchNonVisitedNode() {
 			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
 				return mFunc.on((IASTPreprocessorMacroExpansion) mExpectedNode);
@@ -576,7 +575,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 				return mFunc.on(mExpectedNode);
 			}
 		}
-		
+
 		@Override
 		public int visit(final IASTArrayModifier arrayModifier) {
 			if (mExpectedNode.equals(arrayModifier)) {
@@ -584,7 +583,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTAttribute attribute) {
 			if (mExpectedNode.equals(attribute)) {
@@ -592,7 +591,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
 			if (mExpectedNode.equals(attributeSpecifier)) {
@@ -600,7 +599,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTDeclaration declaration) {
 			if (mExpectedNode.equals(declaration)) {
@@ -608,7 +607,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTDeclarator declarator) {
 			if (mExpectedNode.equals(declarator)) {
@@ -616,7 +615,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTDeclSpecifier declSpecifier) {
 			if (mExpectedNode.equals(declSpecifier)) {
@@ -624,7 +623,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTEnumerator enumerator) {
 			if (mExpectedNode.equals(enumerator)) {
@@ -632,7 +631,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTExpression expression) {
 			if (mExpectedNode.equals(expression)) {
@@ -640,7 +639,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTInitializer initializer) {
 			if (mExpectedNode.equals(initializer)) {
@@ -648,7 +647,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTName name) {
 			if (mExpectedNode.equals(name)) {
@@ -656,7 +655,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTParameterDeclaration parameterDeclaration) {
 			if (mExpectedNode.equals(parameterDeclaration)) {
@@ -664,7 +663,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTPointerOperator pointerOperator) {
 			if (mExpectedNode.equals(pointerOperator)) {
@@ -672,7 +671,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTProblem problem) {
 			if (mExpectedNode.equals(problem)) {
@@ -680,7 +679,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTStatement statement) {
 			if (mExpectedNode.equals(statement)) {
@@ -688,7 +687,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTToken token) {
 			if (mExpectedNode.equals(token)) {
@@ -696,7 +695,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTTranslationUnit translationUnit) {
 			if (mExpectedNode.equals(translationUnit)) {
@@ -704,7 +703,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final IASTTypeId typeId) {
 			if (mExpectedNode.equals(typeId)) {
@@ -712,7 +711,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICASTDesignator castDesignator) {
 			if (mExpectedNode.equals(castDesignator)) {
@@ -720,37 +719,37 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTBaseSpecifier cppBaseSpecifier) {
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTCapture cppCapture) {
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTClassVirtSpecifier cppClassVirtSpecifier) {
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTDecltypeSpecifier cppDecltypeSpecifier) {
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTNamespaceDefinition cppNamespaceDefinition) {
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTTemplateParameter cppTemplateParameter) {
 			return PROCESS_ABORT;
 		}
-		
+
 		@Override
 		public int visit(final ICPPASTVirtSpecifier cppVirtSpecifier) {
 			return PROCESS_ABORT;

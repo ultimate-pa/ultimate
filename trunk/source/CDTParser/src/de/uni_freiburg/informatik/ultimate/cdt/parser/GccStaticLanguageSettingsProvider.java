@@ -40,7 +40,7 @@ import org.eclipse.core.resources.IResource;
 /**
  * A {@link ILanguageSettingsProvider} that provides the builtin results detected by
  * org.eclipse.cdt.managedbuilder.core.GCCBuiltinSpecsDetector from a GCC 8.3.0.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvider {
@@ -50,11 +50,9 @@ public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvi
 	public GccStaticLanguageSettingsProvider() {
 		final ICLanguageSettingEntry[] entries = { createEntry("WIN64", "1"), createEntry("WINNT", "1"),
 				createEntry("_INTEGRAL_MAX_BITS", "64"), createEntry("_REENTRANT", "1"), createEntry("_WIN32", "1"),
-				createEntry("_WIN64", "1"), createEntry("__ATOMIC_ACQUIRE", "2"), createEntry("__ATOMIC_ACQ_REL", "4"),
-				createEntry("__ATOMIC_CONSUME", "1"), createEntry("__ATOMIC_HLE_ACQUIRE", "65536"),
-				createEntry("__ATOMIC_HLE_RELEASE", "131072"), createEntry("__ATOMIC_RELAXED", "0"),
-				createEntry("__ATOMIC_RELEASE", "3"), createEntry("__ATOMIC_SEQ_CST", "5"),
-				createEntry("__BIGGEST_ALIGNMENT__", "16"), createEntry("__BYTE_ORDER__", "__ORDER_LITTLE_ENDIAN__"),
+				createEntry("_WIN64", "1"), createEntry("__ATOMIC_HLE_ACQUIRE", "65536"),
+				createEntry("__ATOMIC_HLE_RELEASE", "131072"), createEntry("__BIGGEST_ALIGNMENT__", "16"),
+				createEntry("__BYTE_ORDER__", "__ORDER_LITTLE_ENDIAN__"),
 				createEntry("__CHAR16_TYPE__", "short unsigned int"), createEntry("__CHAR32_TYPE__", "unsigned int"),
 				createEntry("__CHAR_BIT__", "8"), createEntry("__DBL_DECIMAL_DIG__", "17"),
 				createEntry("__DBL_DENORM_MIN__", "((double)4.94065645841246544176568792868221372e-324L)"),
@@ -206,14 +204,6 @@ public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvi
 				createEntry("__SIG_ATOMIC_MAX__", "0x7fffffff"),
 				createEntry("__SIG_ATOMIC_MIN__", "(-__SIG_ATOMIC_MAX__ - 1)"),
 				createEntry("__SIG_ATOMIC_TYPE__", "int"), createEntry("__SIG_ATOMIC_WIDTH__", "32"),
-				createEntry("__SIZEOF_DOUBLE__", "8"), createEntry("__SIZEOF_FLOAT128__", "16"),
-				createEntry("__SIZEOF_FLOAT80__", "16"), createEntry("__SIZEOF_FLOAT__", "4"),
-				createEntry("__SIZEOF_INT128__", "16"), createEntry("__SIZEOF_INT__", "4"),
-				createEntry("__SIZEOF_LONG_DOUBLE__", "16"), createEntry("__SIZEOF_LONG_LONG__", "8"),
-				createEntry("__SIZEOF_LONG__", "4"), createEntry("__SIZEOF_POINTER__", "8"),
-				createEntry("__SIZEOF_PTRDIFF_T__", "8"), createEntry("__SIZEOF_SHORT__", "2"),
-				createEntry("__SIZEOF_SIZE_T__", "8"), createEntry("__SIZEOF_WCHAR_T__", "2"),
-				createEntry("__SIZEOF_WINT_T__", "2"), createEntry("__SIZE_MAX__", "0xffffffffffffffffULL"),
 				createEntry("__SIZE_TYPE__", "long long unsigned int"), createEntry("__SIZE_WIDTH__", "64"),
 				createEntry("__SSE2_MATH__", "1"), createEntry("__SSE2__", "1"), createEntry("__SSE3__", "1"),
 				createEntry("__SSE_MATH__", "1"), createEntry("__SSE__", "1"), createEntry("__STDC_HOSTED__", "1"),
@@ -261,7 +251,12 @@ public class GccStaticLanguageSettingsProvider implements ILanguageSettingsProvi
 				createEntry("_fastcall", "__attribute__((__fastcall__))"),
 				createEntry("_stdcall", "__attribute__((__stdcall__))"),
 				createEntry("_thiscall", "__attribute__((__thiscall__))"),
+				// Add a custom macro to handle __builtin_va_arg and va_arg, otherwise we crash already during parsing.
+				// Therefore we don't need to handle these functions at all in our library model.
 				createEntry("__builtin_va_arg(ap,type)", "*((typeof(type) *)((ap += sizeof(type)) - sizeof(type)))"),
+				createEntry("va_arg(ap,type)", "*((typeof(type) *)((ap += sizeof(type)) - sizeof(type)))"),
+				// These are type qualifiers that are not supported by the parser (it would crash).
+				// Therefore, we replace them by custom GCC attributes that can be used in the C translation.
 				createEntry("__thread", "__attribute__((thread))"),
 				createEntry("thread_local", "__attribute__((thread))"),
 				createEntry("_Atomic", "__attribute__((atomic))") };

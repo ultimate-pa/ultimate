@@ -129,8 +129,8 @@ public class LTLXBAExecutor {
 	private String[] getCommand(String ltlFormula) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		ltlFormula = prefs.getString(PreferenceInitializer.LABEL_TOOLARGUMENT).replace("$1", ltlFormula);
-		ltlFormula = ltlFormula.replaceAll("\\(", " ( ");
-		ltlFormula = ltlFormula.replaceAll("\\)", " ) ");
+		ltlFormula = ltlFormula.replace("(", " ( ");
+		ltlFormula = ltlFormula.replace(")", " ) ");
 		ltlFormula = ltlFormula.replaceAll("\\s+", " ");
 		final List<String> rtr = new ArrayList<>();
 		rtr.add(prefs.getString(PreferenceInitializer.LABEL_TOOLLOCATION));

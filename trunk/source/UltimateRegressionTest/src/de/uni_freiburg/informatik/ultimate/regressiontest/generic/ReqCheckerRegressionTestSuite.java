@@ -70,7 +70,6 @@ public class ReqCheckerRegressionTestSuite extends AbstractRegressionTestSuite {
 	private static final int TIMEOUT = 90_000;
 
 	public ReqCheckerRegressionTestSuite() {
-		super();
 		mTimeout = TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/Requirements");
 		mFiletypesToConsider = new String[] { ".req" };

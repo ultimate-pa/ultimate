@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2009-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space where n is the amount of states and k the
  * amount of transitions from the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation minimization</i> by <i>Gurumurthy, Bloem and Somenzi</i>.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Letter class of buechi automaton
@@ -140,7 +140,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * <br/>
 	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>
 	 * .
-	 * 
+	 *
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
@@ -183,7 +183,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * <br/>
 	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>
 	 * .
-	 * 
+	 *
 	 * @param progressTimer
 	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
@@ -205,7 +205,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.ASimulation#doSimulation()
 	 */
@@ -272,7 +272,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -354,7 +354,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * Does a single simulation calculation run. After it has finished the progress measure of all game graph vertices
 	 * can be used to determine a simulation relation used for buechi reduction.<br/>
 	 * Can also be used to validate a attempted change, if simulation did not get aborted the change is valid.
-	 * 
+	 *
 	 * @param changes
 	 *            Object to store made changes in, <tt>null</tt> if changes should not get stored
 	 * @return False if simulation was aborted because the underlying language changed, true if not.
@@ -403,7 +403,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Initializes the simulation by adding the correct vertices to the working list and initializing their
 	 * corresponding values.
-	 * 
+	 *
 	 * @param localInfinity
 	 *            The local infinity bound of the used SCC or global infinity if not used
 	 * @param scc
@@ -435,7 +435,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * To be more precise, <b>(q0, q1)</b> if <b>q1 fair simulates q0</b> and <b>q0 fair simulates q1</b> which is
 	 * indicated by a progress measure less than global infinity. Such states may can be merged with not changing the
 	 * language.
-	 * 
+	 *
 	 * @return Buechi states that are candidates for merge.
 	 */
 	private Set<SpoilerVertex<LETTER, STATE>> mergeCandidates() {
@@ -463,7 +463,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Processes a given collection of possible equivalent classes into a data structure that has a faster access for
 	 * single states.
-	 * 
+	 *
 	 * @param possibleEquivalenceClasses
 	 *            Collection to process
 	 * @return Data structure with a fast access for state to its equivalent class
@@ -490,7 +490,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * <br/>
 	 * To be more precise, transitions <b>q1 -a-> q2</b> where <b>q1 -a-> q3</b> exists and <b>q3 fair simulates q2</b>.
 	 * Such transitions may be redundant and not change the language if removed.
-	 * 
+	 *
 	 * @param exclusiveSet
 	 *            Set of {@link SpoilerVertex} objects <b>(q2, q3)</b> that define simulations that should not get
 	 *            considered for candidate generation. In general this are vertices that get merged, such transitions
@@ -533,7 +533,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * If the change is valid <tt>null</tt> gets returned, if not an extended fair game graph changes object gets
 	 * returned that includes the previous changes and also the changes made in the simulation calculation used for
 	 * verification.
-	 * 
+	 *
 	 * @param changes
 	 *            Made changes to validate
 	 * @return A game graph changes object that has all made changes stored if the attempted change is not valid or
@@ -561,7 +561,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
 	 * Attempts the simulated merge of two given buechi states and returns whether the change is valid or not.
-	 * 
+	 *
 	 * @param firstState
 	 *            First state to merge
 	 * @param secondState
@@ -609,7 +609,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
 	 * Attempts the simulated removal of an buechi transition and returns whether the change is valid or not.
-	 * 
+	 *
 	 * @param src
 	 *            Source of the transition
 	 * @param a
@@ -633,7 +633,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
 	 * Proceeds with following simulations to validate which states can be merged and which transitions can be removed.
-	 * 
+	 *
 	 * @param performance
 	 *            Performance object used
 	 * @throws AutomataOperationCanceledException
@@ -736,7 +736,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.ASimulation#efficientLiftingAlgorithm(int, java.util.Set)
 	 */
@@ -895,12 +895,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						// If trying to use a vertex outside of the SCC make
 						// sure the neighbor counter was initialized
 						// before accessing it
-						if (pokePossible) {
-							if (pred.getC() == 0) {
-								final int oldPredC = pred.getC();
-								pred.setC(mGame.getSuccessors(pred).size());
-								saveCChange(pred, oldPredC, mCurrentChanges);
-							}
+						if (pokePossible && (pred.getC() == 0)) {
+							final int oldPredC = pred.getC();
+							pred.setC(mGame.getSuccessors(pred).size());
+							saveCChange(pred, oldPredC, mCurrentChanges);
 						}
 
 						if (pred.getC() == 1) {
@@ -968,7 +966,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.ASimulation#getGameGraph()
 	 */
@@ -979,7 +977,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.ASimulation#initWorkingListAndCWithVertex(de.uni_freiburg.
 	 * informatik.ultimate.automata.nwalibrary.operations.buchiReduction. vertices.Vertex, int, java.util.Set)
@@ -1034,7 +1032,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Saves a change on the <i>BEff value</i> of a given vertex in the current {@link GameGraphChanges} object if there
 	 * currently is no such value stored.
-	 * 
+	 *
 	 * @param vertex
 	 *            Vertex to save change
 	 * @param oldValue
@@ -1052,7 +1050,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Saves a change on the <i>C value</i> of a given vertex in the current {@link GameGraphChanges} object if there
 	 * currently is no such value stored.
-	 * 
+	 *
 	 * @param vertex
 	 *            Vertex to save change
 	 * @param oldValue
@@ -1070,7 +1068,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	/**
 	 * Saves a change on the <i>Progress measure value</i> of a given vertex in the current {@link GameGraphChanges}
 	 * object if there currently is no such value stored.
-	 * 
+	 *
 	 * @param vertex
 	 *            Vertex to save change
 	 * @param oldValue

@@ -59,8 +59,8 @@ public class PolyPoNeUtils {
 	}
 
 	public static Term and(final Script script, final Term context, final List<Term> params) {
-		final Term result = new PolyPoNeWithContext(script, Junction.AND, new PolyPoNe(script, Junction.AND))
-				.and(context, params);
+		final Term result =
+				new PolyPoNeWithContext(script, Junction.AND, new PolyPoNe(script, Junction.AND)).and(context, params);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			final Term inputTerm = SmtUtils.and(script, params);
@@ -82,8 +82,8 @@ public class PolyPoNeUtils {
 	}
 
 	public static Term or(final Script script, final Term context, final List<Term> params) {
-		final Term result = new PolyPoNeWithContext(script, Junction.OR, new PolyPoNe(script, Junction.OR)).or(context,
-				params);
+		final Term result =
+				new PolyPoNeWithContext(script, Junction.OR, new PolyPoNe(script, Junction.OR)).or(context, params);
 		if (DEBUG_CHECK_RESULT) {
 			final boolean tolerateUnknown = true;
 			final Term inputTerm = SmtUtils.or(script, params);

@@ -165,7 +165,7 @@ public class ArrayEquality {
 		return mOriginalTerm.toString();
 	}
 
-	public class ArrayEqualityException extends Exception {
+	public static class ArrayEqualityException extends Exception {
 
 		private static final long serialVersionUID = -5344050289008681972L;
 

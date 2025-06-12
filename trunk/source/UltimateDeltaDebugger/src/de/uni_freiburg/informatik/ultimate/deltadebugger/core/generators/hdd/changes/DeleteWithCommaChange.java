@@ -46,9 +46,9 @@ public class DeleteWithCommaChange extends HddChange {
 	private final IPSTNode mParent;
 	private final List<CommaSeparatedChild> mCommaPositions;
 	private final ISourceRange mNodeLocation;
-	
+
 	private final boolean mKeepOne;
-	
+
 	/**
 	 * @param node
 	 *            PST node.
@@ -67,10 +67,10 @@ public class DeleteWithCommaChange extends HddChange {
 		mNodeLocation = node;
 		mKeepOne = keepOne;
 	}
-	
+
 	/**
 	 * Constructor to delete by location (used to delete the varargs ellipsis token).
-	 * 
+	 *
 	 * @param parent
 	 *            parent PST node
 	 * @param commaPositions
@@ -88,24 +88,24 @@ public class DeleteWithCommaChange extends HddChange {
 		mNodeLocation = nodeLocation;
 		mKeepOne = keepOne;
 	}
-	
+
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		// no immediate modification possible, because we need to know all nodes
 		// to be delete to know how commas are deleted (to handle cases where
 		// commas are missing in non-preprocessed code)
 	}
-	
+
 	@Override
 	public boolean hasDeferredChange() {
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Delete with comma " + mNodeLocation + " (from " + mParent + ")";
 	}
-	
+
 	@Override
 	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		((CombinedChange) deferredChangeMap.computeIfAbsent(mParent, CombinedChange::new))

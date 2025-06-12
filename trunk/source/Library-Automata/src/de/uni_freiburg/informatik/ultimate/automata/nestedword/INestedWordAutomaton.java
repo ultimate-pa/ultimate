@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -36,9 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 
 /**
- * Interface for data structures that implement nested word automata.
- * A nested word automaton is a machine model which accepts nested words (see {@link NestedWord}) introduced by Alur et
- * al.
+ * Interface for data structures that implement nested word automata. A nested word automaton is a machine model which
+ * accepts nested words (see {@link NestedWord}) introduced by Alur et al.
  * <ul>
  * <li>[1] http://www.cis.upenn.edu/~alur/nw.html</li>
  * <li>[2] Rajeev Alur, P. Madhusudan: Adding Nesting Structure to Words. Developments in Language Theory 2006:1-13</li>
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
  * <p>
  * Another deviation from the general model is that we generally do not accept nested words with pending returns. We do
  * accept, however, nested words with pending calls.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -69,20 +68,19 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 	 *         represents result of a complementation) construct their set of states on the fly.
 	 *         <p>
 	 *         Using the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider# getInitialStates()
-	 *         getInitialStates()} method and the successor methods is preferred.
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider#
+	 *         getInitialStates() getInitialStates()} method and the successor methods is preferred.
 	 */
 	Set<STATE> getStates();
 
 	/**
 	 * @return The set of initial states.
 	 *         <p>
-	 *         For iteration, the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword .INwaOutgoingLetterAndTransitionProvider#InitialStates()
-	 *         getInitialStates()} method is preferred.<br>
-	 *         To perform a check for an initial state, the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata .nestedword.INwaOutgoingLetterAndTransitionProvider#isInitial(Object)
-	 *         isInitial(state)} method is preferred.
+	 *         For iteration, the {@link de.uni_freiburg.informatik.ultimate.automata.nestedword
+	 *         .INwaOutgoingLetterAndTransitionProvider#InitialStates() getInitialStates()} method is preferred.<br>
+	 *         To perform a check for an initial state, the {@link de.uni_freiburg.informatik.ultimate.automata
+	 *         .nestedword.INwaOutgoingLetterAndTransitionProvider#isInitial(Object) isInitial(state)} method is
+	 *         preferred.
 	 */
 	@Override
 	Set<STATE> getInitialStates();
@@ -95,11 +93,11 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 	 *         duplicates.
 	 *         <p>
 	 *         Using the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider# isFinal(Object)
-	 *         isFinal(Object)} method to check if a specific state is final is preferred.
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider#
+	 *         isFinal(Object) isFinal(Object)} method to check if a specific state is final is preferred.
 	 */
 	Collection<STATE> getFinalStates();
-	
+
 	/**
 	 * @param state
 	 *            state
@@ -142,7 +140,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 	/**
 	 * All states <tt>hier</tt> such that <tt>state</tt> has an outgoing return transition
 	 * <tt>(state, hier, letter, succ)</tt> for some state <tt>succ</tt>.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param letter
@@ -157,7 +155,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming internal transitions for a given letter.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @param letter
@@ -168,7 +166,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming internal transitions for all letters.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @return incoming internal transitions
@@ -177,7 +175,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming call transitions for a given letter.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @param letter
@@ -188,7 +186,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming call transitions for all letters.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @return incoming call transitions
@@ -197,7 +195,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming return transitions for a given hierarchical predecessor state and letter.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @param hier
@@ -211,7 +209,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming return transitions for a given letter and all hierarchical predecessor states.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @param letter
@@ -222,7 +220,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Incoming return transitions for all letters and hierarchical predecessor states.
-	 * 
+	 *
 	 * @param succ
 	 *            successor state
 	 * @return incoming return transitions
@@ -231,14 +229,14 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Outgoing return transitions for a given letter and all hierarchical predecessor states.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @param letter
 	 *            letter
 	 * @return outgoing return transitions
-	 * @deprecated Inefficient! try to iterate over all outgoing transitions
-	 * or over all outgoing transitions that have a specific down state.
+	 * @deprecated Inefficient! try to iterate over all outgoing transitions or over all outgoing transitions that have
+	 *             a specific down state.
 	 */
 	@Deprecated
 	default Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
@@ -247,7 +245,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Outgoing return transitions for all letters and hierarchical predecessor states.
-	 * 
+	 *
 	 * @param state
 	 *            state
 	 * @return outgoing return transitions
@@ -256,7 +254,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Summary transitions for a given letter and hierarchical predecessor state.
-	 * 
+	 *
 	 * @param hier
 	 *            hierarchical predecessor state
 	 * @param letter
@@ -267,7 +265,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterA
 
 	/**
 	 * Summary transitions for a given hierarchical predecessor state and all letters.
-	 * 
+	 *
 	 * @param hier
 	 *            hierarchical predecessor state
 	 * @return summary transitions

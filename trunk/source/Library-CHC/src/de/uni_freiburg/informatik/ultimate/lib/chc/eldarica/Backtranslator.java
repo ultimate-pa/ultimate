@@ -137,8 +137,8 @@ class Backtranslator {
 			return SmtUtils.ite(mScript, translated, trueTerm, falseTerm);
 		}
 
-		assert translated.getSort().equals(sort) : "Translated term has sort " + translated.getSort() + " instead of "
-				+ sort;
+		assert translated.getSort().equals(sort)
+				: "Translated term has sort " + translated.getSort() + " instead of " + sort;
 		return translated;
 	}
 

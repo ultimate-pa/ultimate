@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 
-import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,11 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.DescendResult;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.Repetition;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.TermContextTransformationEngine.TermWalker;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.MultiDimensionalSelectOverNestedStore;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.binaryrelation.SolvedBinaryRelation;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.polynomials.PolyPoNeUtils;
@@ -93,7 +89,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	 * This option allows us to omit quantified formulas from the critical constraint.
 	 */
 	private static final boolean OVERAPROXIMATE_QUANTIFIED_FORMULAS_IN_CONTEXT = true;
-	private static final boolean SIMPLIFY_REPEATEDLY = true;
+	private static final Repetition SIMPLIFY_REPEATEDLY = Repetition.REPEAT_UNTIL_NO_CHANGE;
 	private static final CheckedNodes CHECKED_NODES = CheckedNodes.ONLY_LEAVES;
 	/**
 	 * Do some overapproximation of quantifiers in the succedent of implications. We implement implication checks as
@@ -105,11 +101,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	/**
 	 * Try to simplify modulo terms.
 	 */
-	private static final boolean MOD_SIMPLIFICATION = true;
+	private static final boolean APPLY_MOD_SIMPLIFICATION = true;
 	/**
 	 * Try to apply a select-over-store simplification.
 	 */
-	private static final boolean ARRAY_SIMPLIFICATION = true;
+	private static final boolean APPLY_ARRAY_SIMPLIFICATION = true;
 
 	/**
 	 * Options for which nodes to check for redundancy. To check redundancy, we check if the critical constraint at the
@@ -149,7 +145,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	private final ArrayDeque<Map<TermVariable, Term>> mRenamingMaps;
 
 	private SimplifyDDA2(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
-		super();
 		mServices = services;
 		mMgdScript = mgdScript;
 		mRenamingMaps = new ArrayDeque<>();
@@ -299,94 +294,27 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				return new TermContextTransformationEngine.FinalResultForAscend(result);
 			}
 		}
-		Term termBasedSimplification = term;
-		if (MOD_SIMPLIFICATION) {
-			final Term modSimplificationResult = tryModSimplification(term);
-			if (modSimplificationResult != null) {
-				termBasedSimplification = modSimplificationResult;
-			}
+		Term tmp = term;
+		if (APPLY_MOD_SIMPLIFICATION) {
+			tmp = SimplificationUtils.tryModSimplification(mMgdScript, this::checkValidity, tmp);
 		}
-		if (ARRAY_SIMPLIFICATION) {
-			final Term arraySimplificationResult = tryArraySimplification(termBasedSimplification);
-			if (arraySimplificationResult != null) {
-				termBasedSimplification = arraySimplificationResult;
-			}
+		if (APPLY_ARRAY_SIMPLIFICATION) {
+			tmp = SimplificationUtils.tryArraySimplification(mMgdScript, this::checkValidity, tmp);
 		}
-		if (termBasedSimplification != term) {
-			return new TermContextTransformationEngine.FinalResultForAscend(termBasedSimplification);
+		if (tmp != term) {
+			return new TermContextTransformationEngine.FinalResultForAscend(tmp);
 		}
 		return null;
 	}
 
-	private Term tryModSimplification(final Term term) {
-		final Set<ApplicationTerm> subTerms = SmtUtils.extractApplicationTerms("mod", term, true);
-		if (subTerms.isEmpty()) {
-			return null;
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Term subTerm : subTerms) {
-			ModTerm modTerm = ModTerm.of(subTerm);
-			{
-				// Check if we can apply the simplification recursively
-				final Term divident = modTerm.getDivident();
-				final Term tmp = tryModSimplification(divident);
-				if (tmp != null) {
-					modTerm = new ModTerm(tmp, modTerm.getDivisor());
-				}
-			}
-			final Term dividentGeq0 =
-					SmtUtils.geq(mMgdScript.getScript(), modTerm.getDivident(), SmtUtils.constructIntegerValue(
-							mMgdScript.getScript(), SmtSortUtils.getIntSort(mMgdScript), BigInteger.ZERO));
-			final Term dividentSmallerDivisor =
-					SmtUtils.less(mMgdScript.getScript(), modTerm.getDivident(), modTerm.getDivisor());
-			final Term inRange = SmtUtils.and(mMgdScript.getScript(), dividentGeq0, dividentSmallerDivisor);
-			final Term notInRange = SmtUtils.not(mMgdScript.getScript(), inRange);
-			final LBool modIsSuperfluous = Util.checkSat(mMgdScript.getScript(), notInRange);
-			if (modIsSuperfluous == LBool.UNSAT) {
-				substitutionMapping.put(subTerm, modTerm.getDivident());
-			}
-		}
-		if (!substitutionMapping.isEmpty()) {
-			return Substitution.apply(mMgdScript, substitutionMapping, term);
-		} else {
-			return null;
-		}
-	}
-
-	private Term tryArraySimplification(final Term term) {
-		final List<MultiDimensionalSelectOverNestedStore> list =
-				MultiDimensionalSelectOverNestedStore.extractMultiDimensionalSelectOverNestedStore(term, true);
-		if (list.isEmpty()) {
-			return null;
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final MultiDimensionalSelectOverNestedStore mdsons : list) {
-			if (mdsons.getNestedStore().getValues().size() != 1) {
-				continue;
-			}
-			final ArrayIndex storeIndex = mdsons.getNestedStore().getIndices().get(0);
-			final ArrayIndex selectIndex = mdsons.getSelectIndex();
-			final Term idxEquivalence =
-					ArrayIndex.constructIndexEquality(mMgdScript.getScript(), storeIndex, selectIndex);
-			final LBool idxEquivalent =
-					Util.checkSat(mMgdScript.getScript(), SmtUtils.not(mMgdScript.getScript(), idxEquivalence));
-			if (idxEquivalent == LBool.UNSAT) {
-				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()),
-						mdsons.getNestedStore().getValues().get(0));
-				continue;
-			}
-			final LBool idxNotEquivalent = Util.checkSat(mMgdScript.getScript(), idxEquivalence);
-			if (idxNotEquivalent == LBool.UNSAT) {
-				final MultiDimensionalSelect mds =
-						new MultiDimensionalSelect(mdsons.getNestedStore().getArray(), mdsons.getSelectIndex());
-				substitutionMapping.put(mdsons.toTerm(mMgdScript.getScript()), mds.toTerm(mMgdScript.getScript()));
-			}
-		}
-		if (!substitutionMapping.isEmpty()) {
-			return Substitution.apply(mMgdScript, substitutionMapping, term);
-		} else {
-			return null;
-		}
+	/**
+	 * Our implementation of SimplificationUtils.ValidityCheck#isValid. In our setting, the current context is already
+	 * on the solvers assertion stack and we only check if the negation of the conjunction of terms is unsatisfiable.
+	 */
+	private LBool checkValidity(final Term... terms) {
+		final Term conjunction = SmtUtils.and(mMgdScript.getScript(), terms);
+		final Term negated = SmtUtils.not(mMgdScript.getScript(), conjunction);
+		return Util.checkSat(mMgdScript.getScript(), negated);
 	}
 
 	/**
@@ -443,27 +371,6 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 				|| (CHECKED_NODES == CheckedNodes.ONLY_LEAVES && isLeaf(term)));
 	}
 
-	private Term doConstantFolding(final Term context, final Term term) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Term conjunct : SmtUtils.getConjuncts(context)) {
-			if (!SmtUtils.isFunctionApplication(conjunct, "=")) {
-				continue;
-			}
-			final PolynomialRelation polyRel = PolynomialRelation.of(mMgdScript.getScript(), conjunct);
-			if (polyRel != null) {
-				final SolvedBinaryRelation sbr = polyRel.isSimpleEquality(mMgdScript.getScript());
-				if (sbr != null) {
-					substitutionMapping.put(sbr.getLeftHandSide(), sbr.getRightHandSide());
-				}
-			}
-		}
-		if (!substitutionMapping.isEmpty()) {
-			final Term renamed = Substitution.apply(mMgdScript, substitutionMapping, term);
-			return renamed;
-		}
-		return term;
-	}
-
 	/**
 	 * Simplifies the formula based on if we want to preprocess it with PolyPac simplification or constant folding.
 	 * Constant folding is already applied in the PolyPac simplification.
@@ -473,11 +380,11 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		Term preprocessedTerm = term;
 		if (PREPROCESS_WITH_POLY_PAC_SIMPLIFICATION) {
 			if (APPLY_CONSTANT_FOLDING) {
-				throw new AssertionError("PolyPac Simplefication Already Implements Constant Folding");
+				throw new AssertionError("PolyPac Simplification Already Implements Constant Folding");
 			}
 			preprocessedTerm = PolyPacSimplificationTermWalker.simplify(mServices, mMgdScript, context, term);
 		} else if (APPLY_CONSTANT_FOLDING) {
-			preprocessedTerm = doConstantFolding(context, term);
+			preprocessedTerm = SimplificationUtils.applyConstantFolding(mMgdScript, context, term);
 		} else {
 			preprocessedTerm = term;
 		}
@@ -574,8 +481,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 		final SimplifyDDA2 simplifyDDA2 = new SimplifyDDA2(services, mgdScript);
 		// do initial push
 		mgdScript.getScript().push(1);
-		final Set<TermVariable> freeVariables = new HashSet<>();
-		freeVariables.addAll(Arrays.asList(context.getFreeVars()));
+		final Set<TermVariable> freeVariables = new HashSet<>(Arrays.asList(context.getFreeVars()));
 		freeVariables.addAll(Arrays.asList(term.getFreeVars()));
 		final Map<TermVariable, Term> substitutionMapping =
 				constructFreshConstantSymbols(mgdScript, freeVariables, term, context);
@@ -666,7 +572,7 @@ public class SimplifyDDA2 extends TermWalker<Term> {
 	}
 
 	@Override
-	protected boolean applyRepeatedlyUntilNoChange() {
+	protected Repetition applyRepeatedly() {
 		return SIMPLIFY_REPEATEDLY;
 	}
 

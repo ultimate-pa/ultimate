@@ -99,7 +99,8 @@ public final class BuchiCegarLoopResult<L extends IIcfgTransition<?>> {
 	}
 
 	public static <L extends IIcfgTransition<?>> BuchiCegarLoopResult<L> constructUnknownResult(
-			final NestedWord<L> stem, final NestedWord<L> loop, final HashRelation<String, ILocation> overapproximations,
+			final NestedWord<L> stem, final NestedWord<L> loop,
+			final HashRelation<String, ILocation> overapproximations,
 			final BuchiAutomizerModuleDecompositionBenchmark mDBenchmark,
 			final TermcompProofBenchmark termcompProofBenchmark) {
 		return new BuchiCegarLoopResult<>(Result.UNKNOWN, stem, loop, overapproximations, null, null, mDBenchmark,

@@ -75,10 +75,9 @@ public final class ResultService implements IStorable, IResultService {
 		if (transformedResult == null) {
 			return;
 		}
-		if (transformedResult instanceof IResultWithLocation) {
-			if (((IResultWithLocation) transformedResult).getLocation() == null) {
-				throw new IllegalArgumentException("Location is null");
-			}
+		if ((transformedResult instanceof IResultWithLocation)
+				&& (((IResultWithLocation) transformedResult).getLocation() == null)) {
+			throw new IllegalArgumentException("Location is null");
 		}
 		if (transformedResult.getShortDescription() == null) {
 			throw new IllegalArgumentException("ShortDescription is null");

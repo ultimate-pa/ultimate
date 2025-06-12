@@ -124,8 +124,7 @@ public class ReflectionUtil {
 	 */
 	public static void supplyCallStackStrings(final Consumer<String> consumer) {
 		final StackTraceElement[] callStack = Thread.currentThread().getStackTrace();
-		for (int i = 0; i < callStack.length; ++i) {
-			final StackTraceElement theFrame = callStack[i];
+		for (final StackTraceElement theFrame : callStack) {
 			consumer.accept(String.format("[L%-4s] %30.30s %s", theFrame.getLineNumber(),
 					truncateFromLeft(theFrame.getClassName(), 30), theFrame.getMethodName()));
 		}

@@ -27,14 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
 
+import java.util.Objects;
+
 /**
- * The class is used to store information about where we can find the
- * declaration of an IdentifierExpression of a VariableLeftHandSide.
+ * The class is used to store information about where we can find the declaration of an IdentifierExpression of a
+ * VariableLeftHandSide.
  *
  * @author Matthias Heizmann
  */
 public class DeclarationInformation {
-
 
 	public static final DeclarationInformation DECLARATIONINFO_GLOBAL =
 			new DeclarationInformation(StorageClass.GLOBAL, null);
@@ -42,19 +43,17 @@ public class DeclarationInformation {
 	/**
 	 * Defines where the declaration of a variable/constant is stored.
 	 */
-	public static enum StorageClass {
+	public enum StorageClass {
 		/**
 		 * All global variables and constants
 		 */
 		GLOBAL,
 		/**
-		 * "In" parameter of a function declaration or procedure declaration
-		 * (with or without body/implementation)
+		 * "In" parameter of a function declaration or procedure declaration (with or without body/implementation)
 		 */
 		PROC_FUNC_INPARAM,
 		/**
-		 * "Out" parameter of function declaration or procedure declaration
-		 * (with or without body/implementation)
+		 * "Out" parameter of function declaration or procedure declaration (with or without body/implementation)
 		 */
 		PROC_FUNC_OUTPARAM,
 		/**
@@ -66,8 +65,7 @@ public class DeclarationInformation {
 		 */
 		IMPLEMENTATION_OUTPARAM,
 		/**
-		 * All local variables and constants
-		 * TODO 2019-06-11 Matthias: There are no local constants in Boogie!
+		 * All local variables and constants TODO 2019-06-11 Matthias: There are no local constants in Boogie!
 		 */
 		LOCAL,
 		/**
@@ -75,8 +73,7 @@ public class DeclarationInformation {
 		 */
 		QUANTIFIED,
 		/**
-		 * TODO 2019-06-11 Matthias: I think this enum value does not make
-		 * sense and should be removed.
+		 * TODO 2019-06-11 Matthias: I think this enum value does not make sense and should be removed.
 		 */
 		@Deprecated
 		IMPLEMENTATION,
@@ -104,29 +101,24 @@ public class DeclarationInformation {
 	}
 
 	/**
-	 * A DeclarationInformation is valid, if the procedure is non-null exactly
-	 * if the StorageClass corresponds to a procedure.
+	 * A DeclarationInformation is valid, if the procedure is non-null exactly if the StorageClass corresponds to a
+	 * procedure.
 	 */
 	private boolean isValid(final StorageClass storageClass, final String procedure) {
 		final boolean result;
-		switch (storageClass) {
+		return switch (storageClass) {
 		case IMPLEMENTATION:
 		case PROC_FUNC:
 		case GLOBAL:
 		case QUANTIFIED:
-			result = (procedure == null);
-			break;
+			yield (procedure == null);
 		case PROC_FUNC_INPARAM:
 		case PROC_FUNC_OUTPARAM:
 		case IMPLEMENTATION_INPARAM:
 		case IMPLEMENTATION_OUTPARAM:
 		case LOCAL:
-			result = (procedure != null);
-			break;
-		default:
-			throw new AssertionError("unknown StorageClass");
-		}
-		return result;
+			yield (procedure != null);
+		};
 	}
 
 	@Override
@@ -140,11 +132,7 @@ public class DeclarationInformation {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mProcedure == null) ? 0 : mProcedure.hashCode());
-		result = prime * result + ((mStorageClass == null) ? 0 : mStorageClass.hashCode());
-		return result;
+		return Objects.hash(mProcedure, mStorageClass);
 	}
 
 	@Override

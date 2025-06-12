@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.e
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -127,7 +127,7 @@ public class ArrayHandler {
 		 * the next subscript as pointer arithmetic (as normal).
 		 */
 
-		final CType cTypeLeft = leftlrValue.getCType().getUnderlyingType();
+		final ICType cTypeLeft = leftlrValue.getCType().getUnderlyingType();
 		final ExpressionResultBuilder result = new ExpressionResultBuilder();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
@@ -135,7 +135,7 @@ public class ArrayHandler {
 			final LRValue transformedValue = transformedResult.getLrValue();
 			assert cTypeLeft.equals(transformedValue.getCType());
 			final RValue integer = (RValue) subscript.getLrValue();
-			final CType valueType = ((CPointer) cTypeLeft).getPointsToType();
+			final ICType valueType = ((CPointer) cTypeLeft).getPointsToType();
 			final ExpressionResult newAddress = mMemoryHandler.doPointerArithmeticWithConversion(
 					IASTBinaryExpression.op_plus, loc, transformedValue.getValue(), integer, valueType);
 			result.addAllExceptLrValue(transformedResult, subscript, newAddress);
@@ -151,7 +151,7 @@ public class ArrayHandler {
 		// missing. E.g., if the input is a (int x int -> float) array
 		// the resulting array will be an (int -> float) array.
 
-		final CType resultCType = lhsArrayType.getValueType();
+		final ICType resultCType = lhsArrayType.getValueType();
 
 		if (leftlrValue instanceof HeapLValue) {
 			// If the left hand side is an array represented as HeapLValue
@@ -264,7 +264,7 @@ public class ArrayHandler {
 				(CPrimitive) currentDimension.getCType().getUnderlyingType());
 		inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		switch (mSettings.checkArrayAccessOffHeap()) {
-		case ASSERTandASSUME:
+		case CHECK:
 			final Statement assertStm = new AssertStatement(loc, inRange);
 			final Check chk = new Check(Spec.ARRAY_INDEX);
 			chk.annotate(assertStm);

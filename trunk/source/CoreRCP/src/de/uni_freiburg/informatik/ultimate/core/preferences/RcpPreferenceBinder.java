@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.KeyValueUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -53,7 +53,7 @@ public final class RcpPreferenceBinder {
 
 	/**
 	 * Initialize an RCP-based backing store with preferences stored in {@link BaseUltimatePreferenceItem}s.
-	 * 
+	 *
 	 * @param preferenceStore
 	 *            The preference store in which you want to save your preferences.
 	 * @param preferenceDescriptors
@@ -113,7 +113,7 @@ public final class RcpPreferenceBinder {
 
 	/**
 	 * Get the RCP backing store for storing the current values of preferences for a given plugin.
-	 * 
+	 *
 	 * @param pluginId
 	 *            The id of the given plugin.
 	 * @return A RCP backing store.
@@ -124,7 +124,7 @@ public final class RcpPreferenceBinder {
 
 	/**
 	 * Get the RCP backing store for storing default values of preferences for a given plugin.
-	 * 
+	 *
 	 * @param pluginId
 	 *            The id of the given plugin.
 	 * @return A RCP backing store.
@@ -136,7 +136,7 @@ public final class RcpPreferenceBinder {
 	/**
 	 * Reset the intersection of all registered preferences with the specified preferences for the specified plugin to
 	 * their default values.
-	 * 
+	 *
 	 * @param pluginId
 	 *            The identifier of the plugin for which preferences should be reseted to default values.
 	 * @param preferenceDescriptors
@@ -150,7 +150,7 @@ public final class RcpPreferenceBinder {
 
 	/**
 	 * Register preferences and set their values to the default values.
-	 * 
+	 *
 	 * @param pluginId
 	 *            The plugin for which preferences should be registered.
 	 * @param preferenceDescriptors

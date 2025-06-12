@@ -465,16 +465,16 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.break_loop=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.collection_cloning=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.comparing_on_criteria=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.comparison_statement=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.comparison_statement=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.controlflow_merge=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_functional_interfaces=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop_if_loop_var_used=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_enhanced_for_loop_if_loop_var_used=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.convert_to_switch_expressions=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.correct_indentation=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.do_while_rather_than_while=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.double_negation=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.else_if=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.else_if=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.embedded_if=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.evaluate_nullable=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.extract_increment=true
@@ -543,8 +543,8 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_unused_private_methods=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.remove_unused_private_types=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.replace_deprecated_calls=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.return_expression=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.simplify_lambda_expression_and_method_ref=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.return_expression=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.simplify_lambda_expression_and_method_ref=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.single_used_field=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.sort_members=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.sort_members_all=false
@@ -553,9 +553,9 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.strictly_equal_or_different=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringbuffer_to_stringbuilder=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringbuilder=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.stringbuilder_for_local_vars=false
+/instance/org.eclipse.jdt.ui/sp_cleanup.stringbuilder_for_local_vars=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.stringconcat_stringbuffer_stringbuilder=false
-/instance/org.eclipse.jdt.ui/sp_cleanup.stringconcat_to_textblock=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.stringconcat_to_textblock=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.substring=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.switch=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.system_property=false
@@ -574,7 +574,7 @@
 /instance/org.eclipse.jdt.ui/sp_cleanup.use_blocks_only_for_return_and_throw=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.use_directly_map_method=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.use_lambda=true
-/instance/org.eclipse.jdt.ui/sp_cleanup.use_parentheses_in_expressions=true
+/instance/org.eclipse.jdt.ui/sp_cleanup.use_parentheses_in_expressions=false
 /instance/org.eclipse.jdt.ui/sp_cleanup.use_string_is_blank=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.use_this_for_non_static_field_access=true
 /instance/org.eclipse.jdt.ui/sp_cleanup.use_this_for_non_static_field_access_only_if_necessary=true
@@ -588,5 +588,8 @@
 
 /instance/org.eclipse.ui.ide/WORKSPACE_NAME=Ultimate Program Analysis Framework
 /instance/org.eclipse.ui.ide/tipsAndTricks=false
+
+/instance/org.eclipse.ui.editors/printMargin=true
+/instance/org.eclipse.ui.editors/printMarginColumn=120
 
 file_export_version=3.0

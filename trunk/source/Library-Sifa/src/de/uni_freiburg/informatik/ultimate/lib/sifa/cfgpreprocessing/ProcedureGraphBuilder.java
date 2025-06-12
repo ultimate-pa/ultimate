@@ -62,42 +62,42 @@ public class ProcedureGraphBuilder {
 	}
 
 	/**
-	 * Constructs a procedure graph for a given procedure.
-	 * The resulting procedure graph is labeled with edges and nodes from its ICFG.
-	 * Only relevant parts are included. Relevant parts are
+	 * Constructs a procedure graph for a given procedure. The resulting procedure graph is labeled with edges and nodes
+	 * from its ICFG. Only relevant parts are included. Relevant parts are
 	 * <ul>
-	 *   <li> The procedure's entry node
-	 *   <li> The procedure's exit node
-	 *   <li> {@code locationsOfInterest}
-	 *   <li> {@code enterCallsOfInterest}
-	 *   <li> Everything connecting any of the above nodes
+	 * <li>The procedure's entry node
+	 * <li>The procedure's exit node
+	 * <li>{@code locationsOfInterest}
+	 * <li>{@code enterCallsOfInterest}
+	 * <li>Everything connecting any of the above nodes
 	 * </ul>
 	 * <p>
 	 * Inside the procedure graph calls are represented as follows:
 	 * <ul>
-	 *   <li> Calls to implemented procedures are represented by up to two edges.
-	 *     <ul>
-	 *       <li> One summary edge of type {@link CallReturnSummary} for the case in which we
-	 *            enter the function and return normally.<br>
-	 *            Note that summary edges do not actually summarize the call.
-	 *            They are just there to point out, that we skipped the procedure.
-	 *       <li> If requested by {@code enterCallsOfInterest}:
-	 *            One error edge of type {@link IIcfgCallTransition} for the case in which we
-	 *            enter the function but do not return due to errors in the callee or functions called by the callee.
-	 *     </ul>
-	 *   <li> Calls to unimplemented procedures are represented by the original summary edge from the icfg.
+	 * <li>Calls to implemented procedures are represented by up to two edges.
+	 * <ul>
+	 * <li>One summary edge of type {@link CallReturnSummary} for the case in which we enter the function and return
+	 * normally.<br>
+	 * Note that summary edges do not actually summarize the call. They are just there to point out, that we skipped the
+	 * procedure.
+	 * <li>If requested by {@code enterCallsOfInterest}: One error edge of type {@link IIcfgCallTransition} for the case
+	 * in which we enter the function but do not return due to errors in the callee or functions called by the callee.
+	 * </ul>
+	 * <li>Calls to unimplemented procedures are represented by the original summary edge from the icfg.
 	 * </ul>
 	 * Cases in which callees do not terminate are not treated specially.
 	 *
-	 * @param procedureName Name of the procedure for which a procedure graph shall be constructed
-	 * @param locationsOfInterest Locations to be included in the graph
-	 *                            besides the procedure's entry and exit location and connections between them.
-	 * @param enterCallsOfInterest Names of the callees for which dead-end edges should be inserted
-	 *                             modelling entering the callee without returning due to an error
+	 * @param procedureName
+	 *            Name of the procedure for which a procedure graph shall be constructed
+	 * @param locationsOfInterest
+	 *            Locations to be included in the graph besides the procedure's entry and exit location and connections
+	 *            between them.
+	 * @param enterCallsOfInterest
+	 *            Names of the callees for which dead-end edges should be inserted modelling entering the callee without
+	 *            returning due to an error
 	 */
 	public ProcedureGraph graphOfProcedure(final String procedureName,
-			final Collection<IcfgLocation> locationsOfInterest,
-			final Collection<String> enterCallsOfInterest) {
+			final Collection<IcfgLocation> locationsOfInterest, final Collection<String> enterCallsOfInterest) {
 
 		mStats.start(SifaStats.Key.PROCEDURE_GRAPH_BUILDER_TIME);
 
@@ -125,24 +125,22 @@ public class ProcedureGraphBuilder {
 	@SuppressWarnings("unchecked")
 	private void copyEnterCallEdges(final String caller, final String callee) {
 		mIcfg.getProcedureEntryNodes().get(callee).getIncomingEdges().stream()
-			.filter(incomingEdge -> incomingEdge instanceof IIcfgCallTransition<?>)
-			.map(callEdge -> (IIcfgCallTransition<IcfgLocation>) callEdge)
-			.filter(callEdge -> caller.equals(callEdge.getPrecedingProcedure()))
-			// Dead end edge representing the possibility to enter the callee without returning due to an error
-			.peek(this::copyEdge)
-			.map(IIcfgTransition::getSource)
-			.forEach(this::addToWorklistIfNew);
+				.filter(incomingEdge -> incomingEdge instanceof IIcfgCallTransition<?>)
+				.map(callEdge -> (IIcfgCallTransition<IcfgLocation>) callEdge)
+				.filter(callEdge -> caller.equals(callEdge.getPrecedingProcedure()))
+				// Dead end edge representing the possibility to enter the callee without returning due to an error
+				.peek(this::copyEdge).map(IIcfgTransition::getSource).forEach(this::addToWorklistIfNew);
 		// Call summaries are added later if needed
 	}
 
 	/**
-	 * Traverses the ICFG backwards and copies edges to the procedure graph.
-	 * Backwards processing allows to only include required paths (for instance to the procedure's exit or
-	 * locations of interest) while ignoring dead ends in which we are not interested.
+	 * Traverses the ICFG backwards and copies edges to the procedure graph. Backwards processing allows to only include
+	 * required paths (for instance to the procedure's exit or locations of interest) while ignoring dead ends in which
+	 * we are not interested.
 	 */
 	@SuppressWarnings("unchecked")
 	private void processBottomUp(final IcfgEdge edge) {
-		if (edge instanceof IIcfgReturnTransition<?,?>) {
+		if (edge instanceof IIcfgReturnTransition<?, ?>) {
 			processReturn((IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>>) edge);
 		} else if (edge instanceof IIcfgCallTransition<?>) {
 			processCall((IIcfgCallTransition<IcfgLocation>) edge);
@@ -154,7 +152,8 @@ public class ProcedureGraphBuilder {
 		}
 	}
 
-	private void processReturn(final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnEdge) {
+	private void
+			processReturn(final IIcfgReturnTransition<IcfgLocation, IIcfgCallTransition<IcfgLocation>> returnEdge) {
 		final IIcfgCallTransition<IcfgLocation> correspondingCallEdge = returnEdge.getCorrespondingCall();
 		final IcfgLocation correspondingSource = correspondingCallEdge.getSource();
 		addToWorklistIfNew(correspondingSource);
@@ -164,8 +163,8 @@ public class ProcedureGraphBuilder {
 	}
 
 	private void processCall(final IIcfgCallTransition<IcfgLocation> callEdge) {
-		assert callEdge.getTarget() == mCurrentProcedureGraph.getEntryNode() :
-				"Builder entered return (backwards) but should have skipped body of sub-procedure.";
+		assert callEdge.getTarget() == mCurrentProcedureGraph.getEntryNode()
+				: "Builder entered return (backwards) but should have skipped body of sub-procedure.";
 	}
 
 	private void processCallSummary(final IIcfgSummaryTransition<IcfgLocation> callSummaryEdge) {

@@ -85,7 +85,7 @@ public final class BranchUnfoldIcfgTransformer {
 	public IIcfg<IcfgLocation> transform(final IIcfg<IcfgLocation> inputIcfg) {
 		mInputIcfg = inputIcfg;
 
-		final IValueConstruction<IcfgEdge, Integer> edgeNumberVc = new IValueConstruction<IcfgEdge, Integer>() {
+		final IValueConstruction<IcfgEdge, Integer> edgeNumberVc = new IValueConstruction<>() {
 			int mCounter = 0;
 
 			@Override
@@ -97,7 +97,7 @@ public final class BranchUnfoldIcfgTransformer {
 		final ConstructionCache<IcfgEdge, Integer> edgeNumberConstructor = new ConstructionCache<>(edgeNumberVc);
 
 		final IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationVc =
-				new IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation>() {
+				new IValueConstruction<>() {
 
 					@Override
 					public IcfgLocation constructValue(final Pair<IcfgLocation, Integer> pair) {
@@ -112,7 +112,9 @@ public final class BranchUnfoldIcfgTransformer {
 						final boolean isProcEntry = initial;
 						final boolean isProcExit = false;
 						final boolean isLoopLocation = mInputIcfg.getLoopLocations().contains(inputLoc);
-						mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+						final boolean isLocationOfInterest = mInputIcfg.getLocationsOfInterest().contains(inputLoc);
+						mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation,
+								isLocationOfInterest);
 						mOldLoc2NewLoc.addPair(inputLoc, resultLoc);
 						// if (!mVisited.contains(pair)) {
 						// mVisited.add(pair);

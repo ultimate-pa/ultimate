@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it
  * and/or modify it under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation, either version 3 of the License,
  * or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be
  * useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automata Library, or any covered work, by linking or combining it
  * with Eclipse RCP (or a modified version of Eclipse RCP), containing parts
@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  * <li>according to a fixed pattern (which is finite and repeated), or</li>
  * <li>according to the iteration (intended to be used in an outer loop).</li>
  * </ul>
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -61,7 +61,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 	 * <p>
 	 * NOTE: It makes little sense to use this operation from the AutomataScript interface as only the first operation
 	 * is executed.
-	 * 
+	 *
 	 * @param services
 	 *            services
 	 * @param stateFactory
@@ -79,7 +79,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 
 	/**
 	 * Constructor with default pattern.
-	 * 
+	 *
 	 * @param services
 	 *            services
 	 * @param stateFactory
@@ -104,7 +104,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 
 	/**
 	 * Constructor using only one minimization operation every {@code k}th iteration.
-	 * 
+	 *
 	 * @param services
 	 *            services
 	 * @param stateFactory
@@ -132,7 +132,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 
 	/**
 	 * Constructor with user-defined pattern.
-	 * 
+	 *
 	 * @param services
 	 *            services
 	 * @param stateFactory
@@ -163,7 +163,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 
 	/**
 	 * Creates a pattern where minimization is only used in each {@code k}th iteration.
-	 * 
+	 *
 	 * @param indexForMinimization
 	 *            index at which the minimization should actually be used
 	 * @return pattern

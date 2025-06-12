@@ -129,7 +129,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		unAssertPostcondition();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<Validity, List<IPredicate>>(validity, preconditionsInUnsatCore);
+		return new Pair<>(validity, preconditionsInUnsatCore);
 	}
 
 	private List<IPredicate> determinePreconditionsInUnsatCore() {
@@ -163,7 +163,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		unAssertPostcondition();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<Validity, List<IPredicate>>(validity, preconditionsInUnsatCore);
+		return new Pair<>(validity, preconditionsInUnsatCore);
 	}
 
 	public Pair<Validity, List<IPredicate>> checkReturn(final List<IPredicate> linPre, final IPredicate hierPre,
@@ -183,7 +183,7 @@ public class HoareTripleCheckerWithPreconditionRelevanceAnalysis extends Increme
 		unAssertHierPred();
 		unAssertPrecondition();
 		unAssertCodeBlock();
-		return new Pair<Validity, List<IPredicate>>(validity, preconditionsInUnsatCore);
+		return new Pair<>(validity, preconditionsInUnsatCore);
 	}
 
 }

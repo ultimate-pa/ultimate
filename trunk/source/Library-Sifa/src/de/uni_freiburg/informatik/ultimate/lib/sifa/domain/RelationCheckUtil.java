@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain.ResultForAlte
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 
 /**
- * Common approaches to implement {@link IDomain#isEqBottom(IPredicate)}
- * and {@link IDomain#isSubsetEq(IPredicate, IPredicate)}.
+ * Common approaches to implement {@link IDomain#isEqBottom(IPredicate)} and
+ * {@link IDomain#isSubsetEq(IPredicate, IPredicate)}.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -45,8 +45,8 @@ public final class RelationCheckUtil {
 		// objects of this class have no purpose
 	}
 
-	public static ResultForAlteredInputs isEqBottom_SolverAlphaSolver(
-			final SymbolicTools tools, final IDomain domain, final IPredicate pred) {
+	public static ResultForAlteredInputs isEqBottom_SolverAlphaSolver(final SymbolicTools tools, final IDomain domain,
+			final IPredicate pred) {
 		final ResultForAlteredInputs result = new ResultForAlteredInputs(pred, tools.bottom());
 		for (int attempt = 0; attempt < 2; ++attempt) {
 			if (SmtUtils.isFalseLiteral(result.mLhs.getFormula())) {
@@ -60,13 +60,12 @@ public final class RelationCheckUtil {
 			}
 			result.abstractLhs(domain::alpha);
 		}
-		throw new UnsupportedOperationException(String.format(
-				"Solver couldn't answer isBottom for%noriginal:%n%s%nabstracted:%n%s",
-				pred, result.mLhs));
+		throw new UnsupportedOperationException(String
+				.format("Solver couldn't answer isBottom for%noriginal:%n%s%nabstracted:%n%s", pred, result.mLhs));
 	}
 
-	public static ResultForAlteredInputs isSubsetEq_SolverAlphaSolver(
-			final SymbolicTools tools, final IDomain domain, final IPredicate left, final IPredicate right) {
+	public static ResultForAlteredInputs isSubsetEq_SolverAlphaSolver(final SymbolicTools tools, final IDomain domain,
+			final IPredicate left, final IPredicate right) {
 		final ResultForAlteredInputs result = new ResultForAlteredInputs(left, right);
 		for (int attempt = 0; attempt < 2; ++attempt) {
 			if (SmtUtils.isFalseLiteral(result.mLhs.getFormula()) || result.mLhs.equals(result.mRhs)) {
@@ -81,9 +80,9 @@ public final class RelationCheckUtil {
 			// TODO maybe abstracting one side per attempt is also possible. Think about it carefully.
 			result.abstractLhsAndRhs(domain::alpha);
 		}
-		throw new UnsupportedOperationException(String.format(
-				"Solver couldn't answer isSubsetEq for%noriginal:%n%s%n%s%nabstracted:%n%s%n%s",
-				left, right, result.mLhs, result.mRhs));
+		throw new UnsupportedOperationException(
+				String.format("Solver couldn't answer isSubsetEq for%noriginal:%n%s%n%s%nabstracted:%n%s%n%s", left,
+						right, result.mLhs, result.mRhs));
 	}
 
 }

@@ -103,19 +103,11 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 		mLogger.debug("Start unfolding. Net " + mOperand.sizeInformation()
 				+ (mStopIfAcceptingRunFound ? "We stop if some accepting run was found"
 						: "We compute complete finite Prefix"));
-		switch (order) {
-		case KMM:
-			mOrder = new McMillanOrder<>();
-			break;
-		case ERV:
-			mOrder = new EsparzaRoemerVoglerOrder<>();
-			break;
-		case DBO:
-			mOrder = new DepthBasedOrder<>();
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
+		mOrder = switch (order) {
+		case KMM -> new McMillanOrder<>();
+		case ERV -> new EsparzaRoemerVoglerOrder<>();
+		case DBO -> new DepthBasedOrder<>();
+		};
 		mUnfolding = new BranchingProcess<>(mServices, operand, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
 		mPossibleExtensions =
 				new PossibleExtensions<>(mUnfolding, mOrder, USE_FIRSTBORN_CUTOFF_CHECK, B32_OPTIMIZATION);
@@ -297,8 +289,8 @@ public abstract class PetriNetUnfolderBase<L, P, R> {
 					mLogger.info("  existing Event has " + event2.getAncestors() + " ancestors and is "
 							+ (event.isCutoffEvent() ? "" : "not ") + "cut-off event");
 					assert event2.getAncestors() == event.getAncestors() || event.isCutoffEvent()
-							|| event2.isCutoffEvent() : "if there is "
-									+ "already an event that has the same marking and a different size of "
+							|| event2.isCutoffEvent()
+							: "if there is " + "already an event that has the same marking and a different size of "
 									+ "local configuration then the new event must be cut-off event";
 				}
 			}

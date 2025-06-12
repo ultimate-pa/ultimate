@@ -25,13 +25,12 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 	private final SetOfStates<STATE> mSetOfStates;
-    private final int mAcceptanceSize;
-    private final Map<STATE, TrackState<STATE>> mTrackStateMap;
+	private final int mAcceptanceSize;
+	private final Map<STATE, TrackState<STATE>> mTrackStateMap;
 	private final Map<TrackState<STATE>, STATE> mStateMap;
-	
+
 	public <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiToBuchi(
-			final SF stateFactory,
-			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand){
+			final SF stateFactory, final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		mOperand = operand;
 		mStateFactory = stateFactory;
 		mEmptyStackState = stateFactory.createEmptyStackState();
@@ -41,14 +40,13 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 		mStateMap = new HashMap<>();
 		constructInitialStates();
 	}
-	
+
 	public <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiToBuchi(
-			final SF stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand){
-		if(! (operand instanceof IGeneralizedNestedWordAutomaton)) {
+			final SF stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
+		if (!(operand instanceof IGeneralizedNestedWordAutomaton)) {
 			throw new UnsupportedOperationException("Input automaton is not GBA");
 		}
-		mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)operand;;
+		mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand;
 		mStateFactory = stateFactory;
 		mEmptyStackState = stateFactory.createEmptyStackState();
 		mSetOfStates = new SetOfStates<>(mEmptyStackState);
@@ -57,14 +55,13 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 		mStateMap = new HashMap<>();
 		constructInitialStates();
 	}
-	
+
 	public <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> GeneralizedBuchiToBuchi(
-			final SF stateFactory,
-			final IGeneralizedNestedWordAutomaton<LETTER, STATE> operand){
-		if(! (operand instanceof IGeneralizedNestedWordAutomaton)) {
+			final SF stateFactory, final IGeneralizedNestedWordAutomaton<LETTER, STATE> operand) {
+		if (!(operand instanceof IGeneralizedNestedWordAutomaton)) {
 			throw new UnsupportedOperationException("Input automaton is not GBA");
 		}
-		mOperand = (IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE>)operand;;
+		mOperand = operand;
 		mStateFactory = stateFactory;
 		mEmptyStackState = stateFactory.createEmptyStackState();
 		mSetOfStates = new SetOfStates<>(mEmptyStackState);
@@ -73,18 +70,18 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 		mStateMap = new HashMap<>();
 		constructInitialStates();
 	}
-	
+
 	private void constructInitialStates() {
 		for (final STATE st : mOperand.getInitialStates()) {
 			final int track = 0;
 			getOrConstructState(st, true, track);
 		}
 	}
-	
-	private TrackState<STATE> getOrConstructState(STATE state, boolean isInitial, final int track) {
-		TrackState<STATE> trackState = new TrackState<>(state, track);
+
+	private TrackState<STATE> getOrConstructState(final STATE state, final boolean isInitial, final int track) {
+		final TrackState<STATE> trackState = new TrackState<>(state, track);
 		STATE res = mStateMap.get(trackState);
-		if(res == null) {
+		if (res == null) {
 			res = mStateFactory.intersectBuchi(state, state, track);
 			trackState.setBuchiState(res);
 			mTrackStateMap.put(res, trackState);
@@ -94,55 +91,59 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 		}
 		return mTrackStateMap.get(res);
 	}
-	
-	private int getSuccTrack(TrackState<STATE> state, STATE succ) {
+
+	private int getSuccTrack(final TrackState<STATE> state, final STATE succ) {
 		final int succTrack = (state.mTrack + 1) % mAcceptanceSize;
-		if(mOperand.isFinal(succ, state.mTrack)) {
+		if (mOperand.isFinal(succ, state.mTrack)) {
 			return succTrack;
-		}else {
+		} else {
 			return state.mTrack;
 		}
 	}
-	
-	private class TrackState<STATE> {
+
+	private static class TrackState<STATE> {
 		STATE mState;
 		int mTrack;
 		STATE mRes;
+
 		TrackState(final STATE state, final int track) {
 			mState = state;
 			mTrack = track;
 		}
-		
-		void setBuchiState(STATE state) {
+
+		void setBuchiState(final STATE state) {
 			mRes = state;
 		}
-		
+
 		@Override
-		public boolean equals(Object obj) {
-			if(obj == null) return false;
-			if(this == obj) return true;
-			if(!(obj instanceof TrackState)) {
+		public boolean equals(final Object obj) {
+			if (obj == null) {
+				return false;
+			}
+			if (this == obj) {
+				return true;
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
 			}
 			@SuppressWarnings("unchecked")
-			TrackState<STATE> other = (TrackState<STATE>)obj;
-			return mState.equals(other.mState)
-				&& mTrack == other.mTrack;
+			final TrackState<STATE> other = (TrackState<STATE>) obj;
+			return mState.equals(other.mState) && mTrack == other.mTrack;
 		}
-		
+
 		@Override
 		public int hashCode() {
 			int result = mState.hashCode();
 			result = result * 31 + mTrack;
 			return result;
 		}
-		
+
 		@Override
 		public String toString() {
 			return mState + "," + mTrack;
 		}
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mOperand.getAlphabet();
@@ -179,36 +180,39 @@ public class GeneralizedBuchiToBuchi<LETTER, STATE> implements INwaOutgoingLette
 	}
 
 	@Override
-	public boolean isInitial(STATE state) {
+	public boolean isInitial(final STATE state) {
 		return mSetOfStates.isInitial(state);
 	}
 
 	@Override
-	public boolean isFinal(STATE state) {
+	public boolean isFinal(final STATE state) {
 		return mSetOfStates.isAccepting(state);
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(STATE state, LETTER letter) {
-		TrackState<STATE> trackState = mTrackStateMap.get(state);
-		List<OutgoingInternalTransition<LETTER, STATE>> succs = new ArrayList<>();
-		for(final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(trackState.mState, letter)) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
+		final TrackState<STATE> trackState = mTrackStateMap.get(state);
+		final List<OutgoingInternalTransition<LETTER, STATE>> succs = new ArrayList<>();
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(trackState.mState,
+				letter)) {
 			final STATE succ = trans.getSucc();
 			final int succTrack = getSuccTrack(trackState, succ);
-			TrackState<STATE> succTrackState = getOrConstructState(succ, false, succTrack);
-			succs.add(new OutgoingInternalTransition<LETTER, STATE>(letter, succTrackState.mRes));
+			final TrackState<STATE> succTrackState = getOrConstructState(succ, false, succTrack);
+			succs.add(new OutgoingInternalTransition<>(letter, succTrackState.mRes));
 		}
 		return succs;
 	}
 
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(STATE state, LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return new ArrayList<>();
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(STATE state, STATE hier, LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		return new ArrayList<>();
-	} 
-	
+	}
+
 }

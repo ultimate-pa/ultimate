@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ReachingDefinitions plug-in.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ReachingDefinitions plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ReachingDefinitions plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace;
@@ -62,15 +62,16 @@ public class ReachDefTrace {
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final BoogieSymbolTable mSymbolTable;
 
-	public ReachDefTrace(IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
-			IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, ILogger logger, BoogieSymbolTable symboltable) {
+	public ReachDefTrace(final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
+			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider, final ILogger logger,
+			final BoogieSymbolTable symboltable) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
 		mEdgeProvider = edgeProvider;
 		mSymbolTable = symboltable;
 	}
 
-	public List<DataflowDAG<TraceCodeBlock>> process(List<CodeBlock> trace) throws Throwable {
+	public List<DataflowDAG<TraceCodeBlock>> process(final List<CodeBlock> trace) throws Throwable {
 
 		final List<CodeBlock> traceCopy = new ArrayList<>(trace);
 
@@ -78,8 +79,8 @@ public class ReachDefTrace {
 		final List<BlockAndAssumes> assumes = findAssumes(traceCopy);
 		final List<DataflowDAG<TraceCodeBlock>> rtr = buildDAG(traceCopy, assumes);
 
-		//TODO: Optimize by checking the DAGs for uniqueness 
-		
+		// TODO: Optimize by checking the DAGs for uniqueness
+
 		if (mLogger.isDebugEnabled()) {
 			final StringBuilder sb = new StringBuilder();
 			for (final IActionWithBranchEncoders letter : traceCopy) {
@@ -94,7 +95,8 @@ public class ReachDefTrace {
 
 	}
 
-	private List<DataflowDAG<TraceCodeBlock>> buildDAG(List<CodeBlock> trace, List<BlockAndAssumes> assumeContainers) {
+	private List<DataflowDAG<TraceCodeBlock>> buildDAG(final List<CodeBlock> trace,
+			final List<BlockAndAssumes> assumeContainers) {
 		final List<DataflowDAG<TraceCodeBlock>> rtr = new ArrayList<>();
 		for (final BlockAndAssumes assumeContainer : assumeContainers) {
 			for (final AssumeStatement stmt : assumeContainer.getAssumes()) {
@@ -108,20 +110,19 @@ public class ReachDefTrace {
 	}
 
 	/**
-	 * Construct a {@link DataflowDAG} from the uses of a trace. The root node
-	 * is
-	 * 
+	 * Construct a {@link DataflowDAG} from the uses of a trace. The root node is
+	 *
 	 * @param trace
 	 * @param assumeContainer
 	 * @param assume
 	 * @return
 	 */
-	private DataflowDAG<TraceCodeBlock> buildDAG(List<CodeBlock> trace, BlockAndAssumes assumeContainer,
-			AssumeStatement assume) {
+	private DataflowDAG<TraceCodeBlock> buildDAG(final List<CodeBlock> trace, final BlockAndAssumes assumeContainer,
+			final AssumeStatement assume) {
 		final LinkedList<DataflowDAG<TraceCodeBlock>> store = new LinkedList<>();
 
-		DataflowDAG<TraceCodeBlock> current = new DataflowDAG<TraceCodeBlock>(new TraceCodeBlock(trace,
-				assumeContainer.getBlock(), assumeContainer.getIndex()));
+		DataflowDAG<TraceCodeBlock> current =
+				new DataflowDAG<>(new TraceCodeBlock(trace, assumeContainer.getBlock(), assumeContainer.getIndex()));
 		final DataflowDAG<TraceCodeBlock> root = current;
 		store.add(current);
 
@@ -139,7 +140,7 @@ public class ReachDefTrace {
 					final TraceCodeBlock nextBlock = getBlockContainingStatement(trace, stmt);
 					assert nextBlock != null;
 					assert nextBlock.getBlock() != null;
-					final DataflowDAG<TraceCodeBlock> next = new DataflowDAG<TraceCodeBlock>(nextBlock);
+					final DataflowDAG<TraceCodeBlock> next = new DataflowDAG<>(nextBlock);
 
 					if (current.getNodeLabel().equals(next.getNodeLabel())) {
 						mLogger.debug("Staying in the same block; no need to add dependency");
@@ -154,14 +155,9 @@ public class ReachDefTrace {
 		return root;
 	}
 
-	private TraceCodeBlock getBlockContainingStatement(List<CodeBlock> trace, final IndexedStatement stmt) {
+	private TraceCodeBlock getBlockContainingStatement(final List<CodeBlock> trace, final IndexedStatement stmt) {
 		final StatementFinder finder = new StatementFinder();
-		final ISearchPredicate<Statement> predicate = new ISearchPredicate<Statement>() {
-			@Override
-			public boolean is(Statement object) {
-				return object.equals(stmt.getStatement());
-			}
-		};
+		final ISearchPredicate<Statement> predicate = object -> object.equals(stmt.getStatement());
 
 		final int pos = Integer.valueOf(stmt.getKey());
 		final CodeBlock current = trace.get(pos);
@@ -172,7 +168,7 @@ public class ReachDefTrace {
 		return null;
 	}
 
-	private Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> getUse(DataflowDAG<TraceCodeBlock> current) {
+	private Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> getUse(final DataflowDAG<TraceCodeBlock> current) {
 		final String key = String.valueOf(current.getNodeLabel().getIndex());
 		final CodeBlock block = current.getNodeLabel().getBlock();
 		final ReachDefEdgeAnnotation annot = mEdgeProvider.getAnnotation(block, key);
@@ -183,7 +179,7 @@ public class ReachDefTrace {
 		return use.entrySet();
 	}
 
-	private void annotateReachingDefinitions(List<CodeBlock> trace) {
+	private void annotateReachingDefinitions(final List<CodeBlock> trace) {
 		final ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(mSymbolTable);
 		for (int i = 0; i < trace.size(); i++) {
 			CodeBlock predecessor = null;
@@ -197,7 +193,7 @@ public class ReachDefTrace {
 		}
 	}
 
-	private boolean checkElement(IActionWithBranchEncoders current) {
+	private boolean checkElement(final IActionWithBranchEncoders current) {
 		if (current instanceof StatementSequence) {
 			final StatementSequence ss = (StatementSequence) current;
 			return ss.getStatements().size() < 2;
@@ -218,15 +214,10 @@ public class ReachDefTrace {
 		return false;
 	}
 
-	private List<BlockAndAssumes> findAssumes(List<CodeBlock> trace) {
+	private List<BlockAndAssumes> findAssumes(final List<CodeBlock> trace) {
 		final List<BlockAndAssumes> rtr = new ArrayList<>();
 		final StatementFinder visitor = new StatementFinder();
-		final ISearchPredicate<Statement> predicate = new ISearchPredicate<Statement>() {
-			@Override
-			public boolean is(Statement object) {
-				return object instanceof AssumeStatement;
-			}
-		};
+		final ISearchPredicate<Statement> predicate = AssumeStatement.class::isInstance;
 
 		int i = 0;
 		for (final CodeBlock block : trace) {
@@ -243,7 +234,7 @@ public class ReachDefTrace {
 		return rtr;
 	}
 
-	private void printDebugForest(List<DataflowDAG<TraceCodeBlock>> forest) {
+	private void printDebugForest(final List<DataflowDAG<TraceCodeBlock>> forest) {
 		if (forest == null) {
 			return;
 		}
@@ -254,19 +245,19 @@ public class ReachDefTrace {
 	}
 
 	/**
-	 * Container class holding a codeblock, all the assume statements contained
-	 * in it and the index of the codeblock in the currently processed trace.
-	 * 
+	 * Container class holding a codeblock, all the assume statements contained in it and the index of the codeblock in
+	 * the currently processed trace.
+	 *
 	 * @author dietsch@informatik.uni-freiburg.de
 	 *
 	 */
-	private class BlockAndAssumes {
+	private static class BlockAndAssumes {
 
 		private final List<AssumeStatement> mAssumes;
 		private final int mIndex;
 		private final CodeBlock mBlock;
 
-		public BlockAndAssumes(List<AssumeStatement> assumes, int index, CodeBlock block) {
+		public BlockAndAssumes(final List<AssumeStatement> assumes, final int index, final CodeBlock block) {
 			mAssumes = assumes;
 			mIndex = index;
 			mBlock = block;
@@ -286,12 +277,12 @@ public class ReachDefTrace {
 
 	}
 
-	private class StatementFinder extends RCFGEdgeVisitor {
+	private static class StatementFinder extends RCFGEdgeVisitor {
 		private List<Statement> mStatements;
 		private ISearchPredicate<Statement> mPredicate;
 
 		@Override
-		protected void visit(StatementSequence c) {
+		protected void visit(final StatementSequence c) {
 			for (final Statement stmt : c.getStatements()) {
 				if (mPredicate.is(stmt)) {
 					mStatements.add(stmt);
@@ -300,7 +291,7 @@ public class ReachDefTrace {
 			super.visit(c);
 		}
 
-		public List<Statement> start(CodeBlock block, ISearchPredicate<Statement> predicate) {
+		public List<Statement> start(final CodeBlock block, final ISearchPredicate<Statement> predicate) {
 			mStatements = new ArrayList<>();
 			mPredicate = predicate;
 			visit(block);

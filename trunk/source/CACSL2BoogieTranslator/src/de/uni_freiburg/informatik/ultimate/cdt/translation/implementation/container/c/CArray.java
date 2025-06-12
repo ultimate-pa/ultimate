@@ -32,6 +32,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -42,11 +43,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 
 /**
+ * Array type (see C11 6.2.5.20.1)
+ *
  * @author Markus Lindenmann
  * @date 18.09.2012
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
-public class CArray extends CType {
+public final class CArray implements ICType {
 
 	/**
 	 * Size that we use to indicate that an array has a variable length.
@@ -58,21 +61,17 @@ public class CArray extends CType {
 	 */
 	private final RValue mBound;
 
-	private final CType mValueType;
+	private final ICType mValueType;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param dimensions
+	 * @param bound
 	 *            the dimensions of this array.
 	 * @param valueType
 	 *            the type of the array.
-	 * @param cDeclSpec
-	 *            the C declaration used.
 	 */
-	public CArray(final RValue bound, final CType valueType) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
+	public CArray(final RValue bound, final ICType valueType) {
 		mBound = bound;
 		mValueType = valueType;
 	}
@@ -87,7 +86,7 @@ public class CArray extends CType {
 	/**
 	 * @return the valueType
 	 */
-	public CType getValueType() {
+	public ICType getValueType() {
 		return mValueType;
 	}
 
@@ -132,31 +131,23 @@ public class CArray extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mBound == null) ? 0 : mBound.hashCode());
-		result = prime * result + ((mValueType == null) ? 0 : mValueType.hashCode());
-		return result;
+		return Objects.hash(mBound, mValueType);
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CArray)) {
-			return false;
-		}
+		final CArray other = (CArray) obj;
+		return Objects.equals(mBound, other.mBound) && Objects.equals(mValueType, other.mValueType);
+	}
 
-		final CArray oArr = (CArray) oType;
-		if (!mValueType.equals(oArr.mValueType)) {
-			return false;
-		}
-		if (!mBound.equals(oArr.mBound)) {
-			return false;
-		}
-
-		return true;
+	@Override
+	public boolean isAtomic() {
+		return false;
 	}
 }

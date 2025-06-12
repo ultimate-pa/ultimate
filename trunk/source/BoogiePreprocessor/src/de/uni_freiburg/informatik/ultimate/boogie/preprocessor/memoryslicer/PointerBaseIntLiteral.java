@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.memoryslicer;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 /**
  *
@@ -37,7 +38,6 @@ public class PointerBaseIntLiteral extends PointerBase {
 	private final BigInteger mValue;
 
 	public PointerBaseIntLiteral(final BigInteger value) {
-		super();
 		mValue = value;
 	}
 
@@ -47,10 +47,7 @@ public class PointerBaseIntLiteral extends PointerBase {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mValue == null) ? 0 : mValue.hashCode());
-		return result;
+		return Objects.hash(mValue);
 	}
 
 	@Override

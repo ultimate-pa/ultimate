@@ -13,36 +13,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelpe
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class SpaceExPreferenceProcessor {
-	
+
 	private final ILogger mLogger;
-	
+
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
-	
+
 	// the forbiddengroups hold the specified locations + variables of the "forbidden" property.
 	private final List<SpaceExForbiddenGroup> mForbiddenGroups;
-	
+
 	// map that holds value assignments (used to replace constants later on)
 	private final Map<String, Map<String, String>> mRequiresRename;
 	private final AtomicInteger mRenameID;
-	
+
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
-	
+
 	// group building variables
 	// assume only one inital location per preference group.
 	final Map<String, String> mInitialLocations;
 	// assume that multiple locations may be forbidden.
 	final Map<String, List<String>> mForbiddenLocations;
-	
+
 	private final Map<Integer, Map<String, String>> mGroupTodirectAssingment;
-	
+
 	private final SpaceExPreferenceContainer mProcessedPreferences;
-	
+
 	private enum GroupType {
 		INITIALLY, FORBIDDEN
 	}
-	
+
 	public SpaceExPreferenceProcessor(final ILogger logger, final String systemName, final String initially,
 			final String forbidden) {
 		mLogger = logger;
@@ -58,7 +58,7 @@ public class SpaceExPreferenceProcessor {
 		mProcessedPreferences = new SpaceExPreferenceContainer(systemName, mPreferenceGroups, mForbiddenGroups,
 				mRequiresRename, mGroupTodirectAssingment);
 	}
-	
+
 	private void parseInitially(final String initially) {
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
@@ -77,14 +77,14 @@ public class SpaceExPreferenceProcessor {
 		} else {
 			mLogger.info("-Config file has no initially property-");
 		}
-		
+
 		if (mPreferenceGroups.isEmpty()) {
 			mHasPreferenceGroups = false;
 		} else {
 			mHasPreferenceGroups = true;
 		}
 	}
-	
+
 	private void parseForbidden(final String forbidden) {
 		if (!forbidden.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
@@ -99,12 +99,12 @@ public class SpaceExPreferenceProcessor {
 			mHasForbiddenGroup = false;
 		}
 	}
-	
+
 	private PreferenceGroup createGroup(final String infix, final int id, final GroupType type) {
 		// clear group building variables.
 		mInitialLocations.clear();
 		mForbiddenLocations.clear();
-		
+
 		final StringBuilder sb = new StringBuilder();
 		// split infix at &
 		final String[] splitted = infix.split("&");
@@ -154,7 +154,7 @@ public class SpaceExPreferenceProcessor {
 			return new SpaceExForbiddenGroup(mForbiddenLocations, initialVariableInfix, id);
 		}
 	}
-	
+
 	// save assingments of the form x==... as groupID -> (var -> val)
 	private void saveDirectAssignments(final String varString, final int groupID) {
 		final String[] splitted = varString.split("==");
@@ -168,7 +168,7 @@ public class SpaceExPreferenceProcessor {
 			}
 		}
 	}
-	
+
 	/**
 	 * Function that analyses if a variable in the config has to be renamed. variables that have to be renamed are of
 	 * the form SYSNAME.AUTNAME.VARNAME or similar.
@@ -185,7 +185,7 @@ public class SpaceExPreferenceProcessor {
 				// split into [sys.aut, var]
 				// sys.aut defines to which system/automaton the variable belongs
 				final String aut = el.substring(0, el.lastIndexOf('.'));
-				final String var = el.substring(el.lastIndexOf('.') + 1, el.length());
+				final String var = el.substring(el.lastIndexOf('.') + 1);
 				// generate a new name for the variable.
 				String newName = generateNewName(var);
 				if (mRequiresRename.containsKey(aut)) {
@@ -211,35 +211,35 @@ public class SpaceExPreferenceProcessor {
 		}
 		return renameList;
 	}
-	
+
 	private String generateNewName(final String var) {
 		return var + "_Renamed" + mRenameID.getAndIncrement();
 	}
-	
+
 	/*
 	 * Getter/Setter
 	 */
-	
+
 	public Map<String, Map<String, String>> getRequiresRename() {
 		return mRequiresRename;
 	}
-	
+
 	public Map<Integer, SpaceExPreferenceGroup> getPreferenceGroups() {
 		return mPreferenceGroups;
 	}
-	
+
 	public boolean hasPreferenceGroups() {
 		return mHasPreferenceGroups;
 	}
-	
+
 	public List<SpaceExForbiddenGroup> getForbiddenGroups() {
 		return mForbiddenGroups;
 	}
-	
+
 	public boolean hasForbiddenGroup() {
 		return mHasForbiddenGroup;
 	}
-	
+
 	public boolean isLocationForbidden(final String autName, final String locName) {
 		if (mHasForbiddenGroup) {
 			for (final SpaceExForbiddenGroup group : mForbiddenGroups) {
@@ -250,12 +250,12 @@ public class SpaceExPreferenceProcessor {
 		}
 		return false;
 	}
-	
+
 	public Map<Integer, Map<String, String>> getGroupTodirectAssingment() {
 		return mGroupTodirectAssingment;
-		
+
 	}
-	
+
 	public SpaceExPreferenceContainer getProcessedPreferences() {
 		return mProcessedPreferences;
 	}

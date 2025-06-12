@@ -123,10 +123,10 @@ public class RationalMatrix {
 	}
 
 	/**
-	 * Solves a linear equation system les, with k-th choice 1, all other choices 0, with
-	 * additional constraints that solution of linear equation system and constraining vectors are
-	 * linearly independent. To achieve this, the constraining vectors are added to the linear equation
-	 * system with right-hand side 0 (scalar product of constraint and solution is 0).
+	 * Solves a linear equation system les, with k-th choice 1, all other choices 0, with additional constraints that
+	 * solution of linear equation system and constraining vectors are linearly independent. To achieve this, the
+	 * constraining vectors are added to the linear equation system with right-hand side 0 (scalar product of constraint
+	 * and solution is 0).
 	 */
 	public static Rational[] solveLes(final RationalMatrix les, final Rational[][] constraints, final int k) {
 		final int numberOfConstraints = constraints.length;

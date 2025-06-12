@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex;
 import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.RegexToCompactTgf.Arg;
 
 /**
- * Converts a regex to a string in Trivial Graph Format (TGF) representing
- * a lossy compressed syntax tree of the regex.
+ * Converts a regex to a string in Trivial Graph Format (TGF) representing a lossy compressed syntax tree of the regex.
  * <p>
  * <ul>
  * <li>Regex operations (star, union, ...) are nodes
@@ -38,27 +37,27 @@ import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.regex.RegexToComp
  * <li>Literals are leafs
  * <ul>
  * <p>
- * The only difference to {@link RegexToTgf} is the compression.
- * For better readability nested unions/concatenations are written as
- * one union/concatenation with more than two children.
- * The compression is lossy since the original parenthesization is lost.
- * In the compressed tree ((a·b)·c) and (a·(b·c)) look the same.
- * 
+ * The only difference to {@link RegexToTgf} is the compression. For better readability nested unions/concatenations are
+ * written as one union/concatenation with more than two children. The compression is lossy since the original
+ * parenthesization is lost. In the compressed tree ((a·b)·c) and (a·(b·c)) look the same.
+ *
  * @author schaetzc@tf.uni-freiburg.de
  *
- * @param <L> Type of letters that are used inside regex literals
+ * @param <L>
+ *            Type of letters that are used inside regex literals
  */
 public class RegexToCompactTgf<L> implements IRegexVisitor<L, RegexToCompactTgf<L>, Arg> {
 
 	public static <L> String apply(final IRegex<L> regex) {
 		return regex.accept(new RegexToCompactTgf<>()).toString();
 	}
-	
+
 	protected static class Arg {
 		public Arg(final int parentId, final IRegex<?> parent) {
 			mParentId = parentId;
 			mParentClass = parent.getClass();
 		}
+
 		protected final int mParentId;
 		protected final Class<?> mParentClass;
 		protected int mChildOffset;
@@ -96,19 +95,19 @@ public class RegexToCompactTgf<L> implements IRegexVisitor<L, RegexToCompactTgf<
 		rightChild.accept(this, arg);
 		return this;
 	}
-	
+
 	@Override
-	public RegexToCompactTgf<L> visit(final Union<L> union, Arg arg) {
+	public RegexToCompactTgf<L> visit(final Union<L> union, final Arg arg) {
 		return visitAndCompact("∪", union, arg, union.getFirst(), union.getSecond());
 	}
 
 	@Override
-	public RegexToCompactTgf<L> visit(final Concatenation<L> concatenation, Arg arg) {
+	public RegexToCompactTgf<L> visit(final Concatenation<L> concatenation, final Arg arg) {
 		return visitAndCompact("·", concatenation, arg, concatenation.getFirst(), concatenation.getSecond());
 	}
 
 	@Override
-	public RegexToCompactTgf<L> visit(final Star<L> star, Arg arg) {
+	public RegexToCompactTgf<L> visit(final Star<L> star, final Arg arg) {
 		final int starId = addNodeLinkedToParent("*", arg);
 		star.getInner().accept(this, new Arg(starId, star));
 		return this;
@@ -132,6 +131,7 @@ public class RegexToCompactTgf<L> implements IRegexVisitor<L, RegexToCompactTgf<
 		return this;
 	}
 
+	@Override
 	public String toString() {
 		return mNodeList + "#\n" + mEdgeList;
 	}

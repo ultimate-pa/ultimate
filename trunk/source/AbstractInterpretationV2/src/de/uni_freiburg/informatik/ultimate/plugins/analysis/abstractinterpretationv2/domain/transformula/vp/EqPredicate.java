@@ -69,13 +69,13 @@ public class EqPredicate implements IPredicate {
 		mVars = vars;
 
 		final Term constraintFormula = constraint.getTerm(mgdScript.getScript());
-		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(constraintFormula, mgdScript,	symbolTable);
+		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(constraintFormula, mgdScript, symbolTable);
 		mFuns = ImmutableSet.copyOf(tvp.getFuns());
 
-//		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
-//		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
-		final Term literalDisequalities = mConstraint.getFactory()
-				.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
+		// final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
+		// final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();
+		final Term literalDisequalities =
+				mConstraint.getFactory().getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
 
 		mClosedFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getClosedFormula());
 		mFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getFormula());
@@ -92,42 +92,41 @@ public class EqPredicate implements IPredicate {
 
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 
-
 		final Term acc = formula;
 		final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(acc, mgdScript, symbolTable);
 
-//		final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
+		// final Term literalDisequalities = getLiteralDisequalities(constraint, mgdScript);
 
-//		final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
-//				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
-//						collectLiteralsInFormula(formula)));
-//		final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
+		// final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
+		// CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(mgdScript.getScript(),
+		// collectLiteralsInFormula(formula)));
+		// final Term literalDisequalities = eqNodeAndFunctionFactory.getNonTheoryLiteralDisequalities();;
 		final Term literalDisequalities =
 				eqConstraintFactory.getWeqCcManager().getNonTheoryLiteralDisequalitiesIfNecessary();
 
 		mClosedFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getClosedFormula());
 		mFormula = SmtUtils.and(mgdScript.getScript(), literalDisequalities, tvp.getFormula());
-//		mClosedFormula = tvp.getClosedFormula();
-//		mFormula = tvp.getFormula();
+		// mClosedFormula = tvp.getClosedFormula();
+		// mFormula = tvp.getFormula();
 
 	}
 
 	private Set<Term> collectLiteralsInFormula(final Term formula) {
-		final Predicate<Term> pred = term -> term instanceof ConstantTerm
-				|| mEqNodeAndFunctionFactory.getNonTheoryLiterals().contains(term);
+		final Predicate<Term> pred =
+				term -> term instanceof ConstantTerm || mEqNodeAndFunctionFactory.getNonTheoryLiterals().contains(term);
 		return SubTermFinder.find(formula, pred, false);
 	}
 
-//	@Deprecated
-//	private Term getLiteralDisequalities(final EqDisjunctiveConstraint<EqNode> constraint,
-//			final ManagedScript mgdScript) {
-//		final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
-//				CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
-//						mgdScript.getScript(),
-//						constraint.getAllLiteralNodes().stream()
-//							.map(node -> node.getTerm()).collect(Collectors.toSet())));
-//		return literalDisequalities;
-//	}
+	// @Deprecated
+	// private Term getLiteralDisequalities(final EqDisjunctiveConstraint<EqNode> constraint,
+	// final ManagedScript mgdScript) {
+	// final Term literalDisequalities = SmtUtils.and(mgdScript.getScript(),
+	// CongruenceClosureSmtUtils.createDisequalityTermsForNonTheoryLiterals(
+	// mgdScript.getScript(),
+	// constraint.getAllLiteralNodes().stream()
+	// .map(node -> node.getTerm()).collect(Collectors.toSet())));
+	// return literalDisequalities;
+	// }
 
 	@Override
 	public ImmutableSet<IProgramVar> getVars() {
@@ -143,7 +142,6 @@ public class EqPredicate implements IPredicate {
 		assert mConstraint != null;
 		return mConstraint;
 	}
-
 
 	@Override
 	public String toString() {
@@ -162,7 +160,6 @@ public class EqPredicate implements IPredicate {
 		}
 	}
 
-
 	@Override
 	public Term getFormula() {
 		return mFormula;
@@ -175,10 +172,7 @@ public class EqPredicate implements IPredicate {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mConstraint == null) ? 0 : mConstraint.hashCode());
-		return result;
+		return Objects.hash(mConstraint);
 	}
 
 	@Override

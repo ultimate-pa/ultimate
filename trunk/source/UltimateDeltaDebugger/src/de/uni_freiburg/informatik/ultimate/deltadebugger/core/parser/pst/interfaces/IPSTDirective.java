@@ -40,7 +40,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 public interface IPSTDirective extends IPSTPreprocessorNode {
 	@Override
 	IASTPreprocessorStatement getAstNode();
-	
+
 	/**
 	 * @return {@code true} iff the PST directive is a conditional directive.
 	 */

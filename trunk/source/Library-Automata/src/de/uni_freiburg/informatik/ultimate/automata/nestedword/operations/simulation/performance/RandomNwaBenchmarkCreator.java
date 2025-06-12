@@ -280,9 +280,9 @@ public final class RandomNwaBenchmarkCreator {
 			final String fileNamePost = "_" + i;
 			final File automatonFile = new File(pathToSaveBenchmark, fileName + fileNamePost + fileFormat);
 
-			final FileWriter fw = new FileWriter(automatonFile);
-			fw.write(mPreamble + nwa);
-			fw.close();
+			try (final FileWriter fw = new FileWriter(automatonFile)) {
+				fw.write(mPreamble + nwa);
+			}
 		}
 	}
 
@@ -392,7 +392,7 @@ public final class RandomNwaBenchmarkCreator {
 
 	/**
 	 * Creates benchmark sets that cover the whole given spice by using the {@link RandomNwaBenchmarkCreator} class.
-	 * 
+	 *
 	 * @param n
 	 *            The amount of states generated Nwa automata should have
 	 * @param k
@@ -546,20 +546,17 @@ public final class RandomNwaBenchmarkCreator {
 			}
 
 		} else {
-			for (float acceptanceInPerc =
-					acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
-				for (float totalityInternalInPerc =
-						totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc +=
-								stepSize) {
-					for (float totalityCallInPerc =
-							totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc +=
-									stepSize) {
-						for (float totalityReturnInPerc =
-								totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc +=
-										stepSize) {
-							for (float totalityHierPredInPerc =
-									totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc +=
-											stepSize) {
+			for (float acceptanceInPerc = acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax;
+					acceptanceInPerc += stepSize) {
+				for (float totalityInternalInPerc = totalityInternalInPercMin;
+						totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc += stepSize) {
+					for (float totalityCallInPerc = totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax;
+							totalityCallInPerc += stepSize) {
+						for (float totalityReturnInPerc = totalityReturnInPercMin;
+								totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc += stepSize) {
+							for (float totalityHierPredInPerc = totalityHierPredInPercMin;
+									totalityHierPredInPerc <= totalityHierPredInPercMax;
+									totalityHierPredInPerc += stepSize) {
 								createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
 										totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch,
 										useRandomTvModel);
@@ -575,7 +572,7 @@ public final class RandomNwaBenchmarkCreator {
 
 	/**
 	 * Creates a benchmark set with given explicit settings by using the {@link RandomNwaBenchmarkCreator} class.
-	 * 
+	 *
 	 * @param n
 	 *            The amount of states generated Nwa automata should have
 	 * @param k
@@ -606,18 +603,18 @@ public final class RandomNwaBenchmarkCreator {
 			final boolean useRandomTvModel) throws IOException {
 		final String operation;
 		switch (operationSwitch) {
-			case 0:
-				operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
-				break;
-			case 1:
-				operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
-				break;
-			case 2:
-				operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
-				break;
-			default:
-				operation = "";
-				break;
+		case 0:
+			operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
+			break;
+		case 1:
+			operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
+			break;
+		case 2:
+			operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
+			break;
+		default:
+			operation = "";
+			break;
 		}
 
 		final String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());

@@ -77,8 +77,8 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			final Term newTerm;
 			{
 				final Term withoutIte = new IteRemover(mgdScript).transform(oldTransFormula.getFormula());
-				final Term inNnf = new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP)
-						.transform(withoutIte);
+				final Term inNnf =
+						new NnfTransformer(mgdScript, mServices, QuantifierHandling.KEEP).transform(withoutIte);
 				newTerm = new RewriteDisequality.RewriteDisequalityTransformer(mgdScript.getScript()).transform(inNnf);
 			}
 
@@ -95,8 +95,8 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			if (!toRemove.add(edge)) {
 				continue;
 			}
-			final UnmodifiableTransFormula newTransFormula = constructNewTransFormula(mgdScript, oldTransFormula,
-					newTerm);
+			final UnmodifiableTransFormula newTransFormula =
+					constructNewTransFormula(mgdScript, oldTransFormula, newTerm);
 			final IcfgEdge newEdge = mEdgeBuilder.constructAndConnectInternalTransition(edge, edge.getSource(),
 					edge.getTarget(), newTransFormula);
 			rememberEdgeMapping(newEdge, edge);

@@ -160,8 +160,8 @@ class InternalCheckHelper extends SdHoareTripleCheckHelper<IInternalAction> {
 		// `x` in its modifies clause, we consider the Hoare triple to be valid.
 		final String proc = act.getPrecedingProcedure();
 		if (!proc.equals(act.getSucceedingProcedure())) {
-			assert act instanceof IIcfgForkTransitionThreadOther<?>
-					|| act instanceof IIcfgJoinTransitionThreadOther<?> : "internal statement must not change procedure";
+			assert act instanceof IIcfgForkTransitionThreadOther<?> || act instanceof IIcfgJoinTransitionThreadOther<?>
+					: "internal statement must not change procedure";
 			// Unclear what we can do for fork and join statements.
 			return null;
 		}

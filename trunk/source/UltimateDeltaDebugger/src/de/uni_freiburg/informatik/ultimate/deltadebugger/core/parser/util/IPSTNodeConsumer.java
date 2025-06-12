@@ -50,7 +50,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTComment comment) {
 		on((IPSTPreprocessorNode) comment);
 	}
-	
+
 	/**
 	 * @param acslComment
 	 *            PST ACSL comment.
@@ -58,7 +58,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTACSLComment acslComment) {
 		on((IPSTComment) acslComment);
 	}
-	
+
 	/**
 	 * @param acslNode
 	 *            PST ACSL node.
@@ -66,7 +66,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTACSLNode acslNode) {
 		on((IPSTNode) acslNode);
 	}
-	
+
 	/**
 	 * @param conditionalBlock
 	 *            PST conditional block.
@@ -74,7 +74,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTConditionalBlock conditionalBlock) {
 		on((IPSTNode) conditionalBlock);
 	}
-	
+
 	/**
 	 * @param directive
 	 *            PST directive.
@@ -82,7 +82,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTDirective directive) {
 		on((IPSTPreprocessorNode) directive);
 	}
-	
+
 	/**
 	 * @param includeDirective
 	 *            PST include directive.
@@ -90,7 +90,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTIncludeDirective includeDirective) {
 		on((IPSTDirective) includeDirective);
 	}
-	
+
 	/**
 	 * @param literalRegion
 	 *            PST literal region.
@@ -98,7 +98,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTLiteralRegion literalRegion) {
 		on((IPSTNode) literalRegion);
 	}
-	
+
 	/**
 	 * @param macroExpansion
 	 *            PST macro expansion.
@@ -106,13 +106,13 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTMacroExpansion macroExpansion) {
 		on((IPSTPreprocessorNode) macroExpansion);
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST node.
 	 */
 	void on(IPSTNode node);
-	
+
 	/**
 	 * @param preprocessorNode
 	 *            PST preprocessor node.
@@ -120,7 +120,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTPreprocessorNode preprocessorNode) {
 		on((IPSTNode) preprocessorNode);
 	}
-	
+
 	/**
 	 * @param node
 	 *            PST regular node.
@@ -128,7 +128,7 @@ public interface IPSTNodeConsumer {
 	default void on(final IPSTRegularNode node) {
 		on((IPSTNode) node);
 	}
-	
+
 	/**
 	 * @param translationUnit
 	 *            PST translation unit.

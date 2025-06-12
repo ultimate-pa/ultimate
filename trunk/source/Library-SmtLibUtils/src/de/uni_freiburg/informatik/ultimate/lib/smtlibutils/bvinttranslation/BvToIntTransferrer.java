@@ -76,11 +76,10 @@ public class BvToIntTransferrer extends TermTransferrer {
 	int concatCount = 0; // zeroextend and concat
 	int bvdivBvmodCount = 0; // bv div and mod
 	/*
-	 * Translates a formula over bit-vector to a formula over integers. Can
-	 * translate arrays and quantifiers.
+	 * Translates a formula over bit-vector to a formula over integers. Can translate arrays and quantifiers.
 	 *
-	 * Everything that works with pushTerm needs the BvScript and everything
-	 * that works with SetResult needs the IntScript
+	 * Everything that works with pushTerm needs the BvScript and everything that works with SetResult needs the
+	 * IntScript
 	 */
 
 	public BvToIntTransferrer(final Script oldScript, final Script newScript, final ManagedScript mgdscript,
@@ -126,16 +125,14 @@ public class BvToIntTransferrer extends TermTransferrer {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 
 			final FunctionSymbol fsym = appTerm.getFunction();
-			if (appTerm.getParameters().length == 0) {
-				if (SmtUtils.isConstant(appTerm)) {
-					final Term intVar = translateVars(term, true);
-					if (SmtSortUtils.isBitvecSort(term.getSort())) {
-						mTc.varConstraint(term, intVar); // Create and Collect
-															// Constraints
-					}
-					setResult(intVar);
-					return;
+			if ((appTerm.getParameters().length == 0) && SmtUtils.isConstant(appTerm)) {
+				final Term intVar = translateVars(term, true);
+				if (SmtSortUtils.isBitvecSort(term.getSort())) {
+					mTc.varConstraint(term, intVar); // Create and Collect
+														// Constraints
 				}
+				setResult(intVar);
+				return;
 			}
 			// NONE Overapproximation
 			if (mTc.mMode.equals(ConstraintsForBitwiseOperations.NONE) && overaproxWithVars(appTerm)) {
@@ -434,8 +431,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	}
 
 	/*
-	 * This method gets as input an application term with function symbol bvsrem
-	 * and returns the definition of bvsrem.
+	 * This method gets as input an application term with function symbol bvsrem and returns the definition of bvsrem.
 	 */
 	private Term bvsremAbbreviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
@@ -477,8 +473,7 @@ public class BvToIntTransferrer extends TermTransferrer {
 	}
 
 	/*
-	 * This method gets as input an application term with function symbol bvsdiv
-	 * and returns the definition of bvsdiv.
+	 * This method gets as input an application term with function symbol bvsdiv and returns the definition of bvsdiv.
 	 */
 	private Term bvsdivAbbreviation(final ApplicationTerm appTerm) {
 		final BigInteger[] indices = new BigInteger[2];
@@ -520,18 +515,16 @@ public class BvToIntTransferrer extends TermTransferrer {
 	}
 
 	/*
-	 * Gets as Input an ArraySort, if domain Sort or range Sort is bit-vector
-	 * the method returns a new array where this Sort is replaced by integer
-	 * Sort. Iterates through nested arrays.
+	 * Gets as Input an ArraySort, if domain Sort or range Sort is bit-vector the method returns a new array where this
+	 * Sort is replaced by integer Sort. Iterates through nested arrays.
 	 */
 	private Sort translateArraySort(final Sort sort) {
 		return IntBlastingWrapper.translateSort(mMgdScript.getScript(), sort);
 	}
 
 	/*
-	 * translate variables and uninterpreted constants of bit-vector sort or
-	 * array sort adds bv and int variable to mVariableMap and mReversedVarMap
-	 * returns the new variable (translation results)
+	 * translate variables and uninterpreted constants of bit-vector sort or array sort adds bv and int variable to
+	 * mVariableMap and mReversedVarMap returns the new variable (translation results)
 	 */
 	private Term translateVars(final Term term, final boolean addToVarMap) {
 		final boolean declareFun = true;
@@ -597,13 +590,12 @@ public class BvToIntTransferrer extends TermTransferrer {
 	}
 
 	/*
-	 * translates quantified formulas, adds constraints for translated
-	 * quantified variables in their scope
+	 * translates quantified formulas, adds constraints for translated quantified variables in their scope
 	 */
 	@Override
 	public void postConvertQuantifier(final QuantifiedFormula old, final Term newBody) {
-		final HashSet<TermVariable> newTermVars = new HashSet<TermVariable>();
-		final HashSet<Term> tvConstraints = new HashSet<Term>();
+		final HashSet<TermVariable> newTermVars = new HashSet<>();
+		final HashSet<Term> tvConstraints = new HashSet<>();
 		if (newBody != old.getSubformula()) {
 			for (int i = 0; i < old.getVariables().length; i++) {
 				if (SmtSortUtils.isBitvecSort(old.getVariables()[i].getSort())) {
@@ -636,7 +628,6 @@ public class BvToIntTransferrer extends TermTransferrer {
 			setResult(SmtUtils.quantifier(mScript, old.getQuantifier(), newTermVars,
 					QuantifierUtils.applyDualFiniteConnective(mScript, old.getQuantifier(), newBody, QuantifierUtils
 							.negateIfUniversal(mScript, old.getQuantifier(), SmtUtils.and(mScript, tvConstraints)))));
-			return;
 		} else {
 			super.postConvertQuantifier(old, newBody);
 		}
@@ -1131,28 +1122,27 @@ public class BvToIntTransferrer extends TermTransferrer {
 					}
 				}
 
-				if (mNutzTransformation && SmtSortUtils.isArraySort(appTerm.getParameters()[0].getSort())) {
-					if (SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort().getArguments()[1])) {
-						final TermVariable quantifiedVar =
-								mNewScript.variable("AuxVar", SmtSortUtils.getIntSort(mNewScript));
+				if ((mNutzTransformation && SmtSortUtils.isArraySort(appTerm.getParameters()[0].getSort()))
+						&& SmtSortUtils.isBitvecSort(appTerm.getParameters()[0].getSort().getArguments()[1])) {
+					final TermVariable quantifiedVar =
+							mNewScript.variable("AuxVar", SmtSortUtils.getIntSort(mNewScript));
 
-						final Term bounds = SmtUtils.and(mNewScript,
-								SmtUtils.leq(mNewScript,
-										SmtUtils.rational2Term(mNewScript, Rational.ZERO,
-												SmtSortUtils.getIntSort(mNewScript)),
-										quantifiedVar),
-								SmtUtils.leq(mNewScript, quantifiedVar, maxNumberPlusOne));
-						final Term equality =
-								SmtUtils.equality(mNewScript, SmtUtils.select(mNewScript, args[0], quantifiedVar),
-										SmtUtils.select(mNewScript, args[1], quantifiedVar));
-						final Term subfromuls = SmtUtils.implies(mNewScript, bounds, equality);
-						final HashSet<TermVariable> newTermVars = new HashSet<TermVariable>();
-						newTermVars.add(quantifiedVar);
-						final Term quantifiedEq = SmtUtils.quantifier(mNewScript, 1, newTermVars, subfromuls);
-						final Term quantifiedEqImpliesEq =
-								SmtUtils.implies(mNewScript, quantifiedEq, SmtUtils.equality(mNewScript, args));
-						mArrayConstraintMap.put(appTerm, quantifiedEqImpliesEq);
-					}
+					final Term bounds = SmtUtils.and(mNewScript,
+							SmtUtils.leq(mNewScript,
+									SmtUtils.rational2Term(mNewScript, Rational.ZERO,
+											SmtSortUtils.getIntSort(mNewScript)),
+									quantifiedVar),
+							SmtUtils.leq(mNewScript, quantifiedVar, maxNumberPlusOne));
+					final Term equality =
+							SmtUtils.equality(mNewScript, SmtUtils.select(mNewScript, args[0], quantifiedVar),
+									SmtUtils.select(mNewScript, args[1], quantifiedVar));
+					final Term subfromuls = SmtUtils.implies(mNewScript, bounds, equality);
+					final HashSet<TermVariable> newTermVars = new HashSet<>();
+					newTermVars.add(quantifiedVar);
+					final Term quantifiedEq = SmtUtils.quantifier(mNewScript, 1, newTermVars, subfromuls);
+					final Term quantifiedEqImpliesEq =
+							SmtUtils.implies(mNewScript, quantifiedEq, SmtUtils.equality(mNewScript, args));
+					mArrayConstraintMap.put(appTerm, quantifiedEqImpliesEq);
 				}
 
 				return SmtUtils.unfTerm(mScript, "=", null, SmtSortUtils.getIntSort(mMgdScript), translatedArgs);

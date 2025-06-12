@@ -135,8 +135,8 @@ public class PoormanCachedPostOperation<BACKING extends IAbstractState<BACKING>>
 	private HavocStatement constructBoogieHavocStatementOfUnmappedOutVars() {
 		// Variable occurs in inVars, but not in outVars
 		final Set<TermVariable> hvcVar = mTransformula.getInVars().entrySet().stream()
-				.filter(entry -> !mTransformula.getOutVars().containsKey(entry.getKey()))
-				.map(entry -> entry.getValue()).collect(Collectors.toSet());
+				.filter(entry -> !mTransformula.getOutVars().containsKey(entry.getKey())).map(entry -> entry.getValue())
+				.collect(Collectors.toSet());
 
 		assert hvcVar != null;
 

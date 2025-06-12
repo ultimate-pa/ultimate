@@ -231,14 +231,13 @@ public class MetaTraceTransformer<L extends IIcfgTransition<?>> {
 		final IterativePredicateTransformer<L> itp = new IterativePredicateTransformer<>(
 				mPredUnifier.getPredicateFactory(), mScript, mToolkit.getModifiableGlobalsTable(), mServices,
 				nestedWordLoopTrace, precondition, postcondition, Collections.emptySortedMap(),
-				mPredUnifier.getTruePredicate(), SimplificationTechnique.SIMPLIFY_DDA,
-				mToolkit.getSymbolTable());
+				mPredUnifier.getTruePredicate(), SimplificationTechnique.SIMPLIFY_DDA, mToolkit.getSymbolTable());
 		final List<IPredicate> loopInterpols =
 				itp.computeStrongestPostconditionSequence(rtf, Collections.emptyList()).getPredicates();
 		int j = start + 1;
 		currentPreds[start] = precondition;
-		for (int i = 0; i < loopInterpols.size(); i++) {
-			currentPreds[j] = loopInterpols.get(i);
+		for (final IPredicate loopInterpol : loopInterpols) {
+			currentPreds[j] = loopInterpol;
 			j++;
 		}
 		currentPreds[end] = postcondition;

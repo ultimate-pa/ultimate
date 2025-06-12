@@ -457,12 +457,12 @@ public class IterativePredicateTransformer<L extends IAction> {
 			final NestedFormulas<L, UnmodifiableTransFormula, IPredicate> rv, final int callPos, final int returnPos) {
 		final UnmodifiableTransFormula summaryOfInnerStatements =
 				computeSummaryForInterproceduralTrace(trace, rv, callPos + 1, returnPos);
-		final String callee = ((ICallAction) trace.getSymbol(callPos)).getSucceedingProcedure();
+		final String callee = trace.getSymbol(callPos).getSucceedingProcedure();
 		final UnmodifiableTransFormula summaryWithCallAndReturn =
 				TransFormulaUtils.sequentialCompositionWithCallAndReturn(mMgdScript, true, false,
 						TRANSFORM_SUMMARY_TO_CNF, callTf, oldVarsAssignmentTf, globalVarsAssignment,
-						summaryOfInnerStatements, returnTf, mLogger, mServices, mSimplificationTechnique,
-						mSymbolTable, mModifiedGlobals.getModifiedBoogieVars(callee));
+						summaryOfInnerStatements, returnTf, mLogger, mServices, mSimplificationTechnique, mSymbolTable,
+						mModifiedGlobals.getModifiedBoogieVars(callee));
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
@@ -511,8 +511,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 							globalVarsAssignment, summaryAfterPendingCall, mLogger, mServices,
 							modifiableGlobalsOfEndProcedure, mSimplificationTechnique, mSymbolTable,
 							trace.getSymbol(start).getPrecedingProcedure(), trace.getSymbol(i).getPrecedingProcedure(),
-							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure,
-							mModifiedGlobals);
+							trace.getSymbol(i).getSucceedingProcedure(), nameEndProcedure, mModifiedGlobals);
 				}
 				// 1. Compute a summary for the statements between this
 				// non-pending Call
@@ -520,7 +519,7 @@ public class IterativePredicateTransformer<L extends IAction> {
 				final UnmodifiableTransFormula summaryBetweenCallAndReturn =
 						computeSummaryForInterproceduralTrace(trace, rv, i + 1, returnPosition);
 				final UnmodifiableTransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
-				final String callee = ((ICallAction) trace.getSymbol(i)).getSucceedingProcedure();
+				final String callee = trace.getSymbol(i).getSucceedingProcedure();
 				transformulasToComputeSummaryFor.addLast(TransFormulaUtils.sequentialCompositionWithCallAndReturn(
 						mMgdScript, true, false, TRANSFORM_SUMMARY_TO_CNF, callTf, oldVarsAssignment,
 						globalVarsAssignment, summaryBetweenCallAndReturn, returnTf, mLogger, mServices,

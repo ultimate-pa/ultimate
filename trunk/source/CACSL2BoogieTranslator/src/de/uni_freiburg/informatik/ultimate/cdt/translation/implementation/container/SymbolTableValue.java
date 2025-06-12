@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
@@ -112,8 +112,8 @@ public class SymbolTableValue {
 	 *            that expression here. Example: enum entries are translated to Boogie variables, and they have a
 	 *            constant integer value (which is stored in an axiom elsewhere)
 	 */
-	public SymbolTableValue(final String bId, final Declaration boogieDecl, final ASTType astType, final CDeclaration cdecl,
-			final DeclarationInformation declarationInformation, final IASTNode declNode,
+	public SymbolTableValue(final String bId, final Declaration boogieDecl, final ASTType astType,
+			final CDeclaration cdecl, final DeclarationInformation declarationInformation, final IASTNode declNode,
 			final boolean isIntFromPointer, final Expression constantValue) {
 		assert bId != null && !bId.equals(SFO.EMPTY);
 		assert cdecl != null;
@@ -171,7 +171,7 @@ public class SymbolTableValue {
 		return mDeclarationInformation.getStorageClass() == StorageClass.GLOBAL;
 	}
 
-	public CType getCType() {
+	public ICType getCType() {
 		return mCDecl.getType();
 	}
 

@@ -106,8 +106,7 @@ public class RCFGLoopDetector {
 			final Map<IcfgEdge, IcfgEdge> map = new HashMap<>();
 			mLoopEntryExit.put(p, map);
 			process(p, map, forbiddenEdges);
-			forbiddenEdges = new ArrayList<>();
-			forbiddenEdges.addAll(map.values());
+			forbiddenEdges = new ArrayList<>(map.values());
 		}
 		// print result if debug is enabled
 		printResult(mLoopEntryExit);
@@ -155,15 +154,15 @@ public class RCFGLoopDetector {
 			final IcfgEdge forbiddenEdge = addToResult(path, map);
 			forbiddenEdges.add(forbiddenEdge);
 
-			walker = new AStar<IcfgLocation, IcfgEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
-					new RcfgWrapper(), createDenier(forbiddenEdges), mServices.getProgressMonitorService());
+			walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
+					createDenier(forbiddenEdges), mServices.getProgressMonitorService());
 			path = walker.findPath();
 		}
 	}
 
 	private IEdgeDenier<IcfgEdge> createDenier(final List<IcfgEdge> forbiddenEdges) {
 		final List<IEdgeDenier<IcfgEdge>> rtr = new ArrayList<>();
-		rtr.add(new CollectionEdgeDenier<IcfgEdge>(forbiddenEdges));
+		rtr.add(new CollectionEdgeDenier<>(forbiddenEdges));
 		rtr.add(new RcfgCallReturnDenier());
 		return new CompositEdgeDenier<>(rtr);
 	}

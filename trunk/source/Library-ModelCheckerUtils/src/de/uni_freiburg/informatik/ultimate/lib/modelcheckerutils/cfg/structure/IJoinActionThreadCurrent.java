@@ -39,14 +39,12 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Classes that implement this interface represent an {@link IAction} that
- * defines the effect that a join has to the (non-control-flow)
- * variables of the system. A join is the transition that brings the system
- * from a forked procedure back to the joining procedure. This means that the
- * effect of the join is that
+ * Classes that implement this interface represent an {@link IAction} that defines the effect that a join has to the
+ * (non-control-flow) variables of the system. A join is the transition that brings the system from a forked procedure
+ * back to the joining procedure. This means that the effect of the join is that
  * <ul>
- * <li> variables that are assigned by the fork get the values that are returned by the procedure
- * <li> all local variables that occure only in the context of the forked procedure are havoced.
+ * <li>variables that are assigned by the fork get the values that are returned by the procedure
+ * <li>all local variables that occure only in the context of the forked procedure are havoced.
  * <ul/>
  *
  * @author Lars Nitzke (lars.nitzke@outlook.com)
@@ -54,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface IJoinActionThreadCurrent extends IAction {
 
-	public JoinSmtArguments getJoinSmtArguments();
-
+	JoinSmtArguments getJoinSmtArguments();
 
 	public static class JoinSmtArguments {
 
@@ -63,7 +60,6 @@ public interface IJoinActionThreadCurrent extends IAction {
 		private final List<IProgramVar> mAssignmentLhs;
 
 		public JoinSmtArguments(final MultiTermResult threadIdArguments, final List<IProgramVar> assignmentLhs) {
-			super();
 			mThreadIdArguments = threadIdArguments;
 			mAssignmentLhs = assignmentLhs;
 		}
@@ -78,8 +74,9 @@ public interface IJoinActionThreadCurrent extends IAction {
 
 		public UnmodifiableTransFormula constructThreadIdAssumption(final IIcfgSymbolTable symbolTable,
 				final ManagedScript mgdScript, final List<IProgramVar> leftHandSides) {
-			final Term[] terms = getThreadIdArguments().getTerms();
-			return TransFormulaBuilder.constructEqualityAssumption(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
+			final Term[] terms = getThreadIdArguments().terms();
+			return TransFormulaBuilder.constructEqualityAssumption(leftHandSides, Arrays.asList(terms), symbolTable,
+					mgdScript);
 		}
 
 		public UnmodifiableTransFormula constructResultAssignment(final ManagedScript mgdScript,

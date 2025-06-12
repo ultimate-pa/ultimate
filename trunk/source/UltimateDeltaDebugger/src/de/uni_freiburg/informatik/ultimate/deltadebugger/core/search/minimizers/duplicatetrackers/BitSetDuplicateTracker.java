@@ -42,7 +42,7 @@ public final class BitSetDuplicateTracker {
 	private BitSetDuplicateTracker() {
 		// static method access
 	}
-	
+
 	/**
 	 * @param <E>
 	 *            element type
@@ -51,7 +51,7 @@ public final class BitSetDuplicateTracker {
 	public static <E extends IHasSequenceIndex> IDuplicateVariantTracker<E> create() {
 		return new DefaultBitSetDuplicateTracker<>();
 	}
-	
+
 	/**
 	 * Computes indices of a variant given the full input sequence. Assumes that all objects in the input sequence are
 	 * unique. Otherwise this computation is unsound.
@@ -65,28 +65,28 @@ public final class BitSetDuplicateTracker {
 	public static <E> IDuplicateVariantTracker<E> createFallback(final List<E> input) {
 		return new FallbackBitSetDuplicateTracker<>(input);
 	}
-	
+
 	/**
 	 * Abstract bit set duplicate tracker for inheritance.
-	 * 
+	 *
 	 * @param <E>
 	 *            element type
 	 */
 	private abstract static class AbstractBitSetDuplicateTracker<E> implements IDuplicateVariantTracker<E> {
 		protected final Set<BitSet> mVariants = new HashSet<>();
-		
+
 		@Override
 		public void add(final List<? extends E> variant) {
 			mVariants.add(computeInputIndices(variant));
 		}
-		
+
 		protected abstract BitSet computeInputIndices(List<? extends E> variant);
-		
+
 		@Override
 		public boolean contains(final List<? extends E> variant) {
 			return mVariants.contains(computeInputIndices(variant));
 		}
-		
+
 		@Override
 		public void removeLargerVariants(final int keptVariantSize) {
 			final Iterator<BitSet> it = mVariants.iterator();
@@ -96,23 +96,22 @@ public final class BitSetDuplicateTracker {
 				}
 			}
 		}
-		
+
 	}
-	
+
 	/**
 	 * A default bit set duplicate tracker.
-	 * 
+	 *
 	 * @param <E>
 	 *            element type
 	 */
-	static class DefaultBitSetDuplicateTracker<E extends IHasSequenceIndex>
-			extends AbstractBitSetDuplicateTracker<E> {
+	static class DefaultBitSetDuplicateTracker<E extends IHasSequenceIndex> extends AbstractBitSetDuplicateTracker<E> {
 		@Override
 		protected BitSet computeInputIndices(final List<? extends E> variant) {
 			if (variant.isEmpty()) {
 				return new BitSet();
 			}
-			
+
 			final int highestBit = variant.get(variant.size() - 1).getSequenceIndex();
 			final BitSet result = new BitSet(highestBit + 1);
 			for (final IHasSequenceIndex e : variant) {
@@ -121,27 +120,25 @@ public final class BitSetDuplicateTracker {
 			return result;
 		}
 	}
-	
+
 	/**
 	 * A bit set duplicate tracker for fallback.
-	 * 
+	 *
 	 * @param <E>
 	 *            element type
 	 */
 	static class FallbackBitSetDuplicateTracker<E> extends AbstractBitSetDuplicateTracker<E> {
 		private final List<E> mInput;
-		
+
 		public FallbackBitSetDuplicateTracker(final List<E> input) {
 			mInput = input;
 		}
-		
+
 		@Override
 		protected BitSet computeInputIndices(final List<? extends E> variant) {
 			final BitSet result = new BitSet(mInput.size());
-			final Iterator<? extends E> it = variant.iterator();
 			final ListIterator<? extends E> inputIter = mInput.listIterator();
-			while (it.hasNext()) {
-				final E element = it.next();
+			for (final E element : variant) {
 				while (true) {
 					if (inputIter.next().equals(element)) {
 						result.set(inputIter.previousIndex());

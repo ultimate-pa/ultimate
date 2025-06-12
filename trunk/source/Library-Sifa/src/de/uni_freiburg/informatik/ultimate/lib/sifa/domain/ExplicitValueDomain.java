@@ -81,9 +81,8 @@ public class ExplicitValueDomain implements IDomain {
 	@Override
 	public IPredicate alpha(final IPredicate pred) {
 		final DnfToExplicitValue rewriter = new DnfToExplicitValue(mTools);
-		final Term[] rewrittenDisjuncts = Arrays.stream(mTools.dnfDisjuncts(pred))
-				.map(rewriter::transform)
-				.toArray(Term[]::new);
+		final Term[] rewrittenDisjuncts =
+				Arrays.stream(mTools.dnfDisjuncts(pred)).map(rewriter::transform).toArray(Term[]::new);
 		// TODO use a more strict normal form, where assignments have a variable on the left and a number on the right?
 		return mTools.orT(joinAccordingToMax(rewrittenDisjuncts));
 	}
@@ -95,7 +94,8 @@ public class ExplicitValueDomain implements IDomain {
 	}
 
 	/**
-	 * @param disjuncts Disjuncts from a DNF. Each disjunct is free of nested disjunctions.
+	 * @param disjuncts
+	 *            Disjuncts from a DNF. Each disjunct is free of nested disjunctions.
 	 */
 	private Term[] joinAccordingToMax(final Term[] disjuncts) {
 		if (disjuncts.length <= mMaxDisjuncts) {
@@ -106,8 +106,8 @@ public class ExplicitValueDomain implements IDomain {
 		final Term[] joined = new Term[mMaxDisjuncts];
 		int sourceIdx = 0;
 		for (int targetIdx = 0; targetIdx < joined.length; ++targetIdx) {
-			final int joinGroupSize = (int) Math.ceil((disjuncts.length - sourceIdx) /
-					(double) (joined.length - targetIdx));
+			final int joinGroupSize =
+					(int) Math.ceil((disjuncts.length - sourceIdx) / (double) (joined.length - targetIdx));
 			joined[targetIdx] = Arrays.stream(disjuncts, sourceIdx, sourceIdx + joinGroupSize)
 					.reduce(disjuncts[sourceIdx], this::joinConjunctions);
 			sourceIdx += joinGroupSize;
@@ -127,8 +127,8 @@ public class ExplicitValueDomain implements IDomain {
 		return mTools.getScript().term("=", entry.getKey(), entry.getValue());
 	}
 
-	private static Map<Term, Term> joinMapsOfVarsToValues(
-			final Map<Term, Term> leftMap, final Map<Term, Term> rightMap) {
+	private static Map<Term, Term> joinMapsOfVarsToValues(final Map<Term, Term> leftMap,
+			final Map<Term, Term> rightMap) {
 		leftMap.entrySet().retainAll(rightMap.entrySet());
 		return leftMap;
 	}
@@ -184,32 +184,3 @@ public class ExplicitValueDomain implements IDomain {
 		return Optional.ofNullable(constant);
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

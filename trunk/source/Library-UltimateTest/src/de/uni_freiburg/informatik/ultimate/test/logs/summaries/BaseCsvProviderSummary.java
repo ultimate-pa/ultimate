@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -74,7 +74,7 @@ public abstract class BaseCsvProviderSummary extends BaseTestSummary {
 		if (resultService == null) {
 			return;
 		}
-		ICsvProvider<Object> aggregate = new SimpleCsvProvider<>(new ArrayList<String>());
+		ICsvProvider<Object> aggregate = new SimpleCsvProvider<>(new ArrayList<>());
 		ICsvProvider<Object> current = null;
 		for (final Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
 			for (final ICsvProviderProvider<?> benchmarkResultWildcard : ResultUtil
@@ -93,7 +93,7 @@ public abstract class BaseCsvProviderSummary extends BaseTestSummary {
 	protected ICsvProvider<String> makePrintCsvProviderFromResults(
 			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results,
 			final List<ColumnDefinition> columnDefinitions) {
-		ICsvProvider<String> current = new SimpleCsvProvider<>(new ArrayList<String>());
+		ICsvProvider<String> current = new SimpleCsvProvider<>(new ArrayList<>());
 		for (final Entry<UltimateRunDefinition, ExtendedResult> entry : results) {
 			final ICsvProvider<?> provider = mCsvProvider.get(entry.getKey());
 			if (provider == null) {

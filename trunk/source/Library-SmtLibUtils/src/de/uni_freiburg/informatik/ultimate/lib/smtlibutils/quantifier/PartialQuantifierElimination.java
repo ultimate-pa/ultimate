@@ -37,19 +37,29 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransf
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.normalforms.NnfTransformer.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.quantifier.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
- * Try to eliminate existentially quantified variables in terms. Therefore we
- * use that the term ∃v.v=c∧φ[v] is equivalent to term φ[c]. Resp. we use that
- * the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
+ * Try to eliminate existentially quantified variables in terms. Therefore we use that the term ∃v.v=c∧φ[v] is
+ * equivalent to term φ[c]. Resp. we use that the term ∀v.v!=c∨φ[v] is equivalent to term φ[c].
  */
 public class PartialQuantifierElimination {
+
+	/**
+	 * Enable to throw an {@link AssertionError} if not all quantifiers were removed.
+	 */
+	private static final boolean DEBUG_EXPECT_REMOVAL_OF_ALL_QUANTIFIERS = false;
 
 	public static Term eliminate(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final Term term, final SimplificationTechnique simplificationTechnique) {
 		final Term tmp = eliminateLight(services, mgdScript, term);
-		return QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL, simplificationTechnique,
-				tmp);
+		final Term result = QuantifierPushTermWalker.eliminate(services, mgdScript, true, PqeTechniques.ALL,
+				simplificationTechnique, tmp);
+		if (DEBUG_EXPECT_REMOVAL_OF_ALL_QUANTIFIERS && !QuantifierUtils.isQuantifierFree(result)) {
+			throw new AssertionError(String.format("Not all quantifiers eliminated. Size %s Formula: %s",
+					new DAGSize().treesize(result), result));
+		}
+		return result;
 	}
 
 	public static Term eliminateLight(final IUltimateServiceProvider services, final ManagedScript mgdScript,
@@ -67,8 +77,7 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Auxiliary method that replaces old calls to quantifier elimination. This
-	 * method is a temporary workaround.
+	 * Auxiliary method that replaces old calls to quantifier elimination. This method is a temporary workaround.
 	 */
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
@@ -79,8 +88,7 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Auxiliary method that replaces old calls to quantifier elimination. This
-	 * method is a temporary workaround.
+	 * Auxiliary method that replaces old calls to quantifier elimination. This method is a temporary workaround.
 	 */
 	public static Term eliminateCompat(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final SimplificationTechnique simplificationTechnique, final Term term) {

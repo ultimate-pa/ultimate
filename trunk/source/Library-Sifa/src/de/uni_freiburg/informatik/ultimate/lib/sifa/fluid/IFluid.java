@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.sifa.domain.IDomain;
 
 /**
- * An oracle deciding when to apply abstraction to predicates. Fluids are related to abstract domains.
- * The difference is that {@link IDomain#alpha(IPredicate)} describes <i>how</i> to abstract and
+ * An oracle deciding when to apply abstraction to predicates. Fluids are related to abstract domains. The difference is
+ * that {@link IDomain#alpha(IPredicate)} describes <i>how</i> to abstract and
  * {@link IFluid#shallBeAbstracted(IPredicate)} describes <i>when</i> to abstract.
  * <p>
  * At certain points during interpretation the oracle is asked whether a symbolic state should be abstracted or not.

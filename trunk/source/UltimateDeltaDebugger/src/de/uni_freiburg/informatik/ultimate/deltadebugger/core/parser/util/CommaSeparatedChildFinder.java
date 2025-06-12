@@ -49,7 +49,7 @@ public final class CommaSeparatedChildFinder {
 	private CommaSeparatedChildFinder() {
 		// utility class
 	}
-	
+
 	/**
 	 * Find list of comma separated children of the given node identified by the given node property.
 	 *
@@ -64,7 +64,7 @@ public final class CommaSeparatedChildFinder {
 		GapVisitor.invokeAccept(parentNode, instance);
 		return instance.mResult;
 	}
-	
+
 	/**
 	 * Find list of comma separated children of the given node identified by the given node property. This method also
 	 * checks for a varargs function and adds a dummy entry for the "..." token.
@@ -90,7 +90,7 @@ public final class CommaSeparatedChildFinder {
 
 		return instance.mResult;
 	}
-	
+
 	/**
 	 * PST gap visitor.
 	 */
@@ -98,12 +98,12 @@ public final class CommaSeparatedChildFinder {
 		private final IPSTRegularNode mParentNode;
 		private final ASTNodeProperty mChildProperty;
 		private final List<CommaSeparatedChild> mResult = new ArrayList<>();
-		
+
 		private Visitor(final IPSTRegularNode parentNode, final ASTNodeProperty childProperty) {
 			mParentNode = Objects.requireNonNull(parentNode);
 			mChildProperty = Objects.requireNonNull(childProperty);
 		}
-		
+
 		@Override
 		public int defaultLeave(final IPSTNode node) {
 			for (final IASTNode child : node.getUnexpandedChildNodes()) {
@@ -113,14 +113,14 @@ public final class CommaSeparatedChildFinder {
 			}
 			return PROCESS_CONTINUE;
 		}
-		
+
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
 			// Also add ast nodes from literal regions (but don't collect commas)
 			defaultLeave(literalRegion);
 			return PROCESS_SKIP;
 		}
-		
+
 		@Override
 		public int visit(final IPSTRegularNode node) {
 			if (node.equals(mParentNode)) {
@@ -131,14 +131,14 @@ public final class CommaSeparatedChildFinder {
 			}
 			return PROCESS_SKIP;
 		}
-		
+
 		@Override
 		public int visitGap(final int offset, final int endOffset) {
 			final String text = mParentNode.getSource().getText(offset, endOffset);
 			if (!text.trim().startsWith(",")) {
 				return PROCESS_CONTINUE;
 			}
-			
+
 			// Store the position of the first comma encountered after each
 			// element
 			if (!mResult.isEmpty()) {

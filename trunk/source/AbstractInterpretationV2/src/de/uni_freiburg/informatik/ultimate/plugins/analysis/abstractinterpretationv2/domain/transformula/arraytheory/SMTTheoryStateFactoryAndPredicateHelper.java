@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
  */
 public class SMTTheoryStateFactoryAndPredicateHelper {
 
-
 	private final BasicPredicateFactory mBasicPredicateFactory;
 	private final CfgSmtToolkit mCsToolkit;
 	private final ManagedScript mMgdScript;
@@ -75,19 +74,19 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 	private final BasicPredicate mFalsePredicate;
 	private final Map<Term, IPredicate> mTermToPredicate;
 
-	public SMTTheoryStateFactoryAndPredicateHelper(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final SMTTheoryOperationProvider arrayTheoryOperationProvider) {
+	public SMTTheoryStateFactoryAndPredicateHelper(final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final SMTTheoryOperationProvider arrayTheoryOperationProvider) {
 		mCsToolkit = csToolkit;
 		mMgdScript = csToolkit.getManagedScript();
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 
-		mArrayTheoryOperationProvider =	arrayTheoryOperationProvider;
+		mArrayTheoryOperationProvider = arrayTheoryOperationProvider;
 
 		mTermToPredicate = new HashMap<>();
 
-		mBasicPredicateFactory = new BasicPredicateFactory(services, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable());
+		mBasicPredicateFactory =
+				new BasicPredicateFactory(services, csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 
 		csToolkit.getManagedScript().lock(this);
 		final Term trueTerm = csToolkit.getManagedScript().term(this, "true");
@@ -115,15 +114,13 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		IPredicate pred = mTermToPredicate.get(resTerm);
 
 		if (pred == null) {
-			final Set<IProgramVar> vars = variables.stream()
-					.filter(pvoc -> pvoc instanceof IProgramVar)
-					.map(var -> (IProgramVar) var)
-					.collect(Collectors.toSet());
+			final Set<IProgramVar> vars = variables.stream().filter(pvoc -> pvoc instanceof IProgramVar)
+					.map(var -> (IProgramVar) var).collect(Collectors.toSet());
 			mMgdScript.lock(this);
 			mMgdScript.push(this, 1);
 			final TermVarsFuns tvp = TermVarsFuns.computeTermVarsFuns(resTerm, mMgdScript, mCsToolkit.getSymbolTable());
 			mMgdScript.assertTerm(this, tvp.getClosedFormula());
-//					PredicateUtils.computeClosedFormula(resTerm, vars, mMgdScript.getScript()));
+			// PredicateUtils.computeClosedFormula(resTerm, vars, mMgdScript.getScript()));
 			final LBool checkSatResult = mMgdScript.checkSat(this);
 			mMgdScript.pop(this, 1);
 			mMgdScript.unlock(this);
@@ -185,8 +182,7 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 		}
 
 		/*
-		 * for each conjunct in each state: check if it also holds in the other state,
-		 * in case keep it.
+		 * for each conjunct in each state: check if it also holds in the other state, in case keep it.
 		 */
 		final List<Term> conjunctsThatHoldInBoth = new ArrayList<>();
 		final Term[] conjunctsFirst = SmtUtils.getConjuncts(first.getPredicate().getFormula());
@@ -213,15 +209,15 @@ public class SMTTheoryStateFactoryAndPredicateHelper {
 	}
 
 	public IPredicate projectExistentially(final Set<TermVariable> varsToProject, final IPredicate predicate) {
-		final Term projected = mArrayTheoryOperationProvider.projectExistentially(varsToProject,
-				predicate.getFormula());
-		final Term quantEliminated = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript, mSimplificationTechnique, projected);
+		final Term projected =
+				mArrayTheoryOperationProvider.projectExistentially(varsToProject, predicate.getFormula());
+		final Term quantEliminated = PartialQuantifierElimination.eliminateCompat(mServices, mMgdScript,
+				mSimplificationTechnique, projected);
 
 		return mBasicPredicateFactory.newPredicate(quantEliminated);
 	}
 
-	public boolean implies(
-			final SMTTheoryState arrayTheoryState, final SMTTheoryState other) {
+	public boolean implies(final SMTTheoryState arrayTheoryState, final SMTTheoryState other) {
 		mMgdScript.lock(this);
 		mMgdScript.push(this, 1);
 		mMgdScript.assertTerm(this, arrayTheoryState.getPredicate().getClosedFormula());

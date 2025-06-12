@@ -31,59 +31,63 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optnc
 // In order to keep the original code as much as possible, we
 // use the interface of BitSet
 public interface IntSet {
-	
+
 	IntSet clone();
-	
+
 	void andNot(IntSet set);
-	
+
 	void and(IntSet set);
-	
+
 	void or(IntSet set);
-	
+
 	boolean get(int value);
-	
+
 	void set(int value);
-	
+
 	void clear(int value);
-	
+
 	void clear();
-	
+
 	boolean isEmpty();
-	
+
 	int cardinality();
-	
+
+	@Override
 	int hashCode();
-	
+
+	@Override
 	String toString();
-	
-	default boolean overlap(IntSet set) {
+
+	default boolean overlap(final IntSet set) {
 		IntSet a = null;
 		IntSet b = null;
-		
-		if(this.cardinality() <= set.cardinality()) {
+
+		if (cardinality() <= set.cardinality()) {
 			a = this;
 			b = set;
-		}else {
+		} else {
 			a = set;
 			b = this;
 		}
-		
-		IntIterator iter = a.iterator();
-		while(iter.hasNext()) {
-			if(b.get(iter.next())) return true; 
+
+		final IntIterator iter = a.iterator();
+		while (iter.hasNext()) {
+			if (b.get(iter.next())) {
+				return true;
+			}
 		}
 
 		return false;
 	}
-	
+
 	boolean subsetOf(IntSet set);
-	
+
 	boolean contentEq(IntSet set);
-	
+
 	Object get();
-	
+
 	IntIterator iterator();
-	
+
 	Iterable<Integer> iterable();
-		
+
 }

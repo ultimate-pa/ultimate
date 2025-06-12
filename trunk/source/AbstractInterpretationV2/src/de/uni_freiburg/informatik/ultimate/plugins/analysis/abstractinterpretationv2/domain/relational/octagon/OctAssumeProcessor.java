@@ -111,8 +111,8 @@ public class OctAssumeProcessor {
 	private List<OctDomainState> processBooleanOperations(final Expression expr, final boolean isNegated,
 			final List<OctDomainState> oldStates) {
 
-		assert TypeUtils.isBoolean(expr.getType()) : "Expression " + BoogiePrettyPrinter.print(expr)
-				+ " is not boolean";
+		assert TypeUtils.isBoolean(expr.getType())
+				: "Expression " + BoogiePrettyPrinter.print(expr) + " is not boolean";
 
 		if (expr instanceof BooleanLiteral) {
 			if (((BooleanLiteral) expr).getValue() ^ isNegated) {
@@ -541,8 +541,8 @@ public class OctAssumeProcessor {
 				.map(state -> IntervalProjection.projectOctagonStateToIntervalDomainState(logger, state))
 				.collect(Collectors.toList());
 
-		assert intervalStates.stream().noneMatch(state -> state
-				.isBottom()) : "At least one interval state became bottom during conversion. This should not happen";
+		assert intervalStates.stream().noneMatch(state -> state.isBottom())
+				: "At least one interval state became bottom during conversion. This should not happen";
 
 		// All oldstates are bottom
 		if (intervalStates.isEmpty()) {
@@ -550,8 +550,8 @@ public class OctAssumeProcessor {
 		}
 
 		final AssumeStatement assume = new AssumeStatement(originalExpression.getLoc(), originalExpression);
-		final StatementSequence assumeBlock = codeBlockFactory.constructStatementSequence(null, null,
-				Collections.singletonList(assume));
+		final StatementSequence assumeBlock =
+				codeBlockFactory.constructStatementSequence(null, null, Collections.singletonList(assume));
 		if (logger.isDebugEnabled()) {
 			logger.debug("Projection of current OctDomainState to Intervals: " + intervalStates);
 			logger.debug("Applying the following statement to each state: " + BoogiePrettyPrinter.print(assume));

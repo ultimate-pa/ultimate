@@ -55,7 +55,7 @@ public abstract class MapTemplate {
 
 	@Override
 	public boolean equals(final Object other) {
-		if (other instanceof MapTemplate) {
+		if (other != null && getClass() == other.getClass()) {
 			return getIdentifier().equals(((MapTemplate) (other)).getIdentifier());
 		}
 		return false;

@@ -260,9 +260,9 @@ public class SymbolicMemory {
 				mOutVars.put(pv, mInVars.get(pv));
 			}
 		}
-		final Term varReplacedGuard = symValueSubMap.size() > 0
-				? Substitution.apply(mManagedScript, symValueSubMap, guard.getFormula())
-				: guard.getFormula();
+		final Term varReplacedGuard =
+				symValueSubMap.size() > 0 ? Substitution.apply(mManagedScript, symValueSubMap, guard.getFormula())
+						: guard.getFormula();
 
 		final Map<Term, Term> cleanSubMap = new HashMap<>();
 		for (final Map.Entry<TermVariable, IProgramVar> revInEntry : revInVars.entrySet()) {
@@ -282,9 +282,11 @@ public class SymbolicMemory {
 		}
 
 		conjTerms.add(cleanReplacedGuard);
-		final Term formulaTerm = SmtUtils.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
+		final Term formulaTerm =
+				SmtUtils.and(mManagedScript.getScript(), conjTerms.toArray(new Term[conjTerms.size()]));
 		final Term ex = mCurrentPath > 0
-				? mManagedScript.getScript().quantifier(QuantifiedFormula.EXISTS, exitsTaus, formulaTerm) : formulaTerm;
+				? mManagedScript.getScript().quantifier(QuantifiedFormula.EXISTS, exitsTaus, formulaTerm)
+				: formulaTerm;
 		final TermVariable[] allTaus = new TermVariable[1];
 		allTaus[0] = mKappa2Tau.get(mKappas.get(path));
 		final Term allTerm = mManagedScript.getScript().quantifier(QuantifiedFormula.FORALL, allTaus,
@@ -305,7 +307,7 @@ public class SymbolicMemory {
 		}
 
 		final Map<Term, Term> tau2Kappa = new HashMap<>();
-		mKappa2Tau.forEach((k,v) -> tau2Kappa.put(v, k));
+		mKappa2Tau.forEach((k, v) -> tau2Kappa.put(v, k));
 
 		final Term result = SmtUtils.and(mManagedScript.getScript(), terms.toArray(new Term[terms.size()]));
 		return Substitution.apply(mManagedScript, tau2Kappa, result);
@@ -348,11 +350,11 @@ public class SymbolicMemory {
 	}
 
 	public Term getKappaMin() {
-		final Term kappasAdd = mKappas.size() > 1
-				? mManagedScript.getScript().term("+", mKappas.toArray(new Term[mKappas.size()]))
-				: mKappas.get(0);
-		return mManagedScript.getScript().term("<=",
-				Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), kappasAdd);
+		final Term kappasAdd =
+				mKappas.size() > 1 ? mManagedScript.getScript().term("+", mKappas.toArray(new Term[mKappas.size()]))
+						: mKappas.get(0);
+		return mManagedScript.getScript().term("<=", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")),
+				kappasAdd);
 	}
 
 	private void updateInOutVars(final IProgramVar outVar, final IIcfgSymbolTable symbolTable,
@@ -458,10 +460,15 @@ public class SymbolicMemory {
 		return result;
 	}
 
-	/** Return a term which describes the total value of the incrementation/decrementation
-	 * @param t				inc-/decrementing describing term
-	 * @param pathCounter	current pathCounter
-	 * @param assignedVar	inc-/decremented variable
+	/**
+	 * Return a term which describes the total value of the incrementation/decrementation
+	 *
+	 * @param t
+	 *            inc-/decrementing describing term
+	 * @param pathCounter
+	 *            current pathCounter
+	 * @param assignedVar
+	 *            inc-/decremented variable
 	 * @return
 	 */
 	private Term insertPathCounter(final ApplicationTerm t, final TermVariable pathCounter,

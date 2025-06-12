@@ -171,15 +171,10 @@ public class BinaryStatePredicateManager {
 				mPredicateFactory.newPredicate(SmtUtils.and(mScript, siSubsetAndRankDecreaseAndBoundList));
 		final LBool sat = PredicateUtils.isInductiveHelper(mScript, siSubsetAndRankEquality,
 				siSubsetAndRankDecreaseAndBound, loopTf, modifiableGlobals, modifiableGlobals);
-		switch (sat) {
-		case SAT:
-		case UNKNOWN:
-			return false;
-		case UNSAT:
-			return true;
-		default:
-			throw new AssertionError("unknown case");
-		}
+		return switch (sat) {
+		case SAT, UNKNOWN -> false;
+		case UNSAT -> true;
+		};
 	}
 
 	private boolean assertSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf,

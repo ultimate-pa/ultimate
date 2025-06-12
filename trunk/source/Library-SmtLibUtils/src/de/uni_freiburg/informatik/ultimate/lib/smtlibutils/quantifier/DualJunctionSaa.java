@@ -49,13 +49,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	/**
-	 * Our array elimination does not support if the term of the elimination task
-	 * contains quantified formulas. If this variable is set, we bring the term in
-	 * prenex normal form. Apply the elimination to the "matrix" of the prenex
-	 * normal form and add prepend the quantifiers to the result. If the elimination
-	 * new introduces auxiliary quantified variables, these have to be added at the
-	 * same level as the eliminatee, i.e., have to be prepended to the result. If
-	 * this variable is not set the elimination may crash or return unsound results.
+	 * Our array elimination does not support if the term of the elimination task contains quantified formulas. If this
+	 * variable is set, we bring the term in prenex normal form. Apply the elimination to the "matrix" of the prenex
+	 * normal form and add prepend the quantifiers to the result. If the elimination new introduces auxiliary quantified
+	 * variables, these have to be added at the same level as the eliminatee, i.e., have to be prepended to the result.
+	 * If this variable is not set the elimination may crash or return unsound results.
 	 */
 	private static final boolean PRENEX_NORMAL_FORM_FOR_INNERQUANTIFIERS = true;
 
@@ -169,12 +167,12 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 	}
 
 	private EliminationResult tryToEliminateOne3(final EliminationTask inputEt) {
-		final EliminationTask res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(),
-				inputEt.getContext(), inputEt.getEliminatees().iterator().next());
+		final EliminationTask res = tryToEliminate(inputEt.getQuantifier(), inputEt.getTerm(), inputEt.getContext(),
+				inputEt.getEliminatees().iterator().next());
 		if (res == null) {
 			return null;
 		} else {
-			final Set<TermVariable> newEliminatees = new HashSet<TermVariable>(res.getEliminatees());
+			final Set<TermVariable> newEliminatees = new HashSet<>(res.getEliminatees());
 			newEliminatees.removeAll(inputEt.getEliminatees());
 			return new EliminationResult(new EliminationTask(res.getQuantifier(), inputEt.getEliminatees(),
 					res.getTerm(), inputEt.getContext()), newEliminatees);
@@ -183,8 +181,8 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 
 	private EliminationTask tryToEliminate(final int quantifier, final Term term, final Context context,
 			final TermVariable eliminatee) {
-		final EliminationTask inputEtp = new EliminationTask(quantifier, Collections.singleton(eliminatee),
-				term, context);
+		final EliminationTask inputEtp =
+				new EliminationTask(quantifier, Collections.singleton(eliminatee), term, context);
 		EliminationTask res1;
 		try {
 			res1 = ElimStorePlain.applyComplexEliminationRules(mServices, mLogger, mMgdScript, inputEtp);
@@ -202,10 +200,8 @@ public class DualJunctionSaa extends DualJunctionQuantifierElimination {
 				throw new AssertionError(e);
 			}
 		}
-		if (res1 != null) {
-			if (Arrays.asList(res1.getTerm().getFreeVars()).contains(eliminatee)) {
-				throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEtp.toTerm(mScript));
-			}
+		if ((res1 != null) && Arrays.asList(res1.getTerm().getFreeVars()).contains(eliminatee)) {
+			throw new AssertionError("Var not eliminated: " + eliminatee + " " + inputEtp.toTerm(mScript));
 		}
 		return res1;
 	}

@@ -111,8 +111,8 @@ public class BlockEncodingBacktranslator extends
 		final Map<TermVariable, Boolean>[] oldBranchEncoders = oldIcfgPe.getBranchEncoders();
 		assert oldBranchEncoders.length == oldIcfgPe.getLength() : "incorrect number of branch encoders: expected "
 				+ oldIcfgPe.getLength() + ", actual " + oldBranchEncoders.length;
-		assert checkCallStackSourceProgramExecution(mLogger,
-				oldIcfgPe) : "callstack of initial program execution already broken";
+		assert checkCallStackSourceProgramExecution(mLogger, oldIcfgPe)
+				: "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<IIcfgTransition<IcfgLocation>>> newTrace = new ArrayList<>();
 		final List<ProgramState<Term>> newValues = new ArrayList<>();
@@ -312,10 +312,10 @@ public class BlockEncodingBacktranslator extends
 			mLogger.info("Removing " + getCollectionString(mIntermediateEdges));
 		}
 		for (final IIcfgTransition<IcfgLocation> edge : mIntermediateEdges) {
-			assert mSequentialCompositions.values().stream().noneMatch(
-					s -> s.contains(edge)) : "Intermediate edge should not be used in sequential composition";
-			assert mParallelCompositions.values().stream()
-					.noneMatch(s -> s.contains(edge)) : "Intermediate edge should not be used in parallel composition";
+			assert mSequentialCompositions.values().stream().noneMatch(s -> s.contains(edge))
+					: "Intermediate edge should not be used in sequential composition";
+			assert mParallelCompositions.values().stream().noneMatch(s -> s.contains(edge))
+					: "Intermediate edge should not be used in parallel composition";
 
 			mSequentialCompositions.remove(edge);
 			mParallelCompositions.remove(edge);

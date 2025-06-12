@@ -39,29 +39,25 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Classes that implement this interface represent an {@link IAction} that
- * defines the effect that a procedure fork has to the (non-control-flow)
- * variables of the system. In our terminology, a procedure fork is the
- * transition that brings the system from the forking procedure to the forked
- * procedure. This means that the effect of the of a procedure fork is that all
- * input variables of the forking procedure are assigned and all local variables
- * of the forking procedure are havoced.
+ * Classes that implement this interface represent an {@link IAction} that defines the effect that a procedure fork has
+ * to the (non-control-flow) variables of the system. In our terminology, a procedure fork is the transition that brings
+ * the system from the forking procedure to the forked procedure. This means that the effect of the of a procedure fork
+ * is that all input variables of the forking procedure are assigned and all local variables of the forking procedure
+ * are havoced.
  *
  * @author Lars Nitzke (lars.nitzke@outlook.com)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public interface IForkActionThreadCurrent extends IAction {
-	/*@Override
-	default UnmodifiableTransFormula getTransformula() {
-		// TODO: return transormula with true or transformular without an action.
-		return
-	}*/
+	/*
+	 * @Override default UnmodifiableTransFormula getTransformula() { // TODO: return transormula with true or
+	 * transformular without an action. return }
+	 */
 
-	public String getNameOfForkedProcedure();
+	String getNameOfForkedProcedure();
 
-	public ForkSmtArguments getForkSmtArguments();
-
+	ForkSmtArguments getForkSmtArguments();
 
 	public static class ForkSmtArguments {
 
@@ -69,7 +65,6 @@ public interface IForkActionThreadCurrent extends IAction {
 		private final MultiTermResult mProcedureArguments;
 
 		public ForkSmtArguments(final MultiTermResult threadIdArguments, final MultiTermResult procedureArguments) {
-			super();
 			mThreadIdArguments = threadIdArguments;
 			mProcedureArguments = procedureArguments;
 		}
@@ -84,13 +79,13 @@ public interface IForkActionThreadCurrent extends IAction {
 
 		public UnmodifiableTransFormula constructThreadIdAssignment(final IIcfgSymbolTable symbolTable,
 				final ManagedScript mgdScript, final List<IProgramVar> leftHandSides) {
-			final Term[] terms = getThreadIdArguments().getTerms();
+			final Term[] terms = getThreadIdArguments().terms();
 			return TransFormulaBuilder.constructAssignment(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
 		}
 
 		public UnmodifiableTransFormula constructInVarsAssignment(final IIcfgSymbolTable symbolTable,
 				final ManagedScript mgdScript, final List<? extends IProgramVar> leftHandSides) {
-			final Term[] terms = getProcedureArguments().getTerms();
+			final Term[] terms = getProcedureArguments().terms();
 			return TransFormulaBuilder.constructAssignment(leftHandSides, Arrays.asList(terms), symbolTable, mgdScript);
 		}
 	}

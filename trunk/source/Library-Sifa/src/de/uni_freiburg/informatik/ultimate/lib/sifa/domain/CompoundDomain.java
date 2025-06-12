@@ -45,13 +45,13 @@ public class CompoundDomain implements IDomain {
 	private final Collection<IDomain> mSubdomains;
 
 	/**
-	 * Creates a new compound domain from the given subdomains.
-	 * It is even possible to use the same domain type multiple times as a subdomain.
-	 * This can be useful when using different settings for each of the "duplicates".
-	 * The iteration order of {@code subdomains} can be important. For instance,
-	 * using faster domains first can speed up {@link #isEqBottom(IPredicate)}.
+	 * Creates a new compound domain from the given subdomains. It is even possible to use the same domain type multiple
+	 * times as a subdomain. This can be useful when using different settings for each of the "duplicates". The
+	 * iteration order of {@code subdomains} can be important. For instance, using faster domains first can speed up
+	 * {@link #isEqBottom(IPredicate)}.
 	 *
-	 * @param subdomains Domains to be used by this compound domain
+	 * @param subdomains
+	 *            Domains to be used by this compound domain
 	 */
 	public CompoundDomain(final SymbolicTools tools, final Collection<IDomain> subdomains) {
 		mTools = tools;
@@ -83,11 +83,11 @@ public class CompoundDomain implements IDomain {
 		for (final IDomain domain : mSubdomains) {
 			final ResultForAlteredInputs result = domain.isEqBottom(pred);
 			if (result.isTrueForAbstraction() || !result.wasAbstracted()) {
-				// Either: over-approximation = bottom    ==implies=>    original = bottom
-				// Or:     original != bottom
+				// Either: over-approximation = bottom ==implies=> original = bottom
+				// Or: original != bottom
 				return result;
 			}
-			// over-approximation != bottom  (could mean original is bottom or not)
+			// over-approximation != bottom (could mean original is bottom or not)
 			abstractedLhsConjunction.add(result.getLhs());
 		}
 		return new ResultForAlteredInputs(mTools.and(abstractedLhsConjunction), mTools.bottom(), false, true);
@@ -106,17 +106,14 @@ public class CompoundDomain implements IDomain {
 		}
 		// TODO offer different settings for picking an answer, for instance
 		// [X] prefer true (current approach)
-		//       Faster convergence in fixpoint iteration
-		//       (but not necessarily less precise than other methods?)
+		// Faster convergence in fixpoint iteration
+		// (but not necessarily less precise than other methods?)
 		// [_] majority voting
 		// [_] prefer false
 		final boolean pickedTrueResults = !trueResults.isEmpty();
 		final Collection<ResultForAlteredInputs> resultList = pickedTrueResults ? trueResults : falseResults;
-		return new ResultForAlteredInputs(
-			mTools.and(mapAndCollect(resultList, ResultForAlteredInputs::getLhs)),
-			mTools.and(mapAndCollect(resultList, ResultForAlteredInputs::getRhs)),
-			pickedTrueResults, true
-		);
+		return new ResultForAlteredInputs(mTools.and(mapAndCollect(resultList, ResultForAlteredInputs::getLhs)),
+				mTools.and(mapAndCollect(resultList, ResultForAlteredInputs::getRhs)), pickedTrueResults, true);
 	}
 
 	@Override

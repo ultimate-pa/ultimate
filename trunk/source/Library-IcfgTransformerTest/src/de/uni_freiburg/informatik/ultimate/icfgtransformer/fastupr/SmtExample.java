@@ -97,11 +97,13 @@ public class SmtExample {
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;
-		final Term simplfOuter = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, isFalseOuter);
+		final Term simplfOuter = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA, isFalseOuter);
 		final IUltimateServiceProvider services1 = mServices;
 		final ILogger logger1 = mLogger;
 		final ManagedScript mgdScript1 = mMgdScript;
-		final Term simplfInner = PartialQuantifierElimination.eliminateCompat(services1, mgdScript1, SimplificationTechnique.SIMPLIFY_DDA, isFalseInner);
+		final Term simplfInner = PartialQuantifierElimination.eliminateCompat(services1, mgdScript1,
+				SimplificationTechnique.SIMPLIFY_DDA, isFalseInner);
 
 		mLogger.info("Original (in):");
 		mLogger.info(isFalseInner.toStringDirect());

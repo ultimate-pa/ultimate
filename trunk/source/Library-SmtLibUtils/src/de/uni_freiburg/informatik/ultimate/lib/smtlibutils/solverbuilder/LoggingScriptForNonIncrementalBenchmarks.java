@@ -110,16 +110,14 @@ public class LoggingScriptForNonIncrementalBenchmarks extends WrapperScript {
 		mBaseFilename = baseFilename;
 		mDirectory = directory;
 		mCommandStack = new LinkedList<>();
-		mCommandStack.push(new ArrayList<ISmtCommand<?>>());
+		mCommandStack.push(new ArrayList<>());
 	}
 
 	protected LinkedList<ArrayList<ISmtCommand<?>>> deepCopyOfCommandStack() {
 		final LinkedList<ArrayList<ISmtCommand<?>>> result = new LinkedList<>();
 		for (final ArrayList<ISmtCommand<?>> al : mCommandStack) {
-			result.add(new ArrayList<ISmtCommand<?>>());
-			for (final ISmtCommand<?> command : al) {
-				result.getLast().add(command);
-			}
+			result.add(new ArrayList<>());
+			result.getLast().addAll(al);
 		}
 		return result;
 	}
@@ -294,7 +292,7 @@ public class LoggingScriptForNonIncrementalBenchmarks extends WrapperScript {
 		// mPw.println("(push " + levels + ")");
 		// addToCurrentAssertionStack(sw.toString());
 		for (int i = 0; i < levels; i++) {
-			mCommandStack.add(new ArrayList<ISmtCommand<?>>());
+			mCommandStack.add(new ArrayList<>());
 		}
 		mScript.push(levels);
 	}

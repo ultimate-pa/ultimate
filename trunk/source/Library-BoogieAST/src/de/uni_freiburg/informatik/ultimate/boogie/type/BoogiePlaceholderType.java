@@ -32,12 +32,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
- * A placeholder type represents a type bounded by some outer type parameters,
- * like by an ArrayType, by a function signature, a procedure signature or a
- * forall/exists quantifier.
+ * A placeholder type represents a type bounded by some outer type parameters, like by an ArrayType, by a function
+ * signature, a procedure signature or a forall/exists quantifier.
  *
- * The type args are represented in de Bruijn style, giving only the number of
- * type parameter declarations between the placeholder and its binder.
+ * The type args are represented in de Bruijn style, giving only the number of type parameter declarations between the
+ * placeholder and its binder.
  *
  * @author hoenicke
  *
@@ -55,24 +54,25 @@ public class BoogiePlaceholderType extends BoogieType {
 
 	/**
 	 * Get the depth of the declaration where this placeholder points to.
+	 *
 	 * @return the depth.
 	 */
 	public int getDepth() {
 		return depth;
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType substitutePlaceholders(final int deltaDepth, final BoogieType[] substType) {
 		final int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
-			/* Placeholder matches some inner scope*/
+			/* Placeholder matches some inner scope */
 			return this;
 		} else if (relDepth < substType.length) {
 			/* Substitute this placeholder */
 			BoogieType subst = substType[relDepth];
-			/* This should only happen if error type was involved when computing
-			 * substitution.
+			/*
+			 * This should only happen if error type was involved when computing substitution.
 			 */
 			if (subst == null) {
 				return TYPE_ERROR;
@@ -87,12 +87,12 @@ public class BoogiePlaceholderType extends BoogieType {
 		}
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected BoogieType incrementPlaceholders(final int deltaDepth, final int incDepth) {
 		final int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
-			/* Placeholder matches some inner scope*/
+			/* Placeholder matches some inner scope */
 			return this;
 		} else {
 			/* Substitute this placeholder */
@@ -100,7 +100,7 @@ public class BoogiePlaceholderType extends BoogieType {
 		}
 	}
 
-	//@Override
+	// @Override
 	@Override
 	protected boolean unify(final int deltaDepth, BoogieType other, final BoogieType[] substitution) {
 		if (other == TYPE_ERROR) {
@@ -116,7 +116,7 @@ public class BoogiePlaceholderType extends BoogieType {
 			return (type.depth == (relDepth < 0 ? depth : depth - substitution.length));
 		} else {
 			/* Check freedom of inner bounded variable */
-			if (other.hasPlaceholder(0, deltaDepth-1)) {
+			if (other.hasPlaceholder(0, deltaDepth - 1)) {
 				return false;
 			}
 			if (deltaDepth != 0) {
@@ -136,10 +136,9 @@ public class BoogiePlaceholderType extends BoogieType {
 		return depth >= minDepth && depth <= maxDepth;
 	}
 
-	//@Override
+	// @Override
 	@Override
-	protected boolean isUnifiableTo(final int deltaDepth, BoogieType other,
-									final ArrayList<BoogieType> substitution) {
+	protected boolean isUnifiableTo(final int deltaDepth, BoogieType other, final ArrayList<BoogieType> substitution) {
 		/* fast path first */
 		if (other == this || other == TYPE_ERROR) {
 			return true;
@@ -151,16 +150,15 @@ public class BoogiePlaceholderType extends BoogieType {
 			return false;
 		} else {
 			/* Get the real types */
-			final BoogieType[] subst =
-				substitution.toArray(new BoogieType[substitution.size()]);
+			final BoogieType[] subst = substitution.toArray(new BoogieType[substitution.size()]);
 			final BoogieType me = substitutePlaceholders(deltaDepth, subst);
 			other = other.substitutePlaceholders(deltaDepth, subst);
 			if (me == other) {
 				return true;
 			}
 			if (!(me instanceof BoogiePlaceholderType)) {
-				/* we are no longer a placeholder type, let the unification
-				 * process continue;
+				/*
+				 * we are no longer a placeholder type, let the unification process continue;
 				 */
 				return other.isUnifiableTo(deltaDepth, me, substitution);
 			}
@@ -172,7 +170,7 @@ public class BoogiePlaceholderType extends BoogieType {
 			}
 
 			/* Check that other is free of inner bounded variable */
-			if (other.hasPlaceholder(0, deltaDepth-1)) {
+			if (other.hasPlaceholder(0, deltaDepth - 1)) {
 				return false;
 			}
 
@@ -200,10 +198,12 @@ public class BoogiePlaceholderType extends BoogieType {
 	}
 
 	/**
-	 * Computes a string representation.  It uses depth to compute artificial
-	 * names for the placeholders.
-	 * @param depth the number of placeholders outside this expression.
-	 * @param needParentheses true if parentheses should be set for constructed types
+	 * Computes a string representation. It uses depth to compute artificial names for the placeholders.
+	 *
+	 * @param depth
+	 *            the number of placeholders outside this expression.
+	 * @param needParentheses
+	 *            true if parentheses should be set for constructed types
 	 * @return a string representation of this type.
 	 */
 	@Override
@@ -211,16 +211,16 @@ public class BoogiePlaceholderType extends BoogieType {
 		final int paramNumber = depth - this.depth - 1;
 
 		if (paramNumber >= 0) {
-			return "$"+paramNumber;
+			return "$" + paramNumber;
 		} else {
-			return "$_"+(-paramNumber);
+			return "$_" + (-paramNumber);
 		}
 	}
 
 	@Override
 	protected ASTType toASTType(final ILocation loc, final int depth) {
-		return new de.uni_freiburg.informatik.ultimate.boogie.ast.
-			NamedType(loc, this, toString(depth, false), new ASTType[0]);
+		return new de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType(loc, this, toString(depth, false),
+				new ASTType[0]);
 	}
 
 	@Override

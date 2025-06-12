@@ -24,12 +24,12 @@ class BindingCollector extends LeadingNodeCollector {
 	private final Set<ObjFlag> mOptions;
 	private final Map<IBinding, List<IPSTNode>> mResult;
 
-	BindingCollector(Set<ObjFlag> options, Map<IBinding, List<IPSTNode>> result) {
+	BindingCollector(final Set<ObjFlag> options, final Map<IBinding, List<IPSTNode>> result) {
 		mResult = result;
 		mOptions = options;
 	}
 
-	private IBinding getUnreferencedBindingToDelete(IASTSimpleDeclaration declaration) {
+	private IBinding getUnreferencedBindingToDelete(final IASTSimpleDeclaration declaration) {
 		// Typedefs are handled differently because of multiple declarators and nested composite type specifiers
 		// (which can occur anywhere but are much less likely)
 		if (ASTNodeUtils.isTypedef(declaration)) {
@@ -50,7 +50,7 @@ class BindingCollector extends LeadingNodeCollector {
 		return null;
 	}
 
-	private IBinding getUnreferencedBindingFromDeclSpecifier(IASTDeclSpecifier declSpecifier) {
+	private IBinding getUnreferencedBindingFromDeclSpecifier(final IASTDeclSpecifier declSpecifier) {
 		IASTName name = null;
 		if (mOptions.contains(ObjFlag.COMPOSITES) && declSpecifier instanceof IASTCompositeTypeSpecifier) {
 			name = ((IASTCompositeTypeSpecifier) declSpecifier).getName();
@@ -59,8 +59,7 @@ class BindingCollector extends LeadingNodeCollector {
 			// All enumerators must be unreferenced as well...
 			// TODO: do not consider references within the enum itself, e.g. enum { A, B, C = B + 1}; is not considered
 			// unreferenced, because B is referenced
-			if (Arrays.stream(typeSpecifier.getEnumerators())
-					.allMatch(e -> !ASTNodeUtils.hasReferences(e.getName()))) {
+			if (Arrays.stream(typeSpecifier.getEnumerators()).allMatch(e -> !ASTNodeUtils.hasReferences(e.getName()))) {
 				name = typeSpecifier.getName();
 			}
 		} else if (declSpecifier instanceof IASTElaboratedTypeSpecifier) {
@@ -84,8 +83,8 @@ class BindingCollector extends LeadingNodeCollector {
 		if (astNode instanceof IASTSimpleDeclaration) {
 			bindingToDelete = getUnreferencedBindingToDelete((IASTSimpleDeclaration) astNode);
 		} else if (astNode instanceof IASTFunctionDefinition) {
-			final IASTName name = ASTNodeUtils
-					.getNestedDeclaratorName(((IASTFunctionDefinition) astNode).getDeclarator());
+			final IASTName name =
+					ASTNodeUtils.getNestedDeclaratorName(((IASTFunctionDefinition) astNode).getDeclarator());
 			if (mOptions.contains(ObjFlag.FUNCDEFS) && !ASTNodeUtils.hasReferences(name)) {
 				bindingToDelete = name.resolveBinding();
 			}

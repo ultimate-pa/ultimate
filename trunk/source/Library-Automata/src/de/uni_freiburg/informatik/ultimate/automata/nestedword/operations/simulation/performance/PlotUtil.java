@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 /**
  * Provides utility methods for plotting performance entry tables.
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class PlotUtil {
@@ -26,7 +26,7 @@ public final class PlotUtil {
 
 	/**
 	 * Demonstrates the usage of the plot utlity class.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws IOException
@@ -42,7 +42,7 @@ public final class PlotUtil {
 	/**
 	 * Reads a given benchmark file in the plot format and writes the benchmark data to a CSV file next to it containing
 	 * the transition densities and benchmark data.
-	 * 
+	 *
 	 * @param benchmarkPlotFile
 	 *            The file to read
 	 * @throws IOException
@@ -57,11 +57,9 @@ public final class PlotUtil {
 		// Skips trying to read data from directory name
 		final boolean skipDirectoryNameExtraction = false;
 
-		BufferedReader br = null;
-		PrintWriter pw = null;
-		try {
-			br = new BufferedReader(new FileReader(benchmarkPlotFile));
-			pw = new PrintWriter(new FileWriter(new File(benchmarkPlotFile.getParentFile(), FILE_NAME_PLOT_DATA_CSV)));
+		try (final BufferedReader br = new BufferedReader(new FileReader(benchmarkPlotFile));
+				final PrintWriter pw = new PrintWriter(
+						new FileWriter(new File(benchmarkPlotFile.getParentFile(), FILE_NAME_PLOT_DATA_CSV)));) {
 			final String[] headers = br.readLine().split(separator);
 
 			int directoryIndex = -1;
@@ -220,13 +218,6 @@ public final class PlotUtil {
 						+ callAfterPreProc + separator + returnAfterPreProc + separator + internalOutput + separator
 						+ callOutput + separator + returnOutput + separator + sizeInitial + separator + sizeAfterPreProc
 						+ separator + sizeOutput + separator + overallTimeOutput);
-			}
-		} finally {
-			if (br != null) {
-				br.close();
-			}
-			if (pw != null) {
-				pw.close();
 			}
 		}
 	}

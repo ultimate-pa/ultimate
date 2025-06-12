@@ -2,22 +2,22 @@
  * Copyright (C) 2012-2015 Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * Given two nondeterministic NWAs {@code minuend} and {@code subtrahend} a.
  * <p>
  * TODO Christian 2016-08-20: unfinished documentation
- * 
+ *
  * @author Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * @param <STATE>
  *            Content. Type of the labels that are assigned to the states of the automata. In many cases you want to use
@@ -53,7 +53,7 @@ public class AutomatonEpimorphism<STATE> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 */
@@ -67,7 +67,7 @@ public class AutomatonEpimorphism<STATE> {
 	 * of type {@link String} and have to be of the following scheme: <blockquote> {@code l1_l2}, </blockquote> where
 	 * {@code l1} is the actual label of the state and {@code l2} is the label of the state of {@code nwa2} which it is
 	 * epimorphic to.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param nwa1
@@ -114,7 +114,7 @@ public class AutomatonEpimorphism<STATE> {
 
 	/**
 	 * Returns the state where the epimorphism points to.
-	 * 
+	 *
 	 * @param source
 	 *            source state
 	 * @return target state under the epimorphism
@@ -125,7 +125,7 @@ public class AutomatonEpimorphism<STATE> {
 
 	/**
 	 * Inserts a new mapping of two states.
-	 * 
+	 *
 	 * @param source
 	 *            mapping from this state
 	 * @param target

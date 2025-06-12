@@ -211,19 +211,16 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		final var result = afe.getResult();
 
 		mStatistics.reportTraceCheck(result);
-		switch (result.getCounterexampleFeasibility()) {
-		case UNKNOWN:
-			return new Result<>(ResultType.UNKNOWN_CHECK);
-		case SAT:
-			return new Result<>(ResultType.CONDITION_NOT_SATISFIED);
-		case UNSAT:
+		return switch (result.getCounterexampleFeasibility()) {
+		case UNKNOWN -> new Result<>(ResultType.UNKNOWN_CHECK);
+		case SAT -> new Result<>(ResultType.CONDITION_NOT_SATISFIED);
+		case UNSAT -> {
 			if (!result.somePerfectSequenceFound()) {
-				return new Result<>(ResultType.PROOF_IMPERFECT);
+				yield new Result<>(ResultType.PROOF_IMPERFECT);
 			}
-			return new Result<>(postProcessRefinementResult(result));
-		default:
-			throw new AssertionError("unknown LBool: " + result.getCounterexampleFeasibility());
+			yield new Result<>(postProcessRefinementResult(result));
 		}
+		};
 	}
 
 	// Post-processes the refinement result's trace predicates such that the usage of an additional non-commutativity
@@ -303,6 +300,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 		private int mQuantifiedConditions;
 		private int mTraceChecks;
 		private int mUnknownTraceChecks;
+		private int mUnsatisfiedConditions;
 		private int mImperfectProofs;
 
 		public Statistics() {
@@ -313,6 +311,7 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			declareCounter("QuantifiedConditions", () -> mQuantifiedConditions);
 			declareCounter("TraceChecks", () -> mTraceChecks);
 			declareCounter("UnknownTraceChecks", () -> mUnknownTraceChecks);
+			declareCounter("UnsatisfiedConditions", () -> mUnsatisfiedConditions);
 			declareCounter("ImperfectProofs", () -> mImperfectProofs);
 		}
 
@@ -342,6 +341,8 @@ public class ConditionalCommutativityChecker<L extends IAction> {
 			final LBool feasibility = result.getCounterexampleFeasibility();
 			if (feasibility == LBool.UNKNOWN) {
 				mUnknownTraceChecks++;
+			} else if (feasibility == LBool.SAT) {
+				mUnsatisfiedConditions++;
 			} else if (feasibility == LBool.UNSAT && !result.somePerfectSequenceFound()) {
 				mImperfectProofs++;
 			}
