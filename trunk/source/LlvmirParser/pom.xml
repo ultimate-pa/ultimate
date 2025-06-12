@@ -4,9 +4,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-	<artifactId>LlvmirParser</artifactId>
+	<parent>
+		<artifactId>mavenparent</artifactId>
+		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+		<version>0.3.0</version>
+		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
+	</parent>
+	
+	<artifactId>de.uni_freiburg.informatik.ultimate.llvmir.parser</artifactId>
 	<version>0.3.0</version>
+	<packaging>eclipse-plugin</packaging>
 
 	<build>
 		<plugins>
