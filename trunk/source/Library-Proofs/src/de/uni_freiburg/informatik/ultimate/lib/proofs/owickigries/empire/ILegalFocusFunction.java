@@ -55,4 +55,27 @@ public interface ILegalFocusFunction<S, P> {
 	 * @return
 	 */
 	List<IPredicate> getFocusedLaws(S state, Region<P> region);
+
+	/**
+	 * Implements the trivial focus function, which assigns the full law of the state to every region.
+	 *
+	 * @param <S>
+	 *            the type of states in the empire automaton
+	 * @param <P>
+	 *            the type of places in the regions
+	 */
+	class TrivialFocus<S, P> implements ILegalFocusFunction<S, P> {
+		private final IEmpireAutomaton<?, P, S> mEmpire;
+
+		public TrivialFocus(final IEmpireAutomaton<?, P, S> empire) {
+			mEmpire = empire;
+		}
+
+		@Override
+		public List<IPredicate> getFocusedLaws(final S state, final Region<P> region) {
+			assert mEmpire.getTerritory(state).getRegions().contains(region)
+					: "Region " + region + " does not occur in territory of state " + state;
+			return List.of(mEmpire.getLaw(state));
+		}
+	}
 }

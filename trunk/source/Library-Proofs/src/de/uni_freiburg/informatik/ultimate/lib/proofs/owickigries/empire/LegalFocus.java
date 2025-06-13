@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2025 Matthias Zumkeller
+ * Copyright (C) 2025 University of Freiburg
+ *
+ * This file is part of the ULTIMATE Proofs Library.
+ *
+ * The ULTIMATE Proofs Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE Proofs Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Proofs Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Proofs Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Proofs Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.ArrayDeque;
@@ -5,42 +31,54 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ModularEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class LegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
-	private final HashRelation<Pair<State<L, P>, Integer>, Region<P>> mLegalFocus;
+public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 	private final IPetriNet<L, P> mNet;
-	private final INwaOutgoingLetterAndTransitionProvider<L, List<IPredicate>> mProduct;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
+	private final IExplicitEmpireAutomaton<L, P, S> mEmpire;
+	private final Function<IPredicate, List<IPredicate>> mSplitConjuncts;
+
+	private final HashRelation<Pair<S, Integer>, Region<P>> mLegalFocus;
 	private final int mNumLaws;
 
-	public LegalFocus(final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire,
-			final IPetriNet<L, P> net, final INwaOutgoingLetterAndTransitionProvider<L, List<IPredicate>> product,
-			final int numLaws) {
+	public LegalFocus(final IUltimateServiceProvider services, final IEmpireAutomaton<L, P, S> empire,
+			final IPetriNet<L, P> net,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
+			final Function<IPredicate, List<IPredicate>> splitConjuncts) {
 		mNet = net;
-		mProduct = product;
+		mInterpolantAutomaton = interpolantAutomaton;
 		mNumLaws = numLaws;
-		mLegalFocus = computeLegalFocus(empire);
+		mSplitConjuncts = Objects.requireNonNull(splitConjuncts);
+
+		if (empire instanceof final IExplicitEmpireAutomaton<L, P, S> explicitEmpire) {
+			mEmpire = explicitEmpire;
+		} else {
+			mEmpire = new EmpireReachableStates<>(services, empire);
+		}
+
+		mLegalFocus = computeLegalFocus();
 	}
 
-	private HashRelation<Pair<State<L, P>, Integer>, Region<P>>
-			computeLegalFocus(final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire) {
-		final var finalStates = empire.getFinalStates().stream().collect(Collectors.toSet());
-		final var queue = new ArrayDeque<State<L, P>>();
-		final var focus = computeFinalStateFocus(empire, finalStates);
-		for (final State<L, P> state : finalStates) {
+	private HashRelation<Pair<S, Integer>, Region<P>> computeLegalFocus() {
+		final var finalStates = mEmpire.getFinalStates().stream().collect(Collectors.toSet());
+		final var queue = new ArrayDeque<S>();
+		final var focus = computeFinalStateFocus(finalStates);
+		for (final S state : finalStates) {
 			queue.offer(state);
 		}
 		while (!queue.isEmpty()) {
@@ -51,8 +89,8 @@ public class LegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
 				if (currentFocus.isEmpty()) {
 					continue;
 				}
-				final var predecessors = empire.internalPredecessors(state);
-				for (final IncomingInternalTransition<Transition<L, P>, State<L, P>> incomingInternalTransition : predecessors) {
+				final var predecessors = mEmpire.internalPredecessors(state);
+				for (final IncomingInternalTransition<Transition<L, P>, S> incomingInternalTransition : predecessors) {
 					final var predecessor = incomingInternalTransition.getPred();
 					final var predecessorPair = new Pair<>(predecessor, j);
 					final var transition = incomingInternalTransition.getLetter();
@@ -68,9 +106,9 @@ public class LegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
 		return focus;
 	}
 
-	private Set<Region<P>> getFocusedRegions(final State<L, P> predecessor, final Set<Region<P>> successorFocus,
+	private Set<Region<P>> getFocusedRegions(final S predecessor, final Set<Region<P>> successorFocus,
 			final Transition<L, P> transition, final Set<Region<P>> predecessorFocus) {
-		final var territory = predecessor.territory();
+		final var territory = mEmpire.getTerritory(predecessor);
 		final var bystanders = territory.getBystanders(transition);
 		final var focusedBystanders = DataStructureUtils.intersection(bystanders, successorFocus);
 		if (successorFocus.size() == focusedBystanders.size()) {
@@ -91,22 +129,21 @@ public class LegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
 		return focused;
 	}
 
-	private List<IPredicate> getSuccessorLaw(final List<IPredicate> laws, final Transition<L, P> transition) {
-		final var succLaw = mProduct.internalSuccessors(laws, transition.getSymbol());
-		return DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
+	private List<IPredicate> getSuccessorLaw(final IPredicate law, final Transition<L, P> transition) {
+		final var succLaw = mInterpolantAutomaton.internalSuccessors(law, transition.getSymbol());
+		return mSplitConjuncts.apply(DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc());
 	}
 
-	private HashRelation<Pair<State<L, P>, Integer>, Region<P>> computeFinalStateFocus(
-			final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> empire,
-			final Set<State<L, P>> finalStates) {
-		final var focus = new HashRelation<Pair<State<L, P>, Integer>, Region<P>>();
-		for (final State<L, P> state : finalStates) {
-			final var territory = state.territory();
+	private HashRelation<Pair<S, Integer>, Region<P>> computeFinalStateFocus(final Set<S> finalStates) {
+		final var focus = new HashRelation<Pair<S, Integer>, Region<P>>();
+		for (final S state : finalStates) {
+			final var territory = mEmpire.getTerritory(state);
 			final var enabledTransitions = territory.getEnabledTransitions(mNet);
-			final var successorlessTransitions = enabledTransitions
-					.filter(t -> !empire.internalSuccessors(state, t).iterator().hasNext()).collect(Collectors.toSet());
+			final var successorlessTransitions =
+					enabledTransitions.filter(t -> !mEmpire.internalSuccessors(state, t).iterator().hasNext())
+							.collect(Collectors.toSet());
 			for (final Transition<L, P> transition : successorlessTransitions) {
-				final var successorLawList = getSuccessorLaw(state.laws(), transition);
+				final var successorLawList = getSuccessorLaw(mEmpire.getLaw(state), transition);
 				for (int i = 0; i < mNumLaws; i++) {
 					if (!SmtUtils.isFalseLiteral(successorLawList.get(i).getFormula())) {
 						continue;
@@ -127,19 +164,19 @@ public class LegalFocus<L, P> implements ILegalFocusFunction<State<L, P>, P> {
 		return focus;
 	}
 
-	public Set<Region<P>> getLegalFocus(final State<L, P> state, final Integer lawIndex) {
+	public Set<Region<P>> getLegalFocus(final S state, final Integer lawIndex) {
 		return mLegalFocus.getImage(new Pair<>(state, lawIndex));
 	}
 
-	public boolean isFocused(final P place, final State<L, P> state, final Integer lawIndex) {
+	public boolean isFocused(final P place, final S state, final Integer lawIndex) {
 		final var legalFocus = getLegalFocus(state, lawIndex);
 		return legalFocus.stream().anyMatch(r -> r.contains(place));
 	}
 
 	@Override
-	public List<IPredicate> getFocusedLaws(final State<L, P> state, final Region<P> region) {
+	public List<IPredicate> getFocusedLaws(final S state, final Region<P> region) {
 		final List<IPredicate> focusedLaws = new ArrayList<>();
-		final var laws = state.laws();
+		final var laws = mSplitConjuncts.apply(mEmpire.getLaw(state));
 		for (int i = 0; i < mNumLaws; i++) {
 			final var focus = getLegalFocus(state, i);
 			if (focus.contains(region)) {

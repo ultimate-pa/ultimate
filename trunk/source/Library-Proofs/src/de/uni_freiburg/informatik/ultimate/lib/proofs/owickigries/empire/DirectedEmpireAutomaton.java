@@ -73,8 +73,8 @@ public class DirectedEmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, Dir
 	}
 
 	@Override
-	public boolean containsPlace(final State<L, P> state, final P place) {
-		return state.territory().containsPlace(place);
+	public Territory<P, Region<P>> getTerritory(final State<L, P> state) {
+		return (Territory) state.territory();
 	}
 
 	@Override

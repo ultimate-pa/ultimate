@@ -42,27 +42,28 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 
+// TODO Give this class a more descriptive name
 public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutomaton.State<L, P>> {
 	private final ILogger mLogger;
 
 	private final IPetriNet<L, P> mNet;
-	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProduct;
+	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
 
 	private final State<L, P> mInitialState;
 
 	public EmpireAutomaton(final IPetriNet<L, P> net,
-			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> product,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton,
 			final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mNet = net;
-		mProduct = product;
+		mInterpolantAutomaton = interpolantAutomaton;
 
 		// Construct initial state
-		final var initialLaw = DataStructureUtils.getOneAndOnly(mProduct.getInitialStates(), "initial law place");
+		final var initialLaw =
+				DataStructureUtils.getOneAndOnly(mInterpolantAutomaton.getInitialStates(), "initial law place");
 		final var regions = mNet.getInitialPlaces().stream().map(Region::singleton).collect(ImmutableSet.collector());
 		final State<L, P> state = new State<>(new Territory<>(regions), initialLaw, Collections.emptySet());
 		mInitialState = getMarkedSuccessor(state);
@@ -74,8 +75,8 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 	}
 
 	@Override
-	public boolean containsPlace(final State<L, P> state, final P place) {
-		return state.territory().containsPlace(place);
+	public Territory<P, Region<P>> getTerritory(final State<L, P> state) {
+		return state.territory();
 	}
 
 	@Override
@@ -112,7 +113,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		final var enabledTransitions = territory.getEnabledTransitions(mNet).collect(Collectors.toSet());
 		if (succStates.size() < enabledTransitions.size()) {
 			final var falseSuccessors = enabledTransitions.stream()
-					.anyMatch(t -> SmtUtils.isFalseLiteral(getSuccessorLaw(state.law, t).getFormula()));
+					.anyMatch(t -> mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law, t)));
 			if (!falseSuccessors) {
 				mLogger.debug("Bla");
 			}
@@ -135,7 +136,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		for (final Transition<L, P> transition : enabledTransitions) {
 			final var succ = internalSuccessors(state, transition);
 			if (!succ.iterator().hasNext()) {
-				assert SmtUtils.isFalseLiteral(getSuccessorLaw(state.law, transition).getFormula())
+				assert mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law, transition))
 						: "There is no successor, but the law is not false";
 				return true;
 			}
@@ -174,7 +175,7 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 		// step 2: compute the "direct" successor state for the given transition
 		final var directSucc = getReplacementSuccessor(state, letter);
 		final var succLaw = directSucc.law;
-		if (SmtUtils.isFalseLiteral(succLaw.getFormula())) {
+		if (mInterpolantAutomaton.isFinal(succLaw)) {
 			return List.of();
 		}
 
@@ -223,12 +224,12 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	private Set<Transition<L, P>> getEnabledTransitions(final State<L, P> state) {
 		return state.territory().getEnabledTransitions(mNet)
-				.filter(transition -> !SmtUtils.isFalseLiteral(getSuccessorLaw(state.law(), transition).getFormula()))
+				.filter(transition -> !mInterpolantAutomaton.isFinal(getSuccessorLaw(state.law(), transition)))
 				.collect(Collectors.toSet());
 	}
 
 	private IPredicate getSuccessorLaw(final IPredicate law, final Transition<L, P> transition) {
-		final var succLaw = mProduct.internalSuccessors(law, transition.getSymbol());
+		final var succLaw = mInterpolantAutomaton.internalSuccessors(law, transition.getSymbol());
 		if (succLaw.iterator().hasNext()) {
 			return DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc();
 		}

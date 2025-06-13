@@ -35,15 +35,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -55,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.GhostUpdate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesAnnotation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesConstruction;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ModularEmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -66,26 +59,37 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class LegalEmpireToOG<L, P> {
+// TODO This class supersedes EmpireAutomatonToOG. Rename it to be more general (legal focus is one of its features).
+public class LegalEmpireToOG<S, L, P> {
 	private static final String GHOST = "g";
 
-	private final IPetriNet<L, P> mNet;
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
+	private final IPetriNet<L, P> mProgram;
+
+	private final IExplicitEmpireAutomaton<L, P, S> mEmpireAutomaton;
+	private final ILegalFocusFunction<S, P> mLegalFocus;
 
 	private final BasicPredicateFactory mFactory;
-	private final NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>> mEmpireAutomaton;
 	private final IProgramVar mGhostVariable;
-	private final Map<State<L, P>, Term> mStateTerms;
-	private final ILegalFocusFunction<State<L, P>, P> mLegalFocus;
+	private final Map<S, Term> mStateTerms;
+
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
 	public LegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final IPetriNet<L, P> net, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final INwaOutgoingTransitionProvider<Transition<L, P>, State<L, P>> empire,
-			final ILegalFocusFunction<State<L, P>, P> legalFocus,
+			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final IEmpireAutomaton<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
-		mNet = net;
+		this(services, mgdScript, program, symbolTable, procedures, empire, possibleInterferences,
+				new ILegalFocusFunction.TrivialFocus<>(empire));
+	}
+
+	public LegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
+			final IEmpireAutomaton<L, P, S> empire,
+			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
+			final ILegalFocusFunction<S, P> legalFocus) {
+		mProgram = program;
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
 		mLegalFocus = legalFocus;
@@ -96,21 +100,21 @@ public class LegalEmpireToOG<L, P> {
 		mFactory = new BasicPredicateFactory(services, mManagedScript, newSymbolTable);
 
 		final var logger = services.getLoggingService().getLogger(getClass());
-		try {
+		if (empire instanceof final IExplicitEmpireAutomaton<L, P, S> explicitEmpire) {
+			mEmpireAutomaton = explicitEmpire;
+		} else {
 			logger.info("Exploring empire...");
-			mEmpireAutomaton = new NestedWordAutomatonReachableStates<>(new AutomataLibraryServices(services), empire);
+			mEmpireAutomaton = new EmpireReachableStates<>(services, empire);
 			logger.info("Empire has %s", mEmpireAutomaton.sizeInformation());
-		} catch (final AutomataOperationCanceledException aoce) {
-			throw new ToolchainCanceledException(aoce,
-					new RunningTaskInfo(getClass(), "collecting reachable states of empire automaton"));
 		}
+
 		mStateTerms = getStateTerms();
 		final Map<P, IPredicate> formulaMapping = getFormulaMap();
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
 		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
 
 		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
-				OwickiGriesConstruction.getSpecificationForPetriNet(mNet, mFactory), possibleInterferences,
+				OwickiGriesConstruction.getSpecificationForPetriNet(mProgram, mFactory), possibleInterferences,
 				newSymbolTable, formulaMapping, Set.of(mGhostVariable), ghostInitAssignment, assignmentMapping);
 	}
 
@@ -132,13 +136,13 @@ public class LegalEmpireToOG<L, P> {
 	private Map<P, IPredicate> getFormulaMap() {
 		final Map<P, IPredicate> formulaMap = new HashMap<>();
 		final var empireStates = mEmpireAutomaton.getStates();
-		for (final P place : mNet.getPlaces()) {
-			final var states =
-					empireStates.stream().filter(s -> s.territory().containsPlace(place)).collect(Collectors.toSet());
+		for (final P place : mProgram.getPlaces()) {
+			final var states = empireStates.stream().filter(s -> mEmpireAutomaton.containsPlace(s, place))
+					.collect(Collectors.toSet());
 			assert noErrorPlaceInStates(place, states) : "Accepting place in intersection of the states";
 			final var disjuncts = new ArrayList<Term>();
-			for (final State<L, P> state : states) {
-				final var placeRegion = state.territory().getPlaceRegion(place);
+			for (final S state : states) {
+				final var placeRegion = mEmpireAutomaton.getTerritory(state).getPlaceRegion(place);
 				final var conjuncts = new ArrayList<Term>();
 
 				final Term ghostEquation =
@@ -157,8 +161,8 @@ public class LegalEmpireToOG<L, P> {
 		return formulaMap;
 	}
 
-	private boolean noErrorPlaceInStates(final P place, final Set<State<L, P>> states) {
-		return mNet.isAccepting(place) && !states.isEmpty() ? false : true;
+	private boolean noErrorPlaceInStates(final P place, final Set<S> states) {
+		return mProgram.isAccepting(place) && !states.isEmpty() ? false : true;
 	}
 
 	/**
@@ -166,7 +170,7 @@ public class LegalEmpireToOG<L, P> {
 	 */
 	private Map<Transition<L, P>, GhostUpdate> getAssignmentMapping() {
 		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = new HashMap<>();
-		for (final Transition<L, P> transition : mNet.getTransitions()) {
+		for (final Transition<L, P> transition : mProgram.getTransitions()) {
 			final var assignment = getTransitionAssignment(transition);
 			if (assignment != null) {
 				assignmentMapping.put(transition, assignment);
@@ -184,8 +188,8 @@ public class LegalEmpireToOG<L, P> {
 			return null;
 		}
 
-		final var pairs = new HashSet<Pair<State<L, P>, State<L, P>>>();
-		for (final State<L, P> state : enablingStates) {
+		final var pairs = new HashSet<Pair<S, S>>();
+		for (final S state : enablingStates) {
 			final var successors = mEmpireAutomaton.internalSuccessors(state, transition).iterator();
 			if (successors.hasNext()) {
 				final var succ = successors.next();
@@ -203,7 +207,7 @@ public class LegalEmpireToOG<L, P> {
 		return new GhostUpdate(Map.of(mGhostVariable, term));
 	}
 
-	private Term getGhostUpdateTerm(final List<Pair<State<L, P>, State<L, P>>> statePairs) {
+	private Term getGhostUpdateTerm(final List<Pair<S, S>> statePairs) {
 		Term updateTerm;
 		final var pair = statePairs.get(0);
 		final var pred = pair.getFirst();
@@ -218,11 +222,11 @@ public class LegalEmpireToOG<L, P> {
 		return updateTerm;
 	}
 
-	private Map<State<L, P>, Term> getStateTerms() {
-		final var stateTerms = new LinkedHashMap<State<L, P>, Term>();
+	private Map<S, Term> getStateTerms() {
+		final var stateTerms = new LinkedHashMap<S, Term>();
 
 		var num = 1;
-		for (final State<L, P> state : mEmpireAutomaton.getStates()) {
+		for (final S state : mEmpireAutomaton.getStates()) {
 			stateTerms.put(state, mScript.numeral(String.valueOf(num)));
 			num++;
 		}

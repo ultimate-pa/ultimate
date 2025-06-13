@@ -66,6 +66,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * @deprecated Use the more general class LegalEmpireToOG instead, possibly with a trivial legal focus.
+ */
+@Deprecated
 public class EmpireAutomatonToOG<L, P> {
 	private static final String GHOST = "g";
 
