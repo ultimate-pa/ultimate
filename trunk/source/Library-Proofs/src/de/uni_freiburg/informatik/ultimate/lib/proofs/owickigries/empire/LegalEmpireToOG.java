@@ -208,16 +208,13 @@ public class LegalEmpireToOG<S, L, P> {
 	}
 
 	private Term getGhostUpdateTerm(final List<Pair<S, S>> statePairs) {
-		Term updateTerm;
-		final var pair = statePairs.get(0);
-		final var pred = pair.getFirst();
-		final var succ = pair.getSecond();
-		final var equalsTerm = mScript.term(SMTLIBConstants.EQUALS, mGhostVariable.getTerm(), mStateTerms.get(pred));
-		if (statePairs.size() == 1) {
-			updateTerm = mScript.term(SMTLIBConstants.ITE, equalsTerm, mStateTerms.get(succ), mGhostVariable.getTerm());
-		} else {
-			updateTerm = mScript.term(SMTLIBConstants.ITE, equalsTerm, mStateTerms.get(succ),
-					getGhostUpdateTerm(statePairs.subList(1, statePairs.size())));
+		Term updateTerm = mGhostVariable.getTerm();
+		for (final var pair : statePairs) {
+			final var pred = pair.getFirst();
+			final var succ = pair.getSecond();
+			final var equalsTerm =
+					mScript.term(SMTLIBConstants.EQUALS, mGhostVariable.getTerm(), mStateTerms.get(pred));
+			updateTerm = mScript.term(SMTLIBConstants.ITE, equalsTerm, mStateTerms.get(succ), updateTerm);
 		}
 		return updateTerm;
 	}
