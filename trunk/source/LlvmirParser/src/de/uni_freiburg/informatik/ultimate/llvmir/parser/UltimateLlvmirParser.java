@@ -26,14 +26,17 @@
 package de.uni_freiburg.informatik.ultimate.llvmir.parser;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -42,6 +45,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public class UltimateLlvmirParser implements ISource {
+	protected String[] mFileTypes;
+	protected ILogger mLogger;
+	protected List<String> mFileNames;
+	private IUltimateServiceProvider mServices;
 
 	@Override
 	public String getPluginID() {
@@ -50,7 +57,8 @@ public class UltimateLlvmirParser implements ISource {
 
 	@Override
 	public void init() {
-		// Initialization logic if needed
+		mFileTypes = new String[] { ".ll" };
+		mFileNames = new ArrayList<>();
 	}
 
 	@Override
@@ -60,24 +68,88 @@ public class UltimateLlvmirParser implements ISource {
 
 	@Override
 	public File[] parseable(final File[] files) {
-		return Arrays.stream(files)
-				.filter(file -> file.getName().endsWith(".ll") || file.getName().endsWith(".bc"))
-				.toArray(File[]::new);
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
 
+	private boolean parseable(final File file) {
+		for (final String s : getFileTypes()) {
+			if (file.getName().endsWith(s)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Parses a list of files and returns a ParseTree wrapped in an {@link IElement}. For the first implementation, this
+	 * method only parses the first file in the list.
+	 *
+	 * @param files the array of files to be parsed
+	 * @return an {@link IElement} representing the ParseTree of the first file
+	 */
 	@Override
-	public IElement parseAST(final File[] files) throws Exception {
-		// Implement parsing logic here
-		return null; // Placeholder return value
+	public IElement parseAST(final File[] files) throws IOException {
+		if (files == null || files.length == 0) {
+			throw new IOException("No files provided for parsing.");
+		}
+		if (files.length > 1) {
+			mLogger.warn("Multiple files provided, only the first one will be parsed.");
+		}
+		final ParseTree tree = parseFile(files[0]);
+
+		final IElement element = new ParseTreeElementWrapper(tree);
+		return element;
+	}
+
+	/**
+	 * Parses a single file and returns its ParseTree.
+	 *
+	 * @param file the file to be parsed
+	 * @return the ParseTree of the file
+	 * @throws IOException if an error occurs during file reading or parsing
+	 */
+	public ParseTree parseFile(final File file) throws IOException {
+		// mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
+		// mFileNames.add(file.getAbsolutePath());
+		final CharStream input = CharStreams.fromFileName(file.getAbsolutePath());
+		final LLVMIRLexer lexer = new LLVMIRLexer(input);
+		final CommonTokenStream tokens = new CommonTokenStream(lexer);
+		final LLVMIRParser parser = new LLVMIRParser(tokens);
+
+		final ParseTree tree = parser.compilationUnit();
+		System.out.println(tree.toStringTree(parser));
+		return tree;
 	}
 
 	@Override
 	public String[] getFileTypes() {
-		return new String[] { ".ll", ".bc" };
+		return mFileTypes;
 	}
 
 	@Override
 	public ModelType getOutputDefinition() {
-		return ModelType.LLVM_IR; // Placeholder for actual model type definition
+		try {
+			return new ModelType(getPluginID(), ModelType.Type.AST, mFileNames);
+		} catch (final Exception ex) {
+			mLogger.fatal("syntax error: " + ex.getMessage());
+			return null;
+		}
+	}
+
+	@Override
+	public void setServices(final IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
+
+	@Override
+	public void finish() {
+		// probably not needed
+	}
+
+	@Override
+	public IPreferenceInitializer getPreferences() {
+		return null;
 	}
 }
