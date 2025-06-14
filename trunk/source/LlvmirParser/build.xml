@@ -14,5 +14,13 @@
   	      <arg value="${output.dir}"/>
   	      <arg value="${grammar.file}"/>
   	    </java>
+  	
+  	<!-- Place the package declaration in the generated files -->
+  	<replace dir="src/de/uni_freiburg/informatik/ultimate/llvmir/parser" includes="*.java">
+  	        <replacetoken><![CDATA[// Generated from]]></replacetoken>
+  	        <replacevalue><![CDATA[package de.uni_freiburg.informatik.ultimate.llvmir.parser;
+
+// Generated from]]></replacevalue>
+  	    </replace>
   </target>
 </project>
