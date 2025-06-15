@@ -40,7 +40,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
 		mLogger = logger;
 		mUnderlyingPostOp = postOp;
-		mItfApplier = new GuardedInterferenceApplier<>(logger, relationalInterferingDomain, globalMap, maxItf,
+		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, relationalInterferingDomain, globalMap, maxItf,
 				maxParallelStates, interferences);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 		mMaxParallelStates = maxParallelStates;

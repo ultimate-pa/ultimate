@@ -129,7 +129,9 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		var interferences = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				mIfcg.getCfgSmtToolkit().getProcedures());
 		while (true) {
+			final var interferenceCount = interferences.getAllInterferences().size();
 			mLogger.info("Starting thread modular fixpoint engine iteration " + mIteration);
+			mLogger.info("Amount of interferences going to be used in this iteration : " + interferenceCount);
 			// TODO: for debugging, remove later
 //			final Map<String, AbsIntResult<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC>> resultSet = new LinkedHashMap<>();
 			for (final String procedure : mAnalyzer.getTopologicalProcedureOrder()) {
@@ -223,9 +225,6 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 			final Script script, final ConcStatistics stats) {
 		mPrinter.printResults(mLogger, mIteration, resultSet, mEntryLocs, mDomain.getAbstractLocationMap(), script);
 		mLogger.info("maxStates used: " + mMaxParallelStates);
-		for (final String thread : mEntryLocs.keySet()) {
-			mLogger.info("thread: " + thread + "maxother: " + mLocationAbstraction.maxParallelOtherLocationsOf(thread));
-		}
 		mLogger.info("Interference postOp calls:" + stats.postOpCalls());
 		mLogger.info("DisjState cache hits:" + stats.disjCacheHits());
 		mLogger.info("Applier cache hits(no diff, addvars):" + stats.applierCacheHits());

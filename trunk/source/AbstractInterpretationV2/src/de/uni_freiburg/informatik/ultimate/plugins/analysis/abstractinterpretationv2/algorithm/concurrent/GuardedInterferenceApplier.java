@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.Disjunct
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
@@ -29,8 +30,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 	private Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> mAllInterfs;
 	private IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> mPostOp;
 	private final Map<InterferenceWithSourceThread<STATE, ACTION, LOC>, Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> mSeenStatesMap;
+	private final IIcfg<?> mCfg;
 
-	public GuardedInterferenceApplier(final ILogger logger,
+	public GuardedInterferenceApplier(final IIcfg<?> cfg, final ILogger logger,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
 			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
@@ -46,6 +48,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mAllInterfs = new HashSet<>();
 		mItfUtils = new InterferenceUtils<>();
 		mSeenStatesMap = new HashMap<>();
+		mCfg = cfg;
 	}
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
@@ -96,8 +99,9 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				}
 				final var disj = DisjunctiveAbstractState.createDisjunction(interferable, mMaxParallelStates);
 
+				final boolean isSelfInterference = ownerThread.equals(interference.sourceThread());
 				final var post = itfApplier.applyInterferenceToDisjState(interference.interf().disjState(),
-						interference.interf().action(), disj, mPostOp, mMaxParallelStates);
+						interference.interf().action(), disj, mPostOp, mMaxParallelStates, isSelfInterference, mCfg);
 				if (post == null) {
 					continue;
 				}
