@@ -28,11 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -52,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check emptiness and obtain an accepting run of a nested word automaton.
@@ -117,6 +120,8 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 */
 	protected final Collection<STATE> mForbiddenStates;
 
+	protected final List<Pair<STATE, LETTER>> mWayPointStates;
+
 	protected NestedRun<LETTER, STATE> mAcceptingRun;
 
 	/**
@@ -128,12 +133,12 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 * Queue of states that have to be processed and have been visited while processing a internal transition, a return
 	 * transition or a computed summary.
 	 */
-	private final Deque<DoubleDecker<STATE>> mQueue = new ArrayDeque<>();
+	protected final Deque<DoubleDecker<STATE>> mQueue = new ArrayDeque<>();
 
 	/**
 	 * Queue of states that have to be processed and have been visited while processing a call transition.
 	 */
-	private final Deque<DoubleDecker<STATE>> mQueueCall = new ArrayDeque<>();
+	protected final Deque<DoubleDecker<STATE>> mQueueCall = new ArrayDeque<>();
 
 	/**
 	 * Assigns to a pair of states (state,stateK) the run of length 2 that is labeled to the incoming edge of
@@ -214,8 +219,15 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, operand, SearchStrategy.BFS);
+	}
+
+	public IsEmpty(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final List<Pair<STATE, LETTER>> wayPointState) throws AutomataOperationCanceledException {
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null,
+				true, new ArrayList<>(wayPointState), SearchStrategy.BFS);
 	}
 
 	/**
@@ -231,9 +243,9 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 */
 	public IsEmpty(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final SearchStrategy strategy)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null,
-				true, strategy);
+				true, Collections.emptyList(), strategy);
 	}
 
 	/**
@@ -254,8 +266,9 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates)
-					throws AutomataOperationCanceledException {
-		this(services, operand, startStates, forbiddenStates, goalStates, false, SearchStrategy.BFS);
+			throws AutomataOperationCanceledException {
+		this(services, operand, startStates, forbiddenStates, goalStates, false, Collections.emptyList(),
+				SearchStrategy.BFS);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
 	}
@@ -263,7 +276,8 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	protected IsEmpty(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
-			final SearchStrategy strategy) throws AutomataOperationCanceledException {
+			final List<Pair<STATE, LETTER>> wayPointStates, final SearchStrategy strategy)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -276,6 +290,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			assert mGoalStates != null : "mGoalStates must not be null";
 		}
 		mForbiddenStates = forbiddenStates;
+		mWayPointStates = wayPointStates;
 		mStrategy = strategy;
 
 		if (mLogger.isInfoEnabled()) {
@@ -292,7 +307,8 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	protected IsEmpty(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Set<STATE> forbiddenStates, final Set<STATE> goalStates, final boolean goalStateIsAcceptingState,
-			final SearchStrategy strategy, final boolean initializeOnly) throws AutomataOperationCanceledException {
+			final List<Pair<STATE, LETTER>> wayPointStates, final SearchStrategy strategy, final boolean initializeOnly)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -305,6 +321,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			assert mGoalStates != null : "mGoalStates must not be null";
 		}
 		mForbiddenStates = forbiddenStates;
+		mWayPointStates = wayPointStates;
 		mStrategy = strategy;
 
 		if (mLogger.isInfoEnabled()) {
@@ -420,7 +437,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		if (callPreds == null) {
 			return false;
 		}
-		return callPreds.contains(stateK);
+		return callPreds.contains(stateK) & mWayPointStates.isEmpty();
 	}
 
 	/**
@@ -460,15 +477,32 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 			}
 
 			getAcceptingRunHelperReturn(state, stateK);
+
+		}
+		if (!mWayPointStates.isEmpty()) {
+			// assert false;
 		}
 		return null;
+	}
+
+	protected boolean followingWayPoint(final STATE state, final LETTER letter) {
+		final boolean empty = mWayPointStates.isEmpty();
+		if (empty) {
+			return true;
+		}
+		boolean contains = mWayPointStates.getFirst().getFirst().equals(state);
+		contains = contains && mWayPointStates.getFirst().getSecond().equals(letter);
+		if (contains) {
+			mWayPointStates.removeFirst();
+		}
+		return contains || mWayPointStates.isEmpty();
 	}
 
 	protected void getAcceptingRunHelperInternal(final STATE state, final STATE stateK) {
 		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ)) && (!wasVisited(succ, stateK))) {
+			if (!mForbiddenStates.contains(succ) && !wasVisited(succ, stateK) && followingWayPoint(state, symbol)) {
 				addRunInformationInternal(succ, stateK, symbol, state, stateK);
 				enqueueAndMarkVisited(succ, stateK);
 			}
@@ -479,7 +513,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (!mForbiddenStates.contains(succ)) {
+			if (!mForbiddenStates.contains(succ) && followingWayPoint(state, symbol)) {
 				// add these information even in already visited
 				addRunInformationCall(succ, state, symbol, state, stateK);
 				if (!wasVisited(succ, state)) {
@@ -494,7 +528,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 				stateK)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mForbiddenStates.contains(succ)) {
+			if (mForbiddenStates.contains(succ) || !followingWayPoint(state, symbol)) {
 				continue;
 			}
 			for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
@@ -522,7 +556,7 @@ public class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 				assert succ2ReturnSymbol.containsKey(succ);
 				final STATE returnPred = entry.getValue();
 				final LETTER symbol = succ2ReturnSymbol.get(succ);
-				if (!wasVisited(succ, stateK)) {
+				if (!wasVisited(succ, stateK) && followingWayPoint(state, symbol)) {
 					enqueueAndMarkVisited(succ, stateK);
 					addRunInformationReturn(succ, stateK, symbol, returnPred, state);
 				}

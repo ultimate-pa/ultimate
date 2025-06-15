@@ -159,6 +159,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 				// in this setting we dont use error automata
 				mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
 						mCsToolkit.getManagedScript(), mCounterexample, null, true);
+				mBlockingQueueForResults.put(mThreadResult);
 				return mThreadResult;
 			}
 
@@ -226,20 +227,16 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		}
 		Result actualResult;
 		if (programExecution != null) {
-			boolean wasAccelerationmodule = false;
 			for (final ITraceCheckStrategyModule<L, ?> module : mStrategy.getTraceCheckModules()) {
 				if (module instanceof IpTcStrategyModuleAcceleratedTraceCheck) {
-					wasAccelerationmodule = true;
-					final UnprovabilityReason reasonUnknown =
-							new UnprovabilityReason("unable to decide satisfiability of path constraint");
-					actualResult = Result.UNKNOWN;
-					mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
+					throw new AssertionError(
+							"TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
 				}
 			}
-			if (!wasAccelerationmodule) {
-				throw new AssertionError(
-						"TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
-			}
+			final UnprovabilityReason reasonUnknown =
+					new UnprovabilityReason("unable to decide satisfiability of path constraint");
+			actualResult = Result.UNKNOWN;
+			mResultBuilder.addResultForProgramExecution(actualResult, programExecution, null, reasonUnknown);
 		}
 		actualResult = Result.TIMEOUT;
 		mResultBuilder.addResult(currentErrorLoc, actualResult, null, null, null);
