@@ -1,43 +1,40 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public class ArrayValue implements Value {
-	private final Map<Value, Value> mValue;
+	private final TermVariable mArrayVar;
+	private final Map<List<Value>, Value> mValue;
 	private final Sort mSort;
 
-	public ArrayValue(final Map<Value, Value> value, final Sort sort) {
+	public ArrayValue(final Map<List<Value>, Value> value, final TermVariable arrayVar) {
 		mValue = value;
-		mSort = sort;
+		mArrayVar = arrayVar;
+		mSort = mArrayVar.getSort();
+
 	}
 
-	public ArrayValue store(final Value key, final Value value) {
-		final HashMap<Value, Value> out = new HashMap<>(mValue);
+	public ArrayValue store(final List<Value> key, final Value value) {
+		final HashMap<List<Value>, Value> out = new HashMap<>(mValue);
 		out.put(key, value);
-		return new ArrayValue(out, mSort);
+		return new ArrayValue(out, mArrayVar);
 	}
 
-	public Value select(final Value key, final NonDeterministicChoice ndc) {
+	public Value select(final List<Value> key) {
 		if (mValue.containsKey(key)) {
 			return mValue.get(key);
 		}
-		final Sort valueSort = mSort.getArguments()[1];
-		final Value out = ndc.havoc(valueSort, null);
-		// TODO Update state to add havoced entries in previous iterations
-		mValue.put(key, out);
-		return out;
+		throw new AssertionError("Array does not contain key " + key.toString());
 	}
 
 	@Override
@@ -49,73 +46,44 @@ public class ArrayValue implements Value {
 	}
 
 	@Override
-	public Map<Value, Value> getValue() {
+	public Map<List<Value>, Value> getValue() {
 		return mValue;
 	}
 
 	@Override
 	public String toString() {
-		final ArrayList<Entry<Value, Value>> list = new ArrayList<>(mValue.entrySet());
+		final StringBuilder builder = new StringBuilder(mArrayVar.getName() + "{");
 
-		Collections.sort(list, Comparator.comparing(Entry<Value, Value>::getKey));
+		String seperator = "";
+		for (final Entry<List<Value>, Value> entry : mValue.entrySet()) {
+			builder.append(seperator);
+			seperator = "; ";
+			for (final Value key : entry.getKey()) {
+				builder.append("[").append(key.toString()).append("]");
+			}
+			builder.append(" = ").append(entry.getValue());
+		}
 
-		final List<String> lines = list.stream().map((entry) -> entry.getKey() + " -> " + entry.getValue()).toList();
-
-		return new StringBuilder("{").append(String.join(", ", lines)).append("}").toString();
+		return builder.append("}").toString();
 	}
 
 	@Override
-	public Term toTerm(final Script script) {
-		// TODO make new array term if there is none
-		return toTermSelect(script, null);
-	}
+	public Map<Term, Term> toTerm(final Script script, final Term var) {
+		final Map<Term, Term> out = new HashMap<>();
+		for (final Entry<List<Value>, Value> entry : mValue.entrySet()) {
 
-	/**
-	 * Returns and term of ((select array key) = value)
-	 *
-	 * @param script
-	 * @param array
-	 * @return
-	 */
-	public Term toTermSelect(final Script script, final Term array) {
-		final Map<Term, Term> values = makeOutValues(script, array);
+			final Term valueTerm = entry.getValue().toTerm(script, var).get(var);
 
-		final List<Term> conjuncts = new ArrayList<>();
-		for (final Entry<Term, Term> entry : values.entrySet()) {
-			conjuncts.add(SmtUtils.equality(script, entry.getKey(), entry.getValue()));
+			final Term[] keyList = new Term[entry.getKey().size()];
+			for (int i = 0; i < keyList.length; i++) {
+				keyList[i] = entry.getKey().get(i).toTerm(script, var).get(var);
+			}
+			final Term select = SmtUtils.multiDimensionalSelect(script, var, new ArrayIndex(keyList));
+
+			out.put(select, valueTerm);
 		}
 
-		return SmtUtils.and(script, conjuncts);
-	}
-
-	/**
-	 * Returns store(store(array key value) key value)...
-	 *
-	 * @param script
-	 * @param array
-	 * @return
-	 */
-	public Term toTermStore(final Script script, final Term array) {
-		Term storeArray = array;
-
-		for (final Entry<Value, Value> entry : mValue.entrySet()) {
-			storeArray = SmtUtils.store(script, storeArray, entry.getKey().toTerm(script),
-					entry.getValue().toTerm(script));
-
-		}
-
-		return storeArray;
-	}
-
-	public Map<Term, Term> makeOutValues(final Script script, final Term array) {
-		final Map<Term, Term> arrayValues = new HashMap<>();
-
-		for (final Entry<Value, Value> value : mValue.entrySet()) {
-			final Term selectIndex = SmtUtils.select(script, array, value.getKey().toTerm(script));
-			arrayValues.put(selectIndex, value.getValue().toTerm(script));
-		}
-
-		return arrayValues;
+		return out;
 	}
 
 	@Override

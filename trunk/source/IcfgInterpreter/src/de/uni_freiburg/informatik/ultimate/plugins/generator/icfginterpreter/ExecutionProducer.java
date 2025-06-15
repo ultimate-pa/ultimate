@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -261,6 +260,85 @@ public class ExecutionProducer {
 		return makeUpdates(solvedEquations, formula);
 	}
 
+	private int compareEqs(final Map<TermVariable, Set<TermVariable>> requiredNextState, final SolvedEquation a,
+			final SolvedEquation b, final UnmodifiableTransFormula formula) {
+		final TermVariable varA = lookupSymbolTableSafe(a.getLhs(), formula);
+		final TermVariable varB = lookupSymbolTableSafe(b.getLhs(), formula);
+
+		final int value = Integer.compare(requiredNextState.get(varA).size(), requiredNextState.get(varB).size());
+		if (value != 0) {
+			return value;
+		}
+
+		return varB.getName().compareTo(varA.getName());
+	}
+
+	private ArrayDeque<SolvedEquation> sortEqs(final Map<TermVariable, Set<TermVariable>> requiredLastState,
+			final Map<TermVariable, Set<TermVariable>> requiredNextState, final List<SolvedEquation> equationList,
+			final UnmodifiableTransFormula formula) {
+		final ArrayDeque<SolvedEquation> out = new ArrayDeque<>();
+		if (equationList.size() == 0) {
+			return out;
+		}
+		equationList.sort((a, b) -> compareEqs(requiredNextState, a, b, formula));
+		final SolvedEquation pivot = equationList.get(0);
+		final TermVariable pivotVariable = pivot.getLhs();
+		final TermVariable pivotGeneric = lookupSymbolTableSafe(pivotVariable, formula);
+
+		final Set<TermVariable> updatedBeforePivot = requiredNextState.get(pivotGeneric);
+		final Set<TermVariable> updatedAfterPivot = requiredLastState.get(pivotGeneric);
+		updatedBeforePivot.addAll(requiredLastState.keySet().stream()
+				.filter(var -> !updatedAfterPivot.contains(var) && !var.equals(pivotGeneric)).toList());
+
+		// set of variables that are updated before this equation
+		final List<SolvedEquation> before = new ArrayList<>(equationList.stream()
+				.filter(eq -> updatedBeforePivot.contains(lookupSymbolTableSafe(eq.getLhs(), formula))).toList());
+		out.addAll(sortEqs(requiredLastState, requiredNextState, before, formula));
+
+		out.addAll(equationList.stream().filter(eq -> eq.getLhs().equals(pivotVariable)).toList());
+
+		// set of variables that are updated only after this equation
+		final List<SolvedEquation> after = new ArrayList<>(equationList.stream()
+				.filter(eq -> updatedAfterPivot.contains(lookupSymbolTableSafe(eq.getLhs(), formula))).toList());
+		out.addAll(sortEqs(requiredLastState, requiredNextState, after, formula));
+
+		return out;
+	}
+
+	private static void reflexivity(final HashMap<TermVariable, Set<TermVariable>> requiredLastState,
+			final HashMap<TermVariable, Set<TermVariable>> requiredNextState) {
+		// if a variable requires another to still be in its previous state, then the other variable requires the first
+		// to be updated already
+		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredLastState.entrySet()) {
+			for (final TermVariable requiredOldVersion : entry.getValue()) {
+				requiredNextState.get(requiredOldVersion).add(entry.getKey());
+			}
+		}
+
+		// if a variable requires another to already be updated, then the other variable requires the first to be in its
+		// previous state
+		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredNextState.entrySet()) {
+			for (final TermVariable requiredNewVersion : entry.getValue()) {
+				requiredLastState.get(requiredNewVersion).add(entry.getKey());
+			}
+		}
+	}
+
+	private static void transitivity(final HashMap<TermVariable, Set<TermVariable>> requiredLastState,
+			final HashMap<TermVariable, Set<TermVariable>> requiredNextState) {
+		// if a variable requires another to already be updated, then the variables that other requires to be in the
+		// next state are also already in the next state
+		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredNextState.entrySet()) {
+			final Set<TermVariable> alsoUpdated = new HashSet<>();
+
+			for (final TermVariable requiredNewVersion : entry.getValue()) {
+				alsoUpdated.addAll(requiredNextState.get(requiredNewVersion));
+			}
+
+			entry.getValue().addAll(alsoUpdated);
+		}
+	}
+
 	private Update[] makeUpdates(final Set<SolvedEquation> equations, final UnmodifiableTransFormula formula) {
 		// Equations have to be ordered such that
 		// 1. A variable that is defined by a last state value comes before any update that overrides the required
@@ -343,32 +421,47 @@ public class ExecutionProducer {
 			neededOutVars.put(havocEquation, new ArrayList<>());
 		}
 
-		Collections.sort(equationList, (eq1, eq2) -> {
-			final TermVariable var1 = lookupSymbolTableSafe(eq1.getLhs(), formula);
-			final TermVariable var2 = lookupSymbolTableSafe(eq2.getLhs(), formula);
-			if (neededInVars.get(eq1).contains(var2)) {
-				// Equation 1 uses the variable defined by equation 2 in the last state context.
-				// Equation 1 comes first.
-				return -1;
-			}
-			if (neededOutVars.get(eq1).contains(var2)) {
-				// Equation 1 uses the variable defined by equation 2 in the next state context.
-				// Equation 2 comes first.
-				return 1;
-			}
-			if (neededInVars.get(eq2).contains(var1)) {
-				// Equation 2 uses the variable defined by equation 1 in the last state context.
-				// Equation 2 comes first.
-				return 1;
-			}
-			if (neededOutVars.get(eq2).contains(var1)) {
-				// Equation 2 uses the variable defined by equation 1 in the next state context.
-				// Equation 1 comes first.
-				return -1;
-			}
-			// Otherwise, sort by name for consistent ordering of terms
-			return Integer.compare(var1.getName().hashCode(), var2.getName().hashCode());
-		});
+		final HashMap<TermVariable, Set<TermVariable>> requiredLastState = new HashMap<>();
+		for (final Entry<SolvedEquation, List<TermVariable>> entry : neededInVars.entrySet()) {
+			final TermVariable termVar = lookupSymbolTableSafe(entry.getKey().getLhs(), formula);
+			final Set<TermVariable> needed = new HashSet<>(entry.getValue());
+			needed.remove(termVar);
+			requiredLastState.put(termVar, needed);
+		}
+
+		final HashMap<TermVariable, Set<TermVariable>> requiredNextState = new HashMap<>();
+		for (final Entry<SolvedEquation, List<TermVariable>> entry : neededOutVars.entrySet()) {
+			final TermVariable termVar = lookupSymbolTableSafe(entry.getKey().getLhs(), formula);
+			final Set<TermVariable> needed = new HashSet<>(entry.getValue());
+			needed.remove(termVar);
+			requiredNextState.put(termVar, needed);
+		}
+
+		reflexivity(requiredLastState, requiredNextState);
+		transitivity(requiredLastState, requiredNextState);
+		reflexivity(requiredLastState, requiredNextState);
+
+		final ArrayDeque<SolvedEquation> sorted = sortEqs(requiredLastState, requiredNextState,
+				new ArrayList<>(equationList), formula);
+
+		/*
+		 * Collections.sort(equationList, (eq1, eq2) -> { final TermVariable var1 = lookupSymbolTableSafe(eq1.getLhs(),
+		 * formula); final TermVariable var2 = lookupSymbolTableSafe(eq2.getLhs(), formula);
+		 *
+		 * final boolean a = requiredLastState.get(var1).contains(var2); final boolean b =
+		 * requiredLastState.get(var2).contains(var1); final boolean c = requiredNextState.get(var1).contains(var2);
+		 * final boolean d = requiredNextState.get(var2).contains(var1);
+		 *
+		 * if (a) { // Equation 1 uses the variable defined by equation 2 in the last state context. // Equation 1 comes
+		 * first. return -1; } if (b) { // Equation 2 uses the variable defined by equation 1 in the last state context.
+		 * // Equation 2 comes first. return 1; } if (c) { // Equation 1 uses the variable defined by equation 2 in the
+		 * next state context. // Equation 2 comes first. return 1; } if (d) { // Equation 2 uses the variable defined
+		 * by equation 1 in the next state context. // Equation 1 comes first. return -1; } // Otherwise, sort by name
+		 * for consistent ordering of terms // return Integer.compare(var1.getName().hashCode(),
+		 * var2.getName().hashCode()); return 0; // TODO find out why sometimes wrong order happens });
+		 */
+		equationList.clear();
+		equationList.addAll(sorted);
 
 		final ArrayList<Update> out = new ArrayList<>();
 
@@ -460,7 +553,17 @@ public class ExecutionProducer {
 		}
 	}
 
-	private HashMap<Term, Value> makeState(final NonDeterministicChoice ndc) {
+	private Map<Term, Term> castMap(final Map<Term, Value> state) {
+		final HashMap<Term, Term> out = new HashMap<>();
+
+		for (final Entry<Term, Value> entry : state.entrySet()) {
+			out.putAll(entry.getValue().toTerm(mngScript.getScript(), entry.getKey()));
+		}
+
+		return out;
+	}
+
+	private HashMap<Term, Value> makeState() {
 		final HashMap<Term, Value> state = new HashMap<>();
 
 		for (final IProgramVar programVar : mSymbolTable.values()) {
@@ -468,60 +571,29 @@ public class ExecutionProducer {
 			if (state.containsKey(termVar)) {
 				continue;
 			}
-			switch (programVar.getSort().getName()) {
-			case SMTLIBConstants.ARRAY:
-				state.put(termVar, ndc.newArray(programVar.getSort()));
-				break;
-			case SMTLIBConstants.BITVEC:
-				final int length = Util.getBitVecLength(programVar.getSort());
-				state.put(termVar, ndc.havocBitVector(length, null));
-				break;
-			case SMTLIBConstants.BOOL:
-				state.put(termVar, ndc.havocBool(null));
-				break;
-			case SMTLIBConstants.INT:
-				state.put(termVar, ndc.havocInt(null));
-				break;
+			if (programVar.getSort().isArraySort()) {
+				state.put(termVar, new ArrayValue(new HashMap<>(), termVar));
 			}
 		}
 		return state;
 	}
 
-	private Map<Term, Term> castMap(final Map<Term, Value> state) {
-		final HashMap<Term, Term> out = new HashMap<>();
-
-		for (final Entry<Term, Value> entry : state.entrySet()) {
-			switch (entry.getValue()) {
-			case final ArrayValue av:
-				out.putAll(av.makeOutValues(mngScript.getScript(), entry.getKey()));
-				break;
-			default:
-				out.put(entry.getKey(), entry.getValue().toTerm(mngScript.getScript()));
-				break;
-			}
-		}
-
-		return out;
-	}
-
 	public Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> makeExecutions(
 			final NonDeterministicChoice ndc, final IcfgLocation source) {
-		final HashMap<Term, Value> state = makeState(ndc);
-
 		final ArrayDeque<PartialExecution> executions = new ArrayDeque<>();
-		executions.add(new PartialExecution(source, ndc, List.of(), List.of(state), new HashMap<>(), null));
+		executions.add(new PartialExecution(source, List.of(), List.of(makeState()), new HashMap<>(), null));
 
 		final Map<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> out = new HashMap<>();
 
 		while (!executions.isEmpty()) {
 			final PartialExecution execution = executions.pop();
+			final Map<Term, Value> state = execution.getCurrentState();
 
 			if (executionMaxLength != 0 && execution.edges.size() >= executionMaxLength) {
 				finalizeExecution(execution.finish(ExecutionTermintionReason.EXECUTION_TOO_LONG), out);
 				continue;
 			}
 
-			final Map<Term, Value> stateReference = execution.getCurrentState();
 			final List<InterpretedIcfgEdge> nextEdges = mOutEdges.getOrDefault(execution.currentLocation,
 					new ArrayList<>());
 
@@ -537,35 +609,17 @@ public class ExecutionProducer {
 				continue;
 			}
 
-			final List<InterpretedIcfgEdge> availableEdges = new ArrayList<>();
-
 			boolean unsupportedFound = false;
+			boolean anyGuardTrue = false;
 
 			for (final InterpretedIcfgEdge nextEdge : nextEdges) {
-				try {
-					if (nextEdge.guard(stateReference, execution.ndc, execution.havocBounds)) {
-						availableEdges.add(nextEdge);
-					}
-				} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
-					unsupportedFound = true;
-					final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
-					finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
-				}
-			}
-
-			// No guard was true
-			if ((availableEdges.size() == 0) && !unsupportedFound) {
-				// There were no edges that failed due to not being implemented
-				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
-			}
-
-			for (final InterpretedIcfgEdge nextEdge : availableEdges) {
 				if (executions.size() >= unfinishedMaxStored) {
 					// Only add new execution if there is space in the queue
 					break;
 				}
 
-				final int nextExecutions = nextEdge.hasHavoc() ? variantsPerHavoc : 1;
+				// if the update reads havoced variables, create extra executions.
+				final int nextExecutions = nextEdge.containsHavoc(state) ? variantsPerHavoc : 1;
 
 				for (int i = 0; i < nextExecutions; i++) {
 					if (executions.size() >= unfinishedMaxStored) {
@@ -574,14 +628,26 @@ public class ExecutionProducer {
 					}
 
 					try {
-						final Map<Term, Value> nextState = nextEdge.update(stateReference, ndc, execution.havocBounds);
-						executions.addLast(execution.addStep(nextEdge.getEdge(), nextState));
+						final Map<Term, Value> nextState = new HashMap<>(execution.getCurrentState());
+						final HashMap<Term, Restriction<?>> newBounds = new HashMap<>(execution.havocBounds);
+						if (!nextEdge.guard(nextState, ndc, newBounds)) {
+							continue;
+						}
+						anyGuardTrue = true;
+
+						nextEdge.update(nextState, ndc, newBounds);
+						executions.addLast(execution.addStep(nextEdge, nextState, newBounds));
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
-						final PartialExecution failedExecution = execution.addStep(nextEdge.getEdge(), new HashMap<>());
+						unsupportedFound = true;
+						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of());
 						finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
 					}
-
 				}
+			}
+
+			// no more edges can be taken, and it was not because an edge could not be translated
+			if (((nextEdges.size() == 0 || !anyGuardTrue) && !unsupportedFound) && unsupportedFound) {
+				finalizeExecution(execution.finish(ExecutionTermintionReason.REACHED_EXIT), out);
 			}
 		}
 
@@ -609,32 +675,36 @@ public class ExecutionProducer {
 		outMap.put(execution.status, executions);
 	}
 
-	private record PartialExecution(IcfgLocation currentLocation, NonDeterministicChoice ndc, List<IcfgEdge> edges,
-			List<Map<Term, Value>> states, Map<Term, Restriction<?>> havocBounds, ExecutionTermintionReason status) {
+	private record PartialExecution(IcfgLocation currentLocation, List<IcfgEdge> edges, List<Map<Term, Value>> states,
+			Map<Term, Restriction<?>> havocBounds, ExecutionTermintionReason status) {
 		public Map<Term, Value> getCurrentState() {
 			return states.getLast();
 		}
 
 		public PartialExecution finish(final ExecutionTermintionReason reason) {
-			return new PartialExecution(currentLocation, ndc, edges, states, havocBounds, reason);
+			return new PartialExecution(currentLocation, edges, states, havocBounds, reason);
 		}
 
-		public PartialExecution addStep(final IcfgEdge nextEdge, final Map<Term, Value> nextState) {
+		public PartialExecution addStep(final InterpretedIcfgEdge nextEdge, final Map<Term, Value> nextState,
+				final Map<Term, Restriction<?>> newBounds) {
 			if (status != null) {
 				throw new AssertionError("Cannot add steps to finished Execution.");
 			}
 			final List<IcfgEdge> newEdges = new ArrayList<>(edges());
-			newEdges.add(nextEdge);
-			final List<Map<Term, Value>> newStates = new ArrayList<>(states());
+			newEdges.add(nextEdge.getEdge());
+			final List<Map<Term, Value>> newStates = new ArrayList<>(
+					states().stream().map(map -> new HashMap<>(map)).toList());
 
-			// TODO Propagate back havoced variables (does not yet support havoced array entries)
 			int index = newStates.size() - 1;
 			Map<Term, Value> previousState = newStates.get(index);
 			final Set<Term> currentVars = new HashSet<>(nextState.keySet());
+			nextEdge.removeSafe(currentVars);
+
 			while (!previousState.keySet().containsAll(currentVars)) {
 				final Set<Term> finishedVars = new HashSet<>();
 				for (final Term variable : currentVars) {
 					if (!previousState.containsKey(variable)) {
+						// Variable was not in the previous state
 						previousState.put(variable, nextState.get(variable));
 					} else {
 						finishedVars.add(variable);
@@ -650,8 +720,7 @@ public class ExecutionProducer {
 			}
 
 			newStates.add(nextState);
-			return new PartialExecution(nextEdge.getTarget(), ndc, newEdges, newStates, new HashMap<>(havocBounds),
-					status);
+			return new PartialExecution(nextEdge.getTarget(), newEdges, newStates, newBounds, status);
 		}
 	}
 

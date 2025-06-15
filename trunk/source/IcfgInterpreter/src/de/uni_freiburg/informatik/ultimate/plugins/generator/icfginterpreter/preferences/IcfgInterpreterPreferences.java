@@ -37,11 +37,11 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 						validatePositive),
 				new UltimatePreferenceItem<>(SettingLabel.VARIANTS_PER_HAVOC_EDGE.text(), 3, PreferenceType.Integer,
 						validatePositive),
-				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_QUEUED.text(), 1024, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_QUEUED.text(), 128, PreferenceType.Integer,
 						validatePositive),
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTION_MAX_LENGTH.text(), 1024, PreferenceType.Integer,
 						IUltimatePreferenceItemValidator.ONLY_POSITIVE),
-				new UltimatePreferenceItem<>(SettingLabel.BITS_HAVOCED.text(), 128, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(SettingLabel.BITS_HAVOCED.text(), 64, PreferenceType.Integer,
 						new IntegerValidator(4, 2048)),
 				// ADD NEW SETTINGS HERE
 		};

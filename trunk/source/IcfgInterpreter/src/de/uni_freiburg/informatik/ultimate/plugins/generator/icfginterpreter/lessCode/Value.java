@@ -1,13 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ITermProvider;
+import java.util.Map;
 
-public interface Value extends ITermProvider, Comparable<Value> {
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
+public interface Value extends Comparable<Value> {
 	BoolValue equals(Value other);
 
 	BoolValue distinct(Value other);
 
 	Object getValue();
+
+	Map<Term, Term> toTerm(final Script script, Term var);
 
 	@Override
 	int compareTo(Value b);

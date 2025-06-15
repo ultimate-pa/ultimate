@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
 import java.math.BigInteger;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -14,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.ArrayValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BitVecValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.BoolValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.IntValue;
@@ -48,7 +46,7 @@ public class NonDeterministicChoice {
 	public Value havoc(final Sort sort, final Restriction<?> possibleValues) {
 		switch (sort.getName()) {
 		case SMTLIBConstants.ARRAY:
-			return new ArrayValue(new HashMap<>(), sort);
+			throw new AssertionError("Arrays can not be havoced.");
 		case SMTLIBConstants.INT:
 			return havocInt((IntegerRestriction) possibleValues);
 		case SMTLIBConstants.BITVEC:
@@ -70,8 +68,16 @@ public class NonDeterministicChoice {
 		IntValue randBigInt = new IntValue(new BigInteger(length, mRandom));
 
 		if (values == null) {
-			// unrestricted
+			// Make sure that negative numbers can appear
+			if (mRandom.nextBoolean()) {
+				randBigInt = randBigInt.negate();
+			}
 			return randBigInt;
+		}
+
+		// Make sure that negative numbers can appear
+		if (mRandom.nextBoolean()) {
+			randBigInt = randBigInt.negate();
 		}
 
 		final IntValue minimum = values.getMinimum();
@@ -79,12 +85,20 @@ public class NonDeterministicChoice {
 		final IntValue valueCount = values.getValueCount();
 		final Set<IntValue> inEqual = values.getInequal();
 
-		if (minimum != null && randBigInt.compareTo(minimum) < 0) {
-			randBigInt = randBigInt.add(minimum);
+		if (minimum == null) {
+			if (maximum != null && randBigInt.compareTo(maximum) > 0) {
+				randBigInt = maximum.subtract(randBigInt.subtract(maximum).abs());
+			}
+		} else {
+			if (maximum == null) {
+				if (randBigInt.compareTo(minimum) < 0) {
+					randBigInt = minimum.add(minimum.subtract(randBigInt).abs());
+				}
+			} else {
+				randBigInt = randBigInt.abs().mod(valueCount).add(minimum);
+			}
 		}
-		if (valueCount != null && randBigInt.compareTo(valueCount) >= 0) {
-			randBigInt = randBigInt.mod(valueCount).add(minimum);
-		}
+
 		while (inEqual.contains(randBigInt)) {
 			randBigInt = randBigInt.add(IntValue.ONE);
 			if (maximum != null && randBigInt.compareTo(maximum) >= 0) {
@@ -105,11 +119,6 @@ public class NonDeterministicChoice {
 
 	public BitVecValue havocBitVector(final int length, final IntegerRestriction values) {
 		return new BitVecValue(havocInt(values, length).getValue(), length);
-	}
-
-	@SuppressWarnings("static-method")
-	public ArrayValue newArray(final Sort sort) {
-		return new ArrayValue(new HashMap<>(), sort);
 	}
 
 	public UltimatePreferenceItemGroup getImplementationSettings() {

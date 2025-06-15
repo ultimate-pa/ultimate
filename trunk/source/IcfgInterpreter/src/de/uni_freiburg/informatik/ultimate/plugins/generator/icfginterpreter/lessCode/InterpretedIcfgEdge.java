@@ -1,7 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.AssignmentUpdate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.HavocUpdate;
 
 public class InterpretedIcfgEdge {
@@ -27,26 +29,52 @@ public class InterpretedIcfgEdge {
 	private final Update[] mUpdates;
 	private final IcfgEdge mEdge;
 	private final Set<TermVariable> mAuxVars;
-	private final boolean mHasHavoc;
+	private final Set<TermVariable> mGuardVars;
+	/** Variables that were read on this edge */
+	private final Set<TermVariable> mReadVars;
+	/** Variables that were havoced on this edge and then read on this edge */
+	private final Set<TermVariable> mHavocedAndReadVars;
+	/** Variables that were assigned before they were read on this edge */
+	private final Set<TermVariable> mAssignedVars;
 
 	public InterpretedIcfgEdge(final Term guard, final Update[] updateVariants, final IcfgEdge edge,
 			final Set<TermVariable> auxVars) {
 		mGuard = guard;
+		mGuardVars = Set.of(mGuard.getFreeVars());
 		mUpdates = updateVariants;
 		mEdge = edge;
 		mAuxVars = auxVars;
-		boolean hasHavoc = false;
+
+		final List<TermVariable> havocedVars = new ArrayList<>();
+		final Set<TermVariable> readVars = new HashSet<>(mGuardVars);
+		final List<TermVariable> havocedAndReadVars = new ArrayList<>();
+		final List<TermVariable> assignedVars = new ArrayList<>();
+
 		for (final Update update : mUpdates) {
-			if (update instanceof HavocUpdate) {
-				hasHavoc = true;
+			readVars.addAll(update.getFreeVars());
+
+			switch (update) {
+			case final HavocUpdate hu:
+				havocedVars.add(hu.getVariable());
+				break;
+			case final AssignmentUpdate au:
+				if (!readVars.contains(au.getVariable())) {
+					assignedVars.add(au.getVariable());
+				}
+				break;
+			default:
 				break;
 			}
-		}
-		mHasHavoc = hasHavoc;
-	}
 
-	public boolean hasHavoc() {
-		return mHasHavoc;
+			havocedAndReadVars
+					.addAll(update.getFreeVars().stream().filter(termVar -> havocedVars.contains(termVar)).toList());
+		}
+
+		mHavocedAndReadVars = Set.copyOf(havocedAndReadVars);
+		readVars.removeAll(mAuxVars);
+		mReadVars = Set.copyOf(readVars);
+		mAssignedVars = Set.copyOf(assignedVars);
+		System.out.println("test");
 	}
 
 	public IcfgLocation getTarget() {
@@ -61,24 +89,54 @@ public class InterpretedIcfgEdge {
 		return mEdge;
 	}
 
-	public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+	public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
-		final HashMap<Term, Value> out = new HashMap<>(state);
-
 		for (final Update update : mUpdates) {
-			update.update(out, ndc, havocRestrictions);
+			havocNeeded(state, ndc, havocRestrictions, update.getFreeVars());
+			update.update(state, ndc, havocRestrictions);
 		}
 
 		for (final TermVariable auxVar : mAuxVars) {
-			out.remove(auxVar);
+			state.remove(auxVar);
 		}
+	}
 
-		return out;
+	public boolean containsHavoc(final Map<Term, Value> state) {
+		// Havoc happens if a variable undergoes an havoc update and is then read on this edge
+		// OR when a variable underwent a havoc update in a previous state and is read on this edge.
+		return mHavocedAndReadVars.size() > 0 || !state.keySet().containsAll(mReadVars);
+	}
+
+	private static void havocNeeded(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+			final Map<Term, Restriction<?>> havocRestrictions, final Set<TermVariable> required) {
+		for (final TermVariable var : required) {
+			if (state.containsKey(var)) {
+				continue;
+			}
+			state.put(var, ndc.havoc(var.getSort(), havocRestrictions.remove(var)));
+		}
+	}
+
+	/**
+	 * Removes all variables that were not havoced on this edge for the purposes of propagating havocs to earlier
+	 * states.
+	 *
+	 * @param currentVars
+	 */
+	public void removeSafe(final Set<Term> currentVars) {
+		/*
+		 * Assigned variables may have been havoced (and possibly read after the havoc update) on this edge after being
+		 * assigned, but they do not need to be propagated back to earlier states if this is the case, so this is fine.
+		 */
+		currentVars.removeAll(mAssignedVars);
 	}
 
 	public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
-		return ((BoolValue) TermEvaluator.evaluate(state, mGuard, ndc, havocRestrictions)).getValue();
+
+		havocNeeded(state, ndc, havocRestrictions, mGuardVars);
+
+		return ((BoolValue) TermEvaluator.evaluate(state, mGuard)).getValue();
 	}
 
 	@Override
@@ -126,7 +184,7 @@ public class InterpretedIcfgEdge {
 		}
 
 		@Override
-		public HashMap<Term, Value> update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
 			throw new EdgeUntranslatableError();
 		}

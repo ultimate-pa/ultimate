@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -52,8 +54,8 @@ public class BoolValue implements Value {
 	}
 
 	@Override
-	public Term toTerm(final Script script) {
-		return script.getTheory().constant(mValue, script.getTheory().getBooleanSort());
+	public Map<Term, Term> toTerm(final Script script, final Term var) {
+		return Map.of(var, mValue ? script.getTheory().mTrue : script.getTheory().mFalse);
 	}
 
 	@Override

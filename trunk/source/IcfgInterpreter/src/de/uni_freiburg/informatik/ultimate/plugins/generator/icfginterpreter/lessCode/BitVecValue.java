@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
 import java.math.BigInteger;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
@@ -190,9 +191,9 @@ public class BitVecValue implements Value {
 	}
 
 	@Override
-	public Term toTerm(final Script script) {
-		return script.getTheory().constant(Rational.valueOf(mValue, BigInteger.ONE),
-				script.getTheory().getSort(SMTLIBConstants.BITVEC, new String[] { String.valueOf(mLength) }));
+	public Map<Term, Term> toTerm(final Script script, final Term var) {
+		return Map.of(var, script.getTheory().constant(Rational.valueOf(mValue, BigInteger.ONE),
+				script.getTheory().getSort(SMTLIBConstants.BITVEC, new String[] { String.valueOf(mLength) })));
 	}
 
 	@Override

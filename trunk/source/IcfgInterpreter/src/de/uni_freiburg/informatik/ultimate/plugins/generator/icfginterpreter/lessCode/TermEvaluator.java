@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,20 +17,17 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class TermEvaluator {
-	public static Value evaluate(final Map<Term, Value> state, final Term term, final NonDeterministicChoice ndc,
-			final Map<Term, Restriction<?>> havocRestrictions) {
+	public static Value evaluate(final Map<Term, Value> state, final Term term) {
 		switch (term) {
 		case final ApplicationTerm a:
-			return evaluateApplicationTerm(state, a, ndc, havocRestrictions);
+			return evaluateApplicationTerm(state, a);
 		case final TermVariable tv:
-			Value value = state.get(tv);
+			final Value value = state.get(tv);
 			if (value == null) {
-				value = ndc.havoc(tv.getSort(), havocRestrictions.remove(tv));
-				state.put(tv, value);
+				throw new AssertionError("State does not contain vaiable " + tv.getName());
 			}
 			return value;
 		case final ConstantTerm ct:
@@ -65,14 +63,52 @@ public class TermEvaluator {
 		}
 	}
 
-	private static Value evaluateApplicationTerm(final Map<Term, Value> state, final ApplicationTerm aTerm,
-			final NonDeterministicChoice ndc, final Map<Term, Restriction<?>> havocRestrictions) {
-		final Stream<Value> params = Arrays.stream(aTerm.getParameters())
-				.map(x -> evaluate(state, x, ndc, havocRestrictions));
-		Iterator<Value> iter;
-		IntValue intValue;
+	private static Pair<ArrayValue, ArrayDeque<Value>> unpackSelect(final Map<Term, Value> state, final Term term) {
+		final ArrayDeque<Value> keys = new ArrayDeque<>();
+		Term arrayTerm = term;
+		while (arrayTerm instanceof final ApplicationTerm at
+				&& at.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
+			arrayTerm = at.getParameters()[0];
+
+			final Term selectKey = at.getParameters()[1];
+			keys.push(evaluate(state, selectKey));
+		}
+		if (evaluate(state, arrayTerm) instanceof final ArrayValue av) {
+			return new Pair<>(av, keys);
+		}
+		return null;
+	}
+
+	private static Value evaluateApplicationTerm(final Map<Term, Value> state, final ApplicationTerm aTerm) {
 		Value value;
-		switch (aTerm.getFunction().getName()) {
+		final Iterator<Value> iter;
+		IntValue intValue;
+		final String operation = aTerm.getFunction().getName();
+
+		/**** ------ ArraysEx ------ ****/
+		switch (operation) {
+		case "store":
+			final Term arrayTerm = aTerm.getParameters()[0];
+			final Value lastKey = evaluate(state, aTerm.getParameters()[1]);
+			value = evaluate(state, aTerm.getParameters()[2]);
+
+			// To store something at i of an array, the term (store (arrayT_1) key_1 value_1) is used.
+			// If the underlying array is not 1 dimensional, then arrayT_1 is (select arrayT_2 key_2)
+			// this continues until we have an array term that is a TermVariable.
+			// we then do arrayT_N[key_N][key_N-1]...[key_1] = value_1
+			final Pair<ArrayValue, ArrayDeque<Value>> resultSubSelect = unpackSelect(state, arrayTerm);
+			final ArrayDeque<Value> keysPartial = resultSubSelect.b();
+			keysPartial.addLast(lastKey);
+			return resultSubSelect.a().store(List.copyOf(keysPartial), value);
+
+		case "select":
+			final Pair<ArrayValue, ArrayDeque<Value>> resultSelect = unpackSelect(state, aTerm);
+			return resultSelect.a().select(List.copyOf(resultSelect.b()));
+		}
+
+		final Stream<Value> params = Arrays.stream(aTerm.getParameters()).map(x -> evaluate(state, x));
+
+		switch (operation) {
 		/**** ------ Ints ------ ****/
 		case "-":
 			iter = params.iterator();
@@ -136,22 +172,6 @@ public class TermEvaluator {
 			return params.reduce(BoolValue.mFalse, (x, y) -> ((BoolValue) x).or((BoolValue) y));
 		case "xor":
 			return params.reduce(BoolValue.mFalse, (x, y) -> ((BoolValue) x).xor((BoolValue) y));
-
-		/**** ------ ArraysEx ------ ****/
-
-		case "store":
-			// three param term
-			iter = params.iterator();
-			final ArrayValue storeArray = (ArrayValue) iter.next();
-			final Value storeKey = iter.next();
-			final Value storeValue = iter.next();
-			return storeArray.store(storeKey, storeValue);
-		case "select":
-			// two param term
-			iter = params.iterator();
-			final ArrayValue selectArray = (ArrayValue) iter.next();
-			final Value selectKey = iter.next();
-			return selectArray.select(selectKey, ndc);
 
 		/**** ------ Generic ------ ****/
 
