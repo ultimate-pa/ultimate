@@ -143,25 +143,48 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 					enabledTransitions.filter(t -> !mEmpire.internalSuccessors(state, t).iterator().hasNext())
 							.collect(Collectors.toSet());
 			for (final Transition<L, P> transition : successorlessTransitions) {
+				final var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
 				final var successorLawList = getSuccessorLaw(mEmpire.getLaw(state), transition);
-				for (int i = 0; i < mNumLaws; i++) {
+				final var falseSuccessors = getFalseSuccessors(successorLawList);
+				var focusedLaws = filterAlreadyFocusedLaw(state, falseSuccessors, mayRegions, focus);
+				focusedLaws = focusedLaws.isEmpty() ? falseSuccessors : focusedLaws;
+				for (final int i : focusedLaws) {
 					if (!SmtUtils.isFalseLiteral(successorLawList.get(i).getFormula())) {
 						continue;
 					}
-					var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
+
 					assert !mayRegions.isEmpty() : "territory enables transition but has no predecessor regions";
 
 					final var j = i;
 					final var alreadyFocused = mayRegions.stream()
 							.filter(r -> focus.getImage(new Pair<>(state, j)).contains(r)).collect(Collectors.toSet());
-					mayRegions = alreadyFocused.isEmpty() ? mayRegions : alreadyFocused;
-					final var minRegion = mayRegions.stream().min(Comparator.comparingInt(Region::size));
+					final var possibleRegions = alreadyFocused.isEmpty() ? mayRegions : alreadyFocused;
+					final var minRegion = possibleRegions.stream().min(Comparator.comparingInt(Region::size));
 					assert minRegion.isPresent() : "could not find best predecessor region";
 					focus.addPair(new Pair<>(state, j), minRegion.orElseThrow());
+					break;
 				}
 			}
 		}
 		return focus;
+	}
+
+	private List<Integer> filterAlreadyFocusedLaw(final S state, final List<Integer> possibleIndices,
+			final Set<Region<P>> regions, final HashRelation<Pair<S, Integer>, Region<P>> focus) {
+		return possibleIndices.stream()
+				.filter(i -> DataStructureUtils.haveNonEmptyIntersection(regions, focus.getImage(new Pair<>(state, i))))
+				.collect(Collectors.toList());
+	}
+
+	private List<Integer> getFalseSuccessors(final List<IPredicate> successorLaws) {
+		final var falseSuccessors = new ArrayList<Integer>();
+		for (Integer i = 0; i < mNumLaws; i++) {
+			if (!SmtUtils.isFalseLiteral(successorLaws.get(i).getFormula())) {
+				continue;
+			}
+			falseSuccessors.add(i);
+		}
+		return falseSuccessors;
 	}
 
 	public Set<Region<P>> getLegalFocus(final S state, final Integer lawIndex) {
