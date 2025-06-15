@@ -74,7 +74,6 @@ public class InterpretedIcfgEdge {
 		readVars.removeAll(mAuxVars);
 		mReadVars = Set.copyOf(readVars);
 		mAssignedVars = Set.copyOf(assignedVars);
-		System.out.println("test");
 	}
 
 	public IcfgLocation getTarget() {

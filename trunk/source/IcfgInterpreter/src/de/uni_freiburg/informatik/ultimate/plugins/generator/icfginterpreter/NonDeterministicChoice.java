@@ -67,17 +67,13 @@ public class NonDeterministicChoice {
 	private IntValue havocInt(final IntegerRestriction values, final int length) {
 		IntValue randBigInt = new IntValue(new BigInteger(length, mRandom));
 
-		if (values == null) {
-			// Make sure that negative numbers can appear
-			if (mRandom.nextBoolean()) {
-				randBigInt = randBigInt.negate();
-			}
-			return randBigInt;
-		}
-
 		// Make sure that negative numbers can appear
 		if (mRandom.nextBoolean()) {
 			randBigInt = randBigInt.negate();
+		}
+
+		if (values == null) {
+			return randBigInt;
 		}
 
 		final IntValue minimum = values.getMinimum();
