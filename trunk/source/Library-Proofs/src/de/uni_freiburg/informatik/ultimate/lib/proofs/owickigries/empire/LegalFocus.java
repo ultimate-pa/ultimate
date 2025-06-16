@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -35,98 +36,183 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
-	private final IPetriNet<L, P> mNet;
+	private final IPetriNet<L, P> mProgram;
 	private final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mInterpolantAutomaton;
 	private final IExplicitEmpireAutomaton<L, P, S> mEmpire;
+
+	private final int mNumLaws;
 	private final Function<IPredicate, List<IPredicate>> mSplitConjuncts;
+	private final IFocusedRegionHeuristic<P> mHeuristic;
 
 	private final HashRelation<Pair<S, Integer>, Region<P>> mLegalFocus;
-	private final int mNumLaws;
 
-	public LegalFocus(final IUltimateServiceProvider services, final IEmpireAutomaton<L, P, S> empire,
-			final IPetriNet<L, P> net,
+	public LegalFocus(final IExplicitEmpireAutomaton<L, P, S> empire, final IPetriNet<L, P> net,
 			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
 			final Function<IPredicate, List<IPredicate>> splitConjuncts) {
-		mNet = net;
+		this(empire, net, interpolantAutomaton, numLaws, splitConjuncts, IFocusedRegionHeuristic.bySize());
+	}
+
+	public LegalFocus(final IExplicitEmpireAutomaton<L, P, S> empire, final IPetriNet<L, P> program,
+			final INwaOutgoingLetterAndTransitionProvider<L, IPredicate> interpolantAutomaton, final int numLaws,
+			final Function<IPredicate, List<IPredicate>> splitConjuncts, final IFocusedRegionHeuristic<P> heuristic) {
+		mProgram = program;
 		mInterpolantAutomaton = interpolantAutomaton;
+		mEmpire = empire;
+
 		mNumLaws = numLaws;
 		mSplitConjuncts = Objects.requireNonNull(splitConjuncts);
-
-		if (empire instanceof final IExplicitEmpireAutomaton<L, P, S> explicitEmpire) {
-			mEmpire = explicitEmpire;
-		} else {
-			mEmpire = new EmpireReachableStates<>(services, empire);
-		}
+		mHeuristic = heuristic;
 
 		mLegalFocus = computeLegalFocus();
 	}
 
 	private HashRelation<Pair<S, Integer>, Region<P>> computeLegalFocus() {
-		final var finalStates = mEmpire.getFinalStates().stream().collect(Collectors.toSet());
-		final var queue = new ArrayDeque<S>();
-		final var focus = computeFinalStateFocus(finalStates);
-		for (final S state : finalStates) {
-			queue.offer(state);
-		}
+		// Begin the focus computation with states that enable transitions that would lead to "false".
+		// (Rule: inductive-false)
+		final var focus = computeFinalStateFocus(mEmpire.getFinalStates());
+
+		// Perform a backwards-BFS to propagate focus.
+		// (Rules: inductive-edge, bystanders)
+		final var queue = new ArrayDeque<>(mEmpire.getFinalStates());
 		while (!queue.isEmpty()) {
 			final var state = queue.poll();
-			for (int i = 0; i < mNumLaws; i++) {
-				final var j = i;
-				final var currentFocus = focus.getImage(new Pair<>(state, j));
-				if (currentFocus.isEmpty()) {
-					continue;
+			final var predecessors = mEmpire.internalPredecessors(state);
+
+			for (final IncomingInternalTransition<Transition<L, P>, S> edge : predecessors) {
+				final var laws = mSplitConjuncts.apply(mEmpire.getLaw(edge.getPred()));
+
+				boolean modified = false;
+				for (int i = 0; i < mNumLaws; i++) {
+					modified |= propagateFocus(state, edge, focus, i, laws);
 				}
-				final var predecessors = mEmpire.internalPredecessors(state);
-				for (final IncomingInternalTransition<Transition<L, P>, S> incomingInternalTransition : predecessors) {
-					final var predecessor = incomingInternalTransition.getPred();
-					final var predecessorPair = new Pair<>(predecessor, j);
-					final var transition = incomingInternalTransition.getLetter();
-					final var focusedRegions =
-							getFocusedRegions(predecessor, currentFocus, transition, focus.getImage(predecessorPair));
-					final var added = focus.addAllPairs(predecessorPair, focusedRegions);
-					if (added) {
-						queue.offer(predecessor);
-					}
+
+				if (modified) {
+					queue.offer(edge.getPred());
 				}
 			}
 		}
 		return focus;
 	}
 
-	private Set<Region<P>> getFocusedRegions(final S predecessor, final Set<Region<P>> successorFocus,
-			final Transition<L, P> transition, final Set<Region<P>> predecessorFocus) {
+	// returns true if the focus was modified, false otherwise
+	private boolean propagateFocus(final S state, final IncomingInternalTransition<Transition<L, P>, S> edge,
+			final HashRelation<Pair<S, Integer>, Region<P>> focus, final int lawIndex,
+			final List<IPredicate> predecessorLaws) {
+		final var currentFocus = focus.getImage(new Pair<>(state, lawIndex));
+		if (currentFocus.isEmpty()) {
+			// Nothing to propagate
+			return false;
+		}
+
+		final var predecessor = edge.getPred();
+		final var predecessorPair = new Pair<>(predecessor, lawIndex);
+		final var focusedRegions = chooseFocusedRegions(predecessor, currentFocus, edge.getLetter(),
+				predecessorLaws.get(lawIndex), focus.getImage(predecessorPair));
+		return focus.addAllPairs(predecessorPair, focusedRegions);
+	}
+
+	private Set<Region<P>> chooseFocusedRegions(final S predecessor, final Set<Region<P>> successorFocus,
+			final Transition<L, P> transition, final IPredicate predecessorLaw, final Set<Region<P>> predecessorFocus) {
 		final var territory = mEmpire.getTerritory(predecessor);
+
+		// Any bystanders that are in focus after the transition must already be in focus before the transition.
+		// (Rule: bystanders)
 		final var bystanders = territory.getBystanders(transition);
 		final var focusedBystanders = DataStructureUtils.intersection(bystanders, successorFocus);
+
 		if (successorFocus.size() == focusedBystanders.size()) {
+			// Only bystanders are focused; we can skip the application of the inductive-edge rule (rest of the method).
 			return focusedBystanders;
 		}
 
-		var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
-		assert !mayRegions.isEmpty() : "territory enables transition but has no predecessor regions";
+		// At this point, we know that at least one successor region of the transition is focused.
+		// Hence, at least one predecessor region of the transition must also be focused.
+		// (Rule: inductive-edge)
+		final var predecessorRegions = territory.getPlacesRegions(transition.getPredecessors());
+		assert !predecessorRegions.isEmpty() : "territory enables transition but has no predecessor regions";
 
-		final var alreadyFocused = DataStructureUtils.intersection(mayRegions, predecessorFocus);
-		mayRegions = alreadyFocused.isEmpty() ? mayRegions : alreadyFocused;
-
-		final var minRegion = mayRegions.stream().min(Comparator.comparingInt(Region::size));
-		assert minRegion.isPresent() : "could not find best predecessor region";
+		final boolean alreadyFocused = predecessorRegions.stream().anyMatch(predecessorFocus::contains);
+		if (alreadyFocused) {
+			// No need to add any predecessor regions to the focus, they are already there.
+			return focusedBystanders;
+		}
 
 		final var focused = new HashSet<>(focusedBystanders);
-		focused.add(minRegion.orElseThrow());
+		focused.add(chooseBestRegion(predecessorRegions, predecessorLaw));
 		return focused;
+	}
+
+	// When a state's territory enables a transition but the state has no outgoing edge for it, some of the conjuncts
+	// must go to "false" after the transition. For at least one such conjunct, at least one predecessor region of the
+	// transition must be focused.
+	// (Rule: inductive-false)
+	private HashRelation<Pair<S, Integer>, Region<P>> computeFinalStateFocus(final Collection<S> finalStates) {
+		final var focus = new HashRelation<Pair<S, Integer>, Region<P>>();
+		for (final S state : finalStates) {
+			final var territory = mEmpire.getTerritory(state);
+			final var enabledTransitions = territory.getEnabledTransitions(mProgram);
+			final var successorlessTransitions =
+					enabledTransitions.filter(t -> !mEmpire.internalSuccessors(state, t).iterator().hasNext())
+							.collect(Collectors.toList());
+			for (final Transition<L, P> transition : successorlessTransitions) {
+				final var predecessorRegions = territory.getPlacesRegions(transition.getPredecessors());
+				assert !predecessorRegions.isEmpty() : "territory enables transition but has no predecessor regions";
+
+				final var successorLawList = getSuccessorLaw(mEmpire.getLaw(state), transition);
+				final var falseSuccessors = getFalseSuccessors(successorLawList);
+
+				// Check if for any law index leading to false, a predecessor region is already focused.
+				// If so, nothing else needs to be done.
+				final boolean alreadyFocused = falseSuccessors.stream().anyMatch(i -> DataStructureUtils
+						.haveNonEmptyIntersection(predecessorRegions, focus.getImage(new Pair<>(state, i))));
+				if (alreadyFocused) {
+					continue;
+				}
+
+				// Otherwise, for at least one law index leading to false, a predecessor region must be focused.
+				// Choose the best law index and region according to a heuristic.
+				final var predecessorLaws = mSplitConjuncts.apply(mEmpire.getLaw(state));
+				final Comparator<IndexAndRegion<P>> comparator = Comparator.comparing(
+						// map (index, region) to (region, law) pairs
+						indexAndRegion -> new Pair<>(indexAndRegion.region(),
+								predecessorLaws.get(indexAndRegion.lawIndex())),
+						// compare (region, law) pairs according to our heuristic
+						mHeuristic.getPreference());
+				final IndexAndRegion<P> bestIndexAndRegion = falseSuccessors.stream()
+						.flatMap(i -> predecessorRegions.stream().map(r -> new IndexAndRegion<>(i, r))).min(comparator)
+						.orElseThrow();
+				focus.addPair(new Pair<>(state, bestIndexAndRegion.lawIndex()), bestIndexAndRegion.region());
+			}
+		}
+		return focus;
+	}
+
+	private record IndexAndRegion<P>(int lawIndex, Region<P> region) {
+		// small helper record
+	}
+
+	private Region<P> chooseBestRegion(final Set<Region<P>> possibleRegions, final IPredicate law) {
+		assert !possibleRegions.isEmpty() : "cannot choose best region from empty set";
+
+		// Heuristically choose the best predecessor region to focus.
+		final var minRegion = possibleRegions.stream().min(mHeuristic.getPreference(law));
+		assert minRegion.isPresent() : "could not find best region";
+
+		return minRegion.orElseThrow();
 	}
 
 	private List<IPredicate> getSuccessorLaw(final IPredicate law, final Transition<L, P> transition) {
@@ -134,64 +220,16 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 		return mSplitConjuncts.apply(DataStructureUtils.getOneAndOnly(succLaw, "successor state").getSucc());
 	}
 
-	private HashRelation<Pair<S, Integer>, Region<P>> computeFinalStateFocus(final Set<S> finalStates) {
-		final var focus = new HashRelation<Pair<S, Integer>, Region<P>>();
-		for (final S state : finalStates) {
-			final var territory = mEmpire.getTerritory(state);
-			final var enabledTransitions = territory.getEnabledTransitions(mNet);
-			final var successorlessTransitions =
-					enabledTransitions.filter(t -> !mEmpire.internalSuccessors(state, t).iterator().hasNext())
-							.collect(Collectors.toSet());
-			for (final Transition<L, P> transition : successorlessTransitions) {
-				final var mayRegions = territory.getPlacesRegions(transition.getPredecessors());
-				final var successorLawList = getSuccessorLaw(mEmpire.getLaw(state), transition);
-				final var falseSuccessors = getFalseSuccessors(successorLawList);
-				var focusedLaws = filterAlreadyFocusedLaw(state, falseSuccessors, mayRegions, focus);
-				focusedLaws = focusedLaws.isEmpty() ? falseSuccessors : focusedLaws;
-				for (final int i : focusedLaws) {
-					if (!SmtUtils.isFalseLiteral(successorLawList.get(i).getFormula())) {
-						continue;
-					}
-
-					assert !mayRegions.isEmpty() : "territory enables transition but has no predecessor regions";
-
-					final var j = i;
-					final var alreadyFocused = mayRegions.stream()
-							.filter(r -> focus.getImage(new Pair<>(state, j)).contains(r)).collect(Collectors.toSet());
-					final var possibleRegions = alreadyFocused.isEmpty() ? mayRegions : alreadyFocused;
-					final var minRegion = possibleRegions.stream().min(Comparator.comparingInt(Region::size));
-					assert minRegion.isPresent() : "could not find best predecessor region";
-					focus.addPair(new Pair<>(state, j), minRegion.orElseThrow());
-					break;
-				}
-			}
-		}
-		return focus;
-	}
-
-	private List<Integer> filterAlreadyFocusedLaw(final S state, final List<Integer> possibleIndices,
-			final Set<Region<P>> regions, final HashRelation<Pair<S, Integer>, Region<P>> focus) {
-		return possibleIndices.stream()
-				.filter(i -> DataStructureUtils.haveNonEmptyIntersection(regions, focus.getImage(new Pair<>(state, i))))
+	private List<Integer> getFalseSuccessors(final List<IPredicate> successorLaws) {
+		return IntStream.range(0, mNumLaws).filter(i -> isFalseLiteral(successorLaws.get(i))).mapToObj(Integer::valueOf)
 				.collect(Collectors.toList());
 	}
 
-	private List<Integer> getFalseSuccessors(final List<IPredicate> successorLaws) {
-		final var falseSuccessors = new ArrayList<Integer>();
-		for (Integer i = 0; i < mNumLaws; i++) {
-			if (!SmtUtils.isFalseLiteral(successorLaws.get(i).getFormula())) {
-				continue;
-			}
-			falseSuccessors.add(i);
-		}
-		return falseSuccessors;
-	}
-
-	public Set<Region<P>> getLegalFocus(final S state, final Integer lawIndex) {
+	public Set<Region<P>> getLegalFocus(final S state, final int lawIndex) {
 		return mLegalFocus.getImage(new Pair<>(state, lawIndex));
 	}
 
-	public boolean isFocused(final P place, final S state, final Integer lawIndex) {
+	public boolean isFocused(final P place, final S state, final int lawIndex) {
 		final var legalFocus = getLegalFocus(state, lawIndex);
 		return legalFocus.stream().anyMatch(r -> r.contains(place));
 	}
@@ -203,9 +241,44 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 		for (int i = 0; i < mNumLaws; i++) {
 			final var focus = getLegalFocus(state, i);
 			if (focus.contains(region)) {
-				focusedLaws.add(laws.get(i));
+				final var law = laws.get(i);
+				if (law instanceof final PredicateWithConjuncts conjunction) {
+					focusedLaws.addAll(conjunction.getConjuncts());
+				} else {
+					focusedLaws.add(law);
+				}
 			}
 		}
 		return focusedLaws;
+	}
+
+	private boolean isFalseLiteral(final IPredicate predicate) {
+		if (predicate instanceof final PredicateWithConjuncts conjunction) {
+			return conjunction.getConjuncts().stream().anyMatch(this::isFalseLiteral);
+		}
+		return SmtUtils.isFalseLiteral(predicate.getFormula());
+	}
+
+	public interface IFocusedRegionHeuristic<P> {
+		Comparator<Pair<Region<P>, IPredicate>> getPreference();
+
+		default Comparator<Region<P>> getPreference(final IPredicate law) {
+			final var comparator = getPreference();
+			return (r1, r2) -> comparator.compare(new Pair<>(r1, law), new Pair<>(r2, law));
+		}
+
+		static <P> IFocusedRegionHeuristic<P> bySize() {
+			return new IFocusedRegionHeuristic<>() {
+				@Override
+				public Comparator<Pair<Region<P>, IPredicate>> getPreference() {
+					return Comparator.comparing(Pair::getFirst, Comparator.comparing(Region::size));
+				}
+
+				@Override
+				public Comparator<Region<P>> getPreference(final IPredicate law) {
+					return Comparator.comparing(Region::size);
+				}
+			};
+		}
 	}
 }

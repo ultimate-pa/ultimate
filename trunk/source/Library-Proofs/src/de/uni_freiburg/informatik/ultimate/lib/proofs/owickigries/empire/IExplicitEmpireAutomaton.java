@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -52,65 +53,85 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.T
 public interface IExplicitEmpireAutomaton<L, P, S>
 		extends IEmpireAutomaton<L, P, S>, INestedWordAutomaton<Transition<L, P>, S> {
 
+	/**
+	 * @deprecated We should not abuse the final states for empires, they do not represent any meaningful language.
+	 *             Instead introduce a suitably-named new method.
+	 */
+	@Override
+	@Deprecated
+	Collection<S> getFinalStates();
+
+	@Deprecated
 	@Override
 	default Set<Transition<L, P>> lettersReturn(final S state) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Set<Transition<L, P>> lettersSummary(final S state) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Set<Transition<L, P>> lettersCallIncoming(final S state) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Set<Transition<L, P>> lettersReturnIncoming(final S state) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<IncomingCallTransition<Transition<L, P>, S>> callPredecessors(final S succ,
 			final Transition<L, P> letter) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<IncomingCallTransition<Transition<L, P>, S>> callPredecessors(final S succ) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<IncomingReturnTransition<Transition<L, P>, S>> returnPredecessors(final S succ, final S hier,
 			final Transition<L, P> letter) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<IncomingReturnTransition<Transition<L, P>, S>> returnPredecessors(final S succ,
 			final Transition<L, P> letter) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<IncomingReturnTransition<Transition<L, P>, S>> returnPredecessors(final S succ) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<OutgoingReturnTransition<Transition<L, P>, S>> returnSuccessors(final S state) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<SummaryReturnTransition<Transition<L, P>, S>> summarySuccessors(final S hier,
 			final Transition<L, P> letter) {
 		return Collections.emptySet();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<SummaryReturnTransition<Transition<L, P>, S>> summarySuccessors(final S hier) {
 		return Collections.emptySet();

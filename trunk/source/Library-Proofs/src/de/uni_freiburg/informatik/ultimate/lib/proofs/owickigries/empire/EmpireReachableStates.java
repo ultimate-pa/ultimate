@@ -65,6 +65,14 @@ public class EmpireReachableStates<L, P, S> implements IExplicitEmpireAutomaton<
 		}
 	}
 
+	public static <L, P, S> IExplicitEmpireAutomaton<L, P, S> makeExplicit(final IUltimateServiceProvider services,
+			final IEmpireAutomaton<L, P, S> empire) {
+		if (empire instanceof final IExplicitEmpireAutomaton<L, P, S> explicitEmpire) {
+			return explicitEmpire;
+		}
+		return new EmpireReachableStates<>(services, empire);
+	}
+
 	@Override
 	public IPredicate getLaw(final S state) {
 		return mEmpire.getLaw(state);
@@ -112,6 +120,9 @@ public class EmpireReachableStates<L, P, S> implements IExplicitEmpireAutomaton<
 	}
 
 	@Override
+	@Deprecated
+	// TODO We should not abuse the final states for empires, they do not represent any meaningful language.
+	// TODO Instead introduce a suitably-named new method.
 	public Collection<S> getFinalStates() {
 		return mReachable.getFinalStates();
 	}

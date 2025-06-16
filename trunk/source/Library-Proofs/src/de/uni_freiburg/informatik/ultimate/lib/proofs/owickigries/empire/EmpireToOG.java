@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,9 +59,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-// TODO This class supersedes EmpireAutomatonToOG. Rename it to be more general (legal focus is one of its features).
-public class LegalEmpireToOG<S, L, P> {
-	private static final String GHOST = "g";
+public class EmpireToOG<S, L, P> {
+	private static final String GHOST = "ghost";
 
 	private final ManagedScript mManagedScript;
 	private final Script mScript;
@@ -76,46 +75,39 @@ public class LegalEmpireToOG<S, L, P> {
 
 	private final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGriesAnnotation;
 
-	public LegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public EmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final IEmpireAutomaton<L, P, S> empire,
+			final IExplicitEmpireAutomaton<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		this(services, mgdScript, program, symbolTable, procedures, empire, possibleInterferences,
 				new ILegalFocusFunction.TrivialFocus<>(empire));
 	}
 
-	public LegalEmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public EmpireToOG(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IPetriNet<L, P> program, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final IEmpireAutomaton<L, P, S> empire,
+			final IExplicitEmpireAutomaton<L, P, S> empire,
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final ILegalFocusFunction<S, P> legalFocus) {
 		mProgram = program;
 		mManagedScript = mgdScript;
 		mScript = mManagedScript.getScript();
+
+		mEmpireAutomaton = empire;
 		mLegalFocus = legalFocus;
 
 		mGhostVariable = createGhostVariable();
 		final var newSymbolTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		newSymbolTable.add(mGhostVariable);
+
 		mFactory = new BasicPredicateFactory(services, mManagedScript, newSymbolTable);
-
-		final var logger = services.getLoggingService().getLogger(getClass());
-		if (empire instanceof final IExplicitEmpireAutomaton<L, P, S> explicitEmpire) {
-			mEmpireAutomaton = explicitEmpire;
-		} else {
-			logger.info("Exploring empire...");
-			mEmpireAutomaton = new EmpireReachableStates<>(services, empire);
-			logger.info("Empire has %s", mEmpireAutomaton.sizeInformation());
-		}
-
 		mStateTerms = getStateTerms();
-		final Map<P, IPredicate> formulaMapping = getFormulaMap();
-		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = getAssignmentMapping();
-		final Map<IProgramVar, Term> ghostInitAssignment = getGhostInitAssignment();
+		final Map<P, IPredicate> placeAnnotations = computePlaceAnnotations();
+		final Map<Transition<L, P>, GhostUpdate> ghostUpdates = computeGhostUpdateMapping();
+		final Map<IProgramVar, Term> initialGhostValuation = computeInitialGhostValuation();
 
 		mOwickiGriesAnnotation = new OwickiGriesAnnotation<>(
 				OwickiGriesConstruction.getSpecificationForPetriNet(mProgram, mFactory), possibleInterferences,
-				newSymbolTable, formulaMapping, Set.of(mGhostVariable), ghostInitAssignment, assignmentMapping);
+				newSymbolTable, placeAnnotations, Set.of(mGhostVariable), initialGhostValuation, ghostUpdates);
 	}
 
 	private IProgramVar createGhostVariable() {
@@ -131,16 +123,16 @@ public class LegalEmpireToOG<S, L, P> {
 	}
 
 	/**
-	 * @return Map of P to the corresponding formula for each P depending on the legal focus
+	 * @return Map of places to the corresponding formula for each place
 	 */
-	private Map<P, IPredicate> getFormulaMap() {
+	private Map<P, IPredicate> computePlaceAnnotations() {
 		final Map<P, IPredicate> formulaMap = new HashMap<>();
 		final var empireStates = mEmpireAutomaton.getStates();
 		for (final P place : mProgram.getPlaces()) {
-			final var states = empireStates.stream().filter(s -> mEmpireAutomaton.containsPlace(s, place))
-					.collect(Collectors.toSet());
-			assert noErrorPlaceInStates(place, states) : "Accepting place in intersection of the states";
-			final var disjuncts = new ArrayList<Term>();
+			final var states = empireStates.stream().filter(s -> mEmpireAutomaton.containsPlace(s, place)).toList();
+			assert noErrorPlaceInStates(place, states) : "Accepting place in state";
+
+			final var disjuncts = new ArrayList<Term>(states.size());
 			for (final S state : states) {
 				final var placeRegion = mEmpireAutomaton.getTerritory(state).getPlaceRegion(place);
 				final var conjuncts = new ArrayList<Term>();
@@ -161,50 +153,63 @@ public class LegalEmpireToOG<S, L, P> {
 		return formulaMap;
 	}
 
-	private boolean noErrorPlaceInStates(final P place, final Set<S> states) {
-		return mProgram.isAccepting(place) && !states.isEmpty() ? false : true;
+	private boolean noErrorPlaceInStates(final P place, final Collection<S> states) {
+		return !mProgram.isAccepting(place) || states.isEmpty();
+	}
+
+	/**
+	 * @return Map of ghost variable to its init assignment (which is the numeral of the init state)
+	 */
+	private Map<IProgramVar, Term> computeInitialGhostValuation() {
+		final var initState = DataStructureUtils.getOneAndOnly(mEmpireAutomaton.getInitialStates(), "initial state");
+		return Map.of(mGhostVariable, mStateTerms.get(initState));
 	}
 
 	/**
 	 * @return Map of transition to the corresponding formula for each transition in net
 	 */
-	private Map<Transition<L, P>, GhostUpdate> getAssignmentMapping() {
-		final Map<Transition<L, P>, GhostUpdate> assignmentMapping = new HashMap<>();
-		for (final Transition<L, P> transition : mProgram.getTransitions()) {
-			final var assignment = getTransitionAssignment(transition);
-			if (assignment != null) {
-				assignmentMapping.put(transition, assignment);
+	private Map<Transition<L, P>, GhostUpdate> computeGhostUpdateMapping() {
+		final var mapping = new HashMap<Transition<L, P>, GhostUpdate>();
+		for (final var transition : mProgram.getTransitions()) {
+			final var update = computeGhostUpdateForTransition(transition);
+			if (update != null) {
+				mapping.put(transition, update);
 			}
 		}
-		return assignmentMapping;
+		return mapping;
 	}
 
-	private GhostUpdate getTransitionAssignment(final Transition<L, P> transition) {
-		final var states = mEmpireAutomaton.getStates();
-		final var enablingStates =
-				states.stream().filter(s -> mEmpireAutomaton.internalSuccessors(s, transition).iterator().hasNext())
-						.collect(Collectors.toSet());
-		if (enablingStates.isEmpty()) {
-			return null;
-		}
+	private GhostUpdate computeGhostUpdateForTransition(final Transition<L, P> transition) {
+		final var updatePairs = new ArrayList<Pair<S, S>>();
 
-		final var pairs = new HashSet<Pair<S, S>>();
-		for (final S state : enablingStates) {
-			final var successors = mEmpireAutomaton.internalSuccessors(state, transition).iterator();
-			if (successors.hasNext()) {
-				final var succ = successors.next();
-				pairs.add(new Pair<>(state, succ.getSucc()));
+		for (final S state : mEmpireAutomaton.getStates()) {
+			final var edge = DataStructureUtils.getOnly(mEmpireAutomaton.internalSuccessors(state, transition),
+					"More than one successor in automaton for a transition");
+			if (!edge.isPresent()) {
+				// The state does not have an edge for the given transition.
+				// This either means that the state's territory does not enable the transition,
+				// or that the edge would lead to a law "false".
+				// In either case, no ghost update is needed.
+				continue;
 			}
-			assert !successors.hasNext() : "More than one successors in automaton for a transition";
+
+			final S successor = edge.orElseThrow().getSucc();
+			if (state.equals(successor)) {
+				// The edge is a self-loop. Thus, it does not have to be handled explicitly in the ghost update.
+				// Instead, self-loops are handled in the default case of the ghost update's case distinction.
+				continue;
+			}
+
+			updatePairs.add(new Pair<>(state, successor));
 		}
 
-		final var noUpdates = pairs.stream().allMatch(s -> s.getFirst().equals(s.getSecond()));
-		if (noUpdates) {
+		if (updatePairs.isEmpty()) {
+			// Avoid returning a trivial ghost update.
 			return null;
 		}
 
-		final Term term = getGhostUpdateTerm(new ArrayList<>(pairs));
-		return new GhostUpdate(Map.of(mGhostVariable, term));
+		final Term caseDistinction = getGhostUpdateTerm(updatePairs);
+		return new GhostUpdate(Map.of(mGhostVariable, caseDistinction));
 	}
 
 	private Term getGhostUpdateTerm(final List<Pair<S, S>> statePairs) {
@@ -229,16 +234,6 @@ public class LegalEmpireToOG<S, L, P> {
 		}
 
 		return stateTerms;
-	}
-
-	/**
-	 * @return Map of ghost variable to its init assignment (which is the numeral of the init state)
-	 */
-	private Map<IProgramVar, Term> getGhostInitAssignment() {
-		final HashMap<IProgramVar, Term> initAssignments = new HashMap<>();
-		final var initState = DataStructureUtils.getOneAndOnly(mEmpireAutomaton.getInitialStates(), "initial state");
-		initAssignments.put(mGhostVariable, mStateTerms.get(initState));
-		return initAssignments;
 	}
 
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getAnnotation() {

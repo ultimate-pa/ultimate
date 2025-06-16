@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
 
 /**
  * Abstract interface for legal focus.
@@ -75,7 +76,7 @@ public interface ILegalFocusFunction<S, P> {
 		public List<IPredicate> getFocusedLaws(final S state, final Region<P> region) {
 			assert mEmpire.getTerritory(state).getRegions().contains(region)
 					: "Region " + region + " does not occur in territory of state " + state;
-			return List.of(mEmpire.getLaw(state));
+			return PredicateWithConjuncts.flatten(mEmpire.getLaw(state));
 		}
 	}
 }

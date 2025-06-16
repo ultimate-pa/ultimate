@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.B
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomataOwickiGries.FocusComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
@@ -135,7 +136,8 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory);
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+					FocusComputation.UNFOCUSED);
 		}
 
 		@Override
@@ -144,11 +146,12 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		}
 	}
 
-	public static final class SeparateEmpiresOG extends OGProofProducerTest {
+	public static final class GlobalLegalFocusOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory, true);
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+					FocusComputation.GLOBAL);
 		}
 
 		@Override
@@ -157,11 +160,12 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		}
 	}
 
-	public static final class LegalFocusOG extends OGProofProducerTest {
+	public static final class ModularLegalFocusOG extends OGProofProducerTest {
 		@Override
 		protected IPetriNetProofProducer<SimpleAction, IPredicate>
 				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new LegalFocusOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory, false);
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
+					FocusComputation.MODULAR);
 		}
 
 		@Override

@@ -46,24 +46,28 @@ public interface IEmpireAutomaton<L, P, S> extends INwaOutgoingLetterAndTransiti
 		return getTerritory(state).containsPlace(place);
 	}
 
+	@Deprecated
 	@Override
 	default IStateFactory<S> getStateFactory() {
 		// This method is deprecated and should not be used.
 		return null;
 	}
 
+	@Deprecated
 	@Override
 	default S getEmptyStackState() {
 		// Empires do not support calls and returns.
 		return null;
 	}
 
+	@Deprecated
 	@Override
 	default boolean isFinal(final S state) {
 		// There is no meaningful notion of final states in empires.
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<OutgoingCallTransition<Transition<L, P>, S>> callSuccessors(final S state,
 			final Transition<L, P> letter) {
@@ -71,6 +75,7 @@ public interface IEmpireAutomaton<L, P, S> extends INwaOutgoingLetterAndTransiti
 		return List.of();
 	}
 
+	@Deprecated
 	@Override
 	default Iterable<OutgoingReturnTransition<Transition<L, P>, S>> returnSuccessors(final S state, final S hier,
 			final Transition<L, P> letter) {

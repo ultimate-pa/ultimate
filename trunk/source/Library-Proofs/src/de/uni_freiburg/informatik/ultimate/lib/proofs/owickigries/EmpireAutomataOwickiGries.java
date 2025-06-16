@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -50,58 +51,76 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ComputeAutomataStatistics;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateWithConjuncts;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomataStatistics;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomatonToOG;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomaton.State;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireAutomatonValidityCheck;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireReachableStates;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOG;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IExplicitEmpireAutomaton;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ILegalFocusFunction;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.MinMaxMed;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNetProofProducer<L, P> {
+	public enum FocusComputation {
+		UNFOCUSED, GLOBAL, MODULAR
+	}
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+
 	private final IPetriNet<L, P> mProgram;
 	private final ManagedScript mMgdScript;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final Set<String> mProcedures;
 	private final ModifiableGlobalsTable mModifiableGlobals;
+
 	private final BasicPredicateFactory mFactory;
+	private final FocusComputation mFocusComputation;
+
+	private final ConjunctiveUnionFactory mProofUnionFactory;
+
 	private BranchingProcess<L, P> mRefinedUnfolding;
-
-	private final IUnionStateFactory<IPredicate> mUnionFactory;
-	private final Statistics mStatistics;
-
 	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProofProduct;
+	private int mNumProofs = 0;
+
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
+	private final Statistics mStatistics;
 
 	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final PredicateFactory factory) {
+			final CfgSmtToolkit csToolkit, final PredicateFactory factory, final FocusComputation focusComputation) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable(), factory);
+				csToolkit.getModifiableGlobalsTable(), factory, focusComputation);
 	}
 
 	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory) {
+			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory,
+			final FocusComputation focusComputation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
+
 		mProgram = program;
 		mMgdScript = mgdScript;
 		mSymbolTable = symbolTable;
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
+
 		mFactory = factory;
-		mUnionFactory = new UnionFactory(factory);
+		mFocusComputation = focusComputation;
+
+		mProofUnionFactory = new ConjunctiveUnionFactory(factory);
+
 		mStatistics = new Statistics(mLogger);
 	}
 
@@ -109,57 +128,68 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
 		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
+		mNumProofs++;
+
+		final var initialTrueState =
+				DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
+		final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false);
+
 		if (mProofProduct == null) {
-			mProofProduct = interpolantAutomaton;
+			mProofProduct = totalizedProof;
 		} else {
-			final var initialTrueState1 =
-					DataStructureUtils.getOneAndOnly(mProofProduct.getInitialStates(), "initial state");
-			final var totalizedProduct = new TotalizeNwa<>(mProofProduct, initialTrueState1, false);
-
-			final var initialTrueState2 =
-					DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
-			final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState2, false);
-
 			try {
-				mProofProduct = new UnionNwa<>(totalizedProduct, totalizedProof, mUnionFactory, false);
+				mProofProduct = new UnionNwa<>(mProofProduct, totalizedProof, mProofUnionFactory, false);
 			} catch (final AutomataLibraryException e) {
-				throw new AssertionError(e);
+				throw new RuntimeException("Failed to compute union of proof automata", e);
 			}
 		}
 	}
 
 	@Override
 	public boolean isReadyToComputeProof() {
-		return true;
+		return mRefinedUnfolding != null;
 	}
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
-		mLogger.info("Computing Empire automaton...");
-		mStatistics.startEmpireComputation();
-		final EmpireAutomaton<L, P> automaton;
-		try {
-			automaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
-		} finally {
-			mStatistics.stopEmpireComputation();
+		if (mOwickiGries != null) {
+			// If the proof was already computed, just return it.
+			return mOwickiGries;
 		}
 
-		assert checkAutomatonValidity(automaton) : "Empire automaton is invalid";
+		assert isReadyToComputeProof() : "Not ready to compute proof";
 
-		final var empireToOG = getOwickiGriesAnnotation(automaton);
-		final var automatonStatisticsComputation = empireToOG.getAutomatonStatistics();
-		final var empireStatistics = new EmpireAutomataStatistics();
-		empireStatistics.reportEmpire(automatonStatisticsComputation);
-		mStatistics.reportEmpire(empireStatistics);
-		mOwickiGries = empireToOG.getAnnotation();
-		mLogger.debug("Computed Owicki-Gries annotation:\n%s", mOwickiGries);
+		final IExplicitEmpireAutomaton<L, P, State<L, P>> empireAutomaton = computeEmpireAutomaton();
+		assert checkAutomatonValidity(empireAutomaton) : "Empire automaton is invalid";
 
+		final ILegalFocusFunction<State<L, P>, P> legalFocus = computeFocus(empireAutomaton);
+
+		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
+				mProgram.getPlaces(), mDiff2OriginalTransition);
+		mOwickiGries = computeOwickiGriesAnnotation(possibleInterferences, empireAutomaton, legalFocus);
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 
 		return mOwickiGries;
 	}
 
-	private boolean checkAutomatonValidity(final EmpireAutomaton<L, P> automaton) {
+	private IExplicitEmpireAutomaton<L, P, State<L, P>> computeEmpireAutomaton() {
+		mStatistics.startEmpireComputation();
+		try {
+			final var lazyAutomaton = new EmpireAutomaton<>(mProgram, mProofProduct, mServices);
+
+			mLogger.info("Exploring empire automaton...");
+			final var automaton = new EmpireReachableStates<>(mServices, lazyAutomaton);
+
+			mLogger.info("Explored empire automaton has %s", automaton.sizeInformation());
+			mStatistics.reportEmpire(automaton);
+
+			return automaton;
+		} finally {
+			mStatistics.stopEmpireComputation();
+		}
+	}
+
+	private boolean checkAutomatonValidity(final IExplicitEmpireAutomaton<L, P, ?> automaton) {
 		mLogger.info("Checking validity of Empire automaton...");
 		mStatistics.startEmpireValidity();
 		try {
@@ -171,8 +201,37 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		}
 	}
 
+	private ILegalFocusFunction<State<L, P>, P>
+			computeFocus(final IExplicitEmpireAutomaton<L, P, State<L, P>> empireAutomaton) {
+		mStatistics.startFocusComputation();
+		try {
+			mLogger.info("Computing focus ...");
+			return switch (mFocusComputation) {
+			case UNFOCUSED -> new ILegalFocusFunction.TrivialFocus<>(empireAutomaton);
+			case MODULAR -> new LegalFocus<>(empireAutomaton, mProgram, mProofProduct, mNumProofs,
+					mProofUnionFactory::splitConjuncts);
+			case GLOBAL -> new LegalFocus<>(empireAutomaton, mProgram, mProofProduct, 1, List::of);
+			};
+		} finally {
+			mStatistics.stopFocusComputation();
+		}
+	}
+
+	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> computeOwickiGriesAnnotation(
+			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
+			final IExplicitEmpireAutomaton<L, P, State<L, P>> empire,
+			final ILegalFocusFunction<State<L, P>, P> legalFocus) {
+		mStatistics.startOwickiGriesComputation();
+		try {
+			final var construction = new EmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures,
+					empire, possibleInterferences, legalFocus);
+			return construction.getAnnotation();
+		} finally {
+			mStatistics.stopOwickiGriesComputation();
+		}
+	}
+
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
-		mLogger.info("Checking validity of Owicki-Gries proof...");
 		mStatistics.startOwickiGriesValidity();
 		try {
 			final var validity =
@@ -198,103 +257,59 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		return mProgram;
 	}
 
-	private EmpireAutomatonToOG<L, P> getOwickiGriesAnnotation(final EmpireAutomaton<L, P> empireAutomaton) {
-		mLogger.info("Converting Empire automaton to Owicki-Gries proof...");
-		mStatistics.startOwickiGriesComputation();
-		try {
-			final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-					mProgram.getPlaces(), mDiff2OriginalTransition);
-			final EmpireAutomatonToOG<L, P> empireToOwickiGries = new EmpireAutomatonToOG<>(mServices, mMgdScript,
-					mProgram, mSymbolTable, mProcedures, empireAutomaton, possibleInterferences);
-			return empireToOwickiGries;
-		} finally {
-			mStatistics.stopOwickiGriesComputation();
-		}
-	}
-
 	@Override
 	public IStatisticsDataProvider getStatistics() {
 		return mStatistics;
 	}
 
 	private static final class Statistics extends OwickiGriesStatistics {
+		private final TimeTracker mFocusTimer = new TimeTracker();
+
 		public Statistics(final ILogger logger) {
 			super(logger, EmpireComputation.class, EmpireToOwickiGries.class);
+			declareTimeTracker("Focus computation time", mFocusTimer);
 		}
 
-		public void reportEmpire(final IStatisticsDataProvider statistics) {
-			reportEmpireStatistics(statistics, null);
-		}
-	}
-
-	public static final class EmpireAutomataStatistics extends AbstractStatisticsDataProvider {
-		public static final String AUTOMATON_SIZE = "automaton size";
-		public static final String UNIQUE_PAIRS = "number of unique pairs";
-		public static final String LAW_SIZE = "empire law size";
-		public static final String ANNOTATION_SIZE = "empire annotation size";
-		public static final String REGION_COUNT = "number of regions";
-		public static final String TERRITORY_COUNT = "number of territories";
-
-		public static final String REGION_TERRITORY = "number of regions per territory";
-		public static final String PLACES_PER_REGION = "number of places per region";
-
-		private long mAutomatonSize;
-		private long mUniquePairs;
-		private long mLawSize;
-		private long mAnnotationSize;
-		private long mRegionCount;
-		private long mNumberOfTerritories;
-
-		private final MinMaxMed mRegionsPerTerritory = new MinMaxMed();
-		private final MinMaxMed mPlacesPerRegion = new MinMaxMed();
-
-		public EmpireAutomataStatistics() {
-			declareCounter(AUTOMATON_SIZE, () -> mAutomatonSize);
-			declareCounter(UNIQUE_PAIRS, () -> mUniquePairs);
-			declareCounter(LAW_SIZE, () -> mLawSize);
-			declareCounter(ANNOTATION_SIZE, () -> mAnnotationSize);
-			declareCounter(REGION_COUNT, () -> mRegionCount);
-			declareCounter(TERRITORY_COUNT, () -> mNumberOfTerritories);
-
-			declareMinMaxMed(REGION_TERRITORY, mRegionsPerTerritory);
-			declareMinMaxMed(PLACES_PER_REGION, mPlacesPerRegion);
+		public void reportEmpire(final IExplicitEmpireAutomaton<?, ?, ?> empire) {
+			reportEmpireStatistics(new EmpireAutomataStatistics(empire), null);
 		}
 
-		public void reportEmpire(final ComputeAutomataStatistics<?, ?> statisticsComputation) {
-			mRegionCount = statisticsComputation.getRegionCount();
-			mAutomatonSize = statisticsComputation.getAutomatonSize();
-			mUniquePairs = statisticsComputation.getUniquePairsSize();
-			mLawSize = statisticsComputation.getLawSize();
-			mAnnotationSize = statisticsComputation.getAnnotationSize();
-			mNumberOfTerritories = statisticsComputation.getNumberOfTerritories();
+		private void startFocusComputation() {
+			mFocusTimer.start();
+		}
 
-			mRegionsPerTerritory.report(statisticsComputation.getTerritories(), Territory::size);
-			mPlacesPerRegion.report(statisticsComputation.getRegions(), Region::size);
+		private void stopFocusComputation() {
+			mFocusTimer.stop();
 		}
 	}
 
-	private static final class UnionFactory implements IUnionStateFactory<IPredicate> {
-		private final PredicateFactory mPredicateFactory;
-		private final IPredicate mEmptyStack;
+	private static final class ConjunctiveUnionFactory implements IUnionStateFactory<IPredicate> {
+		private final BasicPredicateFactory mFactory;
 
-		public UnionFactory(final PredicateFactory predicateFactory) {
-			mPredicateFactory = predicateFactory;
-			mEmptyStack = predicateFactory.newEmptyStackPredicate();
+		public ConjunctiveUnionFactory(final BasicPredicateFactory factory) {
+			mFactory = factory;
 		}
 
 		@Override
 		public IPredicate createEmptyStackState() {
-			return mEmptyStack;
+			return null;
 		}
 
 		@Override
 		public IPredicate createSinkStateContent() {
-			return mPredicateFactory.and();
+			throw new UnsupportedOperationException("Cannot create sink state. Expecting total automata.");
 		}
 
 		@Override
 		public IPredicate union(final IPredicate state1, final IPredicate state2) {
-			return mPredicateFactory.and(state1, state2);
+			return mFactory.construct(id -> new PredicateWithConjuncts(id, state1, state2));
+		}
+
+		public List<IPredicate> splitConjuncts(final IPredicate predicate) {
+			if (predicate instanceof final PredicateWithConjuncts conjunction) {
+				return conjunction.getConjuncts();
+			}
+			return List.of(predicate);
 		}
 	}
 }
