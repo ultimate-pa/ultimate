@@ -180,9 +180,4 @@ Branch: wip/pr/antlr_integration
 
 Über die build.xml wird mit der `lib/antlr-4.13.2-complete.jar` der LLVMIR Lexer und Parser, sowie die weiterhin relevanten dateien, erzeugt und im `src/de/uni_freiburg/informatik/ultimate/llvmir/parser` Verzeichnis abgelegt. Zudem wird jeder `.java` die benötigte package Signatur hinzugefügt.
 
-In `UltimateLlvmirParser` wird die hauptfunktionalität des Plugins implementiert, d.h. die Übersetzung der `.ll`-Datei in einen ParseTree. Dieser muss als `IElement` übergeben werden, weshalb die Klassen `ParseTreeElementWrapper`, `ParseTreePayloadWrapper` und `ParseTreeAnnotationWrapper` benötigt werden.
-
-Aktuell befindet sich mit `Main.java`, `ACSL-referring_to_global_var_from_function_scope_opt.ll` und Komandozeilenausgabe des ParseTrees in `parseFile()` in `UltimateLlvmirParser` die Möglichkeit zu testen.
-
-##### Issues
-Aktuell wurde nur mit dem ParseTree den `parseFile()` ausgibt getestet. Es muss noch herausgefunden werden, wie man den ParseTree aus dem von `parseAST()` zurückgegebenen `IElement` extrahieren kann.
+In `UltimateLlvmirParser` wird die hauptfunktionalität des Plugins implementiert, d.h. die Übersetzung der `.ll`-Datei in einen ParseTree. Dieser muss als `IElement` übergeben werden, weshalb die Klasse `ParseTreeElementWrapper` benötigt wird. Der ParseTree wird darin als Feld gespeichert. Um die Informationen Abzufragen muss ein Cast verwendet werden.

@@ -109,17 +109,27 @@ public class UltimateLlvmirParser implements ISource {
 	 * @return the ParseTree of the file
 	 * @throws IOException if an error occurs during file reading or parsing
 	 */
-	public ParseTree parseFile(final File file) throws IOException {
-		// mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
-		// mFileNames.add(file.getAbsolutePath());
+	private ParseTree parseFile(final File file) throws IOException {
+		mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
+		mFileNames.add(file.getAbsolutePath());
+		final LLVMIRParser parser = getParser(file);
+
+		final ParseTree tree = parser.compilationUnit();
+		return tree;
+	}
+
+	/**
+	 * Creates a new {@link LLVMIRParser} for the given file.
+	 *
+	 * @param file the file to be parsed
+	 * @return a new instance of {@link LLVMIRParser}
+	 * @throws IOException if an error occurs while reading the file
+	 */
+	private LLVMIRParser getParser(final File file) throws IOException {
 		final CharStream input = CharStreams.fromFileName(file.getAbsolutePath());
 		final LLVMIRLexer lexer = new LLVMIRLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
-		final LLVMIRParser parser = new LLVMIRParser(tokens);
-
-		final ParseTree tree = parser.compilationUnit();
-		System.out.println(tree.toStringTree(parser));
-		return tree;
+		return new LLVMIRParser(tokens);
 	}
 
 	@Override
