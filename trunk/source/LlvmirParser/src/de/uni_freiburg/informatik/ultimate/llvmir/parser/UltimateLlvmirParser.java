@@ -87,9 +87,11 @@ public class UltimateLlvmirParser implements ISource {
 	 *
 	 * @param files the array of files to be parsed
 	 * @return an {@link IElement} representing the ParseTree of the first file
+	 * @throws IOException          if an error occurs during file reading or parsing
+	 * @throws InterruptedException if the parsing process is interrupted
 	 */
 	@Override
-	public IElement parseAST(final File[] files) throws IOException {
+	public IElement parseAST(final File[] files) throws IOException, InterruptedException {
 		if (files == null || files.length == 0) {
 			throw new IOException("No files provided for parsing.");
 		}
@@ -107,15 +109,28 @@ public class UltimateLlvmirParser implements ISource {
 	 *
 	 * @param file the file to be parsed
 	 * @return the ParseTree of the file
-	 * @throws IOException if an error occurs during file reading or parsing
+	 * @throws IOException          if an error occurs during file reading or parsing
+	 * @throws InterruptedException if the parsing process is interrupted
 	 */
-	private ParseTree parseFile(final File file) throws IOException {
+	private ParseTree parseFile(final File file) throws IOException, InterruptedException {
 		mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
 		mFileNames.add(file.getAbsolutePath());
-		final LLVMIRParser parser = getParser(file);
+		final LLVMIRParser parser = getParser(getOptFile(file));
 
 		final ParseTree tree = parser.compilationUnit();
 		return tree;
+	}
+
+	/**
+	 * Reads the LLVM IR file and applies optimizations using the LlvmirOptPipeline.
+	 *
+	 * @param file the file to be optimized
+	 * @return a File object representing the optimized LLVM IR file
+	 * @throws IOException          if an error occurs while reading or writing the file
+	 * @throws InterruptedException if the optimization process is interrupted
+	 */
+	private static File getOptFile(final File file) throws IOException, InterruptedException {
+		return LlvmirOptPipeline.optLlFile(file);
 	}
 
 	/**
@@ -125,7 +140,7 @@ public class UltimateLlvmirParser implements ISource {
 	 * @return a new instance of {@link LLVMIRParser}
 	 * @throws IOException if an error occurs while reading the file
 	 */
-	private LLVMIRParser getParser(final File file) throws IOException {
+	private static LLVMIRParser getParser(final File file) throws IOException {
 		final CharStream input = CharStreams.fromFileName(file.getAbsolutePath());
 		final LLVMIRLexer lexer = new LLVMIRLexer(input);
 		final CommonTokenStream tokens = new CommonTokenStream(lexer);
