@@ -437,7 +437,7 @@ public class CfgBuilder {
 			type = ProcedureErrorType.ASSERT_VIOLATION;
 		} else if (boogieASTNode instanceof EnsuresSpecification) {
 			type = ProcedureErrorType.ENSURES_VIOLATION;
-		} else if (boogieASTNode instanceof RequiresSpecification) {
+		} else if (boogieASTNode instanceof CallStatement) {
 			type = ProcedureErrorType.REQUIRES_VIOLATION;
 		} else if (boogieASTNode instanceof ForkStatement) {
 			type = ProcedureErrorType.INUSE_VIOLATION;
@@ -1401,7 +1401,7 @@ public class CfgBuilder {
 					final Statement st1 = assumeSt;
 					ModelUtils.copyAnnotations(st, st1);
 					mRcfgBacktranslator.putAux(assumeSt, new BoogieASTNode[] { st, spec });
-					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, spec, mProcLocNodes);
+					final BoogieIcfgLocation errorLocNode = addErrorNode(mCurrentProcedureName, st, mProcLocNodes);
 					final StatementSequence errorCB = mCbf.constructStatementSequence(locNode, errorLocNode, assumeSt);
 					ModelUtils.copyAnnotations(spec, errorCB);
 					ModelUtils.copyAnnotations(spec, errorLocNode);
