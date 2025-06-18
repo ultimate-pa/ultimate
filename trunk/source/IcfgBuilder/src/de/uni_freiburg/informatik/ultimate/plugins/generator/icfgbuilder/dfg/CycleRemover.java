@@ -18,27 +18,8 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 public class CycleRemover {
 
-	// computes the feedback vertex Set for the given Dfg. Returns a List of IcfgEdges that can be removed in the
-	// original Trace. Returns empty Set if no cycles are found.
-
-	public static Set<IcfgEdge> computeFeedbackVertexSet(final DfgContainer dfg, final ILogger logger) {
-		final Set<IcfgEdge> fvsHeuristic = computeFeedbackVertexHeuristic(dfg, logger);
-		logger.info("Heuristic FVS found: Size: " + fvsHeuristic.size() + "and fvs = " + fvsHeuristic);
-
-		if (isCyclic(dfg, logger)) {
-			logger.debug("Cycles found");
-			final Set<DfgNode> fvs = feedbackVertexBruteForce(dfg, logger);
-			final Set<IcfgEdge> fvsEdges = fvs.stream().map(node -> node.getCorrespondingDFGEdge())
-					.collect(Collectors.toSet());
-			logger.info("Found Edges to remove:" + fvsEdges.size() + "and fvs = " + fvsEdges);
-			logger.info("Heuristic is Same as optimal? " + fvsHeuristic.equals(fvsEdges));
-			return fvsEdges;
-		}
-		logger.debug("No cycles found. Returning empty Set");
-		return new HashSet<>();
-	}
-
-	private static Set<IcfgEdge> computeFeedbackVertexHeuristic(final DfgContainer dfg, final ILogger logger) {
+	// computes feedback vertex set by taking a node from every cycle and removing it
+	public static Set<IcfgEdge> computeFeedbackVertexHeuristic(final DfgContainer dfg, final ILogger logger) {
 		final ISuccessorProvider<DfgNode> successors = node -> {
 			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
 			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
@@ -55,6 +36,52 @@ public class CycleRemover {
 		return fvs;
 	}
 
+	// naive implementation of the feedbackVertexSet Problem, Brute Force all possible subsets of nodes that are inside
+	// a cycle and check for acyclity
+	// starting from least nodes removed so I can terminate early
+	public static Set<IcfgEdge> computeFeedbackVertexBruteForce(final DfgContainer originalDfg, final ILogger logger) {
+		final ISuccessorProvider<DfgNode> successors = node -> {
+			final Collection<DfgNode> successorsOfNode = originalDfg.getEdgeRelation().getImage(node);
+			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
+		};
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
+				successors, new DefaultStronglyConnectedComponentFactory<>(), originalDfg.getNodeList().size(),
+				originalDfg.getNodeList());
+
+		final Set<DfgNode> cyclicNodes = new HashSet<>();
+		if (scc.getBalls().size() == 0) {
+			logger.info("Found no Cycles, returning empty Set");
+			return new HashSet<>();
+		}
+		for (final StronglyConnectedComponent<DfgNode> ball : scc.getBalls()) {
+			cyclicNodes.addAll(ball.getNodes());
+		}
+		final List<DfgNode> cyclicNodeList = new ArrayList<>(cyclicNodes);
+		final int n = cyclicNodeList.size();
+		final Set<DfgNode> bestSolution;
+		// try all subsets in increasing size
+		for (int size = 1; size <= n; size++) {
+			logger.debug("Checking all subsets of size " + size);
+			final List<List<DfgNode>> subsets = generateSubsetsOfSize(cyclicNodeList, size);
+			for (final List<DfgNode> subset : subsets) {
+				final DfgContainer cloned = cloneDfg(originalDfg);
+				for (final DfgNode node : subset) {
+					cloned.getEdgeRelation().removeDomainElement(node);
+					cloned.getEdgeRelation().removeRangeElement(node);
+					cloned.getNodeList().remove(node);
+				}
+				if (!isCyclic(cloned, logger)) {
+					bestSolution = new HashSet<>(subset);
+					final Set<IcfgEdge> fvsEdges = bestSolution.stream().map(node -> node.getCorrespondingDFGEdge())
+							.collect(Collectors.toSet());
+					return fvsEdges;
+				}
+			}
+		}
+
+		return null;
+	}
+
 	// returns whether the given Dfg is cyclic, if the number of SCCs of the Dfg are the trivial size then it is not
 	// cyclic
 	private static boolean isCyclic(final DfgContainer dfg, final ILogger logger) {
@@ -69,36 +96,8 @@ public class CycleRemover {
 		return scc.getBalls().size() > 0;
 	}
 
-	// naive implementation of the feedbackVertexSet Problem, Brute Force all possible subsets and check for acyclity
-	// starting from least nodes removed so I can terminate early
-	private static Set<DfgNode> feedbackVertexBruteForce(final DfgContainer originalDfg, final ILogger logger) {
-		final Set<DfgNode> nodes = originalDfg.getNodeList();
-		final List<DfgNode> nodeList = new ArrayList<>(nodes);
-		final int n = nodeList.size();
-		final Set<DfgNode> bestSolution;
-		// try all subsets in increasing size
-		for (int size = 1; size <= n; size++) {
-			logger.info(size);
-			final List<List<DfgNode>> subsets = generateSubsetsOfSize(nodeList, size);
-			for (final List<DfgNode> subset : subsets) {
-				final DfgContainer cloned = cloneDfg(originalDfg);
-				for (final DfgNode node : subset) {
-					cloned.getEdgeRelation().removeDomainElement(node);
-					cloned.getEdgeRelation().removeRangeElement(node);
-					cloned.getNodeList().remove(node);
-				}
-				if (!isCyclic(cloned, logger)) {
-					bestSolution = new HashSet<>(subset);
-					return bestSolution;
-				}
-			}
-		}
-
-		return null;
-	}
-
 	// clones the given Dfg
-	// TODO maybe remove/refactor to work on copied edgeRelation/nodelist?
+	// TODO maybe remove/refactor to work on copied edgeRelation/nodelist to save memory?
 	private static DfgContainer cloneDfg(final DfgContainer originalDfg) {
 		final Set<DfgNode> newNodeList = new HashSet<>(originalDfg.getNodeList());
 		final HashRelation<DfgNode, DfgNode> originalEdges = originalDfg.getEdgeRelation();
