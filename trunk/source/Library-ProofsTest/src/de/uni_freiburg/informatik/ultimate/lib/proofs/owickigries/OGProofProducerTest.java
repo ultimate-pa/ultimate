@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import org.junit.runner.RunWith;
@@ -44,15 +45,24 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomata
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 @RunWith(FactoryTestRunner.class)
 public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
+	// Proof printing is disabled for benchmarking purposes, as in particular the naive construction often yields proofs
+	// that exceed the maximum supported string length, and printing them leads to OOMs.
+	// Also, it leads to gigantic log files.
+	private static final boolean PRINT_FULL_PROOF = false;
+
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
 			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException {
 		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s.", program.sizeInformation());
+
+		final var overallTimeTracker = new TimeTracker();
+		overallTimeTracker.start();
 
 		final var producer = createProofProducer(program);
 
@@ -66,13 +76,17 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		assert producer.isReadyToComputeProof();
 		final var annotation = producer.getOrComputeProof();
 
+		overallTimeTracker.stop();
+		mLogger.info("Complete Proof Computation Time: %dms", overallTimeTracker.elapsedTime(TimeUnit.MILLISECONDS));
+
 		// if assertions are enabled, the producers already carry out a validity check
 		assert annotation != null;
 
-		mLogger.info(
-				"Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d\n%s",
-				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size(),
-				annotation);
+		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
+				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
+		if (PRINT_FULL_PROOF) {
+			mLogger.info(annotation);
+		}
 
 		// print proof producer statistics
 		mLogger.info(producer.getStatistics());
