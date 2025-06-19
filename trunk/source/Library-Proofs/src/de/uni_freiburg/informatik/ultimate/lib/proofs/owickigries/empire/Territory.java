@@ -332,7 +332,7 @@ public final class Territory<P, R extends Region<P>> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		return this == obj || obj instanceof final Territory<?, ?> other && mRegions.equals(other.getRegions());
+		return this == obj || (obj instanceof final Territory<?, ?> other && mRegions.equals(other.getRegions()));
 	}
 
 	@Override
