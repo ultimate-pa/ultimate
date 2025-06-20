@@ -240,6 +240,9 @@ public class NaiveOwickiGries<L extends IAction, P> {
 
 		public Statistics(final ILogger logger) {
 			super(logger, null, OwickiGriesConstruction.class);
+
+			declareTimeTracker("Floyd-Hoare computation time", mFloydHoareTime);
+			declareTimeTracker("Floyd-Hoare validity check time", mFloydHoareValidityTime);
 		}
 
 		public void startFloydHoareComputation() {
