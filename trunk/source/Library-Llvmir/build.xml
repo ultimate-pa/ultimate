@@ -1,0 +1,26 @@
+<project name="LlvmirParser" default="generate" xmlns:ant="antlib:org.apache.tools.ant">
+
+  <property name="src.dir" location="src/de/uni_freiburg/informatik/ultimate/lib/llvmir"/>
+  <property name="grammar.file" location="${src.dir}/LLVMIR.g4"/>
+  <property name="output.dir" location="${src.dir}"/>
+
+  <!-- Generate Llvmir parser and lexer with the antlr parser generator -->
+  <target name="generate" description="Generate ANTLR parser and lexer code">
+  	<java classname="org.antlr.v4.Tool"
+  	          fork="true"
+  	          failonerror="true"
+  	          classpath="lib/antlr-4.13.2-complete.jar">
+  	      <arg value="-o"/>
+  	      <arg value="${output.dir}"/>
+  	      <arg value="${grammar.file}"/>
+  	    </java>
+  	
+  	<!-- Place the package declaration in the generated files -->
+  	<replace dir="src/de/uni_freiburg/informatik/ultimate/lib/llvmir" includes="*.java">
+  	        <replacetoken><![CDATA[// Generated from]]></replacetoken>
+  	        <replacevalue><![CDATA[package de.uni_freiburg.informatik.ultimate.lib.llvmir;
+
+// Generated from]]></replacevalue>
+  	    </replace>
+  </target>
+</project>
