@@ -83,18 +83,8 @@ Es werden im Laufe des StuPro mind. 3 Plugins erstellt. Zwei davon sind Parser (
 ##### Mögliche Probleme
 Es könnte sein, dass im späteren Verlauf ein weiteres Projekt erstellt werden sollte, in dem alles nötige für ParseTree ist (Library-Llvmir; siehe andere Library Projekte).
 Zunächst wird allerdings alles in den LLVM-IR Parser gepackt.
+Mitlerweile wurde ein refactoring durchgeführt.
 
-##### ToDos
-**Vorbereitungen:**
-- Nachschauen wie das übergeben von ParseTrees in ANTLR funktioniert.
-- Nachschauen ob es möglich ist Clang und die Optimierungen ohne das erstellen von tmp Dateien auszuführen (Erster Ansatz: Standard Input)
-
-**Implementierung:**
-- Branch erstellen
-- Projekt erstellen
-- Implementieren des LLVM-IR Parsers beginnen
-
-----
 # Dokumentation des Integrationsprozesses
 #### Vorbereitung
 **Nachschauen wie das übergeben von ParseTrees in ANTLR funktioniert:**
@@ -178,7 +168,7 @@ kann mit dem optimierten Code weiter gearbeitet werden ohne in jemals zwischenzu
 #### Implementierung
 Branch: wip/pr/antlr_integration
 
-Über die build.xml wird mit der `lib/antlr-4.13.2-complete.jar` der LLVMIR Lexer und Parser, sowie die weiterhin relevanten dateien, erzeugt und im `src/de/uni_freiburg/informatik/ultimate/llvmir/parser` Verzeichnis abgelegt. Zudem wird jeder `.java` die benötigte package Signatur hinzugefügt.
+Über die build.xml in Library-Llvmir wird mit der `lib/antlr-4.13.2-complete.jar` der LLVMIR Lexer und Parser, sowie die weiterhin relevanten dateien, erzeugt und im `src/de/uni_freiburg/informatik/ultimate/lib/llvmir` Verzeichnis abgelegt. Zudem wird jeder `.java` die benötigte package Signatur hinzugefügt.
 
 In `UltimateLlvmirParser` wird die hauptfunktionalität des Plugins implementiert, d.h. die Übersetzung der `.ll`-Datei in einen ParseTree. Dieser muss als `IElement` übergeben werden, weshalb die Klasse `ParseTreeElementWrapper` benötigt wird. Der ParseTree wird darin als Feld gespeichert. Um die Informationen Abzufragen muss ein Cast verwendet werden.
 

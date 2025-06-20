@@ -1,3 +1,12 @@
+ANTLR Parser Generator for Java
+=============================
+
+ANTLR is a Parser Generator for Java.
+In this Project, it was used to generate an LLVMIR Parser, including a Listener needed for further building a Boogie AST from the generated LLVMIR ParseTree.
+
+Copyright Notice, License, and Disclaimer
+-----------------------------------------
+
 Copyright (c) 2012-2022 The ANTLR Project. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
