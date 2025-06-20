@@ -300,6 +300,7 @@
 		<module>../Library-Jung</module>
 		<module>../Library-KInduction</module>
 		<module>../Library-LassoRanker</module>
+		<module>../Library-Llvmir</module>
 		<module>../Library-MCR</module>
 		<module>../Library-ModelCheckerUtils</module>
 		<module>../Library-MSOD</module>
@@ -317,6 +318,7 @@
 		<module>../Library-UltimateModel</module>
 		<module>../Library-UltimateUtil</module>
 		<module>../LTL2aut</module>
+		<module>../LlvmirParser</module>
 		<module>../PeaExampleGenerator</module>
 		<module>../PEAtoBoogie</module>
 		<module>../RCFGBuilder</module>
