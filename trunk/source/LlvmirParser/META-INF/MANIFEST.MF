@@ -9,5 +9,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.llvmir.parser
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
+ de.uni_freiburg.informatik.ultimate.lib.llvmir,
  org.antlr.antlr4-runtime
 Automatic-Module-Name: de.uni.freiburg.informatik.ultimate.llvmir.parser
