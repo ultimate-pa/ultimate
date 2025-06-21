@@ -132,7 +132,7 @@ public class UltimateLlvmirParser implements ISource {
 	 * @throws InterruptedException if the optimization process is interrupted
 	 */
 	private static File getOptFile(final File file) throws IOException, InterruptedException {
-		return LlvmirOptPipeline.optLlFile(file);
+		return LlvmirOptimizer.optLlFile(file);
 	}
 
 	/**

@@ -172,4 +172,4 @@ Branch: wip/pr/antlr_integration
 
 In `UltimateLlvmirParser` wird die hauptfunktionalität des Plugins implementiert, d.h. die Übersetzung der `.ll`-Datei in einen ParseTree. Dieser muss als `IElement` übergeben werden, weshalb die Klasse `ParseTreeElementWrapper` benötigt wird. Der ParseTree wird darin als Feld gespeichert. Um die Informationen Abzufragen muss ein Cast verwendet werden.
 
-In `LlvmirOptPipeline` werden die Optimierung durchgeführt, die im Abschnitt `Vorbereitung` erklärt werden. Dabei wurde die entworfene Klasse abgeändert, um `File` Objekte zu verarbeiten.
+In `LlvmirOptimizer` werden die Optimierung durchgeführt, die im Abschnitt `Vorbereitung` erklärt werden. Dabei wurde die entworfene Klasse abgeändert, um `File` Objekte zu verarbeiten.

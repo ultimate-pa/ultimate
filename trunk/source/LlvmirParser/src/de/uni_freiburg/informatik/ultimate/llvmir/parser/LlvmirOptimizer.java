@@ -35,8 +35,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
-public class LlvmirOptPipeline {
-	public static File optLlFile(final File file) throws IOException, InterruptedException {
+public class LlvmirOptimizer {
+	protected static File optLlFile(final File file) throws IOException, InterruptedException {
 		// clean the .ll file by removing "optnone" attributes
 		final ByteArrayOutputStream cleanedLl = new ByteArrayOutputStream();
 		try (BufferedReader reader = new BufferedReader(new FileReader(file));
