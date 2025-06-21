@@ -366,6 +366,7 @@
 		<module>../Library-UltimateUtil</module>
 		<module>../LTL2aut</module>
 		<module>../LlvmirParser</module>
+		<module>../LlvmirToBoogie</module>
 		<module>../PeaExampleGenerator</module>
 		<module>../PEAtoBoogie</module>
 		<module>../RCFGBuilder</module>
