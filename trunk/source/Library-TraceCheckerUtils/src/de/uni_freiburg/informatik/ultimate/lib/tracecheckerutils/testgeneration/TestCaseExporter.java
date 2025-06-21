@@ -1,0 +1,577 @@
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.testgeneration;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
+import org.w3c.dom.Element;
+
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
+public class TestCaseExporter {
+
+	private static final boolean WRITE_TESTCASES_TO_FILE = true;
+	LinkedHashSet<TestVector> tvSet = new LinkedHashSet<>();
+	private static TestCaseExporter instance = null;
+	private String mDirName = null;
+	private boolean foundMakefileAndDir = false;
+	private String pathToDir;
+
+	/*
+	 * Export Tests in:
+	 * 1: one directory for all programs
+	 * 2: one directory for each program
+	 */
+	public void exportTests(final TestVector testV, final String i, final boolean allInOneFile) throws Exception {
+
+		FileOutputStream output;
+		final String name = "testcase" + i;
+		final boolean noDirectories = false;
+		final boolean allInOneDirecotry = true;
+		if (noDirectories) {
+			output = new FileOutputStream(name + ".xml");
+		} else if (allInOneDirecotry) {
+			Files.createDirectories(Paths.get("test-suite"));
+			output = new FileOutputStream("test-suite/" + name + ".xml");
+		} else { // testsuites directory and subdirectory for every program that contains the tests
+			if (!foundMakefileAndDir) {
+				findMakeFileAndDir();
+			}
+			if (mDirName == null) {
+				Files.createDirectories(Paths.get("testsuites"));
+
+				output = new FileOutputStream("testsuites/" + name + ".xml");
+			} else {
+				Files.createDirectories(Paths.get(mDirName));
+				output = new FileOutputStream("testsuites/" + name + ".xml");
+			}
+		}
+		writeXml(createXML(testV.values), output);
+		if (testV.need64Bit) {
+			output = new FileOutputStream("test-suite/" + name + "64bit" + ".xml");
+			writeXml(createXML(testV.values64Bit), output);
+		}
+	}
+
+	public static final TestCaseExporter getInstance() {
+		if (instance == null) {
+			instance = new TestCaseExporter();
+		}
+		return instance;
+	}
+
+	// TODO split exportation and creation of the testvectors. Means
+	final Document createXML(final ArrayList<String> inputs) throws ParserConfigurationException {
+
+		// instance of a DocumentBuilderFactory
+		final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+
+		// use factory to get an instance of document builder
+		final DocumentBuilder db = dbf.newDocumentBuilder();
+		// create instance of DOM
+		final Document dom = db.newDocument();
+
+		// create the root element
+		final Element rootEle = dom.createElement("testcase");
+
+		// create data elements and place them under root
+
+		for (final String valueString : inputs) {
+			if (valueString != null) {
+				final Element element = dom.createElement("input");
+				element.appendChild(dom.createTextNode(valueString));
+				rootEle.appendChild(element);
+			}
+		}
+
+		dom.appendChild(rootEle);
+		return dom;
+
+	}
+
+	// write doc to output stream
+	private static void writeXml(final Document doc, final OutputStream output) throws TransformerException {
+
+		final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		final Transformer transformer = transformerFactory.newTransformer();
+		// pretty print XML
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		final DOMImplementation domImpl = doc.getImplementation();
+		final DocumentType doctype = domImpl.createDocumentType("testcase",
+				"+//IDN sosy-lab.org//DTD test-format testcase 1.1//EN",
+				"https://sosy-lab.org/test-format/testcase-1.1.dtd");
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_PUBLIC, doctype.getPublicId());
+		transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, doctype.getSystemId());
+		final DOMSource source = new DOMSource(doc);
+		final StreamResult result = new StreamResult(output);
+
+		transformer.transform(source, result);
+
+	}
+
+	public void addTvToSet(final TestVector tv) {
+		tvSet.add(tv);
+	}
+
+	/*
+	 * Can be Used to create one Dir for each program
+	 */
+	public void findMakeFileAndDir() {
+		final File dir = new File("tests");
+		final File[] files = dir.listFiles();
+		final File lastModified = Arrays.stream(files).filter(File::isDirectory)
+				.max(Comparator.comparing(File::lastModified)).orElse(null);
+		mDirName = lastModified.toString();
+		foundMakefileAndDir = true;
+	}
+
+}
+
+class TestVector {
+
+	final ArrayList<String> values = new ArrayList<>();
+	final ArrayList<String> values64Bit = new ArrayList<>();
+	final ArrayList<String> valuesWithNegativeIndices = new ArrayList<>();
+	final ArrayList<String> valuesWithPositiveIndices = new ArrayList<>();
+	int countNonDets = 0;
+	boolean need64Bit = false;
+
+	public void addValueAssignment(final Term value, final int position, final String type) {
+		if (position < 0) {
+			throw new UnsupportedOperationException("Negative Position fo NonDet in SSA");
+			// addNegativPositionToLinkedList(valuesWithNegativeIndices, position, value);
+		} else {
+			countNonDets += 1;
+
+			addToLinkedList(position, value, type);
+			if (need64Bit) {
+				addToLinkedList64Bit(position, value, type);
+			}
+
+			// addToLinkedList(valuesWithPositiveIndices, position, value);
+		}
+
+	}
+
+	// TODO singed bit not considered in value bounds!!!
+	private void addToLinkedList64Bit(final Integer index, final Term valueTerm, final String type) {
+		need64Bit = false;
+		if (values64Bit.size() <= index) {
+			for (int i = values64Bit.size(); i <= index; i = i + 1) {
+				values64Bit.add(null);
+			}
+		}
+		if (valueTerm == null) {
+			values64Bit.set(index, "0");
+			return;
+		}
+		String valueInRange = null;
+		switch (valueTerm.getSort().getName()) {
+		case SmtSortUtils.BITVECTOR_SORT: {
+			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
+			m.find();
+			valueInRange = m.group(1);
+			if ((type.equals("int") || type.equals("long"))
+					&& (SmtSortUtils.getBitvectorLength(valueTerm.getSort()) <= 64)) {
+				final BigInteger value = new BigInteger(valueInRange);
+				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
+					// wenn 2147483648 dann -2,147,483,648
+					final BigInteger newValue = new BigInteger("-9223372036854775807")
+							.add((value.subtract(new BigInteger("9223372036854775808"))));
+
+					valueInRange = String.valueOf(newValue);
+				}
+			}
+			break;
+		}
+		case SmtSortUtils.REAL_SORT: {
+			if (type.equals("float") || type.equals("double")) {
+				valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+
+				break;
+			}
+		}
+		case SmtSortUtils.INT_SORT: {
+
+			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+			final BigInteger value = new BigInteger(valueInRange);
+
+			switch (type) {
+			case "short": {
+				// -32,768 to 32,767
+				if (value.compareTo(new BigInteger("32767")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-32767")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "ushort": {
+				// 0 to 65,535
+				final BigInteger newValue = value.mod(new BigInteger("65536"));
+				valueInRange = String.valueOf(newValue);
+
+				break;
+			}
+			case "int": {
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-2147483647")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "long": {
+				if (value.compareTo(new BigInteger("9223372036854775807")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-9223372036854775807")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("9223372036854775808"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "uint": {
+				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "ulong": {
+				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "ulonglong": {
+				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "char": {
+				if (value.compareTo(new BigInteger("127")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-127")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue.negate());
+				}
+				break;
+			}
+			case "uchar": {
+				final BigInteger newValue = value.mod(new BigInteger("256"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			default:
+			}
+			break;
+		}
+
+		default: {
+			throw new AssertionError("Unexpected Sort For Test Output");
+		}
+		}
+
+		values64Bit.set(index, valueInRange);
+
+	}
+
+	private void addToLinkedList(final Integer index, final Term valueTerm, final String type) {
+
+		if (values.size() <= index) {
+			for (int i = values.size(); i <= index; i = i + 1) {
+				values.add(null);
+			}
+		}
+		if (valueTerm == null) {
+			values.set(index, "0");
+			return;
+		}
+		String valueInRange = null;
+		switch (valueTerm.getSort().getName()) {
+		case SmtSortUtils.FLOATINGPOINT_SORT: {
+			if (type.equals("float")) {
+				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
+					assert valueTerm instanceof ApplicationTerm;
+					// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+					final String bitString = valueTerm.toStringDirect();
+					final String floatAsBitString = bitString.replaceAll("[^01]", "");
+
+					// String sign = cva.getParameters()[0].toStringDirect();
+					// sign = sign.replaceAll("[^01]", "");
+					//
+					// String exponent = cva.getParameters()[1].toStringDirect();
+					// exponent = exponent.replaceAll("[^01]", "");
+					//
+					// String significant = cva.getParameters()[2].toStringDirect();
+					// significant = significant.replaceAll("[^01]", "");
+					// final String floatAsBitString = sign + exponent + significant;
+					// final int intBits = Integer.parseInt(floatAsBitString, 2);
+					final int intBits = new BigInteger(floatAsBitString, 2).intValue();
+					final float asFloat = Float.intBitsToFloat(intBits);
+					valueInRange = asFloat + "";
+					break;
+				} else {
+					if (valueTerm.toStringDirect().contains("+oo")) {
+						valueInRange = Float.POSITIVE_INFINITY + "";
+					} else if (valueTerm.toStringDirect().contains("-oo")) {
+						valueInRange = Float.NEGATIVE_INFINITY + "";
+					} else if (valueTerm.toStringDirect().contains("NaN")) {
+						valueInRange = Float.NaN + "";
+					} else if (valueTerm.toStringDirect().contains("zero")) {
+						valueInRange = "0";
+					} else {
+						throw new AssertionError("Unexpected Sort For Output Type");
+					}
+					break;
+				}
+			} else if (type.equals("double")) {
+				assert valueTerm instanceof ApplicationTerm;
+				if (((ApplicationTerm) valueTerm).getParameters().length == 3) {
+					final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+					String sign = cva.getParameters()[0].toStringDirect();
+					sign = sign.replaceAll("[^01]", "");
+
+					String exponent = cva.getParameters()[1].toStringDirect();
+					exponent = exponent.replaceAll("[^01]", "");
+
+					String significant = cva.getParameters()[2].toStringDirect();
+					significant = significant.replaceAll("[^01]", "");
+					final String floatAsBitString = sign + exponent + significant;
+					final long longBits = (new BigInteger(floatAsBitString, 2)).longValue();
+					final double asDouble = Double.longBitsToDouble(longBits);
+					valueInRange = asDouble + "";
+					break;
+				} else {
+					if (valueTerm.toStringDirect().contains("+oo")) {
+						valueInRange = Double.POSITIVE_INFINITY + "";
+					} else if (valueTerm.toStringDirect().contains("-oo")) {
+						valueInRange = Double.NEGATIVE_INFINITY + "";
+					} else if (valueTerm.toStringDirect().contains("NaN")) {
+						valueInRange = Double.NaN + "";
+					} else if (valueTerm.toStringDirect().contains("zero")) {
+						valueInRange = "0";
+					} else {
+						throw new AssertionError("Unexpected Sort For Output Type");
+					}
+					break;
+				}
+			}
+			// else {
+			// throw new AssertionError("Unexpected Sort For Output Type" + type);
+			// }
+
+		}
+		case SmtSortUtils.BITVECTOR_SORT: {
+			if (valueTerm.toStringDirect().startsWith("(fp")
+					&& (((ApplicationTerm) valueTerm).getParameters().length == 3)) {
+				assert valueTerm instanceof ApplicationTerm;
+				// final ApplicationTerm cva = (ApplicationTerm) valueTerm;
+				final String bitString = valueTerm.toStringDirect();
+				final String floatAsBitString = bitString.replaceAll("[^01]", "");
+
+				// String sign = cva.getParameters()[0].toStringDirect();
+				// sign = sign.replaceAll("[^01]", "");
+				//
+				// String exponent = cva.getParameters()[1].toStringDirect();
+				// exponent = exponent.replaceAll("[^01]", "");
+				//
+				// String significant = cva.getParameters()[2].toStringDirect();
+				// significant = significant.replaceAll("[^01]", "");
+				// final String floatAsBitString = sign + exponent + significant;
+				// final int intBits = Integer.parseInt(floatAsBitString, 2);
+				final int intBits = new BigInteger(floatAsBitString, 2).intValue();
+				final float myFloat = Float.intBitsToFloat(intBits);
+
+				valueInRange = myFloat + "";
+				break;
+			}
+
+			final Matcher m = Pattern.compile("\\(_\\sbv(\\d+)\\s\\d+\\)").matcher(valueTerm.toStringDirect());
+			m.find();
+			valueInRange = m.group(1);
+			if (type.equals("int") || type.equals("long")) { // if signed
+				final BigInteger value = new BigInteger(valueInRange);
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					// wenn 2147483648 dann -2,147,483,648
+					final BigInteger newValue = new BigInteger("-2147483648")
+							.add((value.subtract(new BigInteger("2147483648"))));
+					valueInRange = String.valueOf(newValue);
+				}
+				if (SmtSortUtils.getBitvectorLength(valueTerm.getSort()) <= 32) {
+				} else {
+					need64Bit = true;
+				}
+			} else if (type.equals("char")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				if (value.compareTo(new BigInteger("32767")) == 1) {
+					final BigInteger newValue = new BigInteger("-32768").add((value.subtract(new BigInteger("32768"))));
+					valueInRange = String.valueOf(newValue);
+				}
+			} else if (type.equals("short")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				if (value.compareTo(new BigInteger("127")) == 1) {
+					final BigInteger newValue = new BigInteger("-128").add((value.subtract(new BigInteger("128"))));
+					valueInRange = String.valueOf(newValue);
+				}
+			} else if (type.equals("bool")) {
+				final BigInteger value = new BigInteger(valueInRange);
+				if (value.equals(BigInteger.ZERO)) {
+					valueInRange = String.valueOf("0");
+				} else {
+					valueInRange = String.valueOf("1");
+				}
+				// final BigInteger value = new BigInteger(valueInRange);
+				// final BigInteger newValue = value.mod(new BigInteger("2"));
+				// valueInRange = String.valueOf(newValue);
+			}
+			break;
+		}
+		case SmtSortUtils.REAL_SORT: {
+			if (type.equals("float") || type.equals("double")) {
+				valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+				break;
+			}
+		}
+		case SmtSortUtils.INT_SORT: {
+			valueInRange = valueTerm.toStringDirect().replaceAll("[\\(\\)\\s]", "");
+			if (valueInRange.contains(".")) {
+				valueInRange = valueInRange.split("\\.")[0];
+			}
+			final BigInteger value = new BigInteger(valueInRange);
+			if (type.equals("long")) {
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					need64Bit = true;
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
+					need64Bit = true;
+				}
+			} else if (type.equals("ulong") && (value.compareTo(new BigInteger("4294967295")) == 1)) {
+				need64Bit = true;
+			}
+
+			switch (type) {
+			case "bool": {
+				if (value.equals(BigInteger.ZERO)) {
+					valueInRange = String.valueOf("0");
+				} else {
+					valueInRange = String.valueOf("1");
+				}
+				// final BigInteger newValue = value.mod(new BigInteger("2"));
+				// valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "short": {
+				// -32,768 to 32,767
+				if (value.compareTo(new BigInteger("32767")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-32768")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("32768"));
+					// valueInRange = String.valueOf(newValue.negate());
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "ushort": {
+				// 0 to 65,535
+				final BigInteger newValue = value.mod(new BigInteger("65536"));
+				valueInRange = String.valueOf(newValue);
+
+				break;
+			}
+			case "int":
+			case "long": {
+				if (value.compareTo(new BigInteger("2147483647")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-2147483648")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("2147483648"));
+					// valueInRange = String.valueOf(newValue.negate());
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "uint":
+			case "ulong": {
+				final BigInteger newValue = value.mod(new BigInteger("4294967296"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "ulonglong": {
+				final BigInteger newValue = value.mod(new BigInteger("18446744073709551616"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			case "char": {
+				if (value.compareTo(new BigInteger("127")) == 1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					valueInRange = String.valueOf(newValue);
+				} else if (value.compareTo(new BigInteger("-128")) == -1) {
+					final BigInteger newValue = value.mod(new BigInteger("128"));
+					// valueInRange = String.valueOf(newValue.negate());
+					valueInRange = String.valueOf(newValue);
+				}
+				break;
+			}
+			case "uchar": {
+				final BigInteger newValue = value.mod(new BigInteger("256"));
+				valueInRange = String.valueOf(newValue);
+				break;
+			}
+			default:
+
+			}
+			break;
+		}
+
+		default: {
+			throw new AssertionError("Unexpected Sort For Test Output");
+		}
+		}
+
+		values.set(index, valueInRange);
+
+	}
+
+	private void addNegativPositionToLinkedList(final LinkedList<Term> testVector, final Integer index, final Term t) {
+		assert index < 0;
+		testVector.add(t);
+	}
+
+	public boolean isEmpty() {
+		return values.isEmpty();
+	}
+
+	public void addValuesWithNegativeIndex() {
+		values.addAll(valuesWithNegativeIndices);
+		values.addAll(valuesWithPositiveIndices);
+	}
+}

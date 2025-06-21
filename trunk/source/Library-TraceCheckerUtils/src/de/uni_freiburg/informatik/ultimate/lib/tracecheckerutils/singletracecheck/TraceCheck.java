@@ -62,11 +62,13 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.testgeneration.TraceCheckTestGeneration;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -350,10 +352,17 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceCheck<L> tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
+			final TraceCheck<L> tc;
+			if (RcfgPreferenceInitializer.getPreferences(mServices)
+					.getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
+				tc =new TraceCheckTestGeneration<>(mNestedFormulas.getPrecondition(),
+						mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
+						AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
+			} else {
+			tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
 					mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-
+			}
 			switch (tc.isCorrect()) {
 			case SAT:
 				return tc.getRcfgProgramExecution();
