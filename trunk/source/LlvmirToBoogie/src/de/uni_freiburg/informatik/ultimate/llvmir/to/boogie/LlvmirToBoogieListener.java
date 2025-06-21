@@ -29,6 +29,6 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseListener;
 
-public class LlvmirToBoogieTranlator extends LLVMIRBaseListener {
+public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 
 }
