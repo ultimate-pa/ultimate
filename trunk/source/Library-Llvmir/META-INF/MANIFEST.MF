@@ -3,7 +3,8 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-Llvmir
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.llvmir
 Bundle-Version: 0.3.0
-Require-Bundle: org.antlr.antlr4-runtime
+Require-Bundle: de.uni_freiburg.informatik.ultimate.core,
+ org.antlr.antlr4-runtime
 Automatic-Module-Name: Library.Llvmir
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Export-Package: de.uni_freiburg.informatik.ultimate.lib.llvmir

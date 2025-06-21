@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRLexer;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
+import de.uni_freiburg.informatik.ultimate.lib.llvmir.ParseTreeElementWrapper;
 
 public class UltimateLlvmirParser implements ISource {
 	protected String[] mFileTypes;
