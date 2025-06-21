@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.Activat
 public class IcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsBreakOnNondet;
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock;
 
 		public boolean isConcurrencySafe() {
 			switch (this) {

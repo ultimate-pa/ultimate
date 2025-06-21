@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum CodeBlockSize {
-		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock, SequenceOfStatementsBreakOnNondet;
+		SingleStatement, OneNontrivialStatement, SequenceOfStatements, LoopFreeBlock;
 
 		public boolean isConcurrencySafe() {
 			switch (this) {
@@ -51,7 +51,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				return true;
 			case SequenceOfStatements:
 			case LoopFreeBlock:
-			case SequenceOfStatementsBreakOnNondet:
 				return false;
 			default:
 				throw new IllegalArgumentException(
@@ -125,7 +124,6 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final boolean DEF_FUTURE_LIVE = true;
 	private static final String DESC_FUTURE_LIVE =
 			"Remove from outVars the local (non-inparam) variables that are not future live. (We cannot remove global variables since they might be needed for our interprocedural proofs.)";
-	public static final String LABEL_TEST_GEN = "Test Case Generation";
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -162,7 +160,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH, DEF_DUMP_PATH, PreferenceType.Directory),
 				new UltimatePreferenceItem<>(LABEL_ADDITIONAL_SMT_OPTIONS, DEF_ADDITIONAL_SMT_OPTIONS,
 						PreferenceType.KeyValue),
-				new UltimatePreferenceItem<>(LABEL_TEST_GEN, false, PreferenceType.Boolean)
+
 		};
 	}
 

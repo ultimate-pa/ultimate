@@ -287,7 +287,6 @@ public class CfgBuilder {
 			break;
 		case SequenceOfStatements: // handled in ProcedureCfgBuilder
 		case OneNontrivialStatement:
-		case SequenceOfStatementsBreakOnNondet:
 		case SingleStatement:
 			final var internalMode = mCtxSwitchOnlyAtAtomicBoundaries && IcfgUtils.isConcurrent(mIcfg)
 					? InternalLbeMode.ALL_EXCEPT_ATOMIC_BOUNDARIES
@@ -1160,15 +1159,6 @@ public class CfgBuilder {
 				case SequenceOfStatements:
 					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
 					break;
-				case SequenceOfStatementsBreakOnNondet:
-					if ((st instanceof HavocStatement) && st.getPayload().toString().contains("__VERIFIER_nondet_")) {
-						endCurrentStatementSequence(st);
-						startNewStatementSequenceAndAddStatement(st);
-						endCurrentStatementSequence(st);
-						break;
-					}
-					addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
-					break;
 				case OneNontrivialStatement:
 					if (((StatementSequence) mCurrent).isTrivial() || StatementSequence.isAssumeTrueStatement(st)) {
 						addStatementToStatementSequenceThatIsCurrentlyBuilt(st);
@@ -1337,8 +1327,7 @@ public class CfgBuilder {
 			final boolean procedureHasImplementation = mBoogieDeclarations.getProcImplementation().containsKey(callee);
 			final boolean nonFreeRequiresIsEmpty = requiresNonFree == null || requiresNonFree.isEmpty();
 
-			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock
-					|| mCodeBlockSize == CodeBlockSize.SequenceOfStatementsBreakOnNondet)
+			if ((mCodeBlockSize == CodeBlockSize.SequenceOfStatements || mCodeBlockSize == CodeBlockSize.LoopFreeBlock)
 					&& !procedureHasImplementation && nonFreeRequiresIsEmpty) {
 				if (mCurrent instanceof BoogieIcfgLocation) {
 					startNewStatementSequenceAndAddStatement(st);
