@@ -2,7 +2,7 @@
  * Copyright (C) 2025 Peter Ritter
  *
  * This file is part of the ULTIMATE LlvmirToBoogie plug-in.
- * It is used to monitor the parsing of LLVM IR files and to translate them into Boogie code.
+ * It is used to monitor the parsing of LLVM IR files and to translate them into a Boogie AST.
  *
  * The ULTIMATE LlvmirToBoogie plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
