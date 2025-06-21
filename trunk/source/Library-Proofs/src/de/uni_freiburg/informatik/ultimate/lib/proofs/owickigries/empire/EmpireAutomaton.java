@@ -159,21 +159,22 @@ public class EmpireAutomaton<L, P> implements IEmpireAutomaton<L, P, EmpireAutom
 
 	@Override
 	public Set<Transition<L, P>> lettersInternal(final State<L, P> state) {
-		// TODO Consider whether we can efficiently override this method
-		return IEmpireAutomaton.super.lettersInternal(state);
+		final var places = state.territory().getPlaces();
+		return mNet.getSuccessorTransitionProviders(places, places).stream().flatMap(p -> p.getTransitions().stream())
+				.collect(Collectors.toSet());
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<Transition<L, P>, State<L, P>>>
 			internalSuccessors(final State<L, P> state, final Transition<L, P> letter) {
-		// compute successor law once and pass it to other methods, to improve performance
-		final IPredicate successorLaw = getSuccessorLaw(state.law(), letter);
-
 		// step 1: see if letter should lead to any successor at all or can be optimized away
 		// (iterate over alphabet and see which other transitions are enabled in the territory)
 		if (!state.territory().enables(letter)) {
 			return List.of();
 		}
+
+		// compute successor law once and pass it to other methods, to improve performance
+		final IPredicate successorLaw = getSuccessorLaw(state.law(), letter);
 		if (isExtendingTransition(state.law(), letter, successorLaw) && isCycle(state, letter, successorLaw)) {
 			return List.of(new OutgoingInternalTransition<>(letter, state));
 		}
