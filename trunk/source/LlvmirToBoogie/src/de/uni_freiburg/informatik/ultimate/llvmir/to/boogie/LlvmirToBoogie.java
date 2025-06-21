@@ -26,6 +26,7 @@
 
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
@@ -35,71 +36,63 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
 public class LlvmirToBoogie implements ITool {
+	private LlvmirToBoogieObserver mObserver;
+	private ModelType mInputDefinition;
+	private IUltimateServiceProvider mServices;
 
 	@Override
-	public void setServices(final IUltimateServiceProvider services) {
-		// TODO Auto-generated method stub
+	public String getPluginName() {
+		return Activator.PLUGIN_NAME;
+	}
 
+	@Override
+	public String getPluginID() {
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
+		mObserver = new LlvmirToBoogieObserver(mServices);
+	}
+
+	@Override
+	public ModelQuery getModelQuery() {
+		return ModelQuery.SOURCE;
+	}
+
+	@Override
+	public List<String> getDesiredToolIds() {
+		return Collections.emptyList();
+	}
+
+	@Override
+	public void setInputDefinition(final ModelType graphType) {
+		mInputDefinition = graphType;
+	}
+
+	@Override
+	public List<IObserver> getObservers() {
+		return Collections.singletonList(mObserver);
+	}
+
+	@Override
+	public boolean isGuiRequired() {
+		return false;
+	}
+
+	@Override
+	public IPreferenceInitializer getPreferences() {
+		return null;
+	}
+
+	@Override
+	public void setServices(final IUltimateServiceProvider services) {
+		mServices = services;
 
 	}
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		// no cleanup needed
 	}
-
-	@Override
-	public String getPluginName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getPluginID() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public IPreferenceInitializer getPreferences() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isGuiRequired() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public ModelQuery getModelQuery() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<String> getDesiredToolIds() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setInputDefinition(final ModelType graphType) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public List<IObserver> getObservers() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

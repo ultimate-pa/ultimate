@@ -26,11 +26,26 @@
 
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.llvmir.ParseTreeElementWrapper;
 
 public class LlvmirToBoogieObserver implements IUnmanagedObserver {
+
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+
+	public LlvmirToBoogieObserver(final IUltimateServiceProvider services) {
+		assert services != null;
+		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
@@ -53,8 +68,17 @@ public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-		// TODO Auto-generated method stub
+		if (!(root instanceof ParseTreeElementWrapper)) {
+			mLogger.error("Expected ParseTreeElementWrapper, but got " + root.getClass().getSimpleName());
+			return false;
+		}
+
+		final ParseTreeElementWrapper parseTreeElementWrapper = (ParseTreeElementWrapper) root;
+		final ParseTree tree = parseTreeElementWrapper.getParseTree();
+
+		ParseTreeWalker.DEFAULT.walk(new LlvmirToBoogieListener(), tree);
+
+		mLogger.info("Successfully processed the LLVM IR parse tree.");
 		return false;
 	}
-
 }
