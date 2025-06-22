@@ -23,7 +23,7 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
 		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
-		case "Split only at Guards" -> mHeuristicLocationAbstraction.computeMine();
+		case "Split only at Guards" -> mHeuristicLocationAbstraction.mutexSplitting();
 		case "Mutex Guard and Vars Splitting" -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		case "Mutex Guard and Vars Splitting no Cutoff" -> mHeuristicLocationAbstraction.mutexVarSplittingNoCutoff();
 		case "Fully precise" ->

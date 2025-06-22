@@ -47,10 +47,35 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
 	}
 
+	/*
+	 * Location-abstraction algorithm: Increment location-abstraction counter label at any location which contains a
+	 * potential mutex guard.
+	 */
+	public AbstractLocationMap<LOC> mutexSplitting() {
+		final AbstractLocationMap<LOC> x = new AbstractLocationMap<>(l -> {
+			final var outgoing = l.getOutgoingEdges();
+			final String sourceThread = l.getProcedure();
+			if (shouldDifferentiate(outgoing)) {
+				return getAndIncrementThreadLocationCounter(sourceThread);
+			}
+			return getThreadLocationCounter(sourceThread);
+		}, mIcfg.getProcedureEntryNodes());
+		return x;
+	}
+
+	/*
+	 * Location-abstraction algorithm: Increment location-abstraction counter label at any location which contains a
+	 * potential mutex guard, or any location which writes or reads a variable contained in a mutex guard, if it occurs
+	 * before a mutex guard.
+	 */
 	public AbstractLocationMap<LOC> mutexVarSplitting() {
 		return new AbstractLocationMap<>(this::mutexVarSplitFun, mIcfg.getProcedureEntryNodes());
 	}
 
+	/*
+	 * Location-abstraction algorithm: Increment location-abstraction counter label at any location which contains a
+	 * potential mutex guard, or any location which writes or reads a variable contained in a mutex guard.
+	 */
 	public AbstractLocationMap<LOC> mutexVarSplittingNoCutoff() {
 		return new AbstractLocationMap<>(this::mutexVarSplitFunNoCutoff, mIcfg.getProcedureEntryNodes());
 	}
@@ -63,29 +88,32 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return mMutexVarSplitMapWithExitMarked.get(loc);
 	}
 
+	private int getThreadLocationCounter(final String thread) {
+		return mPerThreadLocationCounterMap.getOrDefault(thread, 0);
+	}
+
+	private int getAndIncrementThreadLocationCounter(final String thread) {
+		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
+		mPerThreadLocationCounterMap.put(thread, counter + 1);
+		return counter;
+	}
+
 	private Map<LOC, Integer> broadMutexSplitting(final boolean respectAfterGuard) {
 		final Map<LOC, Integer> abstractLocationMapping = new HashMap<>();
 		final var mutexGuardToVarsMap = computeMutexVars();
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
 		for (final String thread : mEntryLocs.keySet()) {
 			boolean seenOneGuard = false;
-			final Set<LOC> seenGuards = new HashSet<>();
 			final var entryLoc = mEntryLocs.get(thread);
 			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
-				if (thread.equals("ULTIMATE.start")) {
-					abstractLocationMapping.put(loc, getThreadLocationCounter(thread));
-					continue;
-				}
 				if (mutexGuardToVarsMap.containsKey(loc)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 					if (!respectAfterGuard) {
 						seenOneGuard = true;
-//						seenGuards.add(loc);
 					}
-				} else if (!seenOneGuard
-						&& containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap, seenGuards)) {
+				} else if (!seenOneGuard && containsRelevantVar(loc.getOutgoingEdges(), mutexGuardToVarsMap)) {
 					abstractLocationMapping.put(loc, getAndIncrementThreadLocationCounter(thread));
 				} else {
 					abstractLocationMapping.put(loc, getThreadLocationCounter(thread));
@@ -95,14 +123,15 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return abstractLocationMapping;
 	}
 
+	/*
+	 * Computes for each location which contains an (assumed) mutex or similarily critical, flag-like location, the set
+	 * of Program variables used for the mutex.
+	 */
 	private Map<LOC, Set<IProgramVar>> computeMutexVars() {
 		final Set<IProgramVar> mutexVarsIProgramVarrs = new LinkedHashSet<>();
 		final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap = new HashMap<>();
 		final var mEntryLocs = mIcfg.getProcedureEntryNodes();
 		for (final LOC entryLoc : mEntryLocs.values()) {
-			if (entryLoc.getProcedure().equals("ULTIMATE.start")) {
-				continue;
-			}
 			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
@@ -122,10 +151,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	}
 
 	private boolean containsRelevantVar(final List<IcfgEdge> outgoing,
-			final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap, final Set<LOC> seenGuards) {
+			final Map<LOC, Set<IProgramVar>> mutexGuardToVarsMap) {
 		final var vars = outgoing.stream().flatMap(e -> e.getTransformula().getAssignedVars().stream())
 				.collect(Collectors.toSet());
-		return mutexGuardToVarsMap.entrySet().stream().filter(entry -> !seenGuards.contains(entry.getKey()))
+		return mutexGuardToVarsMap.entrySet().stream()
 				.anyMatch(entry -> entry.getValue().stream().anyMatch(vars::contains));
 	}
 
@@ -142,18 +171,10 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		return freeVars;
 	}
 
-	public AbstractLocationMap<LOC> computeMine() {
-		final AbstractLocationMap<LOC> x = new AbstractLocationMap<>(l -> {
-			final var outgoing = l.getOutgoingEdges();
-			final String sourceThread = l.getProcedure();
-			if (shouldDifferentiate(outgoing)) {
-				return getAndIncrementThreadLocationCounter(sourceThread);
-			}
-			return getThreadLocationCounter(sourceThread);
-		}, mIcfg.getProcedureEntryNodes());
-		return x;
-	}
-
+	/*
+	 * Computes if the outgoing edges of a location contain a guarded term of global variables. Used to look for
+	 * possible Mutex/ other critical locations.
+	 */
 	public boolean shouldDifferentiate(final List<IcfgEdge> outgoing) {
 		final var guards = outgoing.stream()
 				.map(e -> TransFormulaUtils.computeGuardTerm(mServices, mManagedScript, e.getTransformula(), false))
@@ -163,15 +184,4 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		final var globals = mGlobals.stream().map(v -> v.getTermVariable()).collect(Collectors.toSet());
 		return Arrays.stream(term.getFreeVars()).anyMatch(globals::contains);
 	}
-
-	private int getThreadLocationCounter(final String thread) {
-		return mPerThreadLocationCounterMap.getOrDefault(thread, 0);
-	}
-
-	private int getAndIncrementThreadLocationCounter(final String thread) {
-		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
-		mPerThreadLocationCounterMap.put(thread, counter + 1);
-		return counter;
-	}
-
 }
