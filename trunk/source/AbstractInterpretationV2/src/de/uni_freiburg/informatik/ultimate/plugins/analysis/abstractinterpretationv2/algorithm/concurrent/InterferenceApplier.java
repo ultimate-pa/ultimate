@@ -14,11 +14,12 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
-	private static int UNIQUEINT = 0;
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToDisjState(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferingState,
@@ -30,36 +31,45 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		if (targetState.isBottom() || interferingState.isBottom()) {
 			return null;
 		}
+
 		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> globalTargetState = targetState;
 		final Map<IProgramVarOrConst, IProgramVarOrConst> reverseRenamedMap = new HashMap<>();
+		/*
+		 * In the case of an interference interfering in a state of its own ownerThread, our local program variables
+		 * clash, and cannot be distinguished, but are variables of different threads with potentially different values.
+		 * The interference computation needs the local vars of the prestate of the interference, since the transition
+		 * might contain a local variable of that prestate, and we need the value of that var as it was during the
+		 * creation of the interference.
+		 *
+		 * This is why we have to rename the local vars of the interfered state while computing the interference
+		 * application, so they dont clash or get lost, and later rename them back, and toss away the prestate local
+		 * vars.
+		 */
 		if (isSelfInterfering) {
-			if (!cfg.getCfgSmtToolkit().getManagedScript().isLocked()) {
-				cfg.getCfgSmtToolkit().getManagedScript().lock(this);
-			}
-			final Collection<ILocalProgramVar> locals1 = cfg.getCfgSmtToolkit().getSymbolTable()
+			final Collection<ILocalProgramVar> locals = cfg.getCfgSmtToolkit().getSymbolTable()
 					.getLocals(action.getPrecedingProcedure());
-			final Collection<IProgramVarOrConst> locals = new HashSet<>(locals1);
-			for (final IProgramVarOrConst v : locals) {
-				final var newVar = ProgramVarUtils.constructLocalProgramVar(v.getGloballyUniqueId() + UNIQUEINT++ + "'",
-						action.getPrecedingProcedure(), v.getSort(), cfg.getCfgSmtToolkit().getManagedScript(), this);
+			final Collection<IProgramVarOrConst> progVarLocals = new HashSet<>(locals);
+			for (final IProgramVarOrConst v : progVarLocals) {
+				final var newVar = new LocalProgramVarDummy();
 				reverseRenamedMap.put(newVar, v);
 				globalTargetState = globalTargetState.renameVariable(v, newVar);
 			}
 		} else {
 			globalTargetState = targetState;
 		}
-		// Add local variables to both states to be able to intersect
+
+		/*
+		 * Add local variables to both states to be able to intersect. This is necessary since our interference
+		 * transition might contain local variables of the interfering thread.
+		 */
 		final var adjustedTarget = adjustStateForIntersection(globalTargetState, interferingState, maxSize);
 		final var adjustedInterferer = adjustStateForIntersection(interferingState, globalTargetState, maxSize);
 
 		final var intersectionState = adjustedTarget.intersect(adjustedInterferer);
 
-		// throw out false states from intersection
+		// Throw out false states from intersection
 		final var filtered = filterStates(intersectionState, maxSize);
-		if (filtered.getStates().size() == 0 || filtered.isBottom()) {
-			if (cfg.getCfgSmtToolkit().getManagedScript().isLocked()) {
-				cfg.getCfgSmtToolkit().getManagedScript().unlock(this);
-			}
+		if (filtered.getStates().isEmpty() || filtered.isBottom()) {
 			return null;
 		}
 		// postop
@@ -67,10 +77,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		GuardedInterferenceDomain.postoperatorCalls++;
 
 		// TODO: sound?
-		if (postState.isEmpty() || postState.isBottom()) {
-			if (cfg.getCfgSmtToolkit().getManagedScript().isLocked()) {
-				cfg.getCfgSmtToolkit().getManagedScript().unlock(this);
-			}
+		if (postState.getStates().isEmpty() || postState.isBottom()) {
 			return null;
 		}
 		// remove local variables of other state we added earlier
@@ -79,12 +86,13 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		if (!missingLocals.isEmpty()) {
 			postState = postState.removeVariables(missingLocals);
 		}
+		/*
+		 * Rename our old local program variables, to get the real state of our local variables back. (which cannot
+		 * change based on an interference, local vars are not accessible).
+		 */
 		if (isSelfInterfering) {
 			for (final IProgramVarOrConst tempVar : reverseRenamedMap.keySet()) {
 				postState = postState.renameVariable(tempVar, reverseRenamedMap.get(tempVar));
-			}
-			if (cfg.getCfgSmtToolkit().getManagedScript().isLocked()) {
-				cfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 			}
 		}
 		return postState;
@@ -111,6 +119,44 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		return DisjunctiveAbstractState.createDisjunction(filterMe.getStates().stream().filter(
 				s -> s != null && !s.isBottom() && s.threadCounter() != null && s.abstractLocationState() != null)
 				.collect(Collectors.toSet()), maxSize);
+	}
+
+	private static class LocalProgramVarDummy implements ILocalProgramVar {
+
+		private static final long serialVersionUID = 1L;
+
+		public LocalProgramVarDummy() {
+		}
+
+		@Override
+		public String getIdentifier() {
+			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+		}
+
+		@Override
+		public String getProcedure() {
+			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+		}
+
+		@Override
+		public TermVariable getTermVariable() {
+			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+		}
+
+		@Override
+		public ApplicationTerm getDefaultConstant() {
+			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+		}
+
+		@Override
+		public ApplicationTerm getPrimedConstant() {
+			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+		}
+
+		@Override
+		public Term getTerm() {
+			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+		}
 	}
 
 }
