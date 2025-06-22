@@ -27,15 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
@@ -56,7 +59,8 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 	public SimpleErrorAutomatonBuilder(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction, final NestedWord<L> trace) {
+			final INestedWordAutomaton<L, IPredicate> abstraction, final IRun<L, ?> counterexample) {
+		final NestedWord<L> trace = (NestedWord<L>) counterexample.getWord();
 		mTruePredicate = predicateUnifier.getTruePredicate();
 		mResult = constructStraightLineAutomaton(services, csToolkit, predicateFactory, predicateUnifier,
 				predicateFactoryErrorAutomaton, NestedWordAutomataUtils.getVpAlphabet(abstraction), trace);
@@ -95,6 +99,21 @@ public class SimpleErrorAutomatonBuilder<L extends IIcfgTransition<?>> implement
 		});
 
 		return nwa;
+	}
+
+	public void addCoveredTestGoalToErrorAutomaton(final IPredicate testGoal,
+			final Iterable<IncomingInternalTransition<L, IPredicate>> incomingedge) {
+
+		final BasicPredicate errorStateAsBP =
+				new BasicPredicate(mResult.size(), testGoal.getFormula(), null, null, null);
+		mResult.addState(false, true, errorStateAsBP);
+
+		for (final IPredicate f : mResult.getInitialStates()) {
+			final L letter = incomingedge.iterator().next().getLetter();
+			mResult.addInternalTransition(f, letter, errorStateAsBP);
+			break;
+		}
+
 	}
 
 	@Override

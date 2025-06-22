@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.TaskCanceledException.UserDefinedLimit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.TestGoalAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.DangerInvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -301,6 +302,17 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 				mRefinementResult.getPredicateUnifier(), mCsToolkit, mSimplificationTechnique,
 				mIcfg.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata, mAbstraction,
 				getIteration());
+
+		for (final Object testGoal : mCounterexample.getStateSequence()) {
+			final ISLPredicate testGoalISL = (ISLPredicate) testGoal;
+			if (testGoalISL.getProgramPoint().getPayload().getAnnotations()
+					.containsKey(TestGoalAnnotation.class.getName())) {
+				// TODO check if sound
+					mErrorGeneralizationEngine.addCoveredTestGoalToErrorAutomaton((IPredicate) testGoal,
+							mAbstraction.internalPredecessors((IPredicate) testGoal));
+				}
+
+		}
 
 		mInterpolAutomaton = null;
 		final NestedWordAutomaton<L, IPredicate> resultBeforeEnhancement =
