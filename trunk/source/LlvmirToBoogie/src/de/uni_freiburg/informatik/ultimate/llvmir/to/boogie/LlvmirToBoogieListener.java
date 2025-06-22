@@ -27,8 +27,26 @@
 
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseListener;
 
 public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 
+	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
+	private final WrapperNode mResult;
+
+	public LlvmirToBoogieListener(final IUltimateServiceProvider services, final ILogger logger,
+			final WrapperNode result) {
+		assert services != null;
+		mServices = services;
+		mLogger = logger;
+		mResult = result;
+	}
+
+	public WrapperNode getResult() {
+		return mResult;
+	}
 }
