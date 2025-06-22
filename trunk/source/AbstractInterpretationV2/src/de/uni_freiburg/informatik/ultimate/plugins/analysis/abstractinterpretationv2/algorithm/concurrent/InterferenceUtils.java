@@ -44,13 +44,23 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 	public boolean stateIsInterferableBy(final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
 			final String ownerThread, final String interferenceThreadName,
 			final Interference<STATE, ACTION, LOC> interference, final AbstractLocationMap<LOC> abstractLocationMap) {
+		// Is thread of interference even active/forked
 		if (!interferingThreadIsActiveInState(ownerThread, interferenceThreadName, singleState)) {
 			return false;
 		}
-		if (GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
-				.get(interferenceThreadName) > 1) {
+		/*
+		 * Special check for self-interference, then locations have to be handled differently. ATM we ignore locations,
+		 * which is a sound, but unprecise, overapproximtation.
+		 */
+		if (ownerThread.equals(interferenceThreadName)
+				&& GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
+						.get(interferenceThreadName) > 1) {
 			return true;
 		}
+		/*
+		 * Check if interference comes from location which the interfered state thinks the interfering thread could be
+		 * in. If not, it cannot be interfered by it.
+		 */
 		final Set<Integer> possibleInterferingThreadLocations = singleState.abstractLocationState().getTracker()
 				.getLocationForThread(interferenceThreadName);
 		final int actualInterferenceThreadLocation = abstractLocationMap
@@ -64,11 +74,11 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 	private boolean interferingThreadIsActiveInState(final String ownerThread, final String interferenceThreadName,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
 		final var interferingThreadCount = singleState.threadCounter().getThreadInstances().get(interferenceThreadName);
-		// unforked threads cant interfere
+		// Unforked threads cant interfere
 		if (interferingThreadCount < 1) {
 			return false;
 		}
-		// self interference only when more than 1 threadinstance active
+		// Self interference only when more than 1 threadinstance active
 		if (interferingThreadCount < 2 && ownerThread.equals(interferenceThreadName)) {
 			return false;
 		}
