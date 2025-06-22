@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
@@ -40,6 +41,8 @@ public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
+
+	private WrapperNode mRootNode;
 
 	public LlvmirToBoogieObserver(final IUltimateServiceProvider services) {
 		assert services != null;
@@ -76,9 +79,15 @@ public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 		final ParseTreeElementWrapper parseTreeElementWrapper = (ParseTreeElementWrapper) root;
 		final ParseTree tree = parseTreeElementWrapper.getParseTree();
 
-		ParseTreeWalker.DEFAULT.walk(new LlvmirToBoogieListener(), tree);
+		final LlvmirToBoogieListener listener = new LlvmirToBoogieListener(mServices, mLogger, mRootNode);
+		ParseTreeWalker.DEFAULT.walk(listener, tree);
+		mRootNode = listener.getResult();
 
 		mLogger.info("Successfully processed the LLVM IR parse tree.");
 		return false;
+	}
+
+	public IElement getRoot() {
+		return mRootNode;
 	}
 }
