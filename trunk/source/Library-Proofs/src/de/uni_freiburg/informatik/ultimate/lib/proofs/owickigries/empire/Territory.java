@@ -25,7 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -55,8 +57,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public final class Territory<P, R extends Region<P>> {
 	private final ImmutableSet<R> mRegions;
 
-	// Cached set of places in the territory. This is computed on-demand in #getPlaces().
-	private ImmutableSet<P> mPlaces;
+	// Cached map of places in the territory to the respective region in the territory that contains the place.
+	// This is computed on-demand in #ensurePlaceMap().
+	private Map<P, R> mPlaceMap;
 
 	/**
 	 * Creates a new territory.
@@ -84,10 +87,8 @@ public final class Territory<P, R extends Region<P>> {
 	 * @return the set of all places in this territory, which corresponds to the union of its regions.
 	 */
 	public ImmutableSet<P> getPlaces() {
-		if (mPlaces == null) {
-			mPlaces = mRegions.stream().flatMap(r -> r.getPlaces().stream()).collect(ImmutableSet.collector());
-		}
-		return mPlaces;
+		ensurePlaceMap();
+		return ImmutableSet.of(mPlaceMap.keySet());
 	}
 
 	/**
@@ -98,7 +99,8 @@ public final class Territory<P, R extends Region<P>> {
 	 * @return {@code true} if one of the regions in this territory contains the place, {@code false} otherwise
 	 */
 	public boolean containsPlace(final P place) {
-		return getPlaces().contains(place);
+		ensurePlaceMap();
+		return mPlaceMap.containsKey(place);
 	}
 
 	/**
@@ -248,8 +250,9 @@ public final class Territory<P, R extends Region<P>> {
 	 * @return a stream of all transitions enabled in some marking represented by this territory
 	 */
 	public <L> Stream<Transition<L, P>> getEnabledTransitions(final IPetriNet<L, P> net) {
-		return net.getSuccessorTransitionProviders(getPlaces(), getPlaces()).stream()
-				.flatMap(provider -> provider.getTransitions().stream()).filter(t -> enables(t));
+		final var places = getPlaces();
+		return net.getSuccessorTransitionProviders(places, places).stream()
+				.flatMap(provider -> provider.getTransitions().stream()).filter(this::enables);
 	}
 
 	/**
@@ -307,9 +310,13 @@ public final class Territory<P, R extends Region<P>> {
 	 */
 	public Set<R> getBystanders(final Transition<?, P> transition) {
 		assert enables(transition) : "Territory does not enable the given transition";
-		final var predecessors = transition.getPredecessors();
-		return mRegions.stream().filter(r -> DataStructureUtils.haveEmptyIntersection(r.getPlaces(), predecessors))
-				.collect(Collectors.toSet());
+
+		ensurePlaceMap();
+		final var bystanders = new HashSet<>(mRegions);
+		for (final var predecessor : transition.getPredecessors()) {
+			bystanders.remove(mPlaceMap.get(predecessor));
+		}
+		return bystanders;
 	}
 
 	/**
@@ -320,14 +327,27 @@ public final class Territory<P, R extends Region<P>> {
 	 * @return the set of corresponding regions
 	 */
 	public Set<R> getPlacesRegions(final Set<P> places) {
-		return mRegions.stream().filter(r -> DataStructureUtils.haveNonEmptyIntersection(r.getPlaces(), places))
-				.collect(Collectors.toSet());
+		ensurePlaceMap();
+		return places.stream().map(mPlaceMap::get).collect(Collectors.toSet());
 	}
 
 	public R getPlaceRegion(final P place) {
+		ensurePlaceMap();
 		assert containsPlace(place) : "No region contains the place";
-		final var regionset = mRegions.stream().filter(r -> r.contains(place)).collect(Collectors.toSet());
-		return DataStructureUtils.getOneAndOnly(regionset, "Region");
+		return mPlaceMap.get(place);
+	}
+
+	private void ensurePlaceMap() {
+		if (mPlaceMap != null) {
+			return;
+		}
+
+		mPlaceMap = new HashMap<>();
+		for (final var region : mRegions) {
+			for (final var place : region.getPlaces()) {
+				mPlaceMap.put(place, region);
+			}
+		}
 	}
 
 	@Override
