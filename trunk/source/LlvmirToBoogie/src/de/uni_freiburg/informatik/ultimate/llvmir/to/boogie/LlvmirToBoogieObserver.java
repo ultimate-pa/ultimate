@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.ParseTreeElementWrapper;
+import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.LlvmirToBoogieListener;
 
 public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 
@@ -53,19 +54,17 @@ public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
 			throws Throwable {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
 	public void finish() throws Throwable {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
+		// not needed
 		return false;
 	}
 

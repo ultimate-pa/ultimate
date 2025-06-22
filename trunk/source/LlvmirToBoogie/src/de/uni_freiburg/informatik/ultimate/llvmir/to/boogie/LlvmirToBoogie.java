@@ -29,13 +29,18 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.model.ITool;
+import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
-public class LlvmirToBoogie implements ITool {
+/**
+ * @author Peter Ritter
+ * @date 2025-06-22
+ */
+public class LlvmirToBoogie implements IGenerator {
 	private LlvmirToBoogieObserver mObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
@@ -57,7 +62,7 @@ public class LlvmirToBoogie implements ITool {
 
 	@Override
 	public ModelQuery getModelQuery() {
-		return ModelQuery.SOURCE;
+		return ModelQuery.ALL;
 	}
 
 	@Override
@@ -94,5 +99,15 @@ public class LlvmirToBoogie implements ITool {
 	@Override
 	public void finish() {
 		// no cleanup needed
+	}
+
+	@Override
+	public ModelType getOutputDefinition() {
+		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+	}
+
+	@Override
+	public IElement getModel() {
+		return mObserver.getRoot();
 	}
 }

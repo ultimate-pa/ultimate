@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
+package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
