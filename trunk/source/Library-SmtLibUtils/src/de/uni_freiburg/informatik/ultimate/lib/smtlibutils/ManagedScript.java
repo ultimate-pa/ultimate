@@ -144,6 +144,10 @@ public class ManagedScript {
 
 	public LBool checkSat(final Object lockOwner) throws SMTLIBException {
 		assert lockOwner == mLockOwner : generateLockErrorMessage(lockOwner, mLockOwner);
+		if (Thread.interrupted()) {
+			mScript.exit();
+			throw new SMTLIBException("Thread Was Interrupted, crashing before checkSat");
+		}
 		return mScript.checkSat();
 	}
 
@@ -327,9 +331,11 @@ public class ManagedScript {
 		public TermVariable constructFreshCopy(final TermVariable tv) {
 			String basename = mTv2Basename.get(tv);
 			if (basename == null) {
+				// Variable Names are not synchronized in Parallel CEGAR loop, this warning will be triggered!
 				mLogger.warn("TermVariable " + tv
 						+ " not constructed by VariableManager. Cannot ensure absence of name clashes.");
 				basename = SmtUtils.removeSmtQuoteCharacters(tv.getName());
+				mTv2Basename.put(tv, basename);
 			}
 			final TermVariable result = constructFreshTermVariable(basename, tv.getSort());
 			return result;

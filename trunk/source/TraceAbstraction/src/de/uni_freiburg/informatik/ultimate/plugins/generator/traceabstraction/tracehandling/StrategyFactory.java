@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.AcceleratedInterpolationRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.AcceleratedTraceCheckRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BadgerRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BasicRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.BearRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.CamelOnlyBpRefinementStrategy;
@@ -80,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothNoAmRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.MammothRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.McrRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.PenguinRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.RubberTaipanRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.SifaTaipanRefinementStrategy;
@@ -108,6 +110,22 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	private final PathProgramCache<L> mPathProgramCache;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final Class<L> mTransitionClazz;
+
+	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
+			final PredicateFactory predicateFactory,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolAut, final Class<L> transitionClazz,
+			final PathProgramCache<L> programCache) {
+		mLogger = logger;
+		mTaPrefs = taPrefsForInterpolantConsolidation;
+		mPrefs = prefs;
+		mInitialIcfg = initialIcfg;
+		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
+		mPredicateFactory = predicateFactory;
+		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
+		mPathProgramCache = programCache;
+		mTransitionClazz = transitionClazz;
+	}
 
 	public StrategyFactory(final ILogger logger, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<L> prefs, final IIcfg<?> initialIcfg,
@@ -141,6 +159,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	 * @param abstraction
 	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
 	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
+	 * @param strategyType
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
@@ -154,18 +173,63 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
+	 * Construct Strategy with given type
 	 *
+	 * @param services
 	 * @param counterexample
-	 *            A trace that will be checked for feasibility and for which, if it is infeasible, a refinement result
-	 *            will be constructed.
-	 *
-	 *            Optionally, accompanied by the sequence of control configurations visited by the trace in the program
-	 *            that is being verified. This sequence is used to judge the quality of proofs ("perfect") and for
-	 *            assert order modulation.
 	 * @param abstraction
-	 *            The initial abstraction representing the program. Various strategies require the initial abstraction,
-	 *            e.g., to extract the complete alphabet, or to perform more complex generalizations.
+	 * @param taskIdentifier
+	 * @param emptyStackFactory
+	 * @param preconditionProvider
+	 * @param postconditionProvider
+	 * @param strategyType
+	 * @return
+	 */
+	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
+			final RefinementStrategy strategyType, final PathProgramCache<L> mainCache) {
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
+		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
+		// Since we copy the cache, we need to add the cex to the main here and the copy in construct strategy
+		// However, not sure if we really need the copy but i think it thread safer this way
+		mainCache.addRun(counterexample.getWord());
+		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
+				predicateUnifier, precondition, postcondition, strategyType);
+	}
+
+	/**
+	 * Construct Strategy with given type For Parallel Strategy, meaning we get the module from
+	 * ParallelRefinementStrategy
+	 */
+	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
+			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
+			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
+			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
+			final RefinementStrategy strategyType, final PathProgramCache<L> mainCache,
+			final ParallelRefinementStrategy<L> prs) {
+		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
+		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
+		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
+		// Since we copy the cache, we need to add the cex to the main here and the copy in construct strategy
+		// However, not sure if we really need the copy but i think it thread safer this way
+		// if (prs.getRunningThreadsOfPP() == 0) {
+			mainCache.addRun(counterexample.getWord());
+			mPathProgramCache.addRun(counterexample.getWord());
+			// }
+
+		final StrategyModuleFactory strategyModuleFactory = new StrategyModuleFactory(taskIdentifier, services,
+				counterexample, precondition, postcondition, predicateUnifier, abstraction, emptyStackFactory);
+		final RefinementStrategyExceptionBlacklist exceptionBlacklist = mPrefs.getExceptionBlacklist();
+		assert prs != null;
+		return new BasicRefinementStrategy<>(strategyModuleFactory, prs.getModule(strategyModuleFactory),
+				strategyModuleFactory.createIpAbStrategyModuleStraightlineAll(), exceptionBlacklist);
+	}
+
+	/**
+	 * Constructs a {@link IRefinementStrategy} that can be used in conjunction with a {@link IRefinementEngine}.
 	 */
 	public ITARefinementStrategy<L> constructStrategy(final IUltimateServiceProvider services,
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
@@ -246,6 +310,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		if (mPrefs.usePredicateTrieBasedPredicateUnifier()) {
 			return new BPredicateUnifier(services, mLogger, managedScript, mPredicateFactory, symbolTable);
 		}
+
 		return new PredicateUnifier(mLogger, services, managedScript, mPredicateFactory, symbolTable,
 				mTaPrefs.getSimplificationTechnique());
 	}

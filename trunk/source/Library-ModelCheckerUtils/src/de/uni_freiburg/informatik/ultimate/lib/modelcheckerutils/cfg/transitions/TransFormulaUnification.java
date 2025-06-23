@@ -36,9 +36,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
@@ -163,7 +165,9 @@ public class TransFormulaUnification {
 	private void addFreshTermVariable(final Map<IProgramVar, TermVariable> varMap, final IProgramVar variable,
 			final String suffix) {
 		final String baseName = variable.getGloballyUniqueId() + "_" + suffix;
-		final TermVariable termVar = mMgdScript.constructFreshTermVariable(baseName, variable.getSort());
+		final Sort transferredSort =
+				((HistoryRecordingScript) mMgdScript.getScript()).transferSortToWorker(variable.getSort());
+		final TermVariable termVar = mMgdScript.constructFreshTermVariable(baseName, transferredSort);
 		varMap.put(variable, termVar);
 	}
 
@@ -187,26 +191,40 @@ public class TransFormulaUnification {
 
 		// input variables
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitutionMapping.put(entry.getValue(), mInVars.get(entry.getKey()));
+			substitutionMapping.put(entry.getValue(), ((HistoryRecordingScript) mMgdScript.getScript())
+					.transferTermToWorker(mInVars.get(entry.getKey())));
 		}
 
 		// output variables
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			final IProgramVar pv = entry.getKey();
-			final TermVariable outVar = entry.getValue();
-
-			final boolean isAssignedVar = tf.getInVars().get(pv) != outVar;
-			if (isAssignedVar) {
-				substitutionMapping.put(outVar, mOutVars.get(pv));
+			TermVariable outVar = entry.getValue();
+			outVar = (TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(outVar);
+			final boolean isAssignedVar;
+			if (tf.getInVars().get(pv) != null) {
+				isAssignedVar = ((HistoryRecordingScript) mMgdScript.getScript())
+						.transferTermToWorker(tf.getInVars().get(pv)) != outVar;
 			} else {
+				isAssignedVar = tf.getInVars().get(pv) != outVar;
+			}
+
+			if (isAssignedVar) {
+				substitutionMapping.put(outVar,
+						((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(mOutVars.get(pv)));
+			} else {
+				assert mInVars.get(pv).getTheory().equals(mMgdScript.getScript().getTheory());
+				assert substitutionMapping.get(outVar).getTheory().equals(mMgdScript.getScript().getTheory());
 				assert substitutionMapping.get(outVar) == mInVars.get(pv);
 			}
 		}
 
 		// auxiliary variables
 		for (final TermVariable oldAuxVar : tf.getAuxVars()) {
-			final TermVariable newAuxVar = mMgdScript.constructFreshCopy(oldAuxVar);
-			substitutionMapping.put(oldAuxVar, newAuxVar);
+
+			final TermVariable newAuxVar = mMgdScript.constructFreshCopy(
+					(TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(oldAuxVar));
+			substitutionMapping.put(((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(oldAuxVar),
+					newAuxVar);
 			mAuxVars.add(newAuxVar);
 		}
 

@@ -119,6 +119,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 			mInterpolantComputationStatus =
 					new InterpolantComputationStatus(ItpErrorStatus.SMT_SOLVER_CANNOT_INTERPOLATE_INPUT, null);
 		}
+		mgdScriptTc.getScript().exit();
 	}
 
 	public InterpolatingTraceCheckCraig(final IPredicate precondition, final IPredicate postcondition,

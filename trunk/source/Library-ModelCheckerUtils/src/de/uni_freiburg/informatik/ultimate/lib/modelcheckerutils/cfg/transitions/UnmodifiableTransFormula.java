@@ -39,6 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -61,6 +63,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	private final Set<TermVariable> mBranchEncoders;
 	private final Infeasibility mInfeasibility;
 	private final Term mClosedFormula;
+	private final ManagedScript mMgdScript;
 
 	/**
 	 * Was the solver able to prove infeasiblity of a TransFormula. UNPROVEABLE means that TransFormula could be
@@ -89,6 +92,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		mClosedFormula =
 				computeClosedFormula(formula, super.getInVars(), super.getOutVars(), super.getAuxVars(), script);
 		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
+		mMgdScript = script;
 
 		assert SmtUtils.neitherKeyNorValueIsNull(inVars) : "null in inVars";
 		assert SmtUtils.neitherKeyNorValueIsNull(outVars) : "null in outVars";
@@ -116,6 +120,11 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 */
 	public static Term computeClosedFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars, final ManagedScript script) {
+
+		if (((HistoryRecordingScript) script.getScript()).getMainScript() != null) {
+			return transferAndComputeClosedFormula(formula, inVars, outVars, auxVars, script);
+		}
+
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
 			final TermVariable inTermVar = entry.getValue();
@@ -135,6 +144,40 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
 			substitutionMapping.put(auxVarTv, auxVarConst);
 		}
+		return Substitution.apply(script, substitutionMapping, formula);
+	}
+
+	private static Term transferAndComputeClosedFormula(final Term formula, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final Set<TermVariable> auxVars, final ManagedScript script) {
+		final TermTransferrer termTF = new TermTransferrer(
+				((HistoryRecordingScript) script.getScript()).getMainScript().getScript(), (script.getScript()));
+
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final Entry<IProgramVar, TermVariable> entry : inVars.entrySet()) {
+			final TermVariable inTermVar = entry.getValue();
+			assert !substitutionMapping.containsKey(inTermVar);
+			assert inTermVar.getTheory().equals(script.getScript().getTheory());
+			substitutionMapping.put(inTermVar, termTF.transform(getConstantForInVar(entry.getKey())));
+		}
+		for (final Entry<IProgramVar, TermVariable> entry : outVars.entrySet()) {
+			final IProgramVar outVar = entry.getKey();
+			final TermVariable outTermVar = entry.getValue();
+			assert outTermVar.getTheory().equals(script.getScript().getTheory());
+			if (inVars.get(outVar) == outTermVar) {
+				// is handled above
+				continue;
+			}
+			substitutionMapping.put(outTermVar,
+					termTF.transform(getConstantForOutVar(entry.getKey(), inVars, outVars)));
+		}
+		for (final TermVariable auxVarTv : auxVars) {
+			final Term auxVarConst = ProgramVarUtils.constructConstantForAuxVar(script, auxVarTv);
+			assert auxVarConst.getTheory().equals(script.getScript().getTheory());
+			assert auxVarTv.getTheory().equals(script.getScript().getTheory());
+			substitutionMapping.put(auxVarTv, auxVarConst);
+		}
+
+		assert formula.getTheory().equals(script.getScript().getTheory());
 		return Substitution.apply(script, substitutionMapping, formula);
 	}
 
@@ -227,8 +270,10 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		for (final IProgramConst programConsts : getNonTheoryConsts()) {
 			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
 			assert consistent : "is theory symbol";
-			nonTheoryConstantTerms.add(programConsts.getDefaultConstant());
-			consistent &= constantsInFormula.contains(programConsts.getDefaultConstant());
+			nonTheoryConstantTerms.add((ApplicationTerm) ((HistoryRecordingScript) mMgdScript.getScript())
+					.transferTermToWorker(programConsts.getDefaultConstant()));
+			consistent &= constantsInFormula.contains(((HistoryRecordingScript) mMgdScript.getScript())
+					.transferTermToWorker(programConsts.getDefaultConstant()));
 			assert consistent : "not in formula";
 		}
 		for (final ApplicationTerm constInFormula : constantsInFormula) {

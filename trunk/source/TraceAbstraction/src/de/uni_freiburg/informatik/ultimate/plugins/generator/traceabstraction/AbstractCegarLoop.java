@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -110,6 +111,8 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	protected final ILogger mLogger;
 	protected final SimplificationTechnique mSimplificationTechnique;
 
+	final Set<IPredicate> mNotReachedLongTraceStates = new HashSet<>();
+
 	/**
 	 * Interprocedural control flow graph.
 	 */
@@ -134,7 +137,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
-	private int mIteration;
+	protected int mIteration;
 
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
@@ -392,7 +395,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return false;
 	}
 
-	private void iterate() throws AutomataLibraryException {
+	protected void iterate() throws AutomataLibraryException {
 		mTimeBudget = initializeTimeBudget();
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();
@@ -503,7 +506,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		// Empty implementation. Subclasses may override this method.
 	}
 
-	private IcfgLocation getErrorLocFromCounterexample() {
+	protected IcfgLocation getErrorLocFromCounterexample() {
 		return mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 	}
 
@@ -578,7 +581,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 		return rtr;
 	}
 
-	private IUltimateServiceProvider createIterationTimer(final IcfgLocation currentErrorLoc) {
+	protected IUltimateServiceProvider createIterationTimer(final IcfgLocation currentErrorLoc) {
 		if (!mPref.hasErrorLocTimeLimit()) {
 			// do not limit single counterexample if there is no limit on assert
 			return mServices;
@@ -761,7 +764,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 
 	}
 
-	private final class CegarLoopResultBuilder {
+	protected final class CegarLoopResultBuilder {
 		private final Map<IcfgLocation, CegarLoopLocalResult<L>> mResults = new LinkedHashMap<>();
 
 		public CegarLoopResultBuilder addResultForAllRemaining(final Result result) {
@@ -782,6 +785,7 @@ public abstract class AbstractCegarLoop<L extends IIcfgTransition<?>, A extends 
 			final AtomicTraceElement<L> lastElem = programExecution.getTraceElement(programExecution.getLength() - 1);
 			final IcfgLocation loc = lastElem.getStep().getTarget();
 			return addResult(loc, result, programExecution, rtsp, reasonUnknown);
+
 		}
 
 		public CegarLoopResultBuilder addResult(final IcfgLocation loc, final Result result,

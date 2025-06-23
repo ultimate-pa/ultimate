@@ -96,6 +96,16 @@ public final class TAPreferences {
 	private final IndependenceSettings[] mPorIndependenceSettings;
 	private final IndependenceSettings mLbeIndependenceSettings;
 
+	// Parallel Trace Abstraction Settings
+	private final int mThreadLimit;
+	private final int mThreadLimitPerCex;
+	private final boolean mParallelCegarLoop;
+	public boolean useGoalSetForIsEmpty;
+	public boolean parallelSearchSrategy;
+	public boolean considerOnlyActiveCounterexamplesInIsEmptyParallel;
+	public boolean minimizeAbstractionPerWorker;
+	public boolean mVisitLoopsOnlyOnce;
+
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
 	}
@@ -198,6 +208,16 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEMICOMM_PLBE),
 				IndependenceSettings.DEFAULT_SOLVER /* currently ignored; not exposed as setting */,
 				IndependenceSettings.DEFAULT_SOLVER_TIMEOUT /* currently ignored; not exposed as setting */);
+
+		mParallelCegarLoop = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLEL_CEGAR_LOOP);
+		mThreadLimit = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREADLIMIT);
+		mThreadLimitPerCex = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_THREAD_LIMIT_PER_CEX);
+		useGoalSetForIsEmpty = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_GOALSET);
+		considerOnlyActiveCounterexamplesInIsEmptyParallel =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY);
+		minimizeAbstractionPerWorker =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
+		mVisitLoopsOnlyOnce = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VISIT_LOOPS_ONLY_ONCE);
 	}
 
 	/**
@@ -565,5 +585,21 @@ public final class TAPreferences {
 
 	public HoareProofSettings getHoareSettings() {
 		return new HoareProofSettings(getHoareAnnotationPositions(), getSimplificationTechnique());
+	}
+
+	public int getThreadLimit() {
+		return mThreadLimit;
+	}
+
+	public int getThreadLimitPerCex() {
+		return mThreadLimitPerCex;
+	}
+
+	public boolean isParallelCegarLoop() {
+		return mParallelCegarLoop;
+	}
+
+	public boolean visitLoopsOnlyOnce() {
+		return mVisitLoopsOnlyOnce;
 	}
 }

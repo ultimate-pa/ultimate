@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.solverbuilder.SMTFeat
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.HashedPriorityQueue;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check emptiness and obtain an accepting run of a nested word automaton using a modified version of A*.
@@ -83,7 +84,9 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	private final Predicate<STATE> mIsForbiddenState;
 	private final NestedRun<LETTER, STATE> mAcceptingRun;
 	private final STATE mDummyEmptyStackState;
-
+	protected final List<Pair<STATE, LETTER>> mWayPoints;
+	boolean stillFollowingWayPoint = true;
+	boolean mDontVisitLoops = false;
 	private final IHeuristic<STATE, LETTER> mHeuristic;
 
 	/**
@@ -116,7 +119,26 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
-				heuristic);
+				heuristic, new ArrayList<>(), false);
+	}
+
+	/**
+	 * Default constructor. Here we search a run from the initial states of the automaton to the final states of the
+	 * automaton and use the zero heuristic.
+	 *
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            input NWA
+	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
+	 */
+	public IsEmptyHeuristic(final AutomataLibraryServices services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
+			final boolean noLoopMode)
+			throws AutomataOperationCanceledException {
+		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
+				heuristic, wayPoints, noLoopMode);
 	}
 
 	/**
@@ -128,15 +150,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final Set<STATE> startStates, final Predicate<STATE> funIsForbiddenState,
 			final Predicate<STATE> funIsGoalState, final IHeuristic<STATE, LETTER> heuristic)
 			throws AutomataOperationCanceledException {
-		this(services, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) operand, startStates,
-				funIsForbiddenState, funIsGoalState, heuristic);
+		this(services, operand, startStates, funIsForbiddenState, funIsGoalState, heuristic, new ArrayList<>(), false);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 	}
 
 	private IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
-			final IHeuristic<STATE, LETTER> heuristic) throws AutomataOperationCanceledException {
+			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
+			final boolean noLoopMode)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
@@ -148,7 +171,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		assert mOperand != null;
 
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
-
+		mWayPoints = wayPoints;
+		mDontVisitLoops = noLoopMode;
+		if (!mWayPoints.isEmpty()) {
+			stillFollowingWayPoint = true;
+		}
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -172,12 +199,16 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		final HashedPriorityQueue<Item> worklist =
 				new HashedPriorityQueue<>(Comparator.comparing(a -> a.mEstimatedCostToTarget));
 
+		final List<Pair<STATE, LETTER>> visited = new ArrayList<>();
+
 		for (final STATE state : startStates) {
 			final Item initialItem = new Item(state);
 			initialItem.setCostSoFar(0.0);
 			worklist.add(initialItem);
+			if (mDontVisitLoops) {
+				visited.add(new Pair<>(initialItem.mTargetState, initialItem.mLetter));
+			}
 		}
-
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(String.format("Initial queue: %s", worklist));
 		}
@@ -199,6 +230,10 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 
 			final Item current = worklist.poll();
 
+			if (mDontVisitLoops) {
+				visited.add(new Pair<>(current.mTargetState, current.mLetter));
+			}
+
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(String.format("Current: %s", current));
 			}
@@ -218,7 +253,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			final List<Item> unvaluatedSuccessors =
-					getUnvaluatedSuccessors(current, discoveredUniqueReturnStates, delayedCalls);
+					getUnvaluatedSuccessors(current, discoveredUniqueReturnStates, delayedCalls, visited);
 			if (mLogger.isDebugEnabled() && unvaluatedSuccessors.isEmpty()) {
 				mLogger.debug("  No successors");
 				continue;
@@ -334,6 +369,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 					for (final Entry<ReturnTransition, SummaryItem> entry : summary.entrySet()) {
 						final SummaryItem sumItem = entry.getValue();
 						final Item newSucc = new Item(succ, sumItem);
+
 						newSucc.setCostSoFar(succ.mCostSoFar + sumItem.mSummaryCost);
 						newSuccs.add(newSucc);
 
@@ -446,7 +482,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	private List<Item> getUnvaluatedSuccessors(final Item current,
-			final Map<STATE, Set<STATE>> discoveredUniqueReturnStates, final Map<STATE, Set<Item>> delayedCalls) {
+			final Map<STATE, Set<STATE>> discoveredUniqueReturnStates, final Map<STATE, Set<Item>> delayedCalls,
+			final List<Pair<STATE, LETTER>> visited) {
 		final List<Item> rtr = new ArrayList<>();
 
 		// process internal transitions
@@ -454,20 +491,28 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				.internalSuccessors(current.mTargetState)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mIsForbiddenState.test(succ)) {
+			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
+					|| !followingWayPoint(succ, symbol)) {
 				continue;
 			}
 			rtr.add(new Item(succ, current.getHierPreState(), symbol, current, ItemType.INTERNAL));
+			if (stillFollowingWayPoint) {
+				break;
+			}
 		}
 
 		// process call transitions
 		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(current.mTargetState)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mIsForbiddenState.test(succ)) {
+			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
+					|| !followingWayPoint(succ, symbol)) {
 				continue;
 			}
 			rtr.add(new Item(succ, current.mTargetState, symbol, current, ItemType.CALL));
+			if (stillFollowingWayPoint) {
+				break;
+			}
 		}
 
 		final STATE hierPre = current.getHierPreState();
@@ -482,11 +527,15 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				.returnSuccessorsGivenHier(current.mTargetState, hierPre)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
-			if (mIsForbiddenState.test(succ)) {
+			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
+					|| !followingWayPoint(succ, symbol)) {
 				continue;
 			}
 			// hierarchical predecessor will be taken from current
 			rtr.add(new Item(succ, null, symbol, current, ItemType.RETURN));
+			if (stillFollowingWayPoint) {
+				break;
+			}
 		}
 		if (old != rtr.size()) {
 			// we found a new state from which a hierPre call can take at least one return
@@ -518,6 +567,21 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return false;
 		}
 		return true;
+	}
+
+	protected boolean followingWayPoint(final STATE state, final LETTER letter) {
+		final boolean empty = mWayPoints.isEmpty();
+		if (empty) {
+			stillFollowingWayPoint = false;
+			return true;
+		}
+		boolean contains = mWayPoints.getFirst().getFirst().equals(state);
+		contains = contains && mWayPoints.getFirst().getSecond().equals(letter);
+		if (contains) {
+			mWayPoints.removeFirst();
+
+		}
+		return contains || mWayPoints.isEmpty();
 	}
 
 	@Override
@@ -1085,7 +1149,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	}
 
 	public enum AStarHeuristic {
-		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON
+		ZERO, RANDOM_HALF, RANDOM_FULL, SMT_FEATURE_COMPARISON, PARALLEL
 	}
 
 	/**
@@ -1133,6 +1197,30 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			case RANDOM_HALF -> IHeuristic.getRandomHeuristicHalf(seed);
 			case SMT_FEATURE_COMPARISON -> IHeuristic.getSmtFeatureHeuristic(scoringMethod);
 			case ZERO -> IHeuristic.getZeroHeuristic();
+			case PARALLEL -> IHeuristic.getParallelHeuristic();
+			};
+		}
+
+		/**
+		 * If state and trans are in any cex, we increase the cost
+		 *
+		 * The states and trans in the prefix have 0 cost
+		 *
+		 * @param <STATE>
+		 * @param <LETTER>
+		 * @return
+		 */
+		static <STATE, LETTER> IHeuristic<STATE, LETTER> getParallelHeuristic() {
+			return new IHeuristic<>() {
+				@Override
+				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
+					return 50.0;
+				}
+
+				@Override
+				public final double getConcreteCost(final LETTER e) {
+					return 100.0;
+				}
 			};
 		}
 

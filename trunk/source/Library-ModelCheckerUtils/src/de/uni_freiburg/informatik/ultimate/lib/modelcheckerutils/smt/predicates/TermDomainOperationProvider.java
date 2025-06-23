@@ -26,12 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.Substitution;
@@ -53,62 +58,108 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	public TermDomainOperationProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mServices = services;
 		mMgdScript = mgdScript;
+
 	}
 
 	@Override
 	public Term getConstraint(final IPredicate p) {
-		return p.getFormula();
+		return ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(p.getFormula());
 	}
 
 	@Override
 	public boolean isConstraintUnsatisfiable(final Term constraint) {
-		return SmtUtils.isFalseLiteral(constraint);
+		return SmtUtils
+				.isFalseLiteral(((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(constraint));
 	}
 
 	@Override
 	public boolean isConstraintValid(final Term constraint) {
-		return SmtUtils.isTrueLiteral(constraint);
+		return SmtUtils
+				.isTrueLiteral(((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(constraint));
 	}
 
 	@Override
 	public Term getConstraintFromTransitionRelation(final TransFormula tf) {
-		return tf.getFormula();
+		return ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(tf.getFormula());
 	}
 
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
+		Term renamedTransFormulaTest = null;
+		if (((HistoryRecordingScript) mMgdScript.getScript()).getMainScript() != null) {
+			final HashMap<Term, Term> transferredSubMap = new HashMap<>();
+			for (final Entry<Term, Term> entry : substitutionForTransFormula.entrySet()) {
+				transferredSubMap.put(
+						((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(entry.getKey()),
+						((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(entry.getValue()));
+			}
+
+			renamedTransFormulaTest = Substitution.apply(mMgdScript, transferredSubMap,
+					((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(constraint));
+			return renamedTransFormulaTest;
+		}
 		final Term renamedTransFormula = Substitution.apply(mMgdScript, substitutionForTransFormula, constraint);
 		return renamedTransFormula;
 	}
 
 	@Override
 	public Term constructConjunction(final List<Term> conjuncts) {
-		return SmtUtils.and(mMgdScript.getScript(), conjuncts);
+		final List<Term> transferredList = new ArrayList<>();
+		for (final Term element : conjuncts) {
+			transferredList.add(((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(element));
+		}
+		return SmtUtils.and(mMgdScript.getScript(), transferredList);
 	}
 
 	@Override
 	public Term constructDisjunction(final List<Term> disjuncts) {
-		return SmtUtils.or(mMgdScript.getScript(), disjuncts);
+		final List<Term> transferredList = new ArrayList<>();
+		for (final Term element : disjuncts) {
+			transferredList.add(((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(element));
+		}
+		return SmtUtils.or(mMgdScript.getScript(), transferredList);
 	}
 
 	@Override
 	public Term constructNegation(final Term operand) {
-		return SmtUtils.not(mMgdScript.getScript(), operand);
+		return SmtUtils.not(mMgdScript.getScript(),
+				((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(operand));
 	}
 
 	@Override
 	public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term constraint) {
-		return constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, constraint);
+		final Set<TermVariable> transferredVars = new HashSet<>();
+		for (final Term element : varsToProjectAway) {
+			transferredVars.add(
+					(TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(element));
+		}
+		return constructQuantifiedFormula(Script.EXISTS, transferredVars,
+				((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(constraint));
 	}
 
 	@Override
 	public Term projectUniversally(final Set<TermVariable> varsToProjectAway, final Term constraint) {
-		return constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint);
+		final Set<TermVariable> transferredVars = new HashSet<>();
+		for (final Term element : varsToProjectAway) {
+			transferredVars.add(
+					(TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(element));
+		}
+		return constructQuantifiedFormula(Script.FORALL, transferredVars,
+				((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(constraint));
 	}
 
+	/*
+	 * Does check-sats, therefore needs to be worker script
+	 */
 	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
 			final Term term) {
-		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);
+		final Set<TermVariable> transferredVars = new HashSet<>();
+		for (final Term element : varsToQuantify) {
+			transferredVars.add(
+					(TermVariable) ((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(element));
+		}
+		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, transferredVars,
+				((HistoryRecordingScript) mMgdScript.getScript()).transferTermToWorker(term));
 		return PartialQuantifierElimination.eliminateLight(mServices, mMgdScript, quantified);
 	}
 

@@ -511,6 +511,29 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	private static final String DESC_ASSERT_CODEBLOCKS_HEURISTIC_SCORE_THRESHOLD =
 			"If Assert CodeBlocks is set to SMT_FEATURE_HEURISTIC and partitioning strategy is THRESHOLD, two partitions are created, one partition contains all terms >= threshold  and one all terms < threshold";
 
+	// Parallel Trace Abstraction
+	// ========================================================================
+	public static final String LABEL_PARALLEL_CEGAR_LOOP = "Use CEGAR loop for Parallel Trace Abstraction";
+	public static final boolean DEF_PARALLEL_CEGAR_LOOP = false;
+
+	public static final String LABEL_THREADLIMIT = "Threadlimit for Parallel CEGAR";
+	public static final Integer DEF_THREADLIMIT = 1;
+
+	public static final String LABEL_THREAD_LIMIT_PER_CEX =
+			"Amount of Threads we use to analyse the same Counterexample";
+	public static final Integer DEF_THREAD_LIMIT_PER_CEX = 1;
+	// Parallel CEGAR counterexample search stragies
+	// ========================================================================
+	public static final String LABEL_GOALSET = "IsEmpty with Goal Set ";
+	public static final boolean DEF_GOALSET = false;
+	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
+	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
+	public static final String LABEL_MINIMIZE_ABSTRACTION_PER_WORKER =
+			"Minimize Abstraction every time a worker is done";
+	public static final boolean DEF_MINIMIZE_ABSTRACTION_PER_WORKER = false;
+	public static final String LABEL_VISIT_LOOPS_ONLY_ONCE = "Initially visit loops only once";
+	public static final boolean DEF_VISIT_LOOPS_ONLY_ONCE = false;
+
 	/**
 	 * Constructor.
 	 */
@@ -696,7 +719,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_IF_ANALYZED_TOO_OFTEN, 0, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_DUMP_PATH_PROGRAM_STOP_MODE, PathProgramDumpStop.AFTER_FIRST_DUMP,
 						PreferenceType.Combo, PathProgramDumpStop.values()),
-				getConcurrencySettings() };
+				getConcurrencySettings(), getParallelCegarSettings() };
 	}
 
 	private static UltimatePreferenceItemContainer getConcurrencySettings() {
@@ -723,7 +746,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				getPORSettings(), getPetriLbeSettings());
 	}
 
-	private static UltimatePreferenceItemContainer getPORSettings() {
+	public static UltimatePreferenceItemContainer getPORSettings() {
 		return new UltimatePreferenceItemContainer("Partial Order Reduction (GemCutter)",
 				new UltimatePreferenceItem<>(LABEL_POR_ONESHOT, DEF_POR_ONESHOT, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_POR_MODE, DEF_POR_MODE, PreferenceType.Combo,
@@ -789,6 +812,23 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						IndependenceSettings.DEFAULT_SOLVER, PreferenceType.Combo, ExternalSolver.values()),
 				new UltimatePreferenceItem<>(getSuffixedLabel(LABEL_INDEPENDENCE_SOLVER_TIMEOUT_POR, index),
 						(int) IndependenceSettings.DEFAULT_SOLVER_TIMEOUT, PreferenceType.Integer));
+	}
+
+	public static UltimatePreferenceItemContainer getParallelCegarSettings() {
+		return new UltimatePreferenceItemContainer("Parallel Trace Abstraction",
+				new UltimatePreferenceItem<>(LABEL_PARALLEL_CEGAR_LOOP, DEF_PARALLEL_CEGAR_LOOP,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_THREAD_LIMIT_PER_CEX, DEF_THREAD_LIMIT_PER_CEX,
+						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
+				new UltimatePreferenceItem<>(LABEL_VISIT_LOOPS_ONLY_ONCE, DEF_VISIT_LOOPS_ONLY_ONCE,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
+						PreferenceType.Boolean));
+
 	}
 
 	public static String getSuffixedLabel(final String label, final int index) {
@@ -976,7 +1016,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Use loop acceleration in combination with the fixed preferences
 		 */
-		ACCELERATED_TRACE_CHECK
+		ACCELERATED_TRACE_CHECK,
+
+		/**
+		 * Applies the @ParallelRefinmentStrategy choosing between different modules from other strategies
+		 */
+		PARALLEL
 	}
 
 	/**
@@ -998,7 +1043,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Not yet defined...
 		 */
-		LAZY_IN_ORDER,
+		LAZY_IN_ORDER
 	}
 
 	/**
@@ -1066,4 +1111,5 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public enum PathProgramDumpStop {
 		NEVER, AFTER_FIRST_DUMP, BEFORE_FIRST_DUPLICATE
 	}
+
 }

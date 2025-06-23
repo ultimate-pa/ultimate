@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
@@ -228,6 +229,15 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			} else if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
 				icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches(managedScriptTc);
 				if (icfgProgramExecution != null) {
+					/*
+					 * For parallel Trace Abstraction:
+					 * for us to be able to translate the counterexample to C, we need to know the script it came from
+					 * We use this "hack" and set mCfgManagedScript as the main script of the real main script
+					 */
+					if (((HistoryRecordingScript) mCfgManagedScript.getScript()).getMainScript() != null) {
+						((HistoryRecordingScript) ((HistoryRecordingScript) mCfgManagedScript.getScript())
+								.getMainScript().getScript()).setMainScript(mCfgManagedScript);
+					}
 					providesIcfgProgramExecution = true;
 				}
 				mTraceCheckFinished = true;
