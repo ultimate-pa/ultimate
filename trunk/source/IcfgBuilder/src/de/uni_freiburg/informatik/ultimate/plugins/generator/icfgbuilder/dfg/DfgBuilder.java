@@ -75,29 +75,22 @@ public class DfgBuilder {
 
 		/*
 		 * determines for each node whether it uses or redefines a program variable Use(x) ==> x is in InVars Def(x) ==>
-		 * InVar(x) != OutVar(x) or x in AssignedVars
+		 * x is in OutVars(x) or x is in InVars but not in OutVars (havoc x)
+		 *
 		 */
 		private void defUseAnalysis() {
 			for (final DfgNode node : nodeList) {
 				final IcfgEdge edge = node.getCorrespondingDFGEdge();
 				final UnmodifiableTransFormula transformula = edge.getTransformula();
 				final Set<IProgramVar> InVars = transformula.getInVars().keySet();
-				// start with checking InVars
 				for (final IProgramVar programVar : InVars) {
 					useMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
-					if (transformula.getInVars().get(programVar) != transformula.getOutVars().get(programVar)) {
-						defMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
-					} else if (transformula.getAssignedVars().contains(programVar)) {
-						// TODO: does this cover assume statement? => siehe dings.bpl
+					if (transformula.getOutVars().get(programVar) != null) {
 						defMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
 					}
 				}
 				final Set<IProgramVar> OutVars = transformula.getOutVars().keySet();
-				for (final IProgramVar programVar : OutVars) {
-					if (transformula.getInVars().get(programVar) == null) {
-						defMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
-					}
-				}
+				defMap.computeIfAbsent(node, (k -> new HashSet<>())).addAll(OutVars);
 			}
 			logger.debug("def Map " + defMap.toString());
 			logger.debug("use map " + useMap.toString());
