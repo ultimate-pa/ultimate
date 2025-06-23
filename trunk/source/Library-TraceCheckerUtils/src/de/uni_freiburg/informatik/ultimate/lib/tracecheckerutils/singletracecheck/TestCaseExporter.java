@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.testgeneration;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
 import java.io.File;
 import java.io.FileOutputStream;

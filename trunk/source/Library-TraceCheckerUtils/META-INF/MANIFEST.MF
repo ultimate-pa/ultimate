@@ -14,8 +14,7 @@ Export-Package:
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.independence.abstraction,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.partialorder.petrinetlbe,
  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.predicates,
- de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck,
-  de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.testgeneration
+ de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.lib.automata,

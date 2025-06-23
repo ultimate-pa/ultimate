@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,8 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -63,13 +66,15 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.testgeneration.TraceCheckTestGeneration;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -362,17 +367,10 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			final DefaultTransFormulas<L> withBE = new DefaultTransFormulas<>(mNestedFormulas.getCounterexample(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
-			final TraceCheck<L> tc;
-			if (RcfgPreferenceInitializer.getPreferences(mServices)
-					.getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
-				tc =new TraceCheckTestGeneration<>(mNestedFormulas.getPrecondition(),
-						mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-			} else {
-			tc = new TraceCheck<>(mNestedFormulas.getPrecondition(),
-					mNestedFormulas.getPostcondition(), mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
-			}
+			final TraceCheck<L> tc =
+						new TraceCheck<>(mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(),
+								mPendingContexts, withBE, mServices, mCsToolkit, mTcSmtManager,
+								AssertCodeBlockOrder.NOT_INCREMENTALLY, true, false, true);
 			switch (tc.isCorrect()) {
 			case SAT:
 				return tc.getRcfgProgramExecution();
@@ -430,6 +428,15 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 			funGetValue = this::getValue;
 		}
 
+		if (RcfgPreferenceInitializer.getPreferences(mServices).getBoolean(RcfgPreferenceInitializer.LABEL_TEST_GEN)) {
+			final TestVector testV = extractTestVector(nsb, funGetValue, rpeb);
+			final boolean mExportAllInOneFile = true;
+			final String identifier = "" + rpeb.mTrace.hashCode();
+			exportTest(testV, identifier, mExportAllInOneFile);
+			cleanupAndUnlockSolver();
+			return rpeb.getIcfgProgramExecution();
+		}
+
 		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
 			final IProgramVar bv = entry.getKey();
 			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
@@ -458,6 +465,74 @@ public class TraceCheck<L extends IAction> implements ITraceCheck<L> {
 		}
 		cleanupAndUnlockSolver();
 		return rpeb.getIcfgProgramExecution();
+	}
+
+	// does rpeb.addValueAtVarAssignmentPosition and creates a testVector at the same time
+	private TestVector extractTestVector(final NestedSsaBuilder<L> nsb, final Function<Term, Term> funGetValue,
+			final IcfgProgramExecutionBuilder<L> rpeb) {
+		final TestVector testV = new TestVector();
+		final ArrayList<Term> varAssignment = new ArrayList<>();
+		final ArrayList<Pair<Term, Term>> varAssignmentPair = new ArrayList<>();
+
+		for (final var entry : nsb.getIndexedVarRepresentative().entrySet()) {
+			final IProgramVar bv = entry.getKey();
+			final Map<Integer, Term> indexedRepresentatives = entry.getValue();
+			if (SmtUtils.isSortForWhichWeCanGetValues(bv.getTermVariable().getSort())) {
+				boolean evenRepresentative = true;
+				for (final var representative : indexedRepresentatives.entrySet()) {
+					final Integer index = representative.getKey();
+					final Term indexedVar = representative.getValue();
+					final Term valueT = funGetValue.apply(indexedVar);
+					if (indexedVar instanceof ApplicationTerm) {
+						assert ((ApplicationTerm) indexedVar).getParameters().length == 0;
+						if (indexedVar.toStringDirect().contains("nondet")) {
+							if (evenRepresentative) {
+								// TODO Not sure if save, but by far the best solution
+								if ((index >= 0) && (rpeb.mTrace.asList().get(index) instanceof StatementSequence)) {
+									final StatementSequence stsq = (StatementSequence) rpeb.mTrace.asList().get(index);
+
+									final Matcher m =
+											Pattern.compile("__VERIFIER_nondet_(\\w*)")
+													.matcher(stsq.getPayload().toString());
+									if (m.find()) {
+										final String type = m.group(1);
+										testV.addValueAssignment(valueT, index, type);
+										final TermTransferrer test =
+												new TermTransferrer(mCfgManagedScript.getScript(),
+														mTcSmtManager.getScript());
+										final Term varEqValue =
+												SmtUtils.binaryEquality(mTcSmtManager.getScript(),
+														test.transform(indexedVar), test.transform(valueT));
+										final Pair<Term, Term> varValuePair =
+												new Pair<>(test.transform(indexedVar), test.transform(valueT));
+										varAssignmentPair.add(varValuePair);
+										varAssignment.add(varEqValue);
+									}
+								}
+								evenRepresentative = !evenRepresentative;
+							} else {
+								evenRepresentative = !evenRepresentative;
+							}
+						}
+					}
+					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
+
+				}
+			}
+		}
+		return testV;
+	}
+
+	private void exportTest(final TestVector testV, final String identifier, final boolean allInOneFile) {
+		try {
+			if (!testV.isEmpty()) {
+				mTraceCheckBenchmarkGenerator.reportTestExported();
+				TestCaseExporter.getInstance().exportTests(testV, identifier, allInOneFile);
+			}
+		} catch (final Exception e) {
+			// TODO TestGeneration Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	protected AnnotateAndAssertCodeBlocks<L> getAnnotateAndAsserterCodeBlocks(final NestedFormulas<L, Term, Term> ssa) {

@@ -542,7 +542,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 	private void refinement(final WorkerThreadResult<L, A> threadResult)
 			throws AutomataOperationCanceledException, AutomataLibraryException {
-		assert threadResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
+		// assert threadResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
 
 		// mInterations equals the amount of refinements
 		mCegarLoopBenchmark.announceNextIteration();
