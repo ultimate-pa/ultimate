@@ -106,7 +106,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
 	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
-	private boolean mVisitLoopsOnlyOnce = true; // a strategy where we focus on spread before pathprograms
+	private boolean mVisitLoopsOnlyOnce; // a strategy where we focus on spread before pathprograms
 
 	// Testing Strategies
 	private final boolean useGoalSetForIsEmpty;
@@ -123,7 +123,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private final Integer mCountIsEmptyParallel = 0;
 	private Integer maxActiveThreads = 0;
 	private Integer mActiveExecutors = 0;
-	private final long mSearchTime = 0;
+	private long mSearchTime = 0;
+	private long mWorkerSetUpTime = 0;
 	private int mIterationsWithMaxThreads = 0;
 	private int mIterationsWithOneThread = 0;
 	private final int mExceptionInWorker = 0;
@@ -325,7 +326,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 						}
 
 					} catch (final CancellationException e) {
-						mLogger.warn("Worker was cancelled!");
+						mLogger.warn("Worker was cancelled! " + e);
+						mVisitLoopsOnlyOnce = false;
+					} catch (final Exception e) {
+						mLogger.warn("Worker Failed! " + e);
+						mVisitLoopsOnlyOnce = false;
+						throw e;
 					} finally {
 
 					}
@@ -334,12 +340,14 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				mLogger.info("No more worker results to process");
 				assert workerResult == null;
 
-			} catch (AutomataOperationCanceledException | ToolchainCanceledException e) {
-				// TODO deal with UNKNOWN
+			} catch (final ToolchainCanceledException e) {
+				mVisitLoopsOnlyOnce = false;
+				mLogger.warn("Worker Failed! " + e);
 				throw e;
 			} catch (final InterruptedException ie) {
+				mVisitLoopsOnlyOnce = false;
 				ie.printStackTrace();
-				mLogger.warn("Worker was interrupted!");
+				mLogger.warn("Worker was interrupted! " + ie);
 			}
 			if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker) {
 				minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
@@ -393,8 +401,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mLogger.info("ActiveExecutorsForPathPrograms: " + mActiveExecutors);
 		mLogger.info("IterationsWithMaxThreads: " + mIterationsWithMaxThreads);
 		mLogger.info("IterationsWithONEThread: " + mIterationsWithOneThread);
-		mLogger.info("SearchTime: " + mSearchTime);
+		mLogger.info("SearchTime: " + mSearchTime + " s");
+		mLogger.info("WorkerSetUpTime: " + mWorkerSetUpTime + " s");
 		mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
+
 
 	}
 
@@ -428,6 +438,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 * When we reach this method, we will always start at least one new worker.
 	 */
 	private void startWorker() {
+		final long time = System.nanoTime() / 1000000000;
 		mLogger.info("Main: Starting Thread");
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
@@ -457,6 +468,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mCounterexamplesChecked += 1;
 		// add mCounterexample to list such that we dont get it twice in our search
 		addCounterexampleToSet((NestedRun<L, ?>) mCounterexample);
+		mWorkerSetUpTime += ((System.nanoTime() / 1000000000) - time);
 	}
 
 	/*
@@ -744,6 +756,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	 */
 	private NestedRun<L, IPredicate> searchForErrorTrace(final boolean onlyDoIsEmptyParallel)
 			throws AutomataOperationCanceledException {
+		final long time = System.nanoTime() / 1000000000;
 		Set<IPredicate> possibleEndPoints = null;
 		/*
 		 * Optimization that ensures we find a trace to a not yet targeted test goal / error loc
@@ -811,6 +824,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mLogger.info("Did not Find a Counterexample!");
 		mCountFailedToFindCex += 1;
 		assert mRunningThreads > 0;
+
+		mSearchTime += ((System.nanoTime() / 1000000000) - time);
 		return null;
 	}
 

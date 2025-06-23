@@ -304,7 +304,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE succ, final LETTER symbol,
 			final int position) {
-		if (mNoLoopsMode) { // TODO this is bad we want a real no loop tracking and actually disalow loops for
+		if (mNoLoopsMode && false) { // TODO this is bad we want a real no loop tracking and actually disalow loops for
 							// real
 			return increaseScoreNoLoops(counterexample, succ, symbol, position);
 		}
@@ -537,7 +537,8 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		mVisitedPairs.clear(); // reset visited Pairs, then add start of subsearch
 		if (counterexamples.isEmpty()) {
 			final IsEmptyHeuristic<LETTER, STATE> runsearch = new IsEmptyHeuristic<>(mServices, mOperand,
-					IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix));
+					IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
+					mNoLoopsMode);
 			// final IsEmpty<LETTER, STATE> runsearch = new IsEmpty<>(super.mServices, mOperand, mCurrentPrefix);
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {
@@ -606,16 +607,10 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	}
 
 	private void addToCurrentPrefix(final STATE state, final LETTER letter) {
-		if (!mNoLoopsMode) {
-			// return;
-		}
 		mCurrentPrefix.add(new Pair<>(state, letter));
 	}
 
 	private void removeFromCurrentPrefix(final STATE state, final LETTER letter) {
-		if (!mNoLoopsMode) {
-			// return;
-		}
 		assert mCurrentPrefix.getLast().getFirst().equals(state) && mCurrentPrefix.getLast().getSecond().equals(letter);
 		mCurrentPrefix.removeLast();
 	}
