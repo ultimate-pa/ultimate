@@ -13,8 +13,24 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
+/**
+ * This class is used to build a Data Flow Graph of a given Boogie Control Flow Graph. This is used for trace
+ * abstraction by forwarding it to the CycleRemover and obtaining IcfgEdges to be removed from the original Control Flow
+ * Graph.
+ *
+ * @author christof.schuster@gmx.de
+ */
+
 public class DfgBuilder {
 
+	/**
+	 * Build a Data Flow Graph from a Root Node of a boogie Control Flow Graph.
+	 *
+	 * @param cfgRoot the root node of a Control Flow Graph as a IcfgLocation
+	 * @param logger  the Logger
+	 * @return a data flow graph in form of a node List and an edge relation
+	 *
+	 */
 	public static DfgContainer buildDfg(final IcfgLocation cfgRoot, final ILogger logger) {
 		final BuildContext context = new BuildContext(cfgRoot, logger);
 		final DfgContainer dfg = context.buildDfg();
@@ -25,36 +41,36 @@ public class DfgBuilder {
 	// clear them every time I call buildDfg
 
 	private static class BuildContext {
-		private final Set<DfgNode> nodeList = new HashSet<>();
-		private final Map<DfgNode, Set<IProgramVar>> defMap = new HashMap<>();
-		private final Map<DfgNode, Set<IProgramVar>> useMap = new HashMap<>();
-		private final Map<IcfgEdge, DfgNode> edgeBacklinks = new HashMap<>();
-		private final HashRelation<DfgNode, DfgNode> edgeRelation = new HashRelation<>();
-		private final ILogger logger;
-		private final IcfgLocation cfgRootNode;
+		private final Set<DfgNode> mNodeList = new HashSet<>();
+		private final Map<DfgNode, Set<IProgramVar>> mDefMap = new HashMap<>();
+		private final Map<DfgNode, Set<IProgramVar>> mUseMap = new HashMap<>();
+		private final Map<IcfgEdge, DfgNode> mEdgeBacklinks = new HashMap<>();
+		private final HashRelation<DfgNode, DfgNode> mEdgeRelation = new HashRelation<>();
+		private final ILogger mLogger;
+		private final IcfgLocation mCfgRootNode;
 
-		public BuildContext(final IcfgLocation cfgRootNode, final ILogger logger) {
-			this.cfgRootNode = cfgRootNode;
-			this.logger = logger;
+		private BuildContext(final IcfgLocation cfgRootNode, final ILogger logger) {
+			mCfgRootNode = cfgRootNode;
+			mLogger = logger;
 		}
 
-		public DfgContainer buildDfg() {
+		private DfgContainer buildDfg() {
 			buildNodeList();
-			logger.info("Built Nodelist");
+			mLogger.info("Built Nodelist");
 			defUseAnalysis();
-			logger.info("Completed DefUseAnalysis");
+			mLogger.info("Completed DefUseAnalysis");
 			generateEdges();
-			logger.info("Generated Edges");
-			return new DfgContainer(edgeRelation, nodeList);
+			mLogger.info("Generated Edges");
+			return new DfgContainer(mEdgeRelation, mNodeList);
 		}
 
 		// traverses the CFG edges and creates a corresponding Node in the node list
 		private void buildNodeList() {
-			logger.debug("Handling " + cfgRootNode.toString());
+			mLogger.debug("Handling " + mCfgRootNode.toString());
 			// traverse CFG edges depth-first and get a list of DFG nodes
 			final Set<IcfgEdge> visited = new HashSet<>();
 			final Stack<IcfgLocation> stack = new Stack<>();
-			stack.add(cfgRootNode);
+			stack.add(mCfgRootNode);
 			while (!stack.isEmpty()) {
 				final IcfgLocation node = stack.pop();
 				for (final IcfgEdge edge : node.getOutgoingEdges()) {
@@ -68,8 +84,8 @@ public class DfgBuilder {
 			// we also keep a mapping backwards so its easier generating edges in the dfg
 			for (final IcfgEdge edge : visited) {
 				final DfgNode node = new DfgNode(edge);
-				nodeList.add(node);
-				edgeBacklinks.put(edge, node);
+				mNodeList.add(node);
+				mEdgeBacklinks.put(edge, node);
 			}
 		}
 
@@ -79,37 +95,37 @@ public class DfgBuilder {
 		 *
 		 */
 		private void defUseAnalysis() {
-			for (final DfgNode node : nodeList) {
+			for (final DfgNode node : mNodeList) {
 				final IcfgEdge edge = node.getCorrespondingDFGEdge();
 				final UnmodifiableTransFormula transformula = edge.getTransformula();
 				final Set<IProgramVar> InVars = transformula.getInVars().keySet();
 				for (final IProgramVar programVar : InVars) {
-					useMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
+					mUseMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
 					if (transformula.getOutVars().get(programVar) != null) {
-						defMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
+						mDefMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
 					}
 				}
 				final Set<IProgramVar> OutVars = transformula.getOutVars().keySet();
-				defMap.computeIfAbsent(node, (k -> new HashSet<>())).addAll(OutVars);
+				mDefMap.computeIfAbsent(node, (k -> new HashSet<>())).addAll(OutVars);
 			}
-			logger.debug("def Map " + defMap.toString());
-			logger.debug("use map " + useMap.toString());
+			mLogger.debug("def Map " + mDefMap.toString());
+			mLogger.debug("use map " + mUseMap.toString());
 		}
 
 		private void generateEdges() {
-			for (final DfgNode node : nodeList) {
+			for (final DfgNode node : mNodeList) {
 				// very naive Algorithm: One depth-first search for every def of a variable of a node
-				if (defMap.containsKey(node)) {
-					for (final IProgramVar programVar : defMap.get(node)) {
+				if (mDefMap.containsKey(node)) {
+					for (final IProgramVar programVar : mDefMap.get(node)) {
 						final Set<DfgNode> children = searchNeighbors(node, programVar);
-						edgeRelation.addAllPairs(node, children);
+						mEdgeRelation.addAllPairs(node, children);
 					}
 				}
 			}
 		}
 
 		private Set<DfgNode> searchNeighbors(final DfgNode node, final IProgramVar programVar) {
-			logger.debug("Searching Neighbors for Node " + node.toString() + " , ProgramVar " + programVar.toString());
+			mLogger.debug("Searching Neighbors for Node " + node.toString() + " , ProgramVar " + programVar.toString());
 			final Set<DfgNode> children = new HashSet<>();
 			final IcfgEdge edge = node.getCorrespondingDFGEdge();
 			final Set<IcfgEdge> visited = new HashSet<>();
@@ -120,12 +136,12 @@ public class DfgBuilder {
 				for (final IcfgEdge nextEdge : nextCFGNode.getOutgoingEdges()) {
 					if (!visited.contains(nextEdge)) {
 						visited.add(nextEdge);
-						final DfgNode dfgNode = edgeBacklinks.get(nextEdge);
-						if (useMap.containsKey(dfgNode) && useMap.get(dfgNode).contains(programVar)) {
+						final DfgNode dfgNode = mEdgeBacklinks.get(nextEdge);
+						if (mUseMap.containsKey(dfgNode) && mUseMap.get(dfgNode).contains(programVar)) {
 							children.add(dfgNode);
 						}
 						// if we redefine it then we don't have to search here further
-						if (defMap.containsKey(dfgNode) && !defMap.get(dfgNode).contains(programVar)) {
+						if (mDefMap.containsKey(dfgNode) && !mDefMap.get(dfgNode).contains(programVar)) {
 							final IcfgLocation target = nextEdge.getTarget();
 							stack.push(target);
 						}

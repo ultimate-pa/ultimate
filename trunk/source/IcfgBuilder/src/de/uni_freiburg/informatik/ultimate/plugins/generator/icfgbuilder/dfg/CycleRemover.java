@@ -16,9 +16,22 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
+/**
+ * This class is used to solve the feedback vertex problem of Boogie Data Flow Graphs. It does so by only considering
+ * nodes that are in cycles. A heuristic and an exact solution are provided as a list of the IcfgEdges of the Data Flow
+ * Graph Nodes.
+ *
+ * @author christof.schuster@gmx.de
+ */
 public class CycleRemover {
 
-	// computes feedback vertex set by taking a node from every cycle and removing it
+	/**
+	 * Computes a feedback Vertex Set of the Data Flow Graph, by removing a Node for every Cycle in the Graph
+	 *
+	 * @param dfg    the Data Flow Graph to work on
+	 * @param logger the Logger
+	 * @return the feedback Vertex Set as a Set of IcfgEdges that can be removed
+	 */
 	public static Set<IcfgEdge> computeFeedbackVertexHeuristic(final DfgContainer dfg, final ILogger logger) {
 		final ISuccessorProvider<DfgNode> successors = node -> {
 			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
@@ -36,9 +49,14 @@ public class CycleRemover {
 		return fvs;
 	}
 
-	// naive implementation of the feedbackVertexSet Problem, Brute Force all possible subsets of nodes that are inside
-	// a cycle and check for acyclity
-	// starting from least nodes removed so I can terminate early
+	/**
+	 * Computes the optimal feedback Vertex Set of the Data Flow Graph, by trying every combination of nodes that can be
+	 * removed
+	 *
+	 * @param originalDfg the Data Flow Graph to work on
+	 * @param logger      the Logger
+	 * @return the feedback Vertex Set as a Set of IcfgEdges that can be removed
+	 */
 	public static Set<IcfgEdge> computeFeedbackVertexBruteForce(final DfgContainer originalDfg, final ILogger logger) {
 		final ISuccessorProvider<DfgNode> successors = node -> {
 			final Collection<DfgNode> successorsOfNode = originalDfg.getEdgeRelation().getImage(node);
