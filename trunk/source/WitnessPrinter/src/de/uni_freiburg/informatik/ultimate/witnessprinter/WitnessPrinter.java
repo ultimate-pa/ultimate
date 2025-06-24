@@ -163,13 +163,10 @@ public class WitnessPrinter implements IOutput {
 	// creates a MetaFile with the descriptions necessary for the TestComp
 	// For TestComp we do the witness print Toolchain before the analysis, so that we have a MetaFile in case of timeout
 	private void generateTestCompMetaFile() {
-		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = ILocation.getAnnotation(root).getFileName();
-		final BacktranslatedCFG<?, IcfgEdge> origCfg = new BacktranslatedCFG<>(filename,
-				IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
 		try {
-			new TestCompMetaFilePrinter<>(backtrans.translateCFG(origCfg), mLogger, mServices).printMetaFile();
+			new TestCompMetaFilePrinter<>(filename, mLogger, mServices).printMetaFile();
 		} catch (final Exception e) {
 			throw new AssertionError(e);
 		}

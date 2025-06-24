@@ -52,7 +52,6 @@ import org.w3c.dom.Element;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
@@ -63,17 +62,15 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  */
 public class TestCompMetaFilePrinter<TTE, TE> {
 
-	private static final String[] ACSL_SUBSTRING = { "\\old", "\\result", "\\exists" };
-
-	private final IBacktranslatedCFG<?, TTE> mTranslatedCFG;
 	IUltimateServiceProvider mServices;
+	String mFileName;
 
-	public TestCompMetaFilePrinter(final IBacktranslatedCFG<?, TTE> translatedCFG, final ILogger logger,
+	public TestCompMetaFilePrinter(final String filename, final ILogger logger,
 			final IUltimateServiceProvider services) throws Exception {
-		mTranslatedCFG = translatedCFG;
 		PreferenceInitializer.getPreferences(services)
 				.getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 		mServices = services;
+		mFileName = filename;
 	}
 
 	public void printMetaFile() throws Exception {
@@ -88,8 +85,7 @@ public class TestCompMetaFilePrinter<TTE, TE> {
 				output = new FileOutputStream("test-suite/metadata.xml");
 				createAndWriteDummyTestCase("test-suite/testcaseDummy.xml");
 			} else {
-				final String outputDir = "testsuite_" + mTranslatedCFG.getFilename().substring(
-						mTranslatedCFG.getFilename().lastIndexOf("\\") + 1, mTranslatedCFG.getFilename().length() - 2);
+				final String outputDir = "testsuite_" + mFileName + hashCode();
 
 				Files.createDirectories(Paths.get("tests"));
 				Files.createDirectories(Paths.get("tests/testsuite_" + outputDir));
@@ -172,7 +168,7 @@ public class TestCompMetaFilePrinter<TTE, TE> {
 		// <!ELEMENT programfile (#PCDATA)>
 		final Element programfile = dom.createElement("programfile");
 		programfile.appendChild(dom.createTextNode(
-				"./" + mTranslatedCFG.getFilename().substring(mTranslatedCFG.getFilename().lastIndexOf("\\") + 1)));
+				"./" + mFileName.substring(mFileName.lastIndexOf("\\") + 1)));
 		rootEle.appendChild(programfile);
 
 		// <!ELEMENT programhash (#PCDATA)>

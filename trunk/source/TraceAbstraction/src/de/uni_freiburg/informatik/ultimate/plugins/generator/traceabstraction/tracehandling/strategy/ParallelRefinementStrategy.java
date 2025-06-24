@@ -137,16 +137,18 @@ public class ParallelRefinementStrategy<L extends IIcfgTransition<?>> {
 	 */
 	public IIpTcStrategyModule<?, L>[] getModule(final StrategyFactory<L>.StrategyModuleFactory factory) {
 		final List<IIpTcStrategyModule<?, L>> rtr = new ArrayList<>();
-		if (mQuickCheck) {
-			rtr.add(factory.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
-			return rtr.toArray(new IIpTcStrategyModule[1]);
-		}
+
 
 		final TermClassifier tc = factory.getTermClassifierForTrace();
 		final boolean integerMode =
 				tc.getOccuringSortNames().contains("Int") || tc.getOccuringSortNames().contains("Real");
 
 		if (integerMode) {
+			if (mQuickCheck) {
+				rtr.add(factory
+						.createIpTcStrategyModuleSmtInterpolCraig(InterpolationTechnique.Craig_TreeInterpolation));
+				return rtr.toArray(new IIpTcStrategyModule[1]);
+			}
 			return getIntegerModule(factory);
 		} else {
 			return getBitVectorModule(factory, tc);
