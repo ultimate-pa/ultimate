@@ -14,12 +14,14 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
+	private static int UNIQUEINT = 0;
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToDisjState(
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferingState,
@@ -46,18 +48,21 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		 * vars.
 		 */
 		if (isSelfInterfering) {
-			final Collection<ILocalProgramVar> locals = cfg.getCfgSmtToolkit().getSymbolTable()
+			cfg.getCfgSmtToolkit().getManagedScript().lock(this);
+			final Collection<ILocalProgramVar> locals1 = cfg.getCfgSmtToolkit().getSymbolTable()
 					.getLocals(action.getPrecedingProcedure());
-			final Collection<IProgramVarOrConst> progVarLocals = new HashSet<>(locals);
-			for (final IProgramVarOrConst v : progVarLocals) {
-				final var newVar = new LocalProgramVarDummy();
+			final Collection<IProgramVarOrConst> locals = new HashSet<>(locals1);
+			for (final IProgramVarOrConst v : locals) {
+				final var newVar = ProgramVarUtils.constructLocalProgramVar(
+						v.getGloballyUniqueId() + "_itfCopy" + UNIQUEINT++, action.getPrecedingProcedure(), v.getSort(),
+						cfg.getCfgSmtToolkit().getManagedScript(), this);
 				reverseRenamedMap.put(newVar, v);
 				globalTargetState = globalTargetState.renameVariable(v, newVar);
 			}
+			cfg.getCfgSmtToolkit().getManagedScript().unlock(this);
 		} else {
 			globalTargetState = targetState;
 		}
-
 		/*
 		 * Add local variables to both states to be able to intersect. This is necessary since our interference
 		 * transition might contain local variables of the interfering thread.
@@ -122,20 +127,23 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 	}
 
 	private static class LocalProgramVarDummy implements ILocalProgramVar {
-
 		private static final long serialVersionUID = 1L;
+		private final String mIdentifier;
+		private final String mProcedure;
 
-		public LocalProgramVarDummy() {
+		public LocalProgramVarDummy(final String identifier, final String procedure) {
+			mIdentifier = identifier;
+			mProcedure = procedure;
 		}
 
 		@Override
 		public String getIdentifier() {
-			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+			return mIdentifier;
 		}
 
 		@Override
 		public String getProcedure() {
-			throw new UnsupportedOperationException("Dummy var, should not call its methods");
+			return mProcedure;
 		}
 
 		@Override
