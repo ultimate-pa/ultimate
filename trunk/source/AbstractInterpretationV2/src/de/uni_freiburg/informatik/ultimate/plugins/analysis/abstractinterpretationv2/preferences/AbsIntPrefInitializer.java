@@ -106,7 +106,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_ABSTRACT_DOMAIN_FUTURE = VALUES_ABSTRACT_DOMAIN_FUTURE[0];
 	public static final int DEF_MAXSTATES_CONC = 4;
-	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 2;
+	public static final int DEF_INTERFERENCE_ITERATIONS_UNTIL_WIDENING = 4;
 
 	public static final String INDENT = "   ";
 	public static final String DINDENT = INDENT + INDENT;
