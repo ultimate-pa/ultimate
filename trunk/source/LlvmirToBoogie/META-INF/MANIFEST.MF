@@ -1,11 +1,14 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: LlvmirToBoogie
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;singleton:=true
 Bundle-Version: 0.3.0
+Export-Package: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie,
+ de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.llvmir,
  org.antlr.antlr4-runtime
 Automatic-Module-Name: LlvmirToBoogie
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.LlvmirToBoogie
 Bundle-RequiredExecutionEnvironment: JavaSE-21
