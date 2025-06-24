@@ -820,7 +820,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		// mLogger.info("Found new Counterexample via DFS!");
 		// return search.getNestedRun();
 		// }
-
+		changeToNotVisistLoopsOnlyOnceMode();
 		mLogger.info("Did not Find a Counterexample!");
 		mCountFailedToFindCex += 1;
 		assert mRunningThreads > 0;
