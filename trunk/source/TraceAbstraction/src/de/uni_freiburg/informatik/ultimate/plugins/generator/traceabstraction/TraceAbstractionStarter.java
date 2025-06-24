@@ -226,8 +226,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final Set<IProgramVar> failedGhosts = new HashSet<>();
 				final var ghostsInits = new HashMap<String, String>();
 				for (final var entry : annotation.getGhostAssignment().entrySet()) {
-					final var ghost = (IProgramVar) ((Map.Entry) entry).getKey();
-					final var expr = (Term) ((Map.Entry) entry).getValue();
+					final var ghost = (IProgramVar) entry.getKey();
+					final var expr = (Term) entry.getValue();
 
 					final var initialValue = backTranslatorService.translateExpressionToString(expr, Term.class);
 					if (initialValue == null) {
@@ -241,8 +241,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				new WitnessGhostDeclaration(ghostsInits).annotate(icfg);
 
 				for (final var entry : annotation.getAssignmentMapping().entrySet()) {
-					final var edge = (IIcfgTransition<?>) ((Map.Entry) entry).getKey();
-					final GhostUpdate update = (GhostUpdate) ((Map.Entry) entry).getValue();
+					final var edge = (IIcfgTransition<?>) entry.getKey();
+					final GhostUpdate update = (GhostUpdate) entry.getValue();
 
 					final Map<String, String> ghostUpdate = new HashMap<>();
 					for (final var ghost : update.getAssignedVariables()) {
@@ -267,8 +267,8 @@ public class TraceAbstractionStarter<L extends IIcfgTransition<?>> {
 				final var failedGhostTvs =
 						failedGhosts.stream().map(IProgramVar::getTermVariable).collect(Collectors.toSet());
 				for (final var entry : annotation.getFormulaMapping().entrySet()) {
-					final IcfgLocation loc = (IcfgLocation) ((Map.Entry) entry).getKey();
-					final Term formula = ((IPredicate) ((Map.Entry) entry).getValue()).getFormula();
+					final IcfgLocation loc = (IcfgLocation) entry.getKey();
+					final Term formula = ((IPredicate) entry.getValue()).getFormula();
 					final Object invariant = backTranslatorService.translateExpressionWithContext(formula,
 							ILocation.getAnnotation(loc), Term.class);
 

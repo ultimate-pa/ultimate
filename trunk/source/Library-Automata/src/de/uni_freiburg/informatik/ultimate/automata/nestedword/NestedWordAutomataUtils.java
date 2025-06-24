@@ -178,7 +178,7 @@ public final class NestedWordAutomataUtils {
 	public static <STATE> HashRelation<STATE, STATE> constructHashRelation(final AutomataLibraryServices services,
 			final Collection<Set<STATE>> partition) throws AutomataOperationCanceledException {
 		final HashRelation<STATE, STATE> result = new HashRelation<>();
-		final InitialPartitionProcessor<STATE> ipp = new InitialPartitionProcessor<STATE>(services) {
+		final InitialPartitionProcessor<STATE> ipp = new InitialPartitionProcessor<>(services) {
 
 			@Override
 			public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
@@ -438,8 +438,7 @@ public final class NestedWordAutomataUtils {
 					final NestedMap3<STATE, LETTER, STATE, IsContained> internalOut) {
 		final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer =
 				x -> new OutgoingInternalTransition<>(letter, x);
-		return () -> new TransformIterator<>(
-				keySetOrEmpty(internalOut.get(state, letter)).iterator(), transformer);
+		return () -> new TransformIterator<>(keySetOrEmpty(internalOut.get(state, letter)).iterator(), transformer);
 	}
 
 	public static <LETTER, STATE> Iterable<OutgoingCallTransition<LETTER, STATE>>
@@ -447,15 +446,13 @@ public final class NestedWordAutomataUtils {
 					final NestedMap3<STATE, LETTER, STATE, IsContained> callOut) {
 		final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer =
 				x -> new OutgoingCallTransition<>(letter, x);
-		return () -> new TransformIterator<>(
-				keySetOrEmpty(callOut.get(state, letter)).iterator(), transformer);
+		return () -> new TransformIterator<>(keySetOrEmpty(callOut.get(state, letter)).iterator(), transformer);
 	}
 
 	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>>
 			constructReturnTransitionIteratorFromNestedMap(final STATE state, final STATE hier, final LETTER letter,
 					final NestedMap4<STATE, STATE, LETTER, STATE, IsContained> returnOut) {
-		return () -> new TransformIterator<>(
-				keySetOrEmpty(returnOut.get(state, hier, letter)).iterator(),
+		return () -> new TransformIterator<>(keySetOrEmpty(returnOut.get(state, hier, letter)).iterator(),
 				x -> new OutgoingReturnTransition<>(hier, letter, x));
 	}
 
@@ -474,13 +471,13 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
-	 * Special method for (partially) deterministic and (partially) total automata.
-	 * Returns for a given state-letter pair the unique successor state.
+	 * Special method for (partially) deterministic and (partially) total automata. Returns for a given state-letter
+	 * pair the unique successor state.
 	 */
 	public static <LETTER, STATE> STATE getSuccessorState(
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
-		final Iterator<OutgoingInternalTransition<LETTER, STATE>> succIt = nwa.internalSuccessors(state, letter)
-				.iterator();
+		final Iterator<OutgoingInternalTransition<LETTER, STATE>> succIt =
+				nwa.internalSuccessors(state, letter).iterator();
 		if (!succIt.hasNext()) {
 			throw new IllegalArgumentException("No successor for state " + state + " and letter " + letter);
 		}

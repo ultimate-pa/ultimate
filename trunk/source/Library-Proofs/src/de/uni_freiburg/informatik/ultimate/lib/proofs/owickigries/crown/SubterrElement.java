@@ -49,7 +49,8 @@ class SubterrElement<LETTER, PLACE> {
 	}
 
 	private ImmutableSet<PLACE> calculateMarking() {
-		return mCoSet.stream().map((Function<? super Condition<LETTER, PLACE>, ? extends PLACE>) Condition::getPlace).collect(ImmutableSet.collector());
+		return mCoSet.stream().map((Function<? super Condition<LETTER, PLACE>, ? extends PLACE>) Condition::getPlace)
+				.collect(ImmutableSet.collector());
 	}
 
 	public Marking<PLACE> getMarking() {

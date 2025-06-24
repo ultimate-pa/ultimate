@@ -82,8 +82,7 @@ public class HittingSet<T> {
 	 */
 	private Set<Set<T>> getSymmDifferences(final Set<Set<T>> collection) {
 		final Set<Set<T>> differences = new HashSet<>();
-		final Set<Set<T>> toCombine = new HashSet<>();
-		toCombine.addAll(collection);
+		final Set<Set<T>> toCombine = new HashSet<>(collection);
 		for (final Set<T> e : collection) {
 			if (!toCombine.isEmpty()) {
 				toCombine.remove(e);
@@ -139,8 +138,7 @@ public class HittingSet<T> {
 	 */
 	private Set<T> getHittingSet(final Set<Set<T>> collection) {
 		final Set<T> hittingSet = new HashSet<>();
-		Set<Set<T>> uncovered = new HashSet<>();
-		uncovered.addAll(collection);
+		Set<Set<T>> uncovered = new HashSet<>(collection);
 		for (final Set<T> set : collection) {
 			if (!checkHittingSet(hittingSet, collection)) {
 				final T greedy = getGreedyElement(set, uncovered);

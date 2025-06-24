@@ -183,7 +183,7 @@ public class Marking<PLACE> implements Iterable<PLACE>, Serializable {
 
 	@Override
 	public String toString() {
-		return this.mPlaces.toString();
+		return mPlaces.toString();
 	}
 
 	public Stream<PLACE> stream() {

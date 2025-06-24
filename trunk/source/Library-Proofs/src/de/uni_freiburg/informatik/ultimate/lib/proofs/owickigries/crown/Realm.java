@@ -61,7 +61,8 @@ public final class Realm<PLACE, LETTER> {
 	}
 
 	private ImmutableSet<PLACE> getPlaces() {
-		return mRealm.stream().map((Function<? super Condition<LETTER, PLACE>, ? extends PLACE>) Condition::getPlace).collect(ImmutableSet.collector());
+		return mRealm.stream().map((Function<? super Condition<LETTER, PLACE>, ? extends PLACE>) Condition::getPlace)
+				.collect(ImmutableSet.collector());
 	}
 
 	private boolean placesNotCorelated(final PlacesCoRelation<PLACE> placesCoRelation) {

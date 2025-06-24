@@ -258,8 +258,8 @@ public class RCFGBacktranslator extends
 			throw new IllegalArgumentException();
 		}
 		final IcfgProgramExecution rcfgProgramExecution = (IcfgProgramExecution) programExecution;
-		assert checkCallStackSourceProgramExecution(mLogger,
-				programExecution) : "callstack of initial program execution already broken";
+		assert checkCallStackSourceProgramExecution(mLogger, programExecution)
+				: "callstack of initial program execution already broken";
 
 		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
 		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();

@@ -84,7 +84,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
-import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator.IFunction;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -426,8 +425,8 @@ public class CACSL2BoogieBacktranslator extends
 					}
 					translatedAtoTraceElems.add(ateBuilder.build());
 					translatedProgramStates.add(translateProgramState(programExecution.getProgramState(nextIndex)));
-					assert checkCallStackTarget(mLogger,
-							translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+					assert checkCallStackTarget(mLogger, translatedAtoTraceElems)
+							: "callstack broken during handleCASTFunctionCallExpression";
 					return nextIndex;
 				}
 			}
@@ -436,8 +435,8 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtoTraceElems
 				.add(AtomicTraceElementBuilder.fromReplaceElementAndStep(currentATE, (CACSLLocation) cloc).build());
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStackTarget(mLogger,
-				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+		assert checkCallStackTarget(mLogger, translatedAtoTraceElems)
+				: "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
 
@@ -474,8 +473,8 @@ public class CACSL2BoogieBacktranslator extends
 		translatedAtoTraceElems.add(AtomicTraceElementBuilder
 				.fromReplaceElementAndStep(currentATE, (CACSLLocation) cloc, cloc).setStepInfo(stepInfo).build());
 		translatedProgramStates.add(translateProgramState(programExecution.getProgramState(index)));
-		assert checkCallStackTarget(mLogger,
-				translatedAtoTraceElems) : "callstack broken during handleCASTFunctionCallExpression";
+		assert checkCallStackTarget(mLogger, translatedAtoTraceElems)
+				: "callstack broken during handleCASTFunctionCallExpression";
 		return index;
 	}
 

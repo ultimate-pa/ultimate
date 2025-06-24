@@ -108,22 +108,26 @@ public class PredicateWithConjuncts implements IPredicate {
 
 	@Override
 	public Term getFormula() {
-		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
+		throw new UnsupportedOperationException(
+				"PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Term getClosedFormula() {
-		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
+		throw new UnsupportedOperationException(
+				"PredicateWithConjuncts does not offer formula. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer variables. Access conjuncts individually.");
+		throw new UnsupportedOperationException(
+				"PredicateWithConjuncts does not offer variables. Access conjuncts individually.");
 	}
 
 	@Override
 	public Set<IProgramFunction> getFuns() {
-		throw new UnsupportedOperationException("PredicateWithConjuncts does not offer functions. Access conjuncts individually.");
+		throw new UnsupportedOperationException(
+				"PredicateWithConjuncts does not offer functions. Access conjuncts individually.");
 	}
 
 	@Override
@@ -131,8 +135,8 @@ public class PredicateWithConjuncts implements IPredicate {
 		return mSerial + "#" + mConjuncts.toString();
 	}
 
-	public static List<IPredicate> flatten(IPredicate predicate) {
-		if (predicate instanceof PredicateWithConjuncts conjunction) {
+	public static List<IPredicate> flatten(final IPredicate predicate) {
+		if (predicate instanceof final PredicateWithConjuncts conjunction) {
 			return conjunction.getConjuncts();
 		}
 		return List.of(predicate);

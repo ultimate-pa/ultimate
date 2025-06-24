@@ -257,8 +257,7 @@ public class CegarLoopSWBnonRecursive<L extends IIcfgTransition<?>> extends NwaC
 
 		// Add internal states of the error path
 		mLogger.debug("Add internal states and edges of the error path");
-		addPath(ce_edges, ce_states, ce_interp, mAbstractionInitialState, mAbstractionFinalState,
-				new TreeMap<>());
+		addPath(ce_edges, ce_states, ce_interp, mAbstractionInitialState, mAbstractionFinalState, new TreeMap<>());
 
 		// // // debugging
 		// {
