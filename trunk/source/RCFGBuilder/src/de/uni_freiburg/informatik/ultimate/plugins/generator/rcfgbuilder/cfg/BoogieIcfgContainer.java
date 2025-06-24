@@ -76,6 +76,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Set<BoogieIcfgLocation> mLoopLocations;
+	private final Set<BoogieIcfgLocation> mLocationsOfInterest;
 	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
 	private final Map<String, Map<DebugIdentifier, BoogieIcfgLocation>> mLocNodes;
 
@@ -106,13 +107,13 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		mLocNodes = new LinkedHashMap<>();
 		mErrorNodes = new LinkedHashMap<>();
 		mLoopLocations = new LinkedHashSet<>();
+		mLocationsOfInterest = new LinkedHashSet<>();
 		mInitialNodes = new LinkedHashSet<>();
 
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		final ManagedScript mgScript = mBoogie2smt.getManagedScript();
-		final Set<String> procs = new LinkedHashSet<>();
-		procs.addAll(boogieDeclarations.getProcImplementation().keySet());
+		final Set<String> procs = new LinkedHashSet<>(boogieDeclarations.getProcImplementation().keySet());
 		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
 		final SerialProvider serialprovider = new SerialProvider();
 		mCfgSmtToolkit = new CfgSmtToolkit(
@@ -173,6 +174,12 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	@Visualizable
 	public Set<BoogieIcfgLocation> getLoopLocations() {
 		return mLoopLocations;
+	}
+
+	@Override
+	@Visualizable
+	public Set<BoogieIcfgLocation> getLocationsOfInterest() {
+		return mLocationsOfInterest;
 	}
 
 	public BoogieDeclarations getBoogieDeclarations() {
@@ -245,4 +252,5 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public String toString() {
 		return graphStructureToString();
 	}
+
 }

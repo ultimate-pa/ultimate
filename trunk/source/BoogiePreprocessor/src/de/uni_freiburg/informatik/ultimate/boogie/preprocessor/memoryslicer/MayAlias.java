@@ -50,31 +50,30 @@ public class MayAlias {
 
 	public MayAlias(final UnionFind<AddressStore> pointerBases,
 			final Map<PointerBase, MemorySegment> pointerBaseToMemorySegment) {
-		super();
 		mAddressStores = pointerBases;
 		mPointerBaseToMemorySegment = pointerBaseToMemorySegment;
 	}
 
-//	public MayAlias join(final MayAlias other) {
-//		final Map<PointerBase, MemorySegment> newPointerBaseToMemorySegment = new HashMap<>(
-//				mPointerBaseToMemorySegment);
-//		newPointerBaseToMemorySegment.putAll(other.getPointerBaseToMemorySegment());
-//		final UnionFind<AddressStore> newAddressStores = UnionFind.unionPartitionBlocks(mAddressStores,
-//				other.getAddressStores());
-//		// TODO apply Congruence
-////		for (final Set<AddressStore> eq : newAddressStores.getAllEquivalenceClasses()) {
-////			appl
-////		}
-//		return new MayAlias(newAddressStores, newPointerBaseToMemorySegment);
-//	}
+	// public MayAlias join(final MayAlias other) {
+	// final Map<PointerBase, MemorySegment> newPointerBaseToMemorySegment = new HashMap<>(
+	// mPointerBaseToMemorySegment);
+	// newPointerBaseToMemorySegment.putAll(other.getPointerBaseToMemorySegment());
+	// final UnionFind<AddressStore> newAddressStores = UnionFind.unionPartitionBlocks(mAddressStores,
+	// other.getAddressStores());
+	// // TODO apply Congruence
+	//// for (final Set<AddressStore> eq : newAddressStores.getAllEquivalenceClasses()) {
+	//// appl
+	//// }
+	// return new MayAlias(newAddressStores, newPointerBaseToMemorySegment);
+	// }
 
 	public void reportEquivalence(final AddressStoreFactory asFac, final AddressStore lhs, final AddressStore rhs) {
-//		if ((lhs instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) lhs)) {
-//			throw new MemorySliceException("Must not add nullpointer");
-//		}
-//		if ((rhs instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) rhs)) {
-//			throw new MemorySliceException("Must not add nullpointer");
-//		}
+		// if ((lhs instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) lhs)) {
+		// throw new MemorySliceException("Must not add nullpointer");
+		// }
+		// if ((rhs instanceof PointerBase) && AliasAnalysis.isNullPointer((PointerBase) rhs)) {
+		// throw new MemorySliceException("Must not add nullpointer");
+		// }
 		final AddressStore rhsRep = mAddressStores.find(rhs);
 		final AddressStore lhsRep = mAddressStores.find(lhs);
 		if (rhs == lhs) {
@@ -139,7 +138,6 @@ public class MayAlias {
 			}
 		}
 
-
 	}
 
 	private boolean applyCongruence(final AddressStoreFactory asFac, final UnionFind<AddressStore> resultUf,
@@ -164,15 +162,13 @@ public class MayAlias {
 	}
 
 	public void addPointerBase(final AddressStoreFactory asFac, final PointerBase pb) {
-//		if (AliasAnalysis.isNullPointer(pb)) {
-//			throw new MemorySliceException("Must not add nullpointer");
-//		}
+		// if (AliasAnalysis.isNullPointer(pb)) {
+		// throw new MemorySliceException("Must not add nullpointer");
+		// }
 		final AddressStore rep = mAddressStores.find(pb);
 		final MemorySegment ms = asFac.getMemorySegment(pb);
 		final AddressStore msRep = mAddressStores.find(ms);
 		if (rep != null && msRep != null) {
-			// nothing new was added
-			return;
 		} else {
 			mPointerBaseToMemorySegment.put(pb, ms);
 			if (rep == null) {

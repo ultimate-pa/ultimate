@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Buchi NWA intersection.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -67,7 +67,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INwaOutgoingLetterAndTr
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
@@ -199,7 +199,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INwaOutgoingLetterAndTr
 		final STATE fst = mRes2prod.get(state).getFst();
 		return mFstOperand.lettersCall(fst);
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		final STATE fst = mRes2prod.get(state).getFst();
@@ -332,7 +332,6 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INwaOutgoingLetterAndTr
 		return 0;
 	}
 
-
 	@Override
 	public String sizeInformation() {
 		// TODO Auto-generated method stub
@@ -341,7 +340,7 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INwaOutgoingLetterAndTr
 
 	/**
 	 * Product state.
-	 * 
+	 *
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class ProductState {

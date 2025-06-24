@@ -88,7 +88,8 @@ final class UnionFind {
 		int ptr = 0;
 
 		while (node != mRoot[node]) {
-			mStack[ptr++] = node;
+			mStack[ptr] = node;
+			ptr++;
 			node = mRoot[node];
 		}
 		while (ptr-- > 0) {

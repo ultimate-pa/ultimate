@@ -25,6 +25,7 @@
  */
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -35,10 +36,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * Edge in a recursive control flow graph that represents a fork call. Opposed to a Summary this represents only
- * the execution from the position directly before the fork statement to the next position of the current thread. A
- * ForkCurrentThread object provides one auxiliary TransitionFormula which shows fork th_id_X, where X is the number
- * of the created thread.
+ * Edge in a recursive control flow graph that represents a fork call. Opposed to a Summary this represents only the
+ * execution from the position directly before the fork statement to the next position of the current thread. A
+ * ForkCurrentThread object provides one auxiliary TransitionFormula which shows fork th_id_X, where X is the number of
+ * the created thread.
  *
  * @author lars.nitzke@outlook.com
  */
@@ -52,7 +53,6 @@ public class ForkThreadCurrent extends CodeBlock implements IIcfgForkTransitionT
 	private final boolean mForkedProcedureHasImplementation;
 
 	private ForkSmtArguments mForkSmtArguments;
-
 
 	ForkThreadCurrent(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ForkStatement st, final boolean forkedProcedureHasImplementation, final ILogger logger) {

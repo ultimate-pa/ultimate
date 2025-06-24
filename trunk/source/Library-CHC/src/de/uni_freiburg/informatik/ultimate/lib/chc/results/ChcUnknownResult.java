@@ -38,6 +38,14 @@ public class ChcUnknownResult implements IResult {
 	private final String mPlugin;
 	private final String mLongDescription;
 
+	/**
+	 * Create a new result.
+	 *
+	 * @param plugin
+	 *            The ID of the plugin that produced this result.
+	 * @param description
+	 *            A description of the result.
+	 */
 	public ChcUnknownResult(final String plugin, final String description) {
 		mPlugin = plugin;
 		mLongDescription = description;

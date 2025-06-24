@@ -55,8 +55,8 @@ public final class IcfgInternalTransition extends AbstractIcfgTransition
 				Objects.requireNonNull(transFormulaWithBranchEncoders, "A transformula is missing");
 
 		assert TransFormulaUtils.hasInternalNormalForm(mTransFormula) : "Expected TF in internal normal form";
-		assert TransFormulaUtils
-				.hasInternalNormalForm(mTransFormulaWithBranchEncoders) : "Expected TF in internal normal form";
+		assert TransFormulaUtils.hasInternalNormalForm(mTransFormulaWithBranchEncoders)
+				: "Expected TF in internal normal form";
 	}
 
 	@Override

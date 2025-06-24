@@ -55,12 +55,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class SubArrayManager {
 
-
 	/**
 	 * used for caching the sub arrays that this class manages
 	 */
-	private final NestedMap2<IProgramVarOrConst, List<StoreLocationBlock>, IProgramVarOrConst>
-		mArrayToLocationBlockListToSubArray;
+	private final NestedMap2<IProgramVarOrConst, List<StoreLocationBlock>, IProgramVarOrConst> mArrayToLocationBlockListToSubArray;
 
 	Set<IProgramVarOrConst> mAllSubArrays;
 
@@ -84,14 +82,13 @@ public class SubArrayManager {
 		mAllSubArrays = new HashSet<>();
 	}
 
-
-
 	@Override
 	public String toString() {
 		return "NewArrayIdProvider";// + mArrayToPartitionInformation.toString();
 	}
 
-	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar, final List<StoreLocationBlock> projectList) {
+	public IProgramVarOrConst getSubArray(final IProgramVarOrConst programVar,
+			final List<StoreLocationBlock> projectList) {
 		final ArrayGroup arrayGroup = mCsiag.getArrayGroupForArrayPvoc(programVar);
 		assert Objects.nonNull(arrayGroup);
 		if (projectList.size() != arrayGroup.getDimensionality()) {
@@ -112,8 +109,7 @@ public class SubArrayManager {
 
 	/**
 	 * Given an IndexPartition constructs fresh Terms and ProgramVars for all the arrays in this ParititionInformation's
-	 * array group.
-	 * Updates the mappings that holds these fresh Terms.
+	 * array group. Updates the mappings that holds these fresh Terms.
 	 *
 	 * @param oldArrayId
 	 * @param indexPartition
@@ -137,12 +133,7 @@ public class SubArrayManager {
 			mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
 			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
 
-			freshVar = new LocalProgramVar(
-					newId,
-					lbv.getProcedure(),
-					newTv,
-					newConst,
-					newPrimedConst);
+			freshVar = new LocalProgramVar(newId, lbv.getProcedure(), newTv, newConst, newPrimedConst);
 			mManagedScript.unlock(this);
 			return freshVar;
 		} else if (arrayPv instanceof ProgramNonOldVar) {
@@ -190,10 +181,7 @@ public class SubArrayManager {
 		return sb.toString();
 	}
 
-
-
 	public boolean isSubArray(final IProgramVar key) {
 		return mAllSubArrays.contains(key);
 	}
 }
-

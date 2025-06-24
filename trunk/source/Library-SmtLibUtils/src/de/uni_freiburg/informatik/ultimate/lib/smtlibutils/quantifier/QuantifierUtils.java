@@ -45,34 +45,23 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * This class provides static methods for handling quantified formulas and
- * auxiliary methods for algorithms that handle quantified formulas. <br />
- * The motivation for many of these methods is the following: Several of our
- * algorithms are very similar, but not identical for the two different
- * quantifiers. E.g., an algorithm may construct
- * <li>a conjunction for one quantifier and a disjunction for the other
- * quantifier,
- * <li>an equality for one quantifier and a not-equals relation for the other
- * quantifier,
- * <li>a negation for one quantifier and no additional operation for the other
- * quantifier. <br />
- * In order to write down algorithms and methods that are parameterized by the
- * quantifier we use the following terminology which is inspired by the view
- * that existential quantification is an infinite disjunction and universal
+ * This class provides static methods for handling quantified formulas and auxiliary methods for algorithms that handle
+ * quantified formulas. <br />
+ * The motivation for many of these methods is the following: Several of our algorithms are very similar, but not
+ * identical for the two different quantifiers. E.g., an algorithm may construct
+ * <li>a conjunction for one quantifier and a disjunction for the other quantifier,
+ * <li>an equality for one quantifier and a not-equals relation for the other quantifier,
+ * <li>a negation for one quantifier and no additional operation for the other quantifier. <br />
+ * In order to write down algorithms and methods that are parameterized by the quantifier we use the following
+ * terminology which is inspired by the view that existential quantification is an infinite disjunction and universal
  * quantification is an infinite conjunction.
  * <li>∃ is the dual quantifier for ∀, ∀ is the dual quantifier for ∃
- * <li>∃ is the corresponding quantifier for ∨, ∀ is the corresponding
- * quantifier for ∧
- * <li>∨ is the corresponding finite connective for ∃, ∧ is the corresponding
- * finite connective for ∀
- * <li>a <em>corresponding finite junction</em> is a disjunction for ∃ and a
- * conjunction for ∀
- * <li>∧ is the dual finite connective for ∃, ∨ is the dual finite connective
- * for ∀
- * <li>a <em>dual finite junction</em> is a conjunction for ∃ and a disjunction
- * for ∀
- * <li>= is the DER-Operator for ∃, ≠ is the DER-Operator for ∀ (see
- * {@link DualJunctionDer})
+ * <li>∃ is the corresponding quantifier for ∨, ∀ is the corresponding quantifier for ∧
+ * <li>∨ is the corresponding finite connective for ∃, ∧ is the corresponding finite connective for ∀
+ * <li>a <em>corresponding finite junction</em> is a disjunction for ∃ and a conjunction for ∀
+ * <li>∧ is the dual finite connective for ∃, ∨ is the dual finite connective for ∀
+ * <li>a <em>dual finite junction</em> is a conjunction for ∃ and a disjunction for ∀
+ * <li>= is the DER-Operator for ∃, ≠ is the DER-Operator for ∀ (see {@link DualJunctionDer})
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -203,9 +192,8 @@ public class QuantifierUtils {
 
 	/**
 	 * Return all disjuncts for ∃, return all conjuncts for ∀. <br />
-	 * If the topmost symbol of the input is not the corresponding finite
-	 * connective, we consider the input as a 1-ary corresponding finite junction
-	 * and return a singleton array.
+	 * If the topmost symbol of the input is not the corresponding finite connective, we consider the input as a 1-ary
+	 * corresponding finite junction and return a singleton array.
 	 */
 	public static Term[] getCorrespondingFiniteJuncts(final int quantifier, final Term correspondingFiniteJunction) {
 		final Term[] correspondingFiniteJuncts;
@@ -221,9 +209,8 @@ public class QuantifierUtils {
 
 	/**
 	 * Return all conjuncts for ∃, return all disjuncts for ∀. <br />
-	 * If the topmost symbol of the input is not the corresponding finite
-	 * connective, we consider the input as a 1-ary corresponding finite junction
-	 * and return a singleton array.
+	 * If the topmost symbol of the input is not the corresponding finite connective, we consider the input as a 1-ary
+	 * corresponding finite junction and return a singleton array.
 	 */
 	public static Term[] getDualFiniteJuncts(final int quantifier, final Term dualFiniteJunction) {
 		final Term[] dualFiniteJuncts;
@@ -238,16 +225,16 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * @return true iff the quantifier is ∃ and the term is a conjunction or the
-	 *         quantifier is ∀ and the term is a disjunction.
+	 * @return true iff the quantifier is ∃ and the term is a conjunction or the quantifier is ∀ and the term is a
+	 *         disjunction.
 	 */
 	public static boolean isDualFiniteJunction(final int quantifier, final Term term) {
 		return getDualFiniteJuncts(quantifier, term).length > 1;
 	}
 
 	/**
-	 * @return true iff the quantifier is ∃ and the term is a disjunction or the
-	 *         quantifier is ∀ and the term is a conjunction.
+	 * @return true iff the quantifier is ∃ and the term is a disjunction or the quantifier is ∀ and the term is a
+	 *         conjunction.
 	 */
 	public static boolean isCorrespondingFiniteJunction(final int quantifier, final Term term) {
 		return getCorrespondingFiniteJuncts(quantifier, term).length > 1;
@@ -305,8 +292,7 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * @return inputTerm if quantifier for ∃, negate inputTerm and transform to NNF
-	 *         for ∀
+	 * @return inputTerm if quantifier for ∃, negate inputTerm and transform to NNF for ∀
 	 */
 	public static Term negateIfUniversal(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final int quantifier, final Term inputTerm) {
@@ -338,8 +324,7 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * @return inputTerm if quantifier for ∀, negate inputTerm and transform to NNF
-	 *         for ∃
+	 * @return inputTerm if quantifier for ∀, negate inputTerm and transform to NNF for ∃
 	 */
 	public static Term negateIfExistential(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final int quantifier, final Term inputTerm) {
@@ -403,8 +388,7 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * Transform to DNF for existential quantifier, transform to CNF for universal
-	 * quantifier.
+	 * Transform to DNF for existential quantifier, transform to CNF for universal quantifier.
 	 */
 	public static Term transformToXnf(final IUltimateServiceProvider services, final Script script,
 			final int quantifier, final ManagedScript mgdScript, Term term) throws AssertionError {
@@ -419,8 +403,7 @@ public class QuantifierUtils {
 	}
 
 	/**
-	 * @return A new set that is the projection of vars to the free variables of
-	 *         term.
+	 * @return A new set that is the projection of vars to the free variables of term.
 	 */
 	public static LinkedHashSet<TermVariable> projectToFreeVars(final Collection<TermVariable> vars, final Term term) {
 		final LinkedHashSet<TermVariable> result = new LinkedHashSet<>();
@@ -434,7 +417,7 @@ public class QuantifierUtils {
 
 	@FunctionalInterface
 	public interface IQuantifierEliminator {
-		public Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
+		Term eliminate(final IUltimateServiceProvider services, final ManagedScript script,
 				final boolean applyDistributivity, final PqeTechniques quantifierEliminationTechniques,
 				final SimplificationTechnique simplificationTechnique, final Context context, final Term inputTerm);
 	}

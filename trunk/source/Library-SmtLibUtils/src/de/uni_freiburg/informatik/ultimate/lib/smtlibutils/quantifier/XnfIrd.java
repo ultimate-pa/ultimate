@@ -85,12 +85,10 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	}
 
 	/**
-	 * If the application term contains only parameters param such that for each
-	 * param one of the following holds and the third case applies at most once, we
-	 * return all params that do not contain tv. 1. param does not contain tv 2.
-	 * param is an AffineRelation such that tv is a variable of the AffineRelation
-	 * and the function symbol is "distinct" and quantifier is ∃ or the function
-	 * symbol is "=" and the quantifier is ∀ 3. param is an inequality
+	 * If the application term contains only parameters param such that for each param one of the following holds and
+	 * the third case applies at most once, we return all params that do not contain tv. 1. param does not contain tv 2.
+	 * param is an AffineRelation such that tv is a variable of the AffineRelation and the function symbol is "distinct"
+	 * and quantifier is ∃ or the function symbol is "=" and the quantifier is ∀ 3. param is an inequality
 	 */
 	public static Term[] irdSimple(final ManagedScript mgdScript, final int quantifier, final Term[] oldParams,
 			final TermVariable tv) {

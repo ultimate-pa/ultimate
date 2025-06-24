@@ -111,7 +111,8 @@ public class Main {
 		}
 		String filename;
 		if (paramctr < param.length) {
-			filename = param[paramctr++];
+			filename = param[paramctr];
+			paramctr++;
 		} else {
 			filename = "<stdin>";
 		}

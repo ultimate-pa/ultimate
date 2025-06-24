@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
  *
  * @author Jan Leike
  */
-class StemOverapproximator {
+class StemOverapproximator implements AutoCloseable {
 	private final boolean mAnnotateTerms;
 
 	/**
@@ -85,7 +85,8 @@ class StemOverapproximator {
 	 *            LassoRanker preferences regarding new SMT scripts
 	 * @throws IOException
 	 */
-	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services) throws IOException {
+	public StemOverapproximator(final ILassoRankerPreferences preferences, final IUltimateServiceProvider services)
+			throws IOException {
 		mServices = services;
 		mAnnotateTerms = preferences.isAnnotateTerms();
 
@@ -94,13 +95,15 @@ class StemOverapproximator {
 		mScript.setLogic(Logics.QF_LRA);
 	}
 
+	/**
+	 * Implement {@link AutoCloseable} to release a temporary SMT solver created for the instance.
+	 */
 	@Override
-	protected void finalize() throws Throwable {
+	public void close() {
 		if (mScript != null) {
 			mScript.exit();
 			mScript = null;
 		}
-		super.finalize();
 	}
 
 	public LinearTransition overapproximate(final LinearTransition stem) {

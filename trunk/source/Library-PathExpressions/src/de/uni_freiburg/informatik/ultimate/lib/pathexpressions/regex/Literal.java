@@ -45,7 +45,7 @@ public class Literal<L> implements IRegex<L> {
 	 * Use factory method {@link Regex#literal(IRegex)} to create objects of this class.
 	 */
 	protected Literal(final L letter) {
-		this.mLetter = letter;
+		mLetter = letter;
 	}
 
 	public L getLetter() {
@@ -54,7 +54,7 @@ public class Literal<L> implements IRegex<L> {
 
 	@Override
 	public String toString() {
-//		return "";
+		// return "";
 		return Objects.toString(mLetter);
 	}
 

@@ -226,7 +226,6 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		private static final long serialVersionUID = 1L;
 
 		public SkipTestException() {
-			super();
 		}
 
 		public SkipTestException(final String message) {
@@ -251,7 +250,6 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	@Override
 	protected void validatePublicVoidNoArgMethods(final Class<? extends Annotation> arg0, final boolean arg1,
 			final List<Throwable> arg2) {
-		return;
 	}
 
 	@SuppressWarnings("restriction")
@@ -297,8 +295,7 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		@Override
 		public BinaryOperator<LinkedHashSet<FrameworkFactoryTest>> combiner() {
 			return (a, b) -> {
-				final LinkedHashSet<FrameworkFactoryTest> rtr = new LinkedHashSet<>();
-				rtr.addAll(a);
+				final LinkedHashSet<FrameworkFactoryTest> rtr = new LinkedHashSet<>(a);
 				rtr.addAll(b);
 				return rtr;
 			};

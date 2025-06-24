@@ -158,8 +158,8 @@ public class HornClauseHead {
 				continue;
 			}
 
-			final HcBodyVar bodyVar =
-					symbolTable.getOrConstructBodyVar(headPredSymbolName, counter++, tv.getSort(), tv);
+			final HcBodyVar bodyVar = symbolTable.getOrConstructBodyVar(headPredSymbolName, counter, tv.getSort(), tv);
+			counter++;
 
 			subs.put(tv, bodyVar.getTermVariable());
 			bodyVars.add(bodyVar);

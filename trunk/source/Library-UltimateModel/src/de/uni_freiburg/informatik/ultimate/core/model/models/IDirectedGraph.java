@@ -75,16 +75,17 @@ public interface IDirectedGraph<T extends IDirectedGraph<T, E>, E extends IVisua
 	List<T> getOutgoingNodes();
 
 	/**
-	 * Returns (for instance) the transitive predecessors/successors of this node.
-	 * The direction can be specified manually. Some examples for using the {@code direction} parameter:
+	 * Returns (for instance) the transitive predecessors/successors of this node. The direction can be specified
+	 * manually. Some examples for using the {@code direction} parameter:
 	 * <ul>
-	 * <li> {@code IDirectedGraph::getIncomingNodes} yields the transitive predecessors.
-	 * <li> {@code IDirectedGraph::getOutgoingNodes} yields the transitive successors.
-	 * <li> {@code n -> {Collection<T> r = new ArrayList<>(); r.addAll(n.getIncomingNodes);
-	 *      r.addAll(n.getOutgoingNodes); return r;}} yields the weakly connected component.
+	 * <li>{@code IDirectedGraph::getIncomingNodes} yields the transitive predecessors.
+	 * <li>{@code IDirectedGraph::getOutgoingNodes} yields the transitive successors.
+	 * <li>{@code n -> {Collection<T> r = new ArrayList<>(); r.addAll(n.getIncomingNodes); r.addAll(n.getOutgoingNodes);
+	 * return r;}} yields the weakly connected component.
 	 * </ul>
 	 *
-	 * @param direction Edge-direction in which to include nodes
+	 * @param direction
+	 *            Edge-direction in which to include nodes
 	 * @return Transitive nodes in the specified direction (may or may not contain this node itself)
 	 *
 	 * @see IDirectedGraph#transitiveNodes(Collection, Function) Apply this function to multiple nodes in a single call
@@ -95,20 +96,21 @@ public interface IDirectedGraph<T extends IDirectedGraph<T, E>, E extends IVisua
 	}
 
 	/**
-	 * Returns (for instance) the transitive predecessors/successors of a group of nodes.
-	 * For more information see {@link #transitiveNodes(Function)}.
+	 * Returns (for instance) the transitive predecessors/successors of a group of nodes. For more information see
+	 * {@link #transitiveNodes(Function)}.
 	 *
-	 * @param startingNodes Group of nodes to start from. Equivalent to (but more efficient than)
-	 *                      calling {@link #transitiveNodes(Function)} for each node individually
-	 *                      and then creating the union of the individual results.
-	 * @param direction Edge-direction in which to include nodes
+	 * @param startingNodes
+	 *            Group of nodes to start from. Equivalent to (but more efficient than) calling
+	 *            {@link #transitiveNodes(Function)} for each node individually and then creating the union of the
+	 *            individual results.
+	 * @param direction
+	 *            Edge-direction in which to include nodes
 	 * @return Transitive nodes in the specified direction (may or may not contain this node itself)
 	 */
-	static <N extends IDirectedGraph<N,?>> Set<N> transitiveNodes(
-			final Collection<N> startingNodes, final Function<N, Collection<N>> direction) {
+	static <N extends IDirectedGraph<N, ?>> Set<N> transitiveNodes(final Collection<N> startingNodes,
+			final Function<N, Collection<N>> direction) {
 		final Set<N> transitiveNodes = new HashSet<>();
-		final Queue<N> newNodes = new ArrayDeque<>();
-		newNodes.addAll(startingNodes);
+		final Queue<N> newNodes = new ArrayDeque<>(startingNodes);
 		while (!newNodes.isEmpty()) {
 			for (final N trans : direction.apply(newNodes.remove())) {
 				if (transitiveNodes.add(trans)) {

@@ -143,8 +143,7 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryForAutomaton,
-			final INestedWordAutomaton<L, IPredicate> abstraction,
-			final NestedWord<L> trace) {
+			final INestedWordAutomaton<L, IPredicate> abstraction, final NestedWord<L> trace) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(abstraction)) {
 			throw new IllegalArgumentException("Calls and returns are not yet supported.");
 		}
@@ -168,7 +167,8 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 			final IValueConstruction<Pair<IPredicate, L>, Term> valueConstruction = key -> {
 				final Term wp = mPt.weakestPrecondition(predicateFactory.not(key.getFirst()),
 						key.getSecond().getTransformula());
-				final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices, csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
+				final Term wpLessQuantifiers = PartialQuantifierElimination.eliminateCompat(mServices,
+						csToolkit.getManagedScript(), SimplificationTechnique.SIMPLIFY_DDA, wp);
 				final Term pre = SmtUtils.not(csToolkit.getManagedScript().getScript(), wpLessQuantifiers);
 				return pre;
 			};
@@ -474,15 +474,13 @@ class DangerAutomatonBuilder<L extends IIcfgTransition<?>> implements IErrorAuto
 	private TracePredicates constructPredicates(final ILogger logger, final PredicateFactory predicateFactory,
 			final PredicateUnificationMechanism pum, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final IIcfgSymbolTable symbolTable,
-			final NestedWord<L> trace, final IPredicateUnifier predicateUnifier)
-			throws AssertionError {
-		final IterativePredicateTransformer<L> ipt =
-				new IterativePredicateTransformer<>(predicateFactory, csToolkit.getManagedScript(),
-						csToolkit.getModifiableGlobalsTable(), mServices, trace, null, pum.getTruePredicate(), null,
-						pum.getTruePredicate(), simplificationTechnique, symbolTable);
+			final NestedWord<L> trace, final IPredicateUnifier predicateUnifier) throws AssertionError {
+		final IterativePredicateTransformer<L> ipt = new IterativePredicateTransformer<>(predicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, trace, null,
+				pum.getTruePredicate(), null, pum.getTruePredicate(), simplificationTechnique, symbolTable);
 		final List<IPredicatePostprocessor> postprocessors = new ArrayList<>();
-		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices, csToolkit.getManagedScript(),
-				predicateFactory, simplificationTechnique);
+		final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(mServices,
+				csToolkit.getManagedScript(), predicateFactory, simplificationTechnique);
 		postprocessors.add(qepp);
 		postprocessors.add(new UnifyPostprocessor(predicateUnifier));
 		final DefaultTransFormulas<L> dtf = new DefaultTransFormulas<>(trace, null, null, Collections.emptySortedMap(),

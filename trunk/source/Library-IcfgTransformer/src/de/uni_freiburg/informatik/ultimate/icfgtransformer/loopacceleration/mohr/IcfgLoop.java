@@ -93,13 +93,13 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		return !mNestedLoops.isEmpty();
 	}
 
-	public IcfgLoop<INLOC> getNestedLoop(INLOC loopHead) {
+	public IcfgLoop<INLOC> getNestedLoop(final INLOC loopHead) {
 		return mNestedLoops.get(loopHead);
 	}
 
 	public Set<INLOC> getNestedLoopHeads() {
 		return mNestedLoops.keySet();
-	};
+	}
 
 	public Set<INLOC> getLoopbody() {
 		return mLoopbody;
@@ -130,7 +130,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 		final Deque<ArrayList<IcfgEdge>> queue = new ArrayDeque<>();
 		final List<List<IcfgEdge>> breakPaths = new ArrayList<>();
 		final Map<INLOC, List<Pair<List<IcfgEdge>, INLOC>>> nestedBreakPaths = new HashMap<>();
-		for (final IcfgLoop loop: mNestedLoops.values()) {
+		for (final IcfgLoop loop : mNestedLoops.values()) {
 			loop.getPaths();
 			nestedBreakPaths.put((INLOC) loop.getHead(), loop.getLoopExits());
 		}
@@ -152,7 +152,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 
 			// Consider possible exit paths in nested loops
 			if (nestedBreakPaths.containsKey(destination)) {
-				for (final Pair<List<IcfgEdge>, INLOC> p: nestedBreakPaths.get(destination)) {
+				for (final Pair<List<IcfgEdge>, INLOC> p : nestedBreakPaths.get(destination)) {
 					if (mLoopbody.contains(p.getSecond())) {
 						final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
 						addPath.addAll(p.getFirst());
@@ -166,9 +166,8 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 			}
 
 			for (final IcfgEdge edge : destination.getOutgoingEdges()) {
-				if (!mNestedNodes.contains(edge.getTarget()) &&
-						mLoopbody.contains(edge.getTarget()) &&
-						!destination.equals(edge.getTarget())) {
+				if (!mNestedNodes.contains(edge.getTarget()) && mLoopbody.contains(edge.getTarget())
+						&& !destination.equals(edge.getTarget())) {
 					final ArrayList<IcfgEdge> addPath = new ArrayList<>(path);
 					addPath.add(edge);
 					queue.add(addPath);
@@ -184,7 +183,7 @@ public class IcfgLoop<INLOC extends IcfgLocation> {
 			final List<UnmodifiableTransFormula> bPathFormula = new ArrayList<>();
 			bPath.forEach(edge -> bPathFormula.add(edge.getTransformula()));
 			final INLOC target = (INLOC) bPath.get(bPath.size() - 1).getTarget();
-			mLoopExits.add(new Pair<List<UnmodifiableTransFormula>, INLOC>(bPathFormula, target));
+			mLoopExits.add(new Pair<>(bPathFormula, target));
 		}
 	}
 

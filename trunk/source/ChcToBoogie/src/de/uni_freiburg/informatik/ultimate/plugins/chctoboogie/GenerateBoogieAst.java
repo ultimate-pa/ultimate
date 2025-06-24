@@ -46,8 +46,8 @@ public class GenerateBoogieAst {
 		mResult = generateBoogieAst(hornClauseHeadPredicateToHornClauses);
 	}
 
-	private Unit generateBoogieAst(
-			final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
+	private Unit
+			generateBoogieAst(final HashRelation<HcPredicateSymbol, HornClause> hornClauseHeadPredicateToHornClauses) {
 
 		final ILocation loc = mHelper.getLoc();
 		final List<Declaration> declarations = new ArrayList<>();
@@ -62,44 +62,36 @@ public class GenerateBoogieAst {
 			// breadth-first (pollFirst) or depth-first (pop) should not matter here
 			final HcPredicateSymbol headPredSymbol = headPredQueue.pop();
 
-			final Set<HornClause> hornClausesForHeadPred = hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol);
+			final Set<HornClause> hornClausesForHeadPred =
+					hornClauseHeadPredicateToHornClauses.getImage(headPredSymbol);
 
 			final Set<HcVar> allBodyPredVariables = new HashSet<>();
 
-			final List<Statement> nondetSwitch =
-					generateNondetSwitchForPred(loc, hornClausesForHeadPred, headPredQueue,
-							addedToQueueBefore, allBodyPredVariables);
+			final List<Statement> nondetSwitch = generateNondetSwitchForPred(loc, hornClausesForHeadPred, headPredQueue,
+					addedToQueueBefore, allBodyPredVariables);
 
-			final VarList[] inParams = mHelper.getInParamsForHeadPredSymbol(loc, headPredSymbol, hornClausesForHeadPred.isEmpty());
-
+			final VarList[] inParams =
+					mHelper.getInParamsForHeadPredSymbol(loc, headPredSymbol, hornClausesForHeadPred.isEmpty());
 
 			final List<VariableDeclaration> localVarDecs = new ArrayList<>();
 			mHelper.updateLocalVarDecs(localVarDecs, allBodyPredVariables, loc);
 
-			final VariableDeclaration[] localVars;
-			{
-				localVars = localVarDecs == null
-						? new VariableDeclaration[0]
-						: localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
-			}
+			final VariableDeclaration[] localVars = localVarDecs.toArray(new VariableDeclaration[localVarDecs.size()]);
 
 			/*
 			 * Note: in the headPredUnconstrained case, the procedure body must consist of one "assume false;"
-			 *  statement.
-			 * General intuition: Each procedure blocks execution on those input vectors where the model of the
-			 *  corresponding predicate is false. A predicate that does not occur in a head, can be set to false
-			 *   everywhere.
+			 * statement. General intuition: Each procedure blocks execution on those input vectors where the model of
+			 * the corresponding predicate is false. A predicate that does not occur in a head, can be set to false
+			 * everywhere.
 			 */
 			assert hornClausesForHeadPred.isEmpty() || !nondetSwitch.stream().anyMatch(Objects::isNull);
-			final Statement[] block = hornClausesForHeadPred.isEmpty() ?
-					new Statement[] { new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)) }:
-					nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
+			final Statement[] block = hornClausesForHeadPred.isEmpty()
+					? new Statement[] { new AssumeStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false)) }
+					: nondetSwitch.toArray(new Statement[nondetSwitch.size()]);
 			final Body body = new Body(loc, localVars, block);
 
-			final Procedure proc =
-					new Procedure(loc, new Attribute[0], mHelper.predSymToMethodName(headPredSymbol), new String[0],
-							inParams, new VarList[0],
-							new Specification[0], body);
+			final Procedure proc = new Procedure(loc, new Attribute[0], mHelper.predSymToMethodName(headPredSymbol),
+					new String[0], inParams, new VarList[0], new Specification[0], body);
 			declarations.add(proc);
 		}
 
@@ -108,25 +100,27 @@ public class GenerateBoogieAst {
 
 		declarations.addAll(mHelper.getDeclarationsForSkolemFunctions());
 
-		return new Unit(loc,
-				declarations.toArray(new Declaration[declarations.size()]));
+		return new Unit(loc, declarations.toArray(new Declaration[declarations.size()]));
 	}
 
 	/**
 	 *
 	 * @param loc
-	 * @param predSymbolToLabel null if non-goto mode
+	 * @param predSymbolToLabel
+	 *            null if non-goto mode
 	 * @param predLabelToNumber
 	 * @param hornClausesForHeadPred
-	 * @param headPredQueue (updated)
-	 * @param addedToQueueBefore (updated)
-	 * @param allBodyPredVariables (updated)
+	 * @param headPredQueue
+	 *            (updated)
+	 * @param addedToQueueBefore
+	 *            (updated)
+	 * @param allBodyPredVariables
+	 *            (updated)
 	 * @return
 	 */
 	private List<Statement> generateNondetSwitchForPred(final ILocation loc,
-			final Set<HornClause> hornClausesForHeadPred,
-			final Deque<HcPredicateSymbol> headPredQueue, final Set<HcPredicateSymbol> addedToQueueBefore,
-			final Set<HcVar> allBodyPredVariables) {
+			final Set<HornClause> hornClausesForHeadPred, final Deque<HcPredicateSymbol> headPredQueue,
+			final Set<HcPredicateSymbol> addedToQueueBefore, final Set<HcVar> allBodyPredVariables) {
 		/*
 		 * create the procedure body according to all Horn clauses with headPredSymbol as their head
 		 */
@@ -141,8 +135,7 @@ public class GenerateBoogieAst {
 			allBodyPredVariables.addAll(hornClause.getBodyVariables());
 
 			final List<Statement> branchBody = new ArrayList<>();
-			final Statement assume =
-					new AssumeStatement(loc, mHelper.translate(hornClause.getConstraintFormula()));
+			final Statement assume = new AssumeStatement(loc, mHelper.translate(hornClause.getConstraintFormula()));
 			branchBody.add(assume);
 
 			for (int i = 0; i < hornClause.getNoBodyPredicates(); i++) {
@@ -157,14 +150,14 @@ public class GenerateBoogieAst {
 				final List<Expression> translatedArguments =
 						bodyPredArgs.stream().map(t -> mHelper.translate(t)).collect(Collectors.toList());
 
-				final CallStatement call = new CallStatement(loc, false, new VariableLHS[0],
-						mHelper.predSymToMethodName(bodyPredSym),
-						translatedArguments.toArray(new Expression[bodyPredArgs.size()]));
+				final CallStatement call =
+						new CallStatement(loc, false, new VariableLHS[0], mHelper.predSymToMethodName(bodyPredSym),
+								translatedArguments.toArray(new Expression[bodyPredArgs.size()]));
 				branchBody.add(call);
 			}
 
 			nondetSwitch = mHelper.addIteBranch(loc, nondetSwitch, branchBody,
-				ExpressionFactory.constructBooleanWildCardExpression(loc));
+					ExpressionFactory.constructBooleanWildCardExpression(loc));
 		}
 		return nondetSwitch;
 	}
@@ -180,8 +173,7 @@ public class GenerateBoogieAst {
 		final Statement callToBottomProc = new CallStatement(loc, false, new VariableLHS[0],
 				mHelper.predSymToMethodName(mHelper.getBottomPredSym()), new Expression[0]);
 
-		final Statement assertFalse = new AssertStatement(loc,
-				ExpressionFactory.createBooleanLiteral(loc, false));
+		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));
 		final Check check = new Check(Spec.CHC_SATISFIABILITY);
 		check.annotate(assertFalse);
 

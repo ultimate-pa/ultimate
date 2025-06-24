@@ -51,11 +51,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * While considering a subformula φ of a formula. The <i>context</i> provides
- * some information about siblings and ancestors of φ. The <i>critical
- * constraint</i> is explained in "Small Formulas for Large Programms: On-Line
- * Constraint Simplification in Scalable Static Analysis" by Isil Dillig, Thomas
- * Dillig and Alex Aiken.
+ * While considering a subformula φ of a formula. The <i>context</i> provides some information about siblings and
+ * ancestors of φ. The <i>critical constraint</i> is explained in "Small Formulas for Large Programms: On-Line
+ * Constraint Simplification in Scalable Static Analysis" by Isil Dillig, Thomas Dillig and Alex Aiken.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -70,33 +68,31 @@ public class Context {
 	public enum CcTransformation {
 		NONE,
 		/**
-		 * Bring negated siblings in for critical constraint in NNF. Allows us in some
-		 * cases to get a smaller result. Comes with small additional consts because of
-		 * the NNF transformation.
+		 * Bring negated siblings in for critical constraint in NNF. Allows us in some cases to get a smaller result.
+		 * Comes with small additional consts because of the NNF transformation.
 		 */
 		TO_NNF,
 		/**
 		 * Bring siblings to NNF and replace all quantified formulas by true.
 		 */
-		OVERAPPROXIMATE_QUANTIFIERS };
+		OVERAPPROXIMATE_QUANTIFIERS
+	}
 
 	private final Term mCriticalConstraint;
 	private final CcTransformation mCcTransformation;
 	/**
-	 * Contains the variables that are bound in {@link QuantifiedFormula}s that are
-	 * ancestors of this context's subformula.
+	 * Contains the variables that are bound in {@link QuantifiedFormula}s that are ancestors of this context's
+	 * subformula.
 	 */
 	private final Set<TermVariable> mBoundByAncestors;
 
 	public Context(final Script script) {
-		super();
 		mCcTransformation = OPTION_CCTRANSFORMATION;
 		mCriticalConstraint = script.term("true");
 		mBoundByAncestors = Collections.emptySet();
 	}
 
 	public Context(final Term criticalConstraint, final Set<TermVariable> boundByAncestors) {
-		super();
 		mCcTransformation = OPTION_CCTRANSFORMATION;
 		Objects.requireNonNull(criticalConstraint);
 		Objects.requireNonNull(boundByAncestors);
@@ -116,9 +112,9 @@ public class Context {
 			final Collection<TermVariable> quantifiedVars) {
 		{
 			// Throw UnsupportedOperationException if there are different variables with same name.
-			final Set<TermVariable> all = Stream
-					.concat(Arrays.asList(mCriticalConstraint.getFreeVars()).stream(), quantifiedVars.stream())
-					.collect(Collectors.toSet());
+			final Set<TermVariable> all =
+					Stream.concat(Arrays.asList(mCriticalConstraint.getFreeVars()).stream(), quantifiedVars.stream())
+							.collect(Collectors.toSet());
 			final String nameOfTwoDifferentVars = checkForDifferentVariablesWithSameName(all);
 			if (nameOfTwoDifferentVars != null) {
 				throw new UnsupportedOperationException(
@@ -133,16 +129,15 @@ public class Context {
 	}
 
 	public Context constructChildContextForConDis(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final FunctionSymbol symb,
-			final List<Term> allParams, final int selectedParam) {
+			final ManagedScript mgdScript, final FunctionSymbol symb, final List<Term> allParams,
+			final int selectedParam) {
 		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
 				allParams, selectedParam, mCcTransformation);
 		return new Context(criticalConstraint, mBoundByAncestors);
 	}
 
 	public Context constructChildContextForConDis(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final FunctionSymbol symb,
-			final List<Term> otherParams) {
+			final ManagedScript mgdScript, final FunctionSymbol symb, final List<Term> otherParams) {
 		final Term criticalConstraint = buildCriticalConstraintForConDis(services, mgdScript, mCriticalConstraint, symb,
 				otherParams, mCcTransformation);
 		return new Context(criticalConstraint, mBoundByAncestors);
@@ -151,8 +146,8 @@ public class Context {
 	public static Term buildCriticalContraintForQuantifiedFormula(final Script script,
 			final Term parentCriticalConstraint, final Collection<TermVariable> boundVars,
 			final CcTransformation ccTransformation) {
-		final Term quantified = SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars,
-				parentCriticalConstraint);
+		final Term quantified =
+				SmtUtils.quantifier(script, QuantifiedFormula.EXISTS, boundVars, parentCriticalConstraint);
 		final Term result;
 		if (ccTransformation == CcTransformation.OVERAPPROXIMATE_QUANTIFIERS) {
 			result = QuantifierOverapproximator.apply(script, quantified);
@@ -163,9 +158,8 @@ public class Context {
 	}
 
 	/**
-	 * Keep only the conjuncts of the parentCriticalConstraint that do not contain
-	 * any of the bound variables. We assume that the parentCriticalConstraint is a
-	 * conjunction of atoms.
+	 * Keep only the conjuncts of the parentCriticalConstraint that do not contain any of the bound variables. We assume
+	 * that the parentCriticalConstraint is a conjunction of atoms.
 	 */
 	public static Term buildConjunctiveCriticalContraintForQuantifiedFormula(final Script script,
 			final Term parentCriticalConstraint, final List<TermVariable> boundVars) {
@@ -185,8 +179,8 @@ public class Context {
 			final List<Term> allParams, final int selectedParam, final CcTransformation ccTransformation) {
 		final List<Term> otherParams = new ArrayList<>(allParams);
 		otherParams.remove(selectedParam);
-		return  buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb,
-				otherParams, ccTransformation);
+		return buildCriticalConstraintForConDis(services, mgdScript, parentCriticalConstraint, symb, otherParams,
+				ccTransformation);
 	}
 
 	private static Term buildCriticalConstraintForConDis(final IUltimateServiceProvider services,
@@ -204,10 +198,11 @@ public class Context {
 				break;
 			case OVERAPPROXIMATE_QUANTIFIERS:
 			case TO_NNF:
-				otherParamsNegated = otherParams.stream()
-						.map(x -> new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
-								.transform(SmtUtils.not(mgdScript.getScript(), x)))
-						.collect(Collectors.toList());
+				otherParamsNegated =
+						otherParams.stream()
+								.map(x -> new NnfTransformer(mgdScript, services, QuantifierHandling.KEEP)
+										.transform(SmtUtils.not(mgdScript.getScript(), x)))
+								.collect(Collectors.toList());
 				break;
 			default:
 				throw new AssertionError("unknown value " + ccTransformation);
@@ -265,8 +260,7 @@ public class Context {
 	}
 
 	/**
-	 * Return null if all variables have different names. Otherwise, return a name
-	 * that occurs in several TermVariables.
+	 * Return null if all variables have different names. Otherwise, return a name that occurs in several TermVariables.
 	 */
 	public String checkForDifferentVariablesWithSameName(final Collection<TermVariable> termVariables) {
 		final Map<String, TermVariable> map = new HashMap<>();

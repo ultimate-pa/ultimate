@@ -129,7 +129,7 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	}
 
 	/**
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	public interface ITARefinementStrategy<L extends IAction> extends IRefinementStrategy<L> {

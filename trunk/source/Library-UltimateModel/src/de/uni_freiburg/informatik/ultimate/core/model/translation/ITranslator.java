@@ -87,8 +87,8 @@ public interface ITranslator<STE, TTE, SE, TE, SVL, TVL, CTX> {
 
 	default Lasso<IProgramExecution<TTE, TE>>
 			translateLassoProgramExecution(final Lasso<IProgramExecution<STE, SE>> programExecution) {
-		return new Lasso<>(translateProgramExecution(programExecution.getStem()),
-				translateProgramExecution(programExecution.getLoop()));
+		return new Lasso<>(translateProgramExecution(programExecution.stem()),
+				translateProgramExecution(programExecution.loop()));
 	}
 
 	IBacktranslatedCFG<TVL, TTE> translateCFG(IBacktranslatedCFG<SVL, STE> cfg);

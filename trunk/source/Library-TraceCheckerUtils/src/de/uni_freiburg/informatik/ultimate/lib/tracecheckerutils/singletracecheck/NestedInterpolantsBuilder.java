@@ -77,14 +77,12 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Class for the computation of nested interpolants and tree interpolants.
- * <br />
- * TODO 2024-10-06 Matthias: We do not really need a class that can be
- * instantiated for the current computation. If I would have more time, I would
- * consider the following options.
+ * Class for the computation of nested interpolants and tree interpolants. <br />
+ * TODO 2024-10-06 Matthias: We do not really need a class that can be instantiated for the current computation. If I
+ * would have more time, I would consider the following options.
  * <li>Do all computations in static methods.
- * <li>Use a class hierarchy to split the computation of nested interpolants and
- * tree interpolants. (I have doubts that this is possible.)
+ * <li>Use a class hierarchy to split the computation of nested interpolants and tree interpolants. (I have doubts that
+ * this is possible.)
  */
 public class NestedInterpolantsBuilder<L extends IAction> {
 
@@ -138,14 +136,15 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 		if (mgdScriptTc != mgdScriptCfg) {
-			mConst2RepTvSubst = (x -> new TermTransferrer(mgdScriptTc.getScript(), mMgdScriptCfg.getScript(),
-					const2RepTv, true).transform(x));
+			mConst2RepTvSubst =
+					x -> new TermTransferrer(mgdScriptTc.getScript(), mMgdScriptCfg.getScript(), const2RepTv, true)
+							.transform(x);
 		} else {
-			mConst2RepTvSubst = (x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x));
+			mConst2RepTvSubst = x -> Substitution.apply(mMgdScriptCfg, const2RepTv, x);
 		}
 
-		final Triple<Term[], int[], int[]> triple = generateInterpolationInput(mgdScriptTc, annotatdSsa,
-				mSkippedInnerProcedurePositions);
+		final Triple<Term[], int[], int[]> triple =
+				generateInterpolationInput(mgdScriptTc, annotatdSsa, mSkippedInnerProcedurePositions);
 		final Term[] interpolInput = triple.getFirst();
 		final int[] startOfSubtree = triple.getSecond();
 		final int[] positionMapping = triple.getThird();
@@ -211,7 +210,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 
 			// We add the precondition to the first term unless the first term is a
 			// non-pending call
-			if (i==0 && !(trace.isCallPosition(i) && !trace.isPendingCall(i))) {
+			if (i == 0 && !(trace.isCallPosition(i) && !trace.isPendingCall(i))) {
 				terms.add(annotSsa.getPrecondition());
 			}
 
@@ -220,27 +219,25 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				terms.add(annotSsa.getPrecondition());
 			}
 
-
 			final Term term = SmtUtils.and(mgdScriptTc.getScript(), terms);
 			// Check whether the last position (position i-1) is a position where we want to
 			// compute interpolants. If not we do not want to start a new interpolation
 			// input formulas afterwards but append the current annotated ssa term(s) to the
 			// last interpolation input.
-			final boolean yetSomethingAddedForCurrentSubtree = (interpolInputList.size() > startOfCurrentSubtree);
-			final boolean startNewFormula = (!yetSomethingAddedForCurrentSubtree
-					|| !skippedInnerProcedurePositions.contains(i - 1)) && !terms.isEmpty();
+			final boolean yetSomethingAddedForCurrentSubtree = interpolInputList.size() > startOfCurrentSubtree;
+			final boolean startNewFormula =
+					(!yetSomethingAddedForCurrentSubtree || !skippedInnerProcedurePositions.contains(i - 1))
+							&& !terms.isEmpty();
 			if (startNewFormula) {
 				interpolInputList.add(term);
 				treeInterpolantStructure.add(startOfCurrentSubtree);
-			} else {
-				if (!terms.isEmpty()) {
-					// can only append if there is a term
-					final int lastPosition = interpolInputList.size() - 1;
-					final Term newFormula = SmtUtils.and(mgdScriptTc.getScript(), interpolInputList.get(lastPosition),
-							term);
-					assert newFormula != null : "newFormula must be != null";
-					interpolInputList.set(lastPosition, newFormula);
-				}
+			} else if (!terms.isEmpty()) {
+				// can only append if there is a term
+				final int lastPosition = interpolInputList.size() - 1;
+				final Term newFormula =
+						SmtUtils.and(mgdScriptTc.getScript(), interpolInputList.get(lastPosition), term);
+				assert newFormula != null : "newFormula must be != null";
+				interpolInputList.set(lastPosition, newFormula);
 			}
 			if (i != annotSsa.getTrace().length() - 1) {
 				// after the last formula there is no interpolant
@@ -260,11 +257,11 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		final Term[] interpolInput = interpolInputList.toArray(new Term[interpolInputList.size()]);
 
 		final int[] startOfSubtree = integerListToIntArray(treeInterpolantStructure);
-		return new Triple<Term[], int[], int[]>(interpolInput, startOfSubtree, positionMapping);
+		return new Triple<>(interpolInput, startOfSubtree, positionMapping);
 	}
 
-	private static <L extends IAction> List<Term> getAnnotatedFormulasForInternalPosition(
-			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+	private static <L extends IAction> List<Term>
+			getAnnotatedFormulasForInternalPosition(final NestedFormulas<L, Term, Term> annotSSA, final int i) {
 		final List<Term> result = new ArrayList<>();
 		final Term internalTransition = annotSSA.getFormulaFromNonCallPos(i);
 		if (internalTransition != null) {
@@ -273,8 +270,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		return result;
 	}
 
-	private static <L extends IAction> List<Term> getAnnotatedFormulasForNonPendingCallPosition(
-			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+	private static <L extends IAction> List<Term>
+			getAnnotatedFormulasForNonPendingCallPosition(final NestedFormulas<L, Term, Term> annotSSA, final int i) {
 		final List<Term> result = new ArrayList<>();
 		final Term globalVarAssignment = annotSSA.getGlobalVarAssignment(i);
 		if (globalVarAssignment != null) {
@@ -283,8 +280,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		return result;
 	}
 
-	private static <L extends IAction> List<Term> getAnnotatedFormulasForPendingCallPosition(
-			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+	private static <L extends IAction> List<Term>
+			getAnnotatedFormulasForPendingCallPosition(final NestedFormulas<L, Term, Term> annotSSA, final int i) {
 		final List<Term> result = new ArrayList<>();
 		final Term localVarsAssignment = annotSSA.getLocalVarAssignment(i);
 		if (localVarsAssignment != null) {
@@ -319,8 +316,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		return result;
 	}
 
-	private static <L extends IAction> List<Term> getAnnotatedFormulasForPendingReturnPosition(
-			final NestedFormulas<L, Term, Term> annotSSA, final int i) {
+	private static <L extends IAction> List<Term>
+			getAnnotatedFormulasForPendingReturnPosition(final NestedFormulas<L, Term, Term> annotSSA, final int i) {
 		final List<Term> result = new ArrayList<>();
 		final Term assignmentOnReturn = annotSSA.getFormulaFromNonCallPos(i);
 		if (assignmentOnReturn != null) {
@@ -369,10 +366,17 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 				pred = mPredicateFactory.newDontCarePredicate(null);
 			} else if (craigInterpolPos == SKIPPED_POSITION_FOR_REPETITION) {
 				if (mTrace.isCallPosition(i)) {
-					// We were unable to find a predicate in this context
-					// Hence, all formulas between this position and the call were overapproximated
-					// and hence irrelevant.
-					pred = mPredicateUnifier.getTruePredicate();
+					if (mTrace.isPendingCall(i)) {
+						// We take the predecessor predicate.
+						// If pending call is not asserted, local variables cannot occur in this
+						// predicate.
+						pred = result[i - 1];
+					} else {
+						// We were unable to find a predicate in this context
+						// Hence, all formulas between this position and the call were overapproximated
+						// and hence irrelevant.
+						pred = mPredicateUnifier.getTruePredicate();
+					}
 				} else if (mTrace.isReturnPosition(i)) {
 					if (mTrace.isPendingReturn(i)) {
 						throw new AssertionError("Pending returns are unsupported");
@@ -396,7 +400,7 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 						pred = callPredecessor;
 					} else {
 						pred = mPredicateUnifier.getOrConstructPredicateForConjunction(
-								Arrays.asList(new IPredicate[] { callPredecessor, returnPredecessor }));
+								Arrays.asList(callPredecessor, returnPredecessor));
 					}
 				} else if (i == 0) {
 					pred = mPrecondition;
@@ -447,17 +451,15 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	}
 
 	/**
-	 * Apply various processing steps and (seemingly) translate terms to the script
-	 * of the CFG. <br />
+	 * Apply various processing steps and (seemingly) translate terms to the script of the CFG. <br />
 	 * TODO 2024-10-06 Matthias:
 	 * <li>Check if all postprocessing steps are needed (remove iZ3 support?)
-	 * <li>Check if quantifier elimination should really be done here (is it done
-	 * twice in the overall trace check?)
+	 * <li>Check if quantifier elimination should really be done here (is it done twice in the overall trace check?)
 	 */
 	private Term postprocessInterpolant(final Term withIndices) {
 		/*
-		 * remove all let terms added because iZ3's interpolants contain let terms
-		 * better solution: implement support for let terms in SafeSubstitution
+		 * remove all let terms added because iZ3's interpolants contain let terms better solution: implement support
+		 * for let terms in SafeSubstitution
 		 */
 		final Term unlet = new FormulaUnLet().transform(withIndices);
 		Term withoutIndices = mConst2RepTvSubst.apply(unlet);
@@ -475,9 +477,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	}
 
 	/**
-	 * TODO 2024-10-06 Matthias: Timeout checks here are probably useless. However
-	 * we should catch timeouts thrown by time-consuming methods and append our
-	 * message from below.
+	 * TODO 2024-10-06 Matthias: Timeout checks here are probably useless. However we should catch timeouts thrown by
+	 * time-consuming methods and append our message from below.
 	 */
 	private void checkTimeout() {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -487,10 +488,9 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 	}
 
 	/**
-	 * The interpolating Z3 generates Craig interpolants that contain the array-ext
-	 * function whose semantics is defined by the following axiom ∀a∀b∃k.
-	 * array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]). The theory of arrays does not
-	 * contain this axiom, hence we instantiate it for each occurrence.
+	 * The interpolating Z3 generates Craig interpolants that contain the array-ext function whose semantics is defined
+	 * by the following axiom ∀a∀b∃k. array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]). The theory of arrays does not contain
+	 * this axiom, hence we instantiate it for each occurrence.
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
 		final Term nnf = new NnfTransformer(mMgdScriptCfg, mServices, QuantifierHandling.PULL)
@@ -503,8 +503,8 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 		// matrix
 		final Term matrix = qs.getInnerTerm();
 
-		final Set<ApplicationTerm> arrayExtAppTerms = SmtUtils.extractApplicationTerms("array-ext",
-				interpolantWithoutIndices, false);
+		final Set<ApplicationTerm> arrayExtAppTerms =
+				SmtUtils.extractApplicationTerms("array-ext", interpolantWithoutIndices, false);
 		if (arrayExtAppTerms.isEmpty()) {
 			return interpolantWithoutIndices;
 		}
@@ -546,16 +546,16 @@ public class NestedInterpolantsBuilder<L extends IAction> {
 			}
 			mFirstArray = mArrayExtTerm.getParameters()[0];
 			mSecondArray = mArrayExtTerm.getParameters()[1];
-			mReplacementTermVariable = arrayExtTerm.getTheory().createFreshTermVariable("arrExt",
-					arrayExtTerm.getSort());
+			mReplacementTermVariable =
+					arrayExtTerm.getTheory().createFreshTermVariable("arrExt", arrayExtTerm.getSort());
 			mImplication = constructImplication();
 		}
 
 		private Term constructImplication() {
 			final Term arraysDistinct = mMgdScriptCfg.getScript().term("distinct", mFirstArray, mSecondArray);
 			final Term firstSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mFirstArray, mReplacementTermVariable);
-			final Term secondSelect = SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray,
-					mReplacementTermVariable);
+			final Term secondSelect =
+					SmtUtils.select(mMgdScriptCfg.getScript(), mSecondArray, mReplacementTermVariable);
 			final Term selectDistinct = mMgdScriptCfg.getScript().term("distinct", firstSelect, secondSelect);
 			final Term implication = Util.implies(mMgdScriptCfg.getScript(), arraysDistinct, selectDistinct);
 			return implication;

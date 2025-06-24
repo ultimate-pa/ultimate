@@ -101,7 +101,7 @@ public class IndependenceRelationWithAbstraction<H, L, S> implements IIndependen
 		return mLevel;
 	}
 
-	public class SymbolicIndependenceWithAbstraction<C> implements ISymbolicIndependenceRelation<L, C> {
+	private class SymbolicIndependenceWithAbstraction<C> implements ISymbolicIndependenceRelation<L, C> {
 		private final ISymbolicIndependenceRelation<L, C> mUnderlyingSymbolic;
 
 		public SymbolicIndependenceWithAbstraction(final ISymbolicIndependenceRelation<L, C> underlying) {

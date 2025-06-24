@@ -569,15 +569,11 @@ public class NwaCegarLoop<L extends IIcfgTransition<?>> extends BasicCegarLoop<L
 	}
 
 	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
-		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
+		return switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
 				CounterexampleSearchStrategy.class)) {
-		case BFS:
-			return SearchStrategy.BFS;
-		case DFS:
-			return SearchStrategy.DFS;
-		default:
-			throw new IllegalArgumentException();
-		}
+		case BFS -> SearchStrategy.BFS;
+		case DFS -> SearchStrategy.DFS;
+		};
 	}
 
 	@Override

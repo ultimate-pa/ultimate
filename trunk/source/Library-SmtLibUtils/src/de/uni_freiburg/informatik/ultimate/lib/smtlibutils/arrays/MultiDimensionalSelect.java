@@ -40,25 +40,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Data structure for a (possibly) array select expression.
- * In the array theory of SMT-LIB the Array sort has only two parameters one
- * for the index and one for the value.
- * We model multidimensional arrays by nesting arrays. E.g. an array with two
- * integer indices and real values has the following Sort.
- * (Array Int -> (Array Int -> Real))
- * The select function has the following signature. (select (Array X Y) X Y)
- * Hence we have to use nested select expressions for multidimensional array
- * reads, e.g., in order to access the position (i1,i2) of an array we use the
- * following term. ("select" ("select" a i1) i2)
- * This is data structure is a wrapper for such a nested select expression which
- * allows you to directly access the array and the indices.
- * This data structure allows also multidimensional arrays of dimension 0. In
- * this case, mArray is null, mIndex is empty and mSelectTerm is some term.
- * <br>
- * Note that due to the select-over-store optimization the resulting term may
- * not necessarily be an ApplicationTerm.
- * Note that we also allow indices of size 0 and hence every Term can be the
- * mArray or mSelectTerm of this class.
+ * Data structure for a (possibly) array select expression. In the array theory of SMT-LIB the Array sort has only two
+ * parameters one for the index and one for the value. We model multidimensional arrays by nesting arrays. E.g. an array
+ * with two integer indices and real values has the following Sort. (Array Int -> (Array Int -> Real)) The select
+ * function has the following signature. (select (Array X Y) X Y) Hence we have to use nested select expressions for
+ * multidimensional array reads, e.g., in order to access the position (i1,i2) of an array we use the following term.
+ * ("select" ("select" a i1) i2) This is data structure is a wrapper for such a nested select expression which allows
+ * you to directly access the array and the indices. This data structure allows also multidimensional arrays of
+ * dimension 0. In this case, mArray is null, mIndex is empty and mSelectTerm is some term. <br>
+ * Note that due to the select-over-store optimization the resulting term may not necessarily be an ApplicationTerm.
+ * Note that we also allow indices of size 0 and hence every Term can be the mArray or mSelectTerm of this class.
+ *
  * @author Matthias Heizmann
  *
  */
@@ -68,7 +60,6 @@ public class MultiDimensionalSelect implements ITermProvider {
 	private final ArrayIndex mIndex;
 
 	public MultiDimensionalSelect(final Term array, final ArrayIndex index) {
-		super();
 		if (index.isEmpty()) {
 			throw new AssertionError("Zero dimensions are not supported");
 		}
@@ -78,11 +69,12 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	/**
 	 * Translate a (possibly) nested SMT term into this data structure.
-	 * @param term term of the form ("select" a i2) for some array a and some
-	 * index i2.
+	 *
+	 * @param term
+	 *            term of the form ("select" a i2) for some array a and some index i2.
 	 */
 	public static MultiDimensionalSelect of(Term term) {
-		final ArrayList<Term> index = new ArrayList<Term>();
+		final ArrayList<Term> index = new ArrayList<>();
 		while (true) {
 			if (!(term instanceof ApplicationTerm)) {
 				break;
@@ -92,7 +84,7 @@ public class MultiDimensionalSelect implements ITermProvider {
 				break;
 			}
 			assert appTerm.getParameters().length == 2;
-			index.add(0,appTerm.getParameters()[1]);
+			index.add(0, appTerm.getParameters()[1]);
 			term = appTerm.getParameters()[0];
 		}
 		if (index.isEmpty()) {
@@ -145,25 +137,27 @@ public class MultiDimensionalSelect implements ITermProvider {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final MultiDimensionalSelect other = (MultiDimensionalSelect) obj;
 		return Objects.equals(mArray, other.mArray) && Objects.equals(mIndex, other.mIndex);
 	}
 
 	/**
-	 * Return all MultiDimensionalSelect Objects for all multidimensional select
-	 * expressions that occur in term. If one multidimensional expression occurs in
-	 * another multidimensional select expression (e.g. as index) the nested one is
-	 * not returned by this method. If an select term occurs multiple times it is
-	 * contained multiple times in the result.
+	 * Return all MultiDimensionalSelect Objects for all multidimensional select expressions that occur in term. If one
+	 * multidimensional expression occurs in another multidimensional select expression (e.g. as index) the nested one
+	 * is not returned by this method. If an select term occurs multiple times it is contained multiple times in the
+	 * result.
 	 */
 	public static List<MultiDimensionalSelect> extractSelectShallow(final Term term) {
-		final List<MultiDimensionalSelect> result = new ArrayList<MultiDimensionalSelect>();
+		final List<MultiDimensionalSelect> result = new ArrayList<>();
 		final Set<ApplicationTerm> selectTerms = SmtUtils.extractApplicationTerms("select", term, true);
 		for (final Term storeTerm : selectTerms) {
 			final MultiDimensionalSelect mdSelect = MultiDimensionalSelect.of(storeTerm);
@@ -176,20 +170,18 @@ public class MultiDimensionalSelect implements ITermProvider {
 	}
 
 	/**
-	 * Return all MultiDimensionalSelect Objects for all select expressions that
-	 * occur in term. This method also return the inner multidimensional select
-	 * expressions in other multidimensional select expressions. If an select term
-	 * occurs multiple times it is contained multiple times in the result. If
-	 * multidimensional selects are nested, the inner ones occur earlier in the
-	 * resulting list.
+	 * Return all MultiDimensionalSelect Objects for all select expressions that occur in term. This method also return
+	 * the inner multidimensional select expressions in other multidimensional select expressions. If an select term
+	 * occurs multiple times it is contained multiple times in the result. If multidimensional selects are nested, the
+	 * inner ones occur earlier in the resulting list.
 	 */
 	public static List<MultiDimensionalSelect> extractSelectDeep(final Term term) {
-		final List<MultiDimensionalSelect> result = new LinkedList<MultiDimensionalSelect>();
+		final List<MultiDimensionalSelect> result = new LinkedList<>();
 		List<MultiDimensionalSelect> foundInThisIteration = extractSelectShallow(term);
 		while (!foundInThisIteration.isEmpty()) {
 			result.addAll(0, foundInThisIteration);
 			final List<MultiDimensionalSelect> foundInLastIteration = foundInThisIteration;
-			foundInThisIteration = new ArrayList<MultiDimensionalSelect>();
+			foundInThisIteration = new ArrayList<>();
 			for (final MultiDimensionalSelect mdSelect : foundInLastIteration) {
 				foundInThisIteration.addAll(extractSelectShallow(mdSelect.getArray()));
 				final ArrayIndex index = mdSelect.getIndex();

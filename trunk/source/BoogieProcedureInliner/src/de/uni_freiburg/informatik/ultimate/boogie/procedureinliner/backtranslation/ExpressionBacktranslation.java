@@ -36,6 +36,7 @@ import static de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
@@ -72,38 +73,41 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 			final VarMapKey newValue = entry.getKey();
 			final VarMapKey oldValue = mReverseVarMap.put(key, newValue);
 			if (oldValue != null && !oldValue.equals(newValue)) {
-				if (oldValue.getVarId().equals(oldValue.getVarId())) {
-					final DeclarationInformation combinedDeclInfo =
-							combineDeclInfo(oldValue.getDeclInfo(), newValue.getDeclInfo());
-					final VarMapKey combinedValue = new VarMapKey(oldValue.getVarId(), combinedDeclInfo);
-					mReverseVarMap.put(key, combinedValue);
-				} else {
-					throw new AssertionError("Ambiguous backtranslation mapping. Different variable names.");
-				}
+				final var combinedValue = combineDeclaration(oldValue, newValue);
+				mReverseVarMap.put(key, combinedValue);
 			}
 		}
 	}
 
-	private static DeclarationInformation combineDeclInfo(final DeclarationInformation oldDI,
-			final DeclarationInformation newDI) {
-		final String oldProc = oldDI.getProcedure();
-		final String newProc = newDI.getProcedure();
-		if (oldProc != null && oldProc.equals(newProc) || oldProc == null && newProc == null) {
-			final StorageClass oldSC = oldDI.getStorageClass();
-			final StorageClass newSC = newDI.getStorageClass();
-			if (oldSC == IMPLEMENTATION_INPARAM && newSC == PROC_FUNC_INPARAM
-					|| newSC == IMPLEMENTATION_INPARAM && oldSC == PROC_FUNC_INPARAM) {
-				return new DeclarationInformation(IMPLEMENTATION_INPARAM, oldProc);
-			} else if (oldSC == IMPLEMENTATION_OUTPARAM && newSC == PROC_FUNC_OUTPARAM
-					|| newSC == IMPLEMENTATION_OUTPARAM && oldSC == PROC_FUNC_OUTPARAM) {
-				return new DeclarationInformation(IMPLEMENTATION_OUTPARAM, oldProc);
-			} else {
-				throw new AssertionError("Ambiguous translation mapping. DeclarationInformations cannot be merged: "
-						+ oldDI + ", " + newDI);
-			}
+	private static VarMapKey combineDeclaration(final VarMapKey oldKey, final VarMapKey newKey) {
+		final String oldProc = oldKey.getDeclInfo().getProcedure();
+		final String newProc = newKey.getDeclInfo().getProcedure();
+		if (!Objects.equals(oldProc, newProc)) {
+			throw new AssertionError("Ambiguous translation mapping. Different procedure in DeclarationInformation: "
+					+ oldKey + ", " + newKey);
 		}
-		throw new AssertionError("Ambiguous translation mapping. Different procedure in DeclarationInformation: "
-				+ oldDI + ", " + newDI);
+
+		final StorageClass oldSC = oldKey.getDeclInfo().getStorageClass();
+		final StorageClass newSC = newKey.getDeclInfo().getStorageClass();
+
+		// If declarations can be merged, we use the IMPLEMENTATION storage class and the corresponding identifier
+		// (note that identifiers may differ between implementation and declaration).
+		// This seems to be the sensible choice for invariants and counterexamples, both of which refer to the
+		// implementation body.
+		//
+		// TODO If we ever support backtranslation of contracts across inlining, this may have to be revisited.
+		if (oldSC == IMPLEMENTATION_INPARAM && newSC == PROC_FUNC_INPARAM) {
+			return oldKey;
+		} else if (oldSC == PROC_FUNC_INPARAM && newSC == IMPLEMENTATION_INPARAM) {
+			return newKey;
+		} else if (oldSC == IMPLEMENTATION_OUTPARAM && newSC == PROC_FUNC_OUTPARAM) {
+			return oldKey;
+		} else if (oldSC == PROC_FUNC_OUTPARAM && newSC == IMPLEMENTATION_OUTPARAM) {
+			return newKey;
+		}
+
+		throw new AssertionError(
+				"Ambiguous translation mapping. DeclarationInformations cannot be merged: " + oldKey + ", " + newKey);
 	}
 
 	/**
@@ -144,7 +148,7 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 			Expression newExpr = new IdentifierExpression(location, type, translatedId, translatedDeclInfo);
 			ModelUtils.copyAnnotations(expr, newExpr);
 			if (mapping.getGlobalInOldExprOfProc() != null) {
-				newExpr = new UnaryExpression(location, type, Operator.OLD, idExpr);
+				newExpr = new UnaryExpression(location, type, Operator.OLD, newExpr);
 			}
 			if (translatedDeclInfo.getStorageClass() == GLOBAL || translatedDeclInfo.getStorageClass() == QUANTIFIED
 					|| mActiveProcedures.contains(translatedDeclInfo.getProcedure())) {

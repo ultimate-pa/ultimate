@@ -43,12 +43,12 @@ public class PSTOverlappingRegion extends PSTNode implements IPSTOverlappingRegi
 	public PSTOverlappingRegion(final ISourceDocument source, final ISourceRange location) {
 		super(source, location, null);
 	}
-	
+
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);

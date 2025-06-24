@@ -65,10 +65,10 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 		return script.term("false");
 	}
 
-//	@Override
-//	public void freezeAndClose() {
-//		// do nothing;
-//	}
+	// @Override
+	// public void freezeAndClose() {
+	// // do nothing;
+	// }
 
 	@Override
 	public boolean isFrozen() {
@@ -80,10 +80,10 @@ public class EqBottomConstraint<NODE extends IEqNodeIdentifier<NODE>> extends Eq
 		return Collections.emptySet();
 	}
 
-//	@Override
-//	public void renameVariables(final Map<Term, Term> substitutionMapping) {
-//		// do nothing
-//	}
+	// @Override
+	// public void renameVariables(final Map<Term, Term> substitutionMapping) {
+	// // do nothing
+	// }
 
 	@Override
 	public boolean areEqual(final NODE node1, final NODE node2, final boolean addNodesBeforeAnswering) {

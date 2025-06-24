@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,25 +37,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IRelabelStateFactory;
 
 /**
- * Constructs a new automaton that is a copy of the input but where each states
- * is labeled according to the {@link IRelabelStateFactory}.
- * 
+ * Constructs a new automaton that is a copy of the input but where each states is labeled according to the
+ * {@link IRelabelStateFactory}.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public final class Relabel<LETTER, STATE>
-		extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
+public final class Relabel<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final RelabelNwa<LETTER, STATE> mRelabelNwa;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IRelabelStateFactory<STATE> mStateFactory;
 
-
 	public Relabel(final AutomataLibraryServices services, final IRelabelStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mStateFactory = stateFactory;
@@ -63,7 +62,7 @@ public final class Relabel<LETTER, STATE>
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mRelabelNwa = new RelabelNwa<>(stateFactory, operand);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mRelabelNwa);
 

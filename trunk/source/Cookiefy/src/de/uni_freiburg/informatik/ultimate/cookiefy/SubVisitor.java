@@ -55,13 +55,13 @@ public class SubVisitor extends Visitor {
 	@Override
 	public void visit(final Literal f) {
 		final String context = mStack.pop();
-		mList.add(new Pair<Formula, String>(f, context));
+		mList.add(new Pair<>(f, context));
 	}
 
 	@Override
 	public void visit(final BinaryOperator f) {
 		final String context = mStack.pop();
-		mList.add(new Pair<Formula, String>(f, context));
+		mList.add(new Pair<>(f, context));
 		mStack.add(context + "R");
 		mStack.add(context + "L");
 	}
@@ -69,7 +69,7 @@ public class SubVisitor extends Visitor {
 	@Override
 	public void visit(final UnaryOperator f) {
 		final String context = mStack.pop();
-		mList.add(new Pair<Formula, String>(f, context));
+		mList.add(new Pair<>(f, context));
 		mStack.add(context + "L");
 	}
 

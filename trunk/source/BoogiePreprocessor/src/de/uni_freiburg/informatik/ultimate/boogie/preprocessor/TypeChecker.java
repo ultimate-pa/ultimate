@@ -583,7 +583,7 @@ public class TypeChecker extends BaseObserver {
 				}
 			}
 		}
-		mProc2ModfiedGlobals.put(name, new HashSet<String>());
+		mProc2ModfiedGlobals.put(name, new HashSet<>());
 		for (final Specification s : proc.getSpecification()) {
 			if (s instanceof RequiresSpecification) {
 				final BoogieType t = typecheckExpression(((RequiresSpecification) s).getFormula());
@@ -664,31 +664,35 @@ public class TypeChecker extends BaseObserver {
 
 		final TypeErrorReporter typeErrorReporter = new TypeErrorReporter(statement);
 
-		if (statement instanceof AssumeStatement) {
-			final BoogieType t = typecheckExpression(((AssumeStatement) statement).getFormula());
+		switch (statement) {
+		case final AssumeStatement assumeStmt -> {
+			final BoogieType t = typecheckExpression(assumeStmt.getFormula());
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
 				typeError(statement, "Assume is not boolean: " + statement);
 			}
-			typecheckAttributes(((AssumeStatement) statement).getAttributes());
-		} else if (statement instanceof AssertStatement) {
-			final BoogieType t = typecheckExpression(((AssertStatement) statement).getFormula());
+			typecheckAttributes(assumeStmt.getAttributes());
+		}
+		case final AssertStatement assertStmt -> {
+			final BoogieType t = typecheckExpression(assertStmt.getFormula());
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
 				typeError(statement, "Assert is not boolean: " + statement);
 			}
-			typecheckAttributes(((AssertStatement) statement).getAttributes());
-		} else if (statement instanceof BreakStatement) {
-			final String label = ((BreakStatement) statement).getLabel();
+			typecheckAttributes(assertStmt.getAttributes());
+		}
+		case final BreakStatement breakStmt -> {
+			final String label = breakStmt.getLabel();
 			if (!outer.contains(label == null ? "*" : label)) {
 				typeError(statement, "Break label not found: " + statement);
 			}
-		} else if (statement instanceof HavocStatement) {
-			for (final VariableLHS id : ((HavocStatement) statement).getIdentifiers()) {
+		}
+		case final HavocStatement havocStmt -> {
+			for (final VariableLHS id : havocStmt.getIdentifiers()) {
 				typecheckLeftHandSide(id);
 			}
-		} else if (statement instanceof AssignmentStatement) {
-			final AssignmentStatement astmt = (AssignmentStatement) statement;
-			final LeftHandSide[] lhs = astmt.getLhs();
-			final Expression[] rhs = astmt.getRhs();
+		}
+		case final AssignmentStatement assignStmt -> {
+			final LeftHandSide[] lhs = assignStmt.getLhs();
+			final Expression[] rhs = assignStmt.getRhs();
 
 			final String[] lhsIds = new String[lhs.length];
 			final BoogieType[] lhsTypes = new BoogieType[lhs.length];
@@ -700,43 +704,49 @@ public class TypeChecker extends BaseObserver {
 			}
 
 			TypeCheckHelper.typeCheckAssignStatement(lhsIds, lhsTypes, rhsTypes, typeErrorReporter);
-		} else if (statement instanceof GotoStatement) {
-			for (final String label : ((GotoStatement) statement).getLabels()) {
+		}
+		case final GotoStatement gotoStmt -> {
+			for (final String label : gotoStmt.getLabels()) {
 				if (!allLabels.contains(label)) {
 					typeError(statement, "Goto label not found: " + statement);
 				}
 			}
-		} else if (statement instanceof ReturnStatement) {
+		}
+		case final Label label -> {
 			/* Nothing to check */
-		} else if (statement instanceof IfStatement) {
-			final IfStatement ifstmt = (IfStatement) statement;
-			final BoogieType t = typecheckExpression(ifstmt.getCondition());
+		}
+		case final ReturnStatement returnStmt -> {
+			/* Nothing to check */
+		}
+		case final IfStatement ifStmt -> {
+			final BoogieType t = typecheckExpression(ifStmt.getCondition());
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
 				typeError(statement, "Condition is not boolean: " + statement);
 			}
-			typecheckBlock(outer, allLabels, ifstmt.getThenPart());
-			typecheckBlock(outer, allLabels, ifstmt.getElsePart());
-		} else if (statement instanceof WhileStatement) {
-			final WhileStatement whilestmt = (WhileStatement) statement;
-			final BoogieType t = typecheckExpression(whilestmt.getCondition());
+			typecheckBlock(outer, allLabels, ifStmt.getThenPart());
+			typecheckBlock(outer, allLabels, ifStmt.getElsePart());
+		}
+		case final WhileStatement whileStmt -> {
+			final BoogieType t = typecheckExpression(whileStmt.getCondition());
 			if (!t.equals(BoogieType.TYPE_BOOL) && !t.equals(BoogieType.TYPE_ERROR)) {
 				typeError(statement, "Condition is not boolean: " + statement);
 			}
-			for (final Specification inv : whilestmt.getInvariants()) {
+			for (final Specification inv : whileStmt.getInvariants()) {
 				if (inv instanceof LoopInvariantSpecification) {
-					typecheckExpression(((LoopInvariantSpecification) inv).getFormula());
+					final BoogieType t2 = typecheckExpression(((LoopInvariantSpecification) inv).getFormula());
+					if (!t2.equals(BoogieType.TYPE_BOOL) && !t2.equals(BoogieType.TYPE_ERROR)) {
+						typeError(statement, "Loop invariant is not boolean: " + statement);
+					}
 				} else {
 					TypeCheckHelper.internalError("Unknown while specification: " + inv);
 				}
 			}
 			outer.push("*");
-			typecheckBlock(outer, allLabels, whilestmt.getBody());
+			typecheckBlock(outer, allLabels, whileStmt.getBody());
 			outer.pop();
-		} else if (statement instanceof AtomicStatement) {
-			final AtomicStatement atomicstmt = (AtomicStatement) statement;
-			typecheckBlock(outer, allLabels, atomicstmt.getBody());
-		} else if (statement instanceof CallStatement) {
-			final CallStatement call = (CallStatement) statement;
+		}
+		case final AtomicStatement atomicStmt -> typecheckBlock(outer, allLabels, atomicStmt.getBody());
+		case final CallStatement call -> {
 			final ProcedureInfo procInfo = mDeclaredProcedures.get(call.getMethodName());
 			if (procInfo == null) {
 				typeError(statement, "Calling undeclared procedure " + call);
@@ -760,12 +770,10 @@ public class TypeChecker extends BaseObserver {
 				return;
 			}
 			for (int i = 0; i < arguments.length; i++) {
-				if (call.isForall()) {
-					/* check for wildcard expression and just skip them. */
-					if (arguments[i] instanceof WildcardExpression) {
-						arguments[i].setType(inParams[i].getType());
-						continue;
-					}
+				/* check for wildcard expression and just skip them. */
+				if (call.isForall() && (arguments[i] instanceof WildcardExpression)) {
+					arguments[i].setType(inParams[i].getType());
+					continue;
 				}
 				final BoogieType t = typecheckExpression(arguments[i]);
 				if (!inParams[i].getType().unify(t, typeParams)) {
@@ -789,8 +797,8 @@ public class TypeChecker extends BaseObserver {
 					}
 				}
 			}
-		} else if (statement instanceof ForkStatement) {
-			final ForkStatement fork = (ForkStatement) statement;
+		}
+		case final ForkStatement fork -> {
 			final ProcedureInfo procInfo = mDeclaredProcedures.get(fork.getProcedureName());
 			if (procInfo == null) {
 				typeError(statement, "Forking undeclared procedure " + fork);
@@ -813,8 +821,8 @@ public class TypeChecker extends BaseObserver {
 			for (final Expression threadId : fork.getThreadID()) {
 				typecheckExpression(threadId);
 			}
-		} else if (statement instanceof JoinStatement) {
-			final JoinStatement join = (JoinStatement) statement;
+		}
+		case final JoinStatement join -> {
 			for (final Expression threadId : join.getThreadID()) {
 				if (threadId == null) {
 					typeError(statement, "Expression " + threadId + " does not exist.");
@@ -824,10 +832,7 @@ public class TypeChecker extends BaseObserver {
 			for (int i = 0; i < join.getLhs().length; i++) {
 				typecheckLeftHandSide(join.getLhs()[i]);
 			}
-		} else if (statement instanceof AtomicStatement) {
-			// Nothing to check (yet).
-		} else {
-			TypeCheckHelper.internalError("Not implemented: type checking for " + statement);
+		}
 		}
 	}
 
@@ -959,7 +964,7 @@ public class TypeChecker extends BaseObserver {
 		final HashSet<String> labels = new HashSet<>();
 		processLabels(labels, body.getBlock());
 		/* Finally check statements */
-		typecheckBlock(new Stack<String>(), labels, body.getBlock());
+		typecheckBlock(new Stack<>(), labels, body.getBlock());
 		mVarScopes.endScope();
 	}
 

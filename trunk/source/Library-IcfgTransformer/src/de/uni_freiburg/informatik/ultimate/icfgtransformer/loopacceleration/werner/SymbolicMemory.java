@@ -67,8 +67,7 @@ public class SymbolicMemory {
 	 * Construct a new Symbolic Memory.
 	 *
 	 * @param script
-	 *            A {@link ManagedScript} instance that can be used to perform
-	 *            SMT operations.
+	 *            A {@link ManagedScript} instance that can be used to perform SMT operations.
 	 *
 	 * @param services
 	 *            an {@link IUltimateServiceProvider}
@@ -79,9 +78,8 @@ public class SymbolicMemory {
 	 * @param tf
 	 *            A {@link TransFormula} for which the memory is built.
 	 * @param oldSymbolTable
-	 *            A {@link IIcfgSymbolTable} for translating
-	 *            {@link TermVariable} to an {@link IProgramVar} for changing in
-	 *            the memory.
+	 *            A {@link IIcfgSymbolTable} for translating {@link TermVariable} to an {@link IProgramVar} for changing
+	 *            in the memory.
 	 */
 	public SymbolicMemory(final ManagedScript script, final IUltimateServiceProvider services, final TransFormula tf,
 			final IIcfgSymbolTable oldSymbolTable) {
@@ -157,9 +155,7 @@ public class SymbolicMemory {
 		}
 
 		final ApplicationTerm appTerm = (ApplicationTerm) tf.getFormula();
-		final Map<Term, Term> substitution = new HashMap<>();
-
-		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
+		final Map<Term, Term> substitution = new HashMap<>(termUnravel(appTerm, tf.getInVars()));
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(mInVars, mOutVars, true, null, true, null, true);
 		final Term term = Substitution.apply(mScript, substitution, tf.getFormula());
@@ -172,8 +168,7 @@ public class SymbolicMemory {
 	}
 
 	/**
-	 * Unravel a given term and substitute subterms with values from the
-	 * symbolic memory.
+	 * Unravel a given term and substitute subterms with values from the symbolic memory.
 	 *
 	 * @param appTerm
 	 * @return
@@ -202,8 +197,7 @@ public class SymbolicMemory {
 	}
 
 	/**
-	 * Unravel a given term and substitute subterms with values from the
-	 * symbolic memory.
+	 * Unravel a given term and substitute subterms with values from the symbolic memory.
 	 *
 	 * @param appTerm
 	 * @param progVars

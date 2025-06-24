@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Layla Franke
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft - Algorithm.
- * 
+ *
  * @author Layla Franke
  * @param <LETTER>
  *            letter type
@@ -127,7 +126,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * GUI Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -142,7 +141,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -165,8 +164,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 		printStartMessage();
 
 		/*
-		 * Christian: 2016-08-02:
-		 *   initialize() is also executed by executeAlgorithm().
+		 * Christian: 2016-08-02: initialize() is also executed by executeAlgorithm().
 		 */
 		initialize();
 		if (!sParallel) {
@@ -179,7 +177,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -199,8 +197,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 		mState2int = state2int;
 
 		/*
-		 * Christian: 2016-08-02:
-		 *   initialize() is also executed by executeAlgorithm().
+		 * Christian: 2016-08-02: initialize() is also executed by executeAlgorithm().
 		 */
 		initialize();
 		assert mState2int != null && mInt2state != null;
@@ -224,8 +221,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * This method is only called when the algorithm is executed non-parallel.
 	 */
 	private void executeAlgorithm() {
-		assert (mInterrupt == null)
-				|| (!mInterrupt.getStatus()) : "HOP: The interrupt tells to terminate right at the beginning.";
+		assert (mInterrupt == null) || (!mInterrupt.getStatus())
+				: "HOP: The interrupt tells to terminate right at the beginning.";
 		initialize();
 		minimizeDfaHopcroft();
 		if (!mResultConstructed) {
@@ -253,7 +250,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Method for calling minimization without changing constructor.
-	 * 
+	 *
 	 * @param taskQueue
 	 *            The task queue for the parallel computation.
 	 * @param incremental
@@ -268,7 +265,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Create and return initial partition for the given automaton.
-	 * 
+	 *
 	 * @return Initialized partition.
 	 */
 	private void createInitialPartition() {
@@ -282,12 +279,10 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 		final int nOfFinalStates = finalStatesCol.size();
 		final int nOfStates = statesCol.size();
 
-		final Block acceptingStates = new Block(new HashSet<Integer>(nOfFinalStates));
-		final Block nonAcceptingStates = new Block(new HashSet<Integer>(nOfStates - nOfFinalStates));
+		final Block acceptingStates = new Block(new HashSet<>(nOfFinalStates));
+		final Block nonAcceptingStates = new Block(new HashSet<>(nOfStates - nOfFinalStates));
 
-		final Iterator<STATE> it = statesCol.iterator();
-		while (it.hasNext()) {
-			final STATE st = it.next();
+		for (final STATE st : statesCol) {
 			if (finalStatesCol.contains(st)) {
 				mMappings.put(mState2int.get(st), acceptingStates);
 				acceptingStates.add(mState2int.get(st));
@@ -318,7 +313,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
-			mState2int.put(state, ++index);
+			index++;
+			mState2int.put(state, index);
 		}
 
 	}
@@ -445,7 +441,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 		/*
 		 * add transitions
-		 * 
+		 *
 		 * NOTE: This exploits the fact that the input is deterministic.
 		 */
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
@@ -461,7 +457,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * This method computes a mapping from old states to new representatives.
-	 * 
+	 *
 	 * @return map old state -> new state
 	 */
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
@@ -499,10 +495,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		if (sParallel) {
-			if (!mResultConstructed) {
-				constructResult();
-			}
+		if (sParallel && !mResultConstructed) {
+			constructResult();
 		}
 		return super.getResult();
 	}
@@ -516,7 +510,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Method for setting the flag before constructor is called.
-	 * 
+	 *
 	 * @param parallel
 	 *            True if MinimizeDfaParallel is called originally, false otherwise.
 	 */
@@ -526,7 +520,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Getter for parallel computation.
-	 * 
+	 *
 	 * @return True if mappings have already been computed entirely, false otherwise.
 	 */
 	public boolean getMappings() {
@@ -535,7 +529,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Getter for mappings from integer to state.
-	 * 
+	 *
 	 * @return state
 	 */
 	public ArrayList<STATE> getInt2State() {
@@ -544,7 +538,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Getter for mappings from state to integer.
-	 * 
+	 *
 	 * @return integer
 	 */
 	public HashMap<STATE, Integer> getState2Int() {
@@ -564,7 +558,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 	/**
 	 * Block.
-	 * 
+	 *
 	 * @author layla
 	 */
 	private static class Block {
@@ -610,7 +604,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 		/**
 		 * Call this method to determine whether to split a block.
-		 * 
+		 *
 		 * @return true if the block should be split, false otherwise.
 		 */
 		public boolean doSplit() {
@@ -650,7 +644,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 		@Override
 		public int hashCode() {
-			return this.mId;
+			return mId;
 		}
 	}
 

@@ -51,13 +51,11 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
 public final class RandomTaBenchmarkCreator {
 
 	/**
-	 * Default path where the tree automata benchmark set gets saved if no other
-	 * path is specified.
+	 * Default path where the tree automata benchmark set gets saved if no other path is specified.
 	 */
 	public static final Path DEFAULT_PATH = Paths.get(System.getProperty("user.home"), "Desktop", "randomTaBenchmark");
 	/**
-	 * Default amount of created tree automata after which a logging message gets
-	 * printed.
+	 * Default amount of created tree automata after which a logging message gets printed.
 	 */
 	public static final int LOG_EVERY = 10;
 	/**
@@ -65,8 +63,7 @@ public final class RandomTaBenchmarkCreator {
 	 */
 	private static final int PERC_LOWER_BOUND = 0;
 	/**
-	 * Converts a value in percentage, if multiplied with, into a value between 0.0
-	 * and 1.0.
+	 * Converts a value in percentage, if multiplied with, into a value between 0.0 and 1.0.
 	 */
 	private static final int PERC_TO_DOUBLE = 100;
 	/**
@@ -82,15 +79,14 @@ public final class RandomTaBenchmarkCreator {
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public static void main(final String[] args) throws IOException, AutomataOperationCanceledException {
 		// Settings
 		final int n = 20;
 		final float acceptanceInPerc = 20;
-		final int[] rankToK = new int[] { 2, 1, 3, 1 };
-		final int[] rankToRulesPerLetter = new int[] { 3, 7, 2, 3 };
+		final int[] rankToK = { 2, 1, 3, 1 };
+		final int[] rankToRulesPerLetter = { 3, 7, 2, 3 };
 		final int amount = 100;
 		final int operationSwitch = 0;
 		final boolean createDeterministic = true;
@@ -100,17 +96,14 @@ public final class RandomTaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates a benchmark set with given explicit settings by using the
-	 * {@link RandomTaBenchmarkCreator} class.
-	 * 
+	 * Creates a benchmark set with given explicit settings by using the {@link RandomTaBenchmarkCreator} class.
+	 *
 	 * @param n
 	 *            The amount of states the generated tree automata should have
 	 * @param rankToK
-	 *            The size of the alphabet the generated tree automata should have,
-	 *            per rank
+	 *            The size of the alphabet the generated tree automata should have, per rank
 	 * @param acceptanceInPerc
-	 *            The percentage of how many states should be accepting, between 0
-	 *            and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param rankToRulesPerLetter
 	 *            The percentage of how many rules each letter should have, per rank
 	 * @param amount
@@ -122,8 +115,7 @@ public final class RandomTaBenchmarkCreator {
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private static void createExplicitSet(final int n, final int[] rankToK, final float acceptanceInPerc,
 			final int[] rankToRulesPerLetter, final int amount, final int operationSwitch,
@@ -168,15 +160,13 @@ public final class RandomTaBenchmarkCreator {
 	}
 
 	/**
-	 * Ensures the given value is a percentage. For this, it must be between 0 and
-	 * 100 (both inclusive).
+	 * Ensures the given value is a percentage. For this, it must be between 0 and 100 (both inclusive).
 	 *
 	 * @param percentage
 	 *            Value to ensure
 	 * @return The given value if it is valid
 	 * @throws IllegalArgumentException
-	 *             If the given value is no percentage, i.e. not between 0 and 100
-	 *             (both inclusive)
+	 *             If the given value is no percentage, i.e. not between 0 and 100 (both inclusive)
 	 */
 	private static float ensureIsPercentage(final float percentage) throws IllegalArgumentException {
 		if (percentage < PERC_LOWER_BOUND || percentage > PERC_UPPER_BOUND) {
@@ -197,8 +187,7 @@ public final class RandomTaBenchmarkCreator {
 	}
 
 	/**
-	 * The percentage of how many states should be accepting, between 0 and 100
-	 * (both inclusive).
+	 * The percentage of how many states should be accepting, between 0 and 100 (both inclusive).
 	 */
 	private final float mAcceptance;
 
@@ -208,16 +197,14 @@ public final class RandomTaBenchmarkCreator {
 	private final boolean mCreateDeterministic;
 
 	/**
-	 * The text that gets saved in every following created ats-File right after the
-	 * automaton itself. Can be used to write operations, that use the automaton,
-	 * directly in the same file.
+	 * The text that gets saved in every following created ats-File right after the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
 	 */
 	private String mPostamble;
 
 	/**
-	 * The text that gets saved in every following created ats-File right before the
-	 * automaton itself. Can be used to write operations, that use the automaton,
-	 * directly in the same file.
+	 * The text that gets saved in every following created ats-File right before the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
 	 */
 	private String mPreamble;
 
@@ -242,19 +229,16 @@ public final class RandomTaBenchmarkCreator {
 	private final int mSize;
 
 	/**
-	 * Creates a new creator object that is able to generate random automata with
-	 * the given properties. A benchmark set can then be created using
-	 * {@link #createAndSaveABenchmark(int, Path, int)}. This constructor internally
-	 * uses {@link GetRandomNftaBU}.
+	 * Creates a new creator object that is able to generate random automata with the given properties. A benchmark set
+	 * can then be created using {@link #createAndSaveABenchmark(int, Path, int)}. This constructor internally uses
+	 * {@link GetRandomNftaBU}.
 	 *
 	 * @param size
 	 *            The amount of states generated tree automata should have
 	 * @param rankToAlphabetSize
-	 *            The size of the alphabet generated tree automata should have, per
-	 *            rank
+	 *            The size of the alphabet generated tree automata should have, per rank
 	 * @param acceptance
-	 *            The percentage of how many states should be accepting, between 0
-	 *            and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param rankToRulesPerLetter
 	 *            The amount of how many rules each letter should have, per rank
 	 * @param createDeterministic
@@ -264,37 +248,34 @@ public final class RandomTaBenchmarkCreator {
 	 */
 	public RandomTaBenchmarkCreator(final int size, final int[] rankToAlphabetSize, final float acceptance,
 			final int[] rankToRulesPerLetter, final boolean createDeterministic) throws IllegalArgumentException {
-		this.mSize = size;
-		this.mRankToAlphabetSize = rankToAlphabetSize;
-		this.mAcceptance = ensureIsPercentage(acceptance);
-		this.mRankToRulesPerLetter = rankToRulesPerLetter;
-		this.mCreateDeterministic = createDeterministic;
+		mSize = size;
+		mRankToAlphabetSize = rankToAlphabetSize;
+		mAcceptance = ensureIsPercentage(acceptance);
+		mRankToRulesPerLetter = rankToRulesPerLetter;
+		mCreateDeterministic = createDeterministic;
 
-		this.mServices = new AutomataLibraryServices(new ToolchainStorage());
-		this.mPreamble = "";
+		mServices = new AutomataLibraryServices(new ToolchainStorage());
+		mPreamble = "";
 	}
 
 	/**
-	 * Creates and saves random generated tree automata to the default path,
-	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug message
-	 * to {@link System#out} after every {@link #LOG_EVERY} created automata.
+	 * Creates and saves random generated tree automata to the default path, specified by {@link #DEFAULT_PATH}, in the
+	 * ats-Format. Prints a debug message to {@link System#out} after every {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random tree automata to generate
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public void createAndSaveABenchmark(final int amount) throws IOException, AutomataOperationCanceledException {
 		createAndSaveABenchmark(amount, DEFAULT_PATH, LOG_EVERY);
 	}
 
 	/**
-	 * Creates and saves random generated tree automata to the given path in the
-	 * ats-Format. Prints a debug message to {@link System#out} after every
-	 * {@link #LOG_EVERY} created automata.
+	 * Creates and saves random generated tree automata to the given path in the ats-Format. Prints a debug message to
+	 * {@link System#out} after every {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random tree automata to generate
@@ -303,8 +284,7 @@ public final class RandomTaBenchmarkCreator {
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public void createAndSaveABenchmark(final int amount, final Path pathToSaveBenchmark)
 			throws IOException, AutomataOperationCanceledException {
@@ -312,27 +292,24 @@ public final class RandomTaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated tree automata to the given path in the
-	 * ats-Format.
+	 * Creates and saves random generated tree automata to the given path in the ats-Format.
 	 *
 	 * @param amount
 	 *            Amount of random tree automata to generate
 	 * @param pathToSaveBenchmark
 	 *            The path where the automata should get saved to
 	 * @param logEvery
-	 *            Amount of generated automata after which a logging message gets
-	 *            printed to {@link System#out}
+	 *            Amount of generated automata after which a logging message gets printed to {@link System#out}
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public void createAndSaveABenchmark(final int amount, final Path pathToSaveBenchmark, final int logEvery)
 			throws IOException, AutomataOperationCanceledException {
 		ITreeAutomatonBU<StringRankedLetter, String> ta = null;
 
-		final double acceptanceDouble = percentageToDouble(this.mAcceptance);
+		final double acceptanceDouble = percentageToDouble(mAcceptance);
 
 		final String timeStamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 		final String fileName = "randomTreeAutomata_" + timeStamp;
@@ -351,12 +328,12 @@ public final class RandomTaBenchmarkCreator {
 
 			// Generate the automaton
 			final long seed = System.currentTimeMillis();
-			if (this.mCreateDeterministic) {
-				ta = new GetRandomDftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize,
-						this.mRankToRulesPerLetter, acceptanceDouble, seed).getResult();
+			if (mCreateDeterministic) {
+				ta = new GetRandomDftaBU(mServices, mSize, mRankToAlphabetSize, mRankToRulesPerLetter, acceptanceDouble,
+						seed).getResult();
 			} else {
-				ta = new GetRandomNftaBU(this.mServices, this.mSize, this.mRankToAlphabetSize,
-						this.mRankToRulesPerLetter, acceptanceDouble, seed).getResult();
+				ta = new GetRandomNftaBU(mServices, mSize, mRankToAlphabetSize, mRankToRulesPerLetter, acceptanceDouble,
+						seed).getResult();
 			}
 
 			if (i == 1) {
@@ -367,25 +344,22 @@ public final class RandomTaBenchmarkCreator {
 			final String fileNamePost = "_" + i;
 			final Path automatonFile = pathToSaveBenchmark.resolve(fileName + fileNamePost + fileFormat);
 
-			Files.write(automatonFile, Collections.singletonList(this.mPreamble + ta + this.mPostamble));
+			Files.write(automatonFile, Collections.singletonList(mPreamble + ta + mPostamble));
 		}
 	}
 
 	/**
-	 * Creates and saves random generated tree automata to the default path,
-	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug message
-	 * to {@link System#out} after every {@link #LOG_EVERY} created automata.
+	 * Creates and saves random generated tree automata to the default path, specified by {@link #DEFAULT_PATH}, in the
+	 * ats-Format. Prints a debug message to {@link System#out} after every {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random tree automata to generate
 	 * @param folderName
-	 *            Name of the folder to save the files in, the folder itself is
-	 *            located at the default path
+	 *            Name of the folder to save the files in, the folder itself is located at the default path
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public void createAndSaveABenchmark(final int amount, final String folderName)
 			throws IOException, AutomataOperationCanceledException {
@@ -393,26 +367,24 @@ public final class RandomTaBenchmarkCreator {
 	}
 
 	/**
-	 * Sets a text that gets saved in every following created ats-File right after
-	 * the automaton itself. Can be used to write operations, that use the
-	 * automaton, directly in the same file.
+	 * Sets a text that gets saved in every following created ats-File right after the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
 	 *
 	 * @param postamble
 	 *            Text to set right after the generated automata
 	 */
 	public void setPostamble(final String postamble) {
-		this.mPostamble = postamble;
+		mPostamble = postamble;
 	}
 
 	/**
-	 * Sets a text that gets saved in every following created ats-File right before
-	 * the automaton itself. Can be used to write operations, that use the
-	 * automaton, directly in the same file.
+	 * Sets a text that gets saved in every following created ats-File right before the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
 	 *
 	 * @param preamble
 	 *            Text to set right before the generated automata
 	 */
 	public void setPreamble(final String preamble) {
-		this.mPreamble = preamble;
+		mPreamble = preamble;
 	}
 }

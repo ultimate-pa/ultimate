@@ -25,20 +25,21 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes a named type given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
+import java.util.Objects;
+
 /**
+ * Describes a named type given in C.
+ *
  * @author Markus Lindenmann
  * @date 01.11.2012
  */
-public class CNamed extends CType {
+public final class CNamed implements ICType {
 	/**
 	 * The type this named type is mapping to.
 	 */
-	private final CType mMappedType;
+	private final ICType mMappedType;
 
 	/**
 	 * The name that is mapped.
@@ -55,9 +56,7 @@ public class CNamed extends CType {
 	 * @param mappedType
 	 *            the type this named type is referring to.
 	 */
-	public CNamed(final String name, final CType mappedType) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, mappedType.isAtomic());
+	public CNamed(final String name, final ICType mappedType) {
 		mName = name;
 		mMappedType = mappedType;
 	}
@@ -72,28 +71,13 @@ public class CNamed extends CType {
 	}
 
 	/**
-	 * Getter for the directly mapped type.
-	 *
-	 * @return the type this named type is referring to.
-	 */
-	public CType getMappedType() {
-		return mMappedType;
-	}
-
-	/**
 	 * Getter for the real underlying type.
 	 *
 	 * @return the type this named type is referring to.
 	 */
 	@Override
-	public CType getUnderlyingType() {
-		CType previous = mMappedType;
-		CType current = mMappedType;
-		do {
-			previous = current;
-			current = current.getUnderlyingType();
-		} while (previous != current);
-		return current;
+	public ICType getUnderlyingType() {
+		return mMappedType.getUnderlyingType();
 	}
 
 	@Override
@@ -108,21 +92,33 @@ public class CNamed extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mMappedType == null) ? 0 : mMappedType.hashCode());
-		result = prime * result + ((mName == null) ? 0 : mName.hashCode());
-		return result;
+		return Objects.hash(mMappedType, mName);
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (this == o) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (!(o instanceof CType)) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		return getUnderlyingType().equals(o);
+		final CNamed other = (CNamed) obj;
+		return Objects.equals(mMappedType, other.mMappedType) && Objects.equals(mName, other.mName);
+	}
+
+	@Override
+	public boolean isAtomic() {
+		return mMappedType.isAtomic();
+	}
+
+	@Override
+	public boolean isVoidPointerType() {
+		return mMappedType.isVoidPointerType();
+	}
+
+	@Override
+	public boolean isVoidType() {
+		return mMappedType.isVoidType();
 	}
 }

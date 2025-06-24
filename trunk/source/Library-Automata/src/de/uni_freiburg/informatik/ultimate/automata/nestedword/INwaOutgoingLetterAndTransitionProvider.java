@@ -128,8 +128,7 @@ public interface INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>
 	default Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		final Function<LETTER, Iterator<OutgoingCallTransition<LETTER, STATE>>> fun =
 				x -> callSuccessors(state, x).iterator();
-		return () -> new NestedIteratorNoopConstruction<>(
-				lettersCall(state).iterator(), fun);
+		return () -> new NestedIteratorNoopConstruction<>(lettersCall(state).iterator(), fun);
 	}
 
 	@Override
@@ -137,8 +136,7 @@ public interface INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>
 			final STATE hier) {
 		final Function<LETTER, Iterator<OutgoingReturnTransition<LETTER, STATE>>> fun =
 				x -> returnSuccessors(state, hier, x).iterator();
-		return () -> new NestedIteratorNoopConstruction<>(
-				lettersReturn(state, hier).iterator(), fun);
+		return () -> new NestedIteratorNoopConstruction<>(lettersReturn(state, hier).iterator(), fun);
 	}
 
 }

@@ -26,11 +26,12 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes;
 
 import java.util.EnumSet;
+
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassDescription;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.unref.DeclFlag;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.unref.ObjFlag;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.unref.RemoveUnreferencedObjects;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.unref.RemoveUnreferencedDecls;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.unref.RemoveUnreferencedObjects;
 
 /**
  * Pass to replace unreferenced things.
@@ -48,17 +49,19 @@ public final class RemoveUnreferencedPass {
 					EnumSet.of(ObjFlag.COMPOSITES, ObjFlag.ENUMS, ObjFlag.INCLUDE_EMPTY_MACROS)))
 			.name("Remove unreferenced composite types and enums").build();
 
-	public static final PassDescription TYPEDEFS = PassDescription
-			.builder(ctx -> RemoveUnreferencedDecls.analyze(ctx,
-					EnumSet.of(DeclFlag.TYPEDEFS, DeclFlag.GLOBAL, DeclFlag.LOCAL, DeclFlag.MEMBERS,
-							DeclFlag.INCLUDE_EMPTY_MACROS)))
-			.name("Remove unreferenced typedefs").build();
+	public static final PassDescription TYPEDEFS =
+			PassDescription
+					.builder(
+							ctx -> RemoveUnreferencedDecls.analyze(ctx,
+									EnumSet.of(DeclFlag.TYPEDEFS, DeclFlag.GLOBAL, DeclFlag.LOCAL, DeclFlag.MEMBERS,
+											DeclFlag.INCLUDE_EMPTY_MACROS)))
+					.name("Remove unreferenced typedefs").build();
 
 	public static final PassDescription VARIABLES = PassDescription
 			.builder(ctx -> RemoveUnreferencedDecls.analyze(ctx,
 					EnumSet.of(DeclFlag.VARS, DeclFlag.GLOBAL, DeclFlag.LOCAL, DeclFlag.INCLUDE_EMPTY_MACROS)))
 			.name("Remove unreferenced variables").build();
-	
+
 	// Remove everything
 	public static final PassDescription ALL_DECLS = PassDescription.builder(RemoveUnreferencedDecls::analyze)
 			.name("Remove unreferenced typedefs, variables and composite type members").build();
@@ -66,8 +69,7 @@ public final class RemoveUnreferencedPass {
 	public static final PassDescription ALL_OBJS = PassDescription.builder(RemoveUnreferencedObjects::analyze)
 			.name("Remove unreferenced funcs, structs, unions and enums").build();
 
-	
 	private RemoveUnreferencedPass() {
-		
+
 	}
 }

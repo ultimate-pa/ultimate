@@ -37,9 +37,9 @@ import java.util.Collections;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
-
 /**
  * TODO 2019-01-06: fix documentation of this class' methods
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class XnfUtils {
@@ -47,8 +47,6 @@ public class XnfUtils {
 	private XnfUtils() {
 		// do not instantiate
 	}
-
-
 
 	/**
 	 * Given two disjunctions a and b of conjunctions, this method calculates a new disjunction of conjunctions
@@ -66,8 +64,7 @@ public class XnfUtils {
 		final Dnf<E> result = new Dnf<>();
 		for (final Collection<E> aItem : a) {
 			for (final Collection<E> bItem : b) {
-				final Collection<E> resultItem = new ArrayList<>();
-				resultItem.addAll(aItem);
+				final Collection<E> resultItem = new ArrayList<>(aItem);
 				resultItem.addAll(bItem);
 				result.add(resultItem);
 			}
@@ -158,11 +155,9 @@ public class XnfUtils {
 		for (final Collection<E> disjunct : dnf) {
 			for (final E item : conjunct) {
 				if (!services.getProgressMonitorService().continueProcessing()) {
-					throw new ToolchainCanceledException(XnfUtils.class,
-							"transforming CNF to DNF");
+					throw new ToolchainCanceledException(XnfUtils.class, "transforming CNF to DNF");
 				}
-				final Collection<E> resultItem = new ArrayList<>();
-				resultItem.addAll(disjunct);
+				final Collection<E> resultItem = new ArrayList<>(disjunct);
 				resultItem.add(item);
 				result.add(resultItem);
 			}

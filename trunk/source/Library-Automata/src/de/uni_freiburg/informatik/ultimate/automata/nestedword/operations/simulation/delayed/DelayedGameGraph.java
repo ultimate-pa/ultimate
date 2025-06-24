@@ -4,22 +4,22 @@
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * <b>q1 delayed simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>. The
  * implementation is based on the following paper. Kousha Etessami, Thomas Wilke, Rebecca A. Schuller: Fair Simulation
  * Relations, Parity Games, and State Space Reduction for Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175 (2005)
- * 
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
@@ -88,7 +88,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * <p>
 	 * Throws an IllegalArgumentException if the inputed automaton is no Buechi-automaton. It must have an empty call
 	 * and return alphabet.
-	 * 
+	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
@@ -116,7 +116,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
 	 */
@@ -128,8 +128,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Determine which states to merge
-		final ArrayList<STATE> states = new ArrayList<>();
-		states.addAll(mBuechi.getStates());
+		final ArrayList<STATE> states = new ArrayList<>(mBuechi.getStates());
 		final boolean[][] table = new boolean[states.size()][states.size()];
 		for (final SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
 			// All the states we need are in spoiler vertices
@@ -147,10 +146,8 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				considerVertex = !mBuechi.isFinal(v.getQ0()) || mBuechi.isFinal(v.getQ1());
 			}
 
-			if (considerVertex) {
-				if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
-					table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
-				}
+			if (considerVertex && (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity())) {
+				table[states.indexOf(v.getQ0())][states.indexOf(v.getQ1())] = true;
 			}
 
 			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
@@ -227,7 +224,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
 	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
 	 */
@@ -329,7 +326,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game graph with representation (q0, q1). Since
 	 * there can be such vertices with the extra bit false and true the returned value is between zero and two.
-	 * 
+	 *
 	 * @param q0
 	 *            The state spoiler is at
 	 * @param q1
@@ -354,7 +351,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Sets the internal field of the graphBuildTime.
-	 * 
+	 *
 	 * @param graphBuildTime
 	 *            The graphBuildTime to set
 	 */

@@ -15,22 +15,24 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequalityInvariantPatternStrategy {
 
-
 	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
 	protected Map<IcfgLocation, PatternSetting> mLoc2PatternSetting;
 
-	public DynamicPatternSettingsStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, final int maxRounds, final Set<IProgramVar> allProgramVariables,
+	public DynamicPatternSettingsStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
+			final int maxRounds, final Set<IProgramVar> allProgramVariables,
 			final boolean alwaysStrictAndNonStrictCopies, final boolean useStrictInequalitiesAlternatingly) {
-		super(dimensionsStrat, maxRounds, allProgramVariables,
-				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
+		super(dimensionsStrat, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies,
+				useStrictInequalitiesAlternatingly);
 		mLocations2LiveVariables = new HashMap<>();
 		mLoc2PatternSetting = new HashMap<>();
 	}
 
-	public DynamicPatternSettingsStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, final int maxRounds, final Set<IProgramVar> allProgramVariables, final Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
-			final boolean alwaysStrictAndNonStrictCopies, final boolean useStrictInequalitiesAlternatingly) {
-		super(dimensionsStrat, maxRounds, allProgramVariables,
-				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
+	public DynamicPatternSettingsStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
+			final int maxRounds, final Set<IProgramVar> allProgramVariables,
+			final Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables, final boolean alwaysStrictAndNonStrictCopies,
+			final boolean useStrictInequalitiesAlternatingly) {
+		super(dimensionsStrat, maxRounds, allProgramVariables, alwaysStrictAndNonStrictCopies,
+				useStrictInequalitiesAlternatingly);
 		mLocations2LiveVariables = loc2LiveVariables;
 		if (loc2LiveVariables == null) {
 			mLocations2LiveVariables = new HashMap<>();
@@ -38,7 +40,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		mLoc2PatternSetting = new HashMap<>();
 	}
 
-	protected Set<IProgramVar> getPatternVariablesInitially (final IcfgLocation loc) {
+	protected Set<IProgramVar> getPatternVariablesInitially(final IcfgLocation loc) {
 		if (mLocations2LiveVariables.containsKey(loc)) {
 			return new HashSet<>(mLocations2LiveVariables.get(loc));
 		} else {
@@ -53,22 +55,19 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		// Build invariant pattern
 		final Dnf<AbstractLinearInvariantPattern> disjunction = new Dnf<>(ps.mNumOfDisjuncts);
 		for (int i = 0; i < ps.mNumOfDisjuncts; i++) {
-			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(
-					ps.mNumOfConjuncts);
+			final Collection<AbstractLinearInvariantPattern> conjunction = new ArrayList<>(ps.mNumOfConjuncts);
 			for (int j = 0; j < ps.mNumOfConjuncts; j++) {
-				boolean[] invariantPatternCopies = new boolean[] { false };
-				if (super.mUseStrictInequalitiesAlternatingly) {
-					// if it is an odd conjunct, then construct a strict inequality
-					if (j % 2 == 1) {
-						invariantPatternCopies = new boolean[] { true };
-					}
+				boolean[] invariantPatternCopies = { false };
+				// if it is an odd conjunct, then construct a strict inequality
+				if (super.mUseStrictInequalitiesAlternatingly && (j % 2 == 1)) {
+					invariantPatternCopies = new boolean[] { true };
 				}
 				if (mAlwaysStrictAndNonStrictCopies) {
 					invariantPatternCopies = new boolean[] { false, true };
 				}
 				for (final boolean strict : invariantPatternCopies) {
-					final LinearPatternBase inequality = new LinearPatternBase (
-							solver, ps.getPatternVariables(), prefix + "_" + newPrefix(), strict);
+					final LinearPatternBase inequality =
+							new LinearPatternBase(solver, ps.getPatternVariables(), prefix + "_" + newPrefix(), strict);
 					conjunction.add(inequality);
 					// Add the coefficients of the inequality to our set of pattern coefficients
 					patternCoefficients.addAll(inequality.getCoefficients());
@@ -87,7 +86,8 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		if (!mLoc2PatternSetting.containsKey(location)) {
 			// Create new setting for this location
 			final Set<IProgramVar> varsForThisPattern = getPatternVariablesInitially(location);
-			ps = new PatternSetting(super.mDimensionsStrategy.getInitialDisjuncts(), super.mDimensionsStrategy.getInitialConjuncts(), varsForThisPattern);
+			ps = new PatternSetting(super.mDimensionsStrategy.getInitialDisjuncts(),
+					super.mDimensionsStrategy.getInitialConjuncts(), varsForThisPattern);
 			mLoc2PatternSetting.put(location, ps);
 		} else {
 			ps = mLoc2PatternSetting.get(location);
@@ -103,7 +103,8 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			// Create new setting for this location
 			final Set<IProgramVar> varsForThisPattern = getPatternVariablesInitially(location);
 			if (!varsFromUnsatCore.isEmpty() && varsForThisPattern.containsAll(varsFromUnsatCore)) {
-				// If the current set of variables is a superset of the set of variables from the unsat core, then we remove the residual variables.
+				// If the current set of variables is a superset of the set of variables from the unsat core, then we
+				// remove the residual variables.
 				varsForThisPattern.retainAll(varsFromUnsatCore);
 			}
 			final int[] dimension = super.mDimensionsStrategy.getDimensions(location, round);
@@ -117,7 +118,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			if (mLocations2LiveVariables.containsKey(location)) {
 				final Set<IProgramVar> liveVars = mLocations2LiveVariables.get(location);
 				// Add those variables from unsat core to pattern which are also live.
-				for (final IProgramVar var : varsFromUnsatCore ) {
+				for (final IProgramVar var : varsFromUnsatCore) {
 					if (liveVars.contains(var)) {
 						ps.getPatternVariables().add(var);
 					}
@@ -143,29 +144,30 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		if (mLoc2PatternSetting.containsKey(location)) {
 			mLoc2PatternSetting.get(location).changeSetting(location, round);
 		} else {
-//			throw new UnsupportedOperationException("There is no pattern setting for the given location: " + location);
+			// throw new UnsupportedOperationException("There is no pattern setting for the given location: " +
+			// location);
 
 		}
 	}
 
-
 	@Override
-	public void changePatternSettingForLocation(final IcfgLocation location, final int round, final Set<IcfgLocation> locationsInUnsatCore) {
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round,
+			final Set<IcfgLocation> locationsInUnsatCore) {
 		// This strategy doesn't care about the set of locations in unsat core.
 		changePatternSettingForLocation(location, round);
 	}
 
 	class PatternSetting {
 		private int mNumOfConjuncts;
-//		private static final int MAX_NUM_CONJUNCTS = 3;
+		// private static final int MAX_NUM_CONJUNCTS = 3;
 		private int mNumOfDisjuncts;
-//		private static final int MAX_NUM_DISJUNCTS = 3;
+		// private static final int MAX_NUM_DISJUNCTS = 3;
 		private final Set<IProgramVar> mPatternVariables;
 
 		public PatternSetting(final int disjuncts, final int conjuncts, final Set<IProgramVar> vars) {
 			mNumOfConjuncts = conjuncts;
 			mNumOfDisjuncts = disjuncts;
-			mPatternVariables = new HashSet<IProgramVar>(vars);
+			mPatternVariables = new HashSet<>(vars);
 		}
 
 		public Set<IProgramVar> getPatternVariables() {
@@ -177,28 +179,29 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			mNumOfDisjuncts = dims[0];
 			mNumOfConjuncts = dims[1];
 
-//			if (mNumOfConjuncts < 2) {
-//				mNumOfConjuncts++;
-//			} else if (mNumOfDisjuncts < 2) {
-//				mNumOfDisjuncts++;
-//			} else {
-//				if (mNumOfConjuncts < 4) {
-//					mNumOfConjuncts++;
-//				} else {
-//					mNumOfDisjuncts++;
-//					mNumOfConjuncts++;
-//				}
-//			}
-//			if (mNumOfConjuncts < MAX_NUM_CONJUNCTS) {
-////				mNumOfDisjuncts = mNumOfConjuncts;
-//				mNumOfConjuncts++;
-//			} else {
-//				if (mNumOfDisjuncts < MAX_NUM_DISJUNCTS) {
-//					mNumOfDisjuncts++;
-//				} else {
-//					throw new UnsupportedOperationException("Both number of conjuncts and disjuncts reached the maximum limit.");
-//				}
-//			}
+			// if (mNumOfConjuncts < 2) {
+			// mNumOfConjuncts++;
+			// } else if (mNumOfDisjuncts < 2) {
+			// mNumOfDisjuncts++;
+			// } else {
+			// if (mNumOfConjuncts < 4) {
+			// mNumOfConjuncts++;
+			// } else {
+			// mNumOfDisjuncts++;
+			// mNumOfConjuncts++;
+			// }
+			// }
+			// if (mNumOfConjuncts < MAX_NUM_CONJUNCTS) {
+			//// mNumOfDisjuncts = mNumOfConjuncts;
+			// mNumOfConjuncts++;
+			// } else {
+			// if (mNumOfDisjuncts < MAX_NUM_DISJUNCTS) {
+			// mNumOfDisjuncts++;
+			// } else {
+			// throw new UnsupportedOperationException("Both number of conjuncts and disjuncts reached the maximum
+			// limit.");
+			// }
+			// }
 		}
 
 		public int getNumOfDisjuncts() {
@@ -209,6 +212,5 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 			return mNumOfConjuncts;
 		}
 	}
-
 
 }

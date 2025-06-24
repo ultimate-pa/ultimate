@@ -234,26 +234,23 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 				if (hier.getVars().contains(nonOld)) {
 					return true;
 				}
-				if (!returnPredImpliesHier && !modifiableGlobals.contains(nonOld)) {
-					// there is some risk that pv is also not modifiable by
-					// caller and then the oldvar of the caller coincides
-					// with the global var of the caller
-					if (hier.getVars().contains(pv)) {
-						return true;
-					}
+				// there is some risk that pv is also not modifiable by
+				// caller and then the oldvar of the caller coincides
+				// with the global var of the caller
+				if ((!returnPredImpliesHier && !modifiableGlobals.contains(nonOld)) && hier.getVars().contains(pv)) {
+					return true;
 				}
-			} else if (pv instanceof IProgramNonOldVar) {
-				if (!returnPredImpliesHier && !modifiableGlobals.contains(pv)) {
-					if (hier.getVars().contains(pv)) {
-						return true;
-					}
-					final IProgramOldVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-					// there is some risk that pv is also not modifiable by
-					// caller and then the oldvar of the caller coincides
-					// with the global var of the caller
-					if (hier.getVars().contains(oldVar)) {
-						return true;
-					}
+			} else if ((pv instanceof IProgramNonOldVar)
+					&& (!returnPredImpliesHier && !modifiableGlobals.contains(pv))) {
+				if (hier.getVars().contains(pv)) {
+					return true;
+				}
+				final IProgramOldVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				// there is some risk that pv is also not modifiable by
+				// caller and then the oldvar of the caller coincides
+				// with the global var of the caller
+				if (hier.getVars().contains(oldVar)) {
+					return true;
 				}
 			}
 		}
@@ -294,10 +291,8 @@ public class ReturnCheckHelper extends SdHoareTripleCheckHelper<IReturnAction> {
 			return false;
 		}
 		for (final IProgramVar bv : pre.getVars()) {
-			if (bv.isGlobal() && !bv.isOldvar()) {
-				if (post.getVars().contains(bv)) {
-					return false;
-				}
+			if ((bv.isGlobal() && !bv.isOldvar()) && post.getVars().contains(bv)) {
+				return false;
 			}
 		}
 		return true;

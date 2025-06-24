@@ -67,16 +67,15 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 
 	/***
-	 * Compute the deterministic equivalent automaton of a given Bottom-up Tree
-	 * Automaton
+	 * Compute the deterministic equivalent automaton of a given Bottom-up Tree Automaton
 	 *
 	 * @param services
 	 * @param factory
 	 * @param tree
 	 *            The given tree automaton
 	 */
-	public <SF extends IMergeStateFactory<STATE>> Determinize(
-			final AutomataLibraryServices services, final SF factory, final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public <SF extends IMergeStateFactory<STATE>> Determinize(final AutomataLibraryServices services, final SF factory,
+			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
 		mReducedStates = new HashMap<>();
 		mStateFactoryMerge = factory;
@@ -106,8 +105,8 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 		return "Exiting determinization";
 	}
 
-	private TreeAutomatonBU<LETTER, STATE> constructFromRules(
-			final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules) {
+	private TreeAutomatonBU<LETTER, STATE>
+			constructFromRules(final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules) {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 
@@ -165,7 +164,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 					stateToSState.put(sr, nw);
 				}
 				if (!mp.containsKey(source)) {
-					mp.put(source, new HashSet<STATE>());
+					mp.put(source, new HashSet<>());
 				}
 				mp.get(source).add(sr);
 			}
@@ -179,7 +178,7 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 		if (idx >= src.size()) {
 			assert src.size() == letter.getRank();
 			if (!newRules.get(letter).containsKey(src)) {
-				newRules.get(letter).put(src, new HashSet<Set<STATE>>());
+				newRules.get(letter).put(src, new HashSet<>());
 			}
 			newRules.get(letter).get(src).add(dest);
 			return;
@@ -189,9 +188,8 @@ public class Determinize<LETTER extends IRankedLetter, STATE>
 			final ArrayList<Set<STATE>> toAdd = (ArrayList<Set<STATE>>) src.clone();
 			toAdd.set(idx, state);
 			/*
-			 * if (!newRules.get(letter).containsKey(toAdd)) {
-			 * newRules.get(letter).put(toAdd, new HashSet<Set<STATE>>()); }
-			 * newRules.get(letter).get(toAdd).add(dest);
+			 * if (!newRules.get(letter).containsKey(toAdd)) { newRules.get(letter).put(toAdd, new
+			 * HashSet<Set<STATE>>()); } newRules.get(letter).get(toAdd).add(dest);
 			 */
 			addAllSubsetStates(state, newRules, letter, toAdd, dest, idx + 1);
 		}

@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -67,7 +66,7 @@ public class AStar<V, E> {
 
 	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic,
 			final IGraph<V, E> graph, final IProgressAwareTimer timer) {
-		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(), timer);
+		this(logger, start, target, heuristic, graph, new NoEdgeDenier<>(), timer);
 	}
 
 	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic,
@@ -111,13 +110,8 @@ public class AStar<V, E> {
 	}
 
 	private List<E> astar(final OpenItem<V, E> initialOpenItem) {
-		final HashedPriorityQueue<OpenItem<V, E>> open = new HashedPriorityQueue<>(new Comparator<OpenItem<V, E>>() {
-			@Override
-			public int compare(final OpenItem<V, E> o1, final OpenItem<V, E> o2) {
-				return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(),
-						o2.getAnnotation().getExpectedCostToTarget());
-			}
-		});
+		final HashedPriorityQueue<OpenItem<V, E>> open = new HashedPriorityQueue<>((o1, o2) -> Integer
+				.compare(o1.getAnnotation().getExpectedCostToTarget(), o2.getAnnotation().getExpectedCostToTarget()));
 
 		// we want to allow that we find paths from start to target when start
 		// == target
@@ -229,8 +223,8 @@ public class AStar<V, E> {
 		if (current == null) {
 			final Map<V, AstarAnnotation<E>> map = new HashMap<>();
 			final V source = mGraph.getSource(successor);
-			map.put(source, new AstarAnnotation<E>());
-			map.put(target, new AstarAnnotation<E>());
+			map.put(source, new AstarAnnotation<>());
+			map.put(target, new AstarAnnotation<>());
 			return new OpenItem<>(target, map);
 		}
 
@@ -255,7 +249,7 @@ public class AStar<V, E> {
 
 	private OpenItem<V, E> createInitialSuccessorItem(final V initialNode) {
 		final Map<V, AstarAnnotation<E>> map = new HashMap<>();
-		map.put(initialNode, new AstarAnnotation<E>());
+		map.put(initialNode, new AstarAnnotation<>());
 		return new OpenItem<>(initialNode, map);
 	}
 

@@ -181,14 +181,11 @@ public class Mcr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 
 	@Override
 	public InterpolantComputationStatus getInterpolantComputationStatus() {
-		switch (isCorrect()) {
-		case UNSAT:
-			return new InterpolantComputationStatus();
-		case SAT:
-			return new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
-		default:
-			throw new UnsupportedOperationException();
-		}
+		return switch (isCorrect()) {
+		case UNSAT -> new InterpolantComputationStatus();
+		case SAT -> new InterpolantComputationStatus(ItpErrorStatus.TRACE_FEASIBLE, null);
+		case UNKNOWN -> throw new UnsupportedOperationException();
+		};
 	}
 
 	@Override

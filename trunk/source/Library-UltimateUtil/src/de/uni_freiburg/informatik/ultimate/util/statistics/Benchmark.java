@@ -284,13 +284,13 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		for (final TimeMemoryTracker w : mWatches.values()) {
 
 			final List<Double> values = new ArrayList<>();
-			values.add(Double.valueOf(w.mElapsedTimeNs));
-			values.add(Double.valueOf(w.getPeakMemoryDelta()));
-			values.add(Double.valueOf(w.mStartMemorySizeBytes));
-			values.add(Double.valueOf(w.mStopMemorySizeBytes));
-			values.add(Double.valueOf(w.mStartMemoryFreeSizeBytes));
-			values.add(Double.valueOf(w.mStopMemoryFreeSizeBytes));
-			values.add(Double.valueOf(mMaxMemorySizeBytes));
+			values.add((double) w.mElapsedTimeNs);
+			values.add((double) w.getPeakMemoryDelta());
+			values.add((double) w.mStartMemorySizeBytes);
+			values.add((double) w.mStopMemorySizeBytes);
+			values.add((double) w.mStartMemoryFreeSizeBytes);
+			values.add((double) w.mStopMemoryFreeSizeBytes);
+			values.add((double) mMaxMemorySizeBytes);
 			rtr.addRow(w.mTitle, values);
 		}
 

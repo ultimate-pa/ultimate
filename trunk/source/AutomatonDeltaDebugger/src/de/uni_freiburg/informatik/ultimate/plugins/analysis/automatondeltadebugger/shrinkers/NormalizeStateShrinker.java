@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * </ul>
  * For each of those three types of states the index is a consecutive number, assigned in a depth-first manner starting
  * from some initial state.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -88,7 +88,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 
 	/**
 	 * Depth-first renaming of states.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param list
@@ -98,10 +98,8 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	private Map<STATE, STATE> renameStates(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final List<STATE> list) {
 		/*
-		 * true: try to reuse old names if they fit the pattern<br>
-		 * false: always use fresh names
-		 * <p>
-		 * This does only work if all states are renamed, otherwise there can be name clashes with existing states.
+		 * true: try to reuse old names if they fit the pattern<br> false: always use fresh names <p> This does only
+		 * work if all states are renamed, otherwise there can be name clashes with existing states.
 		 */
 		final boolean reuseOldNames = mAutomaton.size() != list.size();
 
@@ -145,8 +143,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 				newState = oldState;
 			} else {
 				/*
-				 * assign new name
-				 * Make sure that the new state name does not exist.
+				 * assign new name Make sure that the new state name does not exist.
 				 */
 				assert oldState instanceof String : "The state was a string during list creation.";
 				Pair<Integer, STATE> pair;
@@ -195,7 +192,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 
 	/**
 	 * Preprocessing: filters states into initial and non-initial states and returns the set of states not in the list.
-	 * 
+	 *
 	 * @param list
 	 *            list of states (input)
 	 * @param noninitialStates
@@ -223,7 +220,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 
 	/**
 	 * Adds states not reached by a forward search (might be necessary for the bug to occur).
-	 * 
+	 *
 	 * @param noninitialStates
 	 *            non-initial states
 	 * @param stack
@@ -249,7 +246,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 
 	/**
 	 * Adds all successor states which have not been visited.
-	 * 
+	 *
 	 * @param stack
 	 *            stack of states
 	 * @param onStackOrVisited
@@ -274,7 +271,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 
 	/**
 	 * Checks whether the successor is in a set; if not, adds the state to the set and a stack.
-	 * 
+	 *
 	 * @param stack
 	 *            stack to push to
 	 * @param onStackOrVisited
@@ -290,7 +287,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 
 	/**
 	 * Adds transitions for new states.
-	 * 
+	 *
 	 * @param automaton
 	 *            automaton
 	 * @param old2new

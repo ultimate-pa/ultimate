@@ -46,7 +46,6 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 
 	public SimplifyPreprocessor(final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
-		super();
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 	}

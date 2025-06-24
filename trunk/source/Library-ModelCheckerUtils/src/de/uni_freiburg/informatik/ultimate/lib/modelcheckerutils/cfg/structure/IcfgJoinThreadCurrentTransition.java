@@ -45,8 +45,9 @@ public final class IcfgJoinThreadCurrentTransition extends AbstractIcfgTransitio
 	private final UnmodifiableTransFormula mTransFormula;
 	private final JoinSmtArguments mJoinSmtArguments;
 
-	protected IcfgJoinThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
-			final UnmodifiableTransFormula transFormula, final JoinSmtArguments joinSmtArguments, final int id) {
+	protected IcfgJoinThreadCurrentTransition(final IcfgLocation source, final IcfgLocation target,
+			final IPayload payload, final UnmodifiableTransFormula transFormula,
+			final JoinSmtArguments joinSmtArguments, final int id) {
 		super(source, target, payload, id);
 		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 		mJoinSmtArguments = Objects.requireNonNull(joinSmtArguments, "A JoinSmtArguments is missing");

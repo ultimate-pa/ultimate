@@ -658,8 +658,8 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 						/**
 						 * Get the rest of the program as a trace.
 						 */
-						final PathProgramConstructionResult subPP =
-								PathProgram.constructPathProgram("procErrorPP", mIcfg, new HashSet<>(subTrace), null, x -> true);
+						final PathProgramConstructionResult subPP = PathProgram.constructPathProgram("procErrorPP",
+								mIcfg, new HashSet<>(subTrace), null, x -> true);
 						final ArrayDeque<ProofObligation> subTracePo = new ArrayDeque<>();
 						subTracePo.add(newLocalProofObligation);
 						final LBool subTraceResult = computePdr(subPP.getPathProgram(), subTracePo);
@@ -1211,32 +1211,26 @@ public class Pdr<L extends IIcfgTransition<?>> implements IInterpolatingTraceChe
 		final IterativePredicateTransformer<L> spt =
 				new IterativePredicateTransformer<>(mLocalPredicateUnifier.getPredicateFactory(), mScript,
 						mCsToolkit.getModifiableGlobalsTable(), mServices, nestedWord, mTruePred, mFalsePred,
-						Collections.emptySortedMap(), mTruePred, SimplificationTechnique.SIMPLIFY_DDA,
-						mSymbolTable);
+						Collections.emptySortedMap(), mTruePred, SimplificationTechnique.SIMPLIFY_DDA, mSymbolTable);
 
 		final OldVarsAssignmentCache oldVarsAssignmentCache = mCsToolkit.getOldVarsAssignmentCache();
 		final DefaultTransFormulas<L> rtf = new DefaultTransFormulas<>(nestedWord, mTruePred, mFalsePred,
 				Collections.emptySortedMap(), oldVarsAssignmentCache, false);
 
-		final IPredicatePostprocessor pdrPostProcessor = new IPredicatePostprocessor() {
-
-			@Override
-			public IPredicate postprocess(final IPredicate pred, final int l) {
-				Term withPdr;
-				if (l == 0 || l == mTrace.size()) {
-					withPdr = pred.getFormula();
-				} else {
-					final Term pdrTerm = interpolants[l - 1].getFormula();
-					withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
-				}
-				final Term term = withPdr;
-				final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
-						SimplificationTechnique.SIMPLIFY_DDA, term);
-				final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
-				assert result != null;
-				return result;
+		final IPredicatePostprocessor pdrPostProcessor = (pred, l) -> {
+			Term withPdr;
+			if (l == 0 || l == mTrace.size()) {
+				withPdr = pred.getFormula();
+			} else {
+				final Term pdrTerm = interpolants[l - 1].getFormula();
+				withPdr = SmtUtils.and(mScript.getScript(), pred.getFormula(), pdrTerm);
 			}
-
+			final Term term = withPdr;
+			final Term afterQuantElim = PartialQuantifierElimination.eliminateCompat(mServices, mScript,
+					SimplificationTechnique.SIMPLIFY_DDA, term);
+			final IPredicate result = mLocalPredicateUnifier.getOrConstructPredicate(afterQuantElim);
+			assert result != null;
+			return result;
 		};
 
 		List<IPredicate> actualInterpolants;

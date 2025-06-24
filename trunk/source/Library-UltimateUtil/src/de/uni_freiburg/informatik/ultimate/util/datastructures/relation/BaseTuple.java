@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Objects;
+
 /**
  * Base class for a tuple that does not provide any getters. Useful for implementing tuples as return type.
  *
@@ -40,18 +42,13 @@ public abstract class BaseTuple<E1, E2> {
 	protected E2 mSecondElement;
 
 	public BaseTuple(final E1 first, final E2 second) {
-		super();
 		mFirstElement = first;
 		mSecondElement = second;
 	}
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mFirstElement == null) ? 0 : mFirstElement.hashCode());
-		result = prime * result + ((mSecondElement == null) ? 0 : mSecondElement.hashCode());
-		return result;
+		return Objects.hash(mFirstElement, mSecondElement);
 	}
 
 	@Override
@@ -62,7 +59,7 @@ public abstract class BaseTuple<E1, E2> {
 		if (obj == null) {
 			return false;
 		}
-		if (!(obj instanceof BaseTuple)) {
+		if (getClass() != obj.getClass()) {
 			return false;
 		}
 		final BaseTuple<?, ?> other = (BaseTuple<?, ?>) obj;

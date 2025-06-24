@@ -36,20 +36,20 @@ import java.util.EmptyStackException;
 public final class ImmutableStack<E> {
 	@SuppressWarnings("rawtypes")
 	public static final ImmutableStack EMPTY_STACK = new ImmutableStack();
-	
+
 	private final E mHead;
 	private final ImmutableStack<E> mTail;
-	
+
 	private ImmutableStack() {
 		mHead = null;
 		mTail = this;
 	}
-	
+
 	private ImmutableStack(final E head, final ImmutableStack<E> tail) {
 		mHead = head;
 		mTail = tail;
 	}
-	
+
 	/**
 	 * @param <E>
 	 *            Element type.
@@ -59,7 +59,7 @@ public final class ImmutableStack<E> {
 	public static <E> ImmutableStack<E> emptyStack() {
 		return EMPTY_STACK;
 	}
-	
+
 	/**
 	 * @param fifoItems
 	 *            Elements in FIFO order.
@@ -75,14 +75,14 @@ public final class ImmutableStack<E> {
 		}
 		return stack;
 	}
-	
+
 	/**
 	 * @return {@code true} iff the stack is empty.
 	 */
 	public boolean isEmpty() {
 		return mTail.equals(this);
 	}
-	
+
 	/**
 	 * @return Top element (retained).
 	 */
@@ -92,7 +92,7 @@ public final class ImmutableStack<E> {
 		}
 		return mHead;
 	}
-	
+
 	/**
 	 * @return Top element (removed).
 	 */
@@ -102,7 +102,7 @@ public final class ImmutableStack<E> {
 		}
 		return mTail;
 	}
-	
+
 	/**
 	 * @param item
 	 *            New element.
@@ -111,7 +111,7 @@ public final class ImmutableStack<E> {
 	public ImmutableStack<E> push(final E item) {
 		return new ImmutableStack<>(item, this);
 	}
-	
+
 	/**
 	 * @return Stack size in use.
 	 */

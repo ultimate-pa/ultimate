@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -293,10 +294,13 @@ non terminal List<Case> indcases;
 non terminal LogicStatement logic_def, logic_decl;
 non terminal List<LogicStatement> logic_decls;
 non terminal ACSLType type_spec_cv, cast_logic_type;
-non terminal lexpr_list, lexpr_option, rel_list, lexpr_binder, bounded_var, binders,
+non terminal Declaration decl_spec;
+non terminal Declaration[] binders, binders_reentrance;
+non terminal Expression lexpr_binder;
+non terminal lexpr_list, lexpr_option, rel_list, bounded_var,
 			 range,
 			 field_init, array_init, update, field_path_elt, field_init_elt, array_path_elt, array_init_elt,
-			 update_elt, path, path_elt, binders_reentrance, decl_spec, 
+			 update_elt, path, path_elt, 
 			 abs_spec_option, abs_spec,
 			 tabs, abs_spec_bis, ne_logic_type_list,
 			 decl, annotation, post_cond_kind, post_cond, decl_list, beg_code_annotation, 
@@ -451,16 +455,16 @@ lexpr_rel::=
 ;
 
 lexpr_binder::=
- LET bounded_var EQUAL lexpr SEMICOLON lexpr %prec LET 
-| FORALL binders SEMICOLON lexpr  %prec prec_forall
-| EXISTS binders SEMICOLON lexpr  %prec prec_exists
-| LAMBDA binders SEMICOLON lexpr  %prec prec_lambda
+ LET bounded_var EQUAL lexpr SEMICOLON lexpr LET {: RESULT = new NotDefinedExpression(); :} %prec LET
+| FORALL:op binders:b SEMICOLON lexpr:e {: RESULT = new QuantifierExpression(true, b, e); :} %prec prec_forall
+| EXISTS:op binders:b SEMICOLON lexpr:e {: RESULT = new QuantifierExpression(false, b, e); :} %prec prec_exists
+| LAMBDA binders SEMICOLON lexpr {: RESULT = new NotDefinedExpression(); :} %prec prec_lambda
 ;
 
 lexpr_end_rel::=
   lexpr_inner:expr {: RESULT = expr; :} %prec prec_no_rel
-| lexpr_binder:e {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), e$); :}
-| NOT:op lexpr_binder:e {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), op$, e$); :}  
+| lexpr_binder:e {: RESULT = setNodeLocationFromSymbols(e, e$); :}
+| NOT:op lexpr_binder:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LOGICNEG, e), op$, e$); :}  
 ;
 
 rel_list::=
@@ -506,7 +510,7 @@ lexpr_inner::=
 | lexpr_inner:e ARROW identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(new UnaryExpression(UnaryExpression.Operator.POINTER, e), i), e$, i$); :}
 | lexpr_inner:e DOT identifier_or_typename:i {: RESULT = setNodeLocationFromSymbols(new FieldAccessExpression(e, i), e$, i$); :}
 | lexpr_inner:l LSQUARE range:e RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new NotDefinedExpression(), l$, r$); :}
-| lexpr_inner:array LSQUARE lexpr:indices RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new ArrayAccessExpression(array, new Expression[] {indices}), array$, r$); :}
+| lexpr_inner:array LSQUARE lexpr:index RSQUARE:r {: RESULT = setNodeLocationFromSymbols(new ArrayAccessExpression(array, index), array$, r$); :}
 | MINUS:op lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.MINUS, e), op$, e$); :} %prec prec_unary_op 
 | PLUS:op  lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.PLUS, e), op$, e$); :} %prec prec_unary_op 
 | TILDE:op lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.LOGICCOMPLEMENT, e), op$, e$); :}
@@ -514,7 +518,7 @@ lexpr_inner::=
 | AMP:op   lexpr_inner:e {: RESULT = setNodeLocationFromSymbols(new UnaryExpression(UnaryExpression.Operator.ADDROF, e), op$, e$);  :} %prec prec_unary_op 
 | SIZEOF:l LPAR lexpr:expr RPAR:r 
  {: SizeOfExpression sexpr = setNodeLocationFromSymbols(new SizeOfExpression(), l$, r$); 
- 	sexpr.setFormula(expr);
+ 	sexpr.setExpression(expr);
  	RESULT = sexpr; :}
 | SIZEOF:l LPAR logic_type:lt RPAR:r 
  {: SizeOfExpression sexpr = setNodeLocationFromSymbols(new SizeOfExpression(), l$, r$);
@@ -615,17 +619,17 @@ path_elt::=
 /*** binders ***/
 
 binders::=
- binders_reentrance 
+ binders_reentrance: b {: RESULT = b; :} 
 ;
 
 binders_reentrance::=
- decl_spec 
-| binders_reentrance COMMA decl_spec
-| binders_reentrance COMMA var_spec
+ decl_spec:d {: RESULT = new Declaration[] { d }; :}
+| binders_reentrance:b COMMA decl_spec:d {: RESULT = Stream.concat(Arrays.stream(b), Stream.of(d)).toArray(Declaration[]::new); :}
+| binders_reentrance:b COMMA var_spec {: RESULT = b; :}
 ;
 
 decl_spec::=
- type_spec var_spec 
+ type_spec:t var_spec:v {: RESULT = new Declaration(new ACSLType(t), v); :} 
 ;
 
 var_spec::=

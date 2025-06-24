@@ -42,18 +42,16 @@ import java.util.regex.Pattern;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * Creates a summary table in the HTML-format from a given data table in the
- * CSV-format. Empty lines and data entries equals to {@link CSV_ENTRY_NO_VALUE}
- * will get highlighted.
- * 
+ * Creates a summary table in the HTML-format from a given data table in the CSV-format. Empty lines and data entries
+ * equals to {@link CSV_ENTRY_NO_VALUE} will get highlighted.
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class CsvToHtmlSummary {
 
 	/**
-	 * If an data entry of the CSV-content is equals to this constant, then the
-	 * HTML table will highlight the entry.
+	 * If an data entry of the CSV-content is equals to this constant, then the HTML table will highlight the entry.
 	 */
 	public static final String CSV_ENTRY_NO_VALUE = "null";
 	/**
@@ -90,9 +88,8 @@ public final class CsvToHtmlSummary {
 	private static final String HTML_TABLE_ROW_TAG = "tr";
 
 	/**
-	 * Converts content given by rows in a CSV-format into a summary table
-	 * formatted in HTML.
-	 * 
+	 * Converts content given by rows in a CSV-format into a summary table formatted in HTML.
+	 *
 	 * @param csvFileRows
 	 *            Content to convert given by rows in a CSV-format
 	 * @return The converted content as summary table formatted in HTML
@@ -112,7 +109,8 @@ public final class CsvToHtmlSummary {
 				"<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/sorttable.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/markRows.js\"></script>");
-		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/toggleEmptyColumns.js\"></script>");
+		htmlText.append(
+				"<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/toggleEmptyColumns.js\"></script>");
 
 		// TODO Store the CSS as file and somewhere more appropriate.
 		// CSS
@@ -148,7 +146,8 @@ public final class CsvToHtmlSummary {
 		final String htmlClosingOpeningSymbol = "</";
 		htmlText.append(
 				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" />");
-		htmlText.append("<button type=\"button\" id=\"toggleEmptyColumnsButton\" onclick=\"toggleEmptyColumns()\">Hide/Show empty columns</button>");
+		htmlText.append(
+				"<button type=\"button\" id=\"toggleEmptyColumnsButton\" onclick=\"toggleEmptyColumns()\">Hide/Show empty columns</button>");
 		htmlText.append("<br/>");
 		htmlText.append("<table id=\"contentTable\" class=\"wikitable sortable\">");
 
@@ -192,7 +191,7 @@ public final class CsvToHtmlSummary {
 
 	/**
 	 * Demonstrates the usage of this class.
-	 * 
+	 *
 	 * @param args
 	 *            Not supported
 	 * @throws IOException
@@ -203,17 +202,7 @@ public final class CsvToHtmlSummary {
 		final File summaryPath = new File(desktop, "summary");
 
 		// Iterate every CSV-File and generate the tables
-		final FileFilter csvFilter = new FileFilter() {
-			/*
-			 * (non-Javadoc)
-			 * 
-			 * @see java.io.FileFilter#accept(java.io.File)
-			 */
-			@Override
-			public boolean accept(final File file) {
-				return file.getName().endsWith(".csv");
-			}
-		};
+		final FileFilter csvFilter = file -> file.getName().endsWith(".csv");
 		for (final File csvFile : summaryPath.listFiles(csvFilter)) {
 			// Generate HTML-Summary
 			final CsvToHtmlSummary csvToHtmlSummary = new CsvToHtmlSummary(csvFile);
@@ -236,7 +225,7 @@ public final class CsvToHtmlSummary {
 
 	/**
 	 * Reads a given file by rows and returns it row-wise.
-	 * 
+	 *
 	 * @param file
 	 *            File to read
 	 * @return The given file row-wise iterable.
@@ -251,7 +240,7 @@ public final class CsvToHtmlSummary {
 
 		try {
 			while (br.ready()) {
-				String line = br.readLine();
+				final String line = br.readLine();
 				if (line == null) {
 					break;
 				}
@@ -266,7 +255,7 @@ public final class CsvToHtmlSummary {
 
 	/**
 	 * Splits the given text row-wise using the given line separator.
-	 * 
+	 *
 	 * @param text
 	 *            The text to split
 	 * @param lineSeparatorRegex
@@ -277,8 +266,8 @@ public final class CsvToHtmlSummary {
 		final LinkedList<String> result = new LinkedList<>();
 		// Implementing a manual split for maximal compatibility and efficiency
 		// Pattern is: Anything (capturing) and then the separator
-		Pattern pattern = Pattern.compile("(.*)" + lineSeparatorRegex);
-		Matcher matcher = pattern.matcher(text);
+		final Pattern pattern = Pattern.compile("(.*)" + lineSeparatorRegex);
+		final Matcher matcher = pattern.matcher(text);
 		while (matcher.find()) {
 			result.add(matcher.group(1));
 		}
@@ -291,9 +280,8 @@ public final class CsvToHtmlSummary {
 	private final String mHtmlSummary;
 
 	/**
-	 * Creates a new summary table representing the given content formatted in
-	 * HTML.
-	 * 
+	 * Creates a new summary table representing the given content formatted in HTML.
+	 *
 	 * @param csvFile
 	 *            The file to create a table for formatted in CSV.
 	 * @throws FileNotFoundException
@@ -306,12 +294,10 @@ public final class CsvToHtmlSummary {
 	}
 
 	/**
-	 * Creates a new summary table representing the given content formatted in
-	 * HTML.
-	 * 
+	 * Creates a new summary table representing the given content formatted in HTML.
+	 *
 	 * @param csvFileRows
-	 *            The content to create a table for formatted in CSV and
-	 *            row-wise iterable
+	 *            The content to create a table for formatted in CSV and row-wise iterable
 	 */
 	public CsvToHtmlSummary(final Iterable<String> csvFileRows) {
 		mHtmlSummary = convertCsvByRowsToHtmlSummary(csvFileRows);
@@ -320,9 +306,8 @@ public final class CsvToHtmlSummary {
 	}
 
 	/**
-	 * Creates a new summary table representing the given content formatted in
-	 * HTML.
-	 * 
+	 * Creates a new summary table representing the given content formatted in HTML.
+	 *
 	 * @param csvFile
 	 *            The content to create a table for formatted in CSV
 	 */
@@ -331,9 +316,8 @@ public final class CsvToHtmlSummary {
 	}
 
 	/**
-	 * Creates a new summary table representing the given content formatted in
-	 * HTML.
-	 * 
+	 * Creates a new summary table representing the given content formatted in HTML.
+	 *
 	 * @param csvFile
 	 *            The content to create a table for formatted in CSV
 	 * @param lineSeparatorRegex
@@ -345,7 +329,7 @@ public final class CsvToHtmlSummary {
 
 	/**
 	 * Gets the generated summary table formatted in HTML.
-	 * 
+	 *
 	 * @return The generated summary table formatted in HTML
 	 */
 	public String getHtmlSummary() {

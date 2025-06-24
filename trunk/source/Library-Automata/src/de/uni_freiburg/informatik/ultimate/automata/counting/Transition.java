@@ -36,21 +36,18 @@ import java.util.ArrayList;
  */
 
 public class Transition<LETTER, STATE> {
-	
+
 	private LETTER mLetter;
 	private STATE mPredecessorState;
 	private STATE mSuccessorState;
 	private ArrayList<ArrayList<Guard>> mGuards;
 	private ArrayList<Update> mUpdates;
-	
-	public Transition()
-	{}
-	
-	public Transition(LETTER letter,
-			STATE preS,
-			STATE sucS,
-			ArrayList<ArrayList<Guard>> guards,
-			ArrayList<Update> updates){
+
+	public Transition() {
+	}
+
+	public Transition(final LETTER letter, final STATE preS, final STATE sucS, final ArrayList<ArrayList<Guard>> guards,
+			final ArrayList<Update> updates) {
 		mLetter = letter;
 		mPredecessorState = preS;
 		mSuccessorState = sucS;
@@ -61,41 +58,42 @@ public class Transition<LETTER, STATE> {
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	public STATE getPreState() {
 		return mPredecessorState;
 	}
-	
+
 	public STATE getSucState() {
 		return mSuccessorState;
 	}
-	
+
 	public ArrayList<ArrayList<Guard>> getGuards() {
 		return mGuards;
 	}
-	
+
 	public ArrayList<Update> getUpdates() {
 		return mUpdates;
 	}
-	
+
 	public Transition<LETTER, STATE> copyTransition() {
-		ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<ArrayList<Guard>>();
-		for (ArrayList<Guard> list : mGuards) {
-			ArrayList<Guard> guardListCopy = new ArrayList<Guard>();
-			for (Guard guard : list) {
-				Guard guardCopy = guard.copyGuard();
+		final ArrayList<ArrayList<Guard>> guardDNFCopy = new ArrayList<>();
+		for (final ArrayList<Guard> list : mGuards) {
+			final ArrayList<Guard> guardListCopy = new ArrayList<>();
+			for (final Guard guard : list) {
+				final Guard guardCopy = guard.copyGuard();
 				guardListCopy.add(guardCopy);
 			}
 			guardDNFCopy.add(guardListCopy);
 		}
-		
-		ArrayList<Update> updateListCopy = new ArrayList<Update>();
-		for (Update update : mUpdates) {
-			Update updateCopy = update.copyUpdate();
+
+		final ArrayList<Update> updateListCopy = new ArrayList<>();
+		for (final Update update : mUpdates) {
+			final Update updateCopy = update.copyUpdate();
 			updateListCopy.add(updateCopy);
 		}
-		
-		Transition<LETTER, STATE> copy = new Transition<LETTER, STATE>(mLetter, mPredecessorState, mSuccessorState, guardDNFCopy, updateListCopy);
+
+		final Transition<LETTER, STATE> copy =
+				new Transition<>(mLetter, mPredecessorState, mSuccessorState, guardDNFCopy, updateListCopy);
 		return copy;
 	}
 }

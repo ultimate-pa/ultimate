@@ -150,11 +150,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		// get internal alphabet of moperand.
 		final Collection<LETTER> alphabet = mOperand.getVpAlphabet().getInternalAlphabet();
 
-		// iterate over whole alphabet and construct letter --> atom mapping.
-		final Iterator<LETTER> alphabetIt = alphabet.iterator();
 		mLetter2Formular = new HashMap<>(computeHashCap(alphabet.size()));
-		while (alphabetIt.hasNext()) {
-			final LETTER letter = alphabetIt.next();
+		for (final LETTER letter : alphabet) {
 			try {
 				mSmtInterpol.declareFun(letter.toString(), mEmptyArray, mBool);
 			} catch (final SMTLIBException e) {
@@ -175,9 +172,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		// finaslStates - block or to nonfinalStates - Block.
 		// Therby also create Mapping STATE --> Block.
 		mPartition = new HashMap<>(computeHashCap(mNumberOfStates));
-		final Iterator<STATE> allStatesIt = mOperand.getStates().iterator();
-		while (allStatesIt.hasNext()) {
-			final STATE st = allStatesIt.next();
+		for (final STATE st : mOperand.getStates()) {
 			if (mOperand.isFinal(st)) {
 				finalStates.add(st);
 				mPartition.put(st, finalStates);
@@ -207,11 +202,10 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			// P intersect with s = NON - EMPTY
 			// and P \ s = NON - EMPTY.
 			final HashMap<Block, Block> relevant = buildIntersectingBlocksMap(s);
-			final Iterator<Block> relevantIt = relevant.keySet().iterator();
+
 			// iterate over relevant and split mpartition and mworklist if
 			// necessary.
-			while (relevantIt.hasNext()) {
-				final Block p = relevantIt.next();
+			for (final MinimizeDfaSymbolic<LETTER, STATE>.Block p : relevant.keySet()) {
 				final Block p1 = relevant.get(p);
 				// if p1 is smaller than p, the difference of P\S is non -
 				// empty.
@@ -246,11 +240,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 				// intersecting with block s.
 				s = labelMapping.keySet().iterator();
 				final HashSet<Block> intersectingBlocks = buildIntersectingBlocksSet(s);
-				// Iterate over blocks P - for Loop over
-				// intersecting blocks in paper.
-				final Iterator<Block> intersectingBlocksIt = intersectingBlocks.iterator();
-				while (intersectingBlocksIt.hasNext()) {
-					final Block p = intersectingBlocksIt.next();
+				for (final MinimizeDfaSymbolic<LETTER, STATE>.Block p : intersectingBlocks) {
 					final Block p1 = new Block();
 					// Start with some element of P.
 					// Get formula of first state.
@@ -342,19 +332,13 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final STATE st = rIt.next();
 			// All letters over incoming transitions.
 			final Set<LETTER> incomingLabels = mOperand.lettersInternalIncoming(st);
-			// Iterating over all incoming transitions and build term.
-			final Iterator<LETTER> incomingLabelsIt = incomingLabels.iterator();
-			while (incomingLabelsIt.hasNext()) {
-				final LETTER letter = incomingLabelsIt.next();
+			for (final LETTER letter : incomingLabels) {
 				assert hasIncomingTransitionWithLetter(st, letter);
 				// Get all predecessors with transition into state
 				// labled with letter.
 				final Collection<STATE> predecessors = getPredecessor(st, letter);
 				final Term atomLetter = mLetter2Formular.get(letter);
-				// Iterate over predecessors.
-				final Iterator<STATE> predIt = predecessors.iterator();
-				while (predIt.hasNext()) {
-					final STATE pred = predIt.next();
+				for (final STATE pred : predecessors) {
 					final Term existingTermOfPred = retMap.get(pred);
 					if (existingTermOfPred != null) {
 						// HashMap contains pred already.
@@ -509,15 +493,10 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final STATE firstOfBlock = blockOfPartition.iterator().next();
 			// As predecessor for the transition take the states created above.
 			final STATE newPred = blockToNewStates.get(blockOfPartition);
-			// Get all outgoing transitions of firstOfBlock for taking all
-			// existing successors to build new transitions.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt =
-					mOperand.internalSuccessors(firstOfBlock).iterator();
+
 			// Iterate over all outgoing transitions of each block to create a
 			// new transition add it to the new automaton.
-			while (transitionIt.hasNext()) {
-				// Get next outgoing transition.
-				final OutgoingInternalTransition<LETTER, STATE> next = transitionIt.next();
+			for (final OutgoingInternalTransition<LETTER, STATE> next : mOperand.internalSuccessors(firstOfBlock)) {
 				// Get the successor if the transition.
 				final STATE succ = next.getSucc();
 				// Get block in mpartition succ belongs to.

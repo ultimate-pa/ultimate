@@ -21,7 +21,7 @@
       </programArgsMac>
       <programArgsWin>-data @user.home\ultimate-data
       </programArgsWin>
-      <vmArgs>-Xmx4g -Xms4m
+      <vmArgs>-Xmx4g -Xms4m -Dequinox.resolver.revision.batch.size=1
       </vmArgs>
    </launcherArgs>
 
@@ -46,7 +46,6 @@
 
    <plugins>
       <plugin id="com.github.jhoenicke.javacup"/>
-      <plugin id="com.lmax.disruptor"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.astbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.parser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>

@@ -26,21 +26,21 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * Describes an enum given in C.
- */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 
 /**
+ * Enum types (see C11 6.2.5.16)
+ *
  * @author Markus Lindenmann
  * @author nutz
  * @date 18.09.2012
  */
-public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
+public final class CEnum implements ICType, ICPossibleIncompleteType<CEnum> {
 	/**
 	 * Field names.
 	 */
@@ -63,9 +63,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 *            this enums identifier.
 	 */
 	public CEnum(final String id, final String[] fNames) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
-
 		assert id != null;
 		mIdentifier = id;
 		mNames = fNames;
@@ -73,9 +70,6 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	}
 
 	public CEnum(final String id) {
-		// FIXME: integrate those flags -- you will also need to change the equals method if you do
-		super(false, false, false, false, false, false);
-
 		mIdentifier = id;
 		mIsComplete = false;
 		mNames = null;
@@ -131,8 +125,11 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 	 * Replace CEnum types by signed int, other types are untouched. According to C11 6.4.4.3.2 an identifier declared
 	 * as an enumeration constant has type int.
 	 *
+	 * @param cType
+	 *            a given C-type
+	 * @return either cType itself or int if it is an enum
 	 */
-	public static CType replaceEnumWithInt(final CType cType) {
+	public static ICType replaceEnumWithInt(final ICType cType) {
 		if (cType.getUnderlyingType() instanceof CEnum) {
 			return new CPrimitive(CPrimitives.INT);
 		}
@@ -141,36 +138,29 @@ public class CEnum extends CType implements ICPossibleIncompleteType<CEnum> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((mIdentifier == null) ? 0 : mIdentifier.hashCode());
-		result = prime * result + (mIsComplete ? 1231 : 1237);
-		result = prime * result + Arrays.hashCode(mNames);
-		return result;
+		return Objects.hash(mIdentifier, mIsComplete, Arrays.hashCode(mNames));
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CType)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		final CType oType = ((CType) o).getUnderlyingType();
-		if (!(oType instanceof CEnum)) {
-			return false;
-		}
+		final CEnum other = (CEnum) obj;
+		return Objects.equals(mIdentifier, other.mIdentifier) && mIsComplete == other.mIsComplete
+				&& Arrays.equals(mNames, other.mNames);
+	}
 
-		final CEnum oEnum = (CEnum) oType;
-		if (!(mIdentifier.equals(oEnum.mIdentifier))) {
-			return false;
-		}
-		if (mNames.length != oEnum.mNames.length) {
-			return false;
-		}
-		for (int i = mNames.length - 1; i >= 0; --i) {
-			if (!(mNames[i].equals(oEnum.mNames[i]))) {
-				return false;
-			}
-		}
+	@Override
+	public boolean isAtomic() {
+		return false;
+	}
+
+	@Override
+	public boolean isIntegerType() {
 		return true;
 	}
 }

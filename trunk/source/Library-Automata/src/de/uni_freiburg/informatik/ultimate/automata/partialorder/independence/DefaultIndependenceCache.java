@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.partialorder.independence.II
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AbstractStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
 
 /**
  * Default implementation of {@link IIndependenceCache}.
@@ -48,8 +47,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.KeyType;
  *            The type of letters
  */
 public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> {
-
-	private final CacheStatistics mStatistics = new CacheStatistics();
 	private final Map<S, HashRelation<L, L>> mIndependentCache = new HashMap<>();
 	private final Map<S, HashRelation<L, L>> mDependentCache = new HashMap<>();
 	private final Map<S, HashRelation<L, L>> mUnknownCache = new HashMap<>();
@@ -101,6 +98,10 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 		}
 	}
 
+	/**
+	 * Remove all information about conditional independence from this cache, but keep unconditional independence
+	 * information.
+	 */
 	public void clearConditional() {
 		clearConditional(mIndependentCache);
 		clearConditional(mDependentCache);
@@ -154,72 +155,27 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 
 	@Override
 	public IStatisticsDataProvider getStatistics() {
-		return mStatistics;
+		return new CacheStatistics();
 	}
 
 	private final class CacheStatistics extends AbstractStatisticsDataProvider {
 		public static final String TOTAL_CACHE_SIZE = "Total cache size (in pairs)";
-		public static final String POSITIVE_CACHE_SIZE = "Positive cache size";
-		public static final String POSITIVE_CONDITIONAL_CACHE_SIZE = "Positive conditional cache size";
-		public static final String POSITIVE_UNCONDITIONAL_CACHE_SIZE = "Positive unconditional cache size";
-		public static final String NEGATIVE_CACHE_SIZE = "Negative cache size";
-		public static final String NEGATIVE_CONDITIONAL_CACHE_SIZE = "Negative conditional cache size";
-		public static final String NEGATIVE_UNCONDITIONAL_CACHE_SIZE = "Negative unconditional cache size";
-		public static final String UNKNOWN_CACHE_SIZE = "Unknown cache size";
-		public static final String UNKNOWN_CONDITIONAL_CACHE_SIZE = "Unknown conditional cache size";
-		public static final String UNKNOWN_UNCONDITIONAL_CACHE_SIZE = "Unknown unconditional cache size";
 
 		private CacheStatistics() {
-			declare(TOTAL_CACHE_SIZE, this::getTotalSize, KeyType.COUNTER);
-			declare(POSITIVE_CACHE_SIZE, this::getPositiveCacheSize, KeyType.COUNTER);
-			declare(POSITIVE_CONDITIONAL_CACHE_SIZE, this::getPositiveConditionalCacheSize, KeyType.COUNTER);
-			declare(POSITIVE_UNCONDITIONAL_CACHE_SIZE, this::getPositiveUnconditionalCacheSize, KeyType.COUNTER);
-			declare(NEGATIVE_CACHE_SIZE, this::getNegativeCacheSize, KeyType.COUNTER);
-			declare(NEGATIVE_CONDITIONAL_CACHE_SIZE, this::getNegativeConditionalCacheSize, KeyType.COUNTER);
-			declare(NEGATIVE_UNCONDITIONAL_CACHE_SIZE, this::getNegativeUnconditionalCacheSize, KeyType.COUNTER);
-			declare(UNKNOWN_CACHE_SIZE, this::getUnknownCacheSize, KeyType.COUNTER);
-			declare(UNKNOWN_CONDITIONAL_CACHE_SIZE, this::getUnknownConditionalCacheSize, KeyType.COUNTER);
-			declare(UNKNOWN_UNCONDITIONAL_CACHE_SIZE, this::getUnknownUnconditionalCacheSize, KeyType.COUNTER);
+			declareCounter(TOTAL_CACHE_SIZE, this::getTotalSize);
+			declareCacheStatistics("Positive", mIndependentCache);
+			declareCacheStatistics("Negative", mDependentCache);
+			declareCacheStatistics("Unknown", mUnknownCache);
 		}
 
-		public int getTotalSize() {
-			return getPositiveCacheSize() + getNegativeCacheSize();
+		private void declareCacheStatistics(final String name, final Map<S, HashRelation<L, L>> cache) {
+			declareCounter(name + " cache size", () -> getCacheSize(cache));
+			declareCounter(name + " conditional cache size", () -> getConditionalCacheSize(cache));
+			declareCounter(name + " unconditional cache size", () -> getUnconditionalCacheSize(cache));
 		}
 
-		public int getPositiveCacheSize() {
-			return getCacheSize(mIndependentCache);
-		}
-
-		public int getPositiveConditionalCacheSize() {
-			return getPositiveCacheSize() - getPositiveUnconditionalCacheSize();
-		}
-
-		public int getPositiveUnconditionalCacheSize() {
-			return getUnconditionalCacheSize(mIndependentCache);
-		}
-
-		public int getNegativeCacheSize() {
-			return getCacheSize(mDependentCache);
-		}
-
-		public int getNegativeConditionalCacheSize() {
-			return getNegativeCacheSize() - getNegativeUnconditionalCacheSize();
-		}
-
-		public int getNegativeUnconditionalCacheSize() {
-			return getUnconditionalCacheSize(mDependentCache);
-		}
-
-		public int getUnknownCacheSize() {
-			return getCacheSize(mUnknownCache);
-		}
-
-		public int getUnknownConditionalCacheSize() {
-			return getUnknownCacheSize() - getUnknownUnconditionalCacheSize();
-		}
-
-		public int getUnknownUnconditionalCacheSize() {
-			return getUnconditionalCacheSize(mUnknownCache);
+		private int getTotalSize() {
+			return getCacheSize(mIndependentCache) + getCacheSize(mDependentCache) + getCacheSize(mUnknownCache);
 		}
 
 		private int getCacheSize(final Map<S, HashRelation<L, L>> cache) {
@@ -232,6 +188,10 @@ public class DefaultIndependenceCache<S, L> implements IIndependenceCache<S, L> 
 				return 0;
 			}
 			return row.size();
+		}
+
+		private int getConditionalCacheSize(final Map<S, HashRelation<L, L>> cache) {
+			return getCacheSize(cache) - getUnconditionalCacheSize(cache);
 		}
 	}
 }

@@ -115,11 +115,9 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 * @throws FileNotFoundException
 	 */
 	private Object deserialize(final String key) throws FileNotFoundException, IOException, ClassNotFoundException {
-
-		final ObjectInputStream stream = new ObjectInputStream(new FileInputStream(keyToFile(key)));
-		final Object rtr = stream.readObject();
-		stream.close();
-		return rtr;
+		try (final ObjectInputStream stream = new ObjectInputStream(new FileInputStream(keyToFile(key)))) {
+			return stream.readObject();
+		}
 	}
 
 	@Override
@@ -192,9 +190,9 @@ public class SerializationRepository implements IRepository<String, ModelContain
 	 */
 	private void serializie(final String key, final ModelContainer transientInstance)
 			throws FileNotFoundException, IOException {
-		final ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(keyToFile(key)));
-		stream.writeObject(transientInstance);
-		stream.close();
+		try (final ObjectOutputStream stream = new ObjectOutputStream(new FileOutputStream(keyToFile(key)))) {
+			stream.writeObject(transientInstance);
+		}
 		mLogger.debug("serialized model");
 	}
 

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Contains methods which are shared by {@link Accepts} and
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts BuchiAccepts}.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
  *            letter type
@@ -62,7 +62,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
@@ -104,7 +104,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	 * a run at call positions) If the letter is at an internal position we consider only internal successors. If the
 	 * letter is at a call position we consider only call successors. If the letter is at a return position we consider
 	 * only return successors and consider the second topmost stack element as hierarchical predecessor.
-	 * 
+	 *
 	 * @param position
 	 *            of the symbol in the nested word for which the successors are computed.
 	 * @param addInitial
@@ -162,9 +162,9 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 		}
 	}
 
-	private void successorConfigurationsCall(final int position, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa,
-			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
-			final LETTER symbol) throws AutomataLibraryException {
+	private void successorConfigurationsCall(final int position,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final Set<ArrayDeque<STATE>> succConfigs,
+			final ArrayDeque<STATE> config, final STATE state, final LETTER symbol) throws AutomataLibraryException {
 		if (!nwa.getVpAlphabet().getCallAlphabet().contains(symbol)) {
 			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
 					+ position + " not in call alphabet of automaton.");
@@ -179,9 +179,9 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 		}
 	}
 
-	private void successorConfigurationsReturn(final int position, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa,
-			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
-			final LETTER symbol) throws AutomataLibraryException {
+	private void successorConfigurationsReturn(final int position,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final Set<ArrayDeque<STATE>> succConfigs,
+			final ArrayDeque<STATE> config, final STATE state, final LETTER symbol) throws AutomataLibraryException {
 		if (!nwa.getVpAlphabet().getReturnAlphabet().contains(symbol)) {
 			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
 					+ position + " not in return alphabet of automaton.");

@@ -1203,8 +1203,7 @@ public class CongruenceClosureTest {
 		cc1 = manager.reportEquality(y, z, cc1, mInPlace);
 
 		CongruenceClosure<StringCcElement> cc4 = manager.copyNoRemInfo(cc1);
-		cc4 = manager.reportContainsConstraint(x, new HashSet<>(Arrays.asList(new StringCcElement[] { a, b })), cc4,
-				mInPlace);
+		cc4 = manager.reportContainsConstraint(x, new HashSet<>(Arrays.asList(a, b)), cc4, mInPlace);
 		// cc4 = {x, y, z}, {a}, {b}, x in {a, b}
 
 		cc1 = manager.reportEquality(z, a, cc1, mInPlace);
@@ -1260,30 +1259,25 @@ public class CongruenceClosureTest {
 		cc4 = manager.addElement(cc4, b, mInPlace, false);
 
 		cc1 = manager.reportEquality(x, y, cc1, mInPlace);
-		cc1 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(new StringCcElement[] { x, b })), cc1,
-				mInPlace);
+		cc1 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(x, b)), cc1, mInPlace);
 		// cc1 = {x, y}, a in {x, b}
 
-		cc2 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(new StringCcElement[] { x, b })), cc2,
-				mInPlace);
-		cc2 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(new StringCcElement[] { y, b })), cc2,
-				mInPlace);
+		cc2 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(x, b)), cc2, mInPlace);
+		cc2 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(y, b)), cc2, mInPlace);
 		// cc2 = {x},{y}, a in {x, b}, a in {y, b}
 
 		final CongruenceClosure<StringCcElement> cc3 = manager.join(cc1, cc2, mInPlace);
 		// cc3 should be {x}, {y}, a in {x, b}, a in {y, b} (= cc2, not nice, but should be ok..)
 
-		cc4 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(new StringCcElement[] { x, b })), cc4,
-				mInPlace);
-		cc4 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(new StringCcElement[] { y, b })), cc4,
-				mInPlace);
+		cc4 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(x, b)), cc4, mInPlace);
+		cc4 = manager.reportContainsConstraint(a, new HashSet<>(Arrays.asList(y, b)), cc4, mInPlace);
 		// cc4 = {x}, {y}, a in {x, b}, a in {y, b}
 
 		// cc3 and cc4 should be equivalent
 		assertTrue(manager.isStrongerThan(cc3, cc4));
-		;
+
 		assertTrue(manager.isStrongerThan(cc4, cc3));
-		;
+
 	}
 
 	// TODO test transformer

@@ -107,34 +107,19 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 
 	@Override
 	public Severity getSeverity() {
-		switch (mAnnotationState) {
-		case VALID:
-			return Severity.INFO;
-		case INVALID:
-		case UNKNOWN:
-			return Severity.ERROR;
-		default:
-			throw new AssertionError("Unknown value " + mAnnotationState);
-		}
+		return switch (mAnnotationState) {
+		case VALID -> Severity.INFO;
+		case INVALID, UNKNOWN -> Severity.ERROR;
+		};
 	}
 
 	@Override
 	public String getShortDescription() {
-		String result;
-		switch (mAnnotationState) {
-		case INVALID:
-			result = "Annotation is not a valid proof of correctness.";
-			break;
-		case UNKNOWN:
-			result = "Insufficient resources for checking whether annotation is a valid proof of correctness.";
-			break;
-		case VALID:
-			result = "Annotation is a valid proof of correctness.";
-			break;
-		default:
-			throw new AssertionError("illegal value " + mAnnotationState);
-		}
-		return result;
+		return switch (mAnnotationState) {
+		case INVALID -> "Annotation is not a valid proof of correctness.";
+		case UNKNOWN -> "Insufficient resources for checking whether annotation is a valid proof of correctness.";
+		case VALID -> "Annotation is a valid proof of correctness.";
+		};
 	}
 
 	@Override
@@ -196,9 +181,8 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		final CategorizedProgramPoint mCppAfter;
 
 		public LoopFreeSegment(final CategorizedProgramPoint cppBefore, final CategorizedProgramPoint cppAfter) {
-			super();
-			this.mCppBefore = cppBefore;
-			this.mCppAfter = cppAfter;
+			mCppBefore = cppBefore;
+			mCppAfter = cppAfter;
 		}
 
 		@Override
@@ -232,7 +216,6 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		private final ILocation mLocation;
 
 		public CategorizedProgramPoint(final ILocation location) {
-			super();
 			mLocation = location;
 		}
 
@@ -250,6 +233,18 @@ public class AnnotationCheckResult<ELEM extends IElement, EXPR> extends Abstract
 		@Override
 		public String toString() {
 			return "loop head at line " + getLocation().getStartLine();
+		}
+	}
+
+	public static class Label extends CategorizedProgramPoint {
+
+		public Label(final ILocation location) {
+			super(location);
+		}
+
+		@Override
+		public String toString() {
+			return "label at line " + getLocation().getStartLine();
 		}
 	}
 

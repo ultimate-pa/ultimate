@@ -56,40 +56,21 @@ public class ComparativeSummary extends BaseTestSummary {
 			final String tool = entry.getKey().getToolchain().getAbsolutePath() + "+"
 					+ entry.getKey().getSettings().getAbsolutePath();
 			final String filename = entry.getKey().getInputFileNames();
-			HashSet<Entry<UltimateRunDefinition, ExtendedResult>> entries = tool2entry.get(tool);
-			if (entries == null) {
-				entries = new HashSet<>();
-				tool2entry.put(tool, entries);
-			}
-			entries.add(entry);
 
-			HashSet<String> tools = file2tool.get(entry);
-			if (tools == null) {
-				tools = new HashSet<>();
-				file2tool.put(filename, tools);
-			}
-			tools.add(tool);
-
-			HashSet<Entry<UltimateRunDefinition, ExtendedResult>> fEntries = file2entries.get(filename);
-			if (fEntries == null) {
-				fEntries = new HashSet<>();
-				file2entries.put(filename, fEntries);
-			}
-			fEntries.add(entry);
+			tool2entry.computeIfAbsent(tool, x -> new HashSet<>()).add(entry);
+			file2tool.computeIfAbsent(filename, x -> new HashSet<>()).add(tool);
+			file2entries.computeIfAbsent(filename, x -> new HashSet<>()).add(entry);
 		}
 
 		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> mismatches =
-				CoreUtil.where(partitionedResults.Error, new ITestSummaryResultPredicate() {
-					@Override
-					public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						final HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
-						for (final String tool : tools) {
-							if (!tool2entry.containsKey(tool)) {
-								return false;
-							}
+				CoreUtil.where(partitionedResults.Error, entry -> {
+					final HashSet<String> tools = file2tool.get(entry.getKey().getInputFileNames());
+					for (final String tool : tools) {
+						if (!tool2entry.containsKey(tool)) {
+							return false;
 						}
-						return true;
 					}
+					return true;
 				});
 
 		// HashSet<Entry<UltimateRunDefinition, ExtendedResult>> mismatchesSet =

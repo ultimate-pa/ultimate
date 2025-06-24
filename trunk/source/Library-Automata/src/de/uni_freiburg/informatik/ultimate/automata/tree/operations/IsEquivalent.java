@@ -176,7 +176,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 		// Equivalence can be seen language inclusion in both directions
 		// First compute the isIncluded(first, second)
 		mLogger.debug("Starting to compute isIncluded(first, second).");
-		if (!checkInclusion(factory, this.mFirstOperand, this.mSecondOperand)) {
+		if (!checkInclusion(factory, mFirstOperand, mSecondOperand)) {
 			mExitMessage = "The first operand recognizes a word not recognized by the second one.";
 			return false;
 		}
@@ -190,7 +190,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 
 		// Next compute the isIncluded(second, first)
 		mLogger.debug("Starting to compute isIncluded(second, first).");
-		if (!checkInclusion(factory, this.mSecondOperand, this.mFirstOperand)) {
+		if (!checkInclusion(factory, mSecondOperand, mFirstOperand)) {
 			mExitMessage = "The second operand recognizes a word not recognized by the first one.";
 			return false;
 		}
@@ -281,7 +281,7 @@ public final class IsEquivalent<LETTER extends IRankedLetter, STATE>
 		assert !new isTotal<>(services, firstTree).getResult();
 		assert !new isTotal<>(services, secondTree).getResult();
 		assert !new isTotal<>(services, thirdTree).getResult();
-		if (isEquivalent.getResult().booleanValue()) {
+		if (isEquivalent.getResult()) {
 			System.out.println("Is equivalent.");
 		} else {
 			System.out.println("Is not equivalent, counterexample:");

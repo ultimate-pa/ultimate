@@ -153,9 +153,9 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 		// Create empty automaton with same alphabet
 		final NestedWordAutomaton<L, IPredicate> resAutomaton = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(getServices()), abstractionAlphabet, mPredicateFactoryInterpolantAutomata);
-		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mLogger, getServices(),
-				mCsToolkit.getManagedScript(), mPredicateFactory, mCsToolkit.getSymbolTable(),
-				SimplificationTechnique.SIMPLIFY_DDA);
+		final IPredicateUnifier predicateUnifier =
+				new PredicateUnifier(mLogger, getServices(), mCsToolkit.getManagedScript(), mPredicateFactory,
+						mCsToolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA);
 
 		final boolean implicationInformationProvided = rawAutomatonFromFile instanceof IEpsilonNestedWordAutomaton;
 		final Pair<HashRelation<String, String>, HashRelation<String, String>> impliesExpliesStringRelations;
@@ -325,8 +325,7 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 			final Map<String, Set<L>> map) {
 		int removedLetters = 0;
 		int reusedLetters = 0;
-		final Set<String> letters = new HashSet<>();
-		letters.addAll(orgAlphabet.getInternalAlphabet());
+		final Set<String> letters = new HashSet<>(orgAlphabet.getInternalAlphabet());
 		letters.addAll(orgAlphabet.getReturnAlphabet());
 		letters.addAll(orgAlphabet.getCallAlphabet());
 		for (final String strLetter : letters) {
@@ -500,21 +499,16 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 
 		private IHoareTripleChecker constructHtc() {
 			final FloydHoareAutomataReuseEnhancement mode = mPref.getFloydHoareAutomataReuseEnhancement();
-			switch (mode) {
-			case AS_USUAL:
-				// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
-				// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
-				return HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
-						mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
-			case ONLY_NEW_LETTERS:
-				return constructEfficientIgnoringHtc(false);
-			case ONLY_NEW_LETTERS_SOLVER:
-				return constructEfficientIgnoringHtc(true);
-			case NONE:
-			default:
-				throw new UnsupportedOperationException("Unknown / illegal mode: " + mode);
+			return switch (mode) {
+			// TODO: check with Matthias if this HTC is the one we want: it uses the ProtectiveHoareTripleChecker,
+			// thus never checking intricate predicates. The other ones do not use the ProtectiveHoareTripleChecker.
+			case AS_USUAL -> HoareTripleCheckerUtils.constructEfficientHoareTripleCheckerWithCaching(getServices(),
+					mPref.getHoareTripleChecks(), mCsToolkit, getPredicateUnifier());
 
-			}
+			case ONLY_NEW_LETTERS -> constructEfficientIgnoringHtc(false);
+			case ONLY_NEW_LETTERS_SOLVER -> constructEfficientIgnoringHtc(true);
+			case NONE -> throw new UnsupportedOperationException("Illegal mode: " + mode);
+			};
 		}
 
 		private IHoareTripleChecker constructEfficientIgnoringHtc(final boolean allowSdForProtectedActions)
@@ -777,47 +771,27 @@ public class ReuseCegarLoop<L extends IIcfgTransition<?>> extends NwaCegarLoop<L
 
 		@Override
 		public Object getValue(final String key) {
-			final ReuseStatisticsDefinitions keyEnum = Enum.valueOf(ReuseStatisticsDefinitions.class, key);
-			switch (keyEnum) {
-			case REUSE_PREDICATE_UNIFIER:
-				return mPredicateUnifierStats;
-			case REUSE_TIME:
-				return getTime();
-			case NONREUSE_ITERATIONS:
-				return mNonReuseIterations;
-			case REUSE_HTC:
-				return mHtcStats;
-			case AUTOMATA_FROM_FILE:
-				return mAutomataFromFile;
-			case AUTOMATA_FROM_PREV_ERROR_LOC:
-				return mAutomataFromPreviousErrorLocation;
-			case REUSED_STATES:
-				return mReusedStates;
-			case TOTAL_STATES:
-				return mTotalStates;
-			case REUSED_LETTERS:
-				return mReusedLetters;
-			case REUSED_TRANSITIONS:
-				return mReusedTransitions;
-			case TOTAL_LETTERS:
-				return mTotalLetters;
-			case TOTAL_TRANSITIONS:
-				return mTotalTransitions;
-			case AFTER_DIFF_TRANS:
-				return mAfterDiffTransitions;
-			case BEFORE_DIFF_TRANS:
-				return mBeforeDiffTransitions;
-			case AFTER_ACCEPT_TRANS:
-				return mAfterAcceptanceTransitions;
-			case BEFORE_ACCEPT_TRANS:
-				return mBeforeAcceptanceTransitions;
-			case USELESS_PREDICATES:
-				return mUselessPredicates;
-			case DROPPED_AUTOMATA:
-				return mDroppedAutomata;
-			default:
-				throw new UnsupportedOperationException("Unknown key: " + keyEnum);
-			}
+			final ReuseStatisticsDefinitions keyEnum = ReuseStatisticsDefinitions.valueOf(key);
+			return switch (keyEnum) {
+			case REUSE_PREDICATE_UNIFIER -> mPredicateUnifierStats;
+			case REUSE_TIME -> getTime();
+			case NONREUSE_ITERATIONS -> mNonReuseIterations;
+			case REUSE_HTC -> mHtcStats;
+			case AUTOMATA_FROM_FILE -> mAutomataFromFile;
+			case AUTOMATA_FROM_PREV_ERROR_LOC -> mAutomataFromPreviousErrorLocation;
+			case REUSED_STATES -> mReusedStates;
+			case TOTAL_STATES -> mTotalStates;
+			case REUSED_LETTERS -> mReusedLetters;
+			case REUSED_TRANSITIONS -> mReusedTransitions;
+			case TOTAL_LETTERS -> mTotalLetters;
+			case TOTAL_TRANSITIONS -> mTotalTransitions;
+			case AFTER_DIFF_TRANS -> mAfterDiffTransitions;
+			case BEFORE_DIFF_TRANS -> mBeforeDiffTransitions;
+			case AFTER_ACCEPT_TRANS -> mAfterAcceptanceTransitions;
+			case BEFORE_ACCEPT_TRANS -> mBeforeAcceptanceTransitions;
+			case USELESS_PREDICATES -> mUselessPredicates;
+			case DROPPED_AUTOMATA -> mDroppedAutomata;
+			};
 		}
 
 		@Override

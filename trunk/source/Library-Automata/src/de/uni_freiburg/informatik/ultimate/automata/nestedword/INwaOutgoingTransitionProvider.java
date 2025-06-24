@@ -36,9 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Interface for a Nested Word Automaton that is defined by its outgoing
- * transitions. Outgoing transitions are sufficient for the {@link NestedWordAutomatonReachableStates}
- * to construct a {@link IDoubleDeckerAutomaton}
+ * Interface for a Nested Word Automaton that is defined by its outgoing transitions. Outgoing transitions are
+ * sufficient for the {@link NestedWordAutomatonReachableStates} to construct a {@link IDoubleDeckerAutomaton}
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -80,6 +79,6 @@ public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends INwaBasis
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
-		return new NwaToUltimateModel<LETTER, STATE>(services).transformToUltimateModel(this);
+		return new NwaToUltimateModel<>(services, this).transformToUltimateModel();
 	}
 }

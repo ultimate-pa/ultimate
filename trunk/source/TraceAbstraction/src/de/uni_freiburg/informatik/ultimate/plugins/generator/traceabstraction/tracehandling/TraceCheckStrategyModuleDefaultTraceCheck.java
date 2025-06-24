@@ -97,9 +97,9 @@ public class TraceCheckStrategyModuleDefaultTraceCheck<L extends IIcfgTransition
 		if (mTraceCheck == null) {
 			final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample.getWord(), null);
 			final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
-			mTraceCheck = new TraceCheck<>(mPrecondition, postcondition, new TreeMap<Integer, IPredicate>(),
-					mCounterexample, mServices, mPrefs.getCfgSmtToolkit(), assertionOrder,
-					mPrefs.computeCounterexample(), mPrefs.collectInterpolantStatistics());
+			mTraceCheck = new TraceCheck<>(mPrecondition, postcondition, new TreeMap<>(), mCounterexample, mServices,
+					mPrefs.getCfgSmtToolkit(), assertionOrder, mPrefs.computeCounterexample(),
+					mPrefs.collectInterpolantStatistics());
 		}
 		return mTraceCheck;
 	}

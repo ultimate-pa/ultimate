@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctExponentialWideningOperator implements IAbstractStateBinaryOperator<OctDomainState> {
-	
+
 	private final BiFunction<OctMatrix, OctMatrix, OctMatrix> mWideningOperator;
 
 	/**
@@ -56,7 +56,7 @@ public class OctExponentialWideningOperator implements IAbstractStateBinaryOpera
 		final OctValue octThreshold = new OctValue(threshold);
 		mWideningOperator = (m, n) -> m.widenExponential(n, octThreshold);
 	}
-	
+
 	@Override
 	public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 		return first.widen(second, mWideningOperator);

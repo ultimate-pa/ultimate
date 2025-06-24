@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IFunction;
@@ -41,93 +42,89 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 
 /**
+ * Function type (see C11 6.2.5.20.4)
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class CFunction extends CType {
+public final class CFunction implements ICType {
 
 	public enum VarArgsUsage {
 		USED, UNUSED, UNKNOWN
 	}
 
-	private final CType mResultType;
+	private final ICType mResultType;
 	private final CDeclaration[] mParamTypes;
 	private final boolean mTakesVarArgs;
 	private final VarArgsUsage mVarArgsUsage;
 
-	private CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
+	private CFunction(final ICType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs,
 			final VarArgsUsage varArgsUsage) {
-		super(isConst, isInline, isRestrict, isVolatile, isExtern, false);
 		mResultType = resultType;
 		mParamTypes = paramTypes;
 		mTakesVarArgs = takesVarArgs;
 		mVarArgsUsage = varArgsUsage;
 		assert mVarArgsUsage != VarArgsUsage.USED || mTakesVarArgs : "Cannot use varargs but not have varargs";
-		assert mVarArgsUsage == VarArgsUsage.UNUSED
-				|| mTakesVarArgs : "Cannot have no varargs and not know about usage";
+		assert mVarArgsUsage == VarArgsUsage.UNUSED || mTakesVarArgs
+				: "Cannot have no varargs and not know about usage";
 	}
 
 	/**
 	 * Create C function with unknown varargs usage
 	 */
-	private CFunction(final boolean isConst, final boolean isInline, final boolean isRestrict, final boolean isVolatile,
-			final boolean isExtern, final CType resultType, final CDeclaration[] paramTypes,
-			final boolean takesVarArgs) {
-		this(isConst, isInline, isRestrict, isVolatile, isExtern, resultType, paramTypes, takesVarArgs,
-				takesVarArgs ? VarArgsUsage.UNKNOWN : VarArgsUsage.UNUSED);
+	private CFunction(final ICType resultType, final CDeclaration[] paramTypes, final boolean takesVarArgs) {
+		this(resultType, paramTypes, takesVarArgs, takesVarArgs ? VarArgsUsage.UNKNOWN : VarArgsUsage.UNUSED);
 	}
 
 	/**
-	 * Create a default CFunction without arguments and with int as return type.
+	 * @return a default CFunction without arguments and with int as return type.
 	 */
 	public static CFunction createDefaultCFunction() {
-		return new CFunction(false, false, false, false, false, new CPrimitive(CPrimitives.INT), new CDeclaration[0],
-				false);
+		return new CFunction(new CPrimitive(CPrimitives.INT), new CDeclaration[0], false);
 	}
 
 	/**
-	 * Create an empty CFunction without arguments and with return type null
-	 *
-	 * TODO: This seems like a legacy method
+	 * @return an empty CFunction without arguments and with return type null
 	 */
 	public static CFunction createEmptyCFunction() {
-		return new CFunction(false, false, false, false, false, null, new CDeclaration[0], false);
+		return new CFunction(null, new CDeclaration[0], false);
 	}
 
-	public static CFunction createCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+	/**
+	 * Create a function with the given return type and parameter declarations and bindingwith the given return type and
+	 * parameter declarations and binding
+	 *
+	 * @param resultType
+	 *            the return type of the function.
+	 * @param paramDeclarations
+	 *            an array of parameter declarations.
+	 * @param binding
+	 *            the binding of the function in the program (to determine whether it takes varargs).
+	 * @return with the given return type and parameter declarations and binding.
+	 */
+	public static CFunction createCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final IFunction binding) {
-		return new CFunction(false, binding.isInline(), false, false, binding.isExtern(), resultType, paramDeclarations,
-				binding.takesVarArgs());
+		return new CFunction(resultType, paramDeclarations, binding.takesVarArgs());
 	}
 
-	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+	public static CFunction tryCreateCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final ITypedef binding) {
 		IType typedefType = binding.getType();
 		if (typedefType instanceof IFunctionType) {
 			final boolean takesVarArgs = ((IFunctionType) typedefType).takesVarArgs();
-			return new CFunction(false, false, false, false, false, resultType, paramDeclarations, takesVarArgs);
-		}
-		final IPointerType initialPointer;
-		if (typedefType instanceof IPointerType) {
-			initialPointer = (IPointerType) typedefType;
-		} else {
-			throw new UnsupportedOperationException("Cannot extract function type from typedef " + typedefType);
+			return new CFunction(resultType, paramDeclarations, takesVarArgs);
 		}
 		while (typedefType instanceof IPointerType) {
 			typedefType = ((IPointerType) typedefType).getType();
 		}
 		if (typedefType instanceof IFunctionType) {
-			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
-					initialPointer.isVolatile(), false, resultType, paramDeclarations,
-					((IFunctionType) typedefType).takesVarArgs());
+			return new CFunction(resultType, paramDeclarations, ((IFunctionType) typedefType).takesVarArgs());
 		}
 		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + typedefType);
 	}
 
-	public static CFunction tryCreateCFunction(final CType resultType, final CDeclaration[] paramDeclarations,
+	public static CFunction tryCreateCFunction(final ICType resultType, final CDeclaration[] paramDeclarations,
 			final IVariable binding) {
 		IType varType = binding.getType();
 		if (varType instanceof IPointerType) {
@@ -144,15 +141,12 @@ public class CFunction extends CType {
 		} else {
 			throw new UnsupportedOperationException("Cannot extract function type from variable " + varType);
 		}
-		final IPointerType initialPointer = (IPointerType) varType;
 		while (varType instanceof IPointerType) {
 			varType = ((IPointerType) varType).getType();
 		}
 		if (varType instanceof IFunctionType) {
 			// it was indeed a function pointer
-			return new CFunction(initialPointer.isConst(), false, initialPointer.isRestrict(),
-					initialPointer.isVolatile(), binding.isExtern(), resultType, paramDeclarations,
-					((IFunctionType) varType).takesVarArgs());
+			return new CFunction(resultType, paramDeclarations, ((IFunctionType) varType).takesVarArgs());
 		}
 		throw new UnsupportedOperationException("Cannot extract function type from pointer to " + varType);
 	}
@@ -161,16 +155,14 @@ public class CFunction extends CType {
 	 * Create a new {@link CFunction} that is identical to this one except for the parameter types.
 	 */
 	public CFunction newParameter(final CDeclaration[] newParamTypes) {
-		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
-				newParamTypes, hasVarArgs(), getVarArgsUsage());
+		return new CFunction(getResultType(), newParamTypes, hasVarArgs(), getVarArgsUsage());
 	}
 
 	/**
 	 * Create a new {@link CFunction} that is identical to this one except for the return type.
 	 */
-	public CFunction newReturnType(final CType returnType) {
-		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), returnType,
-				getParameterTypes(), hasVarArgs(), getVarArgsUsage());
+	public CFunction newReturnType(final ICType returnType) {
+		return new CFunction(returnType, getParameterTypes(), hasVarArgs(), getVarArgsUsage());
 	}
 
 	/**
@@ -179,11 +171,11 @@ public class CFunction extends CType {
 	 */
 	public CFunction updateVarArgsUsage(final boolean usesVarArgs) {
 		assert hasVarArgs();
-		return new CFunction(isConst(), isInline(), isRestrict(), isVolatile(), isExtern(), getResultType(),
-				getParameterTypes(), hasVarArgs(), usesVarArgs ? VarArgsUsage.USED : VarArgsUsage.UNUSED);
+		return new CFunction(getResultType(), getParameterTypes(), hasVarArgs(),
+				usesVarArgs ? VarArgsUsage.USED : VarArgsUsage.UNUSED);
 	}
 
-	public CType getResultType() {
+	public ICType getResultType() {
 		return mResultType;
 	}
 
@@ -203,8 +195,8 @@ public class CFunction extends CType {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("((");
-		for (int i = 0; i < mParamTypes.length; i++) {
-			appendCType(sb, mParamTypes[i].getType());
+		for (final CDeclaration mParamType : mParamTypes) {
+			appendCType(sb, mParamType.getType());
 			sb.append(" ");
 		}
 		if (mTakesVarArgs) {
@@ -217,7 +209,7 @@ public class CFunction extends CType {
 		return sb.toString();
 	}
 
-	private static StringBuilder appendCType(final StringBuilder sb, final CType type) {
+	private static StringBuilder appendCType(final StringBuilder sb, final ICType type) {
 		if (type == null) {
 			sb.append("?");
 		} else {
@@ -230,9 +222,9 @@ public class CFunction extends CType {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
-		for (int i = 0; i < mParamTypes.length; i++) {
+		for (final CDeclaration mParamType : mParamTypes) {
 			sb.append(times);
-			sb.append(mParamTypes[i].getType().getUnderlyingType().toString());
+			sb.append(mParamType.getType().getUnderlyingType().toString());
 			times = "~X~";
 		}
 		if (mTakesVarArgs) {
@@ -244,6 +236,12 @@ public class CFunction extends CType {
 	}
 
 	@Override
+	public boolean isAtomic() {
+		// Function types cannot be atomic
+		return false;
+	}
+
+	@Override
 	public boolean isIncomplete() {
 		// can a CFunction be incomplete? I never checked that carefully
 		return false;
@@ -251,42 +249,19 @@ public class CFunction extends CType {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + Arrays.hashCode(mParamTypes);
-		result = prime * result + ((mResultType == null) ? 0 : mResultType.hashCode());
-		result = prime * result + (mTakesVarArgs ? 1231 : 1237);
-		return result;
+		return Objects.hash(Arrays.hashCode(mParamTypes), mResultType, mTakesVarArgs);
 	}
 
 	@Override
-	public boolean equals(final Object o) {
-		if (!(o instanceof CFunction)) {
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		if (!super.equals(o)) {
-			return false;
-		}
-
-		final CFunction other = (CFunction) o;
-		if (mParamTypes.length != other.mParamTypes.length) {
-			return false;
-		}
-
-		if (!mResultType.equals(other.mResultType)) {
-			return false;
-		}
-		if (mTakesVarArgs != other.mTakesVarArgs) {
-			return false;
-		}
-
-		for (int i = 0; i < mParamTypes.length; i++) {
-			if (!mParamTypes[i].getType().equals(other.mParamTypes[i].getType())) {
-				return false;
-			}
-		}
-
-		return true;
+		final CFunction other = (CFunction) obj;
+		return Arrays.equals(mParamTypes, other.mParamTypes) && Objects.equals(mResultType, other.mResultType)
+				&& mTakesVarArgs == other.mTakesVarArgs;
 	}
-
 }

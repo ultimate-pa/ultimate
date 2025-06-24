@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Contains STATES and information of transitions.
@@ -385,10 +384,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			return Collections.emptySet();
 		}
 	}
-	
+
+	@Override
 	public Set<LETTER> lettersReturn(final STATE hier) {
 		if (mapModeOutgoing()) {
-			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map =
+					(NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			if (map == null) {
 				return Collections.emptySet();
 			} else {
@@ -415,7 +416,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Deprecated
 	public Set<LETTER> lettersReturn() {
 		if (mapModeOutgoing()) {
-			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map =
+					(NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			return map == null ? mEmptySetOfLetters : map.projektTo2();
 		}
 		if (mOut3 instanceof OutgoingReturnTransition) {
@@ -539,7 +541,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Collection<STATE> hierPred(final LETTER letter) {
 		if (mapModeOutgoing()) {
-			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map =
+					(NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
@@ -562,7 +565,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Collection<STATE> succReturn(final STATE hier, final LETTER letter) {
 		if (mapModeOutgoing()) {
-			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map =
+					(NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
@@ -625,9 +629,9 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mIn1 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<STATE, IncomingInternalTransition<LETTER, STATE>> transformer = x -> new IncomingInternalTransition<LETTER, STATE>(
-					x, letter);
-			return () -> new TransformIterator<STATE, IncomingInternalTransition<LETTER, STATE>>(
+			final Function<STATE, IncomingInternalTransition<LETTER, STATE>> transformer =
+					x -> new IncomingInternalTransition<>(x, letter);
+			return () -> new TransformIterator<>(
 					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mIn1).get(letter)).iterator(), transformer);
 		}
 	}
@@ -637,8 +641,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mIn1 == null) {
 			return Collections.emptySet();
 		} else {
-			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, IncomingInternalTransition<LETTER, STATE>>(
-					((NestedMap2<LETTER, STATE, IsContained>) mIn1).entrySet().iterator(),
+			return () -> new TransformIterator<>(((NestedMap2<LETTER, STATE, IsContained>) mIn1).entrySet().iterator(),
 					x -> new IncomingInternalTransition<LETTER, STATE>(x.getSecond(), x.getFirst()));
 		}
 	}
@@ -648,9 +651,9 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mIn2 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<STATE, IncomingCallTransition<LETTER, STATE>> transformer = x -> new IncomingCallTransition<LETTER, STATE>(
-					x, letter);
-			return () -> new TransformIterator<STATE, IncomingCallTransition<LETTER, STATE>>(
+			final Function<STATE, IncomingCallTransition<LETTER, STATE>> transformer =
+					x -> new IncomingCallTransition<>(x, letter);
+			return () -> new TransformIterator<>(
 					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mIn2).get(letter)).iterator(), transformer);
 		}
 	}
@@ -660,8 +663,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mIn2 == null) {
 			return Collections.emptySet();
 		} else {
-			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, IncomingCallTransition<LETTER, STATE>>(
-					((NestedMap2<LETTER, STATE, IsContained>) mIn2).entrySet().iterator(),
+			return () -> new TransformIterator<>(((NestedMap2<LETTER, STATE, IsContained>) mIn2).entrySet().iterator(),
 					x -> new IncomingCallTransition<LETTER, STATE>(x.getSecond(), x.getFirst()));
 		}
 	}
@@ -669,7 +671,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessorsMap(final STATE hier,
 			final LETTER letter) {
 		assert mapModeIncoming();
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private final Iterator<STATE> mIterator = initialize();
 
 			private Iterator<STATE> initialize() {
@@ -705,7 +707,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
 		 * iterators returned by returnPredecessorsMap(hier, letter, succ)
 		 */
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<STATE> mHierIterator;
 			private STATE mCurrentHier;
 			private Iterator<IncomingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -756,7 +758,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
 		 * iterators returned by returnPredecessorsMap(letter, succ)
 		 */
-		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<LETTER> mLetterIterator;
 			private LETTER mCurrentLetter;
 			private Iterator<IncomingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -806,9 +808,9 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut1 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer = x -> new OutgoingInternalTransition<>(
-					letter, x);
-			return () -> new TransformIterator<STATE, OutgoingInternalTransition<LETTER, STATE>>(
+			final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer =
+					x -> new OutgoingInternalTransition<>(letter, x);
+			return () -> new TransformIterator<>(
 					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mOut1).get(letter)).iterator(),
 					transformer);
 		}
@@ -819,8 +821,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut1 == null) {
 			return Collections.emptySet();
 		} else {
-			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, OutgoingInternalTransition<LETTER, STATE>>(
-					((NestedMap2<LETTER, STATE, IsContained>) mOut1).entrySet().iterator(),
+			return () -> new TransformIterator<>(((NestedMap2<LETTER, STATE, IsContained>) mOut1).entrySet().iterator(),
 					x -> new OutgoingInternalTransition<LETTER, STATE>(x.getFirst(), x.getSecond()));
 		}
 	}
@@ -830,9 +831,9 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut2 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer = x -> new OutgoingCallTransition<>(
-					letter, x);
-			return () -> new TransformIterator<STATE, OutgoingCallTransition<LETTER, STATE>>(
+			final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer =
+					x -> new OutgoingCallTransition<>(letter, x);
+			return () -> new TransformIterator<>(
 					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mOut2).get(letter)).iterator(),
 					transformer);
 		}
@@ -843,8 +844,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut2 == null) {
 			return Collections.emptySet();
 		} else {
-			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, OutgoingCallTransition<LETTER, STATE>>(
-					((NestedMap2<LETTER, STATE, IsContained>) mOut2).entrySet().iterator(),
+			return () -> new TransformIterator<>(((NestedMap2<LETTER, STATE, IsContained>) mOut2).entrySet().iterator(),
 					x -> new OutgoingCallTransition<LETTER, STATE>(x.getFirst(), x.getSecond()));
 		}
 	}
@@ -855,10 +855,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut3 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer = 
+			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer =
 					x -> new OutgoingReturnTransition<>(x.getFirst(), x.getSecond(), x.getThird());
-					return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
-							((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entries(hier, letter).iterator(), transformer);
+			return () -> new TransformIterator<>(
+					((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entries(hier, letter).iterator(),
+					transformer);
 		}
 	}
 
@@ -869,7 +870,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
 		 * iterators returned by returnSuccecessorsMap(state, letter)
 		 */
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			private Iterator<STATE> mHierIterator;
 			private STATE mCurrentHier;
 			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
@@ -919,10 +920,10 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut3 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer = 
+			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer =
 					x -> new OutgoingReturnTransition<>(x.getFirst(), x.getSecond(), x.getThird());
-					return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
-							((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entrySet().iterator(), transformer);
+			return () -> new TransformIterator<>(
+					((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entrySet().iterator(), transformer);
 		}
 	}
 
@@ -931,10 +932,10 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mOut3 == null) {
 			return Collections.emptySet();
 		} else {
-			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer = 
+			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer =
 					x -> new OutgoingReturnTransition<>(x.getFirst(), x.getSecond(), x.getThird());
-					return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
-							((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entries(hier).iterator(), transformer);
+			return () -> new TransformIterator<>(
+					((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entries(hier).iterator(), transformer);
 		}
 	}
 
@@ -954,7 +955,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	}
 
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsField(final LETTER letter) {
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			/**
 			 * Points to next field that has OutgoingInternalTransition.
 			 */
@@ -1016,7 +1017,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	}
 
 	private Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessorsField(final LETTER letter) {
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
+		return () -> new Iterator<>() {
 			/**
 			 * Points to next field that has IncomingInternalTransition.
 			 */
@@ -1247,7 +1248,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		}
 		return internalPredecessorsField(null);
 	}
-	
+
 	private Iterable<STATE> keySetOrEmpty(final Map<STATE, IsContained> map) {
 		if (map == null) {
 			return Collections.emptySet();

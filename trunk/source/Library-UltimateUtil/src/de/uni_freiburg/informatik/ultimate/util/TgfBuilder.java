@@ -32,22 +32,20 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.GraphToTgf;
 
 /**
- * Converts a list of edges into a string using the Trivial Graph Format (TGF) file format.
- * TGF files can be interpreted as directed or undirected graphs –
- * this information itself isn't stored in TGF files.
+ * Converts a list of edges into a string using the Trivial Graph Format (TGF) file format. TGF files can be interpreted
+ * as directed or undirected graphs – this information itself isn't stored in TGF files.
  * <p>
- * The graph has to be enumerated manually using {@link #addEdge(N, Object, N)}
- * (and {@link #addDisconnectedNode(N)} if there are any disconnected nodes).
- * The resulting TGF is returned by {@link #toString()}.
+ * The graph has to be enumerated manually using {@link #addEdge(N, Object, N)} (and {@link #addDisconnectedNode(N)} if
+ * there are any disconnected nodes). The resulting TGF is returned by {@link #toString()}.
  * <p>
- * Nodes in the graph are identified by object equality according to {@link Object#equals(Object)}
- * and labeled using the canonical string representation {@link Object#toString()}. The same edge
- * can be added multiple times. {@code null} nodes and edge labels are supported.
+ * Nodes in the graph are identified by object equality according to {@link Object#equals(Object)} and labeled using the
+ * canonical string representation {@link Object#toString()}. The same edge can be added multiple times. {@code null}
+ * nodes and edge labels are supported.
  * <p>
  *
- * @param <N> Type of the nodes in the graph. It is perfectly fine to use {@code Object} here.
- *            However, you might want to use a more concrete type to prevent accidentally using the wrong
- *            objects as nodes.
+ * @param <N>
+ *            Type of the nodes in the graph. It is perfectly fine to use {@code Object} here. However, you might want
+ *            to use a more concrete type to prevent accidentally using the wrong objects as nodes.
  *
  * @author schaetzc@tf.uni-freiburg.de
  *
@@ -60,10 +58,8 @@ public class TgfBuilder<N> {
 	private final Map<N, Integer> mNodeToId = new HashMap<>();
 
 	public TgfBuilder<N> addEdge(final N sourceNode, final Object edgeLabel, final N targetNode) {
-		mTgfEdges
-			.append(nodeId(sourceNode)).append(' ')
-			.append(nodeId(targetNode)).append(' ')
-			.append(labelOf(edgeLabel)).append('\n');
+		mTgfEdges.append(nodeId(sourceNode)).append(' ').append(nodeId(targetNode)).append(' ')
+				.append(labelOf(edgeLabel)).append('\n');
 		return this;
 	}
 
@@ -89,11 +85,7 @@ public class TgfBuilder<N> {
 
 	@Override
 	public String toString() {
-		return new StringBuilder()
-			.append(mTgfNodes)
-			.append("#\n")
-			.append(mTgfEdges)
-			.toString();
+		return new StringBuilder().append(mTgfNodes).append("#\n").append(mTgfEdges).toString();
 	}
 
 	public void reset() {

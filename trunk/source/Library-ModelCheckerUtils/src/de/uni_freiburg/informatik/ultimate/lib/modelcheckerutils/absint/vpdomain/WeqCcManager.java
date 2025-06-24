@@ -560,7 +560,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			// TODO: not that happy with this loop
 			int counter = 0;
 			while (!weqcc1Copy.getAllElements().equals(weqcc2Copy.getAllElements())) {
-				if (++counter > 2) {
+				counter++;
+				if (counter > 2) {
 					throw new AssertionError("not expecting to do many iterations here --> check");
 				}
 				alignElements(weqcc1Copy, weqcc2Copy, true);
@@ -881,8 +882,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		/*
 		 * declare a constant for each variable and substitute the variables
 		 */
-		final Set<TermVariable> freeVars = new HashSet<>();
-		freeVars.addAll(Arrays.asList(ante.getFreeVars()));
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(ante.getFreeVars()));
 		freeVars.addAll(Arrays.asList(succ.getFreeVars()));
 
 		final Map<Term, Term> subsMap = new HashMap<>();
@@ -968,10 +968,8 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 			return script.term("false");
 		}
 
-		final List<Term> allConjuncts = new ArrayList<>();
-		allConjuncts.addAll(CongruenceClosureSmtUtils.congruenceClosureToCube(script, weqCc.getCongruenceClosure(),
-				literalDisequalities));
-
+		final List<Term> allConjuncts = new ArrayList<>(CongruenceClosureSmtUtils.congruenceClosureToCube(script,
+				weqCc.getCongruenceClosure(), literalDisequalities));
 		final List<Term> weakEqConstraints =
 				weqCc.getWeakEquivalenceGraph().getWeakEquivalenceConstraintsAsTerms(script);
 		allConjuncts.addAll(weakEqConstraints);
@@ -1436,7 +1434,7 @@ public class WeqCcManager<NODE extends IEqNodeIdentifier<NODE>> {
 		return mCcManager;
 	}
 
-	static enum WeqCcBmNames {
+	enum WeqCcBmNames {
 
 		FILTERREDUNDANT, UNFREEZE, COPY, MEET, JOIN, ISSTRONGERTHAN, ADDNODE, REPORTEQUALITY, REPORTDISEQUALITY,
 		REPORTWEQ, REPORTCONTAINS, PROJECTAWAY, RENAMEVARS, ADDALLNODES, MEETEDGELABELS, ISLABELSTRONGERTHAN,

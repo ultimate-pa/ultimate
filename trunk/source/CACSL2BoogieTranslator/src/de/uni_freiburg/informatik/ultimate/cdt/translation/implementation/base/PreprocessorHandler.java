@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IPreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
  * @author Markus Lindenmann
@@ -151,10 +150,5 @@ public class PreprocessorHandler implements IPreprocessorHandler {
 		final ILocation loc = mLocationFactory.createCLocation(node);
 		mReporter.unsupportedSyntax(loc, msg);
 		return new SkipResult();
-	}
-
-	@Override
-	public Result visit(final IDispatcher main, final ACSLNode node) {
-		throw new UnsupportedOperationException();
 	}
 }

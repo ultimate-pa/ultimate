@@ -45,14 +45,12 @@ public class SetOfStates<STATE> {
 	private final Set<STATE> mInitialStates = new HashSet<>();
 	private final Set<STATE> mAcceptingStates = new HashSet<>();
 	/**
-	 * Auxiliary state that we use to mark the empty stack.
-	 * If we use strings to represent states, we usually use the Euro symbol €
-	 * as emtpy stack symbol.
+	 * Auxiliary state that we use to mark the empty stack. If we use strings to represent states, we usually use the
+	 * Euro symbol € as emtpy stack symbol.
 	 */
 	private final STATE mEmptyStackState;
 
 	public SetOfStates(final STATE emptyStackState) {
-		super();
 		mEmptyStackState = emptyStackState;
 	}
 
@@ -101,8 +99,7 @@ public class SetOfStates<STATE> {
 	/**
 	 * Makes an initial state non-initial.
 	 *
-	 * @deprecated
-	 * 			Do not modify existing automata, construct new automata instead.
+	 * @deprecated Do not modify existing automata, construct new automata instead.
 	 */
 	@Deprecated
 	public void makeStateNonInitial(final STATE state) {

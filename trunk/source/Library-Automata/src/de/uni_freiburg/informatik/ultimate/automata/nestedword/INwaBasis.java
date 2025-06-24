@@ -31,7 +31,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
 /**
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -46,7 +45,10 @@ public interface INwaBasis<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 	 * @deprecated Automata should not provide their state factory anymore.
 	 */
 	@Deprecated
-	IStateFactory<STATE> getStateFactory();
+	default IStateFactory<STATE> getStateFactory() {
+		throw new UnsupportedOperationException(
+				getClass().getSimpleName() + " does not provide a state factory (this method is deprecated)");
+	}
 
 	VpAlphabet<LETTER> getVpAlphabet();
 

@@ -18,8 +18,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersect
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-
+public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE>
+		extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	protected final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
 	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
@@ -28,7 +28,7 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -43,11 +43,12 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> AbstractGeneralizedBuchiDifference(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, boolean lazyOptimization) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, final boolean lazyOptimization)
+			throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		
+
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(sndOperand)) {
 			throw new UnsupportedOperationException("Calls and returns are not yet supported.");
 		}
@@ -60,30 +61,32 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 			mLogger.info(exitMessage());
 		}
 
-//		new ComplementTest<>(mServices, stateFactory, mSndOperand);
-//		new BuchiDifferenceTest<>(mServices, stateFactory, getResult(), mFstOperand, mSndOperand);
+		// new ComplementTest<>(mServices, stateFactory, mSndOperand);
+		// new BuchiDifferenceTest<>(mServices, stateFactory, getResult(), mFstOperand, mSndOperand);
 	}
 
 	protected <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
-			void constructResult(final SF stateFactory, final boolean lazyOptimization) throws AutomataLibraryException {
+			void constructResult(final SF stateFactory, final boolean lazyOptimization)
+					throws AutomataLibraryException {
 		// first we get the complement
-		final BuchiComplementNCSBSimpleNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBSimpleNwa<>(mServices, stateFactory, mSndOperand);
+		final BuchiComplementNCSBSimpleNwa<LETTER, STATE> onDemandComplemented =
+				new BuchiComplementNCSBSimpleNwa<>(mServices, stateFactory, mSndOperand);
 		Options.lazyS = lazyOptimization;
 		Options.lazyB = false;
-		mSndComplemented = new ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
+		mSndComplemented = new ComplementNwaOutgoingLetterAndTransitionAdapter<>(onDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}
 
-	protected abstract <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void constructDifferenceFromComplement(SF stateFactory)
-			throws AutomataLibraryException;
+	protected abstract <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
+			constructDifferenceFromComplement(SF stateFactory) throws AutomataLibraryException;
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + ". Second operand "
-				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
-				+ getSndComplemented().size() + " states.";
+		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation()
+				+ ". Second operand " + mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+				+ " Complement of second has " + getSndComplemented().size() + " states.";
 	}
-		
+
 	@Override
 	public final IGeneralizedNwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
@@ -93,11 +96,11 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	public final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
@@ -111,7 +114,8 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 		}
 
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
-		final GeneralizedBuchiIsEmpty<LETTER, STATE> fstOperandEmptiness = new GeneralizedBuchiIsEmpty<>(mServices, mFstOperand);
+		final GeneralizedBuchiIsEmpty<LETTER, STATE> fstOperandEmptiness =
+				new GeneralizedBuchiIsEmpty<>(mServices, mFstOperand);
 		final boolean fstOperandEmpty = fstOperandEmptiness.getResult();
 		if (!fstOperandEmpty) {
 			lassoWords.add(fstOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -121,7 +125,8 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 		if (!sndOperandEmpty) {
 			lassoWords.add(sndOperandEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
 		}
-		final GeneralizedBuchiIsEmpty<LETTER, STATE> resultEmptiness = new GeneralizedBuchiIsEmpty<>(mServices, mResult);
+		final GeneralizedBuchiIsEmpty<LETTER, STATE> resultEmptiness =
+				new GeneralizedBuchiIsEmpty<>(mServices, mResult);
 		final boolean resultEmpty = resultEmptiness.getResult();
 		if (!resultEmpty) {
 			lassoWords.add(resultEmptiness.getAcceptingNestedLassoRun().getNestedLassoWord());
@@ -129,31 +134,31 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 		boolean correct = true;
 		correct &= (!fstOperandEmpty || resultEmpty);
 		assert correct;
-//		lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mResult.size(), 0));
-//		lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mFstOperand.size(), 1));
-//		lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mSndOperand.size(), 2));
-//		lassoWords.addAll((new LassoExtractor<>(mServices, mFstOperand)).getResult());
-//		lassoWords.addAll((new LassoExtractor<>(mServices, mSndOperand)).getResult());
-//		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
-//
-//		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
-//			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
-//			assert correct;
-//		}
-//		if (!correct) {
-//			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
-//					"language is different", mFstOperand, mSndOperand);
-//		}
-//		if (mLogger.isInfoEnabled()) {
-//			mLogger.info("Finished testing correctness of " + getOperationName());
-//		}
+		// lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mResult.size(), 0));
+		// lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mFstOperand.size(), 1));
+		// lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mSndOperand.size(), 2));
+		// lassoWords.addAll((new LassoExtractor<>(mServices, mFstOperand)).getResult());
+		// lassoWords.addAll((new LassoExtractor<>(mServices, mSndOperand)).getResult());
+		// lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
+		//
+		// for (final NestedLassoWord<LETTER> nlw : lassoWords) {
+		// correct &= checkAcceptance(nlw, mFstOperand, mSndOperand, underApproximationOfComplement);
+		// assert correct;
+		// }
+		// if (!correct) {
+		// AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
+		// "language is different", mFstOperand, mSndOperand);
+		// }
+		// if (mLogger.isInfoEnabled()) {
+		// mLogger.info("Finished testing correctness of " + getOperationName());
+		// }
 		return correct;
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand1,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand2, final boolean underApproximationOfComplement)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand2,
+			final boolean underApproximationOfComplement) throws AutomataLibraryException {
 		boolean correct;
 		final boolean op1 = (new BuchiAccepts<>(mServices, operand1, nlw)).getResult();
 		final boolean op2 = (new BuchiAccepts<>(mServices, operand2, nlw)).getResult();
@@ -168,4 +173,3 @@ public abstract class AbstractGeneralizedBuchiDifference<LETTER, STATE> extends 
 	}
 
 }
-

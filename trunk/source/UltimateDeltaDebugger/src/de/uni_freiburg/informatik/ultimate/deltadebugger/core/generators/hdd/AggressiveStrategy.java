@@ -48,7 +48,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
-import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
@@ -116,7 +115,7 @@ public class AggressiveStrategy implements IHddStrategy {
 			collector.addDeleteVarArgsChange((IPSTRegularNode) node, (IASTStandardFunctionDeclarator) astNode, false);
 		}
 	}
-	
+
 	@Override
 	public void createChangeForNode(final IPSTNode node, final ChangeCollector collector) {
 		if (node instanceof IPSTRegularNode) {
@@ -147,20 +146,20 @@ public class AggressiveStrategy implements IHddStrategy {
 			collector.addDeleteChange(node);
 		}
 	}
-	
+
 	@Override
 	public boolean expandUnchangeableNodeImmediately(final IPSTNode node) {
 		return node instanceof IPSTConditionalBlock;
 	}
-	
+
 	/**
 	 * Regular node handler.
 	 */
 	static final class RegularNodeHandler implements IASTNodeConsumer {
 		private final IPSTRegularNode mCurrentNode;
-		
+
 		private final ChangeCollector mCollector;
-		
+
 		/**
 		 * @param node
 		 *            Node.
@@ -171,11 +170,11 @@ public class AggressiveStrategy implements IHddStrategy {
 			mCurrentNode = node;
 			mCollector = collector;
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 			final IASTNode astNode = node.getAstNode();
-			
+
 			// Delete everything that is known to be comma separated accordingly
 			// Expressions are handled explicitly below.
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
@@ -188,34 +187,34 @@ public class AggressiveStrategy implements IHddStrategy {
 				collector.addDeleteWithCommaChange(node, false);
 				return;
 			}
-			
+
 			new ASTNodeConsumerDispatcher(new RegularNodeHandler(node, collector)).dispatch(astNode);
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTDeclaration declaration) {
-			
+
 			// The declaration is usually the same as the parent statement without the ";"
 			if (declaration.getPropertyInParent() == IASTDeclarationStatement.DECLARATION) {
 				return;
 			}
-			
+
 			// Condition declarations should be valid for C++ only, not sure if gcc accepts it anyways for C
 			if (declaration.getPropertyInParent() == IASTIfStatement.CONDITION) {
 				mCollector.addReplaceChange(mCurrentNode, "0");
 				return;
 			}
-			
+
 			IASTNodeConsumer.super.on(declaration);
 		}
-		
+
 		@Override
 		public void on(final IASTDeclarator declarator) {
 			// includes function/variable/whatever name and additional syntax that
 			// cannot be deleted alone
 		}
-		
+
 		@Override
 		public void on(final IASTDeclSpecifier declSpecifier) {
 			// Changing types is likely to cause type checking errors, but let's see what happens.
@@ -228,12 +227,12 @@ public class AggressiveStrategy implements IHddStrategy {
 				mCollector.addReplaceChange(mCurrentNode, "int");
 			}
 		}
-		
+
 		@Override
 		public void on(final IASTEqualsInitializer equalsInitializer) {
 			mCollector.addDeleteChange(mCurrentNode);
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTExpression expression) {
@@ -269,7 +268,7 @@ public class AggressiveStrategy implements IHddStrategy {
 						replacements.stream().findFirst().orElse("0"));
 				return;
 			}
-			
+
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
 				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
@@ -290,12 +289,12 @@ public class AggressiveStrategy implements IHddStrategy {
 				mCollector.addDeleteWithCommaOrReplaceChange(mCurrentNode, false, replacements);
 				return;
 			}
-			
+
 			if (!replacements.isEmpty()) {
 				mCollector.addMultiReplaceChange(mCurrentNode, replacements);
 			}
 		}
-		
+
 		@Override
 		public void on(final IASTInitializerList initializerList) {
 			// An empty initializer list is not valid C syntax (see C grammar).
@@ -312,25 +311,25 @@ public class AggressiveStrategy implements IHddStrategy {
 			// variables anyways.
 			mCollector.addReplaceChange(mCurrentNode, "{}");
 		}
-		
+
 		@Override
 		public void on(final IASTName name) {
 			// no point in messing with names
 		}
-		
+
 		@Override
 		public void on(final IASTNode node) {
 			// Unless overridden regular nodes are simply deleted
 			mCollector.addDeleteChange(mCurrentNode);
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTStatement statement) {
 			// delete all statements (if required replace by ";")
 			mCollector.addReplaceChange(mCurrentNode, RewriteUtils.getReplacementStringForSafeDeletion(mCurrentNode));
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTTypeId typeId) {

@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AcceleratedTraceCheckRefinementStrategy<L extends IIcfgTransition<?>>
-		extends BasicRefinementStrategy<L> {
+public class AcceleratedTraceCheckRefinementStrategy<L extends IIcfgTransition<?>> extends BasicRefinementStrategy<L> {
 
 	@SuppressWarnings("unchecked")
 	public AcceleratedTraceCheckRefinementStrategy(final StrategyFactory<L>.StrategyModuleFactory factory,

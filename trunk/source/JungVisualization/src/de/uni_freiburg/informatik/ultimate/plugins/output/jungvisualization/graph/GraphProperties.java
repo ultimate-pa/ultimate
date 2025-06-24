@@ -4,22 +4,22 @@
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2010-2015 pashko
- * 
+ *
  * This file is part of the ULTIMATE JungVisualization plug-in.
- * 
+ *
  * The ULTIMATE JungVisualization plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE JungVisualization plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE JungVisualization plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JungVisualization plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -70,17 +70,16 @@ import edu.uci.ics.jung.visualization.decorators.ToStringLabeller;
 import edu.uci.ics.jung.visualization.renderers.Renderer;
 
 /**
- * Manages graph properties. Designed according to the thread-safe singleton
- * pattern.
- * 
+ * Manages graph properties. Designed according to the thread-safe singleton pattern.
+ *
  * @author lena
- * 
+ *
  */
 public class GraphProperties {
 
 	/**
 	 * Sets all graph properties necessary to paint the graph.
-	 * 
+	 *
 	 * @param vv
 	 *            {@link VisualizationViewer}
 	 * @param graph
@@ -101,40 +100,35 @@ public class GraphProperties {
 		final FontRenderContext frc = vv.getFontMetrics(font).getFontRenderContext();
 		Layout<VisualizationNode, VisualizationEdge> layout = vv.getGraphLayout();
 
-		//set node shape and label
+		// set node shape and label
 		if (store.getBoolean(JungPreferenceValues.LABEL_ANNOTATED_NODES)) {
 			final String vertexShapePreference = store.getString(JungPreferenceValues.LABEL_SHAPE_NODE);
 			Transformer<VisualizationNode, Shape> vertexShapeTransformer;
-			vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<VisualizationNode>());
+			vv.getRenderContext().setVertexLabelTransformer(new ToStringLabeller<>());
 
 			if (vertexShapePreference.equalsIgnoreCase("RoundRectangle")) {
-				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
-					@Override
-					public Shape transform(final VisualizationNode n) {
-						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
-						final int vertexShapeLength = (int) bounds.getWidth() + 2;
-						final Shape vertexShape = new RoundRectangle2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength,
-								20, 8, 8);
-						return vertexShape;
-					}
+				vertexShapeTransformer = n -> {
+					final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
+					final int vertexShapeLength = (int) bounds.getWidth() + 2;
+					final Shape vertexShape =
+							new RoundRectangle2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength, 20, 8, 8);
+					return vertexShape;
 				};
 			} else if (vertexShapePreference.equalsIgnoreCase("Rectangle")) {
-				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
-					@Override
-					public Shape transform(final VisualizationNode n) {
-						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
-						final int vertexShapeLength = (int) bounds.getWidth() + 2;
-						final Shape vertexShape = new Rectangle(-vertexShapeLength / 2, -10, vertexShapeLength, 20);
-						return vertexShape;
-					}
+				vertexShapeTransformer = n -> {
+					final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
+					final int vertexShapeLength = (int) bounds.getWidth() + 2;
+					final Shape vertexShape = new Rectangle(-vertexShapeLength / 2, -10, vertexShapeLength, 20);
+					return vertexShape;
 				};
 			} else {
-				vertexShapeTransformer = new EllipseVertexShapeTransformer<VisualizationNode>() {
+				vertexShapeTransformer = new EllipseVertexShapeTransformer<>() {
 					@Override
 					public Shape transform(final VisualizationNode n) {
 						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						final int vertexShapeLength = (int) bounds.getWidth() + 2;
-						final Shape vertexShape = new Ellipse2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength + 3, 24);
+						final Shape vertexShape =
+								new Ellipse2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength + 3, 24);
 						return vertexShape;
 					}
 
@@ -155,15 +149,11 @@ public class GraphProperties {
 		final Color backgroundColor = new Color(rgb.red, rgb.green, rgb.blue);
 		vv.setBackground(backgroundColor);
 
-		vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<VisualizationNode, Paint>() {
-
-			@Override
-			public Paint transform(final VisualizationNode arg0) {
-				if (vv.getPickedVertexState().isPicked(arg0)) {
-					return nodeFillColor;
-				} else {
-					return nodePickedColor;
-				}
+		vv.getRenderContext().setVertexFillPaintTransformer(arg0 -> {
+			if (vv.getPickedVertexState().isPicked(arg0)) {
+				return nodeFillColor;
+			} else {
+				return nodePickedColor;
 			}
 		});
 
@@ -219,27 +209,25 @@ public class GraphProperties {
 		// set preferred Graph Layout, default Layout = KKLayout
 		final String prefLayout = store.getString(JungPreferenceValues.LABEL_LAYOUT);
 		if (prefLayout.equalsIgnoreCase("FRLayout")) {
-			layout = new FRLayout<VisualizationNode, VisualizationEdge>(graph);
+			layout = new FRLayout<>(graph);
 		} else if (prefLayout.equalsIgnoreCase("FRLayout2")) {
-			layout = new FRLayout2<VisualizationNode, VisualizationEdge>(graph);
+			layout = new FRLayout2<>(graph);
 		} else if (prefLayout.equalsIgnoreCase("ISOMLayout")) {
-			layout = new ISOMLayout<VisualizationNode, VisualizationEdge>(graph);
+			layout = new ISOMLayout<>(graph);
 		} else if (prefLayout.equals("KKLayout")) {
-			layout = new KKLayout<VisualizationNode, VisualizationEdge>(graph);
+			layout = new KKLayout<>(graph);
 			((KKLayout<VisualizationNode, VisualizationEdge>) layout).setMaxIterations(400);
 		} else {
 			@SuppressWarnings("rawtypes")
-			final
-			MinimumSpanningForest2<VisualizationNode, VisualizationEdge> prim = new MinimumSpanningForest2<>(graph,
-					new DelegateForest<VisualizationNode, VisualizationEdge>(),
+			final MinimumSpanningForest2<VisualizationNode, VisualizationEdge> prim = new MinimumSpanningForest2<>(
+					graph, new DelegateForest<VisualizationNode, VisualizationEdge>(),
 					DelegateTree.<VisualizationNode, VisualizationEdge> getFactory(), new ConstantTransformer(1.0));
 
 			final Forest<VisualizationNode, VisualizationEdge> tree = prim.getForest();
-			final Layout<VisualizationNode, VisualizationEdge> layout1 = new TreeLayout<VisualizationNode, VisualizationEdge>(
-					tree);
-			layout = new StaticLayout<VisualizationNode, VisualizationEdge>(graph, layout1);
+			final Layout<VisualizationNode, VisualizationEdge> layout1 = new TreeLayout<>(tree);
+			layout = new StaticLayout<>(graph, layout1);
 		}
-//		this.vv = vv;
+		// this.vv = vv;
 		vv.setGraphLayout(layout);
 
 	}

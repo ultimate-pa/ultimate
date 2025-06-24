@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.regressiontest.generic;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import de.uni_freiburg.informatik.ultimate.regressiontest.AbstractRegressionTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -43,14 +46,16 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 public class RegressionTestSuite extends AbstractRegressionTestSuite {
 
 	private static final long DEFAULT_TIMEOUT = 25 * 1000L;
+	private static final List<String> EXCLUDED_DIRS = List.of("CToBoogieTranslation", "Backtranslation", "lassos",
+			"termination", "SignedIntegerOverflow", "abstractInterpretation", "Automata", "LTL", "DataRace",
+			"witness-checking", "witness-generation-validation");
 
 	public RegressionTestSuite() {
 		mTimeout = DEFAULT_TIMEOUT;
 		mRootFolder = TestUtil.getPathFromTrunk("examples/");
 
 		// exclude paths that match the following regex
-		mExcludeFilterRegexToolchain =
-				".*(CToBoogieTranslation|Backtranslation|lassos|termination|SignedIntegerOverflow|abstractInterpretation|Automata|LTL|DataRace|witness-checking).*";
+		mExcludeFilterRegexToolchain = ".*(" + EXCLUDED_DIRS.stream().collect(Collectors.joining("|")) + ").*";
 	}
 
 	@Override

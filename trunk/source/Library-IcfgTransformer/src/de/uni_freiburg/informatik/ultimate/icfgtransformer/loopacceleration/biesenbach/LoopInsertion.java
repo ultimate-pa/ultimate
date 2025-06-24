@@ -92,8 +92,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 			}
 
-
-			final Term transformedExitFormula = Substitution.apply(mMgScript, substitute, exitTransformula.getFormula());
+			final Term transformedExitFormula =
+					Substitution.apply(mMgScript, substitute, exitTransformula.getFormula());
 
 			// Quantifier - Start
 
@@ -126,12 +126,14 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 					}
 				}
 
-				final Term remainingTransformedExitFormula = Substitution.apply(mMgScript, substitute, remainingExitTransformula.getFormula());
+				final Term remainingTransformedExitFormula =
+						Substitution.apply(mMgScript, substitute, remainingExitTransformula.getFormula());
 
 				// replace n with k
 				final Map<Term, Term> substituteK = new HashMap<>();
 				substituteK.put(n, k);
-				final Term transformedExitFormulaK = Substitution.apply(mMgScript, substituteK, remainingTransformedExitFormula);
+				final Term transformedExitFormulaK =
+						Substitution.apply(mMgScript, substituteK, remainingTransformedExitFormula);
 				remainingExitFormulas.add(transformedExitFormulaK);
 			}
 			Term quantifiedFormulaK = TransFormulaBuilder.getTrivialTransFormula(mMgScript).getFormula();
@@ -144,7 +146,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			}
 			final Term jointTerm = script.quantifier(Script.EXISTS, new TermVariable[] { n },
 					script.term("and", quantifiedFormula, quantifiedFormulaK, result));
-			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript, SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
+			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript,
+					SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
 
 			// Quantifier - End
 			final TransFormulaBuilder tfb = new TransFormulaBuilder(originalLoopTransFormula.getInVars(), outVars,
@@ -196,8 +199,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 				}
 			}
 
-			final Term transformedExitFormula = script.term("not",
-					Substitution.apply(mMgScript, substitute, exitTransformula.getFormula()));
+			final Term transformedExitFormula =
+					script.term("not", Substitution.apply(mMgScript, substitute, exitTransformula.getFormula()));
 
 			// Quantifier - Start
 
@@ -214,7 +217,8 @@ public class LoopInsertion<INLOC extends IcfgLocation, OUTLOC extends IcfgLocati
 			final Term quantifiedFormula = script.quantifier(Script.FORALL, new TermVariable[] { j }, conditions);
 			final Term jointTerm = script.quantifier(Script.EXISTS, new TermVariable[] { n },
 					script.term("and", quantifiedFormula, result));
-			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript, SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
+			final Term simplified = PartialQuantifierElimination.eliminateCompat(mServices, mMgScript,
+					SimplificationTechnique.SIMPLIFY_DDA, jointTerm);
 
 			// Quantifier - End
 

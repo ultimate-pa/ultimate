@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Used to manage identifiers.
- * This stores already used identifiers and can make identifiers unique by adding pre- and post-fixes.
+ * Used to manage identifiers. This stores already used identifiers and can make identifiers unique by adding pre- and
+ * post-fixes.
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -53,19 +53,23 @@ public class IdManager {
 
 	/**
 	 * Adds an id to this manager. The id will be registered as it is.
-	 * @param id An identifier.
+	 *
+	 * @param id
+	 *            An identifier.
 	 * @return The same identifier.
-	 * @throws IllegalStateException When adding the same id twice.
+	 * @throws IllegalStateException
+	 *             When adding the same id twice.
 	 */
-	public String addId(final String id){
+	public String addId(final String id) {
 		if (!mIds.add(id)) {
 			throw new IllegalStateException("Id was already registered: " + id);
 		}
 		return id;
 	}
+
 	/**
-	 * Convenience method for {@link #makeAndAddUniqueId(String, String)} without prefix.
-	 * This tries to preserve the original identifier.
+	 * Convenience method for {@link #makeAndAddUniqueId(String, String)} without prefix. This tries to preserve the
+	 * original identifier.
 	 */
 	public String makeAndAddUniqueId(final String id) {
 		return makeAndAddUniqueId(null, id);
@@ -73,9 +77,12 @@ public class IdManager {
 
 	/**
 	 * Makes an id unique and adds it to this manager.
-	 * @param prefix Prefix to be used (for instance, the id of the surrounding procedure).
-	 *               The prefix is followed by a delimiter symbol. Use null for no prefix and prefix delimiter.
-	 * @param id An identifier.
+	 *
+	 * @param prefix
+	 *            Prefix to be used (for instance, the id of the surrounding procedure). The prefix is followed by a
+	 *            delimiter symbol. Use null for no prefix and prefix delimiter.
+	 * @param id
+	 *            An identifier.
 	 * @return The unique and registered version of the id.
 	 */
 	public String makeAndAddUniqueId(final String prefix, final String id) {
@@ -99,6 +106,7 @@ public class IdManager {
 
 	/**
 	 * Returns a Read-only view of all stored identifiers. Changes on this IdManager affect the returned set too.
+	 *
 	 * @return Set of stored identifiers.
 	 */
 	public Set<String> getIds() {

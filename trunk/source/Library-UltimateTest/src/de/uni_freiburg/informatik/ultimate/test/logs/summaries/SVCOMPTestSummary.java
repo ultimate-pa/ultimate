@@ -59,33 +59,21 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 	@Override
 	public String getLog() {
 
-		final Set<TCS> tcs = CoreUtil.selectDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
-			@Override
-			public TCS reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
-			}
-		});
+		final Set<TCS> tcs = CoreUtil.selectDistinct(mResults.entrySet(),
+				entry -> new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings()));
 
-		final Set<String> svcompCategories = CoreUtil.selectDistinct(mResults.entrySet(), new IMyReduce<String>() {
-			@Override
-			public String reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().getTestname().split(" ")[0];
-			}
-		});
+		final Set<String> svcompCategories =
+				CoreUtil.selectDistinct(mResults.entrySet(), entry -> entry.getValue().getTestname().split(" ")[0]);
 
 		final StringBuilder sb = new StringBuilder();
 		final String indent = "\t";
 		for (final TCS atcs : tcs) {
 			for (final String svcompCategory : svcompCategories) {
 				final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results =
-						CoreUtil.where(mResults.entrySet(), new ITestSummaryResultPredicate() {
-							@Override
-							public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-								return entry.getKey().getToolchain().equals(atcs.Toolchain)
+						CoreUtil.where(mResults.entrySet(),
+								entry -> entry.getKey().getToolchain().equals(atcs.Toolchain)
 										&& entry.getKey().getSettings().equals(atcs.Setting)
-										&& entry.getValue().getTestname().split(" ")[0].equals(svcompCategory);
-							}
-						});
+										&& entry.getValue().getTestname().split(" ")[0].equals(svcompCategory));
 
 				if (results.isEmpty()) {
 					continue;
@@ -106,12 +94,7 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 				// FAIL)
 				for (final TestResult tResult : TestResult.values()) {
 					final Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults =
-							CoreUtil.where(results, new ITestSummaryResultPredicate() {
-								@Override
-								public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-									return entry.getValue().getResult() == tResult;
-								}
-							});
+							CoreUtil.where(results, entry -> entry.getValue().getResult() == tResult);
 
 					summary.append(tResult).append(": ").append(specificResults.size())
 							.append(CoreUtil.getPlatformLineSeparator());
@@ -126,23 +109,13 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 					sb.append(" =====").append(CoreUtil.getPlatformLineSeparator());
 
 					final Set<String> resultCategories =
-							CoreUtil.selectDistinct(specificResults, new IMyReduce<String>() {
-								@Override
-								public String reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-									return entry.getValue().getCategory();
-								}
-							});
+							CoreUtil.selectDistinct(specificResults, entry -> entry.getValue().getCategory());
 
 					for (final String resultCategory : resultCategories) {
 						// group by result category
 						sb.append(indent).append(resultCategory).append(CoreUtil.getPlatformLineSeparator());
 						final Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory =
-								CoreUtil.where(results, new ITestSummaryResultPredicate() {
-									@Override
-									public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-										return entry.getValue().getCategory().equals(resultCategory);
-									}
-								});
+								CoreUtil.where(results, entry -> entry.getValue().getCategory().equals(resultCategory));
 						for (final Entry<UltimateRunDefinition, ExtendedResult> entry : resultsByCategory) {
 
 							// name of the file
@@ -186,12 +159,7 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 		}
 
 		final List<Entry<String, Integer>> nemesis = new ArrayList<>(nemesisMap.entrySet());
-		Collections.sort(nemesis, new Comparator<Entry<String, Integer>>() {
-			@Override
-			public int compare(final Entry<String, Integer> o1, final Entry<String, Integer> o2) {
-				return -o1.getValue().compareTo(o2.getValue());
-			}
-		});
+		Collections.sort(nemesis, Comparator.<Entry<String, Integer>, Integer> comparing(Entry::getValue).reversed());
 
 		sb.append("################# Reasons for !SUCCESS #################")
 				.append(CoreUtil.getPlatformLineSeparator());
@@ -209,14 +177,9 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 		sb.append("Fail").append(indent);
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		for (final TCS toolchainAndSettings : tcs) {
-			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults =
-					CoreUtil.where(mResults.entrySet(), new ITestSummaryResultPredicate() {
-						@Override
-						public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
-									&& entry.getKey().getSettings().equals(toolchainAndSettings.Setting);
-						}
-					});
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = CoreUtil.where(
+					mResults.entrySet(), entry -> entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
+							&& entry.getKey().getSettings().equals(toolchainAndSettings.Setting));
 			appendComparison(sb, indent, toolchainAndSettings, specificResults);
 		}
 

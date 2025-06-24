@@ -72,10 +72,10 @@ public class LoggingView extends ViewPart {
 	private static final int RGB_RED = 255;
 	private static final int FONT_SIZE = 10;
 	public static final String ID = "de.uni_freiburg.informatik.ultimate.gui.views.LoggingView";
-	private static final Set<String> RELEVANT_EVENTS = new HashSet<>(Arrays.asList(
-			new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN, CorePreferenceInitializer.LABEL_COLOR_DEBUG,
+	private static final Set<String> RELEVANT_EVENTS = new HashSet<>(
+			Arrays.asList(CorePreferenceInitializer.LABEL_LOG4J_PATTERN, CorePreferenceInitializer.LABEL_COLOR_DEBUG,
 					CorePreferenceInitializer.LABEL_COLOR_INFO, CorePreferenceInitializer.LABEL_COLOR_WARNING,
-					CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL }));
+					CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL));
 
 	private ILoggingService mLoggingService;
 	private Writer mLastWriter;
@@ -97,7 +97,7 @@ public class LoggingView extends ViewPart {
 			final Set<String> availableScalableFonts =
 					Arrays.stream(display.getFontList(null, true)).map(FontData::getName).collect(Collectors.toSet());
 
-			final String[] preferredFonts = new String[] { "Roboto Mono", "Monospace", "Courier New", "Courier" };
+			final String[] preferredFonts = { "Roboto Mono", "Monospace", "Courier New", "Courier" };
 			for (final String f : preferredFonts) {
 				if (availableScalableFonts.contains(f)) {
 					sFontName = f;

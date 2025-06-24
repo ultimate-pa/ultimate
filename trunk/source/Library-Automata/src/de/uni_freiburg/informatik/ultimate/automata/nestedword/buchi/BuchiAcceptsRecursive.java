@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * Class that provides the Buchi acceptance check for nested word automata.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Symbol. Type of the symbols used as alphabet.
@@ -71,7 +71,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	 * <p>
 	 * Returns true iff nlw is accepted by nwa. Note that here a nested lasso word is always rejected if its loop
 	 * contains pending returns.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param nlw
@@ -147,7 +147,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		final Set<STATE> hondaStates = new HashSet<>();
 		final Iterable<STATE> initialStates = nwa.getInitialStates();
 		for (final STATE initialState : initialStates) {
-			final Set<STATE> reach = getReachableStates(0, initialState, new LinkedList<STATE>());
+			final Set<STATE> reach = getReachableStates(0, initialState, new LinkedList<>());
 			hondaStates.addAll(reach);
 		}
 
@@ -155,8 +155,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		// contains an accepting state and brings the automaton back to the honda state.
 		boolean result = false;
 		for (final STATE hondaState : hondaStates) {
-			result = result || isCompleteableToAcceptingRun(new HashMap<STATE, Boolean>(), 0, hondaState,
-					new LinkedList<STATE>());
+			result = result || isCompleteableToAcceptingRun(new HashMap<>(), 0, hondaState, new LinkedList<>());
 		}
 
 		return result;
@@ -198,7 +197,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			// in case of nondeterminism, i.e. several successor states for
 			// currentSymbol, every recursive call of this procedure needs its own
 			// copy of the call stack. One of the recursive procedure calls (I decided
-			// for the last one) can use the existing copy  of the callStack.
+			// for the last one) can use the existing copy of the callStack.
 			List<STATE> callStackcopy;
 			if (i != succStates.size() - 1) {
 				callStackcopy = new LinkedList<>(callStack);
@@ -271,7 +270,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			// in case of nondeterminism, i.e. several successor states for
 			// currentSymbol, every recursive call of this procedure needs its own
 			// copy of the call stack. One of the recursive procedure calls (I decided
-			// for the last one) can use the existing copy  of the callStack.
+			// for the last one) can use the existing copy of the callStack.
 			List<STATE> callStackCopy;
 			Map<STATE, Boolean> hondaCandidatesCopy;
 			if (i != succStates.size() - 1) {
@@ -299,7 +298,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 			outgoingTransitions = mNwa.callSuccessors(currentState, currentSymbol);
 		} else if (word.isReturnPosition(currentPosition)) {
 			assert !callStack.isEmpty() : "restricted to " + name + " without pending return";
-			//pop the top element from the callStack
+			// pop the top element from the callStack
 			final STATE linearPred = callStack.remove(callStack.size() - 1);
 			outgoingTransitions = mNwa.returnSuccessors(currentState, linearPred, currentSymbol);
 		} else {

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Sergio Feo Arenis (arenis@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BoogieModSetAnnotator plug-in.
- * 
+ *
  * The ULTIMATE BoogieModSetAnnotator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BoogieModSetAnnotator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BoogieModSetAnnotator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieModSetAnnotator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieModSetAnnotator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieModSetAnnotator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.modsetannotator;
@@ -50,15 +50,14 @@ public class ModSetWriter implements IUnmanagedObserver {
 	private Map<String, Set<String>> mModifies;
 	private final ModSetAnalyzer mAnalyzer;
 
-	public ModSetWriter(ModSetAnalyzer analyzer,
-			IUltimateServiceProvider services) {
+	public ModSetWriter(final ModSetAnalyzer analyzer, final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mAnalyzer = analyzer;
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex,
-			int numberOfModels) throws Throwable {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels)
+			throws Throwable {
 		mModifies = mAnalyzer.getModifiedGlobals();
 	}
 
@@ -72,7 +71,7 @@ public class ModSetWriter implements IUnmanagedObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
+	public boolean process(final IElement root) throws Throwable {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
 			final Declaration[] declarations = unit.getDeclarations();
@@ -94,11 +93,11 @@ public class ModSetWriter implements IUnmanagedObserver {
 
 	/**
 	 * Adds variables to the modifies clauses
-	 * 
+	 *
 	 * @param decl
 	 * @return
 	 */
-	protected Procedure processProcedure(Procedure proc) {
+	protected Procedure processProcedure(final Procedure proc) {
 		final Set<String> modifiesSet = mModifies.get(proc.getIdentifier());
 		// Only process if there is work to do and it is a procedure declaration
 		if (modifiesSet != null && proc.getSpecification() != null) {
@@ -109,14 +108,13 @@ public class ModSetWriter implements IUnmanagedObserver {
 
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof ModifiesSpecification) {
-					modifiesArray = ((ModifiesSpecification) specs[i])
-							.getIdentifiers();
+					modifiesArray = ((ModifiesSpecification) specs[i]).getIdentifiers();
 					modSpecPosition = i;
 					break;
 				}
 			}
 
-			final Set<VariableLHS> newModifiesSet = new HashSet<VariableLHS>();
+			final Set<VariableLHS> newModifiesSet = new HashSet<>();
 
 			if (modifiesArray != null) {
 				for (final VariableLHS var : modifiesArray) {
@@ -134,22 +132,18 @@ public class ModSetWriter implements IUnmanagedObserver {
 					newModifiesSet.add(newModVar);
 				}
 
-				final ModifiesSpecification newModifies = new ModifiesSpecification(
-						proc.getLocation(), false,
-						newModifiesSet.toArray(new VariableLHS[newModifiesSet
-								.size()]));
+				final ModifiesSpecification newModifies = new ModifiesSpecification(proc.getLocation(), false,
+						newModifiesSet.toArray(new VariableLHS[newModifiesSet.size()]));
 
 				if (modSpecPosition != -1) { // Do the modification in-place
 					specs[modSpecPosition] = newModifies;
 				} else { // We need a new declaration
-					final Specification[] newSpec = Arrays.copyOf(specs,
-							specs.length + 1);
+					final Specification[] newSpec = Arrays.copyOf(specs, specs.length + 1);
 					newSpec[specs.length] = newModifies;
 
-					final Procedure newDecl = new Procedure(proc.getLocation(),
-							proc.getAttributes(), proc.getIdentifier(),
-							proc.getTypeParams(), proc.getInParams(),
-							proc.getOutParams(), newSpec, proc.getBody());
+					final Procedure newDecl = new Procedure(proc.getLocation(), proc.getAttributes(),
+							proc.getIdentifier(), proc.getTypeParams(), proc.getInParams(), proc.getOutParams(),
+							newSpec, proc.getBody());
 
 					return newDecl;
 				}

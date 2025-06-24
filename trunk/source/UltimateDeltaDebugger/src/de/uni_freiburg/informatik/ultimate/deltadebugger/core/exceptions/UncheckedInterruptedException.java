@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
  */
 public class UncheckedInterruptedException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
-	
+
 	/**
 	 * @param cause
 	 *            Cause.

@@ -74,8 +74,7 @@ public class MergedLocation extends DefaultLocation {
 	public IAnnotations merge(final IAnnotations other) {
 		if (other instanceof MergedLocation) {
 			final MergedLocation otherMergedLoc = (MergedLocation) other;
-			final List<ILocation> mergedOrigins = new ArrayList<>();
-			mergedOrigins.addAll(getOriginLocations());
+			final List<ILocation> mergedOrigins = new ArrayList<>(getOriginLocations());
 			mergedOrigins.addAll(otherMergedLoc.getOriginLocations());
 			return mergeNonMergeLocation(this, otherMergedLoc, mergedOrigins);
 		}

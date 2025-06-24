@@ -32,11 +32,11 @@ import java.util.Comparator;
  */
 public enum HierarchicalSourceRangeComparator implements Comparator<ISourceRange> {
 	INSTANCE;
-	
+
 	public static HierarchicalSourceRangeComparator getInstance() {
 		return INSTANCE;
 	}
-	
+
 	@Override
 	public int compare(final ISourceRange lhs, final ISourceRange rhs) {
 		final int res = Integer.compare(lhs.offset(), rhs.offset());

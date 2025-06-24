@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils.arrays;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Wrapper for `store` terms from the SMT theory of arrays.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ArrayStore implements ITermWrapper {
@@ -91,27 +93,29 @@ public class ArrayStore implements ITermWrapper {
 	@Override
 	public int hashCode() {
 		// ArrayStores are similar if they have the same term.
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mTerm == null) ? 0 : mTerm.hashCode());
-		return result;
+		return Objects.hash(mTerm);
 	}
 
 	@Override
 	public boolean equals(final Object obj) {
 		// ArrayStores are similar if they have the same term.
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final ArrayStore other = (ArrayStore) obj;
 		if (mTerm == null) {
-			if (other.mTerm != null)
+			if (other.mTerm != null) {
 				return false;
-		} else if (!mTerm.equals(other.mTerm))
+			}
+		} else if (!mTerm.equals(other.mTerm)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -133,8 +137,8 @@ public class ArrayStore implements ITermWrapper {
 
 	/**
 	 *
-	 * @param onlyOutermost if set to true we do not descend to subterms of a term
-	 *                      that has been found
+	 * @param onlyOutermost
+	 *            if set to true we do not descend to subterms of a term that has been found
 	 */
 	public static Collection<ArrayStore> extractStores(final Term term, final boolean onlyOutermost) {
 		final Set<ApplicationTerm> storeTerms = SmtUtils.extractApplicationTerms("store", term, onlyOutermost);

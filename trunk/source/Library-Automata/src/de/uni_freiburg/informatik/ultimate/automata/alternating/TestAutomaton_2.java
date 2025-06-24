@@ -42,7 +42,7 @@ public final class TestAutomaton_2 extends AlternatingAutomaton<String, String> 
 			new TestCase<>(new Word<>(b, b, a, b, a, a, a), true),
 			new TestCase<>(new Word<>(a, a, a, a, a, a, b, b, a), true) };
 
-	//b*a(a|ba)*b(a|b)*
+	// b*a(a|ba)*b(a|b)*
 	public TestAutomaton_2() {
 		super(generateAlphabet());
 		final String state1 = "q2_1";

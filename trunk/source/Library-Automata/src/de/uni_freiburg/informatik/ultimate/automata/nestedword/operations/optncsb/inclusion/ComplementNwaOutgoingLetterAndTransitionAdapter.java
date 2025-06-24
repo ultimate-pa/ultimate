@@ -34,25 +34,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.optncs
 
 /**
  * This class is a wrapper for the complement automaton to access the NCSB tuple
- * */
-public class ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> extends NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>{
+ */
+public class ComplementNwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>
+		extends NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> {
 
 	private final BuchiComplementNCSBSimpleNwa<LETTER, STATE> mComplementNwa;
-	
+
 	public ComplementNwaOutgoingLetterAndTransitionAdapter(
 			final BuchiComplementNCSBSimpleNwa<LETTER, STATE> complementNwa) {
 		super(complementNwa);
 		mComplementNwa = complementNwa;
 	}
 
-	public boolean coveredBy(STATE fstState, STATE sndState) {
+	public boolean coveredBy(final STATE fstState, final STATE sndState) {
 		return mComplementNwa.coveredBy(fstState, sndState);
 	}
-	
-	public NCSB getNCSB(STATE state) {
+
+	public NCSB getNCSB(final STATE state) {
 		return mComplementNwa.getRelatedNCSB(state);
 	}
-	
+
 	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mComplementNwa.getOperand();
 	}

@@ -45,18 +45,12 @@ public interface IPartialComparator<T> {
 		STRICTLY_SMALLER, EQUAL, STRICTLY_GREATER, INCOMPARABLE;
 
 		public ComparisonResult invert() {
-			switch (this) {
-			case STRICTLY_SMALLER:
-				return STRICTLY_GREATER;
-			case EQUAL:
-				return EQUAL;
-			case STRICTLY_GREATER:
-				return STRICTLY_SMALLER;
-			case INCOMPARABLE:
-				return INCOMPARABLE;
-			default:
-				throw new AssertionError("unknown value");
-			}
+			return switch (this) {
+			case STRICTLY_SMALLER -> STRICTLY_GREATER;
+			case EQUAL -> EQUAL;
+			case STRICTLY_GREATER -> STRICTLY_SMALLER;
+			case INCOMPARABLE -> INCOMPARABLE;
+			};
 		}
 
 		private static ComparisonResult fromNonPartialComparison(final int nonPartialComparisonResult) {
@@ -84,20 +78,18 @@ public interface IPartialComparator<T> {
 		 * @return the aggregated result
 		 */
 		public static ComparisonResult aggregate(final ComparisonResult cr1, final ComparisonResult cr2) {
-			switch (cr1) {
+			return switch (cr1) {
 			case EQUAL:
-				return cr2;
+				yield cr2;
 			case INCOMPARABLE:
-				return INCOMPARABLE;
+				yield INCOMPARABLE;
 			case STRICTLY_SMALLER:
 			case STRICTLY_GREATER:
 				if (cr2 == INCOMPARABLE || cr2 == cr1.invert()) {
-					return INCOMPARABLE;
+					yield INCOMPARABLE;
 				}
-				return cr1;
-			default:
-				throw new AssertionError("unknown value");
-			}
+				yield cr1;
+			};
 		}
 
 		public boolean isLessOrEqual() {

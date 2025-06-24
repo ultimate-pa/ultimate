@@ -58,17 +58,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 @SuppressWarnings("unchecked")
 public class PatternBuilder {
 
-	private static final Class<?>[] PATTERNS = new Class<?>[] { ResponseDelayBoundL2Pattern.class,
-			ResponseDelayBoundL1Pattern.class, EdgeResponseBoundL2Pattern.class, EdgeResponseDelayBoundL2Pattern.class,
-			EdgeResponseBoundU1Pattern.class, BndEntryConditionPattern.class, ExistenceBoundUPattern.class,
-			InvarianceBoundL2Pattern.class, ReccurrenceBoundLPattern.class, ResponseBoundL12Pattern.class,
-			ResponseBoundL1Pattern.class, ResponseDelayPattern.class, TriggerResponseBoundL1Pattern.class,
-			TriggerResponseDelayBoundL1Pattern.class, ConstrainedChainPattern.class, EdgeResponseDelayPattern.class,
-			DeclarationPattern.class, AbsencePattern.class, InitializationPattern.class, InvariancePattern.class,
-			DurationBoundUPattern.class, DurationBoundLPattern.class, PersistencePattern.class,
-			PrecedenceChain12Pattern.class, PrecedenceChain21Pattern.class, PrecedencePattern.class,
-			ResponseChain12Pattern.class, ResponsePattern.class, UniversalityPattern.class,
-			UniversalityDelayPattern.class };
+	private static final Class<?>[] PATTERNS = { ResponseDelayBoundL2Pattern.class, ResponseDelayBoundL1Pattern.class,
+			EdgeResponseBoundL2Pattern.class, EdgeResponseDelayBoundL2Pattern.class, EdgeResponseBoundU1Pattern.class,
+			BndEntryConditionPattern.class, ExistenceBoundUPattern.class, InvarianceBoundL2Pattern.class,
+			ReccurrenceBoundLPattern.class, ResponseBoundL12Pattern.class, ResponseBoundL1Pattern.class,
+			ResponseDelayPattern.class, TriggerResponseBoundL1Pattern.class, TriggerResponseDelayBoundL1Pattern.class,
+			ConstrainedChainPattern.class, EdgeResponseDelayPattern.class, DeclarationPattern.class,
+			AbsencePattern.class, InitializationPattern.class, InvariancePattern.class, DurationBoundUPattern.class,
+			DurationBoundLPattern.class, PersistencePattern.class, PrecedenceChain12Pattern.class,
+			PrecedenceChain21Pattern.class, PrecedencePattern.class, ResponseChain12Pattern.class,
+			ResponsePattern.class, UniversalityPattern.class, UniversalityDelayPattern.class,
+			InvarianceDelayPattern.class, ConditionalResponseBoundL1Pattern.class };
 
 	private static final Map<Class<? extends PatternType<?>>, PatternTypeConstructor> CONSTRUCTORS = new HashMap<>();
 
@@ -112,8 +112,7 @@ public class PatternBuilder {
 
 	public PatternBuilder addDuration(final String... durations) {
 		if (durations != null && durations.length > 0) {
-			for (int i = 0; i < durations.length; ++i) {
-				final String duration = durations[i];
+			for (final String duration : durations) {
 				String name;
 				Rational rational;
 				try {

@@ -41,14 +41,18 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieIdExtractor;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AbstractResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.IResultWithCheck;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -90,8 +94,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.preferences.Pea2BoogiePreferences;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheck;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckFailResult;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRedundancyResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckRtInconsistentResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.results.ReqCheckSuccessResult;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Req2BoogieTranslator;
@@ -114,18 +120,21 @@ public class VerificationResultTransformer {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IReqSymbolTable mReqSymbolTable;
+	private final IPreferenceProvider mPrefs;
 
 	public VerificationResultTransformer(final ILogger logger, final IUltimateServiceProvider services,
 			final IReqSymbolTable reqSymbolTable) {
 		mLogger = logger;
 		mServices = services;
 		mReqSymbolTable = reqSymbolTable;
+		mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
 	public IResult convertTraceAbstractionResult(final IResult result) {
 		final AbstractResultAtElement<?> oldRes;
 		final ReqCheck reqCheck;
 		boolean isPositive;
+		InvariantResult<?, ?> invResult = null;
 		if (result instanceof CounterExampleResult<?, ?, ?>) {
 			oldRes = (AbstractResultAtElement<?>) result;
 			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
@@ -133,6 +142,21 @@ public class VerificationResultTransformer {
 		} else if (result instanceof PositiveResult<?>) {
 			oldRes = (AbstractResultAtElement<?>) result;
 			reqCheck = (ReqCheck) ((IResultWithCheck) result).getCheckedSpecification();
+			isPositive = true;
+		} else if (result instanceof InvariantResult<?, ?>) {
+			invResult = (InvariantResult<?, ?>) result;
+			oldRes = (AbstractResultAtElement<?>) result;
+			final var check = invResult.getChecks().stream().filter(ReqCheck.class::isInstance).findFirst();
+			if (check.isEmpty()) {
+				// Not sure if such a case can ever occur or if to just return result here
+				return result;
+			}
+			reqCheck = (ReqCheck) check.get();
+			// Important if other specs receive invariants too
+			// that should be ignored
+			if (!reqCheck.getSpec().contains(Spec.REDUNDANCY)) {
+				return result;
+			}
 			isPositive = true;
 		} else if (result instanceof AllSpecificationsHoldResult) {
 			// makes no sense in our context, suppress it
@@ -164,6 +188,9 @@ public class VerificationResultTransformer {
 		}
 
 		if (spec == Spec.RTINCONSISTENT) {
+			if (!mPrefs.getBoolean(Pea2BoogiePreferences.LABEL_GEN_FAILURE_PATH)) {
+				return new ReqCheckRtInconsistentResult<>(element, plugin);
+			}
 			@SuppressWarnings("unchecked")
 			final IcfgProgramExecution<? extends IAction> oldPe =
 					(IcfgProgramExecution<? extends IAction>) ((CounterExampleResult<?, ?, Term>) oldRes)
@@ -186,14 +213,38 @@ public class VerificationResultTransformer {
 			final String failurePath = formatTimeSequenceMap(delta2var2value);
 			return new ReqCheckRtInconsistentResult<>(element, plugin, failurePath);
 		}
+		// If no InvariantResult is present, fall through to generic FailResult
+		if (spec == Spec.REDUNDANCY && invResult != null) {
+			// Annotation needed for the result to know the respective Check
+			reqCheck.annotate(element);
+			final var invariant = (Expression) invResult.getInvariant();
+			final var reqIds = reqCheck.getReqIds();
+			// Only works if spec checks a single requirement
+			if (reqIds.size() != 1) {
+				throw new AssertionError("Creating redundancy sets for Check containing multiple requirements" + reqIds
+						+ "is not supported");
+			}
+			final var redId = reqIds.iterator().next();
+			final var redSet = extractRedundancySet(invariant);
+			return new ReqCheckRedundancyResult<>(element, plugin, redId, redSet);
+
+		}
 		return new ReqCheckFailResult<>(element, plugin);
+	}
+
+	private static Set<String> extractRedundancySet(final Expression invariant) {
+		final BoogieIdExtractor idExtractor = new BoogieIdExtractor();
+		idExtractor.processExpression(invariant);
+		return idExtractor.getIds().stream().filter(id -> (id.endsWith("_total_pc") || id.endsWith("_total")))
+				.map(id -> id.split("_ct")[0]).collect(Collectors.toSet());
 	}
 
 	private String formatTimeSequenceMap(final List<Entry<Rational, Map<Term, Term>>> delta2var2value) {
 
 		final int deltaMaxLength =
 				delta2var2value.stream().map(a -> a.getKey().toString().length()).max(Integer::compare).get();
-		// there might be two numbers of maxlength, we have 3 additional chars "(;]", we want 2 spaces
+		// there might be two numbers of maxlength, we have 3 additional chars "(;]", we
+		// want 2 spaces
 		// if maxLength is smaller than INITIAL (7) + 5 , use 12 instead
 		final int maxLength = deltaMaxLength * 2 + 5 < 12 ? 12 : deltaMaxLength * 2 + 5;
 

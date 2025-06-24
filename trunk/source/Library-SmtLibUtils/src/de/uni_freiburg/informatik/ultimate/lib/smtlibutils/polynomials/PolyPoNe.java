@@ -45,22 +45,17 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Internal data structure that we use to construct simplified conjunctions and
- * disjunction. We distinguish three kinds of parameters of the
- * disjunction/conjunction.
- * <li>polynomial parameter: params that can be converted into a
- * {@link PolynomialRelation}
- * <li>negative parameters: params that cannot be converted into a
- * {@link PolynomialRelation} and are negated
+ * Internal data structure that we use to construct simplified conjunctions and disjunction. We distinguish three kinds
+ * of parameters of the disjunction/conjunction.
+ * <li>polynomial parameter: params that can be converted into a {@link PolynomialRelation}
+ * <li>negative parameters: params that cannot be converted into a {@link PolynomialRelation} and are negated
  * <li>negative parameters: all other params.
  *
- * Based on a pairwise comparison of params, we decide whether a parameter is
- * redundant and can be omitted or whether the result for two parameters is
- * already the absorbing element of the operation.
+ * Based on a pairwise comparison of params, we decide whether a parameter is redundant and can be omitted or whether
+ * the result for two parameters is already the absorbing element of the operation.
  *
- * For disjunctions we store negated versions of the
- * {@link PolynomialRelation}s, apply the rules for conjunctions, and negate all
- * {@link PolynomialRelation} before computing the result.
+ * For disjunctions we store negated versions of the {@link PolynomialRelation}s, apply the rules for conjunctions, and
+ * negate all {@link PolynomialRelation} before computing the result.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -68,7 +63,7 @@ public class PolyPoNe {
 
 	protected enum Check {
 		REDUNDANT, INCONSISTENT, MAYBE_USEFUL
-	};
+	}
 
 	protected final Script mScript;
 	protected final Junction mJunction;
@@ -143,12 +138,12 @@ public class PolyPoNe {
 
 	private Check compareToExistingRepresentations(final PolynomialRelation newPolyRel,
 			final boolean removeExpliedPolyRels) {
-		final Set<PolynomialRelation> existingPolyRels = mPolyRels
-				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
+		final Set<PolynomialRelation> existingPolyRels =
+				mPolyRels.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		final List<PolynomialRelation> existingThatExplyNew = new ArrayList<>();
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
-			final ComparisonResult comp = AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel,
-					newPolyRel);
+			final ComparisonResult comp =
+					AbstractGeneralizedAffineTerm.compareRepresentation(existingPolyRel, newPolyRel);
 			if (comp != null) {
 				switch (comp) {
 				case IMPLIES:
@@ -170,8 +165,8 @@ public class PolyPoNe {
 			// remove all existing relations that exply the new relation (i.e., all that are
 			// implied by the new relation)
 			for (final PolynomialRelation existing : existingThatExplyNew) {
-				final boolean modified = mPolyRels
-						.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(), existing);
+				final boolean modified =
+						mPolyRels.removePair(existing.getPolynomialTerm().getAbstractVariable2Coefficient(), existing);
 				assert modified : "nothing removed";
 			}
 		}
@@ -194,11 +189,11 @@ public class PolyPoNe {
 
 	private PolynomialRelation isFusibleWithExistingRepresentation(final Junction junction,
 			final PolynomialRelation newPolyRel) {
-		final Set<PolynomialRelation> existingPolyRels = mPolyRels
-				.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
+		final Set<PolynomialRelation> existingPolyRels =
+				mPolyRels.getImage(newPolyRel.getPolynomialTerm().getAbstractVariable2Coefficient());
 		for (final PolynomialRelation existingPolyRel : existingPolyRels) {
-			final boolean res = AbstractGeneralizedAffineTerm.areRepresentationsFusible(junction, existingPolyRel,
-					newPolyRel);
+			final boolean res =
+					AbstractGeneralizedAffineTerm.areRepresentationsFusible(junction, existingPolyRel, newPolyRel);
 			if (res) {
 				return existingPolyRel;
 			}
@@ -219,8 +214,8 @@ public class PolyPoNe {
 				if (fusionPartner != null) {
 					mPolyRels.removePair(fusionPartner.getPolynomialTerm().getAbstractVariable2Coefficient(),
 							fusionPartner);
-					final PolynomialRelation fusion = PolynomialRelation.of(polyRel.getPolynomialTerm(),
-							RelationSymbol.EQ);
+					final PolynomialRelation fusion =
+							PolynomialRelation.of(polyRel.getPolynomialTerm(), RelationSymbol.EQ);
 					mPolyRels.addPair(fusion.getPolynomialTerm().getAbstractVariable2Coefficient(), fusion);
 					return false;
 				}
@@ -324,9 +319,7 @@ public class PolyPoNe {
 		for (final Entry<Map<?, Rational>, PolynomialRelation> pair : mPolyRels.getSetOfPairs()) {
 			params.add(pair.getValue().toTerm(mScript));
 		}
-		for (final Term term : mPositive) {
-			params.add(term);
-		}
+		params.addAll(mPositive);
 		for (final Term term : mNegative) {
 			params.add(SmtUtils.not(mScript, term));
 		}
@@ -344,9 +337,7 @@ public class PolyPoNe {
 		for (final Term term : mPositive) {
 			params.add(SmtUtils.not(mScript, term));
 		}
-		for (final Term term : mNegative) {
-			params.add(term);
-		}
+		params.addAll(mNegative);
 		return SmtUtils.or(mScript, params);
 	}
 

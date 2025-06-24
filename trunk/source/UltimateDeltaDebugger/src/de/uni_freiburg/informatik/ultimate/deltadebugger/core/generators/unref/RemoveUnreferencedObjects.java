@@ -98,7 +98,7 @@ public final class RemoveUnreferencedObjects implements IVariantGenerator {
 		final Map<IBinding, List<IPSTNode>> funcs = new HashMap<>();
 		tu.accept(new BindingCollector(options, funcs));
 		final List<ObjChange> changes = new ArrayList<>(funcs.size());
-		for (Entry<IBinding, List<IPSTNode>> entry : funcs.entrySet()) {
+		for (final Entry<IBinding, List<IPSTNode>> entry : funcs.entrySet()) {
 			changes.add(new ObjChange(changes.size(), entry.getKey().getNameCharArray().toString(), entry.getValue()));
 		}
 		return changes;
@@ -116,7 +116,7 @@ public final class RemoveUnreferencedObjects implements IVariantGenerator {
 		}
 
 		void apply(final SourceRewriter rewriter) {
-			for (IPSTNode node : mNodes) {
+			for (final IPSTNode node : mNodes) {
 				rewriter.replace(node, RewriteUtils.getReplacementStringForSafeDeletion(node));
 			}
 		}

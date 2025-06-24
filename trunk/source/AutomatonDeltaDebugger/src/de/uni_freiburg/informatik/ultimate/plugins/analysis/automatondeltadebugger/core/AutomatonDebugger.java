@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2015-2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015-2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * designated error occurs. Example: If the user wants to find the cause for an {@link AutomataLibraryException}, this
  * might be introduced during the process of shrinking the automaton as well.<br>
  * For further explanations see {@link #shrink(List, List)}.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -100,7 +100,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * inside which all the shrinkers from above.
 	 * <p>
 	 * Finally, we apply a second set of shrinking rules which make sense only once (e.g., shrinking the alphabet).
-	 * 
+	 *
 	 * @param shrinkersLoop
 	 *            list of shrinkers (shrinking rules) applied in loop
 	 * @param shrinkersBridge
@@ -177,7 +177,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 
 	/**
 	 * Runs a binary search for each shrinker in a list.
-	 * 
+	 *
 	 * @param shrinkers
 	 *            list of shrinkers (shrinking rules)
 	 * @param policy

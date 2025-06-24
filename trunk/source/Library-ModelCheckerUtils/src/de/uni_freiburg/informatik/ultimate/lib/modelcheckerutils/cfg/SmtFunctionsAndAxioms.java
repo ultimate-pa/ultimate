@@ -52,19 +52,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
 /**
- * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols
- * created throughout a toolchain.
+ * {@link SmtFunctionsAndAxioms} contains axioms and SMT function symbols created throughout a toolchain.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- *         TODO: Extend {@link HistoryRecordingScript} to be able to create a
- *         nicer term transferrer
+ *         TODO: Extend {@link HistoryRecordingScript} to be able to create a nicer term transferrer
  *
- *         TODO 20220401 Matthias: It does not make sense to store axioms and
- *         SMT function symbols that are created throughout a toolchain in the
- *         ICFG. Each algorithm should store the function symbol that it
- *         utilizes. FunctionSymbols that are utilized by the ICFG should be
- *         stored in the symbol table of the ICFG.
+ *         TODO 20220401 Matthias: It does not make sense to store axioms and SMT function symbols that are created
+ *         throughout a toolchain in the ICFG. Each algorithm should store the function symbol that it utilizes.
+ *         FunctionSymbols that are utilized by the ICFG should be stored in the symbol table of the ICFG.
  *
  */
 public class SmtFunctionsAndAxioms {
@@ -91,17 +87,18 @@ public class SmtFunctionsAndAxioms {
 	}
 
 	/**
-	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined by a
-	 * {@link Term} and a set of {@link IProgramFunction}s.
+	 * Create a {@link SmtFunctionsAndAxioms} instance with axioms defined by a {@link Term} and a set of
+	 * {@link IProgramFunction}s.
 	 *
-	 * @param axioms Axioms given as {@link Term}.
-	 * @param funs   The procedures from which the axioms come or null.
-	 * @param script A {@link ManagedScript} instance that was used to build the
-	 *               axioms term and the ICFG to which this
-	 *               {@link SmtFunctionsAndAxioms} instance belongs.
+	 * @param axioms
+	 *            Axioms given as {@link Term}.
+	 * @param funs
+	 *            The procedures from which the axioms come or null.
+	 * @param script
+	 *            A {@link ManagedScript} instance that was used to build the axioms term and the ICFG to which this
+	 *            {@link SmtFunctionsAndAxioms} instance belongs.
 	 */
-	public SmtFunctionsAndAxioms(final Term axioms, final Set<IProgramFunction> funs,
-			final ManagedScript mgdScript) {
+	public SmtFunctionsAndAxioms(final Term axioms, final Set<IProgramFunction> funs, final ManagedScript mgdScript) {
 		this(new BasicPredicate(HARDCODED_SERIALNUMBER_FOR_AXIOMS, axioms, Collections.emptySet(), funs, axioms),
 				mgdScript);
 	}
@@ -127,6 +124,7 @@ public class SmtFunctionsAndAxioms {
 	/**
 	 * Create a new {@link SmtFunctionsAndAxioms} instance with an additional axiom without corresponding procedure.
 	 * Also asserts the new axiom in the underlying script.
+	 *
 	 * @param symbolTable
 	 */
 	public SmtFunctionsAndAxioms addAxiom(final Term additionalAxioms, final IIcfgSymbolTable symbolTable) {

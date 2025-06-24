@@ -40,8 +40,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.xml.bind.JAXBException;
-
 import org.apache.commons.cli.AlreadySelectedException;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Option;
@@ -61,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
+import jakarta.xml.bind.JAXBException;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -253,8 +252,7 @@ public class ParsedParameter {
 		final String[] values = mCli.getOptionValues(CommandLineOptions.OPTION_NAME_INPUTFILES);
 		final List<File> files = new ArrayList<>();
 
-		for (int i = 0; i < values.length; ++i) {
-			final String value = values[i];
+		for (final String value : values) {
 			if (value.contains("*")) {
 				final int first = value.indexOf("*");
 				try (DirectoryStream<Path> dirStream =
@@ -262,7 +260,7 @@ public class ParsedParameter {
 					dirStream.forEach(path -> files.add(path.toFile()));
 				}
 			} else {
-				files.add(new File(values[i]));
+				files.add(new File(value));
 			}
 		}
 

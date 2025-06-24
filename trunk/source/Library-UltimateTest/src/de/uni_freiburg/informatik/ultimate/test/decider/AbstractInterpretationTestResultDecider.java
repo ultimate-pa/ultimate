@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Christopher Dillo
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
@@ -41,10 +41,10 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 /**
  * Took stuff from the old SafetyCheckTestResultDecider_OldVersion 'cause there was so much I had to adjust for my own
  * needs and I don't want to dig into the new one to see if it suits me better
- * 
+ *
  * @author Christopher Dillo
  */
 public class AbstractInterpretationTestResultDecider extends TestResultDecider {
@@ -74,7 +74,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		SAFE, UNSAFE, UNKNOWN, SYNTAX_ERROR, TIMEOUT, UNSUPPORTED_SYNTAX, EXCEPTION_OR_ERROR, NO_RESULT;
 	}
 
-	protected class ActualResult {
+	protected static class ActualResult {
 		private final IResult mIResult;
 		private final ActualResultType mactualResultType;
 
@@ -112,7 +112,6 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	 *            Used to identify which tool the result belongs to.
 	 */
 	public AbstractInterpretationTestResultDecider(final File inputFile, final String toolIdentifier) {
-		super();
 		mInputFile = inputFile.getAbsolutePath();
 		mtoolIdentifier = toolIdentifier;
 		generateExpectedResult(inputFile);
@@ -236,7 +235,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	public TestResult getTestResult(final IUltimateServiceProvider service, final Throwable e) {
 		generateResultMessageAndCategory(
 				new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, new ExceptionOrErrorResult("Ultimate", e)));
-		TestUtil.logResults(AbstractInterpretationTestResultDecider.class, mInputFile, true, new LinkedList<String>(),
+		TestUtil.logResults(AbstractInterpretationTestResultDecider.class, mInputFile, true, new LinkedList<>(),
 				service);
 		return TestResult.FAIL;
 	}

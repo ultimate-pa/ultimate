@@ -27,12 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.heapseparator.datastructures;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 /**
  * Represents a set of array write locations (which are represented by the class {@link StoreInfo}. An array write
- *  location consists of a program location, represented by an IcfgEdge or an EdgeInfo instance, and a Term that is used
- *  as index of the written array cell in the IcfgEdge.
+ * location consists of a program location, represented by an IcfgEdge or an EdgeInfo instance, and a Term that is used
+ * as index of the written array cell in the IcfgEdge.
  *
  * Relative to an array group; also can give the subarray for each array in the array group that corresponds to the
  * location block
@@ -83,12 +84,7 @@ public class StoreLocationBlock {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mArrayGroup == null) ? 0 : mArrayGroup.hashCode());
-		result = prime * result + mDimension;
-		result = prime * result + ((mStoreInfos == null) ? 0 : mStoreInfos.hashCode());
-		return result;
+		return Objects.hash(mArrayGroup, mDimension, mStoreInfos);
 	}
 
 	@Override

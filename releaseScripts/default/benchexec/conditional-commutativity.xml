@@ -1,50 +1,83 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<benchmark tool="ultimategemcutter" memlimit="8GB" timelimit="900" hardtimelimit="920" cpuCores="2">
+<benchmark tool="ultimategemcutter" memlimit="16GB" timelimit="900" hardtimelimit="920" cpuCores="2">
   <resultfiles></resultfiles>
 
-  <option name="&#45;-force-no-wrapper" />
+  <rundefinition name="UNCONDITIONAL">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">false</option>
+    <option name="&#45;-traceabstraction.commutativity.condition.synthesis">NONE</option>
+  </rundefinition>
 
-  <option name="-s">${benchmark_path}/../../../trunk/examples/settings/gemcutter/NewStatesSleepPersistentFixedOrder.epf</option>
-  <option name="&#45;-traceabstraction.dfs.order.used.in.por">LOOP_LOCKSTEP</option>
-
-  <rundefinition name="NONE" />
+  <rundefinition name="PROOFSENSITIVE">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">true</option>
+    <option name="&#45;-traceabstraction.commutativity.condition.synthesis">NONE</option>
+  </rundefinition>
 
   <rundefinition name="CE-Sufficient">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">true</option>
     <option name="&#45;-traceabstraction.commutativity.condition.synthesis">SUFFICIENT</option>
   </rundefinition>
 
   <rundefinition name="CE-SufficientWithContext">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">true</option>
     <option name="&#45;-traceabstraction.commutativity.condition.synthesis">SUFFICIENT_WITH_CONTEXT</option>
   </rundefinition>
 
   <rundefinition name="CE-NecessaryAndSufficient">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">true</option>
     <option name="&#45;-traceabstraction.commutativity.condition.synthesis">NECESSARY_AND_SUFFICIENT</option>
   </rundefinition>
 
   <rundefinition name="CE-NecessaryAndSufficient-Badger">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">true</option>
     <option name="&#45;-traceabstraction.commutativity.condition.synthesis">NECESSARY_AND_SUFFICIENT</option>
     <option name="&#45;-traceabstraction.refinement.strategy.for.commutativity.condition.synthesis">BADGER</option>
   </rundefinition>
 
   <rundefinition name="CE-NecessaryAndSufficient-Camel">
+    <option name="&#45;-traceabstraction.use.conditional.por.in.concurrent.analysis">true</option>
     <option name="&#45;-traceabstraction.commutativity.condition.synthesis">NECESSARY_AND_SUFFICIENT</option>
     <option name="&#45;-traceabstraction.refinement.strategy.for.commutativity.condition.synthesis">CAMEL</option>
   </rundefinition>
 
-  <tasks name="canary">
-    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+  <tasks name="canary-c">
+    <!-- Uses wrapper script toolchain and settings selection (as in SV-COMP), including fallback to bitvector mode -->
+    <option name="&#45;-full-output" />
+
     <include>${benchmark_path}/../../../trunk/examples/svcomp/weaver/parallel-misc-2-unrolled-atomic.wvr.yml</include>
-    <propertyfile expectedverdict="true">${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
+  </tasks>
+
+  <tasks name="canary-bpl">
+    <!-- Uses Ultimate without wrapper script, thus must define toolchain and settings explicitly -->
+    <option name="&#45;-force-no-wrapper" />
+    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/gemcutter/svcomp-Reach-32bit-GemCutter_Default.epf</option>
+
+    <!-- Set this option to false, as it is unsound for Boogie. -->
+    <option name="&#45;-rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
+    <include>${benchmark_path}/../../../trunk/examples/concurrent/bpl/weaver-benchmarks/generated/parallel/misc-2-unrolled.wvr.yml</include>
+    <include>${benchmark_path}/../../../trunk/examples/concurrent/bpl/weaver-benchmarks/generated/parallel/barrier-loop.wvr.yml</include>
+    <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
   <tasks name="SVCOMP-ConcurrencySafety">
-    <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
+    <!-- Uses wrapper script toolchain and settings selection (as in SV-COMP), including fallback to bitvector mode -->
+    <option name="&#45;-full-output" />
+
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 
   <tasks name="Weaver-Boogie">
+    <!-- Uses Ultimate without wrapper script, thus must define toolchain and settings explicitly -->
+    <option name="&#45;-force-no-wrapper" />
     <option name="-tc">${benchmark_path}/../../../trunk/examples/toolchains/AutomizerBplInline.xml</option>
+    <option name="-s">${benchmark_path}/../../../trunk/examples/settings/default/gemcutter/svcomp-Reach-32bit-GemCutter_Default.epf</option>
+
+    <!-- Set this option to false, as it is unsound for Boogie. -->
+    <option name="&#45;-rcfgbuilder.only.consider.context.switches.at.boundaries.of.atomic.blocks">false</option>
+
     <includesfile>${benchmark_path}/../../../trunk/examples/concurrent/bpl/weaver-benchmarks/WeaverBenchmarks.set</includesfile>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>

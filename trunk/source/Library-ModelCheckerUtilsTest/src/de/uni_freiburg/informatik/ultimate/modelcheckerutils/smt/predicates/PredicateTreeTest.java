@@ -153,7 +153,8 @@ public class PredicateTreeTest {
 		final IUltimateServiceProvider services = mServices;
 		final ILogger logger = mLogger;
 		final ManagedScript mgdScript = mMgdScript;
-		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript, SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
+		final Term result = PartialQuantifierElimination.eliminateCompat(services, mgdScript,
+				SimplificationTechnique.SIMPLIFY_DDA, formulaAsTerm);
 		mLogger.info(result);
 	}
 
@@ -199,7 +200,8 @@ public class PredicateTreeTest {
 		private final Term mClosedFormula;
 		private final Term mFormula;
 
-		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs, final ManagedScript mgdScript) {
+		public TestPredicate(final Term formula, final Set<IProgramVar> vars, final Set<IProgramFunction> funs,
+				final ManagedScript mgdScript) {
 			mVars = vars;
 			mFuns = funs;
 			mFormula = formula;

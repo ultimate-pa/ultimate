@@ -240,24 +240,12 @@ public class Statements2TransFormula {
 		final StorageClass storageClass = declInfo.getStorageClass();
 		// assert (declInfo.getProcedure() == null ||
 		// declInfo.getProcedure().equals(mCurrentProcedure));
-		IProgramVar result;
-		switch (storageClass) {
-		case GLOBAL:
-		case LOCAL:
-		case IMPLEMENTATION_OUTPARAM:
-		case PROC_FUNC_OUTPARAM:
-			result = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-			break;
-		case IMPLEMENTATION_INPARAM:
-		case PROC_FUNC_INPARAM:
-			throw new AssertionError("not modifiable");
-		case IMPLEMENTATION:
-		case PROC_FUNC:
-		case QUANTIFIED:
-		default:
-			throw new AssertionError("no appropriate variable ");
-		}
-		return result;
+		return switch (storageClass) {
+		case GLOBAL, LOCAL, IMPLEMENTATION_OUTPARAM, PROC_FUNC_OUTPARAM ->
+				mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
+		case IMPLEMENTATION_INPARAM, PROC_FUNC_INPARAM -> throw new AssertionError("not modifiable");
+		case IMPLEMENTATION, PROC_FUNC, QUANTIFIED -> throw new AssertionError("no appropriate variable ");
+		};
 	}
 
 	private IIdentifierTranslator[] getIdentifierTranslatorsIntraprocedural() {
@@ -298,9 +286,9 @@ public class Statements2TransFormula {
 		for (final TermVariable tv : addedEqualities.keySet()) {
 
 			final SingleTermResult tlres = mExpression2Term.translateToTerm(its, addedEqualities.get(tv));
-			newAuxVars.addAll(tlres.getAuxiliaryVars());
-			mOverapproximations.putAll(tlres.getOverappoximations());
-			final Term rhsTerm = tlres.getTerm();
+			newAuxVars.addAll(tlres.auxiliaryVars());
+			mOverapproximations.putAll(tlres.overapproximations());
+			final Term rhsTerm = tlres.term();
 			final Term eq = SmtUtils.binaryEquality(mScript, tv, rhsTerm);
 
 			newConjuncts.add(eq);
@@ -329,13 +317,13 @@ public class Statements2TransFormula {
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assume.getFormula());
-		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term f = tlres.getTerm();
+		mOverapproximations.putAll(tlres.overapproximations());
+		final Term f = tlres.term();
 
 		if (COMPUTE_ASSERTS) {
 			mAsserts = Util.implies(mScript, f, mAsserts);
 		}
-		eliminateAuxVarsAndAddNewAssumes(f, tlres.getAuxiliaryVars());
+		eliminateAuxVarsAndAddNewAssumes(f, tlres.auxiliaryVars());
 	}
 
 	@SuppressWarnings("unused")
@@ -345,10 +333,10 @@ public class Statements2TransFormula {
 		}
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		final SingleTermResult tlres = mExpression2Term.translateToTerm(its, assertstmt.getFormula());
-		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term f = tlres.getTerm();
+		mOverapproximations.putAll(tlres.overapproximations());
+		final Term f = tlres.term();
 
-		eliminateAuxVarsAndAddNewAssumes(f, tlres.getAuxiliaryVars());
+		eliminateAuxVarsAndAddNewAssumes(f, tlres.auxiliaryVars());
 		assert assertTermContainsNoNull(mAssumes);
 	}
 
@@ -418,9 +406,9 @@ public class Statements2TransFormula {
 		{
 			final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 			final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
-			newAuxVars.addAll(tlres.getAuxiliaryVars());
-			mOverapproximations.putAll(tlres.getOverappoximations());
-			argumentTerms = tlres.getTerms();
+			newAuxVars.addAll(tlres.auxiliaryVars());
+			mOverapproximations.putAll(tlres.overapproximations());
+			argumentTerms = tlres.terms();
 		}
 
 		offset = 0;
@@ -433,7 +421,7 @@ public class Statements2TransFormula {
 
 		final String calledProcedure = call.getMethodName();
 
-		final IIdentifierTranslator[] ensIts = new IIdentifierTranslator[] { new SubstitutionTranslatorId(substitution),
+		final IIdentifierTranslator[] ensIts = { new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(ensuresSubstitution),
 				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false), mConstOnlyIdentifierTranslator };
 
@@ -441,9 +429,9 @@ public class Statements2TransFormula {
 			if (spec instanceof EnsuresSpecification) {
 				final Expression post = ((EnsuresSpecification) spec).getFormula();
 				final SingleTermResult tlres = mExpression2Term.translateToTerm(ensIts, post);
-				newAuxVars.addAll(tlres.getAuxiliaryVars());
-				mOverapproximations.putAll(tlres.getOverappoximations());
-				final Term f = tlres.getTerm();
+				newAuxVars.addAll(tlres.auxiliaryVars());
+				mOverapproximations.putAll(tlres.overapproximations());
+				final Term f = tlres.term();
 				newConjuncts.add(f);
 				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
@@ -455,7 +443,7 @@ public class Statements2TransFormula {
 			}
 		}
 
-		final IIdentifierTranslator[] reqIts = new IIdentifierTranslator[] { new SubstitutionTranslatorId(substitution),
+		final IIdentifierTranslator[] reqIts = { new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(requiresSubstitution),
 				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false), mConstOnlyIdentifierTranslator };
 
@@ -463,9 +451,9 @@ public class Statements2TransFormula {
 			if (spec instanceof RequiresSpecification) {
 				final Expression pre = ((RequiresSpecification) spec).getFormula();
 				final SingleTermResult tlres = mExpression2Term.translateToTerm(reqIts, pre);
-				newAuxVars.addAll(tlres.getAuxiliaryVars());
-				mOverapproximations.putAll(tlres.getOverappoximations());
-				final Term f = tlres.getTerm();
+				newAuxVars.addAll(tlres.auxiliaryVars());
+				mOverapproximations.putAll(tlres.overapproximations());
+				final Term f = tlres.term();
 				newConjuncts.add(f);
 				if (COMPUTE_ASSERTS) {
 					if (spec.isFree()) {
@@ -553,21 +541,12 @@ public class Statements2TransFormula {
 		protected IProgramVar getBoogieVar(final String id, final DeclarationInformation declInfo,
 				final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 			final StorageClass storageClass = declInfo.getStorageClass();
-			switch (storageClass) {
-			case IMPLEMENTATION_INPARAM:
-			case IMPLEMENTATION_OUTPARAM:
-			case PROC_FUNC_INPARAM:
-			case PROC_FUNC_OUTPARAM:
-			case LOCAL:
-				return mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
-			case GLOBAL:
-				return null;
-			case IMPLEMENTATION:
-			case PROC_FUNC:
-			case QUANTIFIED:
-			default:
-				throw new AssertionError();
-			}
+			return switch (storageClass) {
+			case IMPLEMENTATION_INPARAM, IMPLEMENTATION_OUTPARAM, PROC_FUNC_INPARAM, PROC_FUNC_OUTPARAM, LOCAL ->
+					mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+			case GLOBAL -> null;
+			case IMPLEMENTATION, PROC_FUNC, QUANTIFIED -> throw new AssertionError();
+			};
 		}
 	}
 
@@ -591,31 +570,28 @@ public class Statements2TransFormula {
 		protected IProgramVar getBoogieVar(final String id, final DeclarationInformation declInfo,
 				final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 			final StorageClass storageClass = declInfo.getStorageClass();
-			switch (storageClass) {
+			return switch (storageClass) {
 			case IMPLEMENTATION_INPARAM:
 			case IMPLEMENTATION_OUTPARAM:
 			case PROC_FUNC_INPARAM:
 			case PROC_FUNC_OUTPARAM:
 			case LOCAL:
-				return null;
+				yield null;
+
 			case GLOBAL:
-				IProgramVar bv;
 				if (isOldContext) {
 					if (mAllNonOld || !modifiableByCurrentProcedure(id)) {
-						bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
-					} else {
-						bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, true);
+						yield mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
 					}
-				} else {
-					bv = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
+					yield mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, true);
 				}
-				return bv;
+				yield mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, false);
+
 			case IMPLEMENTATION:
 			case PROC_FUNC:
 			case QUANTIFIED:
-			default:
 				throw new AssertionError();
-			}
+			};
 		}
 
 		private boolean modifiableByCurrentProcedure(final String id) {
@@ -624,7 +600,7 @@ public class Statements2TransFormula {
 
 	}
 
-	private class SubstitutionTranslatorId implements IIdentifierTranslator {
+	private static class SubstitutionTranslatorId implements IIdentifierTranslator {
 		private final Map<String, Term> mSubstitution;
 
 		public SubstitutionTranslatorId(final Map<String, Term> substitution) {
@@ -714,18 +690,18 @@ public class Statements2TransFormula {
 		initialize(procId);
 		for (int i = statements.size() - 1; i >= 0; i--) {
 			final Statement st = statements.get(i);
-			if (st instanceof AssumeStatement) {
-				addAssume((AssumeStatement) st);
-			} else if (st instanceof AssignmentStatement) {
-				addAssignment((AssignmentStatement) st);
-			} else if (st instanceof HavocStatement) {
-				addHavoc((HavocStatement) st);
-			} else if (st instanceof CallStatement) {
-				addSummary((CallStatement) st);
-			} else if (st instanceof ForkStatement) {
-				addForkCurrentThread((ForkStatement) st);
-			} else if (st instanceof JoinStatement) {
-				addJoinCurrentThread((JoinStatement) st);
+			if (st instanceof final AssumeStatement assumeStmt) {
+				addAssume(assumeStmt);
+			} else if (st instanceof final AssignmentStatement assignStmt) {
+				addAssignment(assignStmt);
+			} else if (st instanceof final HavocStatement havocStmt) {
+				addHavoc(havocStmt);
+			} else if (st instanceof final CallStatement call) {
+				addSummary(call);
+			} else if (st instanceof final ForkStatement fork) {
+				addForkCurrentThread(fork);
+			} else if (st instanceof final JoinStatement join) {
+				addJoinCurrentThread(join);
 			} else {
 				throw new IllegalArgumentException(
 						"Intenal Edge only contains" + " Assume, Assignment or Havoc Statement");
@@ -775,9 +751,9 @@ public class Statements2TransFormula {
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, arguments);
-		mAuxVars.addAll(tlres.getAuxiliaryVars());
-		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term[] argTerms = tlres.getTerms();
+		mAuxVars.addAll(tlres.auxiliaryVars());
+		mOverapproximations.putAll(tlres.overapproximations());
+		final Term[] argTerms = tlres.terms();
 
 		mTransFormulaBuilder.removeOutVarsOfLocalContext();
 
@@ -809,9 +785,9 @@ public class Statements2TransFormula {
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, forkThreadIdExpressions);
-		mAuxVars.addAll(tlres.getAuxiliaryVars());
-		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term[] argTerms = tlres.getTerms();
+		mAuxVars.addAll(tlres.auxiliaryVars());
+		mOverapproximations.putAll(tlres.overapproximations());
+		final Term[] argTerms = tlres.terms();
 
 		// FIXME Matthias 2018-08-17 test and probably remove the following line
 		mTransFormulaBuilder.clearOutVars();
@@ -841,9 +817,9 @@ public class Statements2TransFormula {
 
 		final IIdentifierTranslator[] its = getIdentifierTranslatorsIntraprocedural();
 		final MultiTermResult tlres = mExpression2Term.translateToTerms(its, joinedThreadIdExpressions);
-		mAuxVars.addAll(tlres.getAuxiliaryVars());
-		mOverapproximations.putAll(tlres.getOverappoximations());
-		final Term[] argTerms = tlres.getTerms();
+		mAuxVars.addAll(tlres.auxiliaryVars());
+		mOverapproximations.putAll(tlres.overapproximations());
+		final Term[] argTerms = tlres.terms();
 
 		// TODO: also check if this is correct;
 		int offset = 0;

@@ -44,19 +44,18 @@ public interface IParser {
 	 * @return PST
 	 */
 	IPSTTranslationUnit createPst(IASTTranslationUnit ast, ISourceDocument sourceDocument);
-	
+
 	/**
-	 * Parse a source code from string and create a new AST instance.
-	 * Default options are {@link ILanguage#OPTION_IS_SOURCE_UNIT} and {@link ILanguage#OPTION_NO_IMAGE_LOCATIONS} The
-	 * most interesting additional option should be {@link ILanguage#OPTION_SKIP_FUNCTION_BODIES} to speed up the
-	 * parsing.
+	 * Parse a source code from string and create a new AST instance. Default options are
+	 * {@link ILanguage#OPTION_IS_SOURCE_UNIT} and {@link ILanguage#OPTION_NO_IMAGE_LOCATIONS} The most interesting
+	 * additional option should be {@link ILanguage#OPTION_SKIP_FUNCTION_BODIES} to speed up the parsing.
 	 *
 	 * @param source
 	 *            source code string
 	 * @return new AST instance
 	 */
 	IASTTranslationUnit parse(String source);
-	
+
 	/**
 	 * Parse a source code from string and create a new AST instance.
 	 *

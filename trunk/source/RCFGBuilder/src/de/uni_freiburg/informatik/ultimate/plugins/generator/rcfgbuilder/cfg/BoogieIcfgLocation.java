@@ -82,11 +82,11 @@ public class BoogieIcfgLocation extends IcfgLocation {
 	 * @param procedure
 	 * @param isErrorLoc
 	 * @param boogieASTNode
-	 * @param annotationFilter Predicate to determine which annotations to copy over from boogieAstNode
+	 * @param annotationFilter
+	 *            Predicate to determine which annotations to copy over from boogieAstNode
 	 */
 	public BoogieIcfgLocation(final DebugIdentifier debugIdentifier, final String procedure, final boolean isErrorLoc,
-			final BoogieASTNode boogieASTNode,
-			final Predicate<IAnnotations> annotationFilter) {
+			final BoogieASTNode boogieASTNode, final Predicate<IAnnotations> annotationFilter) {
 		super(debugIdentifier, procedure);
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;

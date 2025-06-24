@@ -71,11 +71,11 @@ public class ProcedureResources {
 
 		// TODO split this function for readability
 
-		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(stats, icfg)
-				.graphOfProcedure(procedure, locationsOfInterest, enterCallsOfInterest);
+		final ProcedureGraph procedureGraph = new ProcedureGraphBuilder(stats, icfg).graphOfProcedure(procedure,
+				locationsOfInterest, enterCallsOfInterest);
 		final Map<String, IcfgLocation> procedureEntryNodes = icfg.getProcedureEntryNodes();
 		final IcfgLocation entry = procedureGraph.getEntryNode();
-		final PathExpressionComputer<IcfgLocation,IIcfgTransition<IcfgLocation>> peComputer =
+		final PathExpressionComputer<IcfgLocation, IIcfgTransition<IcfgLocation>> peComputer =
 				RegexStatUtils.createPEComputer(stats, procedureGraph);
 		final RegexToDag<IIcfgTransition<IcfgLocation>> regexToDag = RegexStatUtils.createRegexToDag(stats);
 
@@ -84,23 +84,20 @@ public class ProcedureResources {
 		final Collection<RegexDagNode<IIcfgTransition<IcfgLocation>>> enterCallMarkers =
 				// pre-sizing assumes that procedures are called up to two times
 				new ArrayList<>(2 * enterCallsOfInterest.size());
-		
-		locationsOfInterest.stream()
-				.peek(loi -> assertLoiFromSameProcedure(procedure, loi))
-				.map(loi -> RegexDagUtils.markRegex(RegexStatUtils.exprBetween(stats, peComputer, entry, loi), loi))
-				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex))
-				.forEach(loiMarkers::add);
-		enterCallsOfInterest.stream()
-				.map(procedureEntryNodes::get)
-				.map(procEntry -> RegexDagUtils.markRegex(RegexStatUtils.exprBetween(stats, peComputer, entry, procEntry), procEntry))
-				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex))
-				.forEach(enterCallMarkers::add);
 
-		IcfgLocation exitNode = procedureGraph.getExitNode().orElse(null);
-		final IRegex<IIcfgTransition<IcfgLocation>> regexToReturn = exitNode == null ?
-				Regex.emptySet() : RegexStatUtils.exprBetween(stats, peComputer, entry, exitNode);
-		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode = RegexStatUtils.addToDag(stats, regexToDag,
-				RegexDagUtils.markRegex(regexToReturn, exitNode));
+		locationsOfInterest.stream().peek(loi -> assertLoiFromSameProcedure(procedure, loi))
+				.map(loi -> RegexDagUtils.markRegex(RegexStatUtils.exprBetween(stats, peComputer, entry, loi), loi))
+				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex)).forEach(loiMarkers::add);
+		enterCallsOfInterest.stream().map(procedureEntryNodes::get)
+				.map(procEntry -> RegexDagUtils
+						.markRegex(RegexStatUtils.exprBetween(stats, peComputer, entry, procEntry), procEntry))
+				.map(regex -> RegexStatUtils.addToDag(stats, regexToDag, regex)).forEach(enterCallMarkers::add);
+
+		final IcfgLocation exitNode = procedureGraph.getExitNode().orElse(null);
+		final IRegex<IIcfgTransition<IcfgLocation>> regexToReturn =
+				exitNode == null ? Regex.emptySet() : RegexStatUtils.exprBetween(stats, peComputer, entry, exitNode);
+		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode =
+				RegexStatUtils.addToDag(stats, regexToDag, RegexDagUtils.markRegex(regexToReturn, exitNode));
 
 		mRegexDag = RegexStatUtils.getDagAndReset(stats, regexToDag);
 		RegexStatUtils.compress(stats, mRegexDag);
@@ -123,25 +120,24 @@ public class ProcedureResources {
 	}
 
 	/**
-	 * Returns the DAG overlay where only nodes and edges leading to this procedure's exit location are included.
-	 * The overlay contains exactly one marker ({@link LocationMarkerTransition}). The marker marks the exit location.
-	 * 
+	 * Returns the DAG overlay where only nodes and edges leading to this procedure's exit location are included. The
+	 * overlay contains exactly one marker ({@link LocationMarkerTransition}). The marker marks the exit location.
+	 *
 	 * @return Overlay for exit node of procedure
 	 */
 	public IDagOverlay<IIcfgTransition<IcfgLocation>> getDagOverlayPathToReturn() {
 		return mDagOverlayPathToReturn;
 	}
-	
+
 	/**
 	 * Returns the DAG overlay where only nodes and edges are included that
 	 * <ul>
 	 * <li>either lead to a LOI in this procedure
 	 * <li>or lead to an enter call of interest (specified in the constructor) in the procedure.
 	 * <ul>
-	 * LOIs are marked ({@link LocationMarkerTransition}).
-	 * Enter calls are not marked to differentiate them from LOIs. Enter calls can be identified by their
-	 * transition type ({@link IIcfgCallTransition}).
-	 * 
+	 * LOIs are marked ({@link LocationMarkerTransition}). Enter calls are not marked to differentiate them from LOIs.
+	 * Enter calls can be identified by their transition type ({@link IIcfgCallTransition}).
+	 *
 	 * @return Overlay for LOIs and enter calls in procedure
 	 */
 	public IDagOverlay<IIcfgTransition<IcfgLocation>> getDagOverlayPathToLoisAndEnterCalls() {

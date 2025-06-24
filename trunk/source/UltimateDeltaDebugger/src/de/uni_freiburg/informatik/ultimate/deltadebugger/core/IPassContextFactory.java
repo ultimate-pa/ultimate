@@ -31,7 +31,8 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 @FunctionalInterface
 public interface IPassContextFactory {
 	/**
-	 * @param source Source string.
+	 * @param source
+	 *            Source string.
 	 * @return a pass context
 	 */
 	IPassContext create(String source);

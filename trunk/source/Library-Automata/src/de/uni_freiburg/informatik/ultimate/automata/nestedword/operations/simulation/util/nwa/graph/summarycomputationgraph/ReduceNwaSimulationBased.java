@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Computes a simulation relation and applies PMax-SAT-based minimization afterward.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -127,8 +127,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		if (DEFAULT_USE_BISIMULATION_PREPROCESSING) {
 			final PartitionBackedSetOfPairs<STATE> partitionBackedSetOfPairs =
 					new NwaApproximateBisimulation<>(services, operand,
-							simulationInfoProvider.mayMergeFinalAndNonFinalStates()
-									? SimulationType.ORDINARY
+							simulationInfoProvider.mayMergeFinalAndNonFinalStates() ? SimulationType.ORDINARY
 									: SimulationType.DIRECT,
 							USE_FULL_PREPROCESSING).getResult();
 			final Collection<Set<STATE>> initialPartition = partitionBackedSetOfPairs.getRelation();
@@ -139,12 +138,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 					+ " equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass
 					+ " states.");
 		} else {
-			initialPairs =
-					new NwaApproximateSimulation<>(services, operand,
-							simulationInfoProvider.mayMergeFinalAndNonFinalStates()
-									? SimulationType.ORDINARY
-									: SimulationType.DIRECT,
-							USE_FULL_PREPROCESSING).getResult();
+			initialPairs = new NwaApproximateSimulation<>(services, operand,
+					simulationInfoProvider.mayMergeFinalAndNonFinalStates() ? SimulationType.ORDINARY
+							: SimulationType.DIRECT,
+					USE_FULL_PREPROCESSING).getResult();
 			sizeOfLargestEquivalenceClass = -1;
 		}
 		final long timePreprocessing = System.currentTimeMillis() - timer;
@@ -173,17 +170,17 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 					initialPairs::containsPair, mLogger) : "The computed simulation results are incorrect.";
 			Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair;
 			switch (backend) {
-				case FINITE_AUTOMATON:
-					resultPair = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
-					break;
-				case BISIMULATION:
-					resultPair = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
-					break;
-				case SIMULATION:
-					resultPair = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown backend type: " + backend);
+			case FINITE_AUTOMATON:
+				resultPair = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
+				break;
+			case BISIMULATION:
+				resultPair = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+				break;
+			case SIMULATION:
+				resultPair = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown backend type: " + backend);
 			}
 			final IDoubleDeckerAutomaton<LETTER, STATE> result = resultPair.getFirst();
 			super.directResultConstruction(result);
@@ -273,7 +270,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	 */
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final ISetOfPairs<STATE, ?> simulationRelation) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final ISetOfPairs<STATE, ?> simulationRelation) {
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 			if (isAuxiliaryVertex(spoilerVertex)) {
 				continue;
@@ -321,8 +319,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 				simulationToEquivalenceRelation(operand, simulationInfoProvider, graph);
 
 		final Settings<STATE> settings = getPmaxSatSettings(simulationInfoProvider);
-		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory,
-				mOperand, new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()), settings);
+		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer =
+				new MinimizeNwaPmaxSatDirectBi<>(mServices, stateFactory, mOperand,
+						new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()), settings);
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
 
@@ -334,8 +333,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 
 		final Settings<STATE> settings = getPmaxSatSettings(simulationInfoProvider);
-		final MinimizeNwaPmaxSatDirect<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatDirect<>(
-				mServices, stateFactory, mOperand, simRelation.getRelation(), settings);
+		final MinimizeNwaPmaxSatDirect<LETTER, STATE> maxSatMinimizer =
+				new MinimizeNwaPmaxSatDirect<>(mServices, stateFactory, mOperand, simRelation.getRelation(), settings);
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
 
@@ -365,7 +364,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 
 	/**
 	 * Which PMax-SAT-based backend to use for minimization.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private enum MinimizationBackend {

@@ -304,8 +304,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 	public EqDisjunctiveConstraint<NODE> disjoinDisjunctiveConstraints(final EqDisjunctiveConstraint<NODE> disjunct1,
 			final EqDisjunctiveConstraint<NODE> disjunct2) {
 		debugStart(BmNames.DISJOIN_DISJUNCTIVE);
-		final Set<EqConstraint<NODE>> allConjunctiveConstraints = new HashSet<>();
-		allConjunctiveConstraints.addAll(disjunct1.getConstraints());
+		final Set<EqConstraint<NODE>> allConjunctiveConstraints = new HashSet<>(disjunct1.getConstraints());
 		allConjunctiveConstraints.addAll(disjunct2.getConstraints());
 		final EqDisjunctiveConstraint<NODE> result = getDisjunctiveConstraint(allConjunctiveConstraints);
 		debugEnd(BmNames.DISJOIN_DISJUNCTIVE);
@@ -514,8 +513,8 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 
 	private void postProjectHelper(final EqConstraint<NODE> original, final Collection<Term> termsToProjectAway,
 			final EqConstraint<NODE> result) {
-		assert VPDomainHelpers.constraintFreeOfVars(termsToProjectAway, result,
-				getMgdScript().getScript()) : "resulting constraint still has at least one of the to-be-projected vars";
+		assert VPDomainHelpers.constraintFreeOfVars(termsToProjectAway, result, getMgdScript().getScript())
+				: "resulting constraint still has at least one of the to-be-projected vars";
 
 		if (mIsDebugMode) {
 			mLogger.debug("projected variables " + termsToProjectAway + " from " + original.hashCode() + " result: "
@@ -575,7 +574,7 @@ public class EqConstraintFactory<NODE extends IEqNodeIdentifier<NODE>> {
 		return mBenchmark;
 	}
 
-	private static enum BmNames {
+	private enum BmNames {
 
 		PROJECTAWAY, UNFREEZE, ADD_EQUALITY, ADD_DISEQUALITY, ADD_WEAK_EQUALITY, CONJOIN, CONJOIN_DISJUNCTIVE, DISJOIN,
 		DISJOIN_DISJUNCTIVE, RENAME_VARIABLES, RENAME_VARIABLES_DISJUNCTIVE;

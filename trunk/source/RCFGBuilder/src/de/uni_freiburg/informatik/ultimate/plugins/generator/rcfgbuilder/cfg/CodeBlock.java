@@ -80,8 +80,6 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 	private String mPrecedingProcedure;
 	private String mSucceedingProcedure;
 
-	protected RCFGEdgeAnnotation mAnnotation;
-
 	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
 		super(source, target, source == null ? new Payload() : new Payload(source.getPayload()));
@@ -136,7 +134,7 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 
 	private void setPreceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
-			final String name = ((BoogieIcfgLocation) source).getProcedure();
+			final String name = source.getProcedure();
 			if (mPrecedingProcedure == null) {
 				mPrecedingProcedure = name;
 			} else {
@@ -151,7 +149,7 @@ public abstract class CodeBlock extends IcfgEdge implements IActionWithBranchEnc
 
 	private void setSucceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
-			final String name = ((BoogieIcfgLocation) source).getProcedure();
+			final String name = source.getProcedure();
 			if (mSucceedingProcedure == null) {
 				mSucceedingProcedure = name;
 			} else {

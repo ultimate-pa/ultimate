@@ -76,10 +76,6 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 		mCallsWithoutReturns = getCheckedOpenCalls(codeBlocks).size();
 		mPrettyPrinted = null;
 
-		// workaround: set annotation with this pluginId again, because it was
-		// overwritten by the mergeAnnotations method
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
-
 		final boolean transformToCNF =
 				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
@@ -88,10 +84,10 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(csToolkit, simplify, extPqe,
 				transformToCNF, true, mLogger, services, codeBlocks, simplificationTechnique);
 
-		assert mCallsWithoutReturns > 0
-				|| TransFormulaUtils.hasInternalNormalForm(mTransitionFormula) : "Expected TF in internal normal form";
-		assert mCallsWithoutReturns > 0 || TransFormulaUtils
-				.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders) : "Expected TF in internal normal form";
+		assert mCallsWithoutReturns > 0 || TransFormulaUtils.hasInternalNormalForm(mTransitionFormula)
+				: "Expected TF in internal normal form";
+		assert mCallsWithoutReturns > 0 || TransFormulaUtils.hasInternalNormalForm(mTransitionFormulaWithBranchEncoders)
+				: "Expected TF in internal normal form";
 	}
 
 	private Deque<Call> getCheckedOpenCalls(final List<CodeBlock> codeBlocks) {
@@ -147,6 +143,7 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 	/**
 	 * Returns Transformula for a sequence of CodeBlocks that may (opposed to the method sequentialComposition) contain
 	 * also Call and Return.
+	 *
 	 * @param logger
 	 * @param services
 	 */
@@ -179,8 +176,8 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 					if (withBranchEncoders) {
 						// TODO: What about branchencoders in the IAction context?
 						if (currentAction instanceof CodeBlock) {
-							beforeFirstPendingCall
-									.add(((IActionWithBranchEncoders) currentAction).getTransitionFormulaWithBranchEncoders());
+							beforeFirstPendingCall.add(((IActionWithBranchEncoders) currentAction)
+									.getTransitionFormulaWithBranchEncoders());
 						} else {
 							// things that are no codeblock cannot have branch encoders
 							throw new UnsupportedOperationException("No codeblock, no branch encoders");
@@ -194,10 +191,9 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 					if (callsSinceLastUnmatchedCall == returnsSinceLastUnmatchedCall) {
 						final IReturnAction correspondingReturn = (IReturnAction) currentAction;
 						final List<IAction> actionsBetween = new ArrayList<>(afterLastUnmatchedCall);
-						final UnmodifiableTransFormula localTransFormula =
-								getInterproceduralTransFormula(csToolkit, simplify, extPqe, tranformToCNF,
-										withBranchEncoders, null, null, lastUnmatchedCall, correspondingReturn, logger,
-										services, actionsBetween, simplificationTechnique);
+						final UnmodifiableTransFormula localTransFormula = getInterproceduralTransFormula(csToolkit,
+								simplify, extPqe, tranformToCNF, withBranchEncoders, null, null, lastUnmatchedCall,
+								correspondingReturn, logger, services, actionsBetween, simplificationTechnique);
 						beforeFirstPendingCall.add(localTransFormula);
 						lastUnmatchedCall = null;
 						callsSinceLastUnmatchedCall = 0;
@@ -268,7 +264,8 @@ public class SequentialComposition extends CodeBlock implements IIcfgInternalTra
 				result = TransFormulaUtils.sequentialCompositionWithCallAndReturn(csToolkit.getManagedScript(),
 						simplify, extPqe, tranformToCNF, call.getLocalVarsAssignment(), oldVarsAssignment,
 						globalVarsAssignment, tfForCodeBlocks, ret.getAssignmentOfReturn(), logger, services,
-						simplificationTechnique, csToolkit.getSymbolTable(), csToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProc));
+						simplificationTechnique, csToolkit.getSymbolTable(),
+						csToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(calledProc));
 			}
 
 		}

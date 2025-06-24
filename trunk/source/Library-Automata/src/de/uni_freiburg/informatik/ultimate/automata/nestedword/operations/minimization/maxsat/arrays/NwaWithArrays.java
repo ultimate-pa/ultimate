@@ -150,19 +150,19 @@ final class NwaWithArrays implements Cloneable {
 	 *         non-deterministic)
 	 */
 	static boolean checkDeterminism(final NwaWithArrays nwa) {
-		final HashSet<ITrans> iSeen = new HashSet<ITrans>();
+		final HashSet<ITrans> iSeen = new HashSet<>();
 		for (final ITrans x : nwa.mITrans) {
 			if (!iSeen.add(new ITrans(x.mSrc, x.mSym, 0))) {
 				return false;
 			}
 		}
-		final HashSet<CTrans> cSeen = new HashSet<CTrans>();
+		final HashSet<CTrans> cSeen = new HashSet<>();
 		for (final CTrans x : nwa.mCTrans) {
 			if (!cSeen.add(new CTrans(x.mSrc, x.mSym, 0))) {
 				return false;
 			}
 		}
-		final HashSet<RTrans> rSeen = new HashSet<RTrans>();
+		final HashSet<RTrans> rSeen = new HashSet<>();
 		for (final RTrans x : nwa.mRTrans) {
 			if (!rSeen.add(new RTrans(x.mSrc, x.mSym, x.mTop, 0))) {
 				return false;
@@ -178,7 +178,7 @@ final class NwaWithArrays implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in strictly ascending order.
 	 */
 	static ArrayList<Integer> computeInitialStates(final NwaWithArrays nwa) {
-		final ArrayList<Integer> out = new ArrayList<Integer>();
+		final ArrayList<Integer> out = new ArrayList<>();
 
 		for (int i = 0; i < nwa.mNumStates; i++) {
 			if (nwa.mIsInitial[i]) {
@@ -195,7 +195,7 @@ final class NwaWithArrays implements Cloneable {
 	 * @return ArrayList containing all final states of <code>nwa</code>, in strictly ascending order.
 	 */
 	static ArrayList<Integer> computeFinalStates(final NwaWithArrays nwa) {
-		final ArrayList<Integer> out = new ArrayList<Integer>();
+		final ArrayList<Integer> out = new ArrayList<>();
 
 		for (int i = 0; i < nwa.mNumStates; i++) {
 			if (nwa.mIsFinal[i]) {

@@ -31,7 +31,6 @@ fi
 export PATH="${PATH}:${ultdir}"
 spushd "$website_static_dir"
 # this step will create the diretory _site
-exit_on_fail bundle install 
 exit_on_fail run_python scripts/build.py --production
 spopd
 if [ -d "$target_dir" ]; then

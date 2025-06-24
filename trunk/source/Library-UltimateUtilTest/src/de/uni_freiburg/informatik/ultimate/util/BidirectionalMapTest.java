@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util;
@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
  * Some basic tests for {@link BidirectionalMap}.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class BidirectionalMapTest {
-	
+
 	@Test
 	public void testContainsValue() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -56,7 +56,7 @@ public class BidirectionalMapTest {
 		assertTrue(m.containsValue(2));
 		assertFalse(m.containsValue(3));
 	}
-	
+
 	@Test
 	public void testClear() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -78,7 +78,7 @@ public class BidirectionalMapTest {
 		assertEquals(m.inverse(), m.inverse().inverse().inverse());
 		assertNotEquals(m, m.inverse());
 	}
-	
+
 	@Test
 	public void testPut() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -96,7 +96,7 @@ public class BidirectionalMapTest {
 		assertEquals(expected, m);
 		assertEquals(expectedInverse, m.inverse());
 	}
-	
+
 	@Test
 	public void testPutExisiting() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -114,7 +114,7 @@ public class BidirectionalMapTest {
 		assertEquals(expected, m);
 		assertEquals(expectedInverse, m.inverse());
 	}
-	
+
 	@Test
 	public void testReplace() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -150,27 +150,27 @@ public class BidirectionalMapTest {
 		assertEquals(expected, m);
 		assertEquals(expectedInverse, m.inverse());
 	}
-	
+
 	@Test
 	public void testRemove() {
 		testGenericRemoveB2(m -> m.remove("b"));
 	}
-	
+
 	@Test
 	public void testInverseRemove() {
 		testGenericRemoveB2(m -> m.inverse().remove(2));
 	}
-	
+
 	@Test
 	public void testKeySetRemove() {
 		testUnsupportedRemoveB2(m -> m.keySet().remove("b"));
 	}
-	
+
 	@Test
 	public void testValuesRemove() {
 		testUnsupportedRemoveB2(m -> m.values().remove(2));
 	}
-	
+
 	@Test
 	public void testEntrySetIteratorRemove() {
 		testUnsupportedRemoveB2(m -> {
@@ -182,17 +182,17 @@ public class BidirectionalMapTest {
 			}
 		});
 	}
-	
-	private void testUnsupportedRemoveB2(Consumer<BidirectionalMap<String, Integer>> removeOperation) {
+
+	private void testUnsupportedRemoveB2(final Consumer<BidirectionalMap<String, Integer>> removeOperation) {
 		// both are accepted: correct remove and unsupported operation
 		try {
 			testGenericRemoveB2(removeOperation);
-		} catch(final UnsupportedOperationException uoe) {
+		} catch (final UnsupportedOperationException uoe) {
 			// nothing to do
 		}
 	}
-	
-	private void testGenericRemoveB2(Consumer<BidirectionalMap<String, Integer>> removeOperation) {
+
+	private void testGenericRemoveB2(final Consumer<BidirectionalMap<String, Integer>> removeOperation) {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
 		m.put("a", 1);
 		m.put("b", 2);
@@ -207,7 +207,7 @@ public class BidirectionalMapTest {
 		assertEquals(expected, m);
 		assertEquals(expectedInverse, m.inverse());
 	}
-	
+
 	@Test
 	public void testPutAll() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -232,7 +232,7 @@ public class BidirectionalMapTest {
 		assertEquals(expected, m);
 		assertEquals(expectedInverse, m.inverse());
 	}
-	
+
 	@Test
 	public void testPutSelf() {
 		final BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
@@ -244,43 +244,43 @@ public class BidirectionalMapTest {
 		assertEquals(mCopy, m);
 		assertEquals(mCopy.inverse(), m.inverse());
 	}
-	
+
 	// TODO
-//	@Test
-//	public void testValues() {
-//		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
-//		m.put("a", 1);
-//		m.put("b", 2);
-//		m.put("c", 3);
-//	
-//		// test values() equals
-//
-//		// test unmodifiable
-//	}
-	
+	// @Test
+	// public void testValues() {
+	// BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+	// m.put("a", 1);
+	// m.put("b", 2);
+	// m.put("c", 3);
+	//
+	// // test values() equals
+	//
+	// // test unmodifiable
+	// }
+
 	// TODO
-//	@Test
-//	public void testKeySet() {
-//		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
-//		m.put("a", 1);
-//		m.put("b", 2);
-//		m.put("c", 3);
-//	
-//		// test keySet() equals
-//	
-//		// test unmodifiable
-//	}
+	// @Test
+	// public void testKeySet() {
+	// BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+	// m.put("a", 1);
+	// m.put("b", 2);
+	// m.put("c", 3);
+	//
+	// // test keySet() equals
+	//
+	// // test unmodifiable
+	// }
 
 	// Known bug, mentioned in documentation
-//	@Test
-//	public void testEntrySet() {
-//		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
-//		m.put("a", 1);
-//		m.entrySet().iterator().next().setValue(2);
-//		
-//		BidirectionalMap<Integer, String> mInverseExpected = new BidirectionalMap<>();
-//		mInverseExpected.put(2, "a");
-//		
-//		assertEquals(mInverseExpected, m.inverse());
-//	}
+	// @Test
+	// public void testEntrySet() {
+	// BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+	// m.put("a", 1);
+	// m.entrySet().iterator().next().setValue(2);
+	//
+	// BidirectionalMap<Integer, String> mInverseExpected = new BidirectionalMap<>();
+	// mInverseExpected.put(2, "a");
+	//
+	// assertEquals(mInverseExpected, m.inverse());
+	// }
 }

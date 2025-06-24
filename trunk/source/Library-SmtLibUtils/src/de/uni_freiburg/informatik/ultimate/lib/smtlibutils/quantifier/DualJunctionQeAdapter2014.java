@@ -36,11 +36,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Adapter that allows us to use the old
- * {@link XjunctPartialQuantifierElimination} in the new
- * {@link DualJunctionQuantifierElimination}. The development of the old
- * {@link XjunctPartialQuantifierElimination} started in around 2014, hence the
- * name of this class.
+ * Adapter that allows us to use the old {@link XjunctPartialQuantifierElimination} in the new
+ * {@link DualJunctionQuantifierElimination}. The development of the old {@link XjunctPartialQuantifierElimination}
+ * started in around 2014, hence the name of this class.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -68,10 +66,10 @@ public class DualJunctionQeAdapter2014 extends DualJunctionQuantifierElimination
 	public EliminationResult tryToEliminate(final EliminationTask et) {
 		final Term[] dualJuncts = QuantifierUtils.getDualFiniteJuncts(et.getQuantifier(), et.getTerm());
 		final Set<TermVariable> modifiableEliminateeSet = new LinkedHashSet<>(et.getEliminatees());
-		final Term[] resultdualJuncts = mXjunctPqe.tryToEliminate(et.getQuantifier(), dualJuncts,
-				modifiableEliminateeSet);
-		final Term resultDualJunction = QuantifierUtils.applyDualFiniteConnective(mScript, et.getQuantifier(),
-				resultdualJuncts);
+		final Term[] resultdualJuncts =
+				mXjunctPqe.tryToEliminate(et.getQuantifier(), dualJuncts, modifiableEliminateeSet);
+		final Term resultDualJunction =
+				QuantifierUtils.applyDualFiniteConnective(mScript, et.getQuantifier(), resultdualJuncts);
 		final EliminationTask resultEt = et.update(modifiableEliminateeSet, resultDualJunction);
 		if (resultEt.getEliminatees().containsAll(et.getEliminatees())) {
 			// no eliminatee has been removed

@@ -30,6 +30,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
  * Ultimate model of an automaton transition.
@@ -64,6 +65,7 @@ public final class AutomatonTransition
 		INITIAL
 	}
 
+	@Visualizable
 	private String mName;
 
 	/**
@@ -85,22 +87,12 @@ public final class AutomatonTransition
 		super(state, succState);
 		assert type == Transition.RETURN || hierPred == null;
 		assert type != Transition.RETURN || hierPred != null;
-		switch (type) {
-		case CALL:
-			mName = "Call";
-			break;
-		case INTERNAL:
-			mName = "Internal";
-			break;
-		case RETURN:
-			mName = "Return";
-			break;
-		case INITIAL:
-			mName = "";
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
+		mName = switch (type) {
+		case CALL -> "Call";
+		case INTERNAL -> "Internal";
+		case RETURN -> "Return";
+		case INITIAL -> "";
+		};
 		mName = mName + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
 			mName = mName + " " + hierPred;

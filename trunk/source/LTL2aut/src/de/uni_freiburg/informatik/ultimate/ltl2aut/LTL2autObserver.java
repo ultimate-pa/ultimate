@@ -68,8 +68,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.PreprocessorAnnot
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.typechecker.TypeCheckException;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -144,7 +144,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		mCheck.annotate(mNWAContainer);
 	}
 
-	private LTLPropertyCheck createCheckFromPropertyString(final String ltlProperty, final BoogieSymbolTable symbolTable) throws Throwable {
+	private LTLPropertyCheck createCheckFromPropertyString(final String ltlProperty,
+			final BoogieSymbolTable symbolTable) throws Throwable {
 		final Map<String, CheckableExpression> apIrs = parseAtomicPropositions(ltlProperty, symbolTable);
 		if (apIrs.isEmpty()) {
 			throw new IllegalArgumentException("No atomic propositions in " + ltlProperty);
@@ -165,7 +166,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	// Parse atomic propositions while respecting proper parenthesis nesting.
-	private Map<String, CheckableExpression> parseAtomicPropositions(final String ltlProperty, final BoogieSymbolTable symbolTable) {
+	private Map<String, CheckableExpression> parseAtomicPropositions(final String ltlProperty,
+			final BoogieSymbolTable symbolTable) {
 		final Map<String, CheckableExpression> apIrs = new LinkedHashMap<>();
 
 		int pos = ltlProperty.indexOf("AP(");
@@ -175,8 +177,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 			int numParens = 1;
 			while (numParens > 0) {
-				int firstOpen = ltlProperty.indexOf("(", pos);
-				int firstClose = ltlProperty.indexOf(")", pos);
+				final int firstOpen = ltlProperty.indexOf("(", pos);
+				final int firstClose = ltlProperty.indexOf(")", pos);
 
 				assert firstOpen >= 0 || firstClose >= 0 : "Unmatched opening parenthesis";
 				if (firstOpen >= 0 && firstOpen < firstClose) {
@@ -232,19 +234,19 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			return String.valueOf(ALPHABET.charAt(i));
 		}
 
-		String rtr = "A";
+		final StringBuilder rtr = new StringBuilder("A");
 		int idx = i;
 		while (idx > ALPHABET.length()) {
 			idx = idx - ALPHABET.length();
-			rtr += String.valueOf(ALPHABET.charAt(idx % ALPHABET.length()));
+			rtr.append(ALPHABET.charAt(idx % ALPHABET.length()));
 		}
-		return rtr;
+		return rtr.toString();
 	}
 
 	private String[] getLTLPropertyString() throws IOException {
 		final String[] properties;
 		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-		                .getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
+				.getBoolean(PreferenceInitializer.LABEL_PROPERTYFROMFILE) && mInputFile != null) {
 			properties = extractPropertyFromInputFile();
 			if (properties.length > 0) {
 				return properties;
@@ -262,17 +264,14 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private String[] extractPropertyFromInputFile() throws IOException {
-		BufferedReader br;
 		String line = null;
 		final List<String> properties = new ArrayList<>();
-		try {
-			br = new BufferedReader(new FileReader(mInputFile));
+		try (var br = new BufferedReader(new FileReader(mInputFile))) {
 			while ((line = br.readLine()) != null) {
 				if (line.contains(LTL_MARKER)) {
-					properties.add(line.replaceFirst("//", "").replaceAll(LTL_MARKER, "").trim());
+					properties.add(line.replaceFirst("//", "").replace(LTL_MARKER, "").trim());
 				}
 			}
-			br.close();
 		} catch (final IOException e) {
 			mLogger.error("Error while reading " + mInputFile + ": " + e);
 			throw e;
@@ -343,13 +342,14 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	/*
-	 * Implements a post-order traversal of an expression that constructs a fully typed expression using
-         * an existing symbol table.
+	 * Implements a post-order traversal of an expression that constructs a fully typed expression using an existing
+	 * symbol table.
 	 */
 	private static final class TypeAdder extends GeneratedBoogieAstTransformer {
 		private Pair<String, Expression> mTypeError;
-		private BoogieSymbolTable mSymbolTable;
+		private final BoogieSymbolTable mSymbolTable;
 
+		@Override
 		public String toString() {
 			return "Transformer that adds type information to atomic propositions";
 		}
@@ -358,7 +358,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 			return mTypeError;
 		}
 
-		public TypeAdder(BoogieSymbolTable symbolTable) {
+		public TypeAdder(final BoogieSymbolTable symbolTable) {
 			mSymbolTable = symbolTable;
 		}
 
@@ -391,8 +391,10 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		public Expression transform(final IdentifierExpression node) {
 			// Look up the Boogie type of the identifier in the underlying (real) Boogie program.
 			final IBoogieType boogieType;
-			boogieType = mSymbolTable.getTypeForVariableSymbol(node.getIdentifier(), DeclarationInformation.StorageClass.GLOBAL, "GLOBAL");
-			return new IdentifierExpression(node.getLoc(), boogieType, node.getIdentifier(), DeclarationInformation.DECLARATIONINFO_GLOBAL);
+			boogieType = mSymbolTable.getTypeForVariableSymbol(node.getIdentifier(),
+					DeclarationInformation.StorageClass.GLOBAL, "GLOBAL");
+			return new IdentifierExpression(node.getLoc(), boogieType, node.getIdentifier(),
+					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		}
 
 		@Override
@@ -438,7 +440,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 		public Expression transform(final BitVectorAccessExpression node) {
 			final Expression bvExpr = node.getBitvec().accept(this);
 			try {
-				return ExpressionFactory.constructBitvectorAccessExpression(node.getLoc(), bvExpr, node.getEnd(), node.getStart());
+				return ExpressionFactory.constructBitvectorAccessExpression(node.getLoc(), bvExpr, node.getEnd(),
+						node.getStart());
 			} catch (final TypeCheckException ex) {
 				setTypeError(ex.getMessage(), node);
 				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",
@@ -473,7 +476,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 				typedIdxExprs[i] = untypedIdxExprs[i].accept(this);
 			}
 			try {
-				return ExpressionFactory.constructArrayStoreExpression(node.getLoc(), arrayExpr, typedIdxExprs, valExpr);
+				return ExpressionFactory.constructArrayStoreExpression(node.getLoc(), arrayExpr, typedIdxExprs,
+						valExpr);
 			} catch (final TypeCheckException ex) {
 				setTypeError(ex.getMessage(), node);
 				return new IdentifierExpression(node.getLoc(), BoogieType.TYPE_ERROR, "Error",

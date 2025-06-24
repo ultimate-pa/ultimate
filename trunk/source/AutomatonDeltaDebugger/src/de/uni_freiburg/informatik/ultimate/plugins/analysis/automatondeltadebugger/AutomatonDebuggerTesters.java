@@ -1,23 +1,23 @@
 /*
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automaton Delta Debugger.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
  * it and/or modify it under the terms of the GNU Lesser General Public License
  * as published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
  * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automaton Delta Debugger. If not, see
  * <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7: If you modify the
  * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
  * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * Testers used by the automaton delta debugger.
  * <p>
  * NOTE: Users may insert their sample code as a new method and leave it here.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class AutomatonDebuggerTesters {
@@ -81,7 +81,7 @@ public class AutomatonDebuggerTesters {
 
 	/**
 	 * Getter for an {@link IOperation}.
-	 * 
+	 *
 	 * @param testMode
 	 *            test mode
 	 * @param operationType
@@ -92,27 +92,27 @@ public class AutomatonDebuggerTesters {
 			final EOperationType operationType) {
 		final AbstractTester<String, String> tester;
 		switch (testMode) {
-			case GENERAL:
-				tester = getGeneralTester(operationType);
-				break;
+		case GENERAL:
+			tester = getGeneralTester(operationType);
+			break;
 
-			case CHECK_RESULT:
-				tester = getCheckResultTester(operationType);
-				break;
+		case CHECK_RESULT:
+			tester = getCheckResultTester(operationType);
+			break;
 
-			case MINIMIZATION:
-				tester = getMinimizationResultTester();
-				break;
+		case MINIMIZATION:
+			tester = getMinimizationResultTester();
+			break;
 
-			default:
-				throw new IllegalArgumentException("Unknown tester: " + testMode);
+		default:
+			throw new IllegalArgumentException("Unknown tester: " + testMode);
 		}
 		return tester;
 	}
 
 	/**
 	 * Constructs an {@link IOperation} object from the setting.
-	 * 
+	 *
 	 * @param operationType
 	 *            operation to use
 	 * @param automaton
@@ -131,7 +131,7 @@ public class AutomatonDebuggerTesters {
 
 	/**
 	 * Example tester for debugging general problems.
-	 * 
+	 *
 	 * @param operationType
 	 *            operation to use
 	 * @return tester which listens for any throwable
@@ -140,7 +140,7 @@ public class AutomatonDebuggerTesters {
 		// 'null' stands for any exception
 		final Throwable throwable = null;
 
-		return new AbstractTester<String, String>(throwable) {
+		return new AbstractTester<>(throwable) {
 			@Override
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final StringFactory factory = new StringFactory();
@@ -152,7 +152,7 @@ public class AutomatonDebuggerTesters {
 
 	/**
 	 * Example tester for debugging problems with the {@code checkResult()} method of {@code IOperation}.
-	 * 
+	 *
 	 * @param operationType
 	 *            operation to use
 	 * @return tester which debugs the checkResult method
@@ -161,7 +161,7 @@ public class AutomatonDebuggerTesters {
 		final String message = "'checkResult' failed";
 		final Throwable throwable = new DebuggerException(message);
 
-		return new AbstractTester<String, String>(throwable) {
+		return new AbstractTester<>(throwable) {
 			@Override
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final StringFactory factory = new StringFactory();
@@ -179,7 +179,7 @@ public class AutomatonDebuggerTesters {
 
 	/**
 	 * Example tester for debugging problems with the {@code checkResult()} method of {@code IOperation}.
-	 * 
+	 *
 	 * @return tester which debugs the checkResult method
 	 */
 	private AbstractTester<String, String> getMinimizationResultTester() {
@@ -187,7 +187,7 @@ public class AutomatonDebuggerTesters {
 		final Throwable throwable = new DebuggerException(message);
 		final IUltimateServiceProvider services2 = mServices;
 
-		return new AbstractTester<String, String>(throwable) {
+		return new AbstractTester<>(throwable) {
 			@Override
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final AutomataLibraryServices services = new AutomataLibraryServices(services2);

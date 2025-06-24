@@ -2,7 +2,7 @@
  * Code taken from https://github.com/johspaeth/PathExpression
  * Copyright (C) 2018 Johannes Spaeth
  * Copyright (C) 2018 Fraunhofer IEM, Paderborn, Germany
- * 
+ *
  * Copyright (C) 2019 Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  * Copyright (C) 2019 University of Freiburg
  *
@@ -33,9 +33,6 @@ package de.uni_freiburg.informatik.ultimate.lib.pathexpressions;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledEdge;
-import de.uni_freiburg.informatik.ultimate.lib.pathexpressions.ILabeledGraph;
-
 public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 
 	protected final Set<N> mNodes;
@@ -45,7 +42,7 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 		this(new HashSet<>(), new HashSet<>());
 	}
 
-	protected GenericLabeledGraph(Set<N> nodes, Set<ILabeledEdge<N, L>> edges) {
+	protected GenericLabeledGraph(final Set<N> nodes, final Set<ILabeledEdge<N, L>> edges) {
 		mNodes = nodes;
 		mEdges = edges;
 	}
@@ -53,10 +50,11 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 	/**
 	 * Adds a node to this graph. Already existing nodes are ignored.
 	 * <p>
-	 * Nodes can also be added implicitly using {@link #addEdge(ILabeledEdge)}
-	 * so calling this method might not be necessary.
-	 * 
-	 * @param node Node to be added
+	 * Nodes can also be added implicitly using {@link #addEdge(ILabeledEdge)} so calling this method might not be
+	 * necessary.
+	 *
+	 * @param node
+	 *            Node to be added
 	 * @return The node was new (did not already exist), the node was added
 	 */
 	public boolean addNode(final N node) {
@@ -66,10 +64,11 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 	/**
 	 * Adds an edge to this graph. Already existing edges are ignored.
 	 * <p>
-	 * Source and target nodes of the edge are also added to this graph.
-	 * Calling {@link #addNode(Object)} is not necessary.
-	 * 
-	 * @param edge Edge to be added
+	 * Source and target nodes of the edge are also added to this graph. Calling {@link #addNode(Object)} is not
+	 * necessary.
+	 *
+	 * @param edge
+	 *            Edge to be added
 	 * @return The edge was new (did not already exist), the edge was added
 	 */
 	public boolean addEdge(final ILabeledEdge<N, L> edge) {
@@ -81,16 +80,19 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 	/**
 	 * Constructs and adds an edge to this graph. Already existing edges are ignored.
 	 * <p>
-	 * Source and target nodes of the edge are also added to this graph.
-	 * Calling {@link #addNode(Object)} is not necessary.
-	 * 
-	 * @param source Source node of the new edge
-	 * @param label Label of the new edge
-	 * @param target Target node of the edge
+	 * Source and target nodes of the edge are also added to this graph. Calling {@link #addNode(Object)} is not
+	 * necessary.
+	 *
+	 * @param source
+	 *            Source node of the new edge
+	 * @param label
+	 *            Label of the new edge
+	 * @param target
+	 *            Target node of the edge
 	 * @return The edge was new (did not already exist), the edge was added
 	 */
 	public boolean addEdge(final N source, final L label, final N target) {
-		return addEdge(new GenericLabeledEdge<N, L>(source, label, target));
+		return addEdge(new GenericLabeledEdge<>(source, label, target));
 	}
 
 	@Override
@@ -102,7 +104,7 @@ public class GenericLabeledGraph<N, L> implements ILabeledGraph<N, L> {
 	public Set<N> getNodes() {
 		return mNodes;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "nodes = " + mNodes + " edges = " + mEdges;

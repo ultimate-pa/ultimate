@@ -24,9 +24,9 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenC
 
 class DeclCollector extends LeadingNodeCollector {
 	private final Set<DeclFlag> mOptions;
-	private List<DeclParts> mResult;
+	private final List<DeclParts> mResult;
 
-	public DeclCollector(Set<DeclFlag> options, List<DeclParts> result) {
+	public DeclCollector(final Set<DeclFlag> options, final List<DeclParts> result) {
 		mOptions = options;
 		mResult = result;
 	}
@@ -39,8 +39,7 @@ class DeclCollector extends LeadingNodeCollector {
 
 		// Filter type (typedef or not)
 		final boolean isTypedef = ASTNodeUtils.isTypedef(declaration);
-		if ((isTypedef && !mOptions.contains(DeclFlag.TYPEDEFS))
-				|| (!isTypedef && !mOptions.contains(DeclFlag.VARS))) {
+		if ((isTypedef && !mOptions.contains(DeclFlag.TYPEDEFS)) || (!isTypedef && !mOptions.contains(DeclFlag.VARS))) {
 			return false;
 		}
 
@@ -68,7 +67,7 @@ class DeclCollector extends LeadingNodeCollector {
 	 *            decl specifier
 	 * @return if the declSpecifier is a composite type or enum specifier that is referenced
 	 */
-	private boolean isReferencedTypeSpecifier(IASTDeclSpecifier declSpecifier) {
+	private boolean isReferencedTypeSpecifier(final IASTDeclSpecifier declSpecifier) {
 		if (declSpecifier instanceof IASTCompositeTypeSpecifier) {
 			final IASTCompositeTypeSpecifier compositeTypeSpecifier = (IASTCompositeTypeSpecifier) declSpecifier;
 			if (ASTNodeUtils.hasReferences(compositeTypeSpecifier.getName())) {
@@ -96,21 +95,22 @@ class DeclCollector extends LeadingNodeCollector {
 			final IASTDeclSpecifier declSpecifier) {
 		final List<Token> availableTokens = TokenCollector.collect(node);
 		final List<Integer> requiredTokens = ASTNodeUtils.getRequiredDeclSpecifierTokens(declSpecifier);
-		final List<Token> deletableTokens = availableTokens.stream().filter(t -> requiredTokens.contains(t.getType()))
-				.collect(Collectors.toList());
+		final List<Token> deletableTokens =
+				availableTokens.stream().filter(t -> requiredTokens.contains(t.getType())).collect(Collectors.toList());
 		if (deletableTokens.size() == requiredTokens.size()) {
 			return Optional.of(deletableTokens);
 		}
 		return Optional.empty();
 	}
 
-	private List<IPSTNode> getUnreferencedDeclarators(IPSTRegularNode node, IASTSimpleDeclaration declaration) {
+	private List<IPSTNode> getUnreferencedDeclarators(final IPSTRegularNode node,
+			final IASTSimpleDeclaration declaration) {
 		return Arrays.stream(declaration.getDeclarators()).filter(d -> !ASTNodeUtils.hasReferences(d))
 				.map(node::findRegularChild).filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	@Override
-	protected int visitRegular(IPSTRegularNode node) {
+	protected int visitRegular(final IPSTRegularNode node) {
 		if (!(node.getAstNode() instanceof IASTSimpleDeclaration)) {
 			return PROCESS_CONTINUE;
 		}
@@ -122,8 +122,8 @@ class DeclCollector extends LeadingNodeCollector {
 		// Check if there is a referenced type specifier, which cannot be removed even if all declarators are
 		// unreferenced
 		final IASTDeclSpecifier declSpecifier = declaration.getDeclSpecifier();
-		final IASTDeclSpecifier referencedTypeSpecifier = isReferencedTypeSpecifier(declSpecifier) ? declSpecifier
-				: null;
+		final IASTDeclSpecifier referencedTypeSpecifier =
+				isReferencedTypeSpecifier(declSpecifier) ? declSpecifier : null;
 		// Get the tokens that need to be removed in order to keep the type specifier individually
 		final IPSTRegularNode declSpecifierNode = node.findRegularChild(declSpecifier);
 		List<Token> typeSpecifierTokens = null;

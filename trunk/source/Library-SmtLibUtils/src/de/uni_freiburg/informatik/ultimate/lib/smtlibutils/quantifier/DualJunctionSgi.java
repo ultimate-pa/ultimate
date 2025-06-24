@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
  *
- * 
+ *
  * @author Xinyu Jiang
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -95,13 +95,13 @@ public class DualJunctionSgi extends DualJunctionQuantifierElimination {
 			List<Map<TermVariable, Term>> mapForThisRotation = new ArrayList<>();
 			final Set<Integer> bannedcandidates = new HashSet<>();
 			boolean foundInRotation = false;
-			for (int i = 0; i < qsubformulas.size(); i++) {
+			for (final Term element : qsubformulas) {
 				List<Map<TermVariable, Term>> res = null;
 				for (int j = 0; j < candidates.size(); j++) {
 					if (bannedcandidates.contains(j)) {
 						continue;
 					}
-					res = matchExpression(instantiatees, qsubformulas.get(i), candidates.get(j));
+					res = matchExpression(instantiatees, element, candidates.get(j));
 					if (res != null) {
 						final List<Map<TermVariable, Term>> mapForThisMatch = mergeAllMaps(mapForThisRotation, res);
 						if (mapForThisMatch == null) {

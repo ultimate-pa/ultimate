@@ -29,19 +29,16 @@ package de.uni_freiburg.informatik.ultimate.lib.smtlibutils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * Classes that implement this interface represent certain kinds of
- * {@link Term}s. In contrast to {@link Term} these classes have methods (e.g.,
- * getters) that give us direct access to information that is only available
- * these kinds of {@link Term}s (e.g, direct access to parameters of this term).
- * <br />
- * In contrast to the {@link ITermProvider} this interface requires that the
- * {@link Term} is stored here, i.e., there must be a method
- * {@link ITermWrapper#getTerm} that does take any arguments.
+ * Classes that implement this interface represent certain kinds of {@link Term}s. In contrast to {@link Term} these
+ * classes have methods (e.g., getters) that give us direct access to information that is only available these kinds of
+ * {@link Term}s (e.g, direct access to parameters of this term). <br />
+ * In contrast to the {@link ITermProvider} this interface requires that the {@link Term} is stored here, i.e., there
+ * must be a method {@link ITermWrapper#getTerm} that does take any arguments.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Leonard Fichtner (leonard.fichtner@web.de)
  */
 public interface ITermWrapper {
 
-	public Term getTerm();
+	Term getTerm();
 }

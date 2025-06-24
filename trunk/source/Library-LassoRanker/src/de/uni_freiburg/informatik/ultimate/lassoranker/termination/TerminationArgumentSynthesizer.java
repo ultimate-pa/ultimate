@@ -389,9 +389,10 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			});
 		} else if (mSettings.isOverapproximateStem()) {
 			mLogger.info("Overapproximating stem...");
-			final StemOverapproximator so = new StemOverapproximator(mPreferences, mServices);
 			final int stematoms = stem.getNumInequalities();
-			stem = so.overapproximate(stem);
+			try (final var so = new StemOverapproximator(mPreferences, mServices)) {
+				stem = so.overapproximate(stem);
+			}
 			mLogger.info("Reduced " + stematoms + " stem atoms to " + stem.getNumInequalities() + ".");
 		}
 
@@ -408,8 +409,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		final LBool sat = mScript.checkSat();
 		if (sat == LBool.SAT) {
 			// Get all relevant variables
-			final ArrayList<Term> coefficients = new ArrayList<>();
-			coefficients.addAll(mTemplate.getCoefficients());
+			final ArrayList<Term> coefficients = new ArrayList<>(mTemplate.getCoefficients());
 			for (final SupportingInvariantGenerator sig : msi_generators) {
 				coefficients.addAll(sig.getCoefficients());
 			}
@@ -431,12 +431,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 			// Simplify supporting invariants
 			if (mSettings.isSimplifySupportingInvariants()) {
-				final SupportingInvariantSimplifier tas = new SupportingInvariantSimplifier(mPreferences, mServices);
-				mLogger.info("Simplifying supporting invariants...");
 				final int before = mSupportingInvariants.size();
-				mSupportingInvariants = tas.simplify(mSupportingInvariants);
-				mLogger.info("Removed " + (before - mSupportingInvariants.size())
-						+ " redundant supporting invariants from a total of " + before + ".");
+				try (final var tas = new SupportingInvariantSimplifier(mPreferences, mServices)) {
+					mLogger.info("Simplifying supporting invariants...");
+					mSupportingInvariants = tas.simplify(mSupportingInvariants);
+				}
+				mLogger.info("Removed %d redundant supporting invariants from a total of %d.",
+						before - mSupportingInvariants.size(), before);
 			}
 		} else if (sat == LBool.UNKNOWN) {
 			mScript.echo(new QuotedObject(ArgumentSynthesizer.SOLVER_UNKNOWN_MESSAGE));

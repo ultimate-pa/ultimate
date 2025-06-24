@@ -30,61 +30,67 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.text;
  */
 public interface ISourceRange {
 	/**
-	 * @param index Index.
+	 * @param index
+	 *            Index.
 	 * @return {@code true} iff the index is in the range
 	 */
 	default boolean contains(final int index) {
 		return offset() <= index && index < endOffset();
 	}
-	
+
 	/**
-	 * 
-	 * @param offset Offset.
-	 * @param endOffset end of the offset
+	 *
+	 * @param offset
+	 *            Offset.
+	 * @param endOffset
+	 *            end of the offset
 	 * @return @return {@code true} iff the offset is in the range
 	 */
 	default boolean contains(final int offset, final int endOffset) {
 		return offset() <= offset && endOffset <= endOffset();
 	}
-	
+
 	/**
-	 * 
-	 * @param other Other range.
+	 *
+	 * @param other
+	 *            Other range.
 	 * @return @return {@code true} iff the other range is in the range
 	 */
 	default boolean contains(final ISourceRange other) {
 		return offset() <= other.offset() && other.endOffset() <= endOffset();
 	}
-	
+
 	/**
-	 * 
-	 * @param other Other range.
+	 *
+	 * @param other
+	 *            Other range.
 	 * @return @return {@code true} iff the other range is disjoint
 	 */
 	default boolean disjoint(final ISourceRange other) {
 		return endOffset() <= other.offset() || other.endOffset() <= offset();
 	}
-	
+
 	/**
 	 * @return Exclusive end-offset of the range.
 	 */
 	int endOffset();
-	
+
 	/**
-	 * @param other Other range.
+	 * @param other
+	 *            Other range.
 	 * @return {@code true} iff the two ranges are the same
 	 */
 	default boolean equalsSourceRange(final ISourceRange other) {
 		return offset() == other.offset() && endOffset() == other.endOffset();
 	}
-	
+
 	/**
 	 * @return Number of characters in this range.
 	 */
 	default int length() {
 		return endOffset() - offset();
 	}
-	
+
 	/**
 	 * @return Start offset of the range.
 	 */

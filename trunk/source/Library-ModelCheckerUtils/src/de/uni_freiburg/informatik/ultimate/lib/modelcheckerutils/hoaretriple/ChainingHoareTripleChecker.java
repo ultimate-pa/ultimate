@@ -236,8 +236,7 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private ChainingHoareTripleChecker replaceLast(final IWrappedHoareTripleChecker replacement) {
-		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs.size());
-		list.addAll(mHtcs);
+		final List<IWrappedHoareTripleChecker> list = new ArrayList<>(mHtcs);
 		list.set(list.size() - 1, replacement);
 		return new ChainingHoareTripleChecker(mLogger, list);
 	}
@@ -374,17 +373,11 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		 * Return true if results are compatible or one is UNKNOWN
 		 */
 		private static boolean reviewResult(final Validity result, final Validity reviewResult) {
-			switch (result) {
-			case VALID:
-				return reviewResult == Validity.VALID || reviewResult == Validity.UNKNOWN;
-			case INVALID:
-				return reviewResult == Validity.INVALID || reviewResult == Validity.UNKNOWN;
-			case UNKNOWN:
-			case NOT_CHECKED:
-				return true;
-			default:
-				throw new UnsupportedOperationException("Unknown validity: " + result);
-			}
+			return switch (result) {
+			case VALID -> reviewResult == Validity.VALID || reviewResult == Validity.UNKNOWN;
+			case INVALID -> reviewResult == Validity.INVALID || reviewResult == Validity.UNKNOWN;
+			case UNKNOWN, NOT_CHECKED -> true;
+			};
 		}
 
 		private AssertionError createAssertionError(final Validity result, final Validity reviewResult) {
@@ -595,25 +588,16 @@ public class ChainingHoareTripleChecker implements IHoareTripleChecker {
 		}
 
 		public void inc(final Validity val, final IAction action) {
-			switch (val) {
-			case INVALID:
-				inc(action, mInvalid);
-				break;
-			case NOT_CHECKED:
-				inc(action, mUnchecked);
-				break;
-			case UNKNOWN:
-				inc(action, mUnknown);
-				break;
-			case VALID:
-				inc(action, mValid);
-				break;
-			default:
-				throw new UnsupportedOperationException("Unknown validity " + val);
-			}
+			final InCaReCounter counter = switch (val) {
+			case INVALID -> mInvalid;
+			case NOT_CHECKED -> mUnchecked;
+			case UNKNOWN -> mUnknown;
+			case VALID -> mValid;
+			};
+			inc(action, counter);
 		}
 
-		private void inc(final IAction act, final InCaReCounter cnt) {
+		private static void inc(final IAction act, final InCaReCounter cnt) {
 			if (act instanceof IInternalAction) {
 				cnt.incIn();
 			} else if (act instanceof ICallAction) {

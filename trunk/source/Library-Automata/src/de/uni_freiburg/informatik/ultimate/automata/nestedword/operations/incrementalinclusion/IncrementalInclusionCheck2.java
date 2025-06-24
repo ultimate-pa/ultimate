@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Jeffery Hsu (a71128@gmail.com)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 /**
  * This is an implementation of incremental inclusion check based on the Bn baseline Algorithm.<br/>
  * We use InclusionViaDIfference to check its correctness.
- * 
+ *
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
  *            letter type
@@ -64,7 +64,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	private final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> local_mB2;
 	private final AutomataLibraryServices localServiceProvider;
 
-	class NodeData<A, B> {
+	static class NodeData<A, B> {
 		public int hash;
 		public boolean covered = false;
 		public HashMap<INwaOutgoingLetterAndTransitionProvider<A, B>, HashSet<B>> bStates;
@@ -93,7 +93,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	}
 
 	@Override
-	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa)
+			throws AutomataLibraryException {
 		mLogger.info(startMessage());
 		super.addSubtrahend(nwa);
 		local_mB.add(nwa);
@@ -123,7 +124,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 							if (bufferedTree.containsKey(state)) {
 								bufferedTree.get(state).addAll(bufferedTree2.get(state));
 							} else {
-								bufferedTree.put(state, new HashSet<NodeData<LETTER, STATE>>());
+								bufferedTree.put(state, new HashSet<>());
 								bufferedTree.get(state).addAll(bufferedTree2.get(state));
 							}
 						}
@@ -136,8 +137,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	}
 
 	public IncrementalInclusionCheck2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b)
-			throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services, a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
 		localServiceProvider = services;
@@ -197,7 +198,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 							if (bufferedTree.containsKey(state)) {
 								bufferedTree.get(state).addAll(bufferedTree2.get(state));
 							} else {
-								bufferedTree.put(state, new HashSet<NodeData<LETTER, STATE>>());
+								bufferedTree.put(state, new HashSet<>());
 								bufferedTree.get(state).addAll(bufferedTree2.get(state));
 							}
 						}
@@ -252,18 +253,19 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 			tempHash = 0;
 			bStates = new HashMap<>();
 			for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata : local_mB) {
-				bStates.put(automata, new HashSet<STATE>());
+				bStates.put(automata, new HashSet<>());
 				for (final STATE Bstate : automata.getInitialStates()) {
 					bStates.get(automata).add(Bstate);
 					tempHash = tempHash | Bstate.hashCode();
 				}
 			}
 			for (final STATE state : local_mA.getInitialStates()) {
-				nextNodes.put(state, new HashSet<NodeData<LETTER, STATE>>());
+				nextNodes.put(state, new HashSet<>());
 				tempBNodeData = new NodeData<>(new NestedRun<LETTER, STATE>(state));
 				tempBNodeData.hash = tempHash;
 				tempBNodeData.bStates =
-						(HashMap<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>, HashSet<STATE>>) bStates.clone();
+						(HashMap<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>, HashSet<STATE>>) bStates
+								.clone();
 				counter_total_nodes++;
 				nextNodes.get(state).add(tempBNodeData);
 			}
@@ -272,8 +274,9 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 				for (final NodeData<LETTER, STATE> currentNodeSet : currentTree.get(state)) {
 					tempHash = 0;
 					bStates = new HashMap<>();
-					for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata : currentNodeSet.bStates.keySet()) {
-						bStates.put(automata, new HashSet<STATE>());
+					for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata : currentNodeSet.bStates
+							.keySet()) {
+						bStates.put(automata, new HashSet<>());
 						for (final STATE Bstate : currentNodeSet.bStates.get(automata)) {
 							for (final OutgoingInternalTransition<LETTER, STATE> BTransition : automata
 									.internalSuccessors(Bstate, alp)) {
@@ -296,7 +299,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 						}
 						counter_total_nodes++;
 						if (!nextNodes.containsKey(ATransition.getSucc())) {
-							nextNodes.put(ATransition.getSucc(), new HashSet<NodeData<LETTER, STATE>>());
+							nextNodes.put(ATransition.getSucc(), new HashSet<>());
 						}
 						nextNodes.get(ATransition.getSucc()).add(tempBNodeData);
 					}
@@ -329,7 +332,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 				 * toBeDeleteed.get(currentAState).add(currentNodeSet1); }else{
 				 */
 				if (completeTree != null) {
-					if (completeTree.keySet().contains(currentAState)) {
+					if (completeTree.containsKey(currentAState)) {
 						for (final NodeData<LETTER, STATE> completeNodeSet : completeTree.get(currentAState)) {
 							if (completeNodeSet.hash == (currentNodeSet1.hash & completeNodeSet.hash)) {
 								// if(true){
@@ -347,12 +350,12 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 						}
 					} else {
 						containsAllbnState = false;
-						completeTree.put(currentAState, new HashSet<NodeData<LETTER, STATE>>());
+						completeTree.put(currentAState, new HashSet<>());
 					}
 				} else {
 					completeTree = new HashMap<>();
 					containsAllbnState = false;
-					completeTree.put(currentAState, new HashSet<NodeData<LETTER, STATE>>());
+					completeTree.put(currentAState, new HashSet<>());
 				}
 				if (!containsAllbnState) {
 					newNodeInCompleteTree = true;
@@ -360,10 +363,10 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 				} else {
 					currentNodeSet1.covered = true;
 					if (!coveredNodes.containsKey(currentAState)) {
-						coveredNodes.put(currentAState, new HashSet<NodeData<LETTER, STATE>>());
+						coveredNodes.put(currentAState, new HashSet<>());
 					}
 					if (!toBeDeleteed.containsKey(currentAState)) {
-						toBeDeleteed.put(currentAState, new HashSet<NodeData<LETTER, STATE>>());
+						toBeDeleteed.put(currentAState, new HashSet<>());
 					}
 					coveredNodes.get(currentAState).add(currentNodeSet1);
 					toBeDeleteed.get(currentAState).add(currentNodeSet1);
@@ -400,7 +403,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 			if (local_mA.isFinal(currentAstate)) {
 				for (final NodeData<LETTER, STATE> currentNodeSet : currentTree.get(currentAstate)) {
 					foundFinal = false;
-					for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet.bStates.keySet()) {
+					for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : currentNodeSet.bStates
+							.keySet()) {
 						for (final STATE bnState : currentNodeSet.bStates.get(bn)) {
 							if (bn.isFinal(bnState)) {
 								foundFinal = true;
@@ -457,7 +461,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	 * } } for(STATE currentAState : toBeDeleteed.keySet()){ for(NodeData<LETTER,STATE>
 	 * currentNodeSet1:toBeDeleteed.get(currentAState)){ currentTree.get(currentAState).remove(currentNodeSet1); } }
 	 * return !newNodeInCompleteTree;
-	 * 
+	 *
 	 * }
 	 */
 
@@ -513,8 +517,9 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b,
-			final NestedRun<LETTER, STATE> ctrEx) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b, final NestedRun<LETTER, STATE> ctrEx)
+			throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
 		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bi : b) {
@@ -546,8 +551,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		HashSet<STATE> curStaSet = null;
 		Iterable<OutgoingInternalTransition<LETTER, STATE>> nextStaSet = null;
 		HashSet<STATE> newStaSet;
-		curStaSet = new HashSet<>();
-		curStaSet.addAll((Set<STATE>) bn.getInitialStates());
+		curStaSet = new HashSet<>((Set<STATE>) bn.getInitialStates());
 		if (word.getWord().length() != 0) {
 			for (final LETTER alphabet : word.getWord().asList()) {
 				newStaSet = new HashSet<>();
@@ -569,7 +573,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		if (completeTree != null) {
 			for (final STATE aSTATE : completeTree.keySet()) {
 				for (final NodeData<LETTER, STATE> node : completeTree.get(aSTATE)) {
-					node.bStates.put(nwa, new HashSet<STATE>());
+					node.bStates.put(nwa, new HashSet<>());
 					newStates = NestedRunStates(nwa, node.word);
 					node.bStates.get(nwa).addAll(newStates);
 					for (final STATE s : newStates) {
@@ -581,7 +585,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		for (final STATE aSTATE : coveredNodes.keySet()) {
 			for (final NodeData<LETTER, STATE> node : coveredNodes.get(aSTATE)) {
 				if (!currentTree.containsKey(aSTATE)) {
-					currentTree.put(aSTATE, new HashSet<NodeData<LETTER, STATE>>());
+					currentTree.put(aSTATE, new HashSet<>());
 				}
 				currentTree.get(aSTATE).add(node);
 			}
@@ -591,7 +595,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		for (final STATE aSTATE : currentTree.keySet()) {
 			for (final NodeData<LETTER, STATE> node : currentTree.get(aSTATE)) {
 				node.covered = false;
-				node.bStates.put(nwa, new HashSet<STATE>());
+				node.bStates.put(nwa, new HashSet<>());
 				newStates = NestedRunStates(nwa, node.word);
 				node.bStates.get(nwa).addAll(newStates);
 				for (final STATE s : newStates) {
@@ -601,7 +605,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 		}
 	}
 
-	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
+	public static <LETTER, STATE> void
+			abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(a)) {
 			throw new UnsupportedOperationException("Operation does not support call or return");
 		}

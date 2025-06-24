@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Class for computation of game graph summaries. The computation of the summaries is done in the game automaton.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -99,7 +99,6 @@ public class SummaryComputation<LETTER, STATE> {
 	public SummaryComputation(final AutomataLibraryServices services,
 			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mGameAutomaton = gameAutomaton;
@@ -134,7 +133,7 @@ public class SummaryComputation<LETTER, STATE> {
 							GameAutomaton.unwrapSpoilerNwaVertex(targetPrio.getKey());
 					if (spoilerVertex.getSink() != null) {
 						// omit, target is sink
-//						assert mNeedSpoilerWinningSink.contains(source);
+						// assert mNeedSpoilerWinningSink.contains(source);
 						continue;
 					}
 					final STATE spoilerChoice = spoilerVertex.getQ0();
@@ -295,7 +294,8 @@ public class SummaryComputation<LETTER, STATE> {
 
 		final Set<NestedMap2<IGameState, IGameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst =
 				Collections.singleton(computeDuplicatorPredecessorUnderReturn(source2Current2Targets, hier2dupl2spoi));
-//				computePredecessorsUnderPly(Collections.singleton(source2Current2Targets), dupl2spoi, this::duplicatorNodePriorityProvider, hier2dupl2spoi);
+		// computePredecessorsUnderPly(Collections.singleton(source2Current2Targets), dupl2spoi,
+		// this::duplicatorNodePriorityProvider, hier2dupl2spoi);
 		final Set<NestedMap2<IGameState, IGameState, WeightedSummaryTargets>> spoi2Wsts = computePredecessorsUnderPly(
 				dupl2Wst, spoi2dupl, this::spoilerNodePriorityProvider, this::spoilerAggregration);
 
@@ -584,11 +584,11 @@ public class SummaryComputation<LETTER, STATE> {
 
 	@FunctionalInterface
 	interface Aggregation {
-		public List<WeightedSummaryTargets> aggregate(Set<WeightedSummaryTargets> weightedSummaryTargetsSet);
+		List<WeightedSummaryTargets> aggregate(Set<WeightedSummaryTargets> weightedSummaryTargetsSet);
 	}
 
 	@FunctionalInterface
 	interface PriorityProvider<P, S> {
-		public Integer getPriority(P p, S s);
+		Integer getPriority(P p, S s);
 	}
 }

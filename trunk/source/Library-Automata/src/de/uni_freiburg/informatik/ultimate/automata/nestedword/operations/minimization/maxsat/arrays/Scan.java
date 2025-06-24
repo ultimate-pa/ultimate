@@ -182,7 +182,8 @@ final class Scan {
 		return scanNwa(reader);
 	}
 
-	/* shitty helpers for inputAsRelations()
+	/*
+	 * shitty helpers for inputAsRelations()
 	 */
 
 	@SuppressWarnings("serial")

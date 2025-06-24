@@ -257,7 +257,7 @@ public abstract class FloydHoareValidityCheck<S> {
 		case UNKNOWN:
 			mUnknown++;
 			break;
-		default:
+		case NOT_CHECKED:
 			throw new IllegalArgumentException("unexpected validity: " + inductivity);
 		}
 	}

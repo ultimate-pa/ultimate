@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * Construct game graph from given game automaton.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
@@ -66,13 +66,12 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 			final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton,
 			final SpoilerNwaVertex<LETTER, STATE> spoilerWinningSink, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<GameCallReturnSummary<STATE>> gameSummaries) throws AutomataOperationCanceledException {
-		super();
 		mServices = services;
 		mGameAutomaton = gameAutomaton;
 		mSpoilerWinningSink = spoilerWinningSink;
 		mDuplicatorWinningSink = new DuplicatorNwaVertex<>(0, false, null, null, null, TransitionType.SINK,
 				new DuplicatorWinningSink<>(null));
-		mGameGraph = new AGameGraph<LETTER, STATE>(mServices, null, null, null, operand) {
+		mGameGraph = new AGameGraph<>(mServices, null, null, null, operand) {
 
 			@Override
 			public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
@@ -164,8 +163,8 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 		for (final IGameState duplicatorResponse : gameSummary.getDuplicatorResponses().keySet()) {
 			final SpoilerSubSummaryPriorityVertex<LETTER, STATE> spoilerPrioVertex =
 					new SpoilerSubSummaryPriorityVertex<>(gameSummary, duplicatorResponse);
-			assert !mGameGraph.getSpoilerVertices()
-					.contains(spoilerPrioVertex) : "spoiler priority vertex already there";
+			assert !mGameGraph.getSpoilerVertices().contains(spoilerPrioVertex)
+					: "spoiler priority vertex already there";
 			mGameGraph.addSpoilerVertex(spoilerPrioVertex);
 			final SpoilerNwaVertex<LETTER, STATE> targetVertex = getSpoilerVertex(duplicatorResponse);
 			assert mGameGraph.getSpoilerVertices().contains(targetVertex) : "target missing";

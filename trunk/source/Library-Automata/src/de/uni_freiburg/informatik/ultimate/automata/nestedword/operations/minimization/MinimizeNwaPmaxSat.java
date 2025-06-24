@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
 	@SuppressWarnings("rawtypes")
-	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
+	private static final Doubleton[] EMPTY_LITERALS = {};
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -95,8 +95,7 @@ public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSa
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings, final String filename)
-			throws AutomataOperationCanceledException {
+			final Settings<STATE> settings, final String filename) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, settings, new NestedMap2<>(), filename);
 	}
 
@@ -114,7 +113,8 @@ public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSa
 	protected abstract void generateVariablesHelper(final STATE[] states);
 
 	@Override
-	protected abstract void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints) throws AutomataOperationCanceledException;
+	protected abstract void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
+			throws AutomataOperationCanceledException;
 
 	protected void generateTransitionConstraints(final STATE[] states, final int firstStateIndex) {
 		final STATE state1 = states[firstStateIndex];
@@ -144,8 +144,7 @@ public abstract class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSa
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, succsToRemove);
 		/*
 		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
-		 * should not try to add a clause for the other direction (as it will be found out again that they are
-		 * similar).
+		 * should not try to add a clause for the other direction (as it will be found out again that they are similar).
 		 */
 		succs2.removeAll(succsToRemove);
 

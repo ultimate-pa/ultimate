@@ -9,7 +9,7 @@
    <launcherArgs>
       <programArgs>-nosplash -consoleLog
       </programArgs>
-      <vmArgs>-Dosgi.noShutdown=true
+      <vmArgs>-Dosgi.noShutdown=true -Dequinox.resolver.revision.batch.size=1
 -Dorg.eclipse.jetty.util.log.class=org.eclipse.jetty.util.log.StdErrLog
 -DWebBackend.SETTINGS_FILE=\path\to\web.config.properties.dist
       </vmArgs>

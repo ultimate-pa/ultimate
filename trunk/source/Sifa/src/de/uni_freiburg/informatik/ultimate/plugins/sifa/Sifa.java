@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.sifa.preferences.SifaPreferences;
 
 /**
- * Symbolic interpretation with fluid abstractions (Sifa).
- * Abstract-interpretation-like interpreter using logical formulas as abstract states.
+ * Symbolic interpretation with fluid abstractions (Sifa). Abstract-interpretation-like interpreter using logical
+ * formulas as abstract states.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)

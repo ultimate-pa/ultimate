@@ -37,7 +37,7 @@ public final class ListUtils {
 	private ListUtils() {
 		// utility class
 	}
-	
+
 	/**
 	 * Computing the complement of the subsequence wrt. the given sequence.<br>
 	 * Important: subsequence must be a subsequence of universe (minimizer results guarantee that). Null elements are
@@ -60,10 +60,8 @@ public final class ListUtils {
 			return Collections.emptyList();
 		}
 		final List<E> complement = new ArrayList<>(universe.size() - subsequence.size());
-		final Iterator<? extends E> skipIter = subsequence.iterator();
 		final Iterator<? extends E> sourceIter = universe.iterator();
-		while (skipIter.hasNext()) {
-			final E nextToSkip = skipIter.next();
+		for (final E nextToSkip : subsequence) {
 			while (true) {
 				final E element = sourceIter.next();
 				if (nextToSkip.equals(element)) {
@@ -72,11 +70,11 @@ public final class ListUtils {
 				complement.add(element);
 			}
 		}
-		
+
 		while (sourceIter.hasNext()) {
 			complement.add(sourceIter.next());
 		}
-		
+
 		return complement;
 	}
 }
