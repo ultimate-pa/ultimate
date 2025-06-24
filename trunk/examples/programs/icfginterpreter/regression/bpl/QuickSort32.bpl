@@ -15,16 +15,8 @@ procedure main() {
     var temp : int;
     var initialPass : bool; // used to enter the loop before anything is on the stack, and to continue the loop once more after taking off the last element.
     var elements : int;
+
     elements := 32;
-    index := 0;
-
-    while(index < elements) {
-        havoc temp;
-        randomArray[index] := temp;
-        index := index + 1;
-    }
-    assert index == elements;
-
     left := 0;
     right := elements - 1;
     index := 0;

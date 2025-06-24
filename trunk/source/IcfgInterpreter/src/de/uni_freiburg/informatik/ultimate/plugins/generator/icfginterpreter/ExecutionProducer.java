@@ -285,10 +285,11 @@ public class ExecutionProducer {
 		final TermVariable pivotVariable = pivot.getLhs();
 		final TermVariable pivotGeneric = lookupSymbolTableSafe(pivotVariable, formula);
 
-		final Set<TermVariable> updatedBeforePivot = requiredNextState.get(pivotGeneric);
-		final Set<TermVariable> updatedAfterPivot = requiredLastState.get(pivotGeneric);
-		updatedBeforePivot.addAll(requiredLastState.keySet().stream()
-				.filter(var -> !updatedAfterPivot.contains(var) && !var.equals(pivotGeneric)).toList());
+		final Set<TermVariable> updatedBeforePivot = new HashSet<>(requiredNextState.get(pivotGeneric));
+		final Set<TermVariable> updatedAfterPivot = new HashSet<>(requiredLastState.get(pivotGeneric));
+		updatedBeforePivot
+				.addAll(requiredLastState.keySet().stream().filter(var -> !updatedAfterPivot.contains(var)).toList());
+		updatedBeforePivot.remove(pivotGeneric);
 
 		// set of variables that are updated before this equation
 		final List<SolvedEquation> before = new ArrayList<>(equationList.stream()
@@ -311,6 +312,11 @@ public class ExecutionProducer {
 		// to be updated already
 		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredLastState.entrySet()) {
 			for (final TermVariable requiredOldVersion : entry.getValue()) {
+				if (entry.getKey() == requiredOldVersion) {
+					// Variable does not require self
+					continue;
+				}
+
 				requiredNextState.get(requiredOldVersion).add(entry.getKey());
 			}
 		}
@@ -319,6 +325,10 @@ public class ExecutionProducer {
 		// previous state
 		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredNextState.entrySet()) {
 			for (final TermVariable requiredNewVersion : entry.getValue()) {
+				if (entry.getKey() == requiredNewVersion) {
+					// Variable does not require self
+					continue;
+				}
 				requiredLastState.get(requiredNewVersion).add(entry.getKey());
 			}
 		}
@@ -332,6 +342,10 @@ public class ExecutionProducer {
 			final Set<TermVariable> alsoUpdated = new HashSet<>();
 
 			for (final TermVariable requiredNewVersion : entry.getValue()) {
+				if (entry.getKey() == requiredNewVersion) {
+					// Variable does not require self
+					continue;
+				}
 				alsoUpdated.addAll(requiredNextState.get(requiredNewVersion));
 			}
 
@@ -444,22 +458,6 @@ public class ExecutionProducer {
 		final ArrayDeque<SolvedEquation> sorted = sortEqs(requiredLastState, requiredNextState,
 				new ArrayList<>(equationList), formula);
 
-		/*
-		 * Collections.sort(equationList, (eq1, eq2) -> { final TermVariable var1 = lookupSymbolTableSafe(eq1.getLhs(),
-		 * formula); final TermVariable var2 = lookupSymbolTableSafe(eq2.getLhs(), formula);
-		 *
-		 * final boolean a = requiredLastState.get(var1).contains(var2); final boolean b =
-		 * requiredLastState.get(var2).contains(var1); final boolean c = requiredNextState.get(var1).contains(var2);
-		 * final boolean d = requiredNextState.get(var2).contains(var1);
-		 *
-		 * if (a) { // Equation 1 uses the variable defined by equation 2 in the last state context. // Equation 1 comes
-		 * first. return -1; } if (b) { // Equation 2 uses the variable defined by equation 1 in the last state context.
-		 * // Equation 2 comes first. return 1; } if (c) { // Equation 1 uses the variable defined by equation 2 in the
-		 * next state context. // Equation 2 comes first. return 1; } if (d) { // Equation 2 uses the variable defined
-		 * by equation 1 in the next state context. // Equation 1 comes first. return -1; } // Otherwise, sort by name
-		 * for consistent ordering of terms // return Integer.compare(var1.getName().hashCode(),
-		 * var2.getName().hashCode()); return 0; // TODO find out why sometimes wrong order happens });
-		 */
 		equationList.clear();
 		equationList.addAll(sorted);
 
@@ -467,17 +465,19 @@ public class ExecutionProducer {
 
 		while (!equationList.isEmpty()) {
 			final SolvedEquation equation = equationList.get(0);
-			TermVariable definedVar = equation.getLhs();
+			final TermVariable definedVar = equation.getLhs();
 
 			final List<SolvedEquation> definitions = equationList.stream()
-					.filter((eq) -> eq.getLhs().equals(equation.getLhs())).toList();
+					.filter((eq) -> eq.getLhs().equals(definedVar)).toList();
 
 			// Remove all equations that define this variable
 			equationList.removeAll(definitions);
 
 			if (equation.getRhs() == null || equation.getRelation() == null) {
 				// can be havoced to any value
-				out.add(new HavocUpdate(lookupSymbolTableSafe(definedVar, formula), new ArrayList<>()));
+				final boolean removePreviousRestrictions = formulaInVars.containsValue(definedVar);
+				out.add(new HavocUpdate(lookupSymbolTableSafe(definedVar, formula), new ArrayList<>(),
+						removePreviousRestrictions));
 				continue;
 			}
 
@@ -487,20 +487,31 @@ public class ExecutionProducer {
 			for (final SolvedEquation definition : definitions) {
 				if (definition.getRelation().equals(RelationSymbol.EQ)) {
 					equals.add(generalize(definition, formula));
-					break;
 				}
 				inequals.add(generalize(definition, formula));
 			}
 
 			// Replace the formula specific TermVariable with its generic global counterpart
-			definedVar = lookupSymbolTableSafe(definedVar, formula);
+			final TermVariable globalVar = lookupSymbolTableSafe(definedVar, formula);
 
 			if (!equals.isEmpty()) {
 				// We have at least one Term that directly defines the variable.
-				out.add(new AssignmentUpdate(definedVar, substituteProgramVars(equals.get(0).getRhs(), formula)));
+				// Find the one that depends on the least variables
+				SolvedEquation leastNeeded = equals.get(0);
+
+				for (final SolvedEquation equalEQ : equals) {
+					if (equalEQ.getFreeVars().size() < leastNeeded.getFreeVars().size()) {
+						leastNeeded = equalEQ;
+					}
+				}
+				out.add(new AssignmentUpdate(globalVar, substituteProgramVars(leastNeeded.getRhs(), formula)));
 			} else {
 				// We only have bounds for the Term.
-				out.add(new HavocUpdate(definedVar, inequals));
+
+				// Remove previous restrictions if the variable that was havoced is havoced again (not an invar)
+				// If it is an InVar, then we may have had an edge with restricted havoc, and an assume on this edge.
+				final boolean removePreviousRestrictions = formulaInVars.containsValue(definedVar);
+				out.add(new HavocUpdate(globalVar, inequals, removePreviousRestrictions));
 			}
 		}
 

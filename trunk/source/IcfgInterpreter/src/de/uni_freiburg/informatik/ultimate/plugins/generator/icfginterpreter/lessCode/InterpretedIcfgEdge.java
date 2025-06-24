@@ -15,10 +15,13 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.EqualityExtractor.EdgeUntranslatableError;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode.Update.AssignmentUpdate;
@@ -30,6 +33,7 @@ public class InterpretedIcfgEdge {
 	private final IcfgEdge mEdge;
 	private final Set<TermVariable> mAuxVars;
 	private final Set<TermVariable> mGuardVars;
+	private final List<Pair<Term, List<Term>>> mGuardArrayReads;
 	/** Variables that were read on this edge */
 	private final Set<TermVariable> mReadVars;
 	/** Variables that were havoced on this edge and then read on this edge */
@@ -41,6 +45,9 @@ public class InterpretedIcfgEdge {
 			final Set<TermVariable> auxVars) {
 		mGuard = guard;
 		mGuardVars = Set.of(mGuard.getFreeVars());
+		final List<ApplicationTerm> guardSelects = Util.extractSelects(guard);
+		mGuardArrayReads = List.copyOf(guardSelects.stream().map(select -> Util.selectToKeyPair(select)).toList());
+
 		mUpdates = updateVariants;
 		mEdge = edge;
 		mAuxVars = auxVars;
@@ -91,7 +98,12 @@ public class InterpretedIcfgEdge {
 	public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
 		for (final Update update : mUpdates) {
+			// havoc variables that are not in the state
 			havocNeeded(state, ndc, havocRestrictions, update.getFreeVars());
+
+			// havoc read array entries that don't exist yet
+			havocArrayReads(state, ndc, update.getArrayReads());
+
 			update.update(state, ndc, havocRestrictions);
 		}
 
@@ -116,6 +128,22 @@ public class InterpretedIcfgEdge {
 		}
 	}
 
+	private static void havocArrayReads(final Map<Term, Value> state, final NonDeterministicChoice ndc,
+			final List<Pair<Term, List<Term>>> arrayReads) {
+		for (final Pair<Term, List<Term>> select : arrayReads) {
+			final Term arrayTerm = select.a();
+
+			final ArrayValue array = (ArrayValue) state.get(arrayTerm);
+			final List<Value> keyValues = select.b().stream().map(term -> TermEvaluator.evaluate(state, term)).toList();
+
+			if (array.hasKey(keyValues)) {
+				continue;
+			}
+
+			state.put(arrayTerm, array.store(keyValues, ndc.havoc(array.getValueSort(), null)));
+		}
+	}
+
 	/**
 	 * Removes all variables that were not havoced on this edge for the purposes of propagating havocs to earlier
 	 * states.
@@ -132,8 +160,8 @@ public class InterpretedIcfgEdge {
 
 	public boolean guard(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 			final Map<Term, Restriction<?>> havocRestrictions) {
-
 		havocNeeded(state, ndc, havocRestrictions, mGuardVars);
+		havocArrayReads(state, ndc, mGuardArrayReads);
 
 		return ((BoolValue) TermEvaluator.evaluate(state, mGuard)).getValue();
 	}

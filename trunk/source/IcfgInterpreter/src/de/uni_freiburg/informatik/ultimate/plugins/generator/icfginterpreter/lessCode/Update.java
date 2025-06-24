@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
 import java.math.BigInteger;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.Restriction;
@@ -37,58 +37,21 @@ public interface Update extends ITermProvider {
 	 */
 	Set<TermVariable> getFreeVars();
 
-	List<Pair<ArrayValue, List<Value>>> getArrayReads(Map<Term, Value> state);
-
-	default List<ApplicationTerm> extractSelects(final Term term) {
-		final List<ApplicationTerm> out = new ArrayList<>();
-		final ArrayDeque<Term> terms = new ArrayDeque<>();
-		terms.add(term);
-
-		while (terms.size() > 0) {
-			final Term subTerm = terms.pop();
-			if (subTerm instanceof final ApplicationTerm at) {
-				if (at.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
-					out.add(at);
-				} else {
-					terms.addAll(List.of(at.getParameters()));
-				}
-			}
-		}
-
-		return out;
-	}
-
-	default Pair<Term, List<Term>> selectToKeyPair(ApplicationTerm select) {
-		final ArrayDeque<Term> keys = new ArrayDeque<>();
-		Term arrayTerm = null;
-
-		while (select.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
-			keys.push(select.getParameters()[1]);
-
-			final Term subTerm = select.getParameters()[0];
-			if (subTerm instanceof final ApplicationTerm at) {
-				select = at;
-			} else {
-				arrayTerm = subTerm;
-				break;
-			}
-		}
-		return new Pair<>(arrayTerm, List.of(keys.toArray(new Term[keys.size()])));
-	}
+	List<Pair<Term, List<Term>>> getArrayReads();
 
 	public static class AssignmentUpdate implements Update {
 		private final TermVariable mTermVar;
 		private final Term mValue;
 		private final Set<TermVariable> freeVars;
-		private final List<Pair<Term, List<Term>>> arrayReads;
+		private final List<Pair<Term, List<Term>>> mArrayReads;
 
 		public AssignmentUpdate(final TermVariable programVar, final Term value) {
 			assert programVar.getSort().equals(value.getSort());
 			mTermVar = programVar;
 			freeVars = Set.of(value.getFreeVars());
 
-			final List<ApplicationTerm> selected = extractSelects(value);
-			arrayReads = List.copyOf(selected.stream().map(select -> selectToKeyPair(select)).toList());
+			final List<ApplicationTerm> selected = Util.extractSelects(value);
+			mArrayReads = List.copyOf(selected.stream().map(select -> Util.selectToKeyPair(select)).toList());
 			mValue = value;
 		}
 
@@ -132,16 +95,16 @@ public interface Update extends ITermProvider {
 		}
 
 		@Override
-		public List<Pair<ArrayValue, List<Value>>> getArrayReads(final Map<Term, Value> state) {
-			final List<Pair<ArrayValue, List<Value>>> out = new ArrayList<>();
+		public List<Pair<Term, List<Term>>> getArrayReads() {
+			return mArrayReads;
 
-			for (final Pair<Term, List<Term>> arrayPair : arrayReads) {
-				final ArrayValue array = (ArrayValue) state.get(arrayPair.a());
-				out.add(new Pair<>(array,
-						arrayPair.b().stream().map(term -> TermEvaluator.evaluate(state, term)).toList()));
-			}
+			// final List<Pair<ArrayValue, List<Value>>> out = new ArrayList<>();
 
-			return out;
+			// for (final Pair<Term, List<Term>> arrayPair : mArrayReads) {
+			// final ArrayValue array = (ArrayValue) state.get(arrayPair.a());
+			// out.add(new Pair<>(array,
+			// arrayPair.b().stream().map(term -> TermEvaluator.evaluate(state, term)).toList()));
+			// }
 		}
 	}
 
@@ -150,48 +113,70 @@ public interface Update extends ITermProvider {
 		private final HashSet<Term> mLessEq;
 		private final HashSet<Term> mGreaterEq;
 		private final HashSet<Term> mInEqual;
-		private final Set<TermVariable> freeVars;
+		private final Set<TermVariable> mFreeVars;
+		private final boolean mRemovePrevious;
+		private final List<Pair<Term, List<Term>>> mArrayReads;
 
-		public HavocUpdate(final TermVariable programVar, final List<SolvedEquation> equations) {
+		/**
+		 * @param programVar     Variable to receive a non-deterministic value
+		 * @param equations      List of equation restricting the variable's value
+		 * @param removePrevious True if this update removes previous restrictions (the variable was not an InVar)
+		 */
+		public HavocUpdate(final TermVariable programVar, final List<SolvedEquation> equations,
+				final boolean removePrevious) {
 			mTermVar = programVar;
 			mLessEq = new HashSet<>();
 			mGreaterEq = new HashSet<>();
 			mInEqual = new HashSet<>();
-			freeVars = Set.copyOf(equations.stream().map((eq) -> eq.getRhs().getFreeVars())
+			mFreeVars = Set.copyOf(equations.stream().map((eq) -> eq.getRhs().getFreeVars())
 					.flatMap((arr) -> Arrays.stream(arr)).toList());
+			mRemovePrevious = removePrevious;
 			final Theory theory = mTermVar.getTheory();
 			final Term one = theory.constant(BigInteger.ONE, theory.getNumericSort());
+			final ArrayList<Pair<Term, List<Term>>> arrayReads = new ArrayList<>();
 
 			for (final SolvedEquation equation : equations) {
+				Term newTerm;
+
 				switch (equation.getRelation()) {
 				case BVUGE:
 				case GEQ:
-					mGreaterEq.add(trySimplifyToConstant(equation.getRhs()));
+					newTerm = trySimplifyToConstant(equation.getRhs());
+					mGreaterEq.add(newTerm);
 					break;
 
 				case BVUGT:
 					// TODO make separate version with BitVec constant, BitVec - Int is undefined
 				case GREATER:
 					// x > y <==> x > y + 1 or x == y + 1 <==> x >= y + 1
-					mGreaterEq.add(trySimplifyToConstant(theory.term(SMTLIBConstants.PLUS, equation.getRhs(), one)));
+					newTerm = trySimplifyToConstant(theory.term(SMTLIBConstants.PLUS, equation.getRhs(), one));
+					mGreaterEq.add(newTerm);
 					break;
 				case BVULE:
 				case LEQ:
-					mLessEq.add(trySimplifyToConstant(equation.getRhs()));
+					newTerm = trySimplifyToConstant(equation.getRhs());
+					mLessEq.add(newTerm);
 					break;
 				case BVULT:
 					// TODO make separate version with BitVec constant, BitVec + Int is undefined
 				case LESS:
 					// x < y <==> x < y - 1 or x == y - 1 <==> x <= y - 1
-					mLessEq.add(trySimplifyToConstant(theory.term(SMTLIBConstants.MINUS, equation.getRhs(), one)));
+					newTerm = trySimplifyToConstant(theory.term(SMTLIBConstants.MINUS, equation.getRhs(), one));
+					mLessEq.add(newTerm);
 					break;
 				case DISTINCT:
-					mInEqual.add(trySimplifyToConstant(equation.getRhs()));
+					newTerm = trySimplifyToConstant(equation.getRhs());
+					mInEqual.add(newTerm);
 					break;
 				default:
-					break;
+					continue;
 				}
+
+				final List<ApplicationTerm> selected = Util.extractSelects(newTerm);
+				arrayReads.addAll(selected.stream().map(select -> Util.selectToKeyPair(select)).toList());
 			}
+
+			mArrayReads = List.copyOf(arrayReads);
 		}
 
 		private static Term trySimplifyToConstant(Term term) {
@@ -219,8 +204,7 @@ public interface Update extends ITermProvider {
 			return term;
 		}
 
-		private Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc,
-				final Map<Term, Restriction<?>> havocRestrictions) {
+		private Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
 			switch (mTermVar.getSort().getName()) {
 			case SMTLIBConstants.BOOL:
 				final HashSet<BoolValue> inEqualBools = new HashSet<>();
@@ -285,10 +269,10 @@ public interface Update extends ITermProvider {
 			final Restriction<?> existingRestriction = havocRestrictions.remove(mTermVar);
 			Restriction<?> newRestriction;
 
-			if (existingRestriction != null) {
-				newRestriction = existingRestriction.combine(getRestriction(state, ndc, havocRestrictions));
+			if (existingRestriction != null && !mRemovePrevious) {
+				newRestriction = existingRestriction.combine(getRestriction(state, ndc));
 			} else {
-				newRestriction = getRestriction(state, ndc, havocRestrictions);
+				newRestriction = getRestriction(state, ndc);
 			}
 
 			// Is havoced when (and only if) variable is read
@@ -303,7 +287,7 @@ public interface Update extends ITermProvider {
 
 		@Override
 		public Set<TermVariable> getFreeVars() {
-			return freeVars;
+			return mFreeVars;
 		}
 
 		@Override
@@ -363,9 +347,8 @@ public interface Update extends ITermProvider {
 		}
 
 		@Override
-		public List<Pair<ArrayValue, List<Value>>> getArrayReads(final Map<Term, Value> state) {
-			// TODO Auto-generated method stub
-			return null;
+		public List<Pair<Term, List<Term>>> getArrayReads() {
+			return mArrayReads;
 		}
 	}
 }

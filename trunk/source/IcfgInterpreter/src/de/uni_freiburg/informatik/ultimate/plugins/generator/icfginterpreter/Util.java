@@ -1,7 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
 
 public class Util {
 	public static Long SMTDiv(final long m, final long n) {
@@ -31,5 +39,42 @@ public class Util {
 			return -1;
 		}
 		return Integer.parseInt(sort.getIndices()[0]);
+	}
+
+	public static List<ApplicationTerm> extractSelects(final Term term) {
+		final List<ApplicationTerm> out = new ArrayList<>();
+		final ArrayDeque<Term> terms = new ArrayDeque<>();
+		terms.add(term);
+
+		while (terms.size() > 0) {
+			final Term subTerm = terms.pop();
+			if (subTerm instanceof final ApplicationTerm at) {
+				if (at.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
+					out.add(at);
+				} else {
+					terms.addAll(List.of(at.getParameters()));
+				}
+			}
+		}
+
+		return out;
+	}
+
+	public static Pair<Term, List<Term>> selectToKeyPair(ApplicationTerm select) {
+		final ArrayDeque<Term> keys = new ArrayDeque<>();
+		Term arrayTerm = null;
+
+		while (select.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
+			keys.push(select.getParameters()[1]);
+
+			final Term subTerm = select.getParameters()[0];
+			if (subTerm instanceof final ApplicationTerm at) {
+				select = at;
+			} else {
+				arrayTerm = subTerm;
+				break;
+			}
+		}
+		return new Pair<>(arrayTerm, List.of(keys.toArray(new Term[keys.size()])));
 	}
 }

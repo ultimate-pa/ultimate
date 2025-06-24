@@ -16,12 +16,13 @@ public class ArrayValue implements Value {
 	private final TermVariable mArrayVar;
 	private final Map<List<Value>, Value> mValue;
 	private final Sort mSort;
+	private final Sort mValueSort;
 
 	public ArrayValue(final Map<List<Value>, Value> value, final TermVariable arrayVar) {
 		mValue = value;
 		mArrayVar = arrayVar;
 		mSort = mArrayVar.getSort();
-
+		mValueSort = mSort.getArguments()[1];
 	}
 
 	public ArrayValue store(final List<Value> key, final Value value) {
@@ -35,6 +36,10 @@ public class ArrayValue implements Value {
 			return mValue.get(key);
 		}
 		throw new AssertionError("Array does not contain key " + key.toString());
+	}
+
+	public boolean hasKey(final List<Value> key) {
+		return mValue.containsKey(key);
 	}
 
 	@Override
@@ -116,7 +121,15 @@ public class ArrayValue implements Value {
 		return this.getClass().getSimpleName().compareTo(b.getClass().getSimpleName());
 	}
 
+	public TermVariable getTermVar() {
+		return mArrayVar;
+	}
+
 	public Sort getSort() {
 		return mSort;
+	}
+
+	public Sort getValueSort() {
+		return mValueSort;
 	}
 }
