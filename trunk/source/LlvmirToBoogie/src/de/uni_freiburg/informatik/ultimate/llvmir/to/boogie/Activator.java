@@ -33,7 +33,7 @@ import org.eclipse.core.runtime.Plugin;
 
 /**
  * @author Peter Ritter
- * @date 21.06.2025
+ * @date 2025-06-21
  */
 public class Activator extends Plugin {
 	/**
@@ -43,5 +43,5 @@ public class Activator extends Plugin {
 	/**
 	 * The plug-in name.
 	 */
-	public static final String PLUGIN_NAME = "CACSL2BoogieTranslator";
+	public static final String PLUGIN_NAME = "LlvmirToBoogie";
 }
