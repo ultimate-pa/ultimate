@@ -108,6 +108,6 @@ public class LlvmirToBoogie implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		return mObserver.getRoot();
+		return mObserver.getResult();
 	}
 }

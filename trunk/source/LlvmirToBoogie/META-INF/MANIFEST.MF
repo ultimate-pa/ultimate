@@ -12,3 +12,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
 Automatic-Module-Name: LlvmirToBoogie
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.LlvmirToBoogie
 Bundle-RequiredExecutionEnvironment: JavaSE-21
+Import-Package: de.uni_freiburg.informatik.ultimate.boogie.ast
