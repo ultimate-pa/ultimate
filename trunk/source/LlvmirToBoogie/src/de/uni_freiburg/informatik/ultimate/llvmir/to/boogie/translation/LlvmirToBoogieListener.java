@@ -78,8 +78,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * Handles the exit event for the compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method creates the initial procedures required for the Boogie translation, specifically an `#init` procedure
-	 * and a `ULTIMATE.start` procedure that calls `#init`. These procedures are added to the list of declarations, and
-	 * the resulting Boogie `Unit` is constructed and stored.
+	 * and a `ULTIMATE.start` procedure that calls `#init` and `#main`. These procedures are added to the list of
+	 * declarations, and the resulting Boogie `Unit` is constructed and stored.
 	 *
 	 * @param ctx The parse tree context for the compilation unit.
 	 */
@@ -91,8 +91,10 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		mDeclarations.add(initProcedure);
 		final CallStatement initCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#init",
 				new Expression[] {});
+		final CallStatement mainCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#main",
+				new Expression[] {});
 		final Body startBody = new Body(new DefaultLocation(), new VariableDeclaration[] {},
-				new Statement[] { initCall });
+				new Statement[] { initCall, mainCall });
 		final Procedure startProcedure = new Procedure(new DefaultLocation(), new Attribute[] {}, "ULTIMATE.start",
 				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
 		mDeclarations.add(startProcedure);
