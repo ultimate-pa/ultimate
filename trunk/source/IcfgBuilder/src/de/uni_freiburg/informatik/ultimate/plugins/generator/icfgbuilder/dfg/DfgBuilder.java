@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -90,23 +91,32 @@ public class DfgBuilder {
 		}
 
 		/*
-		 * determines for each node whether it uses or redefines a program variable Use(x) ==> x is in InVars Def(x) ==>
-		 * x is in OutVars(x) or x is in InVars but not in OutVars (havoc x)
+		 * determines for each node whether it uses or redefines a program variable. Use(x) ==> x is in InVars Def(x)
+		 * ==> OutVar(x) != InVar(x)
 		 *
 		 */
 		private void defUseAnalysis() {
 			for (final DfgNode node : mNodeList) {
 				final IcfgEdge edge = node.getCorrespondingDFGEdge();
 				final UnmodifiableTransFormula transformula = edge.getTransformula();
-				final Set<IProgramVar> InVars = transformula.getInVars().keySet();
-				for (final IProgramVar programVar : InVars) {
-					mUseMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
-					if (transformula.getOutVars().get(programVar) != null) {
-						mDefMap.computeIfAbsent(node, (k -> new HashSet<>())).add(programVar);
+				final Map<IProgramVar, TermVariable> inVars = transformula.getInVars();
+				final Map<IProgramVar, TermVariable> outVars = transformula.getOutVars();
+				mUseMap.computeIfAbsent(node, k -> new HashSet<>()).addAll(inVars.keySet());
+
+				for (final IProgramVar programVar : outVars.keySet()) {
+					final TermVariable out = outVars.get(programVar);
+					final TermVariable in = inVars.get(programVar); // may be null
+
+					if (!out.equals(in)) {
+						mDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
 					}
 				}
-				final Set<IProgramVar> OutVars = transformula.getOutVars().keySet();
-				mDefMap.computeIfAbsent(node, (k -> new HashSet<>())).addAll(OutVars);
+				for (final IProgramVar programVar : inVars.keySet()) {
+					if (outVars.get(programVar) == null) {
+						mDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
+					}
+				}
+				mDefMap.computeIfAbsent(node, k -> new HashSet<>()); // create empty set for easier implementation later
 			}
 			mLogger.debug("def Map " + mDefMap.toString());
 			mLogger.debug("use map " + mUseMap.toString());
