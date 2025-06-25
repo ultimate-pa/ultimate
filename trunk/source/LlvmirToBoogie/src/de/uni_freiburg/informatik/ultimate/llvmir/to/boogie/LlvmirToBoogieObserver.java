@@ -78,7 +78,7 @@ public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 		final ParseTreeElementWrapper parseTreeElementWrapper = (ParseTreeElementWrapper) root;
 		final ParseTree tree = parseTreeElementWrapper.getParseTree();
 
-		final LlvmirToBoogieListener listener = new LlvmirToBoogieListener(mServices, mLogger, mResult);
+		final LlvmirToBoogieListener listener = new LlvmirToBoogieListener(mServices, mLogger);
 		ParseTreeWalker.DEFAULT.walk(listener, tree);
 		mResult = listener.getResult();
 
