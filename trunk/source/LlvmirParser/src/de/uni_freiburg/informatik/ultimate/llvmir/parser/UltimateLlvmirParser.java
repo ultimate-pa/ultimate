@@ -92,13 +92,10 @@ public class UltimateLlvmirParser implements ISource {
 	 * Parses a list of files and returns a ParseTree wrapped in an {@link IElement}. For the first implementation, this
 	 * method only parses the first file in the list.
 	 *
-	 * @param files
-	 *            the array of files to be parsed
+	 * @param files the array of files to be parsed
 	 * @return an {@link IElement} representing the ParseTree of the first file
-	 * @throws IOException
-	 *             if an error occurs during file reading or parsing
-	 * @throws InterruptedException
-	 *             if the parsing process is interrupted
+	 * @throws IOException          if an error occurs during file reading or parsing
+	 * @throws InterruptedException if the parsing process is interrupted
 	 */
 	@Override
 	public IElement parseAST(final File[] files) throws IOException, InterruptedException {
@@ -117,13 +114,10 @@ public class UltimateLlvmirParser implements ISource {
 	/**
 	 * Parses a single file and returns its ParseTree.
 	 *
-	 * @param file
-	 *            the file to be parsed
+	 * @param file the file to be parsed
 	 * @return the ParseTree of the file
-	 * @throws IOException
-	 *             if an error occurs during file reading or parsing
-	 * @throws InterruptedException
-	 *             if the parsing process is interrupted
+	 * @throws IOException          if an error occurs during file reading or parsing
+	 * @throws InterruptedException if the parsing process is interrupted
 	 */
 	private ParseTree parseFile(final File file) throws IOException, InterruptedException {
 		mLogger.info("Parsing: '" + file.getAbsolutePath() + "'");
@@ -131,19 +125,17 @@ public class UltimateLlvmirParser implements ISource {
 		final LLVMIRParser parser = getParser(getOptFile(file));
 
 		final ParseTree tree = parser.compilationUnit();
+		mLogger.debug("ParseTree (as String): " + tree.toStringTree(parser));
 		return tree;
 	}
 
 	/**
 	 * Reads the LLVM IR file and applies optimizations using the LlvmirOptPipeline.
 	 *
-	 * @param file
-	 *            the file to be optimized
+	 * @param file the file to be optimized
 	 * @return a File object representing the optimized LLVM IR file
-	 * @throws IOException
-	 *             if an error occurs while reading or writing the file
-	 * @throws InterruptedException
-	 *             if the optimization process is interrupted
+	 * @throws IOException          if an error occurs while reading or writing the file
+	 * @throws InterruptedException if the optimization process is interrupted
 	 */
 	private static File getOptFile(final File file) throws IOException, InterruptedException {
 		return LlvmirOptimizer.optLlFile(file);
@@ -152,11 +144,9 @@ public class UltimateLlvmirParser implements ISource {
 	/**
 	 * Creates a new {@link LLVMIRParser} for the given file.
 	 *
-	 * @param file
-	 *            the file to be parsed
+	 * @param file the file to be parsed
 	 * @return a new instance of {@link LLVMIRParser}
-	 * @throws IOException
-	 *             if an error occurs while reading the file
+	 * @throws IOException if an error occurs while reading the file
 	 */
 	private static LLVMIRParser getParser(final File file) throws IOException {
 		final CharStream input = CharStreams.fromFileName(file.getAbsolutePath());
