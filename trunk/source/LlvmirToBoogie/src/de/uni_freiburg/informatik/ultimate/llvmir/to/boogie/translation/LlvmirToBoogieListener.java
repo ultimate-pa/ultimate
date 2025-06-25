@@ -75,7 +75,13 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	}
 
 	/**
-	 * Temporarily returns an empty Unit to verify that the toolchain is working correctly.
+	 * Handles the exit event for the compilation unit in the LLVM IR parse tree.
+	 *
+	 * This method creates the initial procedures required for the Boogie translation, specifically an `#init` procedure
+	 * and a `ULTIMATE.start` procedure that calls `#init`. These procedures are added to the list of declarations, and
+	 * the resulting Boogie `Unit` is constructed and stored.
+	 *
+	 * @param ctx The parse tree context for the compilation unit.
 	 */
 	@Override
 	public void exitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
