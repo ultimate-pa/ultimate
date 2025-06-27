@@ -106,14 +106,13 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * Handles the exit event for a function definition in the LLVM IR parse tree.
 	 *
 	 * This method translates the parsed LLVM IR function into a Boogie procedure, including its body, parameters, and
-	 * return type. Currently, only `void` and integer return types are supported. If the return type is not supported,
-	 * a fatal log message is issued.
+	 * return type. Currently, only `void` and integer return types are supported.
 	 *
 	 * @param ctx The parse tree context for the function definition.
+	 * @throws AssertionError if the return type is not supported.
 	 */
-
 	@Override
-	public void exitFuncDef(final LLVMIRParser.FuncDefContext ctx) {
+	public void exitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
 		final String funcName = unifyFuncName(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 		final Body funcBody = new Body(new DefaultLocation(), mFuncLocalVars.toArray(VariableDeclaration[]::new),
@@ -131,7 +130,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			final VarList retVarList = new VarList(new DefaultLocation(), new String[] { "ret" }, intType);
 			outParams.add(retVarList);
 		} else {
-			mLogger.fatal("The support for return types other than void and integers is not implemented yet.");
+			throw new AssertionError(
+					"The support for return types other than void and integers is not implemented yet.");
 		}
 
 		final Procedure procedure = new Procedure(new DefaultLocation(), attributes.toArray(Attribute[]::new), funcName,
@@ -149,20 +149,20 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * @param funcName the name of the function as it appears in LLVM IR
 	 * @return the unified function name for Boogie, with '@' replaced by '#'
 	 */
-	private String unifyFuncName(final String funcName) {
+	private static String unifyFuncName(final String funcName) {
 		return funcName.replace('@', '#');
 	}
 
 	/**
 	 * Handles the exit event for a return terminator in the LLVM IR parse tree.
 	 *
-	 * Currently, it only supports integer return types. If the return type is not supported, a fatal log message is
-	 * issued.
+	 * Currently, it only supports integer return types.
 	 *
 	 * @param ctx The parse tree context for the return terminator.
+	 * @throws AssertionError if the return type is not supported.
 	 */
 	@Override
-	public void exitRetTerm(final LLVMIRParser.RetTermContext ctx) {
+	public void exitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
 		final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
 		if (returnType.intType() != null) {
 			final String returnValue = ctx.value().constant().intConst().getText();
@@ -174,7 +174,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			mFuncBlock.add(assignmentStmt);
 			mFuncBlock.add(returnStmt);
 		} else {
-			mLogger.fatal("The support for return types other than integers is not implemented yet.");
+			throw new AssertionError("The support for return types other than integers is not implemented yet.");
 		}
 	}
 }
