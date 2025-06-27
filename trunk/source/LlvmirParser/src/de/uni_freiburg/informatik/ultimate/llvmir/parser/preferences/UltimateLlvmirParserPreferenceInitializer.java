@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.llvmir.parser.Activator;
 public class UltimateLlvmirParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String OPT_PATH = "Your opt directory:";
-	public static final String DEF_OPT_PATH = "\"C:\\msys64\\mingw64\\bin\\opt.exe\"";
+	public static final String DEF_OPT_PATH = "opt";
 
 	public UltimateLlvmirParserPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
