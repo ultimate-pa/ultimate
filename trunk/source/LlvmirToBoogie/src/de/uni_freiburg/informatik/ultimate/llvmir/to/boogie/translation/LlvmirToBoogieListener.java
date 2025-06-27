@@ -59,8 +59,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	private Unit mResult;
 
 	// Temporary storage for function-local variables and statements
-	private final ArrayList<VariableDeclaration> mFuncLocalVars = new ArrayList<>();
-	private final ArrayList<Statement> mFuncBlock = new ArrayList<>();
+	private ArrayList<VariableDeclaration> mFuncLocalVars = new ArrayList<>();
+	private ArrayList<Statement> mFuncBlock = new ArrayList<>();
 	// Storage for the declarations that will be part of the final Boogie Unit
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 
@@ -139,8 +139,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				spec.toArray(Specification[]::new), funcBody);
 		mDeclarations.add(procedure);
 
-		mFuncBlock.clear();
-		mFuncLocalVars.clear();
+		mFuncBlock = new ArrayList<>();
+		mFuncLocalVars = new ArrayList<>();
 	}
 
 	/**
