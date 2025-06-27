@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireT
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.IExplicitEmpireAutomaton;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.ILegalFocusFunction;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.LegalFocus;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -83,14 +81,12 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	private final IIcfgSymbolTable mSymbolTable;
 	private final Set<String> mProcedures;
 	private final ModifiableGlobalsTable mModifiableGlobals;
+	private final IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 
 	private final BasicPredicateFactory mFactory;
 	private final FocusComputation mFocusComputation;
 
 	private final ConjunctiveUnionFactory mProofUnionFactory;
-
-	private BranchingProcess<L, P> mRefinedUnfolding;
-	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
 	private INwaOutgoingLetterAndTransitionProvider<L, IPredicate> mProofProduct;
 	private int mNumProofs = 0;
 
@@ -98,14 +94,16 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	private final Statistics mStatistics;
 
 	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit, final PredicateFactory factory, final FocusComputation focusComputation) {
+			final CfgSmtToolkit csToolkit, final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
+			final PredicateFactory factory, final FocusComputation focusComputation) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable(), factory, focusComputation);
+				csToolkit.getModifiableGlobalsTable(), possibleInterferences, factory, focusComputation);
 	}
 
 	public EmpireAutomataOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals, final PredicateFactory factory,
+			final ModifiableGlobalsTable modifiableGlobals,
+			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences, final PredicateFactory factory,
 			final FocusComputation focusComputation) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
@@ -115,6 +113,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 		mSymbolTable = symbolTable;
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
+		mPossibleInterferences = possibleInterferences;
 
 		mFactory = factory;
 		mFocusComputation = focusComputation;
@@ -127,7 +126,6 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	@Override
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
-		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
 		mNumProofs++;
 
 		final var initialTrueState =
@@ -147,7 +145,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 	@Override
 	public boolean isReadyToComputeProof() {
-		return mRefinedUnfolding != null;
+		return true;
 	}
 
 	@Override
@@ -164,9 +162,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 		final ILegalFocusFunction<State<L, P>, P> legalFocus = computeFocus(empireAutomaton);
 
-		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-				mProgram.getPlaces(), mDiff2OriginalTransition);
-		mOwickiGries = computeOwickiGriesAnnotation(possibleInterferences, empireAutomaton, legalFocus);
+		mOwickiGries = computeOwickiGriesAnnotation(mPossibleInterferences, empireAutomaton, legalFocus);
 		assert checkOwickiGriesValidity(mOwickiGries) : "Owicki Gries annotation is invalid";
 
 		return mOwickiGries;
@@ -249,7 +245,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 	@Override
 	public void finalize(final IPetriNet<L, P> refinedNet, final BranchingProcess<L, P> refinedNetUnfolding) {
-		mRefinedUnfolding = refinedNetUnfolding;
+		// Nothing to do here
 	}
 
 	@Override

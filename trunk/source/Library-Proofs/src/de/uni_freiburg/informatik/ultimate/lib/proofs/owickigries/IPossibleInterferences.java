@@ -28,6 +28,11 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Condition;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.Event;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.ICoRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -69,5 +74,20 @@ public interface IPossibleInterferences<T, P> {
 	 */
 	static <T, P> IPossibleInterferences<T, P> fromRelation(final HashRelation<P, T> rel) {
 		return rel::getImage;
+	}
+
+	static <L, P> HashRelation<P, Transition<L, P>> fromUnfolding(final BranchingProcess<L, P> bp) {
+		final HashRelation<P, Transition<L, P>> relation = new HashRelation<>();
+		final ICoRelation<L, P> coRelation = bp.getCoRelation();
+		for (final Condition<L, P> condition : bp.getConditions()) {
+			final P place = condition.getPlace();
+			for (final Event<L, P> event : coRelation.computeCoRelatatedEvents(condition)) {
+				final Transition<L, P> transition = event.getTransition();
+				if (!transition.getPredecessors().contains(place)) {
+					relation.addPair(place, transition);
+				}
+			}
+		}
+		return relation;
 	}
 }

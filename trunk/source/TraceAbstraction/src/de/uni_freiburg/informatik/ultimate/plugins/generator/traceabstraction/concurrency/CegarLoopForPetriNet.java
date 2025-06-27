@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeExc
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.PetriNetUtils;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.Difference.LoopSyncMethod;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -83,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPetriNetProofProducer;
+import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.IPossibleInterferences;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.ILooperCheck;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -97,6 +99,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -111,6 +114,7 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 	private static final boolean DUMP_OWICKI_GRIES_TEST = false;
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofAutomata = new ArrayList<>();
 	private final IPetriNet<L, IPredicate> mInitialNet;
+	private HashRelation<IPredicate, Transition<L, IPredicate>> mPossibleInterferences;
 
 	private static final boolean USE_ON_DEMAND_RESULT = true;
 
@@ -184,10 +188,11 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			final EventOrderEnum eventOrder = mPref.eventOrder();
 
 			mPetriClStatisticsGenerator.start(PetriCegarLoopStatisticsDefinitions.EmptinessCheckTime.toString());
-			PetriNetUnfolder<L, IPredicate> unf;
+			final PetriNetUnfolder<L, IPredicate> unf;
 			try {
+				final boolean stopIfAcceptingRunFound = !DUMP_OWICKI_GRIES_TEST || getIteration() != 0;
 				unf = new PetriNetUnfolder<>(new AutomataLibraryServices(getServices()), mAbstraction, eventOrder,
-						cutOffSameTrans, true);
+						cutOffSameTrans, stopIfAcceptingRunFound);
 			} catch (final PetriNetNot1SafeException e) {
 				throw new UnsupportedOperationException(e.getMessage());
 			} finally {
@@ -197,12 +202,17 @@ public class CegarLoopForPetriNet<L extends IIcfgTransition<?>>
 			mCoRelationQueries +=
 					finPrefix.getCoRelation().getQueryCounterYes() + finPrefix.getCoRelation().getQueryCounterNo();
 			mCounterexample = unf.getAcceptingRun();
+
+			if (DUMP_OWICKI_GRIES_TEST && getIteration() == 0) {
+				mPossibleInterferences = IPossibleInterferences.fromUnfolding(finPrefix);
+			}
 		}
 		if (mCounterexample == null) {
 			if (DUMP_OWICKI_GRIES_TEST) {
-				new OwickiGriesTestDumper<>(mServices, mTaskIdentifier, mIcfg, mInitialNet, mProofAutomata);
+				assert mPossibleInterferences != null : "possible interferences should have been initialized";
+				new OwickiGriesTestDumper<>(mServices, mTaskIdentifier, mIcfg, mInitialNet, mPossibleInterferences,
+						mProofAutomata);
 			}
-
 			return true;
 		}
 		if (mPref.dumpAutomata()) {

@@ -39,13 +39,13 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtParserUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.ThreadModularPrePostSpecification;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -59,17 +59,17 @@ public class ExpectedOGTestSuite extends OwickiGriesTestSuite {
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException {
+			final BranchingProcess<SimpleAction, IPredicate> unfolding,
+			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
+			throws AutomataLibraryException, IOException {
 		final var unifier = mUnifiers.get(0);
 
 		final var spec =
 				new ThreadModularPrePostSpecification<>(Map.of(Marking.initial(program), unifier.getTruePredicate()),
 						program::isAccepting, unifier.getFalsePredicate());
-		final var interferences =
-				PetriOwickiGries.getPossibleInterferences(unfolding, program.getPlaces(), mDiff2OriginalTransition);
 		final var annotation = new OwickiGriesParser<SimpleAction, IPredicate>(mProgramPlaceMap::get,
 				(ghosts, str) -> parsePredicate(ghosts, str, unifier)).parse(program, mSymbolTable,
-						Set.of(SimpleAction.PROCEDURE), spec, interferences, computeOGPath(path));
+						Set.of(SimpleAction.PROCEDURE), spec, possibleInterferences, computeOGPath(path));
 
 		assert new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, mHtc, program, annotation)
 				.isValid() != Validity.INVALID : "Specified annotation is invalid";

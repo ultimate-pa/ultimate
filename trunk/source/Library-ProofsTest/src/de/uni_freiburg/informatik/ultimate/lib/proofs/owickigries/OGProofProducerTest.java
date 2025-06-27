@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
@@ -58,13 +59,15 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException {
+			final BranchingProcess<SimpleAction, IPredicate> unfolding,
+			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
+			throws AutomataLibraryException, IOException {
 		mLogger.info("Constructing Owicki-Gries proof for Petri program that %s.", program.sizeInformation());
 
 		final var overallTimeTracker = new TimeTracker();
 		overallTimeTracker.start();
 
-		final var producer = createProofProducer(program);
+		final var producer = createProofProducer(program, possibleInterferences);
 
 		// feed the required information to the producer (simulate the CEGAR loop)
 		for (int i = 0; i < mProofs.size(); ++i) {
@@ -100,15 +103,17 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 				Map.of(), Map.of(), null, null, null);
 	}
 
-	protected abstract IPetriNetProofProducer<SimpleAction, IPredicate>
-			createProofProducer(final IPetriNet<SimpleAction, IPredicate> program);
+	protected abstract IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+			final IPetriNet<SimpleAction, IPredicate> program,
+			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences);
 
 	protected abstract OwickiGriesSettings getSettings();
 
 	public static final class NaiveOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
 			return new NaiveOwickiGries<>(mServices, mPredicateFactory, createCsToolkit(), program, getSettings())
 					.createProofProducer(Function.identity());
 		}
@@ -121,8 +126,9 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 
 	public static final class CrownsOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
 			return new CrownsOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
 					Function.identity());
 		}
@@ -135,8 +141,9 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 
 	public static final class GraphEmpireOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
 			return new GraphEmpireOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory);
 		}
 
@@ -148,56 +155,80 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 
 	public static final class EmpireAutomatonOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
-					FocusComputation.UNFOCUSED);
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), possibleInterferences,
+					mPredicateFactory, FocusComputation.UNFOCUSED);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.AUTOMATA, false, false);
 		}
+
+		@Override
+		protected boolean requiresUnfoldingAndDifference() {
+			return false;
+		}
 	}
 
 	public static final class GlobalLegalFocusOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
-					FocusComputation.GLOBAL);
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), possibleInterferences,
+					mPredicateFactory, FocusComputation.GLOBAL);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
+		}
+
+		@Override
+		protected boolean requiresUnfoldingAndDifference() {
+			return false;
 		}
 	}
 
 	public static final class ModularLegalFocusOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), mPredicateFactory,
-					FocusComputation.MODULAR);
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
+			return new EmpireAutomataOwickiGries<>(mServices, program, createCsToolkit(), possibleInterferences,
+					mPredicateFactory, FocusComputation.MODULAR);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.LEGAL_FOCUS, false, false);
 		}
+
+		@Override
+		protected boolean requiresUnfoldingAndDifference() {
+			return false;
+		}
 	}
 
 	public static final class DirectedLegalFocusOG extends OGProofProducerTest {
 		@Override
-		protected IPetriNetProofProducer<SimpleAction, IPredicate>
-				createProofProducer(final IPetriNet<SimpleAction, IPredicate> program) {
-			return new DirectedLegalFocusOwickiGries<>(mServices, program, createCsToolkit());
+		protected IPetriNetProofProducer<SimpleAction, IPredicate> createProofProducer(
+				final IPetriNet<SimpleAction, IPredicate> program,
+				final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences) {
+			return new DirectedLegalFocusOwickiGries<>(mServices, program, createCsToolkit(), possibleInterferences);
 		}
 
 		@Override
 		protected OwickiGriesSettings getSettings() {
 			return new OwickiGriesSettings(OwickiGriesComputation.DIR_LEGAL_FOCUS, false, false);
+		}
+
+		@Override
+		protected boolean requiresUnfoldingAndDifference() {
+			return false;
 		}
 	}
 }

@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Directe
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.DirectedLegalFocus;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireComputation;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -78,23 +76,23 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 	private final IIcfgSymbolTable mSymbolTable;
 	private final Set<String> mProcedures;
 	private final ModifiableGlobalsTable mModifiableGlobals;
-	private BranchingProcess<L, P> mRefinedUnfolding;
+	private final IPossibleInterferences<Transition<L, P>, P> mPossibleInterferences;
 
 	private final Statistics mStatistics;
-	private Function<Transition<L, P>, Transition<L, P>> mDiff2OriginalTransition = Function.identity();
 	private final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> mProofs = new ArrayList<>();
 	private OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> mOwickiGries;
-	private INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, ProductState<L, P>> mProduct = null;
+	private INwaOutgoingLetterAndTransitionProvider<Transition<L, P>, ProductState<L, P>> mProduct;
 
 	public DirectedLegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
-			final CfgSmtToolkit csToolkit) {
+			final CfgSmtToolkit csToolkit, final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		this(services, program, csToolkit.getManagedScript(), csToolkit.getSymbolTable(), csToolkit.getProcedures(),
-				csToolkit.getModifiableGlobalsTable());
+				csToolkit.getModifiableGlobalsTable(), possibleInterferences);
 	}
 
 	public DirectedLegalFocusOwickiGries(final IUltimateServiceProvider services, final IPetriNet<L, P> program,
 			final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final Set<String> procedures,
-			final ModifiableGlobalsTable modifiableGlobals) {
+			final ModifiableGlobalsTable modifiableGlobals,
+			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(getClass());
 		mProgram = program;
@@ -102,14 +100,13 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 		mSymbolTable = symbolTable;
 		mProcedures = procedures;
 		mModifiableGlobals = modifiableGlobals;
-		new UnionFactory<>();
+		mPossibleInterferences = possibleInterferences;
 		mStatistics = new Statistics(mLogger);
 	}
 
 	@Override
 	public void refine(final IPredicateUnifier unifier, final INestedWordAutomaton<L, IPredicate> interpolantAutomaton,
 			final Map<Transition<L, P>, Transition<L, P>> transitionBacktranslation) {
-		mDiff2OriginalTransition = mDiff2OriginalTransition.compose(transitionBacktranslation::get);
 		final var initialTrueState =
 				DataStructureUtils.getOneAndOnly(interpolantAutomaton.getInitialStates(), "initial state");
 		final var totalizedProof = new TotalizeNwa<>(interpolantAutomaton, initialTrueState, false);
@@ -123,9 +120,6 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 
 	@Override
 	public OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> getOrComputeProof() {
-		final var possibleInterferences = PetriOwickiGries.getPossibleInterferences(mRefinedUnfolding,
-				mProgram.getPlaces(), mDiff2OriginalTransition);
-
 		final List<NestedWordAutomatonReachableStates<Transition<L, P>, State<L, P>>> empireAutomata;
 		mStatistics.startEmpireComputation();
 		try {
@@ -146,7 +140,7 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 
 		mStatistics.startOwickiGriesComputation();
 		try {
-			final var annotationConstruction = getOwickiGriesAnnotation(possibleInterferences, legalFocus);
+			final var annotationConstruction = getOwickiGriesAnnotation(mPossibleInterferences, legalFocus);
 			mOwickiGries = annotationConstruction.getAnnotation();
 		} finally {
 			mStatistics.stopOwickiGriesComputation();
@@ -200,7 +194,7 @@ public class DirectedLegalFocusOwickiGries<L extends IAction, P> implements IPet
 
 	@Override
 	public void finalize(final IPetriNet<L, P> refinedNet, final BranchingProcess<L, P> refinedNetUnfolding) {
-		mRefinedUnfolding = refinedNetUnfolding;
+		// nothing to do here
 	}
 
 	@Override

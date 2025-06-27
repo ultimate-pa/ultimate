@@ -43,12 +43,12 @@ import org.junit.runner.RunWith;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireToOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.EmpireValidityCheck;
-import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.PetriOwickiGries;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Region;
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.empire.Territory;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.IncrementalPlicationChecker.Validity;
@@ -62,7 +62,9 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException {
+			final BranchingProcess<SimpleAction, IPredicate> unfolding,
+			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
+			throws AutomataLibraryException, IOException {
 
 		final var unifier = mUnifiers.get(0);
 		final var implicationChecker = new MonolithicImplicationChecker(mServices, mMgdScript);
@@ -88,8 +90,6 @@ public class EmpireToOwickiGriesTest extends OwickiGriesTestSuite {
 				program, modifiableGlobals, empire);
 		assumeThat("Given empire annotation is not valid", empireCheck.getValidity(), equalTo(Validity.VALID));
 
-		final var possibleInterferences =
-				PetriOwickiGries.getPossibleInterferences(unfolding, program.getPlaces(), mDiff2OriginalTransition);
 		final var empireToOwickiGries = new EmpireToOwickiGries<>(mServices, mMgdScript, program, mSymbolTable,
 				Set.of(SimpleAction.PROCEDURE), empire, possibleInterferences);
 

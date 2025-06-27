@@ -44,6 +44,10 @@ public class PetriOwickiGries {
 		return cond.getPredecessorEvent().isCutoffEvent();
 	}
 
+	/**
+	 * @deprecated Do not use! The possible interferences relation derived from the difference net may be incomplete.
+	 */
+	@Deprecated(forRemoval = true)
 	public static <L, P> IPossibleInterferences<Transition<L, P>, P> getPossibleInterferences(
 			final BranchingProcess<L, P> bp, final Set<P> originalPlaces,
 			final Function<Transition<L, P>, Transition<L, P>> diff2OriginalTransition) {

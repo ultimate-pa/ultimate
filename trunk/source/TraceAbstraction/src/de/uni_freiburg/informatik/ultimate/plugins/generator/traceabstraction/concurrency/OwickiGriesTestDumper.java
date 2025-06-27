@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.INwaAtsFormatter;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.IPetriAtsFormatter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.PureSubstitution;
 import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public final class OwickiGriesTestDumper<L extends IAction> {
 	private final Map<L, String> mAlphabetNames = new HashMap<>();
@@ -64,11 +66,13 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 
 	public OwickiGriesTestDumper(final IUltimateServiceProvider services, final TaskIdentifier ident,
 			final IIcfg<?> icfg, final IPetriNet<L, IPredicate> initialNet,
+			final HashRelation<IPredicate, Transition<L, IPredicate>> possibleInterferences,
 			final List<INwaOutgoingLetterAndTransitionProvider<L, IPredicate>> proofAutomata) {
 		mMgdScript = icfg.getCfgSmtToolkit().getManagedScript();
 
 		final String variablesComment = getVariablesComment(icfg);
 		final String alphabetComments = getAlphabetDefinition(initialNet, proofAutomata);
+		final String interferencesComments = getInterferencesComment(initialNet, possibleInterferences);
 
 		final var automata = new ArrayList<NamedAutomaton<L, IPredicate>>();
 		automata.add(new NamedAutomaton<>("program", initialNet));
@@ -79,8 +83,8 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 			i++;
 		}
 
-		writeAutomataToFile(services, ident.toString(), variablesComment + System.lineSeparator() + alphabetComments,
-				automata.toArray(NamedAutomaton[]::new));
+		writeAutomataToFile(services, ident.toString(), variablesComment + System.lineSeparator() + alphabetComments
+				+ System.lineSeparator() + interferencesComments, automata.toArray(NamedAutomaton[]::new));
 	}
 
 	private String getVariablesComment(final IIcfg<?> icfg) {
@@ -117,6 +121,22 @@ public final class OwickiGriesTestDumper<L extends IAction> {
 			alphabetDefinition.append(System.lineSeparator());
 		}
 		return alphabetDefinition.toString();
+	}
+
+	private String getInterferencesComment(final IPetriNet<L, IPredicate> initialNet,
+			final HashRelation<IPredicate, Transition<L, IPredicate>> possibleInterferences) {
+		final var placeNames = new PetriProgramFormatter<L, IPredicate>().getPlacesMapping(initialNet.getPlaces());
+		final var comments = new ArrayList<String>();
+
+		for (final var entry : possibleInterferences.entrySet()) {
+			final IPredicate place = entry.getKey();
+			final String placeName = placeNames.get(place);
+			final String interferingActions = entry.getValue().stream().map(t -> mAlphabetNames.get(t.getSymbol()))
+					.collect(Collectors.joining(", "));
+			comments.add("//@ interference(" + placeName + ") : " + interferingActions);
+		}
+
+		return comments.stream().collect(Collectors.joining(System.lineSeparator()));
 	}
 
 	private String getTransFormulaDescription(final UnmodifiableTransFormula transformula) {

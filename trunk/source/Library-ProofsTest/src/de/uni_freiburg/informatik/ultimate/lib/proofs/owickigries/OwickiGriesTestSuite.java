@@ -52,12 +52,15 @@ import org.junit.Before;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.TotalizeNwa;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetNot1SafeException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.operations.DifferencePairwiseOnDemand;
@@ -139,8 +142,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected final List<Map<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>>> mBacktranslations =
 			new ArrayList<>();
 
-	@Deprecated
-	protected Function<Transition<SimpleAction, IPredicate>, Transition<SimpleAction, IPredicate>> mDiff2OriginalTransition;
+	private FinitePrefix<SimpleAction, IPredicate> mFinitePrefixOfDifference;
 
 	private long mStartTime = -1L;
 
@@ -149,7 +151,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		final Path dir = Path.of(TestUtil.getPathFromTrunk("examples/concurrent/OwickiGries/PetriPrograms"));
 		try (final var files = Files.list(dir)) {
 			return files.filter(file -> file.toString().endsWith(".ats")).filter(this::includeTest)
-					.map(OwickiGriesTestCase::new).sorted().collect(Collectors.toList());
+					.map(OwickiGriesTestCase::new).sorted().toList();
 		}
 	}
 
@@ -182,8 +184,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mProgramPlaceMap.clear();
 		mProofs.clear();
 		mUnifiers.clear();
-		mBacktranslations.clear();
-		mDiff2OriginalTransition = null;
+		mFinitePrefixOfDifference = null;
 	}
 
 	protected boolean includeTest(final Path path) {
@@ -193,7 +194,9 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	protected abstract void runTest(final Path path, final AutomataTestFileAST ast,
 			final BoundedPetriNet<SimpleAction, IPredicate> program,
 			final BoundedPetriNet<SimpleAction, IPredicate> refinedPetriNet,
-			final BranchingProcess<SimpleAction, IPredicate> unfolding) throws AutomataLibraryException, IOException;
+			final BranchingProcess<SimpleAction, IPredicate> unfolding,
+			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences)
+			throws AutomataLibraryException, IOException;
 
 	private void runTestInternal(final Path path) throws IOException, AutomataLibraryException {
 		mSymbolTable = setupSymbolTable(path);
@@ -269,28 +272,108 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 			i++;
 		}
 		assert difference != null : "Difference can only be null if there no proofs, this is checked above";
-		mDiff2OriginalTransition = diff2OriginalTransition;
 
 		final var looperStats = new MinMaxMed();
 		looperStats.report(looperCounts, Integer::longValue);
 		mLogger.info("Loopers in proof automata: min=%d, max=%d, median=%d", looperStats.getMinimum(),
 				looperStats.getMaximum(), looperStats.getMedian());
 
-		final var finPrefix = new FinitePrefix<>(mAutomataServices, difference);
-		final var ctex = finPrefix.getAcceptingRun();
-		if (ctex != null) {
-			mLogger.warn("Unproven counterexample: %s", ctex);
-		}
-		assert ctex == null : "Proof is insufficient";
+		assert checkCounterexample(difference);
 
-		final var bp = finPrefix.getResult();
-		final var constructedDifference = difference.getYetConstructedPetriNet();
+		var interferenceRelation = parsePossibleInterferences(path, id2Action, program);
+		if (interferenceRelation.isEmpty()) {
+			mLogger.warn("No possible interferences specified. Computing from unfolding...");
+			final var bp = new FinitePrefix<>(mAutomataServices, program).getResult();
+			interferenceRelation = IPossibleInterferences.fromUnfolding(bp);
+		} else {
+			assert checkInterference(program, interferenceRelation)
+					: "Specified possible interferences deviate from actual";
+		}
+
+		final BoundedPetriNet<SimpleAction, IPredicate> constructedDifference;
+		final BranchingProcess<SimpleAction, IPredicate> bp;
+		if (requiresUnfoldingAndDifference()) {
+			bp = getOrConstructFinPrefixOfDifference(difference).getResult();
+			constructedDifference = difference.getYetConstructedPetriNet();
+		} else {
+			bp = null;
+			constructedDifference = null;
+		}
 
 		final long setupTime = System.nanoTime() - mStartTime;
 		mLogger.info("OwickiGriesTestSuite setup time: %s",
 				CoreUtil.toTimeString(setupTime, TimeUnit.NANOSECONDS, TimeUnit.MILLISECONDS, 0));
 
-		runTest(path, parsed, program, constructedDifference, bp);
+		runTest(path, parsed, program, constructedDifference, bp,
+				IPossibleInterferences.fromRelation(interferenceRelation));
+	}
+
+	private FinitePrefix<SimpleAction, IPredicate>
+			getOrConstructFinPrefixOfDifference(final DifferencePetriNet<SimpleAction, IPredicate> difference)
+					throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		if (mFinitePrefixOfDifference == null) {
+			mFinitePrefixOfDifference = new FinitePrefix<>(mAutomataServices, difference);
+		}
+		return mFinitePrefixOfDifference;
+	}
+
+	protected boolean requiresUnfoldingAndDifference() {
+		return true;
+	}
+
+	private boolean checkInterference(final IPetriNet<SimpleAction, IPredicate> program,
+			final HashRelation<IPredicate, Transition<SimpleAction, IPredicate>> interferenceRelation)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final var finPrefix = new FinitePrefix<>(mAutomataServices, program);
+		final var bp = finPrefix.getResult();
+		final var actualInterference = IPossibleInterferences.fromUnfolding(bp);
+		return interferenceRelation.equals(actualInterference);
+	}
+
+	private boolean checkCounterexample(final DifferencePetriNet<SimpleAction, IPredicate> difference)
+			throws AutomataOperationCanceledException, PetriNetNot1SafeException {
+		final var ctex = getOrConstructFinPrefixOfDifference(difference).getAcceptingRun();
+		if (ctex != null) {
+			mLogger.warn("Unproven counterexample: %s", ctex);
+		}
+		return ctex == null;
+	}
+
+	private HashRelation<IPredicate, Transition<SimpleAction, IPredicate>> parsePossibleInterferences(final Path path,
+			final Map<Integer, SimpleAction> id2Action, final IPetriNet<SimpleAction, IPredicate> program)
+			throws IOException {
+		final var relation = new HashRelation<IPredicate, Transition<SimpleAction, IPredicate>>();
+
+		final String prefix = "//@ interference(";
+		final List<String> interferenceLines;
+		try (final var lines = Files.lines(path)) {
+			interferenceLines = lines.filter(l -> l.startsWith(prefix)).toList();
+		}
+
+		final Pattern interferencePattern =
+				Pattern.compile("^//@ interference\\((.*)\\) : (\\[\\d+\\](, \\[\\d+\\])*)$");
+		for (final var line : interferenceLines) {
+			final var matcher = interferencePattern.matcher(line);
+			final boolean lineMatches = matcher.matches();
+			assert lineMatches : "failed to parse interference information: " + line;
+
+			final var placeName = matcher.group(1);
+			final var actionNames = matcher.group(2).split(", ");
+
+			final var place = mProgramPlaceMap.get(placeName);
+			assert place != null : "unknown place name: " + placeName;
+			assert !relation.getDomain().contains(place) : "repeated interference line for " + place;
+
+			final var actions = Arrays.stream(actionNames)
+					.map(name -> findTransition(program, parseAction(id2Action, name))).toList();
+			relation.addAllPairs(place, actions);
+		}
+
+		return relation;
+	}
+
+	private static <L, P> Transition<L, P> findTransition(final IPetriNet<L, P> net, final L letter) {
+		return net.getTransitions().stream().filter(t -> t.getSymbol().equals(letter)).findAny().orElseThrow();
 	}
 
 	private static <L, P> Map<Transition<L, P>, Transition<L, P>> combine(
