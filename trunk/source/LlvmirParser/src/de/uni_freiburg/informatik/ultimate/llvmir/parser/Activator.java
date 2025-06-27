@@ -31,12 +31,12 @@ package de.uni_freiburg.informatik.ultimate.llvmir.parser;
 
 /**
  * @author Peter Ritter
- * @date 11.06.2025
+ * @date 2025-06-11
  */
 public class Activator {
-	
+
 	public static final String PLUGIN_ID = "LlvmirParser";
 
 	public static final String PLUGIN_NAME = "LlvmirParser";
-	
+
 }

@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
+import de.uni_freiburg.informatik.ultimate.llvmir.parser.preferences.UltimateLlvmirParserPreferenceInitializer;
+
 public class LlvmirOptimizer {
 	protected static File optLlFile(final File file) throws IOException, InterruptedException {
 		// clean the .ll file by removing "optnone" attributes
@@ -54,8 +56,8 @@ public class LlvmirOptimizer {
 		outputFile.deleteOnExit();
 
 		// start opt process
-		final ProcessBuilder opt = new ProcessBuilder("opt", "-S", "-passes=sroa,mem2reg,simplifycfg", "-o",
-				outputFile.getAbsolutePath(), "-");
+		final ProcessBuilder opt = new ProcessBuilder(UltimateLlvmirParserPreferenceInitializer.DEF_OPT_PATH, "-S",
+				"-passes=sroa,mem2reg,simplifycfg", "-o", outputFile.getAbsolutePath(), "-");
 		final Process optProc = opt.start();
 
 		// write cleaned .ll content to opt process
