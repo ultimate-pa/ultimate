@@ -23,20 +23,30 @@
  * licensors of the ULTIMATE LlvmirParser plug-in grant you additional permission
  * to convey the resulting work.
  */
-/**
- * The activator class controls the plug-in life cycle
- */
+package de.uni_freiburg.informatik.ultimate.llvmir.parser.preferences;
 
-package de.uni_freiburg.informatik.ultimate.llvmir.parser;
+import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.llvmir.parser.Activator;
 
-/**
- * @author Peter Ritter
- * @date 2025-06-11
- */
-public class Activator {
+public class UltimateLlvmirParserPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public static final String PLUGIN_ID = "LlvmirParser";
+	public static final String OPT_PATH = "Your opt directory:";
+	public static final String DEF_OPT_PATH = "\"C:\\msys64\\mingw64\\bin\\opt.exe\"";
 
-	public static final String PLUGIN_NAME = "LlvmirParser";
+	public UltimateLlvmirParserPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
+	@Override
+	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<>(OPT_PATH, DEF_OPT_PATH, PreferenceType.Directory), };
+	}
+
+//	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
+//		return services.getPreferenceProvider(Activator.PLUGIN_ID);
+//	}
 }
