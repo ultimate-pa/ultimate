@@ -6,6 +6,7 @@
   <option name="-tc">../../../trunk/examples/toolchains/AutomizerCInline.xml</option>
   <option name="-s">../../../trunk/examples/settings/automizer/concurrent/svcomp-Reach-32bit-Automizer_Default-noMmResRef-PN-NoLbe.epf</option>
   <option name="--traceabstraction.positions.where.we.compute.the.hoare.annotation">All</option>
+  <option name="--cacsl2boogietranslator.behaviour.of.calls.to.undefined.functions">OVERAPPROXIMATE_BEHAVIOUR</option>
 
   <rundefinition name="AutomizerPN-ReachSafety">
     <tasks name="ConcurrencySafety-Main">
@@ -27,9 +28,9 @@
   <rundefinition name="AutomizerPN-MemSafety">
     <tasks name="ConcurrencySafety-MemSafety">
       <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
-      <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">ASSERTandASSUME</option>
-      <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">ASSERTandASSUME</option>
-      <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">ASSERTandASSUME</option>
+      <option name="--cacsl2boogietranslator.pointer.base.address.is.valid.at.dereference">CHECK</option>
+      <option name="--cacsl2boogietranslator.pointer.to.allocated.memory.at.dereference">CHECK</option>
+      <option name="--cacsl2boogietranslator.check.array.bounds.for.arrays.that.are.off.heap">CHECK</option>
       <option name="--cacsl2boogietranslator.check.if.freed.pointer.was.valid">true</option>
       <option name="--cacsl2boogietranslator.adapt.memory.model.on.pointer.casts.if.necessary">true</option>
 
@@ -41,7 +42,7 @@
   <rundefinition name="AutomizerPN-NoOverflow">
     <tasks name="ConcurrencySafety-NoOverflow">
       <option name="--cacsl2boogietranslator.check.unreachability.of.reach_error.function">false</option>
-      <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">ASSERTandASSUME</option>
+      <option name="--cacsl2boogietranslator.check.absence.of.signed.integer.overflows">CHECK</option>
 
       <includesfile>../../../trunk/examples/svcomp/Concurrency.set</includesfile>
       <propertyfile expectedverdict="true">../../../trunk/examples/svcomp/properties/no-overflow.prp</propertyfile>
