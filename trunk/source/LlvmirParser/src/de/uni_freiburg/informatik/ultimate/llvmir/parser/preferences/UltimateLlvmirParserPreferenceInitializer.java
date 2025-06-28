@@ -43,7 +43,7 @@ public class UltimateLlvmirParserPreferenceInitializer extends UltimatePreferenc
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(OPT_PATH, DEF_OPT_PATH, PreferenceType.Directory), };
+				new UltimatePreferenceItem<>(OPT_PATH, DEF_OPT_PATH, PreferenceType.File), };
 	}
 
 //	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {

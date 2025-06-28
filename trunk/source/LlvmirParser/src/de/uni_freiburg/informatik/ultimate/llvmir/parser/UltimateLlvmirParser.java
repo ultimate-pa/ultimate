@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRLexer;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.ParseTreeElementWrapper;
+import de.uni_freiburg.informatik.ultimate.llvmir.parser.preferences.UltimateLlvmirParserPreferenceInitializer;
 
 public class UltimateLlvmirParser implements ISource {
 	protected String[] mFileTypes;
@@ -183,6 +184,6 @@ public class UltimateLlvmirParser implements ISource {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return null;
+		return new UltimateLlvmirParserPreferenceInitializer();
 	}
 }
