@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -68,6 +70,42 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		assert services != null;
 		mServices = services;
 		mLogger = logger;
+		createInitialDeclarations();
+	}
+
+	/**
+	 * Creates the initial declarations for the Boogie translation, specifically an `#init` procedure and a
+	 * `ULTIMATE.start` procedure that calls `#init` and `#main`.
+	 *
+	 * The `#init` procedure is empty, while the `ULTIMATE.start` procedure initializes the program by calling both
+	 * `#init` and `#main`.
+	 */
+	private void createInitialDeclarations() {
+		final Body initBody = new Body(new DefaultLocation(), new VariableDeclaration[] {}, new Statement[] {});
+		final Procedure initProcedure = new Procedure(new DefaultLocation(), new Attribute[] {}, "#init",
+				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, initBody);
+		mDeclarations.add(initProcedure);
+		final CallStatement initCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#init",
+				new Expression[] {});
+		final CallStatement mainCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#main",
+				new Expression[] {});
+		final Body startBody = new Body(new DefaultLocation(), new VariableDeclaration[] {},
+				new Statement[] { initCall, mainCall });
+		final Procedure startProcedure = new Procedure(new DefaultLocation(), new Attribute[] {}, "ULTIMATE.start",
+				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
+		mDeclarations.add(startProcedure);
+	}
+
+	/**
+	 * Retrieves the `#init` procedure from the list of declarations.
+	 *
+	 * @return The `#init` procedure.
+	 * @throws IllegalStateException if no `#init` procedure is found.
+	 */
+	private Procedure getInitProcedure() throws IllegalStateException {
+		return (Procedure) mDeclarations.stream()
+				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#init"))
+				.findFirst().orElseThrow(() -> new IllegalStateException("No #init declaration found"));
 	}
 
 	public Unit getResult() {
@@ -85,20 +123,6 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 */
 	@Override
 	public void exitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
-		final Body initBody = new Body(new DefaultLocation(), new VariableDeclaration[] {}, new Statement[] {});
-		final Procedure initProcedure = new Procedure(new DefaultLocation(), new Attribute[] {}, "#init",
-				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, initBody);
-		mDeclarations.add(initProcedure);
-		final CallStatement initCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#init",
-				new Expression[] {});
-		final CallStatement mainCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#main",
-				new Expression[] {});
-		final Body startBody = new Body(new DefaultLocation(), new VariableDeclaration[] {},
-				new Statement[] { initCall, mainCall });
-		final Procedure startProcedure = new Procedure(new DefaultLocation(), new Attribute[] {}, "ULTIMATE.start",
-				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
-		mDeclarations.add(startProcedure);
-
 		mResult = new Unit(new DefaultLocation(), mDeclarations.toArray(Declaration[]::new));
 	}
 
@@ -176,5 +200,61 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		} else {
 			throw new AssertionError("The support for return types other than integers is not implemented yet.");
 		}
+	}
+
+	@Override
+	public void exitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) {
+		final LLVMIRParser.TypeContext type = ctx.type();
+		final String identifier = ctx.GlobalIdent().getText();
+		if (type.intType() != null) {
+			final PrimitiveType intType = new PrimitiveType(new DefaultLocation(), "int");
+			final VarList varList = new VarList(new DefaultLocation(), new String[] { unifyFuncName(identifier) },
+					intType);
+			final VariableDeclaration varDecl = new VariableDeclaration(new DefaultLocation(), new Attribute[] {},
+					new VarList[] { varList });
+			mDeclarations.add(varDecl);
+
+			final Procedure initProcedure = getInitProcedure();
+			final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), unifyFuncName(identifier));
+			final IntegerLiteral initValue = new IntegerLiteral(new DefaultLocation(),
+					ctx.constant().intConst().getText());
+			final AssignmentStatement assignment = new AssignmentStatement(new DefaultLocation(),
+					new LeftHandSide[] { varLhs }, new Expression[] { initValue });
+
+			final Specification modifiesSpec = new ModifiesSpecification(new DefaultLocation(), false,
+					new VariableLHS[] { varLhs });
+
+			updateInitProcedure(assignment, modifiesSpec);
+		} else {
+			throw new AssertionError("The support for types other than integers is not implemented yet.");
+		}
+	}
+
+	/**
+	 * Updates the `#init` procedure with a new assignment statement and modifies specification.
+	 *
+	 * This method removes the old `#init` procedure, updates its body with the new assignment, and adds a modifies
+	 * specification for the variable being initialized. The updated procedure is then added back to the list of
+	 * declarations.
+	 *
+	 * @param assignment   The assignment statement to be added to the `#init` procedure.
+	 * @param modifiesSpec The modifies specification for the variable being initialized.
+	 */
+	private void updateInitProcedure(final AssignmentStatement assignment, final Specification modifiesSpec) {
+		final Procedure initProcedure = getInitProcedure();
+		mDeclarations.remove(initProcedure);
+
+		final ArrayList<Statement> newBlock = new ArrayList<>(Arrays.asList(initProcedure.getBody().getBlock()));
+		newBlock.add(assignment);
+		final ArrayList<Specification> newSpecs = new ArrayList<>(Arrays.asList(initProcedure.getSpecification()));
+		newSpecs.add(modifiesSpec);
+
+		final Body newBody = new Body(initProcedure.getBody().getLocation(), initProcedure.getBody().getLocalVars(),
+				newBlock.toArray(new Statement[0]));
+		final Procedure newInitProcedure = new Procedure(initProcedure.getLocation(), initProcedure.getAttributes(),
+				initProcedure.getIdentifier(), initProcedure.getTypeParams(), initProcedure.getInParams(),
+				initProcedure.getOutParams(), newSpecs.toArray(new Specification[0]), newBody);
+
+		mDeclarations.add(newInitProcedure);
 	}
 }
