@@ -186,7 +186,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private boolean checkAutomatonValidity(final IExplicitEmpireAutomaton<L, P, ?> automaton) {
-		mLogger.info("Checking validity of Empire automaton...");
+		mLogger.info("Checking validity of empire automaton...");
 		mStatistics.startEmpireValidity();
 		try {
 			final var checker = new EmpireAutomatonValidityCheck<>(mServices, mMgdScript, mFactory, mProgram,
@@ -199,9 +199,9 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 
 	private ILegalFocusFunction<State<L, P>, P>
 			computeFocus(final IExplicitEmpireAutomaton<L, P, State<L, P>> empireAutomaton) {
+		mLogger.info("Computing focus ...");
 		mStatistics.startFocusComputation();
 		try {
-			mLogger.info("Computing focus ...");
 			return switch (mFocusComputation) {
 			case UNFOCUSED -> new ILegalFocusFunction.TrivialFocus<>(empireAutomaton);
 			case MODULAR -> new LegalFocus<>(empireAutomaton, mProgram, mProofProduct, mNumProofs,
@@ -217,6 +217,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 			final IPossibleInterferences<Transition<L, P>, P> possibleInterferences,
 			final IExplicitEmpireAutomaton<L, P, State<L, P>> empire,
 			final ILegalFocusFunction<State<L, P>, P> legalFocus) {
+		mLogger.info("Converting empire automaton to Owicki-Gries annotation...");
 		mStatistics.startOwickiGriesComputation();
 		try {
 			final var construction = new EmpireToOG<>(mServices, mMgdScript, mProgram, mSymbolTable, mProcedures,
@@ -228,6 +229,7 @@ public class EmpireAutomataOwickiGries<L extends IAction, P> implements IPetriNe
 	}
 
 	private boolean checkOwickiGriesValidity(final OwickiGriesAnnotation<Transition<L, P>, P, Marking<P>> annotation) {
+		mLogger.info("Checking validity of Owicki-Gries annotation...");
 		mStatistics.startOwickiGriesValidity();
 		try {
 			final var validity =
