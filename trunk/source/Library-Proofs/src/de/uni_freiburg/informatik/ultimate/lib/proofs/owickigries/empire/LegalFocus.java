@@ -87,21 +87,20 @@ public class LegalFocus<S, L, P> implements ILegalFocusFunction<S, P> {
 
 		// Perform a backwards-BFS to propagate focus.
 		// (Rules: inductive-edge, bystanders)
-		final var queue = new ArrayDeque<>(mEmpire.getFinalStates());
+		final var queue = new ArrayDeque<>(focus.getDomain());
 		while (!queue.isEmpty()) {
-			final var state = queue.poll();
+			final var entry = queue.poll();
+			final var state = entry.getFirst();
+			final int index = entry.getSecond();
+
 			final var predecessors = mEmpire.internalPredecessors(state);
 
 			for (final IncomingInternalTransition<Transition<L, P>, S> edge : predecessors) {
 				final var laws = mSplitConjuncts.apply(mEmpire.getLaw(edge.getPred()));
 
-				boolean modified = false;
-				for (int i = 0; i < mNumLaws; i++) {
-					modified |= propagateFocus(state, edge, focus, i, laws);
-				}
-
+				final boolean modified = propagateFocus(state, edge, focus, index, laws);
 				if (modified) {
-					queue.offer(edge.getPred());
+					queue.offer(new Pair<>(edge.getPred(), index));
 				}
 			}
 		}
