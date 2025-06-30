@@ -32,10 +32,13 @@ import java.util.Arrays;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
@@ -137,7 +140,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 */
 	@Override
 	public void exitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
-		final String funcName = unifyFuncName(ctx.funcHeader().GlobalIdent().getText());
+		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 		final Body funcBody = new Body(new DefaultLocation(), mFuncLocalVars.toArray(VariableDeclaration[]::new),
 				mFuncBlock.toArray(Statement[]::new));
@@ -154,6 +157,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			final VarList retVarList = new VarList(new DefaultLocation(), new String[] { "ret" }, intType);
 			outParams.add(retVarList);
 		} else {
+			// TODO: Support for other types
 			throw new AssertionError(
 					"The support for return types other than void and integers is not implemented yet.");
 		}
@@ -168,13 +172,18 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	}
 
 	/**
-	 * FuncNames in LLVM IR begin with '@', but in Boogie we want them to begin with '#'.
+	 * Unifies the identifier by ensuring it starts with a `#` character.
 	 *
-	 * @param funcName the name of the function as it appears in LLVM IR
-	 * @return the unified function name for Boogie, with '@' replaced by '#'
+	 * This method is used to standardize the identifiers in the Boogie AST, as they are expected to start with `#`.
+	 *
+	 * @param identifier The original identifier from the LLVM IR parse tree.
+	 * @return The unified identifier starting with `#`, or the original identifier if it is null or empty.
 	 */
-	private static String unifyFuncName(final String funcName) {
-		return funcName.replace('@', '#');
+	private static String unifyIdentifier(final String identifier) {
+		if (identifier == null || identifier.isEmpty()) {
+			return identifier;
+		}
+		return "#" + identifier.substring(1);
 	}
 
 	/**
@@ -198,24 +207,34 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			mFuncBlock.add(assignmentStmt);
 			mFuncBlock.add(returnStmt);
 		} else {
+			// TODO: Support for other types
 			throw new AssertionError("The support for return types other than integers is not implemented yet.");
 		}
 	}
 
+	/**
+	 * Handles the exit event for a global variable definition in the LLVM IR parse tree.
+	 *
+	 * This method translates the global variable definition into a Boogie variable declaration and updates the `#init`
+	 * procedure with an assignment statement to initialize the variable.
+	 *
+	 * @param ctx The parse tree context for the global variable definition.
+	 * @throws AssertionError if the type of the global variable is not supported.
+	 */
 	@Override
-	public void exitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) {
+	public void exitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = ctx.GlobalIdent().getText();
 		if (type.intType() != null) {
 			final PrimitiveType intType = new PrimitiveType(new DefaultLocation(), "int");
-			final VarList varList = new VarList(new DefaultLocation(), new String[] { unifyFuncName(identifier) },
+			final VarList varList = new VarList(new DefaultLocation(), new String[] { unifyIdentifier(identifier) },
 					intType);
 			final VariableDeclaration varDecl = new VariableDeclaration(new DefaultLocation(), new Attribute[] {},
 					new VarList[] { varList });
 			mDeclarations.add(varDecl);
 
 			final Procedure initProcedure = getInitProcedure();
-			final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), unifyFuncName(identifier));
+			final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), unifyIdentifier(identifier));
 			final IntegerLiteral initValue = new IntegerLiteral(new DefaultLocation(),
 					ctx.constant().intConst().getText());
 			final AssignmentStatement assignment = new AssignmentStatement(new DefaultLocation(),
@@ -226,6 +245,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 
 			updateInitProcedure(assignment, modifiesSpec);
 		} else {
+			// TODO: Support for other types
 			throw new AssertionError("The support for types other than integers is not implemented yet.");
 		}
 	}
@@ -256,5 +276,118 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				initProcedure.getOutParams(), newSpecs.toArray(new Specification[0]), newBody);
 
 		mDeclarations.add(newInitProcedure);
+	}
+
+	/**
+	 * Handles the exit event for a local variable definition in the LLVM IR parse tree.
+	 *
+	 * This method translates the local variable definition into a Boogie variable declaration and initializes it based
+	 * on the type of instruction (load or iCmp). Currently, it supports load instructions for integers and iCmp
+	 * instructions for equality checks.
+	 *
+	 * @param ctx The parse tree context for the local variable definition.
+	 * @throws AssertionError if the instruction type is not supported.
+	 */
+	@Override
+	public void exitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) throws AssertionError {
+		final String identifier = ctx.LocalIdent().getText();
+		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
+		if (instructionType.loadInst() != null) {
+			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
+			if (variableType.intType() != null) {
+				final PrimitiveType intType = new PrimitiveType(new DefaultLocation(), "int");
+				final VarList varList = new VarList(new DefaultLocation(), new String[] { unifyIdentifier(identifier) },
+						intType);
+				final VariableDeclaration varDecl = new VariableDeclaration(new DefaultLocation(), new Attribute[] {},
+						new VarList[] { varList });
+				mFuncLocalVars.add(varDecl);
+				final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), unifyIdentifier(identifier));
+				final String nameOfGlobalVar = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
+						.getText();
+				final IdentifierExpression globalVarExpr = new IdentifierExpression(new DefaultLocation(),
+						unifyIdentifier(nameOfGlobalVar));
+				final AssignmentStatement assignment = new AssignmentStatement(new DefaultLocation(),
+						new LeftHandSide[] { varLhs }, new Expression[] { globalVarExpr });
+				mFuncBlock.add(assignment);
+				// TODO
+			} else {
+				// TODO: Support for other types
+				throw new AssertionError(
+						"The support for types other than integers in load instructions is not implemented yet.");
+			}
+		} else if (instructionType.iCmpInst() != null) {
+			final PrimitiveType boolType = new PrimitiveType(new DefaultLocation(), "bool");
+			final VarList varList = new VarList(new DefaultLocation(), new String[] { unifyIdentifier(identifier) },
+					boolType);
+			final VariableDeclaration varDecl = new VariableDeclaration(new DefaultLocation(), new Attribute[] {},
+					new VarList[] { varList });
+			mFuncLocalVars.add(varDecl);
+			Expression leftExpr = null;
+			Expression rightExpr = null;
+			Operator operator = null;
+			final String OperatorValue = instructionType.iCmpInst().iPred().getText();
+			if (OperatorValue.equals("eq")) {
+				operator = Operator.COMPEQ;
+			} else {
+				// TODO: Support for other iCmp operators
+				throw new AssertionError("The support for iCmp operators other than eq is not implemented yet.");
+			}
+
+			final LLVMIRParser.ValueContext leftOperandType = instructionType.iCmpInst().typeValue().value();
+			if (leftOperandType.constant() != null) {
+				if (leftOperandType.constant().intConst() != null) {
+					final int constValue = Integer.parseInt(leftOperandType.constant().intConst().getText());
+					final IntegerLiteral leftOperand = new IntegerLiteral(new DefaultLocation(),
+							Integer.toString(constValue));
+					leftExpr = leftOperand;
+				} else {
+					// TODO: Support for other constant operand types
+					throw new AssertionError(
+							"The support for iCmp instructions with constant operands other than integers is not implemented yet.");
+				}
+			} else if (leftOperandType.LocalIdent() != null) {
+				final String leftOperandName = leftOperandType.LocalIdent().getText();
+				final IdentifierExpression leftOperand = new IdentifierExpression(new DefaultLocation(),
+						unifyIdentifier(leftOperandName));
+				leftExpr = leftOperand;
+			} else {
+				// TODO: Support for other left operand types
+				throw new AssertionError(
+						"The support for iCmp instructions with operands other than constants or local identifiers is not implemented yet.");
+			}
+
+			final LLVMIRParser.ValueContext rightOperandType = instructionType.iCmpInst().value();
+			if (rightOperandType.constant() != null) {
+				if (rightOperandType.constant().intConst() != null) {
+					final int constValue = Integer.parseInt(rightOperandType.constant().intConst().getText());
+					final IntegerLiteral rightOperand = new IntegerLiteral(new DefaultLocation(),
+							Integer.toString(constValue));
+					rightExpr = rightOperand;
+				} else {
+					// TODO: Support for other constant operand types
+					throw new AssertionError(
+							"The support for iCmp instructions with constant operands other than integers is not implemented yet.");
+				}
+			} else if (rightOperandType.LocalIdent() != null) {
+				final String rightOperandName = rightOperandType.LocalIdent().getText();
+				final IdentifierExpression rightOperand = new IdentifierExpression(new DefaultLocation(),
+						unifyIdentifier(rightOperandName));
+				rightExpr = rightOperand;
+			} else {
+				// TODO: Support for other right operand types
+				throw new AssertionError(
+						"The support for iCmp instructions with operands other than constants or local identifiers is not implemented yet.");
+			}
+
+			final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), unifyIdentifier(identifier));
+			final BinaryExpression binaryExpr = new BinaryExpression(new DefaultLocation(), operator, leftExpr,
+					rightExpr);
+			final AssignmentStatement assignment = new AssignmentStatement(new DefaultLocation(),
+					new LeftHandSide[] { varLhs }, new Expression[] { binaryExpr });
+			mFuncBlock.add(assignment);
+		} else {
+			// TODO: Support for other instructions
+			throw new AssertionError("The support for instructions other than load is not implemented yet.");
+		}
 	}
 }
