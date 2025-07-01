@@ -131,7 +131,7 @@ public final class ConstructMemcpyOrMemmove {
 					loopBody.getStatements()));
 		}
 
-		{
+		if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			bodyDecl.add(loopCtrAux.getVarDec());
 
@@ -289,24 +289,21 @@ public final class ConstructMemcpyOrMemmove {
 			final Expression currentDest = mMemoryHandler.doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc,
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
 					charCType);
+			final ICType cPointer = CPointer.voidPointer();
+			final Expression srcAcc;
+			{
+				final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
+				srcAcc = srcAccExpRes.getLrValue().getValue();
+				loopBody.addStatements(srcAccExpRes.getStatements());
+				loopBody.addDeclarations(srcAccExpRes.getDeclarations());
+				assert srcAccExpRes.getOverapprs().isEmpty();
+			}
 
-			if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-				final ICType cPointer = CPointer.voidPointer();
-				final Expression srcAcc;
-				{
-					final ExpressionResult srcAccExpRes = mMemoryHandler.getReadUnchecked(currentSrc, cPointer);
-					srcAcc = srcAccExpRes.getLrValue().getValue();
-					loopBody.addStatements(srcAccExpRes.getStatements());
-					loopBody.addDeclarations(srcAccExpRes.getDeclarations());
-					assert srcAccExpRes.getOverapprs().isEmpty();
-				}
-
-				{
-					final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
-							LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc,
-							cPointer, true);
-					loopBody.addStatements(writeCall);
-				}
+			{
+				final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
+						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc, cPointer,
+						true);
+				loopBody.addStatements(writeCall);
 			}
 		}
 
