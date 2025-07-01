@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -97,7 +98,7 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 
 	private Set<Integer> mCallPositions;
 
-	private SortedMap<Integer, LETTER> mPendingReturns;
+	private TreeMap<Integer, LETTER> mPendingReturns;
 
 	/**
 	 * Constructor for a nested word from two arrays.
@@ -223,8 +224,8 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		return mPendingReturns;
 	}
 
-	private SortedMap<Integer, LETTER> computePendingReturnPositions() {
-		final SortedMap<Integer, LETTER> result = new TreeMap<>();
+	private TreeMap<Integer, LETTER> computePendingReturnPositions() {
+		final TreeMap<Integer, LETTER> result = new TreeMap<>();
 		for (int i = 0; i < mNestingRelation.length; i++) {
 			if (isPendingReturn(i)) {
 				result.put(i, mWord[i]);
@@ -616,4 +617,31 @@ public class NestedWord<LETTER> extends Word<LETTER> {
 		}
 		return true;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + Arrays.hashCode(mNestingRelation);
+		result = prime * result + Objects.hash(mCallPositions, mPendingReturns);
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final NestedWord<?> other = (NestedWord<?>) obj;
+		return Objects.equals(mCallPositions, other.mCallPositions)
+				&& Arrays.equals(mNestingRelation, other.mNestingRelation)
+				&& Objects.equals(mPendingReturns, other.mPendingReturns);
+	}
+
 }
