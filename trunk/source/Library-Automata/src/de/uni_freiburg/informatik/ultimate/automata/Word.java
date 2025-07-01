@@ -128,4 +128,28 @@ public class Word<LETTER> implements Iterable<LETTER> {
 	public Iterator<LETTER> iterator() {
 		return asList().iterator();
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + Arrays.deepHashCode(mWord);
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final Word<?> other = (Word<?>) obj;
+		return Arrays.deepEquals(mWord, other.mWord);
+	}
+
 }
