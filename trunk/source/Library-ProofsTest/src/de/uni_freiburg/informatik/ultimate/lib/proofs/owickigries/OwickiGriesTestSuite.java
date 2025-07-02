@@ -126,6 +126,10 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final long TIMEOUT_MS = 30_000L;
 
+	// Set this Java system property to override the timeout hardcoded above, or even disable it (by setting it to -1)
+	// (e.g. adding -DOwickiGries.Timeout=-1 to the command line, or using the JAVA_TOOL_OPTIONS environment variable).
+	private static final String PROPERTY_TIMEOUT = "OwickiGries.Timeout";
+
 	protected IUltimateServiceProvider mServices;
 	protected AutomataLibraryServices mAutomataServices;
 	protected ILogger mLogger;
@@ -162,18 +166,7 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
 		mAutomataServices = new AutomataLibraryServices(mServices);
 		mLogger = mServices.getLoggingService().getLogger(getClass());
-
-		final long timeout;
-		final String envTimeout = System.getenv(getClass().getSimpleName() + ".Timeout");
-		if (envTimeout != null && !envTimeout.isBlank()) {
-			timeout = Long.parseLong(envTimeout);
-			mLogger.warn("Using environment timeout: " + timeout + "ms");
-		} else {
-			timeout = TIMEOUT_MS;
-		}
-		if (timeout >= 0) {
-			mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + timeout);
-		}
+		setTimeout();
 
 		mInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
 
@@ -185,6 +178,20 @@ public abstract class OwickiGriesTestSuite implements IMessagePrinter {
 		mProofs.clear();
 		mUnifiers.clear();
 		mFinitePrefixOfDifference = null;
+	}
+
+	private void setTimeout() {
+		final long timeout;
+		final String envTimeout = System.getProperty(PROPERTY_TIMEOUT);
+		if (envTimeout != null && !envTimeout.isBlank()) {
+			timeout = Long.parseLong(envTimeout);
+			mLogger.warn("Using specified timeout: " + timeout + " ms");
+		} else {
+			timeout = TIMEOUT_MS;
+		}
+		if (timeout >= 0) {
+			mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + timeout);
+		}
 	}
 
 	protected boolean includeTest(final Path path) {

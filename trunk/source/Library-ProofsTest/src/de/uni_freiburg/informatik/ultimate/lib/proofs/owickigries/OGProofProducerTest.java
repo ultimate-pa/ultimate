@@ -37,6 +37,7 @@ import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.BoundedPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.netdatastructures.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.unfolding.BranchingProcess;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.EmpireAutomata
 import de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries.OwickiGriesSettings.OwickiGriesComputation;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 import de.uni_freiburg.informatik.ultimate.util.statistics.TimeTracker;
 
 @RunWith(FactoryTestRunner.class)
@@ -54,6 +56,11 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 	// that exceed the maximum supported string length, and printing them leads to OOMs.
 	// Also, it leads to gigantic log files.
 	private static final boolean PRINT_FULL_PROOF = false;
+
+	// Set this Java system property to 'true' in order to validate Owicki-Gries annotations after computation
+	// (adding -DOwickiGries.Validate=true to the command line, or using the JAVA_TOOL_OPTIONS environment variable).
+	// Annotations are always validated if asserts are enabled (-ea), so this only has an effect if asserts are off.
+	private static final String PROPERTY_VALIDATE_OG = "OwickiGries.Validate";
 
 	@Override
 	protected void runTest(final Path path, final AutomataTestFileAST ast,
@@ -82,8 +89,7 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 		overallTimeTracker.stop();
 		mLogger.info("Complete Proof Computation Time: %dms", overallTimeTracker.elapsedTime(TimeUnit.MILLISECONDS));
 
-		// if assertions are enabled, the producers already carry out a validity check
-		assert annotation != null;
+		validateAnnotation(program, annotation);
 
 		mLogger.info("Computed Owicki-Gries annotation with %d ghost variables, %d ghost updates, and overall size %d",
 				annotation.getGhostVariables().size(), annotation.getAssignmentMapping().size(), annotation.size());
@@ -108,6 +114,44 @@ public abstract class OGProofProducerTest extends OwickiGriesTestSuite {
 			final IPossibleInterferences<Transition<SimpleAction, IPredicate>, IPredicate> possibleInterferences);
 
 	protected abstract OwickiGriesSettings getSettings();
+
+	private void validateAnnotation(final BoundedPetriNet<SimpleAction, IPredicate> program,
+			final OwickiGriesAnnotation<Transition<SimpleAction, IPredicate>, IPredicate, Marking<IPredicate>> annotation) {
+		assert annotation != null;
+		if (!validationEnabled()) {
+			return;
+		}
+
+		mLogger.info("Checking validity of Owicki-Gries annotation...");
+		final var validationTimeTracker = new TimeTracker();
+		validationTimeTracker.start();
+
+		try {
+			final var check = new PetriOwickiGriesValidityCheck<>(mServices, mMgdScript, program,
+					computeModifiableGlobals(), annotation);
+			switch (check.isValid()) {
+			case INVALID -> throw new AssertionError("Owicki-Gries annotation is invalid.");
+			case UNKNOWN -> mLogger.warn("Validity check said UNKNOWN");
+			case VALID -> mLogger.info("Validity check succeeded.");
+			case NOT_CHECKED -> throw new IllegalStateException("Validity check said NOT_CHECKED");
+			}
+		} finally {
+			validationTimeTracker.stop();
+			mLogger.info("Owicki-Gries Validation Time: %dms",
+					validationTimeTracker.elapsedTime(TimeUnit.MILLISECONDS));
+		}
+	}
+
+	private static boolean validationEnabled() {
+		if (VMUtils.areAssertionsEnabled()) {
+			// if assertions are enabled, the producers already carry out a validity check
+			return false;
+		}
+
+		final String validation = System.getProperty(PROPERTY_VALIDATE_OG, "false");
+		assert validation != null;
+		return Boolean.parseBoolean(validation);
+	}
 
 	public static final class NaiveOG extends OGProofProducerTest {
 		@Override
