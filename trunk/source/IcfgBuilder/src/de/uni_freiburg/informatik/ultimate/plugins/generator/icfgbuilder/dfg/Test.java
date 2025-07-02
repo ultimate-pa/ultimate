@@ -21,6 +21,9 @@ public class Test {
 			logger.debug("Comparing FVS BruteForce and Heuristic: Bruteforce Length=" + fvsBrute.size()
 					+ " and Heuristic Length=" + fvsHeuristic.size());
 			logger.debug("FVS BruteForce and Heuristic the same? " + fvsBrute.equals(fvsHeuristic));
+			logger.debug("Ball Edges: " + CycleRemover.getBallEdges(dfg, logger));
+			logger.debug("Non Ball Edges: " + CycleRemover.getOutsideBallEdges(dfg, logger));
+			logger.debug("UseToUse Dfg: " + DfgBuilder.buildDfgUseToUse(initialNode, logger));
 		}
 	}
 

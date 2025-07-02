@@ -34,7 +34,22 @@ public class DfgBuilder {
 	 */
 	public static DfgContainer buildDfg(final IcfgLocation cfgRoot, final ILogger logger) {
 		final BuildContext context = new BuildContext(cfgRoot, logger);
-		final DfgContainer dfg = context.buildDfg();
+		final DfgContainer dfg = context.buildDfg(false);
+		return dfg;
+	}
+
+	/**
+	 * Build a Data Flow Graph from a Root Node of a boogie Control Flow Graph, with the difference that "Uses" now also
+	 * have edges to other "Uses"
+	 *
+	 * @param cfgRoot the root node of a Control Flow Graph as a IcfgLocation
+	 * @param logger  the Logger
+	 * @return a data flow graph in form of a node List and an edge relation
+	 *
+	 */
+	public static DfgContainer buildDfgUseToUse(final IcfgLocation cfgRoot, final ILogger logger) {
+		final BuildContext context = new BuildContext(cfgRoot, logger);
+		final DfgContainer dfg = context.buildDfg(true);
 		return dfg;
 	}
 
@@ -55,12 +70,16 @@ public class DfgBuilder {
 			mLogger = logger;
 		}
 
-		private DfgContainer buildDfg() {
+		private DfgContainer buildDfg(final boolean useToUse) {
 			buildNodeList();
 			mLogger.info("Built Nodelist");
 			defUseAnalysis();
 			mLogger.info("Completed DefUseAnalysis");
-			generateEdges();
+			if (useToUse) {
+				generateEdgesUseToUse();
+			} else {
+				generateEdges();
+			}
 			mLogger.info("Generated Edges");
 			return new DfgContainer(mEdgeRelation, mNodeList);
 		}
@@ -127,6 +146,24 @@ public class DfgBuilder {
 				// very naive Algorithm: One depth-first search for every def of a variable of a node
 				if (mDefMap.containsKey(node)) {
 					for (final IProgramVar programVar : mDefMap.get(node)) {
+						final Set<DfgNode> children = searchNeighbors(node, programVar);
+						mEdgeRelation.addAllPairs(node, children);
+					}
+				}
+			}
+		}
+
+		private void generateEdgesUseToUse() {
+			for (final DfgNode node : mNodeList) {
+				// very naive Algorithm: One depth-first search for every def of a variable of a node
+				if (mDefMap.containsKey(node)) {
+					for (final IProgramVar programVar : mDefMap.get(node)) {
+						final Set<DfgNode> children = searchNeighbors(node, programVar);
+						mEdgeRelation.addAllPairs(node, children);
+					}
+				}
+				if (mUseMap.containsKey(node)) {
+					for (final IProgramVar programVar : mUseMap.get(node)) {
 						final Set<DfgNode> children = searchNeighbors(node, programVar);
 						mEdgeRelation.addAllPairs(node, children);
 					}

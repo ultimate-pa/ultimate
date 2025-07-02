@@ -37,6 +37,11 @@ public class DfgContainer {
 	}
 
 	@Override
+	public String toString() {
+		return "DfgContainer [mEdgeRelation=" + mEdgeRelation + ", mNodeList=" + mNodeList + "]";
+	}
+
+	@Override
 	public int hashCode() {
 		return Objects.hash(mEdgeRelation, mNodeList);
 	}
