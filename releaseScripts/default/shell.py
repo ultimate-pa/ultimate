@@ -8,6 +8,7 @@ import benchexec.tools.template
 import benchexec.result as result
 import logging
 import re
+import shlex
 
 class Tool(benchexec.tools.template.BaseTool2):
     """
@@ -26,7 +27,7 @@ class Tool(benchexec.tools.template.BaseTool2):
         self.failure = options[failure_index + 1]
         command_index = options.index('command')
         command = options[command_index + 1]
-        return command.split(' ')
+        return shlex.split(command)
 
     def determine_result(self, run):
         for line in run.output:
