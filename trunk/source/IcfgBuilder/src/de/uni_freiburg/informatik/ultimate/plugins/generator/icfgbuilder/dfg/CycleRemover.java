@@ -26,6 +26,45 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public class CycleRemover {
 
 	/**
+	 * Computes all IcfgEdges that are in any loop in the given Dfg
+	 *
+	 * @param dfg    the Data Flow Graph to work on
+	 * @param logger the Logger
+	 * @return all IcfgEdges of the original Cfg that are in contained in some Dfg loop
+	 */
+	public static Set<IcfgEdge> getBallEdges(final DfgContainer dfg, final ILogger logger) {
+		final ISuccessorProvider<DfgNode> successors = node -> {
+			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
+			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
+		};
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
+				successors, new DefaultStronglyConnectedComponentFactory<>(), dfg.getNodeList().size(),
+				dfg.getNodeList());
+
+		final Set<DfgNode> cyclicNodes = new HashSet<>();
+		for (final StronglyConnectedComponent<DfgNode> ball : scc.getBalls()) {
+			cyclicNodes.addAll(ball.getNodes());
+		}
+		return cyclicNodes.stream().map(node -> node.getCorrespondingDFGEdge()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * Computes all IcfgEdges that are NOT in any loop in the given Dfg
+	 *
+	 * @param dfg    the Data Flow Graph to work on
+	 * @param logger the Logger
+	 * @return all IcfgEdges of the original Cfg that are NOT in contained in some Dfg loop
+	 */
+	public static Set<IcfgEdge> getOutsideBallEdges(final DfgContainer dfg, final ILogger logger) {
+		final Set<IcfgEdge> ballEdges = getBallEdges(dfg, logger);
+		final Set<DfgNode> nodeList = dfg.getNodeList();
+		final Set<IcfgEdge> outsideBallEdges = nodeList.stream()
+				.filter(node -> !ballEdges.contains(node.getCorrespondingDFGEdge()))
+				.map(node -> node.getCorrespondingDFGEdge()).collect(Collectors.toSet());
+		return outsideBallEdges;
+	}
+
+	/**
 	 * Computes a feedback Vertex Set of the Data Flow Graph, by removing a Node for every Cycle in the Graph
 	 *
 	 * @param dfg    the Data Flow Graph to work on
