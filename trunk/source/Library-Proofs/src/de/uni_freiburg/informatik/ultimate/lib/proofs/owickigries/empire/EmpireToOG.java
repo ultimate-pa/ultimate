@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
@@ -132,22 +133,29 @@ public class EmpireToOG<S, L, P> {
 			final var states = empireStates.stream().filter(s -> mEmpireAutomaton.containsPlace(s, place)).toList();
 			assert noErrorPlaceInStates(place, states) : "Accepting place in state";
 
-			final var disjuncts = new ArrayList<Term>(states.size());
+			// As an optimization of the formula structure, we group the disjuncts by law.
+			// I.e., instead of generating a formula of the form (phi1 /\ g=q1) \/ (phi1 /\ g=q2) \/ (phi2 /\ g=q3),
+			// we instead generate the equivalent formula (phi1 /\ (g=q1 \/ g=q2)) \/ (phi2 /\ g=q3).
+			final Map<List<Term>, List<Term>> disjunctsByLaws = new HashMap<>(states.size());
+
 			for (final S state : states) {
 				final var placeRegion = mEmpireAutomaton.getTerritory(state).getPlaceRegion(place);
-				final var conjuncts = new ArrayList<Term>();
 
 				final Term ghostEquation =
 						SmtUtils.binaryEquality(mScript, mGhostVariable.getTerm(), mStateTerms.get(state));
-				conjuncts.add(ghostEquation);
+				final var focusedLaws =
+						mLegalFocus.getFocusedLaws(state, placeRegion).stream().map(IPredicate::getFormula)
+								// Filter true literals, as they do not change the law. This allows for larger groups.
+								.filter(Predicate.not(SmtUtils::isTrueLiteral)).collect(Collectors.toList());
 
-				final var focusedLaws = mLegalFocus.getFocusedLaws(state, placeRegion).stream()
-						.map(IPredicate::getFormula).collect(Collectors.toList());
-				conjuncts.addAll(focusedLaws);
-
-				final var conjunction = SmtUtils.and(mScript, conjuncts);
-				disjuncts.add(conjunction);
+				// Add the state (represented by the ghost equation) to the appropriate group.
+				disjunctsByLaws.computeIfAbsent(focusedLaws, x -> new ArrayList<>()).add(ghostEquation);
 			}
+
+			final var disjuncts = disjunctsByLaws.entrySet().stream().map(
+					// Combine conjunction over the laws (key of the map) and disjunction over the states (values).
+					e -> SmtUtils.and(mScript, SmtUtils.and(mScript, e.getKey()), SmtUtils.or(mScript, e.getValue())))
+					.toList();
 			formulaMap.put(place, mFactory.newPredicate(SmtUtils.or(mScript, disjuncts)));
 		}
 		return formulaMap;

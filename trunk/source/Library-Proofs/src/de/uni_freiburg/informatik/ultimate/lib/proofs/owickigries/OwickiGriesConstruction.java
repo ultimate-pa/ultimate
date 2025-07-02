@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lib.proofs.owickigries;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -124,21 +125,23 @@ public class OwickiGriesConstruction<L, P> {
 	private Map<P, IPredicate> getFormulaMapping() {
 		final Map<P, IPredicate> mapping = new HashMap<>();
 		for (final P place : mNet.getPlaces()) {
-			final Set<Term> clauses = mReachableMarkings.stream().filter(m -> m.contains(place))
-					.map(this::getMarkingPredicate).collect(Collectors.toSet());
-			final Term disjunction = SmtUtils.or(mScript, clauses);
-			mapping.put(place, mFactory.newPredicate(disjunction));
+			final Map<IPredicate, List<Term>> disjunctsByLaw =
+					mReachableMarkings.stream().filter(m -> m.contains(place))
+							// As an optimization of the formula structure, we group markings with the same law.
+							.collect(Collectors.groupingBy(mFloydHoareAnnotation::getAnnotation,
+									Collectors.mapping(this::getGhostFormulaForMarking, Collectors.toList())));
+
+			final var disjuncts = disjunctsByLaw.entrySet().stream()
+					.map(e -> SmtUtils.and(mScript, e.getKey().getFormula(), SmtUtils.or(mScript, e.getValue())))
+					.toList();
+
+			mapping.put(place, mFactory.newPredicate(SmtUtils.or(mScript, disjuncts)));
 		}
 
 		return mapping;
 	}
 
-	/**
-	 * @param place
-	 * @param marking
-	 * @return Predicate with conjunction of Ghost variables and predicate of marking
-	 */
-	private Term getMarkingPredicate(final Marking<P> marking) {
+	private Term getGhostFormulaForMarking(final Marking<P> marking) {
 		final Set<Term> terms = new HashSet<>();
 		Set<P> posPlaces = marking.stream().collect(Collectors.toSet());
 		if (mHittingSet != null) {
@@ -153,7 +156,6 @@ public class OwickiGriesConstruction<L, P> {
 		} else {
 			terms.addAll(getHitNotMarking(marking));
 		}
-		terms.add(mFloydHoareAnnotation.getAnnotation(marking).getFormula());
 		return SmtUtils.and(mScript, terms);
 	}
 
