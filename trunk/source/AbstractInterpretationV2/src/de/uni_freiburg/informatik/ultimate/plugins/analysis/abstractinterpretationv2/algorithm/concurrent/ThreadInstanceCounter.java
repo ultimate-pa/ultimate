@@ -33,14 +33,14 @@ public class ThreadInstanceCounter {
 		return new HashMap<>(mThreadInstances);
 	}
 
-	public ThreadInstanceCounter setActive(final Collection<String> threadName) {
+	public ThreadInstanceCounter setThreadsActive(final Collection<String> threadName) {
 		final var newInstanceMap = new HashMap<>(mThreadInstances);
 		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) < 1)
 				.forEach(p -> newInstanceMap.put(p, 1));
 		return new ThreadInstanceCounter(newInstanceMap);
 	}
 
-	public ThreadInstanceCounter setInf(final Collection<String> threadName) {
+	public ThreadInstanceCounter setThreadsInf(final Collection<String> threadName) {
 		final var newInstanceMap = new HashMap<>(mThreadInstances);
 		threadName.stream().filter(p -> newInstanceMap.get(p) != null).forEach(p -> newInstanceMap.put(p, 2));
 		return new ThreadInstanceCounter(newInstanceMap);
@@ -58,17 +58,20 @@ public class ThreadInstanceCounter {
 	public ThreadInstanceCounter intersect(final ThreadInstanceCounter other) {
 		final Map<String, Integer> newThreadMap = new HashMap<>();
 		for (final String thread : mThreadNameSet) {
+			newThreadMap.put(thread,
+					Math.max(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+			// intersection would be none for the ghost variables -> we need to make state false
 			if (getThreadInstances().get(thread) != other.getThreadInstances().get(thread)
 					&& (getThreadInstances().get(thread) == 0 || other.getThreadInstances().get(thread) == 0)) {
 				return null;
 			}
-			if ((getThreadInstances().get(thread) == 0 || other.getThreadInstances().get(thread) == 0)) {
-				newThreadMap.put(thread,
-						Math.min(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+			if ((getThreadInstances().get(thread) == other.getThreadInstances().get(thread))) {
+				newThreadMap.put(thread, getThreadInstances().get(thread));
 				// edge case, for observing thread 1==2, so an interference of an observer could shrink us from 2->1
+			} else if ((getThreadInstances().get(thread) == 2 || other.getThreadInstances().get(thread) == 2)) {
+				newThreadMap.put(thread, 2);
 			} else {
-				newThreadMap.put(thread,
-						Math.max(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+				return null;
 			}
 		}
 		return new ThreadInstanceCounter(newThreadMap);
