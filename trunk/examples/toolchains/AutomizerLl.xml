@@ -1,0 +1,9 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+	<plugin id="de.uni_freiburg.informatik.ultimate.llvmir.to.boogie"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+
+	</toolchain>
+</rundefinition>
