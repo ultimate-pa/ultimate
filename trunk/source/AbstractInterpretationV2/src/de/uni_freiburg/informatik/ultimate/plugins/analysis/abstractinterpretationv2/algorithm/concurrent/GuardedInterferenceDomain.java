@@ -24,24 +24,25 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	public boolean mWiden = false;
 
 	public static int postoperatorCalls;
-	public static int disjCacheHits;
+	public static int postOpCacheHits;
 	public static int applierCacheHits;
 	public static int totalInnerInterferenceIterations;
 	public static int maxStatesInOneItf;
 
 	public GuardedInterferenceDomain(final IIcfg<? extends LOC> cfg, final IAbstractDomain<STATE, ACTION> underlying,
 			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf,
-			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
+			final AbstractInterferenceState<STATE, ACTION, LOC> interferences,
+			final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
 		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
 		mAbstractLocationMap = locationMap;
 		mUnderlyingDomain = underlying;
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,
-				mUnderlyingDomain.getPostOperator(), this, mAbstractLocationMap, maxItf, maxSize, interferences);
+				mUnderlyingDomain.getPostOperator(), this, mAbstractLocationMap, maxItf, maxSize, interferences, cache);
 		mWideningOperator = new GuardedStateWideningOperator<>(underlying);
 		postoperatorCalls = 0;
 		totalInnerInterferenceIterations = 0;
 		maxStatesInOneItf = 0;
-		disjCacheHits = 0;
+		postOpCacheHits = 0;
 		applierCacheHits = 0;
 	}
 

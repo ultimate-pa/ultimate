@@ -1,13 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -15,26 +13,49 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.ProgramVarUtils;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 
 public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private static int UNIQUEINT = 0;
+	private final GuardedInterferenceCache<STATE, ACTION, LOC> mCache;
 
-	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToDisjState(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferingState,
-			final ACTION action,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> targetState,
-			final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> postOp,
-			final int maxSize, final boolean isSelfInterfering, final IIcfg<?> cfg) {
+	public InterferenceApplier(final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
+		mCache = cache;
+	}
 
-		if (targetState.isBottom() || interferingState.isBottom()) {
-			return null;
+	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToState(
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> interferingStateGuarded, final ACTION action,
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> targetStateGuarded,
+			final GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC> postOp, final boolean isSelfInterfering,
+			final IIcfg<?> cfg) {
+
+		if (targetStateGuarded.isBottom() || interferingStateGuarded.isBottom()) {
+			return Collections.emptyList();
+		}
+		final var threadCounterIntersection = targetStateGuarded.threadCounter()
+				.intersect(interferingStateGuarded.threadCounter());
+		final var abslocIntersection = targetStateGuarded.abstractLocationState()
+				.intersect(interferingStateGuarded.abstractLocationState());
+
+		if (threadCounterIntersection == null || abslocIntersection == null) {
+			return Collections.emptyList();
 		}
 
-		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> globalTargetState = targetState;
+		final var threadCounterPost = postOp.applyThreadCounter(threadCounterIntersection, action);
+		final var absLocPost = postOp.applyAbstractLocation(abslocIntersection, action);
+
+		final var targetState = targetStateGuarded.state();
+		final var interferingState = interferingStateGuarded.state();
+		final var triple = new StateItfPrestatePair<>(targetState, interferingState, action);
+		final var cached = mCache.getItfCache().get(triple);
+		if (cached != null) {
+			GuardedInterferenceDomain.applierCacheHits++;
+			return cached.stream()
+					.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
+					.toList();
+		}
+
+		STATE globalTargetState = targetState;
 		final Map<IProgramVarOrConst, IProgramVarOrConst> reverseRenamedMap = new HashMap<>();
 		/*
 		 * In the case of an interference interfering in a state of its own ownerThread, our local program variables
@@ -67,29 +88,30 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		 * Add local variables to both states to be able to intersect. This is necessary since our interference
 		 * transition might contain local variables of the interfering thread.
 		 */
-		final var adjustedTarget = adjustStateForIntersection(globalTargetState, interferingState, maxSize);
-		final var adjustedInterferer = adjustStateForIntersection(interferingState, globalTargetState, maxSize);
+		final var adjustedTarget = adjustStateForIntersection(globalTargetState, interferingState);
+		final var adjustedInterferer = adjustStateForIntersection(interferingState, globalTargetState);
 
 		final var intersectionState = adjustedTarget.intersect(adjustedInterferer);
 
 		// Throw out false states from intersection
-		final var filtered = filterStates(intersectionState, maxSize);
-		if (filtered.getStates().isEmpty() || filtered.isBottom()) {
-			return null;
+		if (intersectionState == null || intersectionState.isBottom()) {
+			mCache.getItfCache().put(triple, Collections.emptyList());
+			return Collections.emptyList();
 		}
 		// postop
-		var postState = filtered.apply(postOp, action);
+		var postState = postOp.applyState(intersectionState, action).stream().filter(s -> !s.isBottom()).toList();
 		GuardedInterferenceDomain.postoperatorCalls++;
 
 		// TODO: sound?
-		if (postState.getStates().isEmpty() || postState.isBottom()) {
-			return null;
+		if (postState.isEmpty()) {
+			mCache.getItfCache().put(triple, Collections.emptyList());
+			return Collections.emptyList();
 		}
 		// remove local variables of other state we added earlier
 		final var missingLocals = DataStructureUtils.difference(interferingState.getVariables(),
 				globalTargetState.getVariables());
 		if (!missingLocals.isEmpty()) {
-			postState = postState.removeVariables(missingLocals);
+			postState = postState.stream().map(s -> s.removeVariables(missingLocals)).toList();
 		}
 		/*
 		 * Rename our old local program variables, to get the real state of our local variables back. (which cannot
@@ -97,74 +119,26 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		 */
 		if (isSelfInterfering) {
 			for (final IProgramVarOrConst tempVar : reverseRenamedMap.keySet()) {
-				postState = postState.renameVariable(tempVar, reverseRenamedMap.get(tempVar));
+				postState = postState.stream().map(s -> s.renameVariable(tempVar, reverseRenamedMap.get(tempVar)))
+						.toList();
 			}
 		}
-		return postState;
+		final var postStateWithGuard = postState.stream()
+				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
+				.toList();
+
+		mCache.getItfCache().put(triple, postState);
+		return postStateWithGuard;
 	}
 
-	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjustStateForIntersection(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjustee,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> target,
-			final int maxSize) {
+	private STATE adjustStateForIntersection(final STATE adjustee, final STATE target) {
 		final var missingLocals = DataStructureUtils.difference(target.getVariables(), adjustee.getVariables());
-		DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> adjusteeWithForeignLocals;
+		STATE adjusteeWithForeignLocals;
 		if (!missingLocals.isEmpty()) {
 			adjusteeWithForeignLocals = adjustee.addVariables(missingLocals);
 		} else {
 			adjusteeWithForeignLocals = adjustee;
 		}
-		final var filteredState = filterStates(adjusteeWithForeignLocals, maxSize);
-		return filteredState;
+		return adjusteeWithForeignLocals;
 	}
-
-	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> filterStates(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> filterMe,
-			final int maxSize) {
-		return DisjunctiveAbstractState.createDisjunction(filterMe.getStates().stream().filter(
-				s -> s != null && !s.isBottom() && s.threadCounter() != null && s.abstractLocationState() != null)
-				.collect(Collectors.toSet()), maxSize);
-	}
-
-	private static class LocalProgramVarDummy implements ILocalProgramVar {
-		private static final long serialVersionUID = 1L;
-		private final String mIdentifier;
-		private final String mProcedure;
-
-		public LocalProgramVarDummy(final String identifier, final String procedure) {
-			mIdentifier = identifier;
-			mProcedure = procedure;
-		}
-
-		@Override
-		public String getIdentifier() {
-			return mIdentifier;
-		}
-
-		@Override
-		public String getProcedure() {
-			return mProcedure;
-		}
-
-		@Override
-		public TermVariable getTermVariable() {
-			throw new UnsupportedOperationException("Dummy var, should not call its methods");
-		}
-
-		@Override
-		public ApplicationTerm getDefaultConstant() {
-			throw new UnsupportedOperationException("Dummy var, should not call its methods");
-		}
-
-		@Override
-		public ApplicationTerm getPrimedConstant() {
-			throw new UnsupportedOperationException("Dummy var, should not call its methods");
-		}
-
-		@Override
-		public Term getTerm() {
-			throw new UnsupportedOperationException("Dummy var, should not call its methods");
-		}
-	}
-
 }

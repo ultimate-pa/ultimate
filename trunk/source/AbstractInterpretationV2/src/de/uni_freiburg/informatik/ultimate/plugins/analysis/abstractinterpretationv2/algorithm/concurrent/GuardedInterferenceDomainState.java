@@ -56,12 +56,12 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsActive(
 			final Collection<String> forkingStrings) {
-		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setActive(forkingStrings));
+		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setThreadsActive(forkingStrings));
 		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsInf(final Collection<String> forkingStrings) {
-		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setInf(forkingStrings));
+		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setThreadsInf(forkingStrings));
 		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
 	}
 
@@ -210,8 +210,7 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 
 	@Override
 	public int hashCode() {
-		// TODO: state hashcode
-		return Objects.hash(mAbstractLocationState, mThreadCounter);
+		return Objects.hash(mState, mAbstractLocationState, mThreadCounter);
 	}
 
 	@Override

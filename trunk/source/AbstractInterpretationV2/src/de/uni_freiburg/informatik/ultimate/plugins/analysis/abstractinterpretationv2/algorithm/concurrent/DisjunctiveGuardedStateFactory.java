@@ -26,18 +26,21 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	private final int mMaxParallelStates;
 	private final Map<String, ? extends LOC> mEntryLocs;
 	final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mForksInLoop;
+	private final GuardedInterferenceCache<UNDERLYINGSTATE, ACTION, LOC> mCache;
 
 	public DisjunctiveGuardedStateFactory(
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> stateStorage,
 			final ConcurrentIcfgAnalyzer<ACTION, LOC> analyzer, final int maxStates,
 			final GuardedInterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> domain,
-			final Map<String, ? extends LOC> entryLocs, final IIcfg<? extends LOC> icfg) {
+			final Map<String, ? extends LOC> entryLocs, final IIcfg<? extends LOC> icfg,
+			final GuardedInterferenceCache<UNDERLYINGSTATE, ACTION, LOC> cache) {
 		mStateStorage = stateStorage;
 		mAnalyzer = analyzer;
 		mMaxParallelStates = maxStates;
 		mDomain = domain;
 		mEntryLocs = entryLocs;
 		mForksInLoop = IcfgUtils.getForksInLoop(icfg);
+		mCache = cache;
 	}
 
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
@@ -153,7 +156,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		final var applier = ((GuardedInterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
 				.getPostOperator()).getItfApplier();
 		final var cleanedStart = DisjunctiveAbstractState.createDisjunction(initialStates, mMaxParallelStates);
-		final var interferenceDomainDisj = applier.stateAfterInterferences(cleanedStart, procedure);
+		final var interferenceDomainDisj = applier.stateAfterInterferences(cleanedStart, procedure, mCache);
 		return interferenceDomainDisj;
 	}
 

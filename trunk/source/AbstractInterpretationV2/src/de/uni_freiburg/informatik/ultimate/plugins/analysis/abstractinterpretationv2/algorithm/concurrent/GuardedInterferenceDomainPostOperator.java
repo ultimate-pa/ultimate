@@ -31,18 +31,21 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 	private final int mMaxParallelStates;
 	private boolean mApplyInterferences = true;
+	private final GuardedInterferenceCache<STATE, ACTION, LOC> mCache;
 
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
 			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
-			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
+			final AbstractInterferenceState<STATE, ACTION, LOC> interferences,
+			final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
 		mLogger = logger;
 		mUnderlyingPostOp = postOp;
 		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, relationalInterferingDomain, globalMap, maxItf,
-				maxParallelStates, interferences);
+				maxParallelStates, interferences, cache);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 		mMaxParallelStates = maxParallelStates;
+		mCache = cache;
 	}
 
 	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
@@ -60,6 +63,11 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	@Override
 	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
+//		mLogger.warn("=====");
+//		mLogger.warn("Postop:");
+//		mLogger.warn("thread:" + transition.getPrecedingProcedure());
+//		mLogger.warn("node:" + transition.getSource());
+//		mLogger.warn("node:" + transition.getTransformula());
 		if (oldstate.isStateBottom()) {
 			return List.of(oldstate);
 		}
@@ -71,7 +79,9 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				: oldstate;
 
 		// 1. normal poststate
+//		mLogger.warn("calculating Postop:");
 		final var states = mUnderlyingPostOp.apply(newState.state(), transition);
+//		mLogger.warn("finished Postop:");
 
 		// adjust abstract location according to new location
 		final var guardedStates = states
@@ -86,9 +96,32 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			return guardedStates;
 		}
 		// 2. apply interferences
+//		mLogger.warn("Doing interferences inside Postop:");
 		final var disj = DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates);
-		final var afterItfs = mItfApplier.stateAfterInterferences(disj, mCurrentThreadName);
+		final var afterItfs = mItfApplier.stateAfterInterferences(disj, mCurrentThreadName, mCache);
+//		mLogger.warn("=====");
 		return afterItfs.getStates();
+	}
+
+	public Collection<STATE> applyState(final STATE state, final ACTION transition) {
+		return mUnderlyingPostOp.apply(state, transition);
+	}
+
+	public ThreadInstanceCounter applyThreadCounter(final ThreadInstanceCounter threadCounter,
+			final ACTION transition) {
+		var newCounter = threadCounter;
+		if (transition instanceof final ForkThreadCurrent fork1) {
+			final boolean circular = isCircular(fork1);
+			final var forked = fork1.getNameOfForkedProcedure();
+			newCounter = newCounter.setThreadsActive(List.of(forked));
+		}
+		return newCounter;
+	}
+
+	public AbstractLocationState<LOC> applyAbstractLocation(final AbstractLocationState<LOC> absLocState,
+			final ACTION transition) {
+		return absLocState.movedTo(transition.getPrecedingProcedure(),
+				absLocState.getLocationMap().getAbstractLocation(transition.getTarget()));
 	}
 
 	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(
