@@ -14,14 +14,9 @@
     <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
     <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
 
-    <!-- input program & automata -->
-    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
-    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
-    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
-    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
-
-    <!-- test case setup -->
+    <!-- test case setup vs actual test -->
     <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
 
     <!-- resulting O/G annotation -->
     <column title="ghosts"         displayTitle="Ghost Variables">Computed Owicki-Gries annotation with (\d+) ghost variables</column>
@@ -44,6 +39,19 @@
     <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
   </result>
 
+  <result filename="*.NaiveOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
   <result filename="*.EmpireAutomatonOG-NoAssert.xml">
     <!-- default columns -->
     <column title="status"/>
@@ -52,12 +60,29 @@
     <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
     <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
 
-    <!-- test case setup -->
+    <!-- test case setup vs actual test -->
     <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
+
+    <!-- input program & automata -->
+    <column title="progPlaces" displayTitle="Program Places">Constructing Owicki-Gries proof for Petri program that has (\d+) places</column>
+    <column title="progTrans"  displayTitle="Program Transitions">Constructing Owicki-Gries proof for Petri program that has .* (\d+) transitions</column>
+    <column title="progFlow"   displayTitle="Program Flow">Constructing Owicki-Gries proof for Petri program that has .* (\d+) flow</column>
+    <column title="proofCount" displayTitle="Proof Automata">Number of proof automata: (\d+)$</column>
 
     <!-- empire automaton -->
-    <column title="empireStates"      displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
-    <column title="empireTransitions" displayTitle="Empire Transitions">Explored empire automaton has \d+ states and (\d+) transitions</column>
+    <column title="empireSize"         displayTitle="Empire Size">EmpireComputation statistics:.* empire annotation size: (\d+),</column>
+    <column title="empireStates"       displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
+    <column title="empireTransitions"  displayTitle="Empire Transitions">Explored empire automaton has \d+ states and (\d+) transitions</column>
+    <column title="numRegions"         displayTitle="Region Count">EmpireComputation statistics:.* number of regions: (\d+),</column>
+    <column title="numTerritories"     displayTitle="Territory Count">EmpireComputation statistics:.* number of territories: (\d+),</column>
+    <column title="regPerTerritoryMin" displayTitle="Regions/Territory (min)">EmpireComputation statistics:.* Min number of regions per territory: (\d+),</column>
+    <column title="regPerTerritoryMax" displayTitle="Regions/Territory (max)">EmpireComputation statistics:.* Max number of regions per territory: (\d+),</column>
+    <column title="regPerTerritoryMed" displayTitle="Regions/Territory (med)">EmpireComputation statistics:.* Median number of regions per territory: (\d+),</column>
+    <column title="placesPerRegionMin" displayTitle="Places/Region (min)">EmpireComputation statistics:.* Min number of places per region: (\d+),</column>
+    <column title="placesPerRegionMax" displayTitle="Places/Region (max)">EmpireComputation statistics:.* Max number of places per region: (\d+),</column>
+    <column title="placesPerRegionMed" displayTitle="Places/Region (med)">EmpireComputation statistics:.* Median number of places per region: (\d+),</column>
+
     <column title="empireTime"        displayTitle="Empire time"    sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireComputation time \[ms\]: (\d+),</column>
     <column title="empireOgTime"      displayTitle="Empire2OG Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">EmpireToOwickiGries time \[ms\]: (\d+),</column>
 
@@ -83,6 +108,19 @@
     <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
   </result>
 
+  <result filename="*.EmpireAutomatonOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
   <result filename="*.GlobalLegalFocusOG-NoAssert.xml">
     <!-- default columns -->
     <column title="status"/>
@@ -91,8 +129,9 @@
     <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
     <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
 
-    <!-- test case setup -->
+    <!-- test case setup vs actual test -->
     <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
 
     <!-- empire automaton -->
     <column title="empireStates"      displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
@@ -123,6 +162,19 @@
     <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
   </result>
 
+  <result filename="*.GlobalLegalFocusOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"  displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
   <result filename="*.ModularLegalFocusOG-NoAssert.xml">
     <!-- default columns -->
     <column title="status"/>
@@ -131,8 +183,9 @@
     <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
     <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
 
-    <!-- test case setup -->
+    <!-- test case setup vs actual test -->
     <column title="setupTime" displayTitle="Setup Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">OwickiGriesTestSuite setup time: (\d+)ms</column>
+    <column title="proofTime" displayTitle="Proof Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Complete Proof Computation Time: (\d+)ms</column>
 
     <!-- empire automaton -->
     <column title="empireStates"      displayTitle="Empire States">Explored empire automaton has (\d+) states</column>
@@ -159,6 +212,19 @@
 
     <column title="empireCheckTime" displayTitle="Empire Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Empire validity check time \[ms\]: (\d+),</column>
     <column title="ogCheckTime"     displayTitle="OG Validity Time"     sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries validity check time \[ms\]: (\d+)(,|$)</column>
+
+    <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
+  </result>
+
+  <result filename="*.ModularLegalFocusOG-Validate.xml">
+    <!-- default columns -->
+    <column title="status"/>
+    <column title="cputime"   displayTitle="CPU Time"/>
+    <column title="walltime" displayTitle="Wall Time"/>
+    <column title="testtime" displayTitle="JUnit Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">│  │  │   duration: (\d+) ms</column>
+    <column title="memory"   displayTitle="Memory"     sourceUnit="B"  displayUnit="MB"/>
+
+    <column title="ogCheckTime" displayTitle="OG Validity Time" sourceUnit="ms" displayUnit="s" scaleFactor="0.001" numberOfDigits="3">Owicki-Gries Validation Time: (\d+)ms</column>
 
     <column title="error" displayTitle="Exception">caught: .\[31m(.*).\[0m</column>
   </result>
