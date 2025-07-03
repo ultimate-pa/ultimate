@@ -1,3 +1,4 @@
+;#Safe
 @i = global i32 1
 
 define i32 @main() {

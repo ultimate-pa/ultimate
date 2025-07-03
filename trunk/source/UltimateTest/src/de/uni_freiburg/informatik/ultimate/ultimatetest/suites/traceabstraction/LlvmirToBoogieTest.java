@@ -30,7 +30,6 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.NoErrorTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 public class LlvmirToBoogieTest extends AbstractTraceAbstractionTestSuite {
@@ -43,9 +42,8 @@ public class LlvmirToBoogieTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
-		// return super.constructITestResultDecider(ultimateRunDefinition);
-		return new NoErrorTestResultDecider(ultimateRunDefinition);
-
+		return super.constructITestResultDecider(ultimateRunDefinition);
+		// return new NoErrorTestResultDecider(ultimateRunDefinition);
 	}
 
 	// @formatter:off
@@ -69,7 +67,7 @@ public class LlvmirToBoogieTest extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] mToolchains = {
 			"AutomizerLl.xml",
-		};
+	};
 
 
 	@Override
