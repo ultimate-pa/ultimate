@@ -52,9 +52,8 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 		 * Special check for self-interference, then locations have to be handled differently. ATM we ignore locations,
 		 * which is a sound, but unprecise, overapproximtation.
 		 */
-		if (ownerThread.equals(interferenceThreadName)
-				&& GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
-						.get(interferenceThreadName) > 1) {
+		if (GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
+				.get(interferenceThreadName) > 1) {
 			return true;
 		}
 		/*
