@@ -1760,4 +1760,24 @@ public class OctMatrix {
 		}
 		return varsWithConstraints;
 	}
+
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(mEntries);
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof OctMatrix)) {
+			return false;
+		}
+		final OctMatrix other = (OctMatrix) obj;
+		if (mSize != other.mSize) {
+			return false;
+		}
+		return Arrays.equals(mEntries, other.mEntries);
+	}
 }

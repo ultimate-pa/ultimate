@@ -613,22 +613,30 @@ public final class OctDomainState implements IAbstractState<OctDomainState> {
 
 	@Override
 	public int hashCode() {
-		return mId;
+		int result = mVariables.hashCode();
+		result = mBooleanAbstraction.hashCode();
+		result = mNumericAbstraction.hashCode();
+		return result;
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
+	public boolean equals(final Object o) {
+		if (this == o) {
 			return true;
 		}
-		if (obj == null) {
+		if (!(o instanceof final OctDomainState other)) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
+
+		if (!mVariables.equals(other.mVariables)) {
 			return false;
 		}
-		final OctDomainState other = (OctDomainState) obj;
-		return mId == other.mId;
+
+		if (!mBooleanAbstraction.equals(other.mBooleanAbstraction)) {
+			return false;
+		}
+
+		return numericAbstractionIsEqualTo(other);
 	}
 
 	/** For internal use in {@link #isEqualTo(OctDomainState)}. */
