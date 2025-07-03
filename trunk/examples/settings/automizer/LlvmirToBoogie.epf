@@ -1,0 +1,11 @@
+#Thu Jul 03 15:51:13 CEST 2025
+\!/instance/de.uni_freiburg.informatik.ultimate.gui=
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\Uni\\Semester_4\\StuPro\\Parser\\Translation\\Erweiterung4\\ACSL-referring_Simple_LoadInst.ll
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Uni\\Semester_4\\ultimate\\trunk\\examples\\toolchains\\AutomizerLl.xml
+@de.uni_freiburg.informatik.ultimate.gui=0.3.0
+file_export_version=3.0
+#Thu Jul 03 15:51:13 CEST 2025
+\!/instance/de.uni_freiburg.informatik.ultimate.llvmir.parser=
+/instance/de.uni_freiburg.informatik.ultimate.llvmir.parser/Your\ opt\ directory\:=C\:\\msys64\\mingw64\\bin\\opt.exe
+@de.uni_freiburg.informatik.ultimate.llvmir.parser=0.3.0
+file_export_version=3.0
