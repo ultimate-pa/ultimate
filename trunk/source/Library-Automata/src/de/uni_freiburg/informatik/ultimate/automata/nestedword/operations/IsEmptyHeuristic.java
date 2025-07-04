@@ -135,8 +135,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
-			final boolean noLoopMode)
-			throws AutomataOperationCanceledException {
+			final boolean noLoopMode) throws AutomataOperationCanceledException {
 		this(services, operand, CoreUtil.constructHashSet(operand.getInitialStates()), a -> false, operand::isFinal,
 				heuristic, wayPoints, noLoopMode);
 	}
@@ -158,8 +157,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
 			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
-			final boolean noLoopMode)
-			throws AutomataOperationCanceledException {
+			final boolean noLoopMode) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mIsGoalState = funIsGoalState;
@@ -269,6 +267,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			}
 
 			for (final Item succ : successors) {
+				if (mHeuristic.getAStarHeuristic().equals(AStarHeuristic.PARALLEL)) {
+					// consider all successors, even the once seen before by prefix check
+					worklist.add(succ);
+					continue;
+				}
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(String.format("  Succ: %s", succ));
 				}
@@ -1190,6 +1193,8 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		 */
 		double getConcreteCost(LETTER trans);
 
+		AStarHeuristic getAStarHeuristic();
+
 		static <STATE, LETTER> IHeuristic<STATE, LETTER> getHeuristic(final AStarHeuristic astarHeuristic,
 				final ScoringMethod scoringMethod, final long seed) {
 			return switch (astarHeuristic) {
@@ -1214,12 +1219,17 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 			return new IHeuristic<>() {
 				@Override
 				public final double getHeuristicValue(final STATE state, final STATE stateK, final LETTER trans) {
-					return 50.0;
+					return 0.0;
 				}
 
 				@Override
 				public final double getConcreteCost(final LETTER e) {
-					return 100.0;
+					return 1.0;
+				}
+
+				@Override
+				public final AStarHeuristic getAStarHeuristic() {
+					return AStarHeuristic.PARALLEL;
 				}
 			};
 		}
@@ -1234,6 +1244,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				@Override
 				public final double getConcreteCost(final LETTER e) {
 					return 1.0;
+				}
+
+				@Override
+				public final AStarHeuristic getAStarHeuristic() {
+					return AStarHeuristic.ZERO;
 				}
 			};
 		}
@@ -1254,6 +1269,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				public final double getConcreteCost(final LETTER e) {
 					return mConcreteCosts.computeIfAbsent(e, a -> 0.5 * mRandom.nextDouble() + 0.5);
 				}
+
+				@Override
+				public final AStarHeuristic getAStarHeuristic() {
+					return AStarHeuristic.RANDOM_HALF;
+				}
 			};
 		}
 
@@ -1271,6 +1291,11 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				@Override
 				public final double getConcreteCost(final LETTER e) {
 					return mConcreteCosts.computeIfAbsent(e, a -> 0.1 + mRandom.nextDouble());
+				}
+
+				@Override
+				public final AStarHeuristic getAStarHeuristic() {
+					return AStarHeuristic.RANDOM_FULL;
 				}
 			};
 		}

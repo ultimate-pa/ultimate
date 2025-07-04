@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.AStarHeuristic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyHeuristic.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
@@ -80,6 +81,11 @@ public class SmtFeatureHeuristic<STATE, LETTER> implements IHeuristic<STATE, LET
 	@Override
 	public double getConcreteCost(final LETTER trans) {
 		return mScoreCache.computeIfAbsent(trans, this::checkTransition);
+	}
+
+	@Override
+	public final AStarHeuristic getAStarHeuristic() {
+		return AStarHeuristic.SMT_FEATURE_COMPARISON;
 	}
 
 	public void compareSuccessors(final List<IsEmptyHeuristic<LETTER, STATE>.Item> successors) {
