@@ -186,6 +186,62 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	/*
 	 * sets up the worker with its own cfg script and its own RefinementStrategy
 	 */
+	private CegarNwaContinuesWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
+			final IcfgLocation currentErrorLoc, final int id) throws InterruptedException {
+		// mCsToolkit needs to give new mgdScript for each thread
+
+		final CfgSmtToolkit freshToolKit =
+				mCsToolkit.getCfgSmtToolkitWithFreshScript(iterationServices, getSolverSettings(iterationServices,
+						mIteration + mRunningThreads + mCounterexample.getWord().asList().hashCode() + "parallel"));
+		// Set the Main Script
+		((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
+				.setMainScript(mCsToolkit.getManagedScript());
+
+		// Fill the map from worker tv to main tv so we can obtain boogievars later
+		final Map<TermVariable, IProgramVar> varMap =
+				((Boogie2SmtSymbolTable) mCsToolkit.getSymbolTable()).getSmtVar2ProgramVarMap();
+
+		for (final TermVariable tv : varMap.keySet()) {
+			((HistoryRecordingScript) freshToolKit.getManagedScript().getScript()).addTermVariableToMap(
+					(TermVariable) ((HistoryRecordingScript) freshToolKit.getManagedScript().getScript())
+							.transferTermToWorker(tv),
+					tv);
+		}
+
+		// Create predicateFactory with worker script
+		final PredicateFactory predicateFactory =
+				new PredicateFactory(mServices, freshToolKit.getManagedScript(), freshToolKit.getSymbolTable());
+
+		// Create PredicateFactoryForInterpolantAutomata with worker script
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
+				new PredicateFactoryForInterpolantAutomata(freshToolKit.getManagedScript(), predicateFactory,
+						mComputeHoareAnnotation);
+
+		final Set<IcfgLocation> hoareAnnotationLocs = Collections.emptySet();
+		if (mComputeHoareAnnotation) {
+			// TODO need different hoareAnnotationLocs
+			throw new AssertionError("Hoare Annotations not yet supported in Parallel cegar loop");
+		}
+		final PredicateFactoryRefinement stateFactoryForRefinement =
+				new PredicateFactoryRefinement(mServices, freshToolKit.getManagedScript(), predicateFactory,
+						mComputeHoareAnnotation, hoareAnnotationLocs);
+
+		// make sure that mPref.getCfgSmtToolkit returns the worker toolkit
+		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
+				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
+						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
+
+		// start worker
+		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, mCegarLoopBenchmark,
+				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
+				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, this,
+				WorkerGeneralizationMode.YES,
+				mWorkerResultQueue, mWorkerTaskQueue);
+	}
+
+	/*
+	 * sets up the worker with its own cfg script and its own RefinementStrategy
+	 */
 	private CegarNwaWorkerThread<L, A> setUpWorker(final IUltimateServiceProvider iterationServices,
 			final IcfgLocation currentErrorLoc) throws InterruptedException {
 		// mCsToolkit needs to give new mgdScript for each thread
@@ -288,8 +344,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
-
-				setUpWorker(iterationServices, currentErrorLoc);
+				setUpContinuesWorker(iterationServices, currentErrorLoc, i);
+				// setUpWorker(iterationServices, currentErrorLoc);
 			} catch (final InterruptedException e) {
 				throw new AssertionError("TODO");
 			}
@@ -709,8 +765,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mActiveCounterexamples.put(traceHash, counterexample);
 	}
 
-	private void removeCounterexampleFromSet(final IRun<L, ?> run) {
-		final List<L> trace = run.getWord().asList();
+	private void removeCounterexampleFromSet(final IRun<L, ?> cex) {
+		final List<L> trace = cex.getWord().asList();
 		final int traceHash = trace.hashCode();
 		mLogger.info("Subtrahend traceHash: " + traceHash);
 		// Only remove after the counterexample is no longer in the abstraction
@@ -1022,6 +1078,10 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			// use result
 			mAbstraction = newAbstraction;
 		}
+	}
+
+	public PathProgramCache<L> getCurrentProgramCache() {
+		return mProgramCache;
 	}
 }
 

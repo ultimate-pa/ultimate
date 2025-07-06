@@ -1,14 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -25,18 +26,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerCache;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.HoareTripleCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.SubtaskIterationIdentifier;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.IRefinementEngineResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.Counterexample;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -53,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpTcStrategyModuleAcceleratedTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ITARefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.strategy.ParallelRefinementStrategy.WorkerGeneralizationMode;
@@ -76,15 +83,14 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	// each worker needs one of their own:
-	private final int mIteration;
+	private int mIteration;
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	// each worker needs one of their own, but creates it themself:
 	private IRefinementEngineResult<L, NestedWordAutomaton<L, IPredicate>> mRefinementResult;
 	private NestedWordAutomaton<L, IPredicate> mInterpolAutomaton;
 
-	// contains SMT solver stuff, should be done by master anyway
-	private final StrategyFactory<L> mStrategyFactory;
+	TaCheckAndRefinementPreferences<L> mTaCheckAndRefinementPrefs;
 
 	// ???
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
@@ -95,8 +101,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	private final BlockingQueue<IRun<L, ?>> mWorkerTaskQueue;
 	protected IRun<L, ?> mCounterexample = null;
 
-	private final ITARefinementStrategy<L> mStrategy;
-	private final IcfgLocation mCurrentErrorLoc;
+	private IcfgLocation mCurrentErrorLoc;
 
 	// for error automata
 	private final boolean mUseGoalSetForIsEmpty;
@@ -107,44 +112,46 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
 
+	StrategyFactory<L> mStrategyFactory = null;
 	private final WorkerGeneralizationMode mGeneralize;
 
-	public CegarNwaContinuesWorkerThread(final ILogger logger, final TAPreferences pref, final IRun<L, ?> counterexample,
-			final int iteration, final CegarLoopResultBuilder resultBuilder,
+	public CegarNwaContinuesWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
+			final CegarLoopResultBuilder resultBuilder,
 			final CegarLoopStatisticsGenerator statistcs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final StrategyFactory<L> strategyFactory,
+			final CfgSmtToolkit csToolkit,
+			final IIcfg<? extends IcfgLocation> icfg,
 			final PredicateFactory predicateFactory,
+			final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
-			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
 			final ParallelNwaCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
 			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
 			final BlockingQueue<IRun<L, ?>> workerTaskQueue) throws InterruptedException {
 
 		mLogger = logger;
 		mPref = pref;
+		mIteration = id;
 		mRefinementResult = null;
 		mResultBuilder = resultBuilder;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mInterpolAutomaton = null;
-		mIteration = iteration;
 		mCegarLoopBenchmark = statistcs;
 		mServices = services;
 		mCsToolkit = csToolkit;
-		mStrategyFactory = strategyFactory;
+		mIcfg = icfg;
+		// mStrategyFactory = strategyFactory;
+		mTaCheckAndRefinementPrefs = taCheckAndRefinementPrefs;
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
 		mStateFactoryForRefinement = stateFactoryForRefinement;
 		mComputeHoareAnnotation = computeHoareAnnotation;
-		mStrategy = strategy;
-		mCurrentErrorLoc = currentErrorLoc;
 		mSimplificationTechnique = pref.getSimplificationTechnique();
-		mIcfg = rootNode;
 		mUseGoalSetForIsEmpty = pref.useGoalSetForIsEmpty;
 		mMainThread = mainThread;
 		mGeneralize = generalization;
 		mBlockingQueueForResults = blockingQueueForResults;
 		mWorkerTaskQueue = workerTaskQueue;
+
 		final Thread workerThread = new Thread(() -> {
 			try {
 				executeThread();
@@ -158,13 +165,18 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	public void executeThread() throws InterruptedException {
 		while (true) {
 			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
+			mIteration += 1;
 			mCounterexample = mWorkerTaskQueue.take();
 			final List<L> trace = mCounterexample.getWord().asList();
+			mCurrentErrorLoc = mCounterexample.getSymbol(mCounterexample.getLength() - 2).getTarget();
 			final int traceHash = trace.hashCode();
 			mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
 			Thread.currentThread().setName("Worker for " + traceHash);
 			try {
-				final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(mStrategy);
+				final var locations = getControlConfigurationsFromCounterexample(mCounterexample);
+				final Counterexample<L> counterexample = new Counterexample<>(mCounterexample.getWord(), locations);
+				final ITARefinementStrategy<L> strategy = setUpStrategy(counterexample);
+				final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(strategy);
 
 				if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
 					// in this setting we dont use error automata
@@ -174,7 +186,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 					continue;
 				}
 
-				final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(
+				final AbstractCegarLoop.AutomatonType automatonType =
+						processFeasibilityCheckResult(strategy,
 						isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
 				constructRefinementAutomaton(automatonType);
 				mThreadResult = refineAbstractionInternally();
@@ -186,12 +199,81 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		}
 	}
 
+
+	protected List<?> getControlConfigurationsFromCounterexample(final IRun<L, ?> run) {
+		if (IcfgUtils.isConcurrent(mIcfg)) {
+			return run.getStateSequence().stream().map(p -> ((IMLPredicate) p).getProgramPoints())
+					.collect(Collectors.toList());
+		}
+		return getIcfgLocationsFromRun(run);
+	}
+
+	private List<IcfgLocation> getIcfgLocationsFromRun(final IRun<L, ?> run) {
+		return run.getStateSequence().stream().map(p -> ((ISLPredicate) p).getProgramPoint())
+				.collect(Collectors.toList());
+	}
+
+	/*
+	 * sets up the worker with its own cfg script and its own RefinementStrategy
+	 *
+	 *
+	 * TODO what needs to be done once and what needs to be done for every CEX??????????ß
+	 *
+	 * new constuct Strategy for every cex!
+	 *
+	 */
+	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
+
+
+		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
+		final PathProgramCache<L> mainCache = mMainThread.getCurrentProgramCache();
+		cacheCopy.copyCache(mainCache);
+		final StrategyFactory<L> mStrategyFactory =
+				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
+						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheCopy);
+
+		final HashSet<L> pathProgramRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
+
+		final ITARefinementStrategy<L> strategy;
+		// if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
+		// final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
+		// // setup the strategy from getRefinementStrategy() such that the factory has the modules
+		// strategy =
+		// strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+		// new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+		// predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+		// mPref.getRefinementStrategy(), mainCach, parallelStrategy);
+		//
+		// // start worker
+		// return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed,
+		// mResultBuilder, mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory,
+		// predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
+		// mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode, this, parallelStrategy.generalize(),
+		// mWorkerResultQueue, mWorkerTaskQueue);
+		// }
+		// setup up a default strategy for example CAMEL
+		strategy =
+				mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+						new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+						mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+						mPref.getRefinementStrategy(), cacheCopy);
+		return strategy;
+	}
+
+	private IPreconditionProvider getPreconditionProvider() {
+		return IPreconditionProvider.constructDefaultPreconditionProvider();
+	}
+
+	private IPostconditionProvider getPostconditionProvider() {
+		return IPostconditionProvider.constructDefaultPostconditionProvider();
+	}
+
 	protected Pair<LBool, IProgramExecution<L, Term>>
 			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
 		IStatisticsDataProvider refinementEngineStats = null;
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
-					.getPathProgramCache().getPathProgramCount((Word<L>) mCounterexample)) {
+					.getPathProgramCache().getPathProgramCount(mCounterexample.getWord())) {
 				final String taskDescription = "bailout by path program count limit in iteration " + mIteration;
 				throw new TaskCanceledException(UserDefinedLimit.PATH_PROGRAM_ATTEMPTS, getClass(), taskDescription);
 			}
@@ -223,8 +305,11 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 
 	/**
 	 * Report results from a feasibility check if necessary and return the type of the refinement automaton
+	 *
+	 * @param strategy
 	 */
-	public AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final LBool isCounterexampleFeasible,
+	public AbstractCegarLoop.AutomatonType processFeasibilityCheckResult(final ITARefinementStrategy<L> strategy,
+			final LBool isCounterexampleFeasible,
 			final IProgramExecution<L, Term> programExecution, final IcfgLocation currentErrorLoc) {
 		if (isCounterexampleFeasible == Script.LBool.SAT) {
 			mResultBuilder.addResultForProgramExecution(Result.UNSAFE, programExecution, null, null);
@@ -238,7 +323,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		}
 		Result actualResult;
 		if (programExecution != null) {
-			for (final ITraceCheckStrategyModule<L, ?> module : mStrategy.getTraceCheckModules()) {
+			for (final ITraceCheckStrategyModule<L, ?> module : strategy.getTraceCheckModules()) {
 				if (module instanceof IpTcStrategyModuleAcceleratedTraceCheck) {
 					throw new AssertionError(
 							"TraceCheck Unknown, dont return result. Might be just this Strategy that fails");
