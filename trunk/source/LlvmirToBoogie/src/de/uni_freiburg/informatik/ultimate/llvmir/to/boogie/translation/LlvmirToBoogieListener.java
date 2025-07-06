@@ -94,9 +94,15 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		mDeclarations.add(initProcedure);
 		final CallStatement initCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#init",
 				new Expression[] {});
-		final CallStatement mainCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] {}, "#main",
-				new Expression[] {});
-		final Body startBody = new Body(new DefaultLocation(), new VariableDeclaration[] {},
+
+		final PrimitiveType intType = new PrimitiveType(new DefaultLocation(), "int");
+		final VarList varList = new VarList(new DefaultLocation(), new String[] { "tmp" }, intType);
+		final VariableDeclaration varDecl = new VariableDeclaration(new DefaultLocation(), new Attribute[] {},
+				new VarList[] { varList });
+		final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), "tmp");
+		final CallStatement mainCall = new CallStatement(new DefaultLocation(), false, new VariableLHS[] { varLhs },
+				"#main", new Expression[] {});
+		final Body startBody = new Body(new DefaultLocation(), new VariableDeclaration[] { varDecl },
 				new Statement[] { initCall, mainCall });
 		final Procedure startProcedure = new Procedure(new DefaultLocation(), new Attribute[] {}, "ULTIMATE.start",
 				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
