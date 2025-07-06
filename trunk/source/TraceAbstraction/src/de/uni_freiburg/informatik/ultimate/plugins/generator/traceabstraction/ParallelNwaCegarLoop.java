@@ -344,8 +344,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
-				setUpContinuesWorker(iterationServices, currentErrorLoc, i);
-				// setUpWorker(iterationServices, currentErrorLoc);
+				if (mPref.mUseContinuesWorker) {
+					setUpContinuesWorker(iterationServices, currentErrorLoc, i);
+				} else {
+					setUpWorker(iterationServices, currentErrorLoc);
+				}
 			} catch (final InterruptedException e) {
 				throw new AssertionError("TODO");
 			}
