@@ -112,13 +112,13 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
 	private static final String ERROR_AUTOMATON_DIFFERENCE_TIME = "ErrorAutomatonDifferenceTime";
 	private final Benchmark mBenchmark;
-	private boolean mRunningConstruction = false;
-	private boolean mRunningDifference = false;
-	private int mTraceLength = -1;
+	private final boolean mRunningConstruction = false;
+	private final boolean mRunningDifference = false;
+	private final int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
 	private EnhancementType mEnhancement = EnhancementType.UNKNOWN;
 	private final Set<Integer> mLetters = new HashSet<>();
-	private int mLettersFirstTrace = -1;
+	private final int mLettersFirstTrace = -1;
 	private int mRelevantStatements;
 	private long mFaultLocalizationTime = 0l;
 
@@ -128,38 +128,18 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public void startErrorAutomatonConstructionTime() {
-		assert !mRunningConstruction : "Timing already running";
-		mRunningConstruction = true;
-		mBenchmark.start(ERROR_AUTOMATON_CONSTRUCTION_TIME);
 	}
 
 	public void stopErrorAutomatonConstructionTime() {
-		assert mRunningConstruction : "Timing not running";
-		mRunningConstruction = false;
-		mBenchmark.pause(ERROR_AUTOMATON_CONSTRUCTION_TIME);
 	}
 
 	public void startErrorAutomatonDifferenceTime() {
-		assert !mRunningDifference : "Timing already running";
-		mRunningDifference = true;
-		mBenchmark.start(ERROR_AUTOMATON_DIFFERENCE_TIME);
 	}
 
 	public void stopErrorAutomatonDifferenceTime() {
-		assert mRunningDifference : "Timing not running";
-		mRunningDifference = false;
-		mBenchmark.pause(ERROR_AUTOMATON_DIFFERENCE_TIME);
 	}
 
 	public void reportTrace(final NestedWord<?> trace) {
-		assert mTraceLength == -1 : "Length already reported";
-		mTraceLength = trace.length();
-		for (int i = 0; i < trace.length(); ++i) {
-			mLetters.add(trace.getSymbol(i).hashCode());
-		}
-		if (mLettersFirstTrace == -1) {
-			mLettersFirstTrace = mTraceLength;
-		}
 	}
 
 	public <L> void reportRelevantStatements(final List<Collection<L>> relevantStatements) {
@@ -240,17 +220,6 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public void finishAutomatonInstance() {
-		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mEnhancement == null) {
-			throw new IllegalAccessError("Not all statistics data were provided.");
-		}
-
-		final long constructionTime = getLastConstructionTime();
-		final long differenceTime = getLastDifferenceTime();
-		final int traceLength = mTraceLength;
-		final EnhancementType enhancement = mEnhancement;
-		mTraceLength = -1;
-		mAutomatonStatistics
-				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, enhancement));
 	}
 
 	/**

@@ -589,7 +589,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		mRunningThreads -= 1;
 		// Kill the worker script
-		((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
+		// ((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
+		// ((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).pop(1);
+		// if (((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).getStackLevel() > 0) {
+		// ((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).resetAssertions();
+		// }
 
 		// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
 		// Was too expensive, lead to unwanted synchronizations
