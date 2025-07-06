@@ -76,6 +76,10 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		createInitialDeclarations();
 	}
 
+	public Unit getResult() {
+		return mResult;
+	}
+
 	/**
 	 * Creates the initial declarations for the Boogie translation, specifically an `#init` procedure and a
 	 * `ULTIMATE.start` procedure that calls `#init` and `#main`.
@@ -111,8 +115,53 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				.findFirst().orElseThrow(() -> new IllegalStateException("No #init declaration found"));
 	}
 
-	public Unit getResult() {
-		return mResult;
+	/**
+	 * Retrieves the `ULTIMATE.start` procedure from the list of declarations.
+	 *
+	 * @return The `ULTIMATE.start` procedure.
+	 * @throws IllegalStateException if no `ULTIMATE.start` procedure is found.
+	 */
+	private Procedure getStartProcedure() throws IllegalStateException {
+		return (Procedure) mDeclarations.stream().filter(
+				decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("ULTIMATE.start"))
+				.findFirst().orElseThrow(() -> new IllegalStateException("No ULTIMATE.start declaration found"));
+	}
+
+	/**
+	 * Updates the specified procedure with a new assignment statement and modifies specification.
+	 *
+	 * This method removes the old procedure, updates its body with the new assignment, and adds a modifies
+	 * specification for the variable being modified. The updated procedure is then added back to the list of
+	 * declarations. If either assignment or modifiesSpec is null, only the non-null argument will be used to update the
+	 * procedure; if both are null, the procedure will remain unchanged.
+	 *
+	 * @param procedure    The procedure to be updated.
+	 * @param assignment   The assignment statement to be added to the procedure.
+	 * @param modifiesSpec The modifies specification for the variable being modified.
+	 * @throws IllegalArgumentException if the procedure is null.
+	 */
+	private void updateProcedure(final Procedure procedure, final AssignmentStatement assignment,
+			final Specification modifiesSpec) throws IllegalArgumentException {
+		if (procedure == null) {
+			throw new IllegalArgumentException("Procedure cannot be null");
+		}
+		mDeclarations.remove(procedure);
+		final ArrayList<Statement> newBlock = new ArrayList<>(Arrays.asList(procedure.getBody().getBlock()));
+		if (assignment != null) {
+			newBlock.add(assignment);
+		}
+		final ArrayList<Specification> newSpecs = new ArrayList<>(Arrays.asList(procedure.getSpecification()));
+		if (modifiesSpec != null) {
+			newSpecs.add(modifiesSpec);
+		}
+
+		final Body newBody = new Body(procedure.getBody().getLocation(), procedure.getBody().getLocalVars(),
+				newBlock.toArray(new Statement[0]));
+		final Procedure newProcedure = new Procedure(procedure.getLocation(), procedure.getAttributes(),
+				procedure.getIdentifier(), procedure.getTypeParams(), procedure.getInParams(), procedure.getOutParams(),
+				newSpecs.toArray(new Specification[0]), newBody);
+
+		mDeclarations.add(newProcedure);
 	}
 
 	/**
@@ -233,7 +282,6 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 					new VarList[] { varList });
 			mDeclarations.add(varDecl);
 
-			final Procedure initProcedure = getInitProcedure();
 			final VariableLHS varLhs = new VariableLHS(new DefaultLocation(), unifyIdentifier(identifier));
 			final IntegerLiteral initValue = new IntegerLiteral(new DefaultLocation(),
 					ctx.constant().intConst().getText());
@@ -243,39 +291,12 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			final Specification modifiesSpec = new ModifiesSpecification(new DefaultLocation(), false,
 					new VariableLHS[] { varLhs });
 
-			updateInitProcedure(assignment, modifiesSpec);
+			updateProcedure(getInitProcedure(), assignment, modifiesSpec);
+			updateProcedure(getStartProcedure(), null, modifiesSpec);
 		} else {
 			// TODO: Support for other types
 			throw new AssertionError("The support for types other than integers is not implemented yet.");
 		}
-	}
-
-	/**
-	 * Updates the `#init` procedure with a new assignment statement and modifies specification.
-	 *
-	 * This method removes the old `#init` procedure, updates its body with the new assignment, and adds a modifies
-	 * specification for the variable being initialized. The updated procedure is then added back to the list of
-	 * declarations.
-	 *
-	 * @param assignment   The assignment statement to be added to the `#init` procedure.
-	 * @param modifiesSpec The modifies specification for the variable being initialized.
-	 */
-	private void updateInitProcedure(final AssignmentStatement assignment, final Specification modifiesSpec) {
-		final Procedure initProcedure = getInitProcedure();
-		mDeclarations.remove(initProcedure);
-
-		final ArrayList<Statement> newBlock = new ArrayList<>(Arrays.asList(initProcedure.getBody().getBlock()));
-		newBlock.add(assignment);
-		final ArrayList<Specification> newSpecs = new ArrayList<>(Arrays.asList(initProcedure.getSpecification()));
-		newSpecs.add(modifiesSpec);
-
-		final Body newBody = new Body(initProcedure.getBody().getLocation(), initProcedure.getBody().getLocalVars(),
-				newBlock.toArray(new Statement[0]));
-		final Procedure newInitProcedure = new Procedure(initProcedure.getLocation(), initProcedure.getAttributes(),
-				initProcedure.getIdentifier(), initProcedure.getTypeParams(), initProcedure.getInParams(),
-				initProcedure.getOutParams(), newSpecs.toArray(new Specification[0]), newBody);
-
-		mDeclarations.add(newInitProcedure);
 	}
 
 	/**
