@@ -820,6 +820,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		return new UltimatePreferenceItemContainer("Parallel Trace Abstraction",
 				new UltimatePreferenceItem<>(LABEL_PARALLEL_CEGAR_LOOP, DEF_PARALLEL_CEGAR_LOOP,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_CONTINUES_WORKER, DEF_USE_CONTINUES_WORKER,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_THREADLIMIT, DEF_THREADLIMIT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_THREAD_LIMIT_PER_CEX, DEF_THREAD_LIMIT_PER_CEX,
