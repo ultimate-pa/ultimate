@@ -163,6 +163,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"If this setting is enabled, we try to translate conditional expressions to if-statements in Boogie. "
 					+ "Otherwise, we try to translate them to conditionals expressions in Boogie instead";
 
+	public static final String LABEL_MEMORY_ADDRESSING = "Memory addressing";
+	private static final String DESC_MEMOY_ADDRESSING = "Whether a 2D or 1D memory model should be used.";
+
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
 	}
@@ -272,6 +275,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		OVERAPPROXIMATE_BEHAVIOUR
 	}
 
+	public enum MemoryAddressing {
+		One_Dimensional, Two_Dimensional
+	}
+
 	public CACSLPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "C+ACSL to Boogie Translator");
 	}
@@ -341,6 +348,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_MEMORY_STRUCTURE,
 								MemoryStructure.HoenickeLindenmann_Original, PreferenceType.Combo,
 								MemoryStructure.values()),
+						new UltimatePreferenceItem<>(LABEL_MEMORY_ADDRESSING, MemoryAddressing.Two_Dimensional,
+								DESC_MEMOY_ADDRESSING, PreferenceType.Combo, MemoryAddressing.values()),
 						new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
 								DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_REPORT_UNSOUNDNESS_WARNING, true, PreferenceType.Boolean),

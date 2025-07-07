@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryAddressing;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UndefinedFunctionBehaviour;
@@ -86,6 +87,7 @@ public final class TranslationSettings {
 	private final int mStringOverapproximationThreshold;
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 	private final boolean mEnforceIfForConditional;
+	private final MemoryAddressing mMemoryAddressing;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -143,6 +145,7 @@ public final class TranslationSettings {
 		mUndefinedFunctionBehaviour = ups.getEnum(CACSLPreferenceInitializer.LABEL_BEHAVIOUR_UNDEFINED_FUNCTIONS,
 				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
 		mEnforceIfForConditional = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ENFORCE_IF_FOR_CONDITIONAL);
+		mMemoryAddressing = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_ADDRESSING, MemoryAddressing.class);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -158,7 +161,8 @@ public final class TranslationSettings {
 			final boolean checkDataRaces, final boolean useConstantArrays, final boolean useStoreChains,
 			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
-			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional) {
+			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
+			final MemoryAddressing memoryAddressingPreference) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -188,6 +192,7 @@ public final class TranslationSettings {
 		mStringOverapproximationThreshold = stringOverapproximationThreshold;
 		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
 		mEnforceIfForConditional = enforceIfForConditional;
+		mMemoryAddressing = memoryAddressingPreference;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -318,6 +323,10 @@ public final class TranslationSettings {
 		return mEnforceIfForConditional;
 	}
 
+	public MemoryAddressing memoryAddressingPreference() {
+		return mMemoryAddressing;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
@@ -327,7 +336,7 @@ public final class TranslationSettings {
 				mIsSvcompMemtrackCompatibilityMode, mFunctionsCheckedForMemoryNeutrality, mCheckSignedIntegerBounds,
 				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
 				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mUndefinedFunctionBehaviour, mEnforceIfForConditional);
+				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing);
 	}
 
 	/**
