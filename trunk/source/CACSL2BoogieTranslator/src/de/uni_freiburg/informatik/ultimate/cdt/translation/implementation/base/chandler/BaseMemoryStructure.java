@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public abstract class BaseMemoryStructure {
+public abstract class BaseMemoryStructure implements IMemoryStructure {
 
 	protected static final String READ_PROCEDURE_PREFIX = "read~";
 	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
