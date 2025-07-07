@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -82,9 +82,9 @@ public final class ConstructMemcpyOrMemmove {
 	 * @return
 	 */
 	public List<Declaration> declareMemcpyOrMemmove(final CHandler main,
-			final MemoryStructureDeclarations memCopyOrMemMove) {
-		assert memCopyOrMemMove == MemoryStructureDeclarations.C_MEMCPY
-				|| memCopyOrMemMove == MemoryStructureDeclarations.C_MEMMOVE;
+			final MemoryModelDeclarations memCopyOrMemMove) {
+		assert memCopyOrMemMove == MemoryModelDeclarations.C_MEMCPY
+				|| memCopyOrMemMove == MemoryModelDeclarations.C_MEMMOVE;
 
 		final List<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
