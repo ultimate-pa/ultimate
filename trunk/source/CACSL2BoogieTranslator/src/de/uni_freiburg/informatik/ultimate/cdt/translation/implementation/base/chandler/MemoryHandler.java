@@ -1145,14 +1145,14 @@ public class MemoryHandler {
 			case HoenickeLindenmann_4ByteResolution:
 			case HoenickeLindenmann_8ByteResolution:
 				yield new MemoryStructure_SingleBitprecise(memoryStructurePreference.getByteSize(), mTypeSizes,
-						(TypeHandler) mTypeHandler, mExpressionTranslation);
+						mTypeHandler);
 			case HoenickeLindenmann_Original:
-				yield new MemoryStructure_MultiBitprecise(mTypeSizes, mTypeHandler, mExpressionTranslation);
+				yield new MemoryStructure_MultiBitprecise(mTypeSizes, mTypeHandler);
 			};
 		}
 		return switch (memoryStructurePreference) {
 		case HoenickeLindenmann_Original:
-			yield new MemoryStructure_Unbounded(mTypeSizes, mTypeHandler, mExpressionTranslation);
+			yield new MemoryStructure_Unbounded(mTypeSizes, mTypeHandler);
 		case HoenickeLindenmann_1ByteResolution:
 		case HoenickeLindenmann_2ByteResolution:
 		case HoenickeLindenmann_4ByteResolution:

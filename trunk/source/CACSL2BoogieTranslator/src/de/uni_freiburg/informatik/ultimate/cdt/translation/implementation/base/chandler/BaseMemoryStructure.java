@@ -37,7 +37,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -61,8 +60,7 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 
 	private final HeapDataArray mPointerArray;
 
-	public BaseMemoryStructure(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation) {
+	public BaseMemoryStructure(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();

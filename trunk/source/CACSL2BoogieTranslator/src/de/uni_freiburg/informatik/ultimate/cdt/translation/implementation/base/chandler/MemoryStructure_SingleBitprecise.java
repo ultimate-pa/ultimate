@@ -36,12 +36,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -55,8 +54,8 @@ public class MemoryStructure_SingleBitprecise extends BaseMemoryStructure {
 	private final int mResolution;
 
 	public MemoryStructure_SingleBitprecise(final int memoryStructureResolution, final TypeSizes typeSizes,
-			final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
-		super(typeSizes, typeHandler, expressionTranslation);
+			final ITypeHandler typeHandler) {
+		super(typeSizes, typeHandler);
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
@@ -99,8 +98,8 @@ public class MemoryStructure_SingleBitprecise extends BaseMemoryStructure {
 						new CPrimitive(representative));
 				final boolean alsoUncheckedWrite = DataStructureUtils.haveNonEmptyIntersection(
 						requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
-				final boolean alsoInit = DataStructureUtils.haveNonEmptyIntersection(
-						requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
+				final boolean alsoInit = DataStructureUtils
+						.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 				result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
 						alsoUncheckedWrite, alsoInit));
 			}
