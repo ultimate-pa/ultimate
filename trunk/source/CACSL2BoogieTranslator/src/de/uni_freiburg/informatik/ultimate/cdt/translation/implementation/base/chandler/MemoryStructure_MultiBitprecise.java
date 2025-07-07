@@ -38,7 +38,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -54,9 +53,8 @@ public class MemoryStructure_MultiBitprecise extends BaseMemoryStructure {
 	private final Map<Integer, HeapDataArray> mSize2HeapIntegerArray = new HashMap<>();
 	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();
 
-	public MemoryStructure_MultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation) {
-		super(typeSizes, typeHandler, expressionTranslation);
+	public MemoryStructure_MultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
+		super(typeSizes, typeHandler);
 	}
 
 	@Override
@@ -110,8 +108,8 @@ public class MemoryStructure_MultiBitprecise extends BaseMemoryStructure {
 			final String procedureName = getProcedureSuffix(representative);
 			final ASTType astType =
 					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
-			final boolean alsoUncheckedWrite = DataStructureUtils.haveNonEmptyIntersection(
-					requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
+			final boolean alsoUncheckedWrite = DataStructureUtils
+					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
 			final boolean alsoInit = DataStructureUtils
 					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),

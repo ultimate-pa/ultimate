@@ -36,7 +36,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -53,20 +52,19 @@ public class MemoryStructure_Unbounded extends BaseMemoryStructure {
 	private final HeapDataArray mIntegerArray;
 	private final HeapDataArray mFloatingArray;
 
-	public MemoryStructure_Unbounded(final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation expressionTranslation) {
-		super(typeSizes, typeHandler, expressionTranslation);
+	public MemoryStructure_Unbounded(final TypeSizes typeSizes, final ITypeHandler typeHandler) {
+		super(typeSizes, typeHandler);
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		/*
-		 * In our Lindenmann-Hoenicke Memory Structure, we use an array for all integer data on the heap. This
-		 * method returns the CType that we use to represents this data.
+		 * In our Lindenmann-Hoenicke Memory Structure, we use an array for all integer data on the heap. This method
+		 * returns the CType that we use to represents this data.
 		 */
 		final ASTType intArrayType = typeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT));
 
 		/*
-		 * In our Lindenmann-Hoenicke Memory Structure, we use an array for all floating type data on the heap.
-		 * This method returns the CType that we use to represent this data.
+		 * In our Lindenmann-Hoenicke Memory Structure, we use an array for all floating type data on the heap. This
+		 * method returns the CType that we use to represent this data.
 		 */
 		final ASTType realArrayType = typeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.FLOAT));
 
@@ -112,8 +110,8 @@ public class MemoryStructure_Unbounded extends BaseMemoryStructure {
 			final String procedureName = getProcedureSuffix(representative);
 			final ASTType astType =
 					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
-			final boolean alsoUncheckedWrite = DataStructureUtils.haveNonEmptyIntersection(
-					requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
+			final boolean alsoUncheckedWrite = DataStructureUtils
+					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
 			final boolean alsoInit = DataStructureUtils
 					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
