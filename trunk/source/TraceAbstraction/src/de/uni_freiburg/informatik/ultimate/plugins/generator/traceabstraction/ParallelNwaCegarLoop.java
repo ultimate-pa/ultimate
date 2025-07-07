@@ -314,17 +314,19 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 					mResultBuilder, mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory,
 					predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
 					mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode, this, parallelStrategy.generalize(),
-					mWorkerResultQueue, mWorkerTaskQueue);
+					mWorkerResultQueue);
 		}
 		// setup up a default strategy for example CAMEL
-		strategy = strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-				new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()), predicateFactoryInterpolantAutomata,
-				getPreconditionProvider(), getPostconditionProvider(), mPref.getRefinementStrategy(), mProgramCache);
+		strategy =
+				strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+						new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
+						predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+						mPref.getRefinementStrategy(), mProgramCache);
 		// start worker
 		return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed, mResultBuilder,
 				mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory, predicateFactory,
 				predicateFactoryInterpolantAutomata, stateFactoryForRefinement, mComputeHoareAnnotation, strategy,
-				currentErrorLoc, mRootNode, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
+				currentErrorLoc, mRootNode, this, WorkerGeneralizationMode.YES, mWorkerResultQueue);
 	}
 
 	/*
@@ -346,8 +348,6 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			try {
 				if (mPref.mUseContinuesWorker) {
 					setUpContinuesWorker(iterationServices, currentErrorLoc, i);
-				} else {
-					setUpWorker(iterationServices, currentErrorLoc);
 				}
 			} catch (final InterruptedException e) {
 				throw new AssertionError("TODO");
@@ -523,9 +523,21 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		// here we can determine how many threads / checks we want per counterexample
 		for (int module = 0; module < mThreadsPerCex; module++) {
-			// final CegarNwaWorkerThread<L, A> worker = setUpWorker(iterationServices, currentErrorLoc);
-			// executor.submit(worker);
-			mWorkerTaskQueue.add(mCounterexample);
+			if (!mPref.mUseContinuesWorker) {
+				try {
+					CegarNwaWorkerThread<L, A> worker;
+					worker = setUpWorker(iterationServices, currentErrorLoc);
+					executor.submit(worker);
+				} catch (final InterruptedException e) {
+					throw new AssertionError(e);
+				}
+
+			} else {
+				// Probably doesnt work with continues worker yet. Since the counterexample will be taken from the queue
+				assert mThreadsPerCex == 1;
+				mWorkerTaskQueue.add(mCounterexample);
+			}
+
 			mRunningThreads += 1;
 			final HashSet<L> ppRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
 			if (!strategyProvidesAModulesForEachThread(mPref.getRefinementStrategy(),
@@ -648,11 +660,9 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		mRunningThreads -= 1;
 		// Kill the worker script
-		// ((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
-		// ((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).pop(1);
-		// if (((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).getStackLevel() > 0) {
-		// ((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).resetAssertions();
-		// }
+		if (!mPref.mUseContinuesWorker) {
+			((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
+		}
 
 		// Removed 26.1.25: iterate over active counterexamples, check if included else kill worker
 		// Was too expensive, lead to unwanted synchronizations

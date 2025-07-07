@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.tracehandling.ITraceCheckStrategyModule;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.singletracecheck.TraceCheckUtils;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -59,7 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
+public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+		implements Callable<WorkerThreadResult<L, A>> {
 
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
@@ -77,6 +78,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 
 	// each worker needs one of their own:
 	private final int mIteration;
+	private final IRun<L, ?> mCounterexample;
 	private final ErrorGeneralizationEngine<L> mErrorGeneralizationEngine;
 
 	// each worker needs one of their own, but creates it themself:
@@ -91,9 +93,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 	boolean mComputeHoareAnnotation;
 
 	private WorkerThreadResult<L, A> mThreadResult = null;
-	private final BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
-	private final BlockingQueue<IRun<L, ?>> mWorkerTaskQueue;
-	protected IRun<L, ?> mCounterexample = null;
+	BlockingQueue<WorkerThreadResult<L, A>> mBlockingQueueForResults;
 
 	private final ITARefinementStrategy<L> mStrategy;
 	private final IcfgLocation mCurrentErrorLoc;
@@ -118,12 +118,12 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			final PredicateFactoryRefinement stateFactoryForRefinement, final boolean computeHoareAnnotation,
 			final ITARefinementStrategy<L> strategy, final IcfgLocation currentErrorLoc, final IIcfg<?> rootNode,
 			final ParallelNwaCegarLoop<L, A> mainThread, final WorkerGeneralizationMode generalization,
-			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults,
-			final BlockingQueue<IRun<L, ?>> workerTaskQueue) throws InterruptedException {
+			final BlockingQueue<WorkerThreadResult<L, A>> blockingQueueForResults) {
 
 		mLogger = logger;
 		mPref = pref;
 		mRefinementResult = null;
+		mCounterexample = counterexample;
 		mResultBuilder = resultBuilder;
 		mErrorGeneralizationEngine = new ErrorGeneralizationEngine<>(services);
 		mInterpolAutomaton = null;
@@ -144,46 +144,36 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		mMainThread = mainThread;
 		mGeneralize = generalization;
 		mBlockingQueueForResults = blockingQueueForResults;
-		mWorkerTaskQueue = workerTaskQueue;
-		final Thread workerThread = new Thread(() -> {
-			try {
-				executeThread();
-			} catch (final InterruptedException e) {
-				throw new AssertionError(e);
-			}
-		});
-		workerThread.start();
 	}
 
-	public void executeThread() throws InterruptedException {
-		while (true) {
-			mLogger.info("WorkerThread: " + Thread.currentThread() + " is Waiting for a Task");
-			mCounterexample = mWorkerTaskQueue.take();
-			final List<L> trace = mCounterexample.getWord().asList();
-			final int traceHash = trace.hashCode();
-			mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
-			Thread.currentThread().setName("Worker for " + traceHash);
-			try {
-				final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(mStrategy);
+	@Override
+	public WorkerThreadResult<L, A> call() throws InterruptedException {
+		final List<L> trace = mCounterexample.getWord().asList();
+		final int traceHash = trace.hashCode();
+		mLogger.info("Starting Thread: " + Thread.currentThread().getId() + "# for Trace Check: " + traceHash);
+		Thread.currentThread().setName("Worker for " + traceHash);
+		try {
+			final Pair<LBool, IProgramExecution<L, Term>> isCexResult = isCounterexampleFeasible(mStrategy);
 
-				if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
-					// in this setting we dont use error automata
-					mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
-							mCsToolkit.getManagedScript(), mCounterexample, null, true);
-					mBlockingQueueForResults.put(mThreadResult);
-					continue;
-				}
-
-				final AbstractCegarLoop.AutomatonType automatonType = processFeasibilityCheckResult(
-						isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
-				constructRefinementAutomaton(automatonType);
-				mThreadResult = refineAbstractionInternally();
-			} catch (AutomataLibraryException | ToolchainCanceledException | SMTLIBException e) {
-				throw new AssertionError("WorkerThread Failed: " + e);
+			if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
+				// in this setting we dont use error automata
+				mThreadResult =
+						new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
+								mCsToolkit.getManagedScript(), mCounterexample, null, true);
+				mBlockingQueueForResults.put(mThreadResult);
+				return mThreadResult;
 			}
-			mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
-			mBlockingQueueForResults.put(mThreadResult);
+
+			final AbstractCegarLoop.AutomatonType automatonType =
+					processFeasibilityCheckResult(isCexResult.getFirst(), isCexResult.getSecond(), mCurrentErrorLoc);
+			constructRefinementAutomaton(automatonType);
+			mThreadResult = refineAbstractionInternally();
+		} catch (AutomataLibraryException | ToolchainCanceledException e) {
+			throw new AssertionError("WorkerThread Failed: " + e);
 		}
+		mLogger.info("Done with Thread: " + Thread.currentThread().getId() + "#");
+		mBlockingQueueForResults.put(mThreadResult);
+		return mThreadResult;
 	}
 
 	protected Pair<LBool, IProgramExecution<L, Term>>
@@ -201,7 +191,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 			mRefinementResult = refinementEngine.getResult();
 			refinementEngineStats = refinementEngine.getRefinementEngineStatistics();
 
-		} catch (final ToolchainCanceledException | SMTLIBException tce) {
+		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		}
 		final LBool feasibility = mRefinementResult.getCounterexampleFeasibility();
