@@ -33,6 +33,8 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 
 		final BaseUltimatePreferenceItem[] mainPrefs = {
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTION_SEED.text(), -301796050, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(SettingLabel.OUTPUT_METHOD.text(), OutputMethod.PRINT_TO_TERMINAL,
+						PreferenceType.Radio, OutputMethod.values()),
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.text(), 5, PreferenceType.Integer,
 						validatePositive),
 				new UltimatePreferenceItem<>(SettingLabel.VARIANTS_PER_HAVOC_EDGE.text(), 3, PreferenceType.Integer,
@@ -49,6 +51,10 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		return mainPrefs;
 	}
 
+	public enum OutputMethod {
+		PRINT_TO_TERMINAL, PRINT_TO_FILE, DONT_PRINT
+	}
+
 	/**
 	 * The labels used for each settings, to enable easy value retrieval.
 	 */
@@ -58,6 +64,8 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 		VARIANTS_PER_HAVOC_EDGE("Number of differing executions to create when taking an edge with havoc"),
 		EXECUTION_MAX_LENGTH("How many edges should be taken before the execution is terminated early? (0 for never)"),
 		EXECUTIONS_QUEUED("Number of unfinished executions to store before disregarding new ones"),
+		OUTPUT_METHOD("How to print the created executions."
+				+ " The executions are always passed to the next plug-in regardless of choice."),
 		BITS_HAVOCED("Number of bits to havoc for integers. (Bounds of the ICFG take priority over this setting.)");
 
 		private final String mText;

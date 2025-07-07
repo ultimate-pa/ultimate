@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 
 public class Equation implements ITermProvider {
 	private final RelationSymbol mRelation;
@@ -67,13 +68,16 @@ public class Equation implements ITermProvider {
 		}
 	}
 
-	public boolean isSolvedFor(final TermVariable subject) {
+	public boolean isSolvedFor(final Term subject) {
 		return mLHS.equals(subject);
 	}
 
 	public SolvedEquation getSolvedEquation() {
 		if (mLHS instanceof final TermVariable tv) {
 			return new SolvedEquation(mRelation, tv, mRHS);
+		}
+		if (mLHS instanceof final ApplicationTerm at && at.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
+			return new SolvedEquation(mRelation, at, mRHS);
 		}
 		return null;
 	}
@@ -84,15 +88,38 @@ public class Equation implements ITermProvider {
 		return freeVars;
 	}
 
+	public Set<Term> getSelects() {
+		final HashSet<Term> selects = new HashSet<>(Util.extractSelects(mLHS));
+		selects.addAll(Util.extractSelects(mRHS));
+		return selects;
+	}
+
+	private boolean containsTerm(final Term container, final Term subject) {
+		if (container == subject) {
+			return true;
+		}
+		if (container instanceof final ApplicationTerm at) {
+			for (final Term param : at.getParameters()) {
+				if (containsTerm(param, subject)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public ArrayList<SolvedEquation> solveForVars(final Script script) {
 		final ArrayList<SolvedEquation> out = new ArrayList<>();
 
-		for (final TermVariable termVar : getFreeVars()) {
-			final boolean leftContains = Arrays.asList(mLHS.getFreeVars()).contains(termVar);
-			final boolean rightContains = Arrays.asList(mRHS.getFreeVars()).contains(termVar);
+		final Set<Term> freeVars = new HashSet<>(getFreeVars());
+		freeVars.addAll(getSelects());
+
+		for (final Term termVar : freeVars) {
+
+			final boolean leftContains = SmtUtils.isSubterm(mLHS, termVar);
+			final boolean rightContains = SmtUtils.isSubterm(mRHS, termVar);
 
 			if (!(leftContains ^ rightContains)) {
-				// can't solve if variable appears on both sides (yet)
 				continue;
 			}
 
@@ -134,7 +161,7 @@ public class Equation implements ITermProvider {
 		return out;
 	}
 
-	private static SolvedEquation solveForSubjectEquality(final Equation equation, final TermVariable subject) {
+	private static SolvedEquation solveForSubjectEquality(final Equation equation, final Term subject) {
 		if (equation.isSolvedFor(subject)) {
 			return equation.getSolvedEquation();
 		}
@@ -145,15 +172,19 @@ public class Equation implements ITermProvider {
 		return PolynomialRelation.of(script, mRelation, mLHS, mRHS);
 	}
 
-	private static SolvedEquation solveForSubjectInt(Equation equation, final TermVariable subject,
-			final Script script) {
+	private static SolvedEquation solveForSubjectInt(Equation equation, final Term subject, final Script script) {
 		if (equation.isSolvedFor(subject)) {
 			return equation.getSolvedEquation();
 		}
 		final PolynomialRelation polynomial = equation.toPolinomial(script);
 		final SolvedBinaryRelation solved = polynomial.solveForSubject(script, subject);
-		if (solved != null && solved.getLeftHandSide() instanceof final TermVariable tv) {
-			return new SolvedEquation(solved.getRelationSymbol(), tv, solved.getRightHandSide());
+		if (solved != null) {
+			if (solved.getLeftHandSide() instanceof final TermVariable tv && tv.equals(subject)) {
+				return new SolvedEquation(solved.getRelationSymbol(), tv, solved.getRightHandSide());
+			}
+			if (solved.getLeftHandSide() instanceof final ApplicationTerm at && at.equals(subject)) {
+				return new SolvedEquation(solved.getRelationSymbol(), at, solved.getRightHandSide());
+			}
 		}
 
 		final ApplicationTerm leftApp = (ApplicationTerm) equation.getLhs();
@@ -261,32 +292,44 @@ public class Equation implements ITermProvider {
 
 	public static class SolvedEquation extends Equation {
 		private final TermVariable mVariable;
+		private final ApplicationTerm mSelect;
+		private final boolean mIsSelect;
 
 		public SolvedEquation(final RelationSymbol relation, final TermVariable lhs, final Term rhs) {
 			super(relation, lhs, rhs);
 			mVariable = lhs;
+			mSelect = null;
+			mIsSelect = false;
+		}
+
+		public SolvedEquation(final RelationSymbol relation, final ApplicationTerm lhs, final Term rhs) {
+			super(relation, lhs, rhs);
+			assert lhs.getFunction().getName().equals(SMTLIBConstants.SELECT);
+			mSelect = lhs;
+			mVariable = null;
+			mIsSelect = true;
 		}
 
 		@Override
-		public TermVariable getLhs() {
-			return mVariable;
+		public Term getLhs() {
+			return mIsSelect ? mSelect : mVariable;
 		}
 
 		@Override
 		public SolvedEquation negate() {
+			if (mIsSelect) {
+				return new SolvedEquation(getRelation().negate(), mSelect, getRhs());
+			}
 			return new SolvedEquation(getRelation().negate(), mVariable, getRhs());
+		}
+
+		public boolean isSelect() {
+			return mIsSelect;
 		}
 
 		@Override
 		public SolvedEquation getSolvedEquation() {
 			return this;
-		}
-
-		@Override
-		public Set<TermVariable> getFreeVars() {
-			final HashSet<TermVariable> freeVars = new HashSet<>(Set.of(getRhs().getFreeVars()));
-			freeVars.add(mVariable);
-			return freeVars;
 		}
 	}
 }

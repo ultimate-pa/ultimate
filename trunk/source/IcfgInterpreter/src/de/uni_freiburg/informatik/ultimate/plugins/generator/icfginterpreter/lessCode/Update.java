@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.NonDeterministicChoice;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Triple;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.BooleanRestriction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.interpret.IntegerRestriction;
@@ -37,13 +37,13 @@ public interface Update extends ITermProvider {
 	 */
 	Set<TermVariable> getFreeVars();
 
-	List<Pair<Term, List<Term>>> getArrayReads();
+	List<Triple<Term, TermVariable, List<Term>>> getArrayReads();
 
 	public static class AssignmentUpdate implements Update {
 		private final TermVariable mTermVar;
 		private final Term mValue;
 		private final Set<TermVariable> freeVars;
-		private final List<Pair<Term, List<Term>>> mArrayReads;
+		private final List<Triple<Term, TermVariable, List<Term>>> mArrayReads;
 
 		public AssignmentUpdate(final TermVariable programVar, final Term value) {
 			assert programVar.getSort().equals(value.getSort());
@@ -51,7 +51,7 @@ public interface Update extends ITermProvider {
 			freeVars = Set.of(value.getFreeVars());
 
 			final List<ApplicationTerm> selected = Util.extractSelects(value);
-			mArrayReads = List.copyOf(selected.stream().map(select -> Util.selectToKeyPair(select)).toList());
+			mArrayReads = List.copyOf(selected.stream().map(select -> Util.selectToKeyTriple(select)).toList());
 			mValue = value;
 		}
 
@@ -95,36 +95,36 @@ public interface Update extends ITermProvider {
 		}
 
 		@Override
-		public List<Pair<Term, List<Term>>> getArrayReads() {
+		public List<Triple<Term, TermVariable, List<Term>>> getArrayReads() {
 			return mArrayReads;
-
-			// final List<Pair<ArrayValue, List<Value>>> out = new ArrayList<>();
-
-			// for (final Pair<Term, List<Term>> arrayPair : mArrayReads) {
-			// final ArrayValue array = (ArrayValue) state.get(arrayPair.a());
-			// out.add(new Pair<>(array,
-			// arrayPair.b().stream().map(term -> TermEvaluator.evaluate(state, term)).toList()));
-			// }
 		}
 	}
 
 	public static class HavocUpdate implements Update {
 		private final TermVariable mTermVar;
+		private Term mUpdatedTerm;
 		private final HashSet<Term> mLessEq;
 		private final HashSet<Term> mGreaterEq;
 		private final HashSet<Term> mInEqual;
 		private final Set<TermVariable> mFreeVars;
 		private final boolean mRemovePrevious;
-		private final List<Pair<Term, List<Term>>> mArrayReads;
+		private final List<Triple<Term, TermVariable, List<Term>>> mArrayReads;
+
+		public HavocUpdate(final ApplicationTerm select, final TermVariable array, final List<SolvedEquation> equations,
+				final boolean removePrevious) {
+			this(array, equations, removePrevious);
+			mUpdatedTerm = select;
+		}
 
 		/**
-		 * @param programVar     Variable to receive a non-deterministic value
+		 * @param termVar        Variable to receive a non-deterministic value
 		 * @param equations      List of equation restricting the variable's value
 		 * @param removePrevious True if this update removes previous restrictions (the variable was not an InVar)
 		 */
-		public HavocUpdate(final TermVariable programVar, final List<SolvedEquation> equations,
+		public HavocUpdate(final TermVariable termVar, final List<SolvedEquation> equations,
 				final boolean removePrevious) {
-			mTermVar = programVar;
+			mUpdatedTerm = termVar;
+			mTermVar = termVar;
 			mLessEq = new HashSet<>();
 			mGreaterEq = new HashSet<>();
 			mInEqual = new HashSet<>();
@@ -133,7 +133,7 @@ public interface Update extends ITermProvider {
 			mRemovePrevious = removePrevious;
 			final Theory theory = mTermVar.getTheory();
 			final Term one = theory.constant(BigInteger.ONE, theory.getNumericSort());
-			final ArrayList<Pair<Term, List<Term>>> arrayReads = new ArrayList<>();
+			final ArrayList<Triple<Term, TermVariable, List<Term>>> arrayReads = new ArrayList<>();
 
 			for (final SolvedEquation equation : equations) {
 				Term newTerm;
@@ -173,10 +173,21 @@ public interface Update extends ITermProvider {
 				}
 
 				final List<ApplicationTerm> selected = Util.extractSelects(newTerm);
-				arrayReads.addAll(selected.stream().map(select -> Util.selectToKeyPair(select)).toList());
+				arrayReads.addAll(selected.stream().map(select -> Util.selectToKeyTriple(select)).toList());
 			}
 
 			mArrayReads = List.copyOf(arrayReads);
+		}
+
+		/**
+		 * True if this havoc update is on an edge where it's variable is not an InVar, meaning that this is a new
+		 * instance of havocing this variable. If it is false, then the variable was previously havoced and this update
+		 * only restricts the possible values (an assume statement).
+		 *
+		 * @return True if this is a havoc, false if this is an assume.
+		 */
+		public boolean overridesPrevious() {
+			return mRemovePrevious;
 		}
 
 		private static Term trySimplifyToConstant(Term term) {
@@ -204,8 +215,16 @@ public interface Update extends ITermProvider {
 			return term;
 		}
 
-		private Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
-			switch (mTermVar.getSort().getName()) {
+		public Restriction<?> getRestriction(final Map<Term, Value> state, final NonDeterministicChoice ndc) {
+
+			String returnSort;
+			if (mUpdatedTerm instanceof final ApplicationTerm at) {
+				returnSort = at.getFunction().getReturnSort().getName();
+			} else {
+				returnSort = mTermVar.getSort().getName();
+			}
+
+			switch (returnSort) {
 			case SMTLIBConstants.BOOL:
 				final HashSet<BoolValue> inEqualBools = new HashSet<>();
 
@@ -266,7 +285,7 @@ public interface Update extends ITermProvider {
 		@Override
 		public void update(final Map<Term, Value> state, final NonDeterministicChoice ndc,
 				final Map<Term, Restriction<?>> havocRestrictions) {
-			final Restriction<?> existingRestriction = havocRestrictions.remove(mTermVar);
+			final Restriction<?> existingRestriction = havocRestrictions.remove(mUpdatedTerm);
 			Restriction<?> newRestriction;
 
 			if (existingRestriction != null && !mRemovePrevious) {
@@ -276,8 +295,11 @@ public interface Update extends ITermProvider {
 			}
 
 			// Is havoced when (and only if) variable is read
-			havocRestrictions.put(mTermVar, newRestriction);
-			state.remove(mTermVar);
+			havocRestrictions.put(mUpdatedTerm, newRestriction);
+			if (mUpdatedTerm instanceof final TermVariable tv) {
+				// We are havocing a specific variable, not an array entry. Arrays as a whole do not get havoced.
+				state.remove(tv);
+			}
 		}
 
 		@Override
@@ -309,13 +331,14 @@ public interface Update extends ITermProvider {
 						+ "}");
 			}
 
-			return mTermVar + " := havoc(" + String.join("; ", types) + ")";
+			final String type = mRemovePrevious ? "havoc" : "assume";
+			return mUpdatedTerm + " := " + type + "(" + String.join("; ", types) + ")";
 		}
 
 		@Override
 		public boolean equals(final Object b) {
 			if (b instanceof final HavocUpdate update) {
-				return mTermVar.equals(update.mTermVar) && mInEqual.equals(update.mInEqual)
+				return mUpdatedTerm.equals(update.mUpdatedTerm) && mInEqual.equals(update.mInEqual)
 						&& mGreaterEq.equals(update.mGreaterEq) && mLessEq.equals(update.mLessEq);
 			}
 			return false;
@@ -323,7 +346,7 @@ public interface Update extends ITermProvider {
 
 		@Override
 		public int hashCode() {
-			return (((mTermVar.hashCode() * 31 + mInEqual.hashCode()) * 31 + mGreaterEq.hashCode()) * 31
+			return (((mUpdatedTerm.hashCode() * 31 + mInEqual.hashCode()) * 31 + mGreaterEq.hashCode()) * 31
 					+ mLessEq.hashCode()) * 31;
 		}
 
@@ -332,22 +355,22 @@ public interface Update extends ITermProvider {
 			final List<Term> equations = new ArrayList<>();
 
 			for (final Term neq : mInEqual) {
-				return SmtUtils.distinct(script, mTermVar, neq);
+				return SmtUtils.distinct(script, mUpdatedTerm, neq);
 			}
 
 			for (final Term geq : mGreaterEq) {
-				return SmtUtils.geq(script, mTermVar, geq);
+				return SmtUtils.geq(script, mUpdatedTerm, geq);
 			}
 
 			for (final Term leq : mLessEq) {
-				return SmtUtils.leq(script, mTermVar, leq);
+				return SmtUtils.leq(script, mUpdatedTerm, leq);
 			}
 
 			return SmtUtils.and(script, equations);
 		}
 
 		@Override
-		public List<Pair<Term, List<Term>>> getArrayReads() {
+		public List<Triple<Term, TermVariable, List<Term>>> getArrayReads() {
 			return mArrayReads;
 		}
 	}

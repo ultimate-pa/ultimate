@@ -18,10 +18,12 @@ public class IntegerRestriction extends Restriction<IntValue> {
 			mRangeSize = null;
 			mValidValueCount = null;
 		} else {
-			assert mMinimum.compareTo(mMaximum) <= 0;
 			mRangeSize = mMaximum.subtract(mMinimum).add(IntValue.ONE); // number of values := max - min + 1
 			mValidValueCount = mRangeSize.subtract(new IntValue(BigInteger.valueOf(mInequal.size())));
-			assert IntValue.ZERO.compareTo(mValidValueCount) < 0;
+
+			if (mMinimum.compareTo(mMaximum) > 0 || IntValue.ZERO.compareTo(mValidValueCount) >= 0) {
+				throw new EmptyRangeException();
+			}
 		}
 	}
 

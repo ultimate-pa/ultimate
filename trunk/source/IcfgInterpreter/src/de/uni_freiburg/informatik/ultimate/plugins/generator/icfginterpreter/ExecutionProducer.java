@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -52,10 +54,10 @@ public class ExecutionProducer {
 	private final HashMap<IcfgLocation, ArrayList<InterpretedIcfgEdge>> mOutEdges = new HashMap<>();
 	private final ManagedScript mngScript;
 	private final HashMap<TermVariable, IProgramVar> mSymbolTable = new HashMap<>();
-	private int unfinishedMaxStored = 1024;
 	private final IIcfg<? extends IcfgLocation> mIcfg;
 	private int executionMaxLength;
 	private int variantsPerHavoc;
+	private int unfinishedMaxStored;
 
 	public ExecutionProducer(final IIcfg<? extends IcfgLocation> icfg, final IUltimateServiceProvider services) {
 		mIcfg = icfg;
@@ -260,123 +262,57 @@ public class ExecutionProducer {
 		return makeUpdates(solvedEquations, formula);
 	}
 
-	private int compareEqs(final Map<TermVariable, Set<TermVariable>> requiredNextState, final SolvedEquation a,
-			final SolvedEquation b, final UnmodifiableTransFormula formula) {
-		final TermVariable varA = lookupSymbolTableSafe(a.getLhs(), formula);
-		final TermVariable varB = lookupSymbolTableSafe(b.getLhs(), formula);
+	private static ArrayDeque<Update> sortEqs(final Map<TermVariable, List<TermVariable>> neededInVars,
+			final Map<TermVariable, List<TermVariable>> neededOutVars, final Map<TermVariable, Update> equationList) {
+		// add each update that needs no InVars (that are updated)
+		// add updates for which all needed InVars already exist, but only if all that need it as invar are updated
 
-		final int value = Integer.compare(requiredNextState.get(varA).size(), requiredNextState.get(varB).size());
-		if (value != 0) {
-			return value;
+		final ArrayDeque<Update> out = new ArrayDeque<>();
+		final Set<TermVariable> updatedVars = new HashSet<>();
+
+		while (equationList.size() > updatedVars.size()) {
+			final List<TermVariable> neededInVarsTotal = neededInVars.entrySet().stream()
+					.filter(entry -> !updatedVars.contains(entry.getKey())).flatMap(entry -> entry.getValue().stream())
+					.toList();
+
+			// get vars that can be updated because all needed outvars are already updated
+			final Stream<TermVariable> updatableVars = neededOutVars.entrySet().stream()
+					.filter(entry -> !updatedVars.contains(entry.getKey()) && updatedVars.containsAll(entry.getValue()))
+					.map(entry -> entry.getKey());
+
+			// only keep those updates that are not needed as InVars any more
+			final List<TermVariable> safeUpdates = new ArrayList<>(
+					updatableVars.filter(var -> !neededInVarsTotal.contains(var)).toList());
+
+			// These are interchangeable. Sort by variable name for consistency
+			safeUpdates.sort(Comparator.comparing(TermVariable::getName));
+			for (final TermVariable updateVar : safeUpdates) {
+				updatedVars.add(updateVar);
+				out.addLast(equationList.get(updateVar));
+			}
 		}
-
-		return varB.getName().compareTo(varA.getName());
-	}
-
-	private ArrayDeque<SolvedEquation> sortEqs(final Map<TermVariable, Set<TermVariable>> requiredLastState,
-			final Map<TermVariable, Set<TermVariable>> requiredNextState, final List<SolvedEquation> equationList,
-			final UnmodifiableTransFormula formula) {
-		final ArrayDeque<SolvedEquation> out = new ArrayDeque<>();
-		if (equationList.size() == 0) {
-			return out;
-		}
-		equationList.sort((a, b) -> compareEqs(requiredNextState, a, b, formula));
-		final SolvedEquation pivot = equationList.get(0);
-		final TermVariable pivotVariable = pivot.getLhs();
-		final TermVariable pivotGeneric = lookupSymbolTableSafe(pivotVariable, formula);
-
-		final Set<TermVariable> updatedBeforePivot = new HashSet<>(requiredNextState.get(pivotGeneric));
-		final Set<TermVariable> updatedAfterPivot = new HashSet<>(requiredLastState.get(pivotGeneric));
-		updatedBeforePivot
-				.addAll(requiredLastState.keySet().stream().filter(var -> !updatedAfterPivot.contains(var)).toList());
-		updatedBeforePivot.remove(pivotGeneric);
-
-		// set of variables that are updated before this equation
-		final List<SolvedEquation> before = new ArrayList<>(equationList.stream()
-				.filter(eq -> updatedBeforePivot.contains(lookupSymbolTableSafe(eq.getLhs(), formula))).toList());
-		out.addAll(sortEqs(requiredLastState, requiredNextState, before, formula));
-
-		out.addAll(equationList.stream().filter(eq -> eq.getLhs().equals(pivotVariable)).toList());
-
-		// set of variables that are updated only after this equation
-		final List<SolvedEquation> after = new ArrayList<>(equationList.stream()
-				.filter(eq -> updatedAfterPivot.contains(lookupSymbolTableSafe(eq.getLhs(), formula))).toList());
-		out.addAll(sortEqs(requiredLastState, requiredNextState, after, formula));
 
 		return out;
 	}
 
-	private static void reflexivity(final HashMap<TermVariable, Set<TermVariable>> requiredLastState,
-			final HashMap<TermVariable, Set<TermVariable>> requiredNextState) {
-		// if a variable requires another to still be in its previous state, then the other variable requires the first
-		// to be updated already
-		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredLastState.entrySet()) {
-			for (final TermVariable requiredOldVersion : entry.getValue()) {
-				if (entry.getKey() == requiredOldVersion) {
-					// Variable does not require self
-					continue;
-				}
-
-				requiredNextState.get(requiredOldVersion).add(entry.getKey());
-			}
-		}
-
-		// if a variable requires another to already be updated, then the other variable requires the first to be in its
-		// previous state
-		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredNextState.entrySet()) {
-			for (final TermVariable requiredNewVersion : entry.getValue()) {
-				if (entry.getKey() == requiredNewVersion) {
-					// Variable does not require self
-					continue;
-				}
-				requiredLastState.get(requiredNewVersion).add(entry.getKey());
-			}
-		}
-	}
-
-	private static void transitivity(final HashMap<TermVariable, Set<TermVariable>> requiredLastState,
-			final HashMap<TermVariable, Set<TermVariable>> requiredNextState) {
-		// if a variable requires another to already be updated, then the variables that other requires to be in the
-		// next state are also already in the next state
-		for (final Entry<TermVariable, Set<TermVariable>> entry : requiredNextState.entrySet()) {
-			final Set<TermVariable> alsoUpdated = new HashSet<>();
-
-			for (final TermVariable requiredNewVersion : entry.getValue()) {
-				if (entry.getKey() == requiredNewVersion) {
-					// Variable does not require self
-					continue;
-				}
-				alsoUpdated.addAll(requiredNextState.get(requiredNewVersion));
-			}
-
-			entry.getValue().addAll(alsoUpdated);
-		}
-	}
-
 	private Update[] makeUpdates(final Set<SolvedEquation> equations, final UnmodifiableTransFormula formula) {
-		// Equations have to be ordered such that
-		// 1. A variable that is defined by a last state value comes before any update that overrides the required
-		// update
-		// Unordered, relies on this vs. next state (a vs a'):
-		// c' = b' + a; b' = 2 * a; a' = a mod 5
-		// Correct order (only has one version of a variable):
-		// b := 2 * a; c := b + a; a := a mod 5
-
-		// TODO what if b' = 2 * a; a' = a mod b;
+		// TODO detect cycles
 
 		final HashSet<TermVariable> assignableVars = new HashSet<>(formula.getAuxVars());
 		assignableVars.addAll(formula.getOutVars().values().stream().filter((outVar) -> {
 			return !formula.getInVars().containsValue(outVar);
 		}).toList());
 
-		final ArrayList<SolvedEquation> equationList = new ArrayList<>(equations.stream().filter((eq) -> {
-			return assignableVars.contains(eq.getLhs());
-		}).toList());
+		final ArrayList<SolvedEquation> equationList = new ArrayList<>(
+				equations.stream().filter((eq) -> assignableVars.contains(eq.getLhs())).toList());
+
+		// TODO make havoc updates that execute "assume array[index] < value" etc
+		final List<SolvedEquation> arrayEquations = equations.stream().filter(eq -> eq.isSelect()).toList();
 
 		// For each equation, the set of InVars / OutVars that are used. They need to come before / after all
 		// equations that define these variables.
-		final HashMap<SolvedEquation, List<TermVariable>> neededInVars = new HashMap<>();
-		final HashMap<SolvedEquation, List<TermVariable>> neededOutVars = new HashMap<>();
+		final HashMap<TermVariable, List<TermVariable>> neededInVars = new HashMap<>();
+		final HashMap<TermVariable, List<TermVariable>> neededOutVars = new HashMap<>();
 
 		final Map<IProgramVar, TermVariable> formulaInVars = formula.getInVars();
 		final Map<IProgramVar, TermVariable> formulaOutVars = formula.getOutVars();
@@ -385,20 +321,27 @@ public class ExecutionProducer {
 		for (final SolvedEquation equation : equationList) {
 			final List<TermVariable> inVars = neededInVars.getOrDefault(equation, new ArrayList<>());
 			final List<TermVariable> outVars = neededOutVars.getOrDefault(equation, new ArrayList<>());
+			final TermVariable updatedVar = lookupSymbolTableSafe((TermVariable) equation.getLhs(), formula);
+
 			for (final TermVariable usedVar : equation.getRhs().getFreeVars()) {
+				final TermVariable globalVar = lookupSymbolTableSafe(usedVar, formula);
+				if (updatedVar == globalVar) {
+					continue; // No need to define that x' may depend on x since it can't be updated before itself
+				}
 				if (formulaInVars.containsValue(usedVar) && formulaOutVars.containsValue(usedVar)) {
 					// The variable does not change, the value is the same in both states, doesn't affect order
 					continue;
 				}
 				if (formulaInVars.containsValue(usedVar)) {
-					inVars.add(lookupSymbolTableSafe(usedVar, formula));
+					inVars.add(globalVar);
 				}
 				if (formulaOutVars.containsValue(usedVar) || formulaAuxVars.contains(usedVar)) {
-					outVars.add(lookupSymbolTableSafe(usedVar, formula));
+					outVars.add(globalVar);
 				}
 			}
-			neededInVars.put(equation, inVars);
-			neededOutVars.put(equation, outVars);
+
+			neededInVars.put(updatedVar, inVars);
+			neededOutVars.put(updatedVar, outVars);
 		}
 
 		for (final Entry<IProgramVar, TermVariable> inVar : formula.getInVars().entrySet()) {
@@ -406,10 +349,14 @@ public class ExecutionProducer {
 			if (formula.getOutVars().containsKey(inVar.getKey())) {
 				continue;
 			}
-			final SolvedEquation havocEquation = new SolvedEquation(null, inVar.getValue(), null);
+
+			final TermVariable localVar = inVar.getValue();
+			final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
+
+			final SolvedEquation havocEquation = new SolvedEquation(null, localVar, null);
 			equationList.add(havocEquation);
-			neededInVars.put(havocEquation, new ArrayList<>());
-			neededOutVars.put(havocEquation, new ArrayList<>());
+			neededInVars.put(globalVar, new ArrayList<>());
+			neededOutVars.put(globalVar, new ArrayList<>());
 		}
 
 		for (final Entry<IProgramVar, TermVariable> outVar : formula.getOutVars().entrySet()) {
@@ -418,65 +365,38 @@ public class ExecutionProducer {
 					|| equationList.stream().anyMatch(equation -> equation.getLhs().equals(outVar.getValue()))) {
 				continue;
 			}
-			final SolvedEquation havocEquation = new SolvedEquation(null, outVar.getValue(), null);
+			final TermVariable localVar = outVar.getValue();
+			final TermVariable globalVar = lookupSymbolTableSafe(localVar, formula);
+			final SolvedEquation havocEquation = new SolvedEquation(null, localVar, null);
 			equationList.add(havocEquation);
-			neededInVars.put(havocEquation, new ArrayList<>());
-			neededOutVars.put(havocEquation, new ArrayList<>());
+			neededInVars.put(globalVar, new ArrayList<>());
+			neededOutVars.put(globalVar, new ArrayList<>());
 		}
 
-		for (final TermVariable outVar : formula.getAuxVars()) {
+		for (final TermVariable auxVar : formula.getAuxVars()) {
 			// An aux variable is freely havoced if it isn't defined in the transition
-			if (equationList.stream().anyMatch(equation -> equation.getLhs().equals(outVar))) {
+			if (equationList.stream().anyMatch(equation -> equation.getLhs().equals(auxVar))) {
 				continue;
 			}
-			final SolvedEquation havocEquation = new SolvedEquation(null, outVar, null);
+			final SolvedEquation havocEquation = new SolvedEquation(null, auxVar, null);
 			equationList.add(havocEquation);
-			neededInVars.put(havocEquation, new ArrayList<>());
-			neededOutVars.put(havocEquation, new ArrayList<>());
+			neededInVars.put(auxVar, new ArrayList<>());
+			neededOutVars.put(auxVar, new ArrayList<>());
 		}
 
-		final HashMap<TermVariable, Set<TermVariable>> requiredLastState = new HashMap<>();
-		for (final Entry<SolvedEquation, List<TermVariable>> entry : neededInVars.entrySet()) {
-			final TermVariable termVar = lookupSymbolTableSafe(entry.getKey().getLhs(), formula);
-			final Set<TermVariable> needed = new HashSet<>(entry.getValue());
-			needed.remove(termVar);
-			requiredLastState.put(termVar, needed);
-		}
+		final Map<TermVariable, Update> updates = new HashMap<>();
 
-		final HashMap<TermVariable, Set<TermVariable>> requiredNextState = new HashMap<>();
-		for (final Entry<SolvedEquation, List<TermVariable>> entry : neededOutVars.entrySet()) {
-			final TermVariable termVar = lookupSymbolTableSafe(entry.getKey().getLhs(), formula);
-			final Set<TermVariable> needed = new HashSet<>(entry.getValue());
-			needed.remove(termVar);
-			requiredNextState.put(termVar, needed);
-		}
-
-		reflexivity(requiredLastState, requiredNextState);
-		transitivity(requiredLastState, requiredNextState);
-		reflexivity(requiredLastState, requiredNextState);
-
-		final ArrayDeque<SolvedEquation> sorted = sortEqs(requiredLastState, requiredNextState,
-				new ArrayList<>(equationList), formula);
-
-		equationList.clear();
-		equationList.addAll(sorted);
-
-		final ArrayList<Update> out = new ArrayList<>();
-
-		while (!equationList.isEmpty()) {
-			final SolvedEquation equation = equationList.get(0);
-			final TermVariable definedVar = equation.getLhs();
+		for (final TermVariable definedVar : Set
+				.copyOf(equationList.stream().map(eq -> (TermVariable) eq.getLhs()).toList())) {
+			final TermVariable globalVar = lookupSymbolTableSafe(definedVar, formula);
 
 			final List<SolvedEquation> definitions = equationList.stream()
 					.filter((eq) -> eq.getLhs().equals(definedVar)).toList();
 
-			// Remove all equations that define this variable
-			equationList.removeAll(definitions);
-
-			if (equation.getRhs() == null || equation.getRelation() == null) {
-				// can be havoced to any value
+			if (definitions.size() == 1 && definitions.get(0).getRelation() == null) {
+				// This is freely havoced
 				final boolean removePreviousRestrictions = formulaInVars.containsValue(definedVar);
-				out.add(new HavocUpdate(lookupSymbolTableSafe(definedVar, formula), new ArrayList<>(),
+				updates.put(globalVar, new HavocUpdate(lookupSymbolTableSafe(definedVar, formula), new ArrayList<>(),
 						removePreviousRestrictions));
 				continue;
 			}
@@ -491,9 +411,7 @@ public class ExecutionProducer {
 				inequals.add(generalize(definition, formula));
 			}
 
-			// Replace the formula specific TermVariable with its generic global counterpart
-			final TermVariable globalVar = lookupSymbolTableSafe(definedVar, formula);
-
+			Update newUpdate;
 			if (!equals.isEmpty()) {
 				// We have at least one Term that directly defines the variable.
 				// Find the one that depends on the least variables
@@ -504,18 +422,35 @@ public class ExecutionProducer {
 						leastNeeded = equalEQ;
 					}
 				}
-				out.add(new AssignmentUpdate(globalVar, substituteProgramVars(leastNeeded.getRhs(), formula)));
+				newUpdate = new AssignmentUpdate(globalVar, substituteProgramVars(leastNeeded.getRhs(), formula));
 			} else {
 				// We only have bounds for the Term.
 
 				// Remove previous restrictions if the variable that was havoced is havoced again (not an invar)
 				// If it is an InVar, then we may have had an edge with restricted havoc, and an assume on this edge.
 				final boolean removePreviousRestrictions = formulaInVars.containsValue(definedVar);
-				out.add(new HavocUpdate(globalVar, inequals, removePreviousRestrictions));
+				newUpdate = new HavocUpdate(globalVar, inequals, removePreviousRestrictions);
 			}
+
+			// Remove unnecessary restrictions (for example: x = 4, x < y, we don't need y if we can take this edge)
+			neededInVars.put(globalVar,
+					neededInVars.get(globalVar).stream().filter(var -> newUpdate.getFreeVars().contains(var)).toList());
+			neededOutVars.put(globalVar, neededOutVars.get(globalVar).stream()
+					.filter(var -> newUpdate.getFreeVars().contains(var)).toList());
+			updates.put(globalVar, newUpdate);
 		}
 
-		return out.toArray(new Update[out.size()]);
+		// TODO make restrictions from array equations
+		final ArrayDeque<Update> updatesSorted = sortEqs(neededInVars, neededOutVars, updates);
+
+		return updatesSorted.toArray(new Update[updatesSorted.size()]);
+	}
+
+	private Term lookupSymbolTableSafe(final Term var, final UnmodifiableTransFormula formula) {
+		if (var instanceof final TermVariable tv) {
+			return lookupSymbolTableSafe(tv, formula);
+		}
+		return var;
 	}
 
 	private TermVariable lookupSymbolTableSafe(final TermVariable var, final UnmodifiableTransFormula formula) {
@@ -526,7 +461,12 @@ public class ExecutionProducer {
 	}
 
 	private SolvedEquation generalize(final SolvedEquation equation, final UnmodifiableTransFormula formula) {
-		final TermVariable genericVar = lookupSymbolTableSafe(equation.getLhs(), formula);
+		if (equation.isSelect()) {
+			final ApplicationTerm at = (ApplicationTerm) equation.getLhs();
+			final Term genericTerm = substituteProgramVars(equation.getRhs(), formula);
+			return new SolvedEquation(equation.getRelation(), at, genericTerm);
+		}
+		final TermVariable genericVar = (TermVariable) lookupSymbolTableSafe(equation.getLhs(), formula);
 		final Term genericTerm = substituteProgramVars(equation.getRhs(), formula);
 		return new SolvedEquation(equation.getRelation(), genericVar, genericTerm);
 	}
@@ -623,21 +563,12 @@ public class ExecutionProducer {
 			boolean unsupportedFound = false;
 			boolean anyGuardTrue = false;
 
+			final Map<InterpretedIcfgEdge, List<PartialExecution>> newExecutions = new HashMap<>();
 			for (final InterpretedIcfgEdge nextEdge : nextEdges) {
-				if (executions.size() >= unfinishedMaxStored) {
-					// Only add new execution if there is space in the queue
-					break;
-				}
-
 				// if the update reads havoced variables, create extra executions.
 				final int nextExecutions = nextEdge.containsHavoc(state) ? variantsPerHavoc : 1;
 
 				for (int i = 0; i < nextExecutions; i++) {
-					if (executions.size() >= unfinishedMaxStored) {
-						// Only add new execution if there is space in the queue
-						break;
-					}
-
 					try {
 						final Map<Term, Value> nextState = new HashMap<>(execution.getCurrentState());
 						final HashMap<Term, Restriction<?>> newBounds = new HashMap<>(execution.havocBounds);
@@ -647,11 +578,31 @@ public class ExecutionProducer {
 						anyGuardTrue = true;
 
 						nextEdge.update(nextState, ndc, newBounds);
-						executions.addLast(execution.addStep(nextEdge, nextState, newBounds));
+
+						final List<PartialExecution> newExecutionsOfEdge = newExecutions.getOrDefault(nextEdge,
+								new ArrayList<>());
+						newExecutionsOfEdge.add(execution.addStep(nextEdge, nextState, newBounds));
+						newExecutions.put(nextEdge, newExecutionsOfEdge);
 					} catch (final UnsopportedTermError | EdgeUntranslatableError unsupported) {
 						unsupportedFound = true;
 						final PartialExecution failedExecution = execution.addStep(nextEdge, Map.of(), Map.of());
 						finalizeExecution(failedExecution.finish(ExecutionTermintionReason.REACHED_UNSUPPORTED), out);
+					}
+				}
+			}
+
+			if (newExecutions.size() + executions.size() <= unfinishedMaxStored) {
+				for (final List<PartialExecution> edgeExecutions : newExecutions.values()) {
+					executions.addAll(edgeExecutions);
+				}
+			} else {
+				final List<InterpretedIcfgEdge> remainingEdges = new ArrayList<>(newExecutions.keySet());
+				while (newExecutions.size() > 0 && executions.size() < unfinishedMaxStored) {
+					final InterpretedIcfgEdge chosenEdge = ndc.chooseEdge(remainingEdges);
+					final List<PartialExecution> executionList = newExecutions.get(chosenEdge);
+					executions.add(executionList.remove(0));
+					if (executionList.isEmpty()) {
+						remainingEdges.remove(chosenEdge);
 					}
 				}
 			}
@@ -677,8 +628,9 @@ public class ExecutionProducer {
 
 		final List<Map<Term, Term>> statesCast = execution.states.stream().map(stateUncast -> castMap(stateUncast))
 				.toList();
+		final List<IcfgEdge> edgesCast = execution.edges.stream().map(intEdge -> intEdge.getEdge()).toList();
 
-		final IcfgProgramExecution<IcfgEdge> out = createExecution(execution.edges, statesCast);
+		final IcfgProgramExecution<IcfgEdge> out = createExecution(edgesCast, statesCast);
 
 		final List<IcfgProgramExecution<IcfgEdge>> executions = outMap.getOrDefault(execution.status,
 				new ArrayList<>());
@@ -686,8 +638,8 @@ public class ExecutionProducer {
 		outMap.put(execution.status, executions);
 	}
 
-	private record PartialExecution(IcfgLocation currentLocation, List<IcfgEdge> edges, List<Map<Term, Value>> states,
-			Map<Term, Restriction<?>> havocBounds, ExecutionTermintionReason status) {
+	private record PartialExecution(IcfgLocation currentLocation, List<InterpretedIcfgEdge> edges,
+			List<Map<Term, Value>> states, Map<Term, Restriction<?>> havocBounds, ExecutionTermintionReason status) {
 		public Map<Term, Value> getCurrentState() {
 			return states.getLast();
 		}
@@ -701,25 +653,39 @@ public class ExecutionProducer {
 			if (status != null) {
 				throw new AssertionError("Cannot add steps to finished Execution.");
 			}
-			final List<IcfgEdge> newEdges = new ArrayList<>(edges());
-			newEdges.add(nextEdge.getEdge());
-			final List<Map<Term, Value>> newStates = new ArrayList<>(
-					states().stream().map(map -> new HashMap<>(map)).toList());
 
-			int index = newStates.size() - 1;
-			Map<Term, Value> previousState = newStates.get(index);
+			int index = states().size() - 1;
+
+			Map<Term, Value> previousState = states().get(index);
 			final Set<Term> currentVars = new HashSet<>(nextState.keySet());
 			nextEdge.removeSafe(currentVars);
 
+			// Propagate havoced variables backwards
 			while (!previousState.keySet().containsAll(currentVars)) {
+				// Set of variables that were havoced / removed from state on the edge leading to this state
+				Set<TermVariable> havocedToThisState;
+				if (index > 0) {
+					final InterpretedIcfgEdge edgeToPrevState = edges().get(index - 1);
+					havocedToThisState = edgeToPrevState.getHavocedVars();
+				} else {
+					havocedToThisState = Set.of();
+				}
+
 				final Set<Term> finishedVars = new HashSet<>();
+
 				for (final Term variable : currentVars) {
-					if (!previousState.containsKey(variable)) {
-						// Variable was not in the previous state
-						previousState.put(variable, nextState.get(variable));
-					} else {
+					if (previousState.containsKey(variable)) {
+						// Variable was already known in this state, stop propagating it.
+						finishedVars.add(variable);
+						continue;
+					}
+
+					if (havocedToThisState.contains(variable)) {
+						// Variable was havoced on the edge to this state, no need to propagate further
 						finishedVars.add(variable);
 					}
+					// Variable was havoced in this state, add known value
+					previousState.put(variable, nextState.get(variable));
 				}
 				currentVars.removeAll(finishedVars);
 
@@ -727,10 +693,15 @@ public class ExecutionProducer {
 				if (index < 0) {
 					break;
 				}
-				previousState = newStates.get(index);
+				previousState = states().get(index);
 			}
 
+			final List<InterpretedIcfgEdge> newEdges = new ArrayList<>(edges());
+			final List<Map<Term, Value>> newStates = new ArrayList<>(
+					states().stream().map(map -> new HashMap<>(map)).toList());
 			newStates.add(nextState);
+			newEdges.add(nextEdge);
+
 			return new PartialExecution(nextEdge.getTarget(), newEdges, newStates, newBounds, status);
 		}
 	}

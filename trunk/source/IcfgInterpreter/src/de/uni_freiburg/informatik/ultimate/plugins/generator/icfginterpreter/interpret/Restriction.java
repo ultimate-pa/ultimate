@@ -7,6 +7,9 @@ public abstract class Restriction<T> {
 	protected final T mMinimum;
 	protected final T mMaximum;
 
+	public static class EmptyRangeException extends AssertionError {
+	}
+
 	/**
 	 * @param inequal  All specific values that the variable cannot take
 	 * @param minimum  The smallest value a variable can take

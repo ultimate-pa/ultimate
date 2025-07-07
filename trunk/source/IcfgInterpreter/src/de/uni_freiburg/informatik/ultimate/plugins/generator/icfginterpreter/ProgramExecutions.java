@@ -14,6 +14,9 @@ public final class ProgramExecutions<L extends IAction> extends BasePayloadConta
 	public record Pair<A, B>(A a, B b) {
 	}
 
+	public record Triple<A, B, C>(A a, B b, C c) {
+	}
+
 	public enum ExecutionTermintionReason {
 		/** Execution arrived at location where no next edge of ICFG can be taken, it is not an error location */
 		REACHED_EXIT,

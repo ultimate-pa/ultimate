@@ -1,8 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +28,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.ExecutionTermintionReason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.preferences.IcfgInterpreterPreferences.OutputMethod;
 
 public class IcfgInterpreterObserver extends BaseObserver {
 	private final IUltimateServiceProvider mServices;
@@ -74,15 +81,51 @@ public class IcfgInterpreterObserver extends BaseObserver {
 			// TODO: We should probably not output all executions
 			// TODO: Improve format
 			int total = 0;
-			for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : mExecutions
-					.entrySet()) {
-				final ExecutionTermintionReason reason = entry.getKey();
-				total += entry.getValue().size();
-				for (final var e : entry.getValue()) {
-					mLogger.info("Ended because of %s\n\n%s", reason, e);
+
+			final Object outputMethod = IcfgInterpreterPreferences.getPreferences().getEnum(
+					IcfgInterpreterPreferences.SettingLabel.OUTPUT_METHOD.toString(),
+					IcfgInterpreterPreferences.OutputMethod.class);
+
+			File tempDir = null;
+			if (!outputMethod.equals(OutputMethod.DONT_PRINT)) {
+				if (outputMethod.equals(OutputMethod.PRINT_TO_FILE)) {
+					tempDir = Files.createTempDirectory("IcfgInterpreter_Results").toFile();
+				}
+
+				for (final Entry<ExecutionTermintionReason, List<IcfgProgramExecution<IcfgEdge>>> entry : mExecutions
+						.entrySet()) {
+					final ExecutionTermintionReason reason = entry.getKey();
+					total += entry.getValue().size();
+
+					File reasonDirectory = null;
+					if (outputMethod.equals(OutputMethod.PRINT_TO_FILE)) {
+						reasonDirectory = new File(tempDir, reason.toString());
+						reasonDirectory.mkdirs();
+					}
+
+					int i = 0;
+					for (final var e : entry.getValue()) {
+
+						if (outputMethod.equals(OutputMethod.PRINT_TO_TERMINAL)) {
+							mLogger.info("Ended because of %s\n\n%s", reason, e);
+							continue;
+						}
+
+						final File outputFile = new File(reasonDirectory, "Execution_" + String.valueOf(i) + ".txt");
+						i++;
+						outputFile.createNewFile();
+						final BufferedWriter out = new BufferedWriter(
+								new OutputStreamWriter(new FileOutputStream(outputFile)));
+						out.write("Ended because of " + reason + "\n" + e);
+						out.close();
+					}
 				}
 			}
+
 			mLogger.info("Produced %s program executions", total);
+			if (outputMethod.equals(OutputMethod.PRINT_TO_FILE)) {
+				mLogger.info("Stored on path " + tempDir.getAbsolutePath());
+			}
 
 			// TODO: Add a setting for this or move it to another plugin
 			reportSafetyResults();

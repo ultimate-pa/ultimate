@@ -9,7 +9,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Pair;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.ProgramExecutions.Triple;
 
 public class Util {
 	public static Long SMTDiv(final long m, final long n) {
@@ -60,21 +61,22 @@ public class Util {
 		return out;
 	}
 
-	public static Pair<Term, List<Term>> selectToKeyPair(ApplicationTerm select) {
+	public static Triple<Term, TermVariable, List<Term>> selectToKeyTriple(final ApplicationTerm select) {
 		final ArrayDeque<Term> keys = new ArrayDeque<>();
 		Term arrayTerm = null;
 
-		while (select.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
-			keys.push(select.getParameters()[1]);
+		ApplicationTerm current = select;
+		while (current.getFunction().getName().equals(SMTLIBConstants.SELECT)) {
+			keys.push(current.getParameters()[1]);
 
-			final Term subTerm = select.getParameters()[0];
+			final Term subTerm = current.getParameters()[0];
 			if (subTerm instanceof final ApplicationTerm at) {
-				select = at;
+				current = at;
 			} else {
 				arrayTerm = subTerm;
 				break;
 			}
 		}
-		return new Pair<>(arrayTerm, List.of(keys.toArray(new Term[keys.size()])));
+		return new Triple<>(select, (TermVariable) arrayTerm, List.of(keys.toArray(new Term[keys.size()])));
 	}
 }
