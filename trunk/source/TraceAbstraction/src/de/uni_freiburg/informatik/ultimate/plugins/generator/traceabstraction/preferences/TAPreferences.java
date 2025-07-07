@@ -106,6 +106,7 @@ public final class TAPreferences {
 	public boolean minimizeAbstractionPerWorker;
 	public boolean mVisitLoopsOnlyOnce;
 	public boolean mUseContinuesWorker;
+	public boolean mUseIsEmptyHeuristicForparallelCexSearch;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -220,6 +221,8 @@ public final class TAPreferences {
 				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE_ABSTRACTION_PER_WORKER);
 		mVisitLoopsOnlyOnce = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_VISIT_LOOPS_ONLY_ONCE);
 		mUseContinuesWorker = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_CONTINUES_WORKER);
+		mUseIsEmptyHeuristicForparallelCexSearch =
+				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ISEMPTYHEURISIC);
 	}
 
 	/**

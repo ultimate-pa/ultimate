@@ -535,6 +535,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_VISIT_LOOPS_ONLY_ONCE = false;
 	public static final String LABEL_USE_CONTINUES_WORKER = "Use continues worker";
 	public static final boolean DEF_USE_CONTINUES_WORKER = true;
+	public static final String LABEL_USE_ISEMPTYHEURISIC = "Use isemptyheuristic in isemptyparallel";
+	public static final boolean DEF_USE_ISEMPTYHEURISIC = true;
 
 	/**
 	 * Constructor.
@@ -829,6 +831,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_VISIT_LOOPS_ONLY_ONCE, DEF_VISIT_LOOPS_ONLY_ONCE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY, DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_USE_ISEMPTYHEURISIC, DEF_USE_ISEMPTYHEURISIC,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
 						PreferenceType.Boolean));

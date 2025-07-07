@@ -28,6 +28,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyParallel;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyParallelLegacy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
@@ -107,6 +108,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
 	private boolean mVisitLoopsOnlyOnce; // a strategy where we focus on spread before pathprograms
+	private final boolean mUseIsEmptyHeuristicForparallelCexSearch;
 
 	// Testing Strategies
 	private final boolean useGoalSetForIsEmpty;
@@ -177,7 +179,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 		useGoalSetForIsEmpty = mPref.useGoalSetForIsEmpty;
 		mVisitLoopsOnlyOnce = mPref.mVisitLoopsOnlyOnce;
-
+		mUseIsEmptyHeuristicForparallelCexSearch = mPref.mUseIsEmptyHeuristicForparallelCexSearch;
 		Thread.currentThread().setName("Main Cegar Thread");
 		getServices().getStorage().pushMarker(mDestroyEverything);
 
@@ -806,9 +808,16 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			final Set<IPredicate> possibleEndPoints) throws AutomataOperationCanceledException {
 		switch (strategy) {
 		case PARALLEL:
-			return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
-					mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
-					IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
+			if (mUseIsEmptyHeuristicForparallelCexSearch) {
+				return new IsEmptyParallel<>(new AutomataLibraryServices(mServices), mAbstraction,
+						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
+						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
+			} else {
+				return new IsEmptyParallelLegacy<>(new AutomataLibraryServices(mServices), mAbstraction,
+						mAbstraction.getInitialStates(), Collections.emptySet(), possibleEndPoints, true,
+						IsEmpty.SearchStrategy.BFS, mActiveCounterexamples, mVisitLoopsOnlyOnce);
+			}
+
 		default:
 			return new IsEmpty<>(new AutomataLibraryServices(getServices()), mAbstraction, strategy);
 		}
