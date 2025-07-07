@@ -249,8 +249,8 @@ public class FunctionModelHelper {
 	 */
 	public Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
-		final boolean checkMemoryleakInMain = mCheckMemoryLeakInMain
-				&& mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired();
+		final boolean checkMemoryleakInMain = mCheckMemoryLeakInMain && mMemoryHandler
+				.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired();
 		if (!checkProperty && !checkMemoryleakInMain) {
 			return new AssumeStatement(loc, expr);
 		}

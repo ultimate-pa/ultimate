@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * Instances of this class define a memory model.
+ * Instances of this class define a Memory Structure.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
@@ -49,24 +49,24 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
+public class MemoryStructure_SingleBitprecise extends BaseMemoryStructure {
 
 	private final HeapDataArray mDataArray;
 	private final int mResolution;
 
-	public MemoryModel_SingleBitprecise(final int memoryModelResolution, final TypeSizes typeSizes,
+	public MemoryStructure_SingleBitprecise(final int memoryStructureResolution, final TypeSizes typeSizes,
 			final TypeHandler typeHandler, final ExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 
 		final ASTType intArrayType =
-				typeHandler.byteSize2AstType(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryModelResolution);
+				typeHandler.byteSize2AstType(ignoreLoc, CPrimitiveCategory.INTTYPE, memoryStructureResolution);
 		final BoogieType boogieType = mTypeHandler.getBoogieTypeForBoogieASTType(intArrayType);
 
-		mResolution = memoryModelResolution;
+		mResolution = memoryStructureResolution;
 		mDataArray = new HeapDataArray(SFO.INT, intArrayType, boogieType, mTypeHandler.getBoogiePointerType(),
-				memoryModelResolution);
+				memoryStructureResolution);
 	}
 
 	@Override
@@ -81,9 +81,9 @@ public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
 		final HashRelation3<CPrimitiveCategory, Integer, CPrimitives> bytesizes2primitives = new HashRelation3<>();
-		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addTriple(primitive.getPrimitiveCategory(), bytesize, primitive);
@@ -97,10 +97,10 @@ public class MemoryModel_SingleBitprecise extends BaseMemoryModel {
 				final String procedureName = getProcedureSuffix(representative);
 				final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(),
 						new CPrimitive(representative));
-				final boolean alsoUncheckedWrite = DataStructureUtils
-						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
-				final boolean alsoInit = DataStructureUtils
-						.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
+				final boolean alsoUncheckedWrite = DataStructureUtils.haveNonEmptyIntersection(
+						requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
+				final boolean alsoInit = DataStructureUtils.haveNonEmptyIntersection(
+						requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 				result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
 						alsoUncheckedWrite, alsoInit));
 			}

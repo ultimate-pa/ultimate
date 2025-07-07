@@ -25,14 +25,12 @@
  * to convey the resulting work.
  */
 /**
- * Instances of this class define a memory model.
+ * Instances of this class define a Memory Structure.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -41,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
@@ -49,43 +48,35 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
+public class MemoryStructure_Unbounded extends BaseMemoryStructure {
 
-	private final Map<Integer, HeapDataArray> mSize2HeapIntegerArray = new HashMap<>();
-	private final Map<Integer, HeapDataArray> mSize2HeapFloatingArray = new HashMap<>();
+	private final HeapDataArray mIntegerArray;
+	private final HeapDataArray mFloatingArray;
 
-	public MemoryModel_MultiBitprecise(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+	public MemoryStructure_Unbounded(final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
-	}
 
-	@Override
-	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
-		switch (primitive.getPrimitiveCategory()) {
-		case FLOATTYPE:
-			return getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapFloatingArray);
-		case INTTYPE:
-			return getDataHeapArrayForGivenGeneralType(primitive, mSize2HeapIntegerArray);
-		case VOID:
-			throw new AssertionError("void on the heap???");
-		default:
-			throw new AssertionError("unknown primitive category");
-		}
-	}
+		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		/*
+		 * In our Lindenmann-Hoenicke Memory Structure, we use an array for all integer data on the heap. This
+		 * method returns the CType that we use to represents this data.
+		 */
+		final ASTType intArrayType = typeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT));
 
-	private HeapDataArray getDataHeapArrayForGivenGeneralType(final CPrimitives primitive,
-			final Map<Integer, HeapDataArray> size2HeapdataArray) {
-		final int bytesize = mTypeSizes.getSize(primitive);
-		HeapDataArray result = size2HeapdataArray.get(bytesize);
-		if (result == null) {
-			final String name = primitive.getPrimitiveCategory().toString() + bytesize;
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(primitive));
-			final BoogieType boogieType = mTypeHandler.getBoogieTypeForBoogieASTType(astType);
-			result = new HeapDataArray(name, astType, boogieType, mTypeHandler.getBoogiePointerType(), bytesize);
-			size2HeapdataArray.put(bytesize, result);
-		}
-		return result;
+		/*
+		 * In our Lindenmann-Hoenicke Memory Structure, we use an array for all floating type data on the heap.
+		 * This method returns the CType that we use to represent this data.
+		 */
+		final ASTType realArrayType = typeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.FLOAT));
+
+		final BoogieType boogieIntArrayType = mTypeHandler.getBoogieTypeForBoogieASTType(intArrayType);
+		final BoogieType boogieRealArrayType = mTypeHandler.getBoogieTypeForBoogieASTType(realArrayType);
+
+		mIntegerArray =
+				new HeapDataArray(SFO.INT, intArrayType, boogieIntArrayType, mTypeHandler.getBoogiePointerType(), 0);
+		mFloatingArray =
+				new HeapDataArray(SFO.REAL, realArrayType, boogieRealArrayType, mTypeHandler.getBoogiePointerType(), 0);
 	}
 
 	@Override
@@ -94,11 +85,22 @@ public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 	}
 
 	@Override
+	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
+		if (primitive.isIntegertype()) {
+			return mIntegerArray;
+		} else if (primitive.isFloatingtype()) {
+			return mFloatingArray;
+		} else {
+			throw new AssertionError();
+		}
+	}
+
+	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
 		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
-		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			final int bytesize = mTypeSizes.getSize(primitive);
+		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
+			final int bytesize = 0;
 			if (getDataHeapArray(primitive) == hda) {
 				bytesizes2primitives.addPair(bytesize, primitive);
 			}
@@ -110,10 +112,10 @@ public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 			final String procedureName = getProcedureSuffix(representative);
 			final ASTType astType =
 					mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
-			final boolean alsoUncheckedWrite = DataStructureUtils
-					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getUncheckedWriteRequired(), primitives);
+			final boolean alsoUncheckedWrite = DataStructureUtils.haveNonEmptyIntersection(
+					requiredMemoryStructureFeatures.getUncheckedWriteRequired(), primitives);
 			final boolean alsoInit = DataStructureUtils
-					.haveNonEmptyIntersection(requiredMemoryModelFeatures.getInitWriteRequired(), primitives);
+					.haveNonEmptyIntersection(requiredMemoryStructureFeatures.getInitWriteRequired(), primitives);
 			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, new CPrimitive(representative),
 					alsoUncheckedWrite, alsoInit));
 		}
@@ -122,7 +124,7 @@ public class MemoryModel_MultiBitprecise extends BaseMemoryModel {
 
 	@Override
 	protected int bytesizeOfStoredPointerComponents() {
-		return mTypeSizes.getSizeOfPointer();
+		return 0;
 	}
 
 }

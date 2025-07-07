@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -302,7 +302,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private Result handlePthread_exit(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
+		mMemoryHandler.requireMemoryStructureFeature(MemoryStructureDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 1, name, arguments);
@@ -456,7 +456,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
+		mMemoryHandler.requireMemoryStructureFeature(MemoryStructureDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, name, arguments);

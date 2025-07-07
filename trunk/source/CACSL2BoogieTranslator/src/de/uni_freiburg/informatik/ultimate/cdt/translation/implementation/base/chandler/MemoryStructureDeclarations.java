@@ -6,14 +6,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
-public enum MemoryModelDeclarations {
+public enum MemoryStructureDeclarations {
 	ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"),
 
 	/**
 	 * This method allow us to allocate memory without costly array updates. The classical memory allocation in the
-	 * Hoenicke-Lindenmann memory model returns nodeterministically chosen fresh valid pointers but requires an update
-	 * of the #valid array and the #length array. If we have many of these array updates (hundreds, thousands) this
-	 * affects the performance of our tool. This method allows us to assume (via ensures clauses) that and how much
+	 * Hoenicke-Lindenmann Memory Structure returns nodeterministically chosen fresh valid pointers but requires an
+	 * update of the #valid array and the #length array. If we have many of these array updates (hundreds, thousands)
+	 * this affects the performance of our tool. This method allows us to assume (via ensures clauses) that and how much
 	 * memory is valid. This method requires that the fresh pointer is passed as an input. Since we know all memory that
 	 * is allocated initially we use a counter in this translation to construct fresh pointers.
 	 */
@@ -61,8 +61,8 @@ public enum MemoryModelDeclarations {
 	ULTIMATE_VALID(SFO.VALID),
 
 	/**
-	 * The {@link MemoryModelDeclarations#ULTIMATE_STACK_HEAP_BARRIER} allows us to partition the addresses of our
-	 * memory arrays into a stack and a heap. The {@link MemoryModelDeclarations#ULTIMATE_STACK_HEAP_BARRIER} is a
+	 * The {@link MemoryStructureDeclarations#ULTIMATE_STACK_HEAP_BARRIER} allows us to partition the addresses of our
+	 * memory arrays into a stack and a heap. The {@link MemoryStructureDeclarations#ULTIMATE_STACK_HEAP_BARRIER} is a
 	 * constant whose value is not determined. Each pointer whose address-base is strictly smaller than the barrier
 	 * points to the heap, each pointer whose address-base is strictly greater than the barrier points to the stack.
 	 */
@@ -77,7 +77,7 @@ public enum MemoryModelDeclarations {
 
 	private final String mName;
 
-	MemoryModelDeclarations(final String name) {
+	MemoryStructureDeclarations(final String name) {
 		mName = name;
 	}
 
@@ -91,19 +91,19 @@ public enum MemoryModelDeclarations {
 	 * @param settings
 	 * @return true iff the method execution made a change in rmmf
 	 */
-	boolean resolveDependencies(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
-		if (this == MemoryModelDeclarations.C_MEMCPY || this == MemoryModelDeclarations.C_MEMMOVE) {
+	boolean resolveDependencies(final RequiredMemoryStructureFeatures rmmf, final TranslationSettings settings) {
+		if (this == MemoryStructureDeclarations.C_MEMCPY || this == MemoryStructureDeclarations.C_MEMMOVE) {
 			return memcpyOrMemmoveRequirements(rmmf);
-		} else if (this == MemoryModelDeclarations.C_MEMSET) {
+		} else if (this == MemoryStructureDeclarations.C_MEMSET) {
 			return false;
-		} else if (this == MemoryModelDeclarations.ULTIMATE_MEMINIT) {
+		} else if (this == MemoryStructureDeclarations.ULTIMATE_MEMINIT) {
 			return meminitRequirements(rmmf, settings);
-		} else if (this == MemoryModelDeclarations.C_STRCPY) {
+		} else if (this == MemoryStructureDeclarations.C_STRCPY) {
 			return strcpyRequirements(rmmf);
-		} else if (this == MemoryModelDeclarations.C_REALLOC) {
+		} else if (this == MemoryStructureDeclarations.C_REALLOC) {
 			return reallocRequirements(rmmf);
-		} else if (this == MemoryModelDeclarations.ULTIMATE_ALLOC_STACK
-				|| this == MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP) {
+		} else if (this == MemoryStructureDeclarations.ULTIMATE_ALLOC_STACK
+				|| this == MemoryStructureDeclarations.ULTIMATE_ALLOC_HEAP) {
 			return allocRequirements(rmmf);
 		} else if (this == ULTIMATE_PTHREADS_MUTEX_LOCK || this == ULTIMATE_PTHREADS_MUTEX_UNLOCK
 				|| this == ULTIMATE_PTHREADS_MUTEX_TRYLOCK) {
@@ -116,17 +116,17 @@ public enum MemoryModelDeclarations {
 		}
 	}
 
-	private static boolean allocRequirements(final RequiredMemoryModelFeatures rmmf) {
+	private static boolean allocRequirements(final RequiredMemoryStructureFeatures rmmf) {
 		boolean changedSomething = false;
-		changedSomething |= rmmf.requireMemoryModelInfrastructure();
-		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
+		changedSomething |= rmmf.requireMemoryStructureInfrastructure();
+		changedSomething |= rmmf.require(MemoryStructureDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
 		return changedSomething;
 	}
 
-	private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf) {
+	private static boolean reallocRequirements(final RequiredMemoryStructureFeatures rmmf) {
 		boolean changedSomething = false;
-		changedSomething |= rmmf.requireMemoryModelInfrastructure();
-		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_DEALLOC);
+		changedSomething |= rmmf.requireMemoryStructureInfrastructure();
+		changedSomething |= rmmf.require(MemoryStructureDeclarations.ULTIMATE_DEALLOC);
 		for (final CPrimitives prim : rmmf.getDataOnHeapRequiredUnchecked()) {
 			changedSomething |= rmmf.reportDataOnHeapStoreFunctionRequired(prim);
 		}
@@ -136,7 +136,7 @@ public enum MemoryModelDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf) {
+	private static boolean strcpyRequirements(final RequiredMemoryStructureFeatures rmmf) {
 		boolean changedSomething = false;
 		rmmf.reportDataOnHeapRequired(CPrimitives.CHAR);
 		for (final CPrimitives prim : new HashSet<>(rmmf.getDataOnHeapRequiredUnchecked())) {
@@ -148,7 +148,7 @@ public enum MemoryModelDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean meminitRequirements(final RequiredMemoryModelFeatures rmmf,
+	private static boolean meminitRequirements(final RequiredMemoryStructureFeatures rmmf,
 			final TranslationSettings settings) {
 		boolean changedSomething = false;
 		if (settings.useConstantArrays()) {
@@ -167,7 +167,7 @@ public enum MemoryModelDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
+	private static boolean memcpyOrMemmoveRequirements(final RequiredMemoryStructureFeatures mmf) {
 		boolean changedSomething = false;
 		// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 		for (final CPrimitives prim : new HashSet<>(mmf.getDataOnHeapRequiredUnchecked())) {

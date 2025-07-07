@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public abstract class BaseMemoryModel {
+public abstract class BaseMemoryStructure {
 
 	protected static final String READ_PROCEDURE_PREFIX = "read~";
 	protected static final String WRITE_PROCEDURE_PREFIX = "write~";
@@ -61,7 +61,7 @@ public abstract class BaseMemoryModel {
 
 	private final HeapDataArray mPointerArray;
 
-	public BaseMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler,
+	public BaseMemoryStructure(final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
@@ -123,30 +123,30 @@ public abstract class BaseMemoryModel {
 	}
 
 	public final Collection<HeapDataArray>
-			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			getDataHeapArrays(final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
-		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
+		if (requiredMemoryStructureFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
 		}
-		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
+		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			result.add(getDataHeapArray(primitive));
 		}
 		return result;
 	}
 
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+			final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
 		if (hda == mPointerArray) {
-			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
+			if (requiredMemoryStructureFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(
 						new ReadWriteDefinition(getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(),
 								getPointerHeapArray().getASTType(), new CPointer(new CPrimitive(CPrimitives.INT)),
-								requiredMemoryModelFeatures.isPointerUncheckedWriteRequired(),
-								requiredMemoryModelFeatures.isPointerInitRequired()));
+								requiredMemoryStructureFeatures.isPointerUncheckedWriteRequired(),
+								requiredMemoryStructureFeatures.isPointerInitRequired()));
 			}
 			return Collections.emptyList();
 		}
-		return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
+		return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryStructureFeatures);
 	}
 
 	protected abstract int bytesizeOfStoredPointerComponents();
@@ -154,7 +154,7 @@ public abstract class BaseMemoryModel {
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
-			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
+			RequiredMemoryStructureFeatures requiredMemoryStructureFeatures);
 
 	public static class ReadWriteDefinition {
 		private final String mProcedureSuffix;

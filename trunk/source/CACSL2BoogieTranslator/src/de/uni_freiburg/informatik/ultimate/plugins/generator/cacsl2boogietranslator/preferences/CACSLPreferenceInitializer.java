@@ -68,7 +68,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			+ "if the program lost track of allocated memory. If this is set to false we are unsound (at SV-COMP) in "
 			+ "cases where not all memory is freed but pointers to that memory are live at the end of the "
 			+ "main procedure.";
-	public static final String LABEL_MEMORY_MODEL = "Memory model";
+	public static final String LABEL_MEMORY_STRUCTURE = "Memory Structure";
 	public static final String LABEL_POINTER_INTEGER_CONVERSION = "Pointer-integer casts";
 	public static final String LABEL_CHECK_ARRAYACCESSOFFHEAP = "Check array bounds for arrays that are off heap";
 	public static final String LABEL_REPORT_UNSOUNDNESS_WARNING = "Report unsoundness warnings";
@@ -156,7 +156,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		SIGNED, UNSIGNED
 	}
 
-	public enum MemoryModel {
+	public enum MemoryStructure {
 		HoenickeLindenmann_Original, // one data array for each boogie type
 
 		HoenickeLindenmann_1ByteResolution,
@@ -178,7 +178,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			};
 		}
 
-		public boolean isBitVectorMemoryModel() {
+		public boolean isBitVectorRepresentation() {
 			return switch (this) {
 			case HoenickeLindenmann_1ByteResolution, HoenickeLindenmann_2ByteResolution,
 					HoenickeLindenmann_4ByteResolution, HoenickeLindenmann_8ByteResolution -> true;
@@ -186,7 +186,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			};
 		}
 
-		public static MemoryModel getPreciseEnoughMemoryModelFor(final int byteSize) {
+		public static MemoryStructure getPreciseEnoughMemoryStructureFor(final int byteSize) {
 			if (byteSize >= 8) {
 				return HoenickeLindenmann_8ByteResolution;
 			}
@@ -319,12 +319,14 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_FP_ROUNDING_MODE_INITIAL, DEF_FP_ROUNDING_MODE_INITIAL,
 								DESC_FP_ROUNDING_MODE_INITIAL, PreferenceType.Combo,
 								FloatingPointRoundingMode.values())),
+
 				new UltimatePreferenceItemGroup("Semantics",
 						new UltimatePreferenceItem<>(LABEL_POINTER_INTEGER_CONVERSION,
 								PointerIntegerConversion.NonBijectiveMapping, PreferenceType.Combo,
 								PointerIntegerConversion.values()),
-						new UltimatePreferenceItem<>(LABEL_MEMORY_MODEL, MemoryModel.HoenickeLindenmann_Original,
-								PreferenceType.Combo, MemoryModel.values()),
+						new UltimatePreferenceItem<>(LABEL_MEMORY_STRUCTURE,
+								MemoryStructure.HoenickeLindenmann_Original, PreferenceType.Combo,
+								MemoryStructure.values()),
 						new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
 								DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
