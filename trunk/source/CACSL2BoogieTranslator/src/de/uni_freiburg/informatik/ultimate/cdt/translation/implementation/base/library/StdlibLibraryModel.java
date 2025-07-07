@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -368,7 +368,7 @@ public class StdlibLibraryModel implements ILibraryModel {
 	 */
 	private Result handleRealloc(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String methodName) {
-		final MemoryStructureDeclarations reallocMmDecl = MemoryStructureDeclarations.C_REALLOC;
+		final MemoryModelDeclarations reallocMmDecl = MemoryModelDeclarations.C_REALLOC;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, methodName, arguments);

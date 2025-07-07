@@ -80,7 +80,7 @@ public class MemoryStructure_SingleBitprecise extends BaseMemoryStructure {
 
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final HashRelation3<CPrimitiveCategory, Integer, CPrimitives> bytesizes2primitives = new HashRelation3<>();
 		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);

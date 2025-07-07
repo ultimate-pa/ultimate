@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -225,7 +225,7 @@ public class StringLibraryModel implements ILibraryModel {
 	private Result handleStrCpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
 
-		final MemoryStructureDeclarations strCpyMmDecl = MemoryStructureDeclarations.C_STRCPY;
+		final MemoryModelDeclarations strCpyMmDecl = MemoryModelDeclarations.C_STRCPY;
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, name, arguments);
@@ -521,16 +521,16 @@ public class StringLibraryModel implements ILibraryModel {
 
 	private Result handleMemcpy(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMCPYRES, MemoryStructureDeclarations.C_MEMCPY);
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMCPYRES, MemoryModelDeclarations.C_MEMCPY);
 	}
 
 	private Result handleMemmove(final IDispatcher main, final IASTFunctionCallExpression node, final ILocation loc,
 			final String name) {
-		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMMOVERES, MemoryStructureDeclarations.C_MEMMOVE);
+		return handleMemCopyOrMove(main, node, loc, name, SFO.AUXVAR.MEMMOVERES, MemoryModelDeclarations.C_MEMMOVE);
 	}
 
 	private Result handleMemCopyOrMove(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryStructureDeclarations mmDecl) {
+			final ILocation loc, final String name, final AUXVAR auxVar, final MemoryModelDeclarations mmDecl) {
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 3, name, arguments);
 		final CPointer voidType = CPointer.voidPointer();

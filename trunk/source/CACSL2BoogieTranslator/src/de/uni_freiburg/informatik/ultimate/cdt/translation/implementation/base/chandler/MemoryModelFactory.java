@@ -4,6 +4,8 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.IBooleanArrayHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
@@ -19,16 +21,16 @@ public class MemoryModelFactory {
 	 *            The given settings.
 	 * @return A concrete instance of IMemoryAdressing.
 	 */
-	public static IMemoryAdressing createMemoryAddressing(final TranslationSettings settings) {
+	public static IMemoryAdressing createMemoryAddressing(final TranslationSettings settings,
+			final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
+			final IBooleanArrayHelper booleanArrayHelper) {
 		final var memoryAddressingPreference = settings.memoryAddressingPreference();
 
 		switch (memoryAddressingPreference) {
 		case One_Dimensional:
 			final List<SimpleEntry<String, Boolean>> incompatibleOptions = List.of(
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY,
-							settings.getPointerBaseValidityMode() != CheckMode.IGNORE),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC,
-							settings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_DEREF_VALIDITY,
+							settings.checkPointerDerefValidity() != CheckMode.IGNORE),
 					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID,
 							settings.checkIfFreedPointerIsValid()),
 					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN,
@@ -47,9 +49,9 @@ public class MemoryModelFactory {
 						+ " memory addressing is not compatible with the following active settings: "
 						+ String.join(", ", incompatibleActiveOptions));
 			}
-			return new OneDimensionalMemoryAddressing();
+			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper);
 		case Two_Dimensional:
-			return new TwoDimensionalMemoryAddressing();
+			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper);
 		default:
 			throw new UnsupportedOperationException(
 					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");
@@ -63,8 +65,8 @@ public class MemoryModelFactory {
 	 *            The given settings.
 	 * @return A concrete instance of IMemoryStructure.
 	 */
-	public static IMemoryStructure createMemoryStructure(final TranslationSettings settings, final TypeSizes typeSizes,
-			final ITypeHandler typeHandler) {
+	public static BaseMemoryStructure createMemoryStructure(final TranslationSettings settings,
+			final TypeSizes typeSizes, final ITypeHandler typeHandler) {
 		final var memoryStructurePreference = settings.getMemoryStructurePreference();
 		if (memoryStructurePreference.isBitVectorRepresentation() && !settings.isBitvectorTranslation()) {
 			throw new UnsupportedOperationException("Memory Structure: " + memoryStructurePreference

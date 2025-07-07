@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
-public enum MemoryStructureDeclarations {
+public enum MemoryModelDeclarations {
 	ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"),
 
 	/**
@@ -73,11 +73,17 @@ public enum MemoryStructureDeclarations {
 	 */
 	ULTIMATE_DATA_RACE_MEMORY(SFO.MEMORY_RACE),
 
+	ULTIMATE_INITIAL_ALLOCATIONS("#InitialAllocations"),
+
+	ULTIMATE_STACK_ALLOCATIONS("#StackAllocations"),
+
+	ULTIMATE_HEAP_ALLOCATIONS("#HeapAllocations")
+
 	;
 
 	private final String mName;
 
-	MemoryStructureDeclarations(final String name) {
+	MemoryModelDeclarations(final String name) {
 		mName = name;
 	}
 
@@ -91,19 +97,19 @@ public enum MemoryStructureDeclarations {
 	 * @param settings
 	 * @return true iff the method execution made a change in rmmf
 	 */
-	boolean resolveDependencies(final RequiredMemoryStructureFeatures rmmf, final TranslationSettings settings) {
-		if (this == MemoryStructureDeclarations.C_MEMCPY || this == MemoryStructureDeclarations.C_MEMMOVE) {
+	boolean resolveDependencies(final RequiredMemoryModelFeatures rmmf, final TranslationSettings settings) {
+		if (this == MemoryModelDeclarations.C_MEMCPY || this == MemoryModelDeclarations.C_MEMMOVE) {
 			return memcpyOrMemmoveRequirements(rmmf);
-		} else if (this == MemoryStructureDeclarations.C_MEMSET) {
+		} else if (this == MemoryModelDeclarations.C_MEMSET) {
 			return false;
-		} else if (this == MemoryStructureDeclarations.ULTIMATE_MEMINIT) {
+		} else if (this == MemoryModelDeclarations.ULTIMATE_MEMINIT) {
 			return meminitRequirements(rmmf, settings);
-		} else if (this == MemoryStructureDeclarations.C_STRCPY) {
+		} else if (this == MemoryModelDeclarations.C_STRCPY) {
 			return strcpyRequirements(rmmf);
-		} else if (this == MemoryStructureDeclarations.C_REALLOC) {
+		} else if (this == MemoryModelDeclarations.C_REALLOC) {
 			return reallocRequirements(rmmf);
-		} else if (this == MemoryStructureDeclarations.ULTIMATE_ALLOC_STACK
-				|| this == MemoryStructureDeclarations.ULTIMATE_ALLOC_HEAP) {
+		} else if (this == MemoryModelDeclarations.ULTIMATE_ALLOC_STACK
+				|| this == MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP) {
 			return allocRequirements(rmmf);
 		} else if (this == ULTIMATE_PTHREADS_MUTEX_LOCK || this == ULTIMATE_PTHREADS_MUTEX_UNLOCK
 				|| this == ULTIMATE_PTHREADS_MUTEX_TRYLOCK) {
@@ -116,17 +122,17 @@ public enum MemoryStructureDeclarations {
 		}
 	}
 
-	private static boolean allocRequirements(final RequiredMemoryStructureFeatures rmmf) {
+	private static boolean allocRequirements(final RequiredMemoryModelFeatures rmmf) {
 		boolean changedSomething = false;
 		changedSomething |= rmmf.requireMemoryStructureInfrastructure();
-		changedSomething |= rmmf.require(MemoryStructureDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
+		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_STACK_HEAP_BARRIER);
 		return changedSomething;
 	}
 
-	private static boolean reallocRequirements(final RequiredMemoryStructureFeatures rmmf) {
+	private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf) {
 		boolean changedSomething = false;
 		changedSomething |= rmmf.requireMemoryStructureInfrastructure();
-		changedSomething |= rmmf.require(MemoryStructureDeclarations.ULTIMATE_DEALLOC);
+		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_DEALLOC);
 		for (final CPrimitives prim : rmmf.getDataOnHeapRequiredUnchecked()) {
 			changedSomething |= rmmf.reportDataOnHeapStoreFunctionRequired(prim);
 		}
@@ -136,7 +142,7 @@ public enum MemoryStructureDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean strcpyRequirements(final RequiredMemoryStructureFeatures rmmf) {
+	private static boolean strcpyRequirements(final RequiredMemoryModelFeatures rmmf) {
 		boolean changedSomething = false;
 		rmmf.reportDataOnHeapRequired(CPrimitives.CHAR);
 		for (final CPrimitives prim : new HashSet<>(rmmf.getDataOnHeapRequiredUnchecked())) {
@@ -148,7 +154,7 @@ public enum MemoryStructureDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean meminitRequirements(final RequiredMemoryStructureFeatures rmmf,
+	private static boolean meminitRequirements(final RequiredMemoryModelFeatures rmmf,
 			final TranslationSettings settings) {
 		boolean changedSomething = false;
 		if (settings.useConstantArrays()) {
@@ -167,7 +173,7 @@ public enum MemoryStructureDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean memcpyOrMemmoveRequirements(final RequiredMemoryStructureFeatures mmf) {
+	private static boolean memcpyOrMemmoveRequirements(final RequiredMemoryModelFeatures mmf) {
 		boolean changedSomething = false;
 		// TODO: using members instead of getters here to avoid "checkIsFrozen" calls -- not nice..
 		for (final CPrimitives prim : new HashSet<>(mmf.getDataOnHeapRequiredUnchecked())) {

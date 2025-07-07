@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -19,7 +20,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * <li>One for the query if any Memory Structure features are required (PostProcessor queries this because it needs to
  * know for the init procedure.).
  * <li>At the start of {@link MemoryHandler#declareMemoryStructureInfrastructure(CHandler, ILocation, IASTNode)}, the
- * method {@link RequiredMemoryStructureFeatures#finish()} is called. This method resolves dependencies between the
+ * method {@link RequiredMemoryModelFeatures#finish()} is called. This method resolves dependencies between the
  * different Memory Structure features (e.g. memcpy requires write_unchecked procedures for all heap data arrays),
  * afterwards it freezes those features.
  *
@@ -27,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  * immediately (e.g. reportPointerUncheckedWriteRequired, triggers reportPointerOnHeapRequired). Others are resolved
  * during finish().
  */
-public final class RequiredMemoryStructureFeatures {
+public final class RequiredMemoryModelFeatures {
 
 	/**
 	 * This flag must be set if any of the Memory Structure features are required.
@@ -40,7 +41,7 @@ public final class RequiredMemoryStructureFeatures {
 	private boolean mPointerOnHeapRequired;
 	private boolean mPointerUncheckedWriteRequired;
 	private boolean mPointerInitWriteRequired;
-	private final Set<MemoryStructureDeclarations> mRequiredMemoryStructureDeclarations;
+	private final Set<MemoryModelDeclarations> mRequiredMemoryStructureDeclarations;
 
 	/**
 	 * Set of HeapDataArrays for which constant array initialization is required. (for those we create a Boogie function
@@ -59,13 +60,17 @@ public final class RequiredMemoryStructureFeatures {
 
 	private boolean mMemoryStructureInfrastructureRequiredHasBeenQueried;
 
-	public RequiredMemoryStructureFeatures() {
+	private final List<MemoryModelDeclarations> mMetaDataDeclarations;
+
+	public RequiredMemoryModelFeatures(final List<MemoryModelDeclarations> metaDataDeclarations) {
 		mDataOnHeapRequired = new HashSet<>();
 		mRequiredMemoryStructureDeclarations = new HashSet<>();
 		mDataUncheckedWriteRequired = new HashSet<>();
 		mDataInitWriteRequired = new HashSet<>();
 		mDataOnHeapInitFunctionRequired = new HashSet<>();
 		mDataOnHeapStoreFunctionRequired = new HashSet<>();
+
+		mMetaDataDeclarations = metaDataDeclarations;
 	}
 
 	public boolean requireMemoryStructureInfrastructure() {
@@ -78,8 +83,11 @@ public final class RequiredMemoryStructureFeatures {
 			assert false : msg;
 		}
 		mMemoryStructureInfrastructureRequired = true;
-		require(MemoryStructureDeclarations.ULTIMATE_LENGTH);
-		require(MemoryStructureDeclarations.ULTIMATE_VALID);
+
+		for (final var metaDataDeclaration : mMetaDataDeclarations) {
+			require(metaDataDeclaration);
+		}
+
 		return true;
 	}
 
@@ -243,7 +251,7 @@ public final class RequiredMemoryStructureFeatures {
 	 * @param mmdecl
 	 * @return true if a change was made
 	 */
-	public boolean require(final MemoryStructureDeclarations mmdecl) {
+	public boolean require(final MemoryModelDeclarations mmdecl) {
 		if (mRequiredMemoryStructureDeclarations.contains(mmdecl)) {
 			// mmdecl has already been added -- nothing to do
 			return false;
@@ -253,7 +261,7 @@ public final class RequiredMemoryStructureFeatures {
 		return mRequiredMemoryStructureDeclarations.add(mmdecl);
 	}
 
-	public Set<MemoryStructureDeclarations> getRequiredMemoryStructureDeclarations() {
+	public Set<MemoryModelDeclarations> getRequiredMemoryStructureDeclarations() {
 		checkIsFrozen();
 		return Collections.unmodifiableSet(mRequiredMemoryStructureDeclarations);
 	}
@@ -270,7 +278,7 @@ public final class RequiredMemoryStructureFeatures {
 		boolean changedSomething = true;
 		while (changedSomething) {
 			changedSomething = false;
-			for (final MemoryStructureDeclarations mmdecl : new HashSet<>(mRequiredMemoryStructureDeclarations)) {
+			for (final MemoryModelDeclarations mmdecl : new HashSet<>(mRequiredMemoryStructureDeclarations)) {
 				changedSomething |= mmdecl.resolveDependencies(this, settings);
 			}
 		}

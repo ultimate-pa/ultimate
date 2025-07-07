@@ -95,7 +95,7 @@ public class MemoryStructure_Unbounded extends BaseMemoryStructure {
 
 	@Override
 	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
 		for (final CPrimitives primitive : requiredMemoryStructureFeatures.getDataOnHeapRequired()) {
 			final int bytesize = 0;

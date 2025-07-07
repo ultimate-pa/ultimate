@@ -121,7 +121,7 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 	}
 
 	public final Collection<HeapDataArray>
-			getDataHeapArrays(final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
+			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
 		if (requiredMemoryStructureFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
@@ -133,7 +133,7 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 	}
 
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
-			final RequiredMemoryStructureFeatures requiredMemoryStructureFeatures) {
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		if (hda == mPointerArray) {
 			if (requiredMemoryStructureFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(
@@ -152,7 +152,7 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
 
 	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
-			RequiredMemoryStructureFeatures requiredMemoryStructureFeatures);
+			RequiredMemoryModelFeatures requiredMemoryStructureFeatures);
 
 	public static class ReadWriteDefinition {
 		private final String mProcedureSuffix;

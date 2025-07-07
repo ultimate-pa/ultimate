@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ForkStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
@@ -177,28 +177,28 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 		case "pthread_mutex_lock":
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryStructureDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName()))
+							MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_LOCK.getName()))
 					.build();
 		case "pthread_mutex_unlock":
 		case "pthread_cond_wait":
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryStructureDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK.getName()))
+							MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX_UNLOCK.getName()))
 					.build();
 		case "pthread_rwlock_rdlock":
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryStructureDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName()))
+							MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_READLOCK.getName()))
 					.build();
 		case "pthread_rwlock_wrlock":
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryStructureDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK.getName()))
+							MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_WRITELOCK.getName()))
 					.build();
 		case "pthread_rwlock_unlock":
 			return new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(witness)
 					.resetStatements(annotateAtomicCall(loc, expressionResult.getStatements(), witness.getStatements(),
-							MemoryStructureDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK.getName()))
+							MemoryModelDeclarations.ULTIMATE_PTHREADS_RWLOCK_UNLOCK.getName()))
 					.build();
 		case "pthread_create":
 			// Make the ghost update itself atomic and insert it just before the fork.

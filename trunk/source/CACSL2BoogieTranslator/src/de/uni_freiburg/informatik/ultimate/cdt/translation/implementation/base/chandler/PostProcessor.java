@@ -775,7 +775,7 @@ public class PostProcessor {
 							final CallStatement ultimateAllocCall =
 									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
 							proceduresCalledByUltimateInit
-									.add(MemoryStructureDeclarations.ULTIMATE_ALLOC_STACK.name());
+									.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
 							staticObjectInitStatements.add(ultimateAllocCall);
 						}
 

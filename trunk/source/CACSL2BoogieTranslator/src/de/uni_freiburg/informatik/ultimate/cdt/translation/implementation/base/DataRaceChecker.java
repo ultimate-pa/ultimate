@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogiePrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieStructType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -378,7 +378,7 @@ public final class DataRaceChecker {
 		final ASTType astType = new ArrayType(loc, boogieType, new String[0],
 				new ASTType[] { mTypeHandler.constructPointerType(loc) }, getBoolASTType());
 		final VarList vlV = new VarList(loc,
-				new String[] { MemoryStructureDeclarations.ULTIMATE_DATA_RACE_MEMORY.getName() }, astType);
+				new String[] { MemoryModelDeclarations.ULTIMATE_DATA_RACE_MEMORY.getName() }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV });
 	}
 
