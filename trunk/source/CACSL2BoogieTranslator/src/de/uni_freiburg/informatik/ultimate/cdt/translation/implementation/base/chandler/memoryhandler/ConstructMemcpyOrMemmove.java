@@ -27,7 +27,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryStructureDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
@@ -82,9 +82,9 @@ public final class ConstructMemcpyOrMemmove {
 	 * @return
 	 */
 	public List<Declaration> declareMemcpyOrMemmove(final CHandler main,
-			final MemoryModelDeclarations memCopyOrMemMove) {
-		assert memCopyOrMemMove == MemoryModelDeclarations.C_MEMCPY
-				|| memCopyOrMemMove == MemoryModelDeclarations.C_MEMMOVE;
+			final MemoryStructureDeclarations memCopyOrMemMove) {
+		assert memCopyOrMemMove == MemoryStructureDeclarations.C_MEMCPY
+				|| memCopyOrMemMove == MemoryStructureDeclarations.C_MEMMOVE;
 
 		final List<Declaration> memCpyDecl = new ArrayList<>();
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -131,7 +131,7 @@ public final class ConstructMemcpyOrMemmove {
 					loopBody.getStatements()));
 		}
 
-		if (mMemoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
+		if (mMemoryHandler.getRequiredMemoryStructureFeatures().isPointerOnHeapRequired()) {
 			final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 			bodyDecl.add(loopCtrAux.getVarDec());
 
@@ -241,7 +241,8 @@ public final class ConstructMemcpyOrMemmove {
 					destId, new RValue(loopCtrAux.getExp(), mExpressionTranslation.getCTypeOfPointerComponents()),
 					charCType);
 
-			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryModelFeatures().getDataOnHeapRequired()) {
+			for (final CPrimitives cPrim : mMemoryHandler.getRequiredMemoryStructureFeatures()
+					.getDataOnHeapRequired()) {
 				final ICType cPrimType = new CPrimitive(cPrim);
 				final Expression srcAcc;
 				{
@@ -298,7 +299,6 @@ public final class ConstructMemcpyOrMemmove {
 				loopBody.addDeclarations(srcAccExpRes.getDeclarations());
 				assert srcAccExpRes.getOverapprs().isEmpty();
 			}
-
 			{
 				final List<Statement> writeCall = mMemoryHandler.getWriteCall(ignoreLoc,
 						LRValueFactory.constructHeapLValue(mTypeHandler, currentDest, cPointer, null), srcAcc, cPointer,

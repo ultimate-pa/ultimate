@@ -257,7 +257,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.ICACSL2BoogieBacktranslatorMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.LTLExpressionExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -736,7 +736,8 @@ public class CHandler {
 		// constants for initializations
 		mDeclarations.addAll(mTypeSizeComputer.getConstants());
 		mDeclarations.addAll(mTypeSizeComputer.getAxioms());
-		mDeclarations.addAll(mMemoryHandler.declareMemoryModelInfrastructure(this, loc, mDataRaceChecker));
+		mDeclarations.addAll(mMemoryHandler.declareMemoryStructureInfrastructure(this, loc, mDataRaceChecker));
+
 		if (mDataRaceChecker != null) {
 			mDeclarations.addAll(mDataRaceChecker.declareRaceCheckingInfrastructure(loc));
 		}
@@ -753,8 +754,8 @@ public class CHandler {
 		 * <li>now we recompute the declarations, in order to give them correct modifies clauses and insert them into
 		 * the Boogie program
 		 *
-		 * have to block this in prerun, because there, memory model is not declared which may cause problems with the
-		 * call graph computation
+		 * have to block this in prerun, because there, Memory Structure is not declared which may cause problems with
+		 * the call graph computation
 		 */
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
@@ -1114,15 +1115,15 @@ public class CHandler {
 		exprWithType = mExprResultTransformer.makeRepresentationReadyForConversion(exprWithType, loc, newCType, node);
 		checkUnsupportedPointerCast(exprWithType, loc, newCType);
 
-		if (mSettings.isAdaptMemoryModelResolutionOnPointerCasts() && mIsPrerun) {
-			checkIfNecessaryMemoryModelAdaption(loc, newCType, exprWithType);
+		if (mSettings.isAdaptMemoryStructureResolutionOnPointerCasts() && mIsPrerun) {
+			checkIfNecessaryMemoryStructureAdaption(loc, newCType, exprWithType);
 		}
 
 		exprWithType = mExprResultTransformer.rexBoolToInt(exprWithType, loc);
 		return mExprResultTransformer.performImplicitConversion(exprWithType, newCType, loc);
 	}
 
-	private void checkIfNecessaryMemoryModelAdaption(final ILocation loc, final ICType castTargetType,
+	private void checkIfNecessaryMemoryStructureAdaption(final ILocation loc, final ICType castTargetType,
 			final ExpressionResult operand) {
 		final ICType operandType = operand.getLrValue().getCType().getUnderlyingType();
 		if (!(operandType instanceof CArray) && !(operandType instanceof CPointer)
@@ -1195,12 +1196,12 @@ public class CHandler {
 		final BigInteger requiredByteSize = castTargetByteSize.min(operandTypeByteSize);
 
 		final String msg;
-		if (mSettings.getMemoryModelPreference() == MemoryModel.HoenickeLindenmann_Original) {
+		if (mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original) {
 			// memory model has no resolution and the operand is
 			// cast to a type of a different size
 			msg = "Found a cast between two array/pointer types of different sizes while using memory model "
-					+ MemoryModel.HoenickeLindenmann_Original;
-		} else if (BigInteger.valueOf(mSettings.getMemoryModelPreference().getByteSize())
+					+ MemoryStructure.HoenickeLindenmann_Original;
+		} else if (BigInteger.valueOf(mSettings.getMemoryStructurePreference().getByteSize())
 				.compareTo(requiredByteSize) > 0) {
 			// memory model resolution is strictly bigger than the minimum of the size of
 			// the operand and the target
@@ -1214,12 +1215,12 @@ public class CHandler {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(msg);
 			mLogger.debug(" at location: " + loc);
-			mLogger.debug(" current memory model: " + mSettings.getMemoryModelPreference());
+			mLogger.debug(" current memory model: " + mSettings.getMemoryStructurePreference());
 		}
 		// signal a restart of the translation with a memory model precise
 		// enough for the operands
 		signalTranslationRestartWithDifferentSettings(new TranslationSettings.SettingsChange(loc, msg,
-				MemoryModel.getPreciseEnoughMemoryModelFor(requiredByteSize.intValueExact())));
+				MemoryStructure.getPreciseEnoughMemoryStructureFor(requiredByteSize.intValueExact())));
 	}
 
 	public Result visit(final IDispatcher main, final IASTCompoundStatement node) {

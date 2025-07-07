@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * Boogie procedures are inserted into the translated program from several sources:
  * <ul>
  * <li>translations of C functions ({@link CHandler}, {@link FunctionHandler})
- * <li>helper procedures from the memory model ({@link MemoryHandler})
+ * <li>helper procedures from the Memory Structure ({@link MemoryHandler})
  * <li>when we provide a Boogie model for a standard C function ({@link LibraryModelHandler})
  * <li>Ultimate.start and Ultimate.init ({@link PostProcessor})
  * </ul>
@@ -174,7 +174,7 @@ public class ProcedureManager {
 	 * Returns declarations for all procedures that will appear in the translated program. Ensures that the modifies
 	 * clauses of all procedures are transitive with respect to the call graph.
 	 * <p>
-	 * Special case regarding memory models: if one memory-array is included, all active memory arrays have to be
+	 * Special case regarding Memory Structure: if one memory-array is included, all active memory arrays have to be
 	 * included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
 	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
 	 * the modifies clause of procedure
@@ -212,7 +212,7 @@ public class ProcedureManager {
 					procedureName, oldSpec, loc);
 
 			final Specification[] newSpecWithExtraEnsuresClauses;
-			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()
+			if (memoryHandler.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired()
 					&& mSettings.getFunctionsCheckedForMemoryNeutrality().contains(procedureName)) {
 				// add a specification to check for memory neutrality (i.e., if all dynamically allocated memory is
 				// freed)
@@ -221,7 +221,6 @@ public class ProcedureManager {
 				// check memory neutrality is not empty.
 
 				final Expression vIe = memoryHandler.getValidArray(loc);
-
 				final int nrSpec = newSpec.length;
 				final Check check = new Check(Spec.MEMORY_NEUTRAL);
 				final ILocation ensLoc = LocationFactory.createLocation(loc);
@@ -262,8 +261,8 @@ public class ProcedureManager {
 		 * they are added lazily on demand.
 		 *
 		 */
-		final Collection<HeapDataArray> heapDataArrays =
-				memoryHandler.getMemoryModel().getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
+		final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryStructure()
+				.getDataHeapArrays(memoryHandler.getRequiredMemoryStructureFeatures());
 		if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 			for (final HeapDataArray hda : heapDataArrays) {
 				procInfo.addModifiedGlobal(hda.getVariableLHS());
@@ -309,7 +308,7 @@ public class ProcedureManager {
 	/**
 	 * Announces the beginning of the declaration of a custom procedure. A custom procedure is a procedure that is
 	 * introduced by the translation and has no direct counterpart in the translated C program. Examples are
-	 * Ultimate.start, Ultimate.init, and the procedures introduces by the memory model.
+	 * Ultimate.start, Ultimate.init, and the procedures introduces by the Memory Structure.
 	 *
 	 * @param main
 	 * @param loc

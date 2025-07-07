@@ -774,7 +774,8 @@ public class PostProcessor {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
 							final CallStatement ultimateAllocCall =
 									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
-							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+							proceduresCalledByUltimateInit
+									.add(MemoryStructureDeclarations.ULTIMATE_ALLOC_STACK.name());
 							staticObjectInitStatements.add(ultimateAllocCall);
 						}
 
@@ -795,7 +796,7 @@ public class PostProcessor {
 				}
 			}
 		}
-		if (mMemoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
+		if (mMemoryHandler.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired()) {
 
 			// TODO 20211115 Matthias: added the following assume-base initialization for
 			// #valid[0] == 0. I presume that the assignment-case initialization is not
