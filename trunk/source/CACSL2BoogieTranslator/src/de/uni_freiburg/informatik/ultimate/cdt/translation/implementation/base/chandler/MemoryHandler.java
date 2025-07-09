@@ -2110,37 +2110,27 @@ public class MemoryHandler {
 	 * @return declaration and implementation of procedure <code>Ultimate_dealloc</code>
 	 */
 	private List<Declaration> declareDeallocation(final CHandler main, final ILocation tuLoc) {
-		final Expression bLFalse = mBooleanArrayHelper.constructFalse();
-		final Expression addr =
-				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.ADDR,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
-								MemoryModelDeclarations.ULTIMATE_DEALLOC.getName()));
-		final Expression valid = getValidArray(tuLoc);
-		final Expression addrBase = ExpressionFactory.constructStructAccessExpression(tuLoc, addr, SFO.POINTER_BASE);
-		final Expression[] idcFree = { addrBase };
 
-		{
-			final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
-					MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(), new String[0],
-					new VarList[] {
-							new VarList(tuLoc, new String[] { SFO.ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
-					new VarList[0], new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(),
-					deallocDeclaration);
+		final Procedure deallocDeclaration = new Procedure(tuLoc, new Attribute[0],
+				MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(), new String[0],
+				new VarList[] {
+						new VarList(tuLoc, new String[] { SFO.ADDR }, mTypeHandler.constructPointerType(tuLoc)) },
+				new VarList[0], new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(main, tuLoc, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName(),
+				deallocDeclaration);
+
+		final List<Pair<Expression, Set<VariableLHS>>> mallocSpecificationExpressions =
+				mMemoryModel.constructDeallocSpecificationExpressions(tuLoc, mRequiredMemoryModelFeatures,
+						mMemoryModelDeclarationsHandler);
+
+		final List<Specification> deallocSpecifications = new ArrayList<>();
+
+		for (final Pair<Expression, Set<VariableLHS>> pair : mallocSpecificationExpressions) {
+			deallocSpecifications.add(
+					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
 		}
 
-		final ArrayList<Specification> specFree = new ArrayList<>();
-
-		final ArrayStoreExpression arrayStore = ExpressionFactory.constructArrayStoreExpression(tuLoc,
-				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcFree,
-				bLFalse);
-
-		final Expression updateValidArray =
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid, arrayStore);
-
-		specFree.add(mProcedureManager.constructEnsuresSpecification(tuLoc, true, updateValidArray,
-				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(valid))));
-		mProcedureManager.addSpecificationsToCurrentProcedure(specFree);
+		mProcedureManager.addSpecificationsToCurrentProcedure(deallocSpecifications);
 		mProcedureManager.endCustomProcedure(main, MemoryModelDeclarations.ULTIMATE_DEALLOC.getName());
 		return Collections.emptyList();
 	}

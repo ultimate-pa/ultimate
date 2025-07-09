@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -181,5 +182,32 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(lengthArrayExpr))));
 
 		return expressions;
+	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final var falseExpr = mBooleanArrayHelper.constructFalse();
+		final var validArrayExpr = MemoryModelExpressionHelper.getValidArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+
+		final Expression addrExpr =
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.ADDR,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM,
+								MemoryModelDeclarations.ULTIMATE_DEALLOC.getName()));
+		final Expression addrBaseExpr =
+				ExpressionFactory.constructStructAccessExpression(tuLoc, addrExpr, SFO.POINTER_BASE);
+
+		// #valid == old(#valid)[~addr!base := 0]
+		final ArrayStoreExpression arrayStoreExpr = ExpressionFactory.constructArrayStoreExpression(tuLoc,
+				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, validArrayExpr),
+				new Expression[] { addrBaseExpr }, falseExpr);
+
+		final Expression updateValidArrayExpr =
+				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, validArrayExpr, arrayStoreExpr);
+
+		return Collections.singletonList(new Pair<>(updateValidArrayExpr,
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
 	}
 }

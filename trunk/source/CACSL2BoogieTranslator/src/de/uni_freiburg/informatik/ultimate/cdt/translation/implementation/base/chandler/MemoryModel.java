@@ -74,4 +74,17 @@ public class MemoryModel {
 		return mMemoryAddressing.constructMallocSpecificationExpressions(tuLoc, memoryArea, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
+
+	/**
+	 * Constructs the expressions used in the specifications for dealloc.
+	 *
+	 * @return A list of a pair consisting of an expression and a set of the global variables that must be added to the
+	 *         modifies clause.
+	 */
+	public List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
 }

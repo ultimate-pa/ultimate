@@ -183,4 +183,12 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return expressions;
 	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return Collections.emptyList();
+	}
+
 }
