@@ -165,6 +165,15 @@ public final class SFO {
 	public static final String AUXILIARY_FUNCTION_PREFIX = "~";
 
 	/**
+	 * The "~size" variable identifier.
+	 */
+	public static final String SIZE = "~size";
+	/**
+	 * The "~addr" variable identifier.
+	 */
+	public static final String ADDR = "~addr";
+
+	/**
 	 * combined SFOs for memory arrays:
 	 */
 	// public static final String MEMORY_INT = MEMORY + "_" + INT;

@@ -1,20 +1,34 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.IBooleanArrayHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * The two dimensional memory addressing.
@@ -22,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 	public TwoDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
-			final IBooleanArrayHelper booleanArrayHelper) {
-		super(typeHandler, exprTranslation, booleanArrayHelper);
+			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes) {
+		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes);
 	}
 
 	@Override
@@ -90,5 +104,82 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public List<MemoryModelDeclarations> metaDataDeclarations() {
 		return List.of(MemoryModelDeclarations.ULTIMATE_VALID, MemoryModelDeclarations.ULTIMATE_LENGTH);
+	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
+			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+
+		final var memoryAreaName = memoryArea.getMemoryStructureDeclaration().getName();
+		final var falseExpr = mBooleanArrayHelper.constructFalse();
+		final var trueExpr = mBooleanArrayHelper.constructTrue();
+
+		final var validArrayExpr = MemoryModelExpressionHelper.getValidArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+		final var stackHeapBarrierExpr = MemoryModelExpressionHelper.getStackHeapBarrier(tuLoc,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+		final var lengthArrayExpr = MemoryModelExpressionHelper.getLengthArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+
+		final var zeroNumericValueExpr = mTypeSizes.constructLiteralForIntegerType(tuLoc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var resultExpr =
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
+						new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, memoryAreaName));
+
+		final var sizeExpr =
+				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(), SFO.SIZE,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memoryAreaName));
+
+		final var resBaseExpr = ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE);
+
+		final ArrayList<Pair<Expression, Set<VariableLHS>>> expressions = new ArrayList<>();
+
+		// old(#valid)[#res!base] == false
+		final var freshLocationCurrentlyNotValidExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+				ExpressionFactory.constructNestedArrayAccessExpression(tuLoc,
+						ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, validArrayExpr),
+						new Expression[] { resBaseExpr }),
+				falseExpr);
+
+		expressions.add(new Pair<>(freshLocationCurrentlyNotValidExpr, Collections.emptySet()));
+
+		// #valid == old(#valid)[#res!base := true]
+		final var validUpdateExpr =
+				MemoryModelExpressionHelper.ensuresArrayUpdate(tuLoc, trueExpr, resBaseExpr, validArrayExpr);
+		expressions.add(new Pair<>(validUpdateExpr,
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+
+		// #res!offset == 0
+		final var offsetEqualZeroExpr = offsetEqualsZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
+		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
+
+		// #res!base != 0
+		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
+		expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
+
+		if (memoryArea == MemoryArea.STACK) {
+			// #StackHeapBarrier < res!base
+			final var baseGreaterThanBarrierExpr = baseGreaterThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
+			expressions.add(new Pair<>(baseGreaterThanBarrierExpr, Collections.emptySet()));
+		} else if (memoryArea == MemoryArea.HEAP) {
+			// res!base < #StackHeapBarrier
+			final var baseSmallerThanBarrierExpr = baseSmallerThanBarrier(tuLoc, stackHeapBarrierExpr, resultExpr);
+			expressions.add(new Pair<>(baseSmallerThanBarrierExpr, Collections.emptySet()));
+		}
+
+		// #length == old(#length)[#res!base := ~size]
+		final var lengthUpdateExpr =
+				ExpressionFactory
+						.newBinaryExpression(tuLoc, Operator.COMPEQ, lengthArrayExpr,
+								ExpressionFactory.constructArrayStoreExpression(
+										tuLoc, ExpressionFactory.constructUnaryExpression(tuLoc,
+												UnaryExpression.Operator.OLD, lengthArrayExpr),
+										new Expression[] { resBaseExpr }, sizeExpr));
+		expressions.add(new Pair<>(lengthUpdateExpr,
+				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(lengthArrayExpr))));
+
+		return expressions;
 	}
 }

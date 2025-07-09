@@ -127,7 +127,7 @@ public class ThreadIdManager {
 	 */
 	public Expression[] updateForkedThreadId(final IASTInitializerClause argument, final IDispatcher dispatcher,
 			final ILocation loc, final IASTNode hook, final ExpressionResultBuilder erb) {
-		mMemoryHandler.requireMemoryStructureFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_FORK_COUNT);
 
 		final Expression threadId = getOldForkCounterAsTemp(loc, erb);
 		incrementForkCounter(loc, erb);

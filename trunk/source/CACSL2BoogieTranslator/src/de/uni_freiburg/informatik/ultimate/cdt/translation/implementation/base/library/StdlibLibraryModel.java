@@ -396,7 +396,7 @@ public class StdlibLibraryModel implements ILibraryModel {
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), CPointer.voidPointer()));
 
 		// add marker for global declaration to memory handler
-		mMemoryHandler.requireMemoryStructureFeature(reallocMmDecl);
+		mMemoryHandler.requireMemoryModelFeature(reallocMmDecl);
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(reallocMmDecl.getName());

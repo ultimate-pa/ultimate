@@ -1,8 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * The interface defining the functions for the different addressing modes.
@@ -23,4 +29,13 @@ public interface IMemoryAdressing {
 	 * @return The declarations.
 	 */
 	List<MemoryModelDeclarations> metaDataDeclarations();
+
+	/**
+	 * Constructs a list of expressions that are used in the specifications of malloc.
+	 *
+	 * @return The expressions.
+	 */
+	List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(ILocation tuLoc,
+			MemoryArea memoryArea, RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }
