@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -774,8 +773,7 @@ public class PostProcessor {
 							final LocalLValue llVal = new LocalLValue(lhs, en.getValue().getType(), null);
 							final CallStatement ultimateAllocCall =
 									mMemoryHandler.getUltimateMemAllocCall(llVal, currentDeclsLoc, MemoryArea.STACK);
-							proceduresCalledByUltimateInit
-									.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
+							proceduresCalledByUltimateInit.add(MemoryModelDeclarations.ULTIMATE_ALLOC_STACK.name());
 							staticObjectInitStatements.add(ultimateAllocCall);
 						}
 
@@ -797,46 +795,8 @@ public class PostProcessor {
 			}
 		}
 		if (mMemoryHandler.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired()) {
-
-			// TODO 20211115 Matthias: added the following assume-base initialization for
-			// #valid[0] == 0. I presume that the assignment-case initialization is not
-			// needed in any approach and can be dropped.
-			if (true) {
-				// assume #valid[0] == 0 (i.e., the memory at the NULL-pointer is
-				// not allocated)
-				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
-				final Expression eq = ExpressionFactory.newBinaryExpression(translationUnitLoc, Operator.COMPEQ,
-						ExpressionFactory.constructNestedArrayAccessExpression(translationUnitLoc,
-								mMemoryHandler.getValidArray(translationUnitLoc), new Expression[] { zero }),
-						literalThatRepresentsFalse);
-				final AssumeStatement assume = new AssumeStatement(translationUnitLoc, eq);
-				initStatements.add(0, assume);
-			} else {
-				// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is
-				// not allocated)
-				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final Expression literalThatRepresentsFalse = mMemoryHandler.getBooleanArrayHelper().constructFalse();
-				final AssignmentStatement assignment =
-						MemoryHandler.constructOneDimensionalArrayUpdate(translationUnitLoc, zero,
-								mMemoryHandler.getValidArrayLhs(translationUnitLoc), literalThatRepresentsFalse);
-				initStatements.add(0, assignment);
-			}
-			{
-				// Add assume(0 < #StackHeapBarrier) to ensure that the null
-				// pointer is on the heap.
-				final Expression zero = mTypeSize.constructLiteralForIntegerType(translationUnitLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final Expression zeroSmallerStackHeapBarrier =
-						mExpressionTranslation.constructBinaryComparisonIntegerExpression(translationUnitLoc,
-								IASTBinaryExpression.op_lessThan, zero,
-								mExpressionTranslation.getCTypeOfPointerComponents(),
-								mMemoryHandler.getStackHeapBarrier(translationUnitLoc),
-								mExpressionTranslation.getCTypeOfPointerComponents());
-				initStatements.add(new AssumeStatement(translationUnitLoc, zeroSmallerStackHeapBarrier));
-			}
+			final var stmts = mMemoryHandler.ultimateInitStatements(translationUnitLoc);
+			initStatements.addAll(stmts);
 		}
 
 		// initializes current rounding mode var
