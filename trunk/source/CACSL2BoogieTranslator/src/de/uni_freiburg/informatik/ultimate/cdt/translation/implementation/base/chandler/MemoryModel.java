@@ -5,6 +5,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.IBooleanArrayHelper;
@@ -85,6 +86,18 @@ public class MemoryModel {
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryAddressing.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
+
+	/**
+	 * Constructs the statements used in Ultimate.Init.
+	 *
+	 * @return The statements.
+	 */
+	List<Statement> constructUltimateInitStatements(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 }

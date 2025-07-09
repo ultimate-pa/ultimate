@@ -47,6 +47,18 @@ public class MemoryModelExpressionHelper {
 	}
 
 	/**
+	 * Returns the #valid array as an lhs variable.
+	 *
+	 * @return The variable.
+	 */
+	public static VariableLHS getValidArrayLhs(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return MemoryModelExpressionHelper.getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_VALID,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
+	/**
 	 * Returns the #length array expression.
 	 *
 	 * @return The expression.

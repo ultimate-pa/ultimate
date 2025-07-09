@@ -6,16 +6,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -209,5 +214,56 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return Collections.singletonList(new Pair<>(updateValidArrayExpr,
 				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
+	}
+
+	@Override
+	public List<Statement> constructUltimateInitStatements(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final List<Statement> statements = new ArrayList();
+		// TODO 20211115 Matthias: added the following assume-base initialization for
+		// #valid[0] == 0. I presume that the assignment-case initialization is not
+		// needed in any approach and can be dropped.
+		if (true) {
+			// assume #valid[0] == 0 (i.e., the memory at the NULL-pointer is
+			// not allocated)
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final Expression literalThatRepresentsFalse = mBooleanArrayHelper.constructFalse();
+			final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+					ExpressionFactory.constructNestedArrayAccessExpression(loc,
+							MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
+									memoryModelDeclarationsHandler),
+							new Expression[] { zero }),
+					literalThatRepresentsFalse);
+			final AssumeStatement assume = new AssumeStatement(loc, eq);
+			statements.add(assume);
+		} else {
+			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is
+			// not allocated)
+			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final Expression literalThatRepresentsFalse = mBooleanArrayHelper.constructFalse();
+			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(loc, zero,
+					MemoryModelExpressionHelper.getValidArrayLhs(loc, requiredMemoryModelFeatures,
+							memoryModelDeclarationsHandler),
+					literalThatRepresentsFalse);
+
+			statements.add(assignment);
+		}
+
+		// Add assume(0 < #StackHeapBarrier) to ensure that the null
+		// pointer is on the heap.
+		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression zeroSmallerStackHeapBarrier =
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
+						zero, mExpressionTranslation.getCTypeOfPointerComponents(), MemoryModelExpressionHelper
+								.getStackHeapBarrier(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
+						mExpressionTranslation.getCTypeOfPointerComponents());
+
+		statements.add(new AssumeStatement(loc, zeroSmallerStackHeapBarrier));
+
+		return statements;
 	}
 }

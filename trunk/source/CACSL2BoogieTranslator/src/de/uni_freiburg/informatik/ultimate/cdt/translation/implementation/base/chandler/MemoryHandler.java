@@ -581,8 +581,8 @@ public class MemoryHandler {
 	}
 
 	public VariableLHS getValidArrayLhs(final ILocation loc) {
-		return MemoryModelExpressionHelper.getMemoryModelFeatureLhs(loc, MemoryModelDeclarations.ULTIMATE_VALID,
-				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		return MemoryModelExpressionHelper.getValidArrayLhs(loc, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	public Expression getStackHeapBarrier(final ILocation loc) {
@@ -3069,6 +3069,10 @@ public class MemoryHandler {
 			}
 		}
 		return result;
+	}
+
+	public List<Statement> ultimateInitStatements(final ILocation loc) {
+		return mMemoryModel.constructUltimateInitStatements(loc, mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
 	}
 
 	public interface IBooleanArrayHelper {
