@@ -253,7 +253,7 @@ public class StringLibraryModel implements ILibraryModel {
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), CPointer.voidPointer()));
 
 		// add marker for global declaration to memory handler
-		mMemoryHandler.requireMemoryStructureFeature(strCpyMmDecl);
+		mMemoryHandler.requireMemoryModelFeature(strCpyMmDecl);
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(strCpyMmDecl.getName());
@@ -556,7 +556,7 @@ public class StringLibraryModel implements ILibraryModel {
 		resultBuilder.setLrValue(new RValue(auxvarinfo.getExp(), CPointer.voidPointer()));
 
 		// add marker for global declaration to memory handler
-		mMemoryHandler.requireMemoryStructureFeature(mmDecl);
+		mMemoryHandler.requireMemoryModelFeature(mmDecl);
 
 		// add required information to function handler.
 		mProcedureManager.registerProcedure(mmDecl.getName());

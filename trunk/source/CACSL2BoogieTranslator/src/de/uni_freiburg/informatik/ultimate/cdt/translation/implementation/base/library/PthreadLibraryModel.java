@@ -302,7 +302,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private Result handlePthread_exit(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryStructureFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 1, name, arguments);
@@ -456,7 +456,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 
 	private Result handlePthread_mutex_init(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
-		mMemoryHandler.requireMemoryStructureFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
+		mMemoryHandler.requireMemoryModelFeature(MemoryModelDeclarations.ULTIMATE_PTHREADS_MUTEX);
 
 		final IASTInitializerClause[] arguments = node.getArguments();
 		mHelper.checkArguments(loc, 2, name, arguments);

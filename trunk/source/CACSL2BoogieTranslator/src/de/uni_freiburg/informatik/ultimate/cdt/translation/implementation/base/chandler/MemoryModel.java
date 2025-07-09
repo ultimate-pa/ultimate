@@ -1,12 +1,18 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.IBooleanArrayHelper;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * The memory model consisting of a MemoryAdressing and a MemoryStructure.
@@ -28,7 +34,7 @@ public class MemoryModel {
 		mBooleanArrayHelper = booleanArrayHelper;
 
 		mMemoryAddressing = MemoryModelFactory.createMemoryAddressing(settings, mTypeHandler, mExpressionTranslation,
-				mBooleanArrayHelper);
+				mBooleanArrayHelper, mTypeSizes);
 		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
 	}
 
@@ -54,5 +60,18 @@ public class MemoryModel {
 	 */
 	public List<MemoryModelDeclarations> metaDataDeclarations() {
 		return mMemoryAddressing.metaDataDeclarations();
+	}
+
+	/**
+	 * Constructs the expressions used in the specifications for malloc.
+	 *
+	 * @return A list of a pair consisting of an expression and a set of the global variables that must be added to the
+	 *         modifies clause.
+	 */
+	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
+			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructMallocSpecificationExpressions(tuLoc, memoryArea, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 }

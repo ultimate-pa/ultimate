@@ -23,7 +23,7 @@ public class MemoryModelFactory {
 	 */
 	public static IMemoryAdressing createMemoryAddressing(final TranslationSettings settings,
 			final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
-			final IBooleanArrayHelper booleanArrayHelper) {
+			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes) {
 		final var memoryAddressingPreference = settings.memoryAddressingPreference();
 
 		switch (memoryAddressingPreference) {
@@ -49,9 +49,9 @@ public class MemoryModelFactory {
 						+ " memory addressing is not compatible with the following active settings: "
 						+ String.join(", ", incompatibleActiveOptions));
 			}
-			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper);
+			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes);
 		case Two_Dimensional:
-			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper);
+			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes);
 		default:
 			throw new UnsupportedOperationException(
 					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");
