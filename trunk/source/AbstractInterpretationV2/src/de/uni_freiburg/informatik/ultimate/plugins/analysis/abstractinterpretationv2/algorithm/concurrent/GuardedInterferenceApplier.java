@@ -101,22 +101,14 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				}
 
 				final boolean isSelfInterference = ownerThread.equals(interference.sourceThread());
-//				final var disj = DisjunctiveAbstractState.createDisjunction(interferable, mMaxParallelStates);
-//				final var post = itfApplier.applyInterferenceToDisjState(interference.interf().disjState(),
-//						interference.interf().action(), disj, mPostOp, mMaxParallelStates, isSelfInterference, mCfg);
-//				if (post == null) {
-//					continue;
-//				}
 
 				final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> resultSet = new HashSet<>();
 				for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> single : interferable) {
-					for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> itfPreState : interference.interf()
-							.disjState().getStates()) {
-						final var singlepost = itfApplier.applyInterferenceToState(itfPreState,
-								interference.interf().action(), single, mPostOp, isSelfInterference, mCfg);
-						resultSet.addAll(singlepost);
-					}
+					final var singlepost = itfApplier.applyInterferenceToState(interference.interf().preState(),
+							interference.interf().action(), single, mPostOp, isSelfInterference, mCfg);
+					resultSet.addAll(singlepost);
 				}
+
 				if (resultSet.isEmpty()) {
 					continue;
 				}

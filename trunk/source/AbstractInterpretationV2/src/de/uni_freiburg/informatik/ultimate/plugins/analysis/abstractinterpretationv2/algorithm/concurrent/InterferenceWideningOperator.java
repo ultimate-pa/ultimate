@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -38,14 +37,14 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 				final var oldInterference = oldMap.get(act);
 				final var newInterference = newMap.get(act);
 
-				final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> widenedState;
+				final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> widenedState;
 
 				if (oldInterference == null) {
-					widenedState = newInterference.disjState();
+					widenedState = newInterference.preState();
 				} else if (newInterference == null) {
-					widenedState = oldInterference.disjState();
+					widenedState = oldInterference.preState();
 				} else {
-					widenedState = combineStates(oldInterference.disjState(), newInterference.disjState());
+					widenedState = combineStates(oldInterference.preState(), newInterference.preState());
 				}
 
 				result.addInterference(thread, act, widenedState);
@@ -59,15 +58,15 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 		return set.stream().collect(Collectors.toMap(Interference::action, i -> i));
 	}
 
-	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> combineStates(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> disjunctiveAbstractState,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> disjunctiveAbstractState2) {
+	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> combineStates(
+			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> disjunctiveAbstractState,
+			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> disjunctiveAbstractState2) {
 		if (disjunctiveAbstractState == null) {
 			return disjunctiveAbstractState2;
 		}
 		if (disjunctiveAbstractState2 == null) {
 			return disjunctiveAbstractState;
 		}
-		return disjunctiveAbstractState.widen(mWideningOperator, disjunctiveAbstractState2);
+		return mWideningOperator.apply(disjunctiveAbstractState, disjunctiveAbstractState2);
 	}
 }

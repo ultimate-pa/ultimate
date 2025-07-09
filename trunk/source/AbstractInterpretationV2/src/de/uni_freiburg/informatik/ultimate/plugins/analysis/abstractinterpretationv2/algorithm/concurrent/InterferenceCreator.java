@@ -18,17 +18,11 @@ public class InterferenceCreator {
 	public static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeInterferences(
 			final Map<String, ? extends LOC> mEntryLocs, final IIcfg<? extends LOC> icfg,
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
-			final ITransitionProvider<ACTION, LOC> mTransitionProvider, final int maxSize,
+			final ITransitionProvider<ACTION, LOC> mTransitionProvider,
 			final AbstractLocationMap<LOC> mLocationAbstraction,
-			final LocationAbstraction<LOC> locationAbstractionCalculator, final String precision) {
+			final LocationAbstraction<LOC> locationAbstractionCalculator) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
 		// Seems to not make much difference in state amount actually
-		final boolean precise;
-		if (precision.equals("Unioned")) {
-			precise = false;
-		} else {
-			precise = true;
-		}
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
 				icfg.getCfgSmtToolkit().getProcedures());
 		for (final LOC entryLoc : mEntryLocs.values()) {
@@ -40,11 +34,12 @@ public class InterferenceCreator {
 							locationAbstractionCalculator, loc)) {
 						continue;
 					}
-					final var preState = mStateStorage.getAbstractState(mTransitionProvider.getSource((ACTION) edge));
-					if (preState == null) {
+					final var disjPreState = mStateStorage
+							.getAbstractState(mTransitionProvider.getSource((ACTION) edge));
+					if (disjPreState == null) {
 						continue;
 					}
-					final var interference = computeInterference(precise, preState, edge, maxSize);
+					final var interference = computeInterference(disjPreState, edge);
 					result.addInterference(interference);
 				}
 			}
@@ -53,15 +48,12 @@ public class InterferenceCreator {
 	}
 
 	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Interference<UNDERLYINGSTATE, ACTION, LOC> computeInterference(
-			final boolean precise,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
-			final IcfgEdge edge, final int maxSize) {
+			final IcfgEdge edge) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
-		if (precise) {
-			interference = new Interference<>((ACTION) edge, preState);
-		} else {
-			interference = new Interference<>((ACTION) edge, new DisjunctiveAbstractState<>(maxSize,
-					preState.getSingleState(GuardedInterferenceDomainState::union)));
+		{
+			interference = new Interference<>((ACTION) edge,
+					preState.getSingleState(GuardedInterferenceDomainState::union));
 		}
 		return interference;
 	}

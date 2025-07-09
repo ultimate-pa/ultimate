@@ -25,13 +25,12 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 				continue;
 			}
 			for (final Interference<STATE, ACTION, LOC> interference : interferences) {
-				if (interference.disjState() == null) {
+				if (interference.preState() == null) {
 					continue;
 				}
 				// We can remove interferences where our targetstate sourcethread is not active from the beginning,
 				// no amount of other interferences applied to the state will enable this interference to be valid
-				if (GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
-						.get(ownerThread) == 0) {
+				if (interference.preState().threadCounter().getThreadInstances().get(ownerThread) == 0) {
 					continue;
 				}
 				allInterferences.add(new InterferenceWithSourceThread<>(interference, interferenceThreadName));
@@ -52,8 +51,7 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 		 * Special check for self-interference, then locations have to be handled differently. ATM we ignore locations,
 		 * which is a sound, but unprecise, overapproximtation.
 		 */
-		if (GuardedStateTransformer.getThreadInstanceStateUnion(interference.disjState()).getThreadInstances()
-				.get(interferenceThreadName) > 1) {
+		if (interference.preState().threadCounter().getThreadInstances().get(interferenceThreadName) > 1) {
 			return true;
 		}
 		/*

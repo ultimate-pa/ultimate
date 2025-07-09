@@ -191,8 +191,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeNewInterferences() {
 		final var newInterferences = InterferenceCreator.computeInterferences(mEntryLocs, mIfcg, mStateStorage,
-				mTransitionProvider, mMaxParallelStates, mLocationAbstraction, mLocationAbstractionCalculator,
-				mThreadModPrefs.interferencePrestatePrecision());
+				mTransitionProvider, mLocationAbstraction, mLocationAbstractionCalculator);
 		return newInterferences;
 	}
 

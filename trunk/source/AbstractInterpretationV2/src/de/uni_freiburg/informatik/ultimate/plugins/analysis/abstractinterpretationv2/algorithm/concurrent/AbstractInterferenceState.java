@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.DisjunctiveAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -31,11 +30,11 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 	@Override
 	public void addInterference(final Interference<STATE, ACTION, LOC> interference) {
 		addInterference(interference.action().getSource().getProcedure(), interference.action(),
-				interference.disjState());
+				interference.preState());
 	}
 
 	public void addInterference(final String threadName, final ACTION action,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> state) {
+			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state) {
 		if (state == null) {
 			return;
 		}
@@ -47,7 +46,7 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 	public Set<String> interferenceStrings() {
 		return mInterferenceMap.entrySet().stream()
 				.flatMap(e -> e.getValue().values().stream()
-						.map(i -> "Thread " + e.getKey() + ": " + i.action() + (i.disjState())))
+						.map(i -> "Thread " + e.getKey() + ": " + i.action() + (i.preState())))
 				.collect(Collectors.toSet());
 	}
 
@@ -66,11 +65,11 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 			}
 			for (final var actionItfPair : pair.getValue().entrySet()) {
 				final var otherItf = otherThreadMap.get(actionItfPair.getKey());
-				if (otherItf == null || actionItfPair.getValue().disjState() == null) {
+				if (otherItf == null || actionItfPair.getValue().preState() == null) {
 					return SubsetResult.NONE;
 				}
-				final var first = (actionItfPair.getValue().disjState());
-				final var second = (otherItf.disjState());
+				final var first = (actionItfPair.getValue().preState());
+				final var second = (otherItf.preState());
 				if (first.isSubsetOf(second) == SubsetResult.NONE) {
 					return SubsetResult.NONE;
 				}
