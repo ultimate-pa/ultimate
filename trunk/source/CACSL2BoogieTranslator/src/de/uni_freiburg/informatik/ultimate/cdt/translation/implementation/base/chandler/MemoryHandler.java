@@ -283,7 +283,7 @@ public class MemoryHandler {
 		return mRequiredMemoryModelFeatures;
 	}
 
-	public BaseMemoryStructure getMemoryStructure() {
+	public IMemoryStructure getMemoryStructure() {
 		return mMemoryModel.memoryStructure();
 	}
 
