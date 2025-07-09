@@ -69,57 +69,70 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 				bytesizeOfStoredPointerComponents());
 	}
 
+	@Override
 	public final String getReadProcedureName(final CPrimitives primitive) {
 		return READ_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getUncheckedReadProcedureName(final CPrimitives primitive) {
 		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getUncheckedWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + UNCHECKED_PREFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getInitWriteProcedureName(final CPrimitives primitive) {
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + getProcedureSuffix(primitive);
 	}
 
+	@Override
 	public final String getReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return READ_PROCEDURE_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getUncheckedReadPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return READ_PROCEDURE_PREFIX + UNCHECKED_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getWritePointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return WRITE_PROCEDURE_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getUncheckedWritePointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return WRITE_PROCEDURE_PREFIX + UNCHECKED_PREFIX + hda.getName();
 	}
 
+	@Override
 	public final String getInitPointerProcedureName() {
 		final HeapDataArray hda = mPointerArray;
 		return WRITE_PROCEDURE_PREFIX + INIT_INFIX + hda.getName();
 	}
 
+	@Override
 	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
 
+	@Override
 	public final HeapDataArray getPointerHeapArray() {
 		return mPointerArray;
 	}
 
+	@Override
 	public final Collection<HeapDataArray>
 			getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
@@ -132,6 +145,7 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 		return result;
 	}
 
+	@Override
 	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
 			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
 		if (hda == mPointerArray) {

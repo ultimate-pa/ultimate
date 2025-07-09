@@ -65,8 +65,8 @@ public class MemoryModelFactory {
 	 *            The given settings.
 	 * @return A concrete instance of IMemoryStructure.
 	 */
-	public static BaseMemoryStructure createMemoryStructure(final TranslationSettings settings,
-			final TypeSizes typeSizes, final ITypeHandler typeHandler) {
+	public static IMemoryStructure createMemoryStructure(final TranslationSettings settings, final TypeSizes typeSizes,
+			final ITypeHandler typeHandler) {
 		final var memoryStructurePreference = settings.getMemoryStructurePreference();
 		if (memoryStructurePreference.isBitVectorRepresentation() && !settings.isBitvectorTranslation()) {
 			throw new UnsupportedOperationException("Memory Structure: " + memoryStructurePreference

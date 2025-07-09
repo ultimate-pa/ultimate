@@ -18,7 +18,7 @@ public class MemoryModel {
 	private final ExpressionTranslation mExpressionTranslation;
 
 	private final IMemoryAdressing mMemoryAddressing;
-	private final BaseMemoryStructure mMemoryStructure;
+	private final IMemoryStructure mMemoryStructure;
 
 	public MemoryModel(final TranslationSettings settings, final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper) {
@@ -32,7 +32,7 @@ public class MemoryModel {
 		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
 	}
 
-	public BaseMemoryStructure memoryStructure() {
+	public IMemoryStructure memoryStructure() {
 		return mMemoryStructure;
 	}
 
