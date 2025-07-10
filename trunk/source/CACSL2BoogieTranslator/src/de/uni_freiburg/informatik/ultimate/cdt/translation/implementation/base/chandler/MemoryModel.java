@@ -100,9 +100,9 @@ public class MemoryModel {
 	 */
 	List<Statement> constructUltimateInitStatements(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
 		return mMemoryAddressing.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
-				memoryModelDeclarationsHandler);
+				memoryModelDeclarationsHandler, fixedAddressCounter);
 	}
 
 	/**

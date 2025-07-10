@@ -11,6 +11,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -198,8 +199,23 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public List<Statement> constructUltimateInitStatements(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return Collections.emptyList();
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
+
+		// Add assume(fixedAddressCounter == #InitialAllocations)
+		final Expression fixedAddressCounterExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), fixedAddressCounter);
+
+		final Expression initialAllocCounterEqualsFixedAddressCounterExpr =
+				mExpressionTranslation
+						.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
+								fixedAddressCounterExpr, mExpressionTranslation.getCTypeOfPointerComponents(),
+								MemoryModelExpressionHelper.getInitialAllocCounter(loc, requiredMemoryModelFeatures,
+										memoryModelDeclarationsHandler),
+								mExpressionTranslation.getCTypeOfPointerComponents());
+
+		final Statement statement = new AssumeStatement(loc, initialAllocCounterEqualsFixedAddressCounterExpr);
+
+		return Collections.singletonList(statement);
 	}
 
 	@Override

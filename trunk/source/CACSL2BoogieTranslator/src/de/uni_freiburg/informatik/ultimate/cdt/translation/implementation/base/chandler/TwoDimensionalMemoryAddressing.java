@@ -221,7 +221,7 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public List<Statement> constructUltimateInitStatements(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
 		final List<Statement> statements = new ArrayList();
 		// TODO 20211115 Matthias: added the following assume-base initialization for
 		// #valid[0] == 0. I presume that the assignment-case initialization is not
@@ -300,7 +300,6 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		expressions.add(new Pair<>(lengthPtrBaseSize, Collections.emptySet()));
 
 		return expressions;
-
 	}
 
 	@Override

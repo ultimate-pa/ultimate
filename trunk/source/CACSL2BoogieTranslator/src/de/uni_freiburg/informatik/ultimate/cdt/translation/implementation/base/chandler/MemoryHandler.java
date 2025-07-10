@@ -3009,7 +3009,7 @@ public class MemoryHandler {
 
 	public List<Statement> ultimateInitStatements(final ILocation loc) {
 		return mMemoryModel.constructUltimateInitStatements(loc, mRequiredMemoryModelFeatures,
-				mMemoryModelDeclarationsHandler);
+				mMemoryModelDeclarationsHandler, mFixedAddressCounter);
 	}
 
 }
