@@ -10,6 +10,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -19,13 +21,16 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 	ExpressionTranslation mExpressionTranslation;
 	IBooleanArrayHelper mBooleanArrayHelper;
 	TypeSizes mTypeSizes;
+	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 
 	public BaseMemoryAdressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
-			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes) {
+			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizes = typeSizes;
+		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 	}
 
 	protected VariableDeclaration constructStackHeapBarrierConstant() {
@@ -66,5 +71,25 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
 				mExpressionTranslation.getCTypeOfPointerComponents(), stackHeapBarrierExpr,
 				mExpressionTranslation.getCTypeOfPointerComponents());
+	}
+
+	/**
+	 * Multiply an integerExpresion with the size of another type.
+	 *
+	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
+	 */
+	protected Expression multiplyWithSizeOfAnotherType(final ILocation loc, final ICType valueType,
+			final Expression integerExpression, final CPrimitive integerExpresionType) {
+		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
+				integerExpression, integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
+	}
+
+	/**
+	 * Calculates the size of a given type.
+	 *
+	 * @return The size.
+	 */
+	private Expression calculateSizeOf(final ILocation loc, final ICType cType) {
+		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
 }
