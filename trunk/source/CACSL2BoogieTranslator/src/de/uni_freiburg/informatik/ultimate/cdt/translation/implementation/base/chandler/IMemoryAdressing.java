@@ -58,7 +58,7 @@ public interface IMemoryAdressing {
 	 */
 	List<Statement> constructUltimateInitStatements(ILocation loc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, BigInteger fixedAddressCounter);
 
 	/**
 	 * Constructs the expressions used in the specifications for allocInit.
