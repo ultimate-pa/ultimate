@@ -9,6 +9,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -21,19 +23,22 @@ public class MemoryModel {
 	private final ITypeHandler mTypeHandler;
 	private final IBooleanArrayHelper mBooleanArrayHelper;
 	private final ExpressionTranslation mExpressionTranslation;
+	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 
 	private final IMemoryAdressing mMemoryAddressing;
 	private final IMemoryStructure mMemoryStructure;
 
 	public MemoryModel(final TranslationSettings settings, final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper) {
+			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
 		mBooleanArrayHelper = booleanArrayHelper;
+		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 
 		mMemoryAddressing = MemoryModelFactory.createMemoryAddressing(settings, mTypeHandler, mExpressionTranslation,
-				mBooleanArrayHelper, mTypeSizes);
+				mBooleanArrayHelper, mTypeSizes, mTypeSizeAndOffsetComputer);
 		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
 	}
 
@@ -109,5 +114,15 @@ public class MemoryModel {
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryAddressing.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
+	}
+
+	/**
+	 * Add or subtracts a pointer and an integer.
+	 *
+	 * @return The calculated pointer.
+	 */
+	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
+			final RValue integer, final ICType valueType) {
+		return mMemoryAddressing.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType);
 	}
 }

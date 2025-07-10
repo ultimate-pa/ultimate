@@ -29,6 +29,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -40,8 +43,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 	public TwoDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
-			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes) {
-		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes);
+			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer);
 	}
 
 	@Override
@@ -297,5 +301,27 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return expressions;
 
+	}
+
+	@Override
+	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
+			final RValue integer, final ICType valueType) {
+		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
+				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
+			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
+		}
+
+		final var pointerComponentType = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
+
+		final Expression timesSizeOf =
+				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), pointerComponentType);
+
+		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerOffset,
+				pointerComponentType, timesSizeOf, pointerComponentType);
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}
 }

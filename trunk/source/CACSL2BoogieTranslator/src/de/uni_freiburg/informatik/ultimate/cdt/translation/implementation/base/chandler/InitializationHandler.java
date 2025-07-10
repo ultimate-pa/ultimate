@@ -1050,15 +1050,11 @@ public class InitializationHandler {
 		final Expression flatCellNumber =
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, new BigInteger(Integer.toString(product)));
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(arrayBaseAddress.getAddress(), loc);
-		final Expression cellOffset =
-				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cArrayType.getValueType(), flatCellNumber, sizeT);
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, sizeT, cellOffset, sizeT);
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
+				arrayBaseAddress.getAddress(), new RValue(flatCellNumber, sizeT), sizeT);
 
-		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cArrayType.getValueType(), null);
+		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer.getLrValue().getValue(),
+				cArrayType.getValueType(), null);
 	}
 
 	public HeapLValue constructAddressForArrayAtIndex(final ILocation loc, final HeapLValue arrayBaseAddress,
@@ -1072,21 +1068,14 @@ public class InitializationHandler {
 
 		/* do a conversion so the expression has boogie pointer type */
 		final RValue addressRVal = arrayBaseAddress.getAddressAsPointerRValue(mTypeHandler.getBoogiePointerType());
-		// final Expression pointerBase = MemoryHandler.getPointerBaseAddress(arrayBaseAddress.getAddress(), loc);
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(addressRVal.getValue(), loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(addressRVal.getValue(), loc);
 
 		final ICType cellType = cArrayType.getValueType();
 
-		final Expression cellOffset =
-				mMemoryHandler.multiplyWithSizeOfAnotherType(loc, cellType, flatCellNumber, pointerComponentType);
+		final var newPointer = mMemoryHandler.doPointerArithmeticWithConversion(IASTBinaryExpression.op_plus, loc,
+				addressRVal.getValue(), new RValue(flatCellNumber, pointerComponentType), cellType);
 
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-				pointerOffset, pointerComponentType, cellOffset, pointerComponentType);
+		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer.getLrValue().getValue(), cellType, null);
 
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
-
-		return LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, cellType, null);
 	}
 
 	public HeapLValue constructAddressForStructField(final ILocation loc, final HeapLValue baseAddress,

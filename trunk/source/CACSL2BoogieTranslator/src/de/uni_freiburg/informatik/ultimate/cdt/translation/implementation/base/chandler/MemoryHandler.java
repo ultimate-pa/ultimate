@@ -217,8 +217,8 @@ public class MemoryHandler {
 		mMemoryModelDeclarationsHandler =
 				new MemoryModelDeclarationsHandler(mTypeHandler, mBooleanArrayHelper, getRwLockCounterType());
 
-		mMemoryModel =
-				new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper);
+		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
+				mTypeSizeAndOffsetComputer);
 
 		mVariablesToBeMalloced = new LinkedScopedHashMap<>();
 		mVariablesToBeFreed = new LinkedScopedHashMap<>();
@@ -247,8 +247,8 @@ public class MemoryHandler {
 		mVariablesToBeMalloced = prerunMemoryHandler.mVariablesToBeMalloced;
 		mVariablesToBeFreed = prerunMemoryHandler.mVariablesToBeFreed;
 		mMemoryModelDeclarationsHandler = prerunMemoryHandler.mMemoryModelDeclarationsHandler;
-		mMemoryModel =
-				new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper);
+		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
+				mTypeSizeAndOffsetComputer);
 
 		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures(mMemoryModel.metaDataDeclarations());// prerunMemoryHandler.mRequiredMemoryModelFeatures;
 	}
@@ -970,18 +970,7 @@ public class MemoryHandler {
 	 */
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
 			final RValue integer, final ICType valueType) {
-		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
-				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
-			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
-		}
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
-		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(),
-				mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerOffset,
-				mExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf,
-				mExpressionTranslation.getCTypeOfPointerComponents());
-		return MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		return mMemoryModel.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType);
 	}
 
 	/**
@@ -997,20 +986,6 @@ public class MemoryHandler {
 				doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.getLrValue(), valueType);
 		final RValue newRValue = new RValue(resultExpression, mExpressionTranslation.getCTypeOfPointerComponents());
 		return new ExpressionResultBuilder().addAllExceptLrValue(eres).setLrValue(newRValue).build();
-	}
-
-	/**
-	 * Multiply an integerExpresion with the size of another type.
-	 *
-	 * @param integerExpresionType
-	 *            {@link ICType} whose translation is the Boogie type of integerExpression and the result.
-	 *
-	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
-	 */
-	public Expression multiplyWithSizeOfAnotherType(final ILocation loc, final ICType valueType,
-			final Expression integerExpression, final CPrimitive integerExpresionType) {
-		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
-				integerExpression, integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
 	}
 
 	public void beginScope() {

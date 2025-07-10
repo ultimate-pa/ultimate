@@ -7,6 +7,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -65,4 +67,12 @@ public interface IMemoryAdressing {
 	List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(ILocation tuLoc,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Add or subtracts a pointer and an integer.
+	 *
+	 * @return The calculated pointer.
+	 */
+	Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
+			final RValue integer, final ICType valueType);
 }
