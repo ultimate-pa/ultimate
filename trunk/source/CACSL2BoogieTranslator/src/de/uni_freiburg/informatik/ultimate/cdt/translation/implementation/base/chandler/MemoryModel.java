@@ -100,4 +100,16 @@ public class MemoryModel {
 		return mMemoryAddressing.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
+
+	/**
+	 * Constructs the expressions used in the specifications for allocInit.
+	 *
+	 * @return The expressions.
+	 */
+	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
 }
