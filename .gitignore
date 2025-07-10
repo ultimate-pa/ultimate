@@ -335,6 +335,8 @@ trunk/source/WebsiteStatic/webinterface/workers/*.json
 
 releaseScripts/default/sv-benchmarks
 
+trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIRVisitor.java
+trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIRBaseVisitor.java
 trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIR.interp
 trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIR.tokens
 trunk/source/Library-Llvmir/src/de/uni_freiburg/informatik/ultimate/lib/llvmir/LLVMIRBaseListener.java
