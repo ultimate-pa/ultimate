@@ -1028,7 +1028,6 @@ public class MemoryHandler {
 	 */
 	public Expression multiplyWithSizeOfAnotherType(final ILocation loc, final ICType valueType,
 			final Expression integerExpression, final CPrimitive integerExpresionType) {
-		final Expression timesSizeOf;
 		return mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_multiply,
 				integerExpression, integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
 	}
@@ -2881,7 +2880,6 @@ public class MemoryHandler {
 
 	private Attribute[] constructExpandAndSmtDefinedAttributesForSubArrayStore(final HeapDataArray heapDataArray,
 			final String... subArrayToStore) {
-		final Attribute[] attributes;
 		final List<Attribute> attributeList = new ArrayList<>();
 
 		final CACSLLocation ignoreLoc1 = LocationFactory.createIgnoreCLocation();
@@ -2931,7 +2929,6 @@ public class MemoryHandler {
 
 	private Attribute[] constructExpandAndSmtDefinedAttributesForSubArraySelect(final HeapDataArray heapDataArray,
 			final String... indices) {
-		final Attribute[] attributes;
 		final List<Attribute> attributeList = new ArrayList<>();
 
 		final CACSLLocation ignoreLoc1 = LocationFactory.createIgnoreCLocation();
