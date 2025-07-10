@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
@@ -3049,102 +3048,6 @@ public class MemoryHandler {
 	public List<Statement> ultimateInitStatements(final ILocation loc) {
 		return mMemoryModel.constructUltimateInitStatements(loc, mRequiredMemoryModelFeatures,
 				mMemoryModelDeclarationsHandler);
-	}
-
-	public interface IBooleanArrayHelper {
-		ASTType constructBoolReplacementType();
-
-		Expression constructTrue();
-
-		Expression constructFalse();
-
-		Expression compareWithTrue(Expression expr);
-
-		default Expression constructValue(final boolean value) {
-			return value ? constructTrue() : constructFalse();
-		}
-	}
-
-	public static final class BooleanArrayHelper_Bool implements IBooleanArrayHelper {
-
-		@Override
-		public ASTType constructBoolReplacementType() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, BoogieType.TYPE_BOOL, "bool");
-		}
-
-		@Override
-		public Expression constructTrue() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.createBooleanLiteral(ignoreLoc, true);
-		}
-
-		@Override
-		public Expression constructFalse() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.createBooleanLiteral(ignoreLoc, false);
-		}
-
-		@Override
-		public Expression compareWithTrue(final Expression expr) {
-			return expr;
-		}
-
-	}
-
-	public static final class BooleanArrayHelper_Integer implements IBooleanArrayHelper {
-
-		@Override
-		public ASTType constructBoolReplacementType() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, BoogieType.TYPE_INT, "int");
-		}
-
-		@Override
-		public Expression constructTrue() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.createIntegerLiteral(ignoreLoc, "1");
-		}
-
-		@Override
-		public Expression constructFalse() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.createIntegerLiteral(ignoreLoc, "0");
-		}
-
-		@Override
-		public Expression compareWithTrue(final Expression expr) {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ, expr, constructTrue());
-		}
-
-	}
-
-	public static final class BooleanArrayHelper_Bitvector implements IBooleanArrayHelper {
-
-		@Override
-		public ASTType constructBoolReplacementType() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return new PrimitiveType(ignoreLoc, BoogieType.createBitvectorType(1), "bv1");
-		}
-
-		@Override
-		public Expression constructTrue() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.createBitvecLiteral(ignoreLoc, "1", 1);
-		}
-
-		@Override
-		public Expression constructFalse() {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.createBitvecLiteral(ignoreLoc, "0", 1);
-		}
-
-		@Override
-		public Expression compareWithTrue(final Expression expr) {
-			final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
-			return ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ, expr, constructTrue());
-		}
 	}
 
 }
