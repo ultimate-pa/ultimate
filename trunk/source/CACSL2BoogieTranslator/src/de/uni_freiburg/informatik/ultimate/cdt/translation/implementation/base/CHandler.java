@@ -2166,7 +2166,7 @@ public class CHandler {
 
 		final RValue addressRValue;
 		final CallStatement ultimateAllocCall;
-		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+		if (mSettings.fixedAddressesForInitialization()) {
 			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType);
 
 			addressRValue = pair.getFirst();

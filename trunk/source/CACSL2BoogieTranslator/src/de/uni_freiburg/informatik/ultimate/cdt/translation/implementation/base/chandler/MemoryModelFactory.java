@@ -32,8 +32,6 @@ public class MemoryModelFactory {
 							settings.checkPointerDerefValidity() != CheckMode.IGNORE),
 					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID,
 							settings.checkIfFreedPointerIsValid()),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN,
-							settings.checkMemoryLeakInMain()),
 					new SimpleEntry<>(
 							CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),

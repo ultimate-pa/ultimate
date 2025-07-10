@@ -154,11 +154,6 @@ public class MemoryHandler {
 	 */
 	private static final boolean ADD_IMPLEMENTATIONS = false;
 
-	/**
-	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
-	 */
-	public static final boolean FIXED_ADDRESSES_FOR_INITIALIZATION = true;
-
 	// needed for adding modifies clauses
 	private final ITypeHandler mTypeHandler;
 

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem;
@@ -165,6 +166,14 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_MEMORY_ADDRESSING = "Memory addressing";
 	private static final String DESC_MEMOY_ADDRESSING = "Whether a 2D or 1D memory model should be used.";
+
+	/**
+	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}.
+	 */
+	public static final String LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION = "Fixed addresses for initialization";
+	private static final String DESC_FIXED_ADDRESSES_FOR_INITIALIZATION =
+			"Whether allocInit should be used to for initial allocations."
+					+ "This speeds up the verification if there is a high amount of allocations that can be made initially.";
 
 	public enum CheckMode {
 		IGNORE, ASSUME, CHECK
@@ -371,6 +380,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_USE_STORE_CHAINS, false, "Only for benchmarking -- do not use",
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ENFORCE_IF_FOR_CONDITIONAL, false, DESC_ENFORCE_IF_FOR_CONDITIONAL,
-						PreferenceType.Boolean) };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION, true,
+						DESC_FIXED_ADDRESSES_FOR_INITIALIZATION, PreferenceType.Boolean) };
 	}
 }

@@ -759,7 +759,7 @@ public class PostProcessor {
 							DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 					if (mCHandler.isHeapVar(id)) {
-						if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+						if (mSettings.fixedAddressesForInitialization()) {
 							final Pair<RValue, CallStatement> pair = mMemoryHandler
 									.getUltimateMemAllocInitCall(currentDeclsLoc, en.getValue().getType());
 							final RValue addressRValue = pair.getFirst();
