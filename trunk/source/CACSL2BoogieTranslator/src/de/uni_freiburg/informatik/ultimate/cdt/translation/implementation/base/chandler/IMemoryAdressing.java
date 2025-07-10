@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
@@ -75,4 +76,11 @@ public interface IMemoryAdressing {
 	 */
 	Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
 			final RValue integer, final ICType valueType);
+
+	/**
+	 * Returns the step size in which the base value of the initial allocations must be increased.
+	 *
+	 * @return The step size.
+	 */
+	BigInteger fixedAddressCounterCountingStep(final Expression size);
 }

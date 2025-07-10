@@ -184,7 +184,7 @@ public class MemoryHandler {
 	/**
 	 * See {@link MemoryModelDeclarations#ULTIMATE_ALLOC_INIT}
 	 */
-	private int mFixedAddressCounter = 1;
+	private BigInteger mFixedAddressCounter = BigInteger.ONE;
 
 	/**
 	 * Pre-run constructor.
@@ -703,7 +703,7 @@ public class MemoryHandler {
 	 *            which takes a pointer to the object for which allocate.
 	 */
 	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final ICType cType) {
-		final BigInteger ptrBase = BigInteger.valueOf(mFixedAddressCounter);
+		final BigInteger ptrBase = mFixedAddressCounter;
 		final Expression addressExpression =
 				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
 		final RValue addressRValue = new RValue(addressExpression, cType);
@@ -713,7 +713,10 @@ public class MemoryHandler {
 				mExpressionTranslation.getCTypeOfPointerComponents());
 		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(actualLoc, cType);
 		final CallStatement ultimateAllocCall = getUltimateMemAllocInitCall(size, ptrBaseRValue, actualLoc);
-		mFixedAddressCounter++;
+
+		final var fixedAddressCounterStepSize = mMemoryModel.fixedAddressCounterCountingStep(size);
+		mFixedAddressCounter = mFixedAddressCounter.add(fixedAddressCounterStepSize);
+
 		return new Pair<>(addressRValue, ultimateAllocCall);
 	}
 
