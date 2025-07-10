@@ -86,6 +86,7 @@ public final class TranslationSettings {
 	private final UndefinedFunctionBehaviour mUndefinedFunctionBehaviour;
 	private final boolean mEnforceIfForConditional;
 	private final MemoryAddressing mMemoryAddressing;
+	private final boolean mFixedAddressesForInitialization;
 
 	public TranslationSettings(final IPreferenceProvider ups) {
 		mCheckSignedIntegerBounds =
@@ -139,6 +140,8 @@ public final class TranslationSettings {
 				CACSLPreferenceInitializer.UndefinedFunctionBehaviour.class);
 		mEnforceIfForConditional = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ENFORCE_IF_FOR_CONDITIONAL);
 		mMemoryAddressing = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_ADDRESSING, MemoryAddressing.class);
+		mFixedAddressesForInitialization =
+				ups.getBoolean(CACSLPreferenceInitializer.LABEL_FIXED_ADDRESSES_FOR_INITIALIZATION);
 	}
 
 	private TranslationSettings(final CheckMode divisionByZeroOfIntegerTypes,
@@ -157,7 +160,7 @@ public final class TranslationSettings {
 			final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
-			final MemoryAddressing memoryAddressingPreference) {
+			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization) {
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
 		mBitvectorTranslation = bitvectorTranslation;
@@ -190,6 +193,7 @@ public final class TranslationSettings {
 		mUndefinedFunctionBehaviour = undefinedFunctionBehaviour;
 		mEnforceIfForConditional = enforceIfForConditional;
 		mMemoryAddressing = memoryAddressingPreference;
+		mFixedAddressesForInitialization = fixedAddressesForInitialization;
 	}
 
 	public PointerIntegerConversion getPointerIntegerCastMode() {
@@ -332,6 +336,10 @@ public final class TranslationSettings {
 		return mMemoryAddressing;
 	}
 
+	public boolean fixedAddressesForInitialization() {
+		return mFixedAddressesForInitialization;
+	}
+
 	public TranslationSettings setMemoryStructurePreference(final MemoryStructure memoryStructure) {
 		return new TranslationSettings(mDivisionByZeroOfIntegerTypes, mDivisionByZeroOfFloatingTypes,
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields,
@@ -341,7 +349,8 @@ public final class TranslationSettings {
 				mCheckAssertions, mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
-				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing);
+				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
+				mFixedAddressesForInitialization);
 	}
 
 	/**

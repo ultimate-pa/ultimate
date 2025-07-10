@@ -750,8 +750,8 @@ public class CHandler {
 		 * <li>now we recompute the declarations, in order to give them correct modifies clauses and insert them into
 		 * the Boogie program
 		 *
-		 * have to block this in prerun, because there, Memory Structure is not declared which may cause problems
-		 * with the call graph computation
+		 * have to block this in prerun, because there, Memory Structure is not declared which may cause problems with
+		 * the call graph computation
 		 */
 		if (!mIsPrerun) {
 			// handle proc. declaration & resolve their transitive modified globals
@@ -2156,7 +2156,7 @@ public class CHandler {
 
 		final RValue addressRValue;
 		final CallStatement ultimateAllocCall;
-		if (MemoryHandler.FIXED_ADDRESSES_FOR_INITIALIZATION) {
+		if (mSettings.fixedAddressesForInitialization()) {
 			final Pair<RValue, CallStatement> pair = mMemoryHandler.getUltimateMemAllocInitCall(actualLoc, arrayType);
 
 			addressRValue = pair.getFirst();
