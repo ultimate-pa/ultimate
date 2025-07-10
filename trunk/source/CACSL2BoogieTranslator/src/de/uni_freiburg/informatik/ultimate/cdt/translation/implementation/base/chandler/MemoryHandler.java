@@ -2246,46 +2246,24 @@ public class MemoryHandler {
 		final String procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
 		final String pointerBaseIdentifier = "ptrBase";
 		final ASTType intType = typeHandler.cType2AstType(tuLoc, mExpressionTranslation.getCTypeOfPointerComponents());
-		// #valid
-		final Expression valid = getValidArray(tuLoc);
-		// #length
-		final Expression length = getLengthArray(tuLoc);
-		// ~size
-		final IdentifierExpression size =
-				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(), SFO.SIZE,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
-		final IdentifierExpression ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc,
-				mTypeHandler.getBoogieTypeForPointerComponents(), pointerBaseIdentifier,
-				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
-		{
-			final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier,
-					new String[0],
-					new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE, pointerBaseIdentifier }, intType) },
-					new VarList[0], new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
+
+		final Procedure allocDeclaration = new Procedure(tuLoc, new Attribute[0], procedureIdentifier, new String[0],
+				new VarList[] { new VarList(tuLoc, new String[] { SFO.SIZE, pointerBaseIdentifier }, intType) },
+				new VarList[0], new Specification[0], null);
+
+		mProcedureManager.beginCustomProcedure(main, tuLoc, procedureIdentifier, allocDeclaration);
+
+		final var allocInitSpecificationExpressions = mMemoryModel.constructAllocInitSpecificationExpressions(tuLoc,
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+
+		final List<Specification> allocInitSpecifications = new ArrayList<>();
+
+		for (final Pair<Expression, Set<VariableLHS>> pair : allocInitSpecificationExpressions) {
+			allocInitSpecifications.add(
+					mProcedureManager.constructEnsuresSpecification(tuLoc, false, pair.getFirst(), pair.getSecond()));
 		}
 
-		final List<Specification> specs = new ArrayList<>();
-		// ensures #valid[ptrBase] == true;
-		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
-		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				MemoryModelExpressionHelper.ensuresArrayHasValue(tuLoc, bLTrue, ptrBase, valid),
-				Collections.emptySet()));
-		// ensures #length[ptrBase] == size;
-		specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-				MemoryModelExpressionHelper.ensuresArrayHasValue(tuLoc, size, ptrBase, length),
-				Collections.emptySet()));
-		if (false) {
-			// Omit #StackHeapBarrier here until we know that it is needed.
-			// #StackHeapBarrier < res!base
-			specs.add(mProcedureManager.constructEnsuresSpecification(tuLoc, false,
-					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-							IASTBinaryExpression.op_lessThan, getStackHeapBarrier(tuLoc),
-							mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase,
-							mExpressionTranslation.getCTypeOfPointerComponents()),
-					Collections.emptySet()));
-		}
-		mProcedureManager.addSpecificationsToCurrentProcedure(specs);
+		mProcedureManager.addSpecificationsToCurrentProcedure(allocInitSpecifications);
 		mProcedureManager.endCustomProcedure(main, procedureIdentifier);
 	}
 
@@ -3069,7 +3047,8 @@ public class MemoryHandler {
 	}
 
 	public List<Statement> ultimateInitStatements(final ILocation loc) {
-		return mMemoryModel.constructUltimateInitStatements(loc, mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
+		return mMemoryModel.constructUltimateInitStatements(loc, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	public interface IBooleanArrayHelper {

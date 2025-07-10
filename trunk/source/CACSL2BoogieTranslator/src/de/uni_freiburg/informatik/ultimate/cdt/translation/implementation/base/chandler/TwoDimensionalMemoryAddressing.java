@@ -266,4 +266,38 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return statements;
 	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final var pointerBaseIdentifier = "ptrBase";
+		final var procedureIdentifier = MemoryModelDeclarations.ULTIMATE_ALLOC_INIT.getName();
+
+		final var trueExpr = mBooleanArrayHelper.constructTrue();
+		final var validArrayExpr = MemoryModelExpressionHelper.getValidArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+		final var lengthArrayExpr = MemoryModelExpressionHelper.getLengthArray(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+		final var size = ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(),
+				SFO.SIZE, new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+
+		final var ptrBase = ExpressionFactory.constructIdentifierExpression(tuLoc,
+				mTypeHandler.getBoogieTypeForPointerComponents(), pointerBaseIdentifier,
+				new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureIdentifier));
+
+		final ArrayList<Pair<Expression, Set<VariableLHS>>> expressions = new ArrayList<>();
+		// ensures #valid[ptrBase] == true;
+		final var validPtrBaseExpr =
+				MemoryModelExpressionHelper.ensuresArrayHasValue(tuLoc, trueExpr, ptrBase, validArrayExpr);
+		expressions.add(new Pair<>(validPtrBaseExpr, Collections.emptySet()));
+
+		// ensures #length[ptrBase] == size;
+		final var lengthPtrBaseSize =
+				MemoryModelExpressionHelper.ensuresArrayHasValue(tuLoc, size, ptrBase, lengthArrayExpr);
+		expressions.add(new Pair<>(lengthPtrBaseSize, Collections.emptySet()));
+
+		return expressions;
+
+	}
 }

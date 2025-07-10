@@ -54,6 +54,16 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The statements.
 	 */
-	List<Statement> constructUltimateInitStatements(ILocation loc, RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+	List<Statement> constructUltimateInitStatements(ILocation loc,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the expressions used in the specifications for allocInit.
+	 *
+	 * @return The expressions.
+	 */
+	List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(ILocation tuLoc,
+			RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }
