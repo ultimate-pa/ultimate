@@ -141,17 +141,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MemoryHandler {
 
-	public enum MemoryArea {
-		STACK, HEAP,;
-
-		MemoryModelDeclarations getMemoryStructureDeclaration() {
-			return switch (this) {
-			case HEAP -> MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP;
-			case STACK -> MemoryModelDeclarations.ULTIMATE_ALLOC_STACK;
-			};
-		}
-	}
-
 	private enum HeapWriteMode {
 		STORE_CHECKED, STORE_UNCHECKED, SELECT
 	}
