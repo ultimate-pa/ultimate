@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
@@ -125,4 +126,14 @@ public class MemoryModel {
 			final RValue integer, final ICType valueType) {
 		return mMemoryAddressing.doPointerArithmetic(operator, loc, ptrAddress, integer, valueType);
 	}
+
+	/**
+	 * Returns the step size in which the base value of the initial allocations must be increased.
+	 *
+	 * @return The step size.
+	 */
+	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
+		return mMemoryAddressing.fixedAddressCounterCountingStep(size);
+	}
+
 }

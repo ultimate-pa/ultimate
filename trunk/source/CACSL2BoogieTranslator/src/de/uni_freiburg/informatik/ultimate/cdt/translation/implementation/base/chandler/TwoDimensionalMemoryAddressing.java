@@ -324,4 +324,9 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}
+
+	@Override
+	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
+		return BigInteger.ONE;
+	}
 }

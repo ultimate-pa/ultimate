@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -230,6 +231,11 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				mExpressionTranslation.getCTypeOfPointerComponents());
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(sum, zeroExpr, loc);
+	}
+
+	@Override
+	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
+		return mTypeSizes.extractIntegerValue(size, new CPrimitive(CPrimitives.LONG));
 	}
 
 }
