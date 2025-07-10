@@ -4,7 +4,6 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.IBooleanArrayHelper;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
