@@ -66,7 +66,7 @@ public final class TranslationSettings {
 	private final MemoryModel mMemoryModelPreference;
 	private final boolean mFpToIeeeBvExtension;
 	private final boolean mSmtBoolArraysWorkaround;
-	private final String mEntryMethod;
+	private final String mEntryFunction;
 	private final boolean mCheckErrorFunction;
 	private final boolean mCheckAssertions;
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
@@ -93,7 +93,7 @@ public final class TranslationSettings {
 		mCheckMemoryLeakInMain = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN);
 
 		mCheckAssertions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ASSERTIONS);
-		mEntryMethod = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
+		mEntryFunction = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
 		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
@@ -137,7 +137,7 @@ public final class TranslationSettings {
 			final boolean inRange, final PointerIntegerConversion pointerIntegerConversion,
 			final boolean checkIfFreedPointerIsValid, final CheckMode checkPointerDerefValidity,
 			final CheckMode checkPointerSubtractionAndComparisonValidity, final MemoryModel memoryModelPreference,
-			final boolean fpToIeeeBvExtension, final boolean smtBoolArraysWorkaround, final String checkedMethod,
+			final boolean fpToIeeeBvExtension, final boolean smtBoolArraysWorkaround, final String entryFunction,
 			final boolean checkErrorFunction, final boolean checkAssertions,
 			final boolean isSvcompMemtrackCompatibilityMode, final boolean checkAllocationPurity,
 			final boolean checkMemoryLeakInMain, final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces,
@@ -158,7 +158,7 @@ public final class TranslationSettings {
 		mMemoryModelPreference = memoryModelPreference;
 		mFpToIeeeBvExtension = fpToIeeeBvExtension;
 		mSmtBoolArraysWorkaround = smtBoolArraysWorkaround;
-		mEntryMethod = checkedMethod;
+		mEntryFunction = entryFunction;
 		mCheckErrorFunction = checkErrorFunction;
 		mCheckAssertions = checkAssertions;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
@@ -236,8 +236,8 @@ public final class TranslationSettings {
 		return mSmtBoolArraysWorkaround;
 	}
 
-	public String getEntryMethod() {
-		return mEntryMethod;
+	public String getEntryFunction() {
+		return mEntryFunction;
 	}
 
 	public boolean checkErrorFunction() {
@@ -309,7 +309,7 @@ public final class TranslationSettings {
 				mBitvectorTranslation, mOverapproximateFloatingPointOperations, mBitpreciseBitfields, mInRange,
 				mPointerIntegerConversion, mCheckIfFreedPointerIsValid, mCheckPointerDerefValidity,
 				mCheckPointerSubtractionAndComparisonValidity, memoryModel, mFpToIeeeBvExtension,
-				mSmtBoolArraysWorkaround, mEntryMethod, mCheckErrorFunction, mCheckAssertions,
+				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions,
 				mIsSvcompMemtrackCompatibilityMode, mCheckAllocationPurity, mCheckMemoryLeakInMain,
 				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
 				mInitialRoundingMode, mAdaptMemoryModelResolutionOnPointerCasts, mStringOverapproximationThreshold,
