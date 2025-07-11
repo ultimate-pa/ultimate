@@ -62,6 +62,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private Unit mResult;
+	private final String mFilename;
 
 	// Temporary storage for function-local variables and statements
 	private ArrayList<VariableDeclaration> mFuncLocalVars = new ArrayList<>();
@@ -69,10 +70,13 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	// Storage for the declarations that will be part of the final Boogie Unit
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 
-	public LlvmirToBoogieListener(final IUltimateServiceProvider services, final ILogger logger) {
+	public LlvmirToBoogieListener(final IUltimateServiceProvider services, final ILogger logger,
+			final String filename) {
 		assert services != null;
 		mServices = services;
 		mLogger = logger;
+		mFilename = filename;
+		mLogger.info("Starting translation of LLVM IR to Boogie for file: " + mFilename);
 		createInitialDeclarations();
 	}
 
