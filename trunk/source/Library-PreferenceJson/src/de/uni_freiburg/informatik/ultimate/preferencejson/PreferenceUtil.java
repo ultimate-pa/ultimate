@@ -246,7 +246,8 @@ public final class PreferenceUtil {
 	 * <li>Optional: <tt>range</tt>: A list of integers representing a minimal and a maximal value, e.g.
 	 * <tt>[1,12]</tt>. If the type is int or real, this allows the frontend to generate a slider control.</li>
 	 * <li>Optional: <tt>options</tt>: A list of strings representing values to choose from. If the type is string, this
-	 * allows the frontend to generate a selection box.</li>
+	 * allows the frontend to generate a selection box.</li> *
+	 * <li>Optional: <tt>description</tt>: A description that documents this setting.</li>
 	 * </ul>
 	 *
 	 * @param item
@@ -270,6 +271,10 @@ public final class PreferenceUtil {
 
 		// TODO: Perhaps handle ranges via item.getPreferenceValidator() as well
 		// TODO: Deal with keyvalue types
+
+		if (item.getDescription() != null) {
+			rtr.put("description", item.getDescription());
+		}
 
 		return rtr;
 	}
