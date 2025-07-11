@@ -36,14 +36,17 @@ public class ParseTreeElementWrapper implements IElement {
 	private static final long serialVersionUID = 233243407316309392L;
 	private final IPayload mPayload;
 	private final ParseTree mParseTree;
+	private final String mFilename;
 
 	/**
 	 * Constructs a wrapper for a ParseTree that implements the IElement interface.
 	 *
 	 * @param parseTree The ParseTree to wrap.
+	 * @param filename  The name of the file from which the ParseTree was generated.
 	 */
-	public ParseTreeElementWrapper(final ParseTree parseTree) {
+	public ParseTreeElementWrapper(final ParseTree parseTree, final String filename) {
 		mParseTree = parseTree;
+		mFilename = filename;
 		mPayload = new Payload();
 	}
 
@@ -71,4 +74,14 @@ public class ParseTreeElementWrapper implements IElement {
 	public ParseTree getParseTree() {
 		return mParseTree;
 	}
+
+	/**
+	 * Returns the filename from which the ParseTree was generated.
+	 *
+	 * @return The filename from which the ParseTree was generated.
+	 */
+	public String getFilename() {
+		return mFilename;
+	}
+
 }

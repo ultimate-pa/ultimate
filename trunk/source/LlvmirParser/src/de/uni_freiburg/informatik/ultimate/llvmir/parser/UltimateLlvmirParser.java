@@ -108,7 +108,7 @@ public class UltimateLlvmirParser implements ISource {
 		}
 		final ParseTree tree = parseFile(files[0]);
 
-		final IElement element = new ParseTreeElementWrapper(tree);
+		final IElement element = new ParseTreeElementWrapper(tree, files[0].getAbsolutePath());
 		return element;
 	}
 
