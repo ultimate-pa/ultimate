@@ -228,9 +228,6 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
 			final RValue integer, final ICType valueType) {
-		final var t1 = mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType());
-		final var t2 = mTypeSizes.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType());
-
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
 				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
