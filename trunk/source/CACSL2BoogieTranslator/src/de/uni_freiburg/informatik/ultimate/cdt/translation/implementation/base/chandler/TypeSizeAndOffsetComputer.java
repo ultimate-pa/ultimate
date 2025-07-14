@@ -123,8 +123,8 @@ public class TypeSizeAndOffsetComputer {
 	}
 
 	/**
-	 * @return An Expression that represents the offset (in bytes) at which a certain field of a stuct is stored (on the
-	 *         heap).
+	 * @return An Expression that represents the offset (in bytes) at which a certain field of a struct is stored (on
+	 *         the heap).
 	 */
 	public Offset constructOffsetForField(final ILocation loc, final CStructOrUnion cStruct, final int fieldIndex) {
 		if (!mTypeSizeCache.containsKey(cStruct)) {
@@ -447,7 +447,7 @@ public class TypeSizeAndOffsetComputer {
 		Expression asExpression(ILocation loc);
 	}
 
-	private class SizeTValueInteger implements SizeTValue {
+	class SizeTValueInteger implements SizeTValue {
 		private final BigInteger mValue;
 
 		public SizeTValueInteger(final BigInteger value) {

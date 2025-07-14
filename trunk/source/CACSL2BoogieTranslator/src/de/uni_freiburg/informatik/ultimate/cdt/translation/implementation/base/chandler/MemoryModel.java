@@ -9,7 +9,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -134,6 +136,19 @@ public class MemoryModel {
 	 */
 	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
 		return mMemoryAddressing.fixedAddressCounterCountingStep(size);
+	}
+
+	/**
+	 * Returns the address for struct field.
+	 *
+	 * @return The address.
+	 */
+	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
+			final Offset fieldOffset, final CPrimitive sizeT) {
+		if (fieldOffset.isBitfieldOffset()) {
+			throw new UnsupportedOperationException("Bitfield read");
+		}
+		return mMemoryAddressing.constructAddressForStructField(loc, baseAddress, fieldOffset, sizeT);
 	}
 
 }

@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -249,6 +250,20 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public BigInteger fixedAddressCounterCountingStep(final Expression size) {
 		return mTypeSizes.extractIntegerValue(size, new CPrimitive(CPrimitives.LONG));
+	}
+
+	@Override
+	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
+			final Offset fieldOffset, final CPrimitive sizeT) {
+
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress, loc);
+		final Expression zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
+				pointerBase, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(sum, zeroExpr, loc);
 	}
 
 }
