@@ -97,9 +97,8 @@ public final class TranslationSettings {
 		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mCheckIfFreedPointerIsValid = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
-		mCheckPointerDerefValidity = ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.class);
-		// mCheckFreeValid =
-		// prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
+		mCheckPointerDerefValidity =
+				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_DEREF_VALIDITY, CheckMode.class);
 		mCheckPointerSubtractionAndComparisonValidity = ups.getEnum(
 				CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, CheckMode.class);
 		mMemoryModelPreference = ups.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
