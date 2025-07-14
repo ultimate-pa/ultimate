@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
@@ -19,17 +20,22 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 	// TOOD: just a heuristic upper limit(?) atm, make precise. (Need deterministic state reduction then too though)
 	final Map<String, Integer> mLocationCountMap = new HashMap<>();
 	private final Map<String, Integer> mMaxParallelLocationStates;
+	private final Map<String, Set<LOC>> mFinalLocations = new HashMap<>();
 
 	public AbstractLocationMap(final Function<LOC, Integer> mappingFunction,
 			final Map<String, ? extends LOC> entryLocs) {
 		mMappingFunction = mappingFunction;
 		mEntryLocs = entryLocs;
 		mMaxParallelLocationStates = new HashMap<>();
-		calculateMaxParallelLocationStates();
+		computeMaxAndFinalLocs();
 	}
 
 	public int getAbstractEntryLoc(final String threadName) {
 		return getAbstractLocation(mEntryLocs.get(threadName));
+	}
+
+	public Set<Integer> getAbstractFinalLoc(final String threadName) {
+		return mFinalLocations.get(threadName).stream().map(l -> getAbstractLocation(l)).collect(Collectors.toSet());
 	}
 
 	public LOC getEntryLoc(final String threadName) {
@@ -59,7 +65,7 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 		return max;
 	}
 
-	private void calculateMaxParallelLocationStates() {
+	private void computeMaxAndFinalLocs() {
 		for (final LOC entryLoc : mEntryLocs.values()) {
 			final String ownerThreadString = entryLoc.getProcedure();
 			final Set<Integer> abstractLocationSet = new HashSet<>();
@@ -72,6 +78,9 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 					counter++;
 				}
 				abstractLocationSet.add(abstraction);
+				if (!iter.hasNext()) {
+					mFinalLocations.put(ownerThreadString, mFinalLocations.get(ownerThreadString));
+				}
 			}
 			mLocationCountMap.put(ownerThreadString, counter);
 		}
