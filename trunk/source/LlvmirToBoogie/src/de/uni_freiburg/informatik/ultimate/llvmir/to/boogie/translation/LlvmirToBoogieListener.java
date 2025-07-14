@@ -63,6 +63,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	private final ILogger mLogger;
 	private Unit mResult;
 	private final String mFilename;
+	private DefaultLocation mLocation;
 
 	// Temporary storage for function-local variables and statements
 	private ArrayList<VariableDeclaration> mFuncLocalVars = new ArrayList<>();
@@ -76,8 +77,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		mServices = services;
 		mLogger = logger;
 		mFilename = filename;
+		mLocation = null;
 		mLogger.info("Starting translation of LLVM IR to Boogie for file: " + mFilename);
-		createInitialDeclarations();
 	}
 
 	public Unit getResult() {
@@ -92,27 +93,24 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * `#init` and `#main`.
 	 */
 	private void createInitialDeclarations() {
-		final DefaultLocation startLocation = new DefaultLocation(mFilename, -1, -1, -1, -1);
-		final DefaultLocation initLocation = new DefaultLocation(mFilename, -1, -1, -1, -1);
-
-		final Body initBody = new Body(initLocation, new VariableDeclaration[] {}, new Statement[] {});
-		final Procedure initProcedure = new Procedure(initLocation, new Attribute[] {}, "#init", new String[] {},
+		final Body initBody = new Body(mLocation, new VariableDeclaration[] {}, new Statement[] {});
+		final Procedure initProcedure = new Procedure(mLocation, new Attribute[] {}, "#init", new String[] {},
 				new VarList[] {}, new VarList[] {}, new Specification[] {}, initBody);
 		mDeclarations.add(initProcedure);
-		final CallStatement initCall = new CallStatement(startLocation, false, new VariableLHS[] {}, "#init",
+		final CallStatement initCall = new CallStatement(mLocation, false, new VariableLHS[] {}, "#init",
 				new Expression[] {});
 
-		final PrimitiveType intType = new PrimitiveType(startLocation, "int");
-		final VarList varList = new VarList(startLocation, new String[] { "tmp" }, intType);
-		final VariableDeclaration varDecl = new VariableDeclaration(startLocation, new Attribute[] {},
+		final PrimitiveType intType = new PrimitiveType(mLocation, "int");
+		final VarList varList = new VarList(mLocation, new String[] { "tmp" }, intType);
+		final VariableDeclaration varDecl = new VariableDeclaration(mLocation, new Attribute[] {},
 				new VarList[] { varList });
-		final VariableLHS varLhs = new VariableLHS(startLocation, "tmp");
-		final CallStatement mainCall = new CallStatement(startLocation, false, new VariableLHS[] { varLhs }, "#main",
+		final VariableLHS varLhs = new VariableLHS(mLocation, "tmp");
+		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "#main",
 				new Expression[] {});
-		final Body startBody = new Body(startLocation, new VariableDeclaration[] { varDecl },
+		final Body startBody = new Body(mLocation, new VariableDeclaration[] { varDecl },
 				new Statement[] { initCall, mainCall });
-		final Procedure startProcedure = new Procedure(startLocation, new Attribute[] {}, "ULTIMATE.start",
-				new String[] {}, new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
+		final Procedure startProcedure = new Procedure(mLocation, new Attribute[] {}, "ULTIMATE.start", new String[] {},
+				new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
 		mDeclarations.add(startProcedure);
 	}
 
@@ -178,6 +176,22 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	}
 
 	/**
+	 * Handles the entry event for the compilation unit in the LLVM IR parse tree.
+	 *
+	 * This method initializes the location for the compilation unit and creates the initial declarations required for
+	 * the Boogie translation.
+	 *
+	 * @param ctx The parse tree context for the compilation unit.
+	 */
+	@Override
+	public void enterCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
+		mLocation = new DefaultLocation("CompUnit", ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+
+		createInitialDeclarations();
+	}
+
+	/**
 	 * Handles the exit event for the compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method creates the initial procedures required for the Boogie translation, specifically an `#init` procedure
@@ -188,9 +202,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 */
 	@Override
 	public void exitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
-		final DefaultLocation location = new DefaultLocation(mFilename, ctx.getStart().getLine(),
-				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-		mResult = new Unit(location, mDeclarations.toArray(Declaration[]::new));
+		mResult = new Unit(mLocation, mDeclarations.toArray(Declaration[]::new));
 	}
 
 	/**
@@ -207,40 +219,11 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 
-		final DefaultLocation location = new DefaultLocation(mFilename, ctx.getStart().getLine(),
+		final DefaultLocation location = new DefaultLocation("FuncDef", ctx.getStart().getLine(),
 				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
-		final VariableDeclaration[] localVars = mFuncLocalVars.toArray(VariableDeclaration[]::new);
-		for (final VariableDeclaration varDecl : localVars) {
-			varDecl.setLoc(location);
-			for (final Attribute att : varDecl.getAttributes()) {
-				att.setLoc(location);
-			}
-			for (final VarList varList : varDecl.getVariables()) {
-				varList.setLoc(location);
-			}
-		}
-		final Statement[] blockStatements = mFuncBlock.toArray(Statement[]::new);
-		for (final Statement stmt : blockStatements) {
-			stmt.setLoc(location);
-			if (stmt instanceof CallStatement) {
-				for (final Attribute att : ((CallStatement) stmt).getAttributes()) {
-					att.setLoc(location);
-				}
-				for (final VariableLHS lhs : ((CallStatement) stmt).getLhs()) {
-					lhs.setLoc(location);
-				}
-			} else if (stmt instanceof AssignmentStatement) {
-				for (final LeftHandSide lhs : ((AssignmentStatement) stmt).getLhs()) {
-					lhs.setLoc(location);
-				}
-				for (final Expression expr : ((AssignmentStatement) stmt).getRhs()) {
-					expr.setLoc(location);
-				}
-			}
-		}
-
-		final Body funcBody = new Body(location, localVars, blockStatements);
+		final Body funcBody = new Body(location, mFuncLocalVars.toArray(VariableDeclaration[]::new),
+				mFuncBlock.toArray(Statement[]::new));
 		final ArrayList<Attribute> attributes = new ArrayList<>();
 		final ArrayList<String> typeParams = new ArrayList<>();
 		final ArrayList<VarList> inParams = new ArrayList<>();
@@ -294,13 +277,16 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	@Override
 	public void exitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
 		final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
+		final DefaultLocation location = new DefaultLocation("RetTerm", ctx.getStart().getLine(),
+				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+
 		if (returnType.intType() != null) {
 			final String returnValue = ctx.value().constant().intConst().getText();
-			final IntegerLiteral returnLiteral = new IntegerLiteral(null, returnValue);
-			final VariableLHS returnVar = new VariableLHS(null, "ret");
-			final AssignmentStatement assignmentStmt = new AssignmentStatement(null, new LeftHandSide[] { returnVar },
-					new Expression[] { returnLiteral });
-			final ReturnStatement returnStmt = new ReturnStatement(null);
+			final IntegerLiteral returnLiteral = new IntegerLiteral(location, returnValue);
+			final VariableLHS returnVar = new VariableLHS(location, "ret");
+			final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
+					new LeftHandSide[] { returnVar }, new Expression[] { returnLiteral });
+			final ReturnStatement returnStmt = new ReturnStatement(location);
 			mFuncBlock.addAll(Arrays.asList(assignmentStmt, returnStmt));
 		} else {
 			// TODO: Support for other types
@@ -321,6 +307,9 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	public void exitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = ctx.GlobalIdent().getText();
+		final DefaultLocation location = new DefaultLocation("GlobalDef", ctx.getStart().getLine(),
+				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+
 		if (type.intType() != null) {
 			final PrimitiveType intType = new PrimitiveType(null, "int");
 			final VarList varList = new VarList(null, new String[] { unifyIdentifier(identifier) }, intType);
@@ -328,12 +317,13 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 					new VarList[] { varList });
 			mDeclarations.add(varDecl);
 
-			final VariableLHS varLhs = new VariableLHS(null, unifyIdentifier(identifier));
-			final IntegerLiteral initValue = new IntegerLiteral(null, ctx.constant().intConst().getText());
-			final AssignmentStatement assignment = new AssignmentStatement(getInitProcedure().getLocation(),
-					new LeftHandSide[] { varLhs }, new Expression[] { initValue });
+			final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
+			final IntegerLiteral initValue = new IntegerLiteral(location, ctx.constant().intConst().getText());
+			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+					new Expression[] { initValue });
 
-			final Specification modifiesSpec = new ModifiesSpecification(null, false, new VariableLHS[] { varLhs });
+			final Specification modifiesSpec = new ModifiesSpecification(mLocation, false,
+					new VariableLHS[] { varLhs });
 
 			updateProcedure(getInitProcedure(), assignment, modifiesSpec);
 			updateProcedure(getStartProcedure(), null, modifiesSpec);
@@ -357,21 +347,23 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	public void exitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) throws AssertionError {
 		final String identifier = ctx.LocalIdent().getText();
 		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
+		final DefaultLocation location = new DefaultLocation("LocalDefInst", ctx.getStart().getLine(),
+				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+
 		if (instructionType.loadInst() != null) {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
 			if (variableType.intType() != null) {
-				final PrimitiveType intType = new PrimitiveType(null, "int");
-				final VarList varList = new VarList(null, new String[] { unifyIdentifier(identifier) }, intType);
-				final VariableDeclaration varDecl = new VariableDeclaration(null, new Attribute[] {},
+				final PrimitiveType intType = new PrimitiveType(location, "int");
+				final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, intType);
+				final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
 						new VarList[] { varList });
 				mFuncLocalVars.add(varDecl);
-				final VariableLHS varLhs = new VariableLHS(null, unifyIdentifier(identifier));
+				final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
 				final String nameOfGlobalVar = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
 						.getText();
-				final IdentifierExpression globalVarExpr = new IdentifierExpression(
-						new DefaultLocation("LocalDefInst1", -1, -1, -1, -1), unifyIdentifier(nameOfGlobalVar));
-				final AssignmentStatement assignment = new AssignmentStatement(
-						new DefaultLocation("LocalDefInst2", -1, -1, -1, -1), new LeftHandSide[] { varLhs },
+				final IdentifierExpression globalVarExpr = new IdentifierExpression(location,
+						unifyIdentifier(nameOfGlobalVar));
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 						new Expression[] { globalVarExpr });
 				mFuncBlock.add(assignment);
 				// TODO
@@ -381,9 +373,9 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 						"The support for types other than integers in load instructions is not implemented yet.");
 			}
 		} else if (instructionType.iCmpInst() != null) {
-			final PrimitiveType boolType = new PrimitiveType(null, "bool");
-			final VarList varList = new VarList(null, new String[] { unifyIdentifier(identifier) }, boolType);
-			final VariableDeclaration varDecl = new VariableDeclaration(null, new Attribute[] {},
+			final PrimitiveType boolType = new PrimitiveType(location, "bool");
+			final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, boolType);
+			final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
 					new VarList[] { varList });
 			mFuncLocalVars.add(varDecl);
 			Expression leftExpr = null;
@@ -401,8 +393,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			if (leftOperandType.constant() != null) {
 				if (leftOperandType.constant().intConst() != null) {
 					final int constValue = Integer.parseInt(leftOperandType.constant().intConst().getText());
-					final IntegerLiteral leftOperand = new IntegerLiteral(
-							new DefaultLocation("LocalDefInst7", -1, -1, -1, -1), Integer.toString(constValue));
+					final IntegerLiteral leftOperand = new IntegerLiteral(location, Integer.toString(constValue));
 					leftExpr = leftOperand;
 				} else {
 					// TODO: Support for other constant operand types
@@ -411,7 +402,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				}
 			} else if (leftOperandType.LocalIdent() != null) {
 				final String leftOperandName = leftOperandType.LocalIdent().getText();
-				final IdentifierExpression leftOperand = new IdentifierExpression(null,
+				final IdentifierExpression leftOperand = new IdentifierExpression(location,
 						unifyIdentifier(leftOperandName));
 				leftExpr = leftOperand;
 			} else {
@@ -424,8 +415,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			if (rightOperandType.constant() != null) {
 				if (rightOperandType.constant().intConst() != null) {
 					final int constValue = Integer.parseInt(rightOperandType.constant().intConst().getText());
-					final IntegerLiteral rightOperand = new IntegerLiteral(
-							new DefaultLocation("LocalDefInst6", -1, -1, -1, -1), Integer.toString(constValue));
+					final IntegerLiteral rightOperand = new IntegerLiteral(location, Integer.toString(constValue));
 					rightExpr = rightOperand;
 				} else {
 					// TODO: Support for other constant operand types
@@ -434,8 +424,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				}
 			} else if (rightOperandType.LocalIdent() != null) {
 				final String rightOperandName = rightOperandType.LocalIdent().getText();
-				final IdentifierExpression rightOperand = new IdentifierExpression(
-						new DefaultLocation("LocalDefInst5", -1, -1, -1, -1), unifyIdentifier(rightOperandName));
+				final IdentifierExpression rightOperand = new IdentifierExpression(location,
+						unifyIdentifier(rightOperandName));
 				rightExpr = rightOperand;
 			} else {
 				// TODO: Support for other right operand types
@@ -444,10 +434,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			}
 
 			final VariableLHS varLhs = new VariableLHS(null, unifyIdentifier(identifier));
-			final BinaryExpression binaryExpr = new BinaryExpression(
-					new DefaultLocation("LocalDefInst3", -1, -1, -1, -1), operator, leftExpr, rightExpr);
-			final AssignmentStatement assignment = new AssignmentStatement(
-					new DefaultLocation("LocalDefInst4", -1, -1, -1, -1), new LeftHandSide[] { varLhs },
+			final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
+			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
 			mFuncBlock.add(assignment);
 		} else {
