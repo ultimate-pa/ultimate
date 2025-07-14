@@ -991,6 +991,11 @@ public class MemoryHandler {
 		return new ExpressionResultBuilder().addAllExceptLrValue(eres).setLrValue(newRValue).build();
 	}
 
+	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
+			final Offset fieldOffset, final CPrimitive type) {
+		return mMemoryModel.constructAddressForStructField(loc, baseAddress, fieldOffset, type);
+	}
+
 	public void beginScope() {
 		mVariablesToBeMalloced.beginScope();
 		mVariablesToBeFreed.beginScope();
