@@ -31,7 +31,10 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
@@ -40,6 +43,11 @@ import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AssertOrderHeuristicsEvaluation extends AbstractTraceAbstractionTestSuite {
+
+	@Override
+	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
+	}
 
 	/**
 	 * Limit the number of files per directory.
@@ -82,13 +90,13 @@ public class AssertOrderHeuristicsEvaluation extends AbstractTraceAbstractionTes
 //			new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //			new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
 //
-			new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[] { ".c" }, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[] { ".c" }, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-crafted/", new String[] { ".c" }, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-simple/", new String[] { ".c" }, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursive-with-pointer/", new String[] { ".c" }, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-invariants/", new String[] { ".c" }, mFilesPerDirectoryLimit),
-			new DirectoryFileEndingsPair("examples/svcomp/recursified_nla-digbench/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive-simple/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-crafted/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-simple/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursive-with-pointer/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursified_loop-invariants/", new String[] { ".c" }, mFilesPerDirectoryLimit),
+//			new DirectoryFileEndingsPair("examples/svcomp/recursified_nla-digbench/", new String[] { ".c" }, mFilesPerDirectoryLimit),
 
 //
 //			new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
