@@ -344,7 +344,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 								MemoryStructure.HoenickeLindenmann_Original, PreferenceType.Combo,
 								MemoryStructure.values()),
 						new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
-						new UltimatePreferenceItem<>(LABEL_MEMORY_ADDRESSING, MemoryAddressing.Two_Dimensional,
+						new UltimatePreferenceItem<>(LABEL_MEMORY_ADDRESSING, MemoryAddressing.One_Dimensional,
 								DESC_MEMOY_ADDRESSING, PreferenceType.Combo, MemoryAddressing.values()),
 						new UltimatePreferenceItem<>(LABEL_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, false,
 								DESC_ADAPT_MEMORY_MODEL_ON_POINTER_CASTS, PreferenceType.Boolean),
