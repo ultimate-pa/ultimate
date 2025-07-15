@@ -1931,9 +1931,9 @@ public class MemoryHandler {
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
 		if (mSettings.getPointerTargetFullyAllocatedMode() == CheckMode.IGNORE) {
-			// add nothing
 			return Collections.emptyList();
 		}
+
 		Expression leq;
 		{
 			final Expression ptrExpr =
@@ -1946,6 +1946,7 @@ public class MemoryHandler {
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression sum =
 					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
+
 			leq = constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, sum, aae);
 		}
 		final Expression offsetGeqZero;
@@ -2927,6 +2928,7 @@ public class MemoryHandler {
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
 		final List<Statement> result = new ArrayList<>();
+
 		if (mSettings.getPointerBaseValidityMode() != CheckMode.IGNORE) {
 
 			// valid[s.base]
@@ -2943,27 +2945,29 @@ public class MemoryHandler {
 				result.add(assume);
 			}
 		}
-		if (mSettings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE) {
 
+		if (mSettings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE) {
 			// s.offset < length[s.base])
-			final Expression offsetSmallerLength = mExpressionTranslation.constructBinaryComparisonIntegerExpression(
-					loc, IASTBinaryExpression.op_lessThan, MemoryHandler.getPointerOffset(pointerValue, loc),
-					mExpressionTranslation.getCTypeOfPointerComponents(),
-					ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
-							new Expression[] { MemoryHandler.getPointerBaseAddress(pointerValue, loc) }),
-					mExpressionTranslation.getCTypeOfPointerComponents());
+			final Expression ptrOffset = MemoryHandler.getPointerOffset(pointerValue, loc);
+			final Expression ptrBase = MemoryHandler.getPointerBaseAddress(pointerValue, loc);
+			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
+					new Expression[] { ptrBase });
+
+			final Expression offsetSmallerLength =
+					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, ptrOffset, aae);
 
 			// s.offset >= 0;
-			final Expression offsetNonnegative = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, MemoryHandler.getPointerOffset(pointerValue, loc),
-					mExpressionTranslation.getCTypeOfPointerComponents(), mTypeSizes.constructLiteralForIntegerType(loc,
-							mExpressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
-					mExpressionTranslation.getCTypeOfPointerComponents());
+			final var zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+			final Expression offsetNonnegative = constructPointerBinaryComparisonExpression(loc,
+					IASTBinaryExpression.op_greaterEqual, ptrOffset, zeroExpr);
 
 			final Expression aAndB =
 					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
 							offsetNonnegative);
+
 			if (mSettings.getPointerBaseValidityMode() == CheckMode.CHECK) {
 				final AssertStatement assertion = new AssertStatement(loc, aAndB);
 				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
