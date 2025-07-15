@@ -56,12 +56,14 @@ public class AssertOrderHeuristicsEvaluation extends AbstractTraceAbstractionTes
 //		"examples/programs/random",
 //		"examples/programs/real-life",
 //		"examples/programs/reals",
-		"examples/programs/recursive/regression",
-		"examples/programs/regression",
+//		"examples/programs/recursive/regression",
+//		"examples/programs/regression",
 //		"examples/programs/scalable",
-//		"examples/programs/toy",
+		"examples/programs/toy",
 //		"examples/programs/toy/tooDifficultLoopInvariant/",
 //		"examples/programs/20170304-DifficultPathPrograms/",
+//		"examples/programs/20170319-ConjunctivePathPrograms",
+//		"examples/programs/20181010-MemSafetyPathprograms",
 //		"examples/programs/20181015-LoopsPathprograms/",
 	};
 
