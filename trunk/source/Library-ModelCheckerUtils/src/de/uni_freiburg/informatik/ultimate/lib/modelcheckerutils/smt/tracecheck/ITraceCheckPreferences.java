@@ -100,6 +100,10 @@ public interface ITraceCheckPreferences {
 		 * See {@link AssertOrderShuffledSingletons}
 		 */
 		SHUFFLED_SINGLETONS,
+		/**
+		 * See {@link AssertOrderDfgBased}
+		 */
+		DFG_BASED
 	}
 
 	public enum SmtFeatureHeuristicPartitioningType {
