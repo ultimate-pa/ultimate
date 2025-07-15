@@ -215,7 +215,7 @@ public class MemoryHandler {
 				new MemoryModelDeclarationsHandler(mTypeHandler, mBooleanArrayHelper, getRwLockCounterType());
 
 		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
-				mTypeSizeAndOffsetComputer);
+				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations());
 
 		mVariablesToBeMalloced = new LinkedScopedHashMap<>();
 		mVariablesToBeFreed = new LinkedScopedHashMap<>();
@@ -239,13 +239,12 @@ public class MemoryHandler {
 		mProcedureManager = procedureManager;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mSettings = settings;
-
 		mBooleanArrayHelper = prerunMemoryHandler.mBooleanArrayHelper;
 		mVariablesToBeMalloced = prerunMemoryHandler.mVariablesToBeMalloced;
 		mVariablesToBeFreed = prerunMemoryHandler.mVariablesToBeFreed;
 		mMemoryModelDeclarationsHandler = prerunMemoryHandler.mMemoryModelDeclarationsHandler;
 		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
-				mTypeSizeAndOffsetComputer);
+				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations());
 
 		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures(mMemoryModel.metaDataDeclarations());// prerunMemoryHandler.mRequiredMemoryModelFeatures;
 	}
@@ -582,63 +581,8 @@ public class MemoryHandler {
 	}
 
 	public Collection<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed) {
-		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
-
-		final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final Expression valid = getValidArray(loc);
-		final Expression addrOffset = getPointerOffset(pointerToBeFreed.getValue(), loc);
-		final Expression addrBase = getPointerBaseAddress(pointerToBeFreed.getValue(), loc);
-		final Expression[] idcFree = { addrBase };
-
-		final Collection<Statement> result = new ArrayList<>();
-
-		if (mSettings.checkIfFreedPointerIsValid()) {
-			/*
-			 * creating the specification according to C99:7.20.3.2-2: The free function causes the space pointed to by
-			 * ptr to be deallocated, that is, made available for further allocation. If ptr is a null pointer, no
-			 * action occurs. Otherwise, if the argument does not match a pointer earlier returned by the calloc,
-			 * malloc, or realloc function, or if the space has been deallocated by a call to free or realloc, the
-			 * behavior is undefined.
-			 */
-			final Check check = new Check(Spec.MEMORY_FREE);
-			{
-				// assert (~addr!offset == 0);
-				final AssertStatement offsetZero = new AssertStatement(loc,
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrOffset, nr0));
-				check.annotate(offsetZero);
-				result.add(offsetZero);
-			}
-
-			{
-				// assert (~addr!base < #StackHeapBarrier);
-				final Expression inHeapArea = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-						IASTBinaryExpression.op_lessThan, getPointerBaseAddress(pointerToBeFreed.getValue(), loc),
-						mExpressionTranslation.getCTypeOfPointerComponents(), getStackHeapBarrier(loc),
-						mExpressionTranslation.getCTypeOfPointerComponents());
-				final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
-				check.annotate(assertInHeapArea);
-				result.add(assertInHeapArea);
-			}
-
-			{
-				// ~addr!base == 0
-				final Expression ptrBaseZero = mTypeSizes.constructLiteralForIntegerType(loc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				final Expression isNullPtr =
-						ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrBase, ptrBaseZero);
-
-				// requires ~addr!base == 0 || #valid[~addr!base];
-				final Expression addrIsValid = mBooleanArrayHelper
-						.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(loc, valid, idcFree));
-				final AssertStatement baseValid = new AssertStatement(loc,
-						ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
-				check.annotate(baseValid);
-				result.add(baseValid);
-			}
-		}
-
-		return result;
+		return mMemoryModel.getChecksForFreeCall(loc, pointerToBeFreed, mSettings.checkIfFreedPointerIsValid(),
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
 	}
 
 	/**
@@ -2907,6 +2851,16 @@ public class MemoryHandler {
 	public List<Statement> ultimateInitStatements(final ILocation loc) {
 		return mMemoryModel.constructUltimateInitStatements(loc, mRequiredMemoryModelFeatures,
 				mMemoryModelDeclarationsHandler, mFixedAddressCounter);
+	}
+
+	public final ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
+		return mMemoryModel.convertPointerToInt(loc, rexp, newType);
+	}
+
+	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
+		return mMemoryModel.convertIntToPointer(loc, rexp, newType);
 	}
 
 }

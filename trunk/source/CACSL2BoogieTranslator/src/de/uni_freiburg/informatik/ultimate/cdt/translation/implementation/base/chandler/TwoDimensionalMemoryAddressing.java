@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -31,8 +32,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -42,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -51,8 +57,19 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 	public TwoDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer);
+
+		mPointerIntegerConversion = switch (pointerIntegerMode) {
+		case NonBijectiveMapping:
+			yield new NonBijectiveMapping(exprTranslation, typeSizes);
+		case Overapproximate:
+			yield new OverapproximationUF(exprTranslation, functionDeclarations, typeHandler, typeSizes);
+		default:
+			throw new UnsupportedOperationException(
+					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
+		};
 	}
 
 	@Override
@@ -469,5 +486,67 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left, cTypeOfPointerComponent, right,
 				cTypeOfPointerComponent);
+	}
+
+	@Override
+	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
+
+		if (!isPointerCheckRequired) {
+			return Collections.emptyList();
+		}
+
+		final Expression zeroNumericExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+		final Expression valid = MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+		final Expression stackHeapBarrier = MemoryModelExpressionHelper.getStackHeapBarrier(loc,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+
+		final Expression addrOffset = MemoryHandler.getPointerOffset(pointerToBeFreed.getValue(), loc);
+		final Expression addrBase = MemoryHandler.getPointerBaseAddress(pointerToBeFreed.getValue(), loc);
+		final Expression[] idcFree = { addrBase };
+
+		final List<Statement> result = new ArrayList<>();
+
+		/*
+		 * creating the specification according to C99:7.20.3.2-2: The free function causes the space pointed to by ptr
+		 * to be deallocated, that is, made available for further allocation. If ptr is a null pointer, no action
+		 * occurs. Otherwise, if the argument does not match a pointer earlier returned by the calloc, malloc, or
+		 * realloc function, or if the space has been deallocated by a call to free or realloc, the behavior is
+		 * undefined.
+		 */
+		final Check check = new Check(Spec.MEMORY_FREE);
+
+		// assert (~addr!offset == 0);
+		final AssertStatement offsetZero = new AssertStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrOffset, zeroNumericExpr));
+		check.annotate(offsetZero);
+		result.add(offsetZero);
+
+		// assert (~addr!base < #StackHeapBarrier);
+		final Expression inHeapArea = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+				IASTBinaryExpression.op_lessThan, addrBase, mExpressionTranslation.getCTypeOfPointerComponents(),
+				stackHeapBarrier, mExpressionTranslation.getCTypeOfPointerComponents());
+		final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
+		check.annotate(assertInHeapArea);
+		result.add(assertInHeapArea);
+
+		// ~addr!base == 0
+		final Expression isNullPtr =
+				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, addrBase, zeroNumericExpr);
+
+		// requires ~addr!base == 0 || #valid[~addr!base];
+		final Expression addrIsValid = mBooleanArrayHelper
+				.compareWithTrue(ExpressionFactory.constructNestedArrayAccessExpression(loc, valid, idcFree));
+		final AssertStatement baseValid = new AssertStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNullPtr, addrIsValid));
+		check.annotate(baseValid);
+		result.add(baseValid);
+
+		return result;
 	}
 }

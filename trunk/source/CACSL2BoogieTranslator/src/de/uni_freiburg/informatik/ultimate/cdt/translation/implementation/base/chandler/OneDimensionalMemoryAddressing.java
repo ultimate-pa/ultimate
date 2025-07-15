@@ -24,8 +24,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMappingOneDimensional;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF2OneDimensional;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -34,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -42,8 +47,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	public OneDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations) {
 		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer);
+
+		mPointerIntegerConversion = switch (pointerIntegerMode) {
+		case NonBijectiveMapping:
+			yield new NonBijectiveMappingOneDimensional(exprTranslation, typeSizes);
+		case Overapproximate:
+			yield new OverapproximationUF2OneDimensional(exprTranslation, functionDeclarations, typeHandler, typeSizes);
+		default:
+			throw new UnsupportedOperationException(
+					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
+		};
 	}
 
 	@Override
@@ -309,4 +325,17 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				"The target pointer fully allocated check is not compatible with the 1D addressing mode!");
 	}
 
+	@Override
+	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
+
+		if (!isPointerCheckRequired) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException(
+				"The check if the freed pointer is valid is not compatible with the 1D addressing mode!");
+	}
 }

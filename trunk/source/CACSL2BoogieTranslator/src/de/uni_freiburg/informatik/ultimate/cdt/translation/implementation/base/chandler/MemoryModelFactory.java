@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -23,7 +24,8 @@ public class MemoryModelFactory {
 	public static IMemoryAdressing createMemoryAddressing(final TranslationSettings settings,
 			final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final FunctionDeclarations functionDeclarations) {
 		final var memoryAddressingPreference = settings.memoryAddressingPreference();
 
 		switch (memoryAddressingPreference) {
@@ -48,10 +50,10 @@ public class MemoryModelFactory {
 						+ String.join(", ", incompatibleActiveOptions));
 			}
 			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer);
+					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations);
 		case Two_Dimensional:
 			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer);
+					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations);
 		default:
 			throw new UnsupportedOperationException(
 					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");

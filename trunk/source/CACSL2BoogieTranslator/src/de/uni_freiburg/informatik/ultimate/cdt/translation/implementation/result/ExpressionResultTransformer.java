@@ -701,13 +701,10 @@ public class ExpressionResultTransformer {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 		case final CPrimitive cPrimitive when cPrimitive.isRealFloatingType() ->
 				mExprTrans.convertFloatToInt(loc, rexp, newType);
-
 		// could happen e.g. for COMPLEX_FLOAT etc
 		case final CPrimitive cPrimitive -> throw new AssertionError("unknown primitive type " + cPrimitive.getType());
-
-		case final CPointer cPointer -> mExprTrans.convertPointerToInt(loc, rexp, newType);
+		case final CPointer cPointer -> mMemoryHandler.convertPointerToInt(loc, rexp, newType);
 		case final CEnum cEnum -> mExprTrans.convertIntToInt(loc, rexp, newType);
-
 		case final CArray cArray -> throw new AssertionError("cannot convert from CArray");
 		case final CFunction cFunction -> throw new AssertionError("cannot convert from CFunction");
 		case final CNamed cNamed -> throw new AssertionError("getUnderlyingType() must not return CNamed");
@@ -720,20 +717,19 @@ public class ExpressionResultTransformer {
 			final CPointer newType) {
 		assert rexp.getLrValue() instanceof RValue : "has to be converted to RValue";
 		final ICType oldType = rexp.getLrValue().getCType().getUnderlyingType();
-
 		return switch (oldType) {
 		case final CPrimitive cPrimitive when cPrimitive.isIntegerType() ->
-				mExprTrans.convertIntToPointer(loc, rexp, newType);
+				mMemoryHandler.convertIntToPointer(loc, rexp, newType);
 		case final CPrimitive cPrimitive when cPrimitive.isRealFloatingType() ->
+
 				throw new IncorrectSyntaxException(loc, "cannot convert float to pointer");
 		case final CPrimitive cPrimitive when cPrimitive.isVoidType() ->
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 
 		// could happen e.g. for COMPLEX_FLOAT etc
 		case final CPrimitive cPrimitive -> throw new AssertionError("unknown primitive type " + cPrimitive.getType());
-
 		case final CPointer cPointer -> convertPointerToPointer(loc, rexp, newType);
-		case final CEnum cEnum -> mExprTrans.convertIntToPointer(loc, rexp, newType);
+		case final CEnum cEnum -> mMemoryHandler.convertIntToPointer(loc, rexp, newType);
 		case final CArray array when rexp instanceof StringLiteralResult -> {
 			// a string literal's char-array decays to a pointer the stringLiteralResult already has the correct
 			// RValue,we just need to change the type
@@ -741,13 +737,13 @@ public class ExpressionResultTransformer {
 					new RValue(rexp.getLrValue().getValue(), new CPointer(new CPrimitive(CPrimitives.CHAR)));
 			yield new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 		}
-
 		case final CArray cArray -> throw new AssertionError("cannot convert from CArray");
 		case final CFunction cFunction -> throw new AssertionError("cannot convert from CFunction");
 		case final CNamed cNamed -> throw new AssertionError("getUnderlyingType() must not return CNamed");
 		case final CStructOrUnion cStructOrUnion ->
 				throw new UnsupportedSyntaxException(loc, "conversion from CStructOrUnion not implemented.");
 		};
+
 	}
 
 	private static ExpressionResult convertPointerToPointer(final ILocation loc, final ExpressionResult rexp,
@@ -967,7 +963,7 @@ public class ExpressionResultTransformer {
 	public ExpressionResult convertNullPointerConstantToPointer(final ExpressionResult nullPointerConstant,
 			final ICType desiredResultType, final ILocation loc) {
 		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
-			return mExprTrans.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
+			return mMemoryHandler.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
 		}
 		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		return nullPointerConstant;
