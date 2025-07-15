@@ -59,6 +59,7 @@ public class DfgBuilder {
 	private static class BuildContext {
 		private final Set<DfgNode> mNodeList = new HashSet<>();
 		private final Map<DfgNode, Set<IProgramVar>> mDefMap = new HashMap<>();
+		private final Map<DfgNode, Set<IProgramVar>> mUnDefMap = new HashMap<>();
 		private final Map<DfgNode, Set<IProgramVar>> mUseMap = new HashMap<>();
 		private final Map<IcfgEdge, DfgNode> mEdgeBacklinks = new HashMap<>();
 		private final HashRelation<DfgNode, DfgNode> mEdgeRelation = new HashRelation<>();
@@ -120,25 +121,37 @@ public class DfgBuilder {
 				final UnmodifiableTransFormula transformula = edge.getTransformula();
 				final Map<IProgramVar, TermVariable> inVars = transformula.getInVars();
 				final Map<IProgramVar, TermVariable> outVars = transformula.getOutVars();
-				mUseMap.computeIfAbsent(node, k -> new HashSet<>()).addAll(inVars.keySet());
+				for (final IProgramVar programVar : inVars.keySet()) {
+
+					final TermVariable in = inVars.get(programVar);
+					final TermVariable out = outVars.get(programVar); // may be null
+					if (transformula.isHavocedIn(programVar)) {
+						mUnDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
+					} else if (!in.equals(out)) {
+						mDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
+						mUseMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
+					} else {
+						mUseMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
+					}
+				}
 
 				for (final IProgramVar programVar : outVars.keySet()) {
 					final TermVariable out = outVars.get(programVar);
 					final TermVariable in = inVars.get(programVar); // may be null
-
-					if (!out.equals(in)) {
-						mDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
-					}
-				}
-				for (final IProgramVar programVar : inVars.keySet()) {
-					if (outVars.get(programVar) == null) {
+					if (transformula.isHavocedOut(programVar)) {
+						mUnDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
+					} else if (!out.equals(in)) {
 						mDefMap.computeIfAbsent(node, k -> new HashSet<>()).add(programVar);
 					}
 				}
 				mDefMap.computeIfAbsent(node, k -> new HashSet<>()); // create empty set for easier implementation later
+				mUnDefMap.computeIfAbsent(node, k -> new HashSet<>()); // create empty set for easier implementation
+																		// later
+
 			}
 			mLogger.debug("def Map " + mDefMap.toString());
 			mLogger.debug("use map " + mUseMap.toString());
+			mLogger.debug("undef map " + mUnDefMap.toString());
 		}
 
 		private void generateEdges() {
@@ -150,6 +163,16 @@ public class DfgBuilder {
 						mEdgeRelation.addAllPairs(node, children);
 					}
 				}
+				if (mUnDefMap.containsKey(node)) {
+					for (final IProgramVar programVar : mUnDefMap.get(node)) {
+						final Set<DfgNode> havocDefs = searchHavocDefs(node, programVar);
+						for (final DfgNode havocDef : havocDefs) {
+							final Set<DfgNode> children = searchNeighbors(havocDef, programVar);
+							mEdgeRelation.addAllPairs(havocDef, children);
+						}
+					}
+				}
+
 			}
 		}
 
@@ -160,6 +183,16 @@ public class DfgBuilder {
 					for (final IProgramVar programVar : mDefMap.get(node)) {
 						final Set<DfgNode> children = searchNeighbors(node, programVar);
 						mEdgeRelation.addAllPairs(node, children);
+					}
+				}
+				if (mUnDefMap.containsKey(node)) {
+					for (final IProgramVar programVar : mUnDefMap.get(node)) {
+						final Set<DfgNode> havocDefs = searchHavocDefs(node, programVar);
+
+						for (final DfgNode havocDef : havocDefs) {
+							final Set<DfgNode> children = searchNeighbors(havocDef, programVar);
+							mEdgeRelation.addAllPairs(havocDef, children);
+						}
 					}
 				}
 				if (mUseMap.containsKey(node)) {
@@ -187,8 +220,8 @@ public class DfgBuilder {
 						if (mUseMap.containsKey(dfgNode) && mUseMap.get(dfgNode).contains(programVar)) {
 							children.add(dfgNode);
 						}
-						// if we redefine it then we don't have to search here further
-						if (mDefMap.containsKey(dfgNode) && !mDefMap.get(dfgNode).contains(programVar)) {
+						if (mDefMap.containsKey(dfgNode) && !mDefMap.get(dfgNode).contains(programVar)
+								&& !mUnDefMap.get(dfgNode).contains(programVar)) {
 							final IcfgLocation target = nextEdge.getTarget();
 							stack.push(target);
 						}
@@ -197,6 +230,36 @@ public class DfgBuilder {
 				}
 			}
 			return children;
+		}
+
+		// for havocs, the next use is counted as a def
+		private Set<DfgNode> searchHavocDefs(final DfgNode node, final IProgramVar programVar) {
+
+			mLogger.debug(
+					"Searching Havoc Defs for Node " + node.toString() + " , ProgramVar " + programVar.toString());
+			final Set<DfgNode> havocDefs = new HashSet<>();
+			final IcfgEdge edge = node.getCorrespondingDFGEdge();
+			final Set<IcfgEdge> visited = new HashSet<>();
+			final Stack<IcfgLocation> stack = new Stack<>();
+			stack.add(edge.getTarget());
+			while (!stack.isEmpty()) {
+				final IcfgLocation nextCFGNode = stack.pop();
+				for (final IcfgEdge nextEdge : nextCFGNode.getOutgoingEdges()) {
+					if (!visited.contains(nextEdge)) {
+						visited.add(nextEdge);
+						final DfgNode dfgNode = mEdgeBacklinks.get(nextEdge);
+						if (mUseMap.containsKey(dfgNode) && mUseMap.get(dfgNode).contains(programVar)) {
+							havocDefs.add(dfgNode);
+						} else if (mDefMap.containsKey(dfgNode) && !mDefMap.get(dfgNode).contains(programVar)
+								&& !mUnDefMap.get(dfgNode).contains(programVar)) {
+							final IcfgLocation target = nextEdge.getTarget();
+							stack.push(target);
+						}
+
+					}
+				}
+			}
+			return havocDefs;
 		}
 
 	}
