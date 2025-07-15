@@ -188,4 +188,17 @@ public class MemoryModel {
 				memoryModelDeclarationsHandler);
 	}
 
+	/**
+	 * Constructs the pointer target fully allocated specifications.
+	 *
+	 * @return The specifications.
+	 */
+	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
+			final String ptrName, final String procedureName, final CheckMode mode,
+			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructPointerTargetFullyAllocatedCheck(loc, size, ptrName, procedureName, mode,
+				isBitVectorTranslation, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
 }

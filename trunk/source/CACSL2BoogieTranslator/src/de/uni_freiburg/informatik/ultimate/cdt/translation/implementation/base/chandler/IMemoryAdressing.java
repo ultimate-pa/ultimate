@@ -122,4 +122,15 @@ public interface IMemoryAdressing {
 	Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the pointer target fully allocated specifications.
+	 *
+	 * @return The specifications.
+	 */
+	List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
+			final String ptrName, final String procedureName, final CheckMode mode,
+			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
 }

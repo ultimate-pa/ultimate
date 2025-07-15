@@ -296,4 +296,17 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				"The pointer base validity check is not compatible with the 1D addressing mode!");
 	}
 
+	@Override
+	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
+			final String ptrName, final String procedureName, final CheckMode mode,
+			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException(
+				"The target pointer fully allocated check is not compatible with the 1D addressing mode!");
+	}
+
 }
