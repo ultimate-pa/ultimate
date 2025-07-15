@@ -6,6 +6,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -159,6 +161,31 @@ public class MemoryModel {
 	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
 			final BigInteger integerConstant) {
 		return mMemoryAddressing.addIntegerConstantToPointer(loc, ptrExpr, integerConstant);
+	}
+
+	/**
+	 * Constructs the specifications that the pointer base address is valid.
+	 *
+	 * @return The specifications.
+	 */
+	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+			final String procedureName, final CheckMode mode,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructPointerBaseValidityCheck(loc, ptrName, procedureName, mode,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
+	/**
+	 * Constructs the pointer base validity check expression.
+	 *
+	 * @return The expression.
+	 */
+	Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructPointerBaseValidityCheckExpr(loc, ptr, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 }
