@@ -1903,14 +1903,7 @@ public class MemoryHandler {
 
 	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
 			final BigInteger integerConstant) {
-		final Expression base = getPointerBaseAddress(ptrExpr, loc);
-		final Expression offset = getPointerOffset(ptrExpr, loc);
-		final Expression addition =
-				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), integerConstant);
-		final Expression offsetPlus =
-				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, offset,
-						mTypeSizeAndOffsetComputer.getSizeT(), addition, mTypeSizeAndOffsetComputer.getSizeT());
-		return constructPointerFromBaseAndOffset(base, offsetPlus, loc);
+		return mMemoryModel.addIntegerConstantToPointer(loc, ptrExpr, integerConstant);
 	}
 
 	/**

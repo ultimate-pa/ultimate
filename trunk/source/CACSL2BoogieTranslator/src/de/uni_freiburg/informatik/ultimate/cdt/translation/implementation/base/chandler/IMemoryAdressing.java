@@ -93,4 +93,12 @@ public interface IMemoryAdressing {
 	 */
 	Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT);
+
+	/**
+	 * Adds an integer to a pointer.
+	 *
+	 * @return The new pointer.
+	 */
+	Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
+			final BigInteger integerConstant);
 }

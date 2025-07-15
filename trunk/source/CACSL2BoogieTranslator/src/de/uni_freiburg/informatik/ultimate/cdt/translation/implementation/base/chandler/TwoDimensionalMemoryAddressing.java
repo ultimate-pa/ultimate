@@ -342,4 +342,19 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}
+
+	@Override
+	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
+			final BigInteger integerConstant) {
+		final Expression base = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
+		final Expression offset = MemoryHandler.getPointerOffset(ptrExpr, loc);
+
+		final Expression addition =
+				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), integerConstant);
+		final Expression offsetPlus =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, offset,
+						mTypeSizeAndOffsetComputer.getSizeT(), addition, mTypeSizeAndOffsetComputer.getSizeT());
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(base, offsetPlus, loc);
+	}
 }

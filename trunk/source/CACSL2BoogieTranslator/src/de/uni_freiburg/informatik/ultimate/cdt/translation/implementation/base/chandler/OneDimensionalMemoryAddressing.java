@@ -266,4 +266,19 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		return MemoryHandler.constructPointerFromBaseAndOffset(sum, zeroExpr, loc);
 	}
 
+	@Override
+	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
+			final BigInteger integerConstant) {
+		final Expression base = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
+		final Expression offset = MemoryHandler.getPointerOffset(ptrExpr, loc);
+
+		final Expression integerExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), integerConstant);
+		final Expression basePlus =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, base,
+						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(basePlus, offset, loc);
+	}
+
 }
