@@ -2248,15 +2248,8 @@ public class MemoryHandler {
 		}
 
 		final Expression arrayStartAddress = hlv.getAddress();
-		final Expression newStartAddressBase;
-		final Expression newStartAddressOffset;
-		if (arrayStartAddress instanceof StructConstructor) {
-			newStartAddressBase = ((StructConstructor) arrayStartAddress).getFieldValues()[0];
-			newStartAddressOffset = ((StructConstructor) arrayStartAddress).getFieldValues()[1];
-		} else {
-			newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
-			newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
-		}
+		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
+		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
 
 		final Expression valueTypeSize = calculateSizeOf(loc, valueType.getValueType());
 		final int dim = dimBigInteger.intValue();
