@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BreakStatement;
@@ -77,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
@@ -1909,10 +1907,10 @@ public class MemoryHandler {
 	 * memory at the base address of the pointer. Furthermore, we check that the offset is greater than or equal to
 	 * zero.
 	 *
-	 * In case mPointerBaseValidity is ASSERTandASSUME, we construct the requires specification
+	 * In case mPointerBaseValidity is CHECK, we construct the requires specification
 	 * <code>requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
 	 *
-	 * In case mPointerBaseValidity is ASSERTandASSUME, we construct the <b>free</b> requires specification
+	 * In case mPointerBaseValidity is CHECK, we construct the <b>free</b> requires specification
 	 * <code>free requires (#size + #ptr!offset <= #length[#ptr!base] && 0 <= #ptr!offset)</code>.
 	 *
 	 * In case mPointerBaseValidity is IGNORE, we construct nothing.
@@ -1927,69 +1925,9 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
 			final String ptrName, final String procedureName) {
-		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
-			// add nothing
-			return Collections.emptyList();
-		}
-
-		Expression leq;
-		{
-			final Expression ptrExpr =
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
-							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-
-			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
-			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
-					new Expression[] { ptrBase });
-			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
-			final Expression sum =
-					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
-
-			leq = constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, sum, aae);
-		}
-		final Expression offsetGeqZero;
-		{
-			final Expression ptrExpr =
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
-							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-
-			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
-			final Expression nr0 = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			offsetGeqZero =
-					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, nr0, ptrOffset);
-
-		}
-
-		if (mSettings.isBitvectorTranslation()) {
-			/*
-			 * Check that "#ptr!offset <= #ptr!offset + #sizeOf[Written|Read]Type", i.e., the sum does not overflow.
-			 * (This works because #size.. is positive.)
-			 */
-			final Expression ptrExpr =
-					ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
-							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
-			final Expression sum =
-					constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
-			final Expression noOverFlowInSum =
-					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, ptrOffset, sum);
-			leq = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, noOverFlowInSum);
-		}
-
-		final Expression offsetInAllocatedRange =
-				ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND, leq, offsetGeqZero);
-		final boolean isFreeRequires;
-		if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
-			isFreeRequires = false;
-		} else {
-			assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME;
-			isFreeRequires = true;
-		}
-		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, offsetInAllocatedRange);
-		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
-		check.annotate(spec);
-		return Collections.singletonList(spec);
+		return mMemoryModel.constructPointerTargetFullyAllocatedCheck(loc, size, ptrName, procedureName,
+				mSettings.checkPointerDerefValidity(), mSettings.isBitvectorTranslation(), mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	/**
@@ -2022,19 +1960,6 @@ public class MemoryHandler {
 	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
 			final Expression left, final Expression right) {
 		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,
-				mExpressionTranslation.getCTypeOfPointerComponents(), right,
-				mExpressionTranslation.getCTypeOfPointerComponents());
-	}
-
-	/**
-	 * Create an arithmetic expression from a pointer component (base or offset) and another expression.
-	 *
-	 * @param op
-	 *            One of the arithmetic operators defined in {@link IASTBinaryExpression}.
-	 */
-	private Expression constructPointerBinaryArithmeticExpression(final ILocation loc, final int op,
-			final Expression left, final Expression right) {
-		return mExpressionTranslation.constructArithmeticExpression(loc, op, left,
 				mExpressionTranslation.getCTypeOfPointerComponents(), right,
 				mExpressionTranslation.getCTypeOfPointerComponents());
 	}
