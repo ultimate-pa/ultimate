@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.Storage
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
@@ -528,10 +527,8 @@ public class MemoryHandler {
 	 * </ul>
 	 */
 	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr) {
-		final Expression ptrBase = getPointerBaseAddress(ptr, loc);
-		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
-				getValidArray(loc), new Expression[] { ptrBase });
-		return mBooleanArrayHelper.compareWithTrue(aae);
+		return mMemoryModel.constructPointerBaseValidityCheckExpr(loc, ptr, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler);
 	}
 
 	/**
@@ -2010,25 +2007,8 @@ public class MemoryHandler {
 	 */
 	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName) {
-		if (mSettings.checkPointerDerefValidity() == CheckMode.IGNORE) {
-			// add nothing
-			return Collections.emptyList();
-		}
-		final Expression ptrExpr =
-				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
-						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
-		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr);
-		final boolean isFreeRequires;
-		if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
-			isFreeRequires = false;
-		} else {
-			assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME;
-			isFreeRequires = true;
-		}
-		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
-		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
-		check.annotate(spec);
-		return Collections.singletonList(spec);
+		return mMemoryModel.constructPointerBaseValidityCheck(loc, ptrName, procedureName,
+				mSettings.checkPointerDerefValidity(), mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
 	}
 
 	/**

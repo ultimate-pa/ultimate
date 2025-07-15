@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -31,6 +32,7 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizes = typeSizes;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+
 	}
 
 	protected VariableDeclaration constructStackHeapBarrierConstant() {
@@ -91,5 +93,17 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 	 */
 	private Expression calculateSizeOf(final ILocation loc, final ICType cType) {
 		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
+	}
+
+	@Override
+	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final Expression ptrBase = MemoryHandler.getPointerBaseAddress(ptr, loc);
+		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
+				MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
+						memoryModelDeclarationsHandler),
+				new Expression[] { ptrBase });
+		return mBooleanArrayHelper.compareWithTrue(aae);
 	}
 }

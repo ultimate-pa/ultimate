@@ -20,6 +20,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -35,7 +37,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -356,5 +361,28 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 						mTypeSizeAndOffsetComputer.getSizeT(), addition, mTypeSizeAndOffsetComputer.getSizeT());
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(base, offsetPlus, loc);
+	}
+
+	@Override
+	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+			final String procedureName, final CheckMode mode,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		final Expression ptrExpr =
+				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
+		final Expression isValid = constructPointerBaseValidityCheckExpr(loc, ptrExpr, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+
+		final boolean isFreeRequires = mode == CheckMode.CHECK ? false : true;
+
+		final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, isValid);
+		final Check check = new Check(Spec.MEMORY_DEREFERENCE);
+		check.annotate(spec);
+		return Collections.singletonList(spec);
 	}
 }
