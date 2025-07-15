@@ -151,4 +151,14 @@ public class MemoryModel {
 		return mMemoryAddressing.constructAddressForStructField(loc, baseAddress, fieldOffset, sizeT);
 	}
 
+	/**
+	 * Adds an integer to a pointer.
+	 *
+	 * @return The new pointer.
+	 */
+	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
+			final BigInteger integerConstant) {
+		return mMemoryAddressing.addIntegerConstantToPointer(loc, ptrExpr, integerConstant);
+	}
+
 }
