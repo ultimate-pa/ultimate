@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.dfg;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.dfg;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -1,15 +1,15 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.icfgbuilder.dfg;
+package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.dfg;
 
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class Test {
-	public static void test(final BoogieIcfgContainer icfg, final ILogger logger) {
-		for (final BoogieIcfgLocation initialNode : icfg.getInitialNodes()) {
+	public static void test(final IIcfg<?> icfg, final ILogger logger) {
+		for (final IcfgLocation initialNode : icfg.getInitialNodes()) {
 			logger.info("Building Dfg for InitialNode: " + initialNode);
 			final DfgContainer dfg = DfgBuilder.buildDfg(initialNode, logger);
 			logger.info("Obtained Dfg");
