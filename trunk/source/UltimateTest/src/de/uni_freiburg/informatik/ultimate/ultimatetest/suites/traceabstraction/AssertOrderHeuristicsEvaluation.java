@@ -202,6 +202,8 @@ public class AssertOrderHeuristicsEvaluation extends AbstractTraceAbstractionTes
 		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-H5.epf",
 		/*** Heuristic 6 (SHUFFLED_SINGLETONS) ***/
 		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-ShuffSing.epf",
+		/*** Heuristic 7 (DFG_BASED) ***/
+		"automizer/AssertOrderHeuristics/Reach-32bit-Automizer_Default-TreeInterpolation-Dfg.epf",
 	};
 	// @formatter:on
 
