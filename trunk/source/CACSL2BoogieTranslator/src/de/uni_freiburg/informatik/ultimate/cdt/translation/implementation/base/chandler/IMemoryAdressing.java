@@ -10,8 +10,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
@@ -132,5 +134,28 @@ public interface IMemoryAdressing {
 			final String ptrName, final String procedureName, final CheckMode mode,
 			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Constructs the statements used for the check if a freed pointer was valid.
+	 *
+	 * @return The statements.
+	 */
+	List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Converts a pointer to an int.
+	 *
+	 * @return The new int expression.
+	 */
+	ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType);
+
+	/**
+	 * Converts an int to a pointer.
+	 *
+	 * @return The new pointer expression.
+	 */
+	ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType);
 
 }

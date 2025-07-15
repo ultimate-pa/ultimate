@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -82,7 +81,6 @@ public abstract class ExpressionTranslation {
 	protected final FunctionDeclarations mFunctionDeclarations;
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;
-	protected final IPointerIntegerConversion mPointerIntegerConversion;
 	protected final FlatSymbolTable mSymboltable;
 
 	protected final TranslationSettings mSettings;
@@ -94,18 +92,7 @@ public abstract class ExpressionTranslation {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mSymboltable = symboltable;
-		mFunctionDeclarations = new FunctionDeclarations(mTypeHandler, mTypeSizes);
-
-		mPointerIntegerConversion = switch (mSettings.getPointerIntegerCastMode()) {
-		case IdentityAxiom:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.IdentityAxiom);
-		case NonBijectiveMapping:
-			yield new NonBijectiveMapping(this, mTypeSizes);
-		case NutzBijection:
-			throw new UnsupportedOperationException("not yet implemented " + PointerIntegerConversion.NutzBijection);
-		case Overapproximate:
-			yield new OverapproximationUF(this, mFunctionDeclarations, mTypeHandler, mTypeSizes);
-		};
+		mFunctionDeclarations = new FunctionDeclarations(typeHandler, typeSizes);
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -290,16 +277,6 @@ public abstract class ExpressionTranslation {
 	 * CType of the structs components.
 	 */
 	public abstract CPrimitive getCTypeOfPointerComponents();
-
-	public final ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
-			final CPrimitive newType) {
-		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
-	}
-
-	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
-			final CPointer newType) {
-		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
-	}
 
 	public ExpressionResult convertFloatToInt(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {

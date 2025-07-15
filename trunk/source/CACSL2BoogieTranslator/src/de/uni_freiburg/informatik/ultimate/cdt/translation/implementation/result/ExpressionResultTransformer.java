@@ -723,7 +723,7 @@ public class ExpressionResultTransformer {
 			throw new AssertionError("unknown type " + newType);
 		}
 		if (oldType instanceof CPointer) {
-			return mExprTrans.convertPointerToInt(loc, rexp, newType);
+			return mMemoryHandler.convertPointerToInt(loc, rexp, newType);
 		}
 		if (oldType instanceof CEnum) {
 			return mExprTrans.convertIntToInt(loc, rexp, newType);
@@ -747,7 +747,7 @@ public class ExpressionResultTransformer {
 		if (oldType instanceof CPrimitive) {
 			final CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
-				return mExprTrans.convertIntToPointer(loc, rexp, newType);
+				return mMemoryHandler.convertIntToPointer(loc, rexp, newType);
 			}
 			if (cPrimitive.isRealFloatingType()) {
 				throw new IncorrectSyntaxException(loc, "cannot convert float to pointer");
@@ -761,7 +761,7 @@ public class ExpressionResultTransformer {
 			return convertPointerToPointer(loc, rexp, newType);
 		}
 		if (oldType instanceof CEnum) {
-			return mExprTrans.convertIntToPointer(loc, rexp, newType);
+			return mMemoryHandler.convertIntToPointer(loc, rexp, newType);
 		}
 		if (oldType instanceof CArray) {
 			if (rexp instanceof StringLiteralResult) {
@@ -1016,7 +1016,7 @@ public class ExpressionResultTransformer {
 	public ExpressionResult convertNullPointerConstantToPointer(final ExpressionResult nullPointerConstant,
 			final ICType desiredResultType, final ILocation loc) {
 		if (nullPointerConstant.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
-			return mExprTrans.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
+			return mMemoryHandler.convertIntToPointer(loc, nullPointerConstant, (CPointer) desiredResultType);
 		}
 		assert nullPointerConstant.getLrValue().getCType().getUnderlyingType() instanceof CPointer;
 		return nullPointerConstant;

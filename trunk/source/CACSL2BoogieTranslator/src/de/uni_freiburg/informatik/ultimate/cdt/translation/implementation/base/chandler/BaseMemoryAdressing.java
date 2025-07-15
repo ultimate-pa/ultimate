@@ -11,8 +11,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -23,6 +26,7 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 	IBooleanArrayHelper mBooleanArrayHelper;
 	TypeSizes mTypeSizes;
 	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	IPointerIntegerConversion mPointerIntegerConversion;
 
 	public BaseMemoryAdressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
@@ -32,7 +36,6 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizes = typeSizes;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
-
 	}
 
 	protected VariableDeclaration constructStackHeapBarrierConstant() {
@@ -105,5 +108,17 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 						memoryModelDeclarationsHandler),
 				new Expression[] { ptrBase });
 		return mBooleanArrayHelper.compareWithTrue(aae);
+	}
+
+	@Override
+	public ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
+		return mPointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
+	}
+
+	@Override
+	public ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
+		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
 	}
 }

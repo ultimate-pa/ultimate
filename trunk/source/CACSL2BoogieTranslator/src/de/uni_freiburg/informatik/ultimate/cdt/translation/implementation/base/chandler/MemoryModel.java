@@ -9,11 +9,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -29,21 +32,24 @@ public class MemoryModel {
 	private final IBooleanArrayHelper mBooleanArrayHelper;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+	private final FunctionDeclarations mFunctionDeclarations;
 
 	private final IMemoryAdressing mMemoryAddressing;
 	private final IMemoryStructure mMemoryStructure;
 
 	public MemoryModel(final TranslationSettings settings, final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final FunctionDeclarations functionDeclarations) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+		mFunctionDeclarations = functionDeclarations;
 
 		mMemoryAddressing = MemoryModelFactory.createMemoryAddressing(settings, mTypeHandler, mExpressionTranslation,
-				mBooleanArrayHelper, mTypeSizes, mTypeSizeAndOffsetComputer);
+				mBooleanArrayHelper, mTypeSizes, mTypeSizeAndOffsetComputer, mFunctionDeclarations);
 		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
 	}
 
@@ -201,4 +207,25 @@ public class MemoryModel {
 				isBitVectorTranslation, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 
+	/**
+	 * Constructs the statements used for the check if a freed pointer was valid.
+	 *
+	 * @return The statements.
+	 */
+	List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.getChecksForFreeCall(loc, pointerToBeFreed, isPointerCheckRequired,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
+	public final ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
+			final CPrimitive newType) {
+		return mMemoryAddressing.convertPointerToInt(loc, rexp, newType);
+	}
+
+	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
+			final CPointer newType) {
+		return mMemoryAddressing.convertIntToPointer(loc, rexp, newType);
+	}
 }
