@@ -127,6 +127,7 @@ public interface ITraceCheckPreferences {
 		private final ScoringMethod mSmtFeatureHeuristicScoringMethod;
 		private final int mSmtFeatureHeuristicNumPartitions;
 		private final double mSmtFeatureHeuristicThreshold;
+		private IIcfg<?> mIcfg;
 
 		public AssertCodeBlockOrder(final AssertCodeBlockOrderType assertCodeBlockOrderType) {
 			mAssertCodeBlockOrderType = assertCodeBlockOrderType;
@@ -184,6 +185,14 @@ public interface ITraceCheckPreferences {
 				return String.format("%s (unknown partitioning type %s)", mAssertCodeBlockOrderType.toString(),
 						mSmtFeatureHeuristicPartitioningType.toString());
 			}
+		}
+
+		public IIcfg<?> getIcfg() {
+			return mIcfg;
+		}
+
+		public void setIcfg(final IIcfg<?> icfg) {
+			mIcfg = icfg;
 		}
 
 	}

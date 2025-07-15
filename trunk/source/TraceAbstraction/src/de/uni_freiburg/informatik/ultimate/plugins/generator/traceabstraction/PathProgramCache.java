@@ -37,6 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 /**
@@ -50,11 +51,13 @@ public class PathProgramCache<LETTER> {
 	private final ILogger mLogger;
 	private final Map<Set<LETTER>, Integer> mKnownPathPrograms;
 	private final List<Integer> mTraceHashes;
+	private final IIcfg<?> mIcfg;
 
-	public PathProgramCache(final ILogger logger) {
+	public PathProgramCache(final ILogger logger, final IIcfg<?> icfg) {
 		mLogger = logger;
 		mKnownPathPrograms = new HashMap<>();
 		mTraceHashes = new ArrayList<>();
+		mIcfg = icfg;
 	}
 
 	/**
@@ -105,6 +108,10 @@ public class PathProgramCache<LETTER> {
 	public List<Integer> computeSortedHistrogram() {
 		final Integer[] visualizationArray = HistogramOfIterable.generateVisualizationArray(mKnownPathPrograms);
 		return Collections.unmodifiableList(Arrays.asList(visualizationArray));
+	}
+
+	public IIcfg<?> getIcfg() {
+		return mIcfg;
 	}
 
 }

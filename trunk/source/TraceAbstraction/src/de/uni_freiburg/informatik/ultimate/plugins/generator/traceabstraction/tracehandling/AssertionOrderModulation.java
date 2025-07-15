@@ -69,6 +69,9 @@ public class AssertionOrderModulation<LETTER> {
 		mPathProgramCache = pathProgramCache;
 		mLogger = logger;
 		mOrder = order == null || order.length == 0 ? DEFAULT_ORDER : order;
+		for (final AssertCodeBlockOrder ord : mOrder) {
+			ord.setIcfg(mPathProgramCache.getIcfg());
+		}
 	}
 
 	/**

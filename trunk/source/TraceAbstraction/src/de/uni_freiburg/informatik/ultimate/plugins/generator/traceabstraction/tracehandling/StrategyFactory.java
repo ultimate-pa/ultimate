@@ -120,7 +120,7 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 		mCfgSmtToolkit = initialIcfg.getCfgSmtToolkit();
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolAut = predicateFactoryInterpolAut;
-		mPathProgramCache = new PathProgramCache<>(mLogger);
+		mPathProgramCache = new PathProgramCache<>(mLogger, initialIcfg);
 		mTransitionClazz = transitionClazz;
 	}
 
