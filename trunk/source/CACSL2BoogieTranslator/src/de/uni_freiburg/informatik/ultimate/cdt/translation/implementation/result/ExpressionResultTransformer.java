@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
@@ -328,10 +327,6 @@ public class ExpressionResultTransformer {
 			final Expression structOnHeapAddress, final CStructOrUnion structType, final IASTNode hook,
 			final boolean unchecked) {
 
-		final Expression startAddress = structOnHeapAddress;
-		final Expression currentStructBaseAddress = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-		final Expression currentStructOffset = MemoryHandler.getPointerOffset(startAddress, loc);
-
 		// everything for the new Result
 		final ArrayList<Statement> newStmt = new ArrayList<>();
 		final ArrayList<Declaration> newDecl = new ArrayList<>();
@@ -397,14 +392,11 @@ public class ExpressionResultTransformer {
 					throw new UnsupportedOperationException("Bitfield read struct from heap");
 				}
 
-				final Expression offsetSum = mExprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-						currentStructOffset, mExprTrans.getCTypeOfPointerComponents(),
-						innerStructOffset.getAddressOffsetAsExpression(loc), mExprTrans.getCTypeOfPointerComponents());
-				final Expression innerStructAddress =
-						MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, offsetSum, loc);
+				final var newAddress = mMemoryHandler.constructAddressForStructField(loc, structOnHeapAddress,
+						innerStructOffset, mExprTrans.getCTypeOfPointerComponents());
 
-				final ExpressionResult fieldRead = readStructFromHeap(old, loc, innerStructAddress,
-						(CStructOrUnion) underlyingType, hook, unchecked);
+				final ExpressionResult fieldRead =
+						readStructFromHeap(old, loc, newAddress, (CStructOrUnion) underlyingType, hook, unchecked);
 
 				fieldLRVal = fieldRead.getLrValue();
 				newStmt.addAll(fieldRead.getStatements());
