@@ -2138,25 +2138,24 @@ public class MemoryHandler {
 				&& mSettings.getMemoryStructurePreference() == MemoryStructure.HoenickeLindenmann_Original;
 		for (final String fieldId : valueType.getFieldIds()) {
 			final Expression startAddress = hlv.getAddress();
-			final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
-			final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			final ICType fieldType = valueType.getFieldType(fieldId);
+
 			if (checkForFloats && fieldType.getUnderlyingType().isFloatingType()) {
 				stmt.add(ExpressionTranslation.modelUnsupportedFeature(loc,
 						"write for union with floats in the HoenickeLindenmann_Original Memory Structure"));
 			}
-			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
+
 			final Offset fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, valueType, fieldId);
 			if (fieldOffset.isBitfieldOffset()) {
 				throw new UnsupportedOperationException("Bitfield write");
 			}
 
-			final Expression newOffset = mExpressionTranslation.constructArithmeticExpression(loc,
-					IASTBinaryExpression.op_plus, newStartAddressOffset,
-					mExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset.getAddressOffsetAsExpression(loc),
+			final Expression newPointer = mMemoryModel.constructAddressForStructField(loc, startAddress, fieldOffset,
 					mExpressionTranslation.getCTypeOfPointerComponents());
-			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler,
-					constructPointerFromBaseAndOffset(newStartAddressBase, newOffset, loc), fieldType, null);
+
+			final HeapLValue fieldHlv = LRValueFactory.constructHeapLValue(mTypeHandler, newPointer, fieldType, null);
+			final StructAccessExpression sae = ExpressionFactory.constructStructAccessExpression(loc, value, fieldId);
+
 			stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType, writeMode));
 		}
 		return stmt;
