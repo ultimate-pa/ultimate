@@ -296,7 +296,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 
 		return new BaseUltimatePreferenceItem[] {
-
+				// TODO Check default settings, b.c. of the 1D memory addressing
 				new UltimatePreferenceItemGroup("Specification",
 						new UltimatePreferenceItem<>(LABEL_ERROR, true, DESC_ERROR, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC,
@@ -314,7 +314,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						new UltimatePreferenceItem<>(LABEL_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, false,
 								DESC_SVCOMP_MEMTRACK_COMPATIBILITY_MODE, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-								CheckMode.CHECK, PreferenceType.Combo, CheckMode.values()),
+								CheckMode.IGNORE, PreferenceType.Combo, CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, CheckMode.CHECK,
 								PreferenceType.Combo, CheckMode.values()),
 						new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, CheckMode.IGNORE,
