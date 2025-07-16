@@ -462,23 +462,21 @@ public class ExpressionResultTransformer {
 		ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		builder.addAuxVarWithDeclaration(newArrayAuxvar);
 
-		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(address, loc);
-		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(address, loc);
 		final Expression valueTypeSize = mMemoryHandler.calculateSizeOf(loc, arrayValueType);
-
-		Expression arrayEntryAddressOffset = newStartAddressOffset;
+		final int typeSize = mTypeSizes.extractIntegerValue(valueTypeSize, arrayValueType).intValue();
 
 		for (int pos = 0; pos < bound; pos++) {
 
-			final Expression readAddress =
-					MemoryHandler.constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc);
+			final var addressExpr =
+					mMemoryHandler.addIntegerConstantToPointer(loc, address, BigInteger.valueOf(pos * typeSize));
+
 			final ExpressionResult readRex;
 			if (arrayValueType instanceof final CStructOrUnion cStructOrUnion) {
-				readRex = readStructFromHeap(old, loc, readAddress, cStructOrUnion, hook, unchecked);
+				readRex = readStructFromHeap(old, loc, addressExpr, cStructOrUnion, hook, unchecked);
 			} else if (unchecked) {
-				readRex = mMemoryHandler.getReadUnchecked(readAddress, arrayType.getValueType());
+				readRex = mMemoryHandler.getReadUnchecked(addressExpr, arrayType.getValueType());
 			} else {
-				readRex = mMemoryHandler.getReadCall(readAddress, arrayType.getValueType());
+				readRex = mMemoryHandler.getReadCall(addressExpr, arrayType.getValueType());
 			}
 			builder.addAllExceptLrValue(readRex);
 			builder.setOrResetLrValue(readRex.getLrValue());
@@ -491,9 +489,6 @@ public class ExpressionResultTransformer {
 							Collections.emptyList(), builder.build(), hook);
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(assRex).setLrValue(assRex.getLrValue());
 
-			arrayEntryAddressOffset = mExprTrans.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-					arrayEntryAddressOffset, mExprTrans.getCTypeOfPointerComponents(), valueTypeSize,
-					mExprTrans.getCTypeOfPointerComponents());
 		}
 		builder.setOrResetLrValue(resultValue);
 		return builder.build();

@@ -2087,8 +2087,8 @@ public class MemoryHandler {
 
 	private List<Statement> getWriteCallArray(final ILocation loc, final HeapLValue hlv, final Expression value,
 			final CArray valueType, final HeapWriteMode writeMode) {
-
-		if (valueType.getValueType().getUnderlyingType() instanceof CArray) {
+		final ICType arrayValueType = valueType.getValueType().getUnderlyingType();
+		if (arrayValueType instanceof CArray) {
 			throw new UnsupportedSyntaxException(loc,
 					"we need to generalize this to nested and/or variable length arrays");
 		}
@@ -2098,35 +2098,31 @@ public class MemoryHandler {
 			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
 
-		final Expression arrayStartAddress = hlv.getAddress();
-		final Expression newStartAddressBase = MemoryHandler.getPointerBaseAddress(arrayStartAddress, loc);
-		final Expression newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
-
+		final Expression arrayAddress = hlv.getAddress();
 		final Expression valueTypeSize = calculateSizeOf(loc, valueType.getValueType());
-		final int dim = dimBigInteger.intValue();
-		final List<Statement> stmt = new ArrayList<>();
+		final int typeSize = mTypeSizes.extractIntegerValue(valueTypeSize, arrayValueType).intValue();
 
-		Expression arrayEntryAddressOffset = newStartAddressOffset;
+		final int dim = dimBigInteger.intValue();
+
+		final List<Statement> stmt = new ArrayList<>();
 
 		for (int pos = 0; pos < dim; pos++) {
 
+			final var addressExpr =
+					mMemoryModel.addIntegerConstantToPointer(loc, arrayAddress, BigInteger.valueOf(pos * typeSize));
+
 			final Expression position = mTypeSizes.constructLiteralForIntegerType(loc,
 					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(pos));
+
 			final RValue arrayAccessRVal = new RValue(
 					ExpressionFactory.constructNestedArrayAccessExpression(loc, value, new Expression[] { position }),
 					valueType.getValueType());
-			final HeapLValue arrayCellLValue = LRValueFactory.constructHeapLValue(mTypeHandler,
-					constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc),
-					valueType.getValueType(), null);
+
+			final HeapLValue arrayCellLValue =
+					LRValueFactory.constructHeapLValue(mTypeHandler, addressExpr, valueType.getValueType(), null);
+
 			stmt.addAll(getWriteCall(loc, arrayCellLValue, arrayAccessRVal.getValue(), arrayAccessRVal.getCType(),
 					writeMode));
-			// TODO 2015-10-11 Matthias: Why is there an addition of value Type size
-			// and no multiplication? Check this more carefully.
-			arrayEntryAddressOffset =
-					mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
-							arrayEntryAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(),
-							valueTypeSize, mExpressionTranslation.getCTypeOfPointerComponents());
-
 		}
 		return stmt;
 	}
@@ -2861,5 +2857,4 @@ public class MemoryHandler {
 			final CPointer newType) {
 		return mMemoryModel.convertIntToPointer(loc, rexp, newType);
 	}
-
 }
