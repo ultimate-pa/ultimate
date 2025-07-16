@@ -37,9 +37,7 @@ public class MemoryModelFactory {
 							settings.checkIfFreedPointerIsValid()),
 					new SimpleEntry<>(
 							CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION,
-							settings.isBitvectorTranslation()));
+							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE));
 
 			final List<String> incompatibleActiveOptions =
 					incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
