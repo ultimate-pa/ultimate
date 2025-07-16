@@ -41,7 +41,9 @@ public class MemoryModelFactory {
 							settings.checkMemoryLeakInMain()),
 					new SimpleEntry<>(
 							CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE));
+							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY,
+							settings.checkAllocationPurity()));
 
 			final List<String> incompatibleActiveOptions =
 					incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
