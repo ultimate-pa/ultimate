@@ -2533,11 +2533,11 @@ public class MemoryHandler {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.INIT_TO_ZERO_AT_ADDRESS + relevantHeapArray.getName();
 	}
 
-	public String getNameOfHeapStoreFunction(final HeapDataArray relevantHeapArray) {
+	public static String getNameOfHeapStoreFunction(final HeapDataArray relevantHeapArray) {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.STORE_SUBARRAY_AT_ADDRESS + relevantHeapArray.getName();
 	}
 
-	public String getNameOfHeapSelectFunction(final HeapDataArray relevantHeapArray) {
+	public static String getNameOfHeapSelectFunction(final HeapDataArray relevantHeapArray) {
 		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.SELECT_SUBARRAY_AT_ADDRESS + relevantHeapArray.getName();
 	}
 
