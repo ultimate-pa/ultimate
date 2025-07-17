@@ -1428,26 +1428,25 @@ public class MemoryHandler {
 		final String outParamResult = "#res";
 		final String procName = MemoryModelDeclarations.C_MEMSET.getName();
 
+		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
+
 		final VarList inParamPtrVl =
 				new VarList(ignoreLoc, new String[] { inParamPtr }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inParamValueVl = new VarList(ignoreLoc, new String[] { inParamValue },
 				mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)));
-		final VarList inParamAmountVl = new VarList(ignoreLoc, new String[] { inParamAmount },
-				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
+		final VarList inParamAmountVl =
+				new VarList(ignoreLoc, new String[] { inParamAmount }, mTypeHandler.cType2AstType(ignoreLoc, sizeT));
 		final VarList outParamResultVl =
 				new VarList(ignoreLoc, new String[] { outParamResult }, mTypeHandler.constructPointerType(ignoreLoc));
 
 		final VarList[] inParams = { inParamPtrVl, inParamValueVl, inParamAmountVl };
 		final VarList[] outParams = { outParamResultVl };
 
-		{
-			final Procedure procDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
-					outParams, new Specification[0], null);
-			mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
-		}
+		final Procedure procDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
+				outParams, new Specification[0], null);
+		mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, procDecl);
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
-		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final AuxVarInfo loopCtrAux = mAuxVarInfoBuilder.constructAuxVarInfo(ignoreLoc, sizeT, SFO.AUXVAR.LOOPCTR);
 		decl.add(loopCtrAux.getVarDec());
 
@@ -1465,8 +1464,7 @@ public class MemoryHandler {
 		final List<Statement> loopBody =
 				constructMemsetLoopBody(heapDataArrays, loopCtrAux, inParamPtr, convertedValue, procName);
 
-		final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-				mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ONE);
+		final Expression one = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, sizeT, BigInteger.ONE);
 		final IdentifierExpression inParamAmountExprImpl =
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, mTypeHandler.getBoogieTypeForSizeT(),
 						inParamAmount, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
