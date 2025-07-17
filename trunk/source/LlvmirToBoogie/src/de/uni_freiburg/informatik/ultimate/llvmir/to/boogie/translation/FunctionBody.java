@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -39,15 +40,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 public class FunctionBody {
 	private final ArrayList<VariableDeclaration> mFuncLocalVars;
 	private final ArrayList<Statement> mFuncBlock;
+	private final HashMap<String, Integer> mLabelMap;
+	private int mCurrentFreeLabelCount = 0;
+	private int mCurrentLabelIndex = -1;
 
 	public FunctionBody() {
 		mFuncLocalVars = new ArrayList<>();
 		mFuncBlock = new ArrayList<>();
-	}
-
-	public FunctionBody(final ArrayList<VariableDeclaration> funcLocalVars, final ArrayList<Statement> funcBlock) {
-		mFuncLocalVars = funcLocalVars;
-		mFuncBlock = funcBlock;
+		mLabelMap = new HashMap<>();
 	}
 
 	public ArrayList<VariableDeclaration> getFuncLocalVars() {
@@ -56,6 +56,29 @@ public class FunctionBody {
 
 	public ArrayList<Statement> getFuncBlock() {
 		return mFuncBlock;
+	}
+
+	public HashMap<String, Integer> getLabelMap() {
+		return mLabelMap;
+	}
+
+	public int getCurrentFreeLabelCount() {
+		return mCurrentFreeLabelCount;
+	}
+
+	public int getCurrentLabelIndex() {
+		return mCurrentLabelIndex;
+	}
+
+	public void setCurrentLabelIndex(final int currentLabelIndex) {
+		if (currentLabelIndex < 0) {
+			throw new IllegalArgumentException("Label index must be non-negative");
+		}
+		mCurrentLabelIndex = currentLabelIndex;
+	}
+
+	public void incrementCurrentLabelIndex() {
+		mCurrentLabelIndex++;
 	}
 
 	public void addFuncLocalVar(final VariableDeclaration funcLocalVar) {
@@ -72,6 +95,11 @@ public class FunctionBody {
 
 	public void addFuncBlocks(final Collection<Statement> funcBlocks) {
 		mFuncBlock.addAll(funcBlocks);
+	}
+
+	public void addLabel(final String label) {
+		mLabelMap.put(label, mCurrentFreeLabelCount);
+		mCurrentFreeLabelCount++;
 	}
 
 	/**
