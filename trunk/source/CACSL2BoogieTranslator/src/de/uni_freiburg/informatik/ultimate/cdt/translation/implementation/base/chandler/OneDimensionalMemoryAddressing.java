@@ -199,11 +199,14 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		}
 
 		// StackAllocCounter == old(StackAllocCounter) + ~size
+		// HeapAllocCounter == old(HeapAllocCounter) + ~size
+		final var oldExpr =
+				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression);
+		final var sumExpr = mExpressionTranslation.constructArithmeticExpression(tuLoc, IASTBinaryExpression.op_plus,
+				oldExpr, cTypeOfPointerComponent, sizeExpr, mTypeSizeAndOffsetComputer.getSizeT());
 		final var counterUpdateValueExpr =
-				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression,
-						ExpressionFactory.newBinaryExpression(tuLoc, Operator.ARITHPLUS, ExpressionFactory
-								.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression),
-								sizeExpr));
+				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression, sumExpr);
+
 		expressions.add(new Pair<>(counterUpdateValueExpr,
 				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(counterExpression))));
 
