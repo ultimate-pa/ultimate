@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;
 
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -36,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.ParseTreeElementWrapper;
-import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.LlvmirToBoogieListener;
+import de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation.LlvmirToBoogieVisitor;
 
 public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 
@@ -78,10 +77,10 @@ public class LlvmirToBoogieObserver implements IUnmanagedObserver {
 		final ParseTreeElementWrapper parseTreeElementWrapper = (ParseTreeElementWrapper) root;
 		final ParseTree tree = parseTreeElementWrapper.getParseTree();
 
-		final LlvmirToBoogieListener listener = new LlvmirToBoogieListener(mServices, mLogger,
+		final LlvmirToBoogieVisitor visitor = new LlvmirToBoogieVisitor(mServices, mLogger,
 				parseTreeElementWrapper.getFilename());
-		ParseTreeWalker.DEFAULT.walk(listener, tree);
-		mResult = listener.getResult();
+		visitor.visit(tree);
+		mResult = visitor.getResult();
 
 		mLogger.info("Successfully processed the LLVM IR parse tree.");
 		return false;

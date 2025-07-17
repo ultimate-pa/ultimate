@@ -24,11 +24,12 @@
  * licensors of the ULTIMATE LlvmirToBoogie plug-in grant you additional permission
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import org.antlr.v4.runtime.tree.ParseTree;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -53,11 +54,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseListener;
+import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 
-public class LlvmirToBoogieListener extends LLVMIRBaseListener {
+public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -65,14 +66,9 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	private final String mFilename;
 	private LlvmirLocation mLocation;
 
-	// Temporary storage for function-local variables and statements
-	private ArrayList<VariableDeclaration> mFuncLocalVars = new ArrayList<>();
-	private ArrayList<Statement> mFuncBlock = new ArrayList<>();
-	// Storage for the declarations that will be part of the final Boogie Unit
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 
-	public LlvmirToBoogieListener(final IUltimateServiceProvider services, final ILogger logger,
-			final String filename) {
+	public LlvmirToBoogieVisitor(final IUltimateServiceProvider services, final ILogger logger, final String filename) {
 		assert services != null;
 		mServices = services;
 		mLogger = logger;
@@ -86,11 +82,26 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	}
 
 	/**
-	 * Creates the initial declarations for the Boogie translation, specifically an `#init` procedure and a
-	 * `ULTIMATE.start` procedure that calls `#init` and `#main`.
+	 * Unifies the identifier by ensuring it starts with a # character.
 	 *
-	 * The `#init` procedure is empty, while the `ULTIMATE.start` procedure initializes the program by calling both
-	 * `#init` and `#main`.
+	 * This method is used to standardize the identifiers in the Boogie AST, as they are expected to start with #.
+	 *
+	 * @param identifier The original identifier from the LLVM IR parse tree.
+	 * @return The unified identifier starting with #, or the original identifier if it is null or empty.
+	 */
+	private static String unifyIdentifier(final String identifier) {
+		if (identifier == null || identifier.isEmpty()) {
+			return identifier;
+		}
+		return "#" + identifier.substring(1);
+	}
+
+	/**
+	 * Creates the initial declarations for the Boogie translation, specifically an #init procedure and a ULTIMATE.start
+	 * procedure that calls #init and #main.
+	 *
+	 * The #init procedure is empty, while the ULTIMATE.start procedure initializes the program by calling both #init
+	 * and #main.
 	 */
 	private void createInitialDeclarations() {
 		final Body initBody = new Body(mLocation, new VariableDeclaration[] {}, new Statement[] {});
@@ -115,10 +126,10 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	}
 
 	/**
-	 * Retrieves the `#init` procedure from the list of declarations.
+	 * Retrieves the #init procedure from the list of declarations.
 	 *
-	 * @return The `#init` procedure.
-	 * @throws IllegalStateException if no `#init` procedure is found.
+	 * @return The #init procedure.
+	 * @throws IllegalStateException if no #init procedure is found.
 	 */
 	private Procedure getInitProcedure() throws IllegalStateException {
 		return (Procedure) mDeclarations.stream()
@@ -127,10 +138,10 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	}
 
 	/**
-	 * Retrieves the `ULTIMATE.start` procedure from the list of declarations.
+	 * Retrieves the ULTIMATE.start procedure from the list of declarations.
 	 *
-	 * @return The `ULTIMATE.start` procedure.
-	 * @throws IllegalStateException if no `ULTIMATE.start` procedure is found.
+	 * @return The ULTIMATE.start procedure.
+	 * @throws IllegalStateException if no ULTIMATE.start procedure is found.
 	 */
 	private Procedure getStartProcedure() throws IllegalStateException {
 		return (Procedure) mDeclarations.stream().filter(
@@ -175,38 +186,20 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		mDeclarations.add(newProcedure);
 	}
 
-	/**
-	 * Handles the entry event for the compilation unit in the LLVM IR parse tree.
-	 *
-	 * This method initializes the location for the compilation unit and creates the initial declarations required for
-	 * the Boogie translation.
-	 *
-	 * @param ctx The parse tree context for the compilation unit.
-	 */
 	@Override
-	public void enterCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
+	public Void visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-
 		createInitialDeclarations();
-	}
 
-	/**
-	 * Handles the exit event for the compilation unit in the LLVM IR parse tree.
-	 *
-	 * This method creates the initial procedures required for the Boogie translation, specifically an `#init` procedure
-	 * and a `ULTIMATE.start` procedure that calls `#init` and `#main`. These procedures are added to the list of
-	 * declarations, and the resulting Boogie `Unit` is constructed and stored.
-	 *
-	 * @param ctx The parse tree context for the compilation unit.
-	 */
-	@Override
-	public void exitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
+		visitChildren(ctx);
+
 		mResult = new Unit(mLocation, mDeclarations.toArray(Declaration[]::new));
+		return null;
 	}
 
 	/**
-	 * Handles the exit event for a function definition in the LLVM IR parse tree.
+	 * Handles the visit event for a function definition in the LLVM IR parse tree.
 	 *
 	 * This method translates the parsed LLVM IR function into a Boogie procedure, including its body, parameters, and
 	 * return type. Currently, only `void` and integer return types are supported.
@@ -215,15 +208,23 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * @throws AssertionError if the return type is not supported.
 	 */
 	@Override
-	public void exitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
+	public Void visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
+		final FunctionBody body = new FunctionBody();
+		for (final ParseTree child : ctx.children) {
+			final FunctionBody childBody = (FunctionBody) child.accept(this);
+			if (childBody != null) {
+				body.merge(childBody);
+			}
+		}
+
 		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
-		final Body funcBody = new Body(location, mFuncLocalVars.toArray(VariableDeclaration[]::new),
-				mFuncBlock.toArray(Statement[]::new));
+		final Body funcBody = new Body(location, body.getFuncLocalVars().toArray(VariableDeclaration[]::new),
+				body.getFuncBlock().toArray(Statement[]::new));
 		final ArrayList<Attribute> attributes = new ArrayList<>();
 		final ArrayList<String> typeParams = new ArrayList<>();
 		final ArrayList<VarList> inParams = new ArrayList<>();
@@ -247,27 +248,53 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				spec.toArray(Specification[]::new), funcBody);
 		mDeclarations.add(procedure);
 
-		mFuncBlock = new ArrayList<>();
-		mFuncLocalVars = new ArrayList<>();
+		return null;
 	}
 
 	/**
-	 * Unifies the identifier by ensuring it starts with a `#` character.
+	 * Handles the visit event for a function body in the LLVM IR parse tree.
 	 *
-	 * This method is used to standardize the identifiers in the Boogie AST, as they are expected to start with `#`.
+	 * This method processes the children of the function body context and merges their results into a single
+	 * FunctionBody object.
 	 *
-	 * @param identifier The original identifier from the LLVM IR parse tree.
-	 * @return The unified identifier starting with `#`, or the original identifier if it is null or empty.
+	 * @param ctx The parse tree context for the function body.
+	 * @return A FunctionBody object containing the merged results of the children.
 	 */
-	private static String unifyIdentifier(final String identifier) {
-		if (identifier == null || identifier.isEmpty()) {
-			return identifier;
+	@Override
+	public FunctionBody visitFuncBody(final LLVMIRParser.FuncBodyContext ctx) {
+		final FunctionBody body = new FunctionBody();
+		for (final ParseTree child : ctx.children) {
+			final FunctionBody childBody = (FunctionBody) child.accept(this);
+			if (childBody != null) {
+				body.merge(childBody);
+			}
 		}
-		return "#" + identifier.substring(1);
+		return body;
 	}
 
 	/**
-	 * Handles the exit event for a return terminator in the LLVM IR parse tree.
+	 * Handles the visit event for a function body in the LLVM IR parse tree.
+	 *
+	 * This method processes the children of the function body context and merges their results into a single
+	 * FunctionBody object.
+	 *
+	 * @param ctx The parse tree context for the function body.
+	 * @return A FunctionBody object containing the merged results of the children.
+	 */
+	@Override
+	public FunctionBody visitBasicBlock(final LLVMIRParser.BasicBlockContext ctx) {
+		final FunctionBody body = new FunctionBody();
+		for (final ParseTree child : ctx.children) {
+			final FunctionBody childBody = (FunctionBody) child.accept(this);
+			if (childBody != null) {
+				body.merge(childBody);
+			}
+		}
+		return body;
+	}
+
+	/**
+	 * Handles the visit event for a return terminator in the LLVM IR parse tree.
 	 *
 	 * Currently, it only supports integer return types.
 	 *
@@ -275,7 +302,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * @throws AssertionError if the return type is not supported.
 	 */
 	@Override
-	public void exitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
+	public FunctionBody visitRetTerm(final LLVMIRParser.RetTermContext ctx) {
+		final FunctionBody body = new FunctionBody();
 		final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
@@ -287,15 +315,17 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
 					new LeftHandSide[] { returnVar }, new Expression[] { returnLiteral });
 			final ReturnStatement returnStmt = new ReturnStatement(location);
-			mFuncBlock.addAll(Arrays.asList(assignmentStmt, returnStmt));
+			body.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
 		} else {
 			// TODO: Support for other types
 			throw new AssertionError("The support for return types other than integers is not implemented yet.");
 		}
+
+		return body;
 	}
 
 	/**
-	 * Handles the exit event for a global variable definition in the LLVM IR parse tree.
+	 * Handles the visit event for a global variable definition in the LLVM IR parse tree.
 	 *
 	 * This method translates the global variable definition into a Boogie variable declaration and updates the `#init`
 	 * procedure with an assignment statement to initialize the variable.
@@ -304,7 +334,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * @throws AssertionError if the type of the global variable is not supported.
 	 */
 	@Override
-	public void exitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
+	public Void visitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = ctx.GlobalIdent().getText();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
@@ -331,10 +361,12 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			// TODO: Support for other types
 			throw new AssertionError("The support for types other than integers is not implemented yet.");
 		}
+
+		return null;
 	}
 
 	/**
-	 * Handles the exit event for a local variable definition in the LLVM IR parse tree.
+	 * Handles the visit event for a local variable definition in the LLVM IR parse tree.
 	 *
 	 * This method translates the local variable definition into a Boogie variable declaration and initializes it based
 	 * on the type of instruction (load or iCmp). Currently, it supports load instructions for integers and iCmp
@@ -344,7 +376,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	 * @throws AssertionError if the instruction type is not supported.
 	 */
 	@Override
-	public void exitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) throws AssertionError {
+	public FunctionBody visitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) {
+		final FunctionBody body = new FunctionBody();
 		final String identifier = ctx.LocalIdent().getText();
 		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
@@ -357,7 +390,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 				final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, intType);
 				final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
 						new VarList[] { varList });
-				mFuncLocalVars.add(varDecl);
+				body.addFuncLocalVar(varDecl);
 				final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
 				final String nameOfGlobalVar = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
 						.getText();
@@ -365,7 +398,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 						unifyIdentifier(nameOfGlobalVar));
 				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 						new Expression[] { globalVarExpr });
-				mFuncBlock.add(assignment);
+				body.addFuncBlock(assignment);
 				// TODO
 			} else {
 				// TODO: Support for other types
@@ -377,7 +410,7 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, boolType);
 			final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
 					new VarList[] { varList });
-			mFuncLocalVars.add(varDecl);
+			body.addFuncLocalVar(varDecl);
 			Expression leftExpr = null;
 			Expression rightExpr = null;
 			Operator operator = null;
@@ -437,10 +470,12 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 			final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
-			mFuncBlock.add(assignment);
+			body.addFuncBlock(assignment);
 		} else {
 			// TODO: Support for other instructions
 			throw new AssertionError("The support for instructions other than load is not implemented yet.");
 		}
+
+		return body;
 	}
 }
