@@ -152,7 +152,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		final var counterExpression = memoryArea == MemoryArea.STACK
 				? MemoryModelExpressionHelper.getStackAllocCounter(tuLoc, requiredMemoryModelFeatures,
 						memoryModelDeclarationsHandler)
-				: MemoryModelExpressionHelper.getStackAllocCounter(tuLoc, requiredMemoryModelFeatures,
+				: MemoryModelExpressionHelper.getHeapAllocCounter(tuLoc, requiredMemoryModelFeatures,
 						memoryModelDeclarationsHandler);
 
 		final var stackHeapBarrierExpr = MemoryModelExpressionHelper.getStackHeapBarrier(tuLoc,
