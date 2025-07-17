@@ -138,11 +138,13 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
 			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
 		final ArrayList<Pair<Expression, Set<VariableLHS>>> expressions = new ArrayList<>();
 
 		final var memoryAreaName = memoryArea.getMemoryStructureDeclaration().getName();
-		final var zeroNumericValueExpr = mTypeSizes.constructLiteralForIntegerType(tuLoc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var zeroNumericValueExpr =
+				mTypeSizes.constructLiteralForIntegerType(tuLoc, cTypeOfPointerComponent, BigInteger.ZERO);
 		final var resultExpr =
 				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogiePointerType(), SFO.RES,
 						new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, memoryAreaName));
@@ -188,11 +190,11 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			expressions.add(new Pair<>(baseSmallerThanBarrierExpr, Collections.emptySet()));
 
 			// #InitialAllocation < res!base
-			final var baseGreaterThanInitialAllocsExpr = mExpressionTranslation
-					.constructBinaryComparisonIntegerExpression(tuLoc, IASTBinaryExpression.op_lessThan,
-							initialAllocCounterExpr, mExpressionTranslation.getCTypeOfPointerComponents(),
+			final var baseGreaterThanInitialAllocsExpr =
+					mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
+							IASTBinaryExpression.op_lessThan, initialAllocCounterExpr, cTypeOfPointerComponent,
 							ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
-							mExpressionTranslation.getCTypeOfPointerComponents());
+							cTypeOfPointerComponent);
 			expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
 		}
 
@@ -220,17 +222,18 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
 
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
 		// Add assume(fixedAddressCounter == #InitialAllocations)
-		final Expression fixedAddressCounterExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), fixedAddressCounter);
+		final Expression fixedAddressCounterExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, fixedAddressCounter);
 
 		final Expression initialAllocCounterEqualsFixedAddressCounterExpr =
-				mExpressionTranslation
-						.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-								fixedAddressCounterExpr, mExpressionTranslation.getCTypeOfPointerComponents(),
-								MemoryModelExpressionHelper.getInitialAllocCounter(loc, requiredMemoryModelFeatures,
-										memoryModelDeclarationsHandler),
-								mExpressionTranslation.getCTypeOfPointerComponents());
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
+						fixedAddressCounterExpr, cTypeOfPointerComponent,
+						MemoryModelExpressionHelper.getInitialAllocCounter(loc, requiredMemoryModelFeatures,
+								memoryModelDeclarationsHandler),
+						cTypeOfPointerComponent);
 
 		final Statement statement = new AssumeStatement(loc, initialAllocCounterEqualsFixedAddressCounterExpr);
 
@@ -247,20 +250,22 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
 			final RValue integer, final ICType valueType) {
+
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
-				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
+				.getSize(cTypeOfPointerComponent.getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
-		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(),
-				mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression timesSizeOf =
+				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), cTypeOfPointerComponent);
+		final Expression zeroExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerBase,
-				mExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf,
-				mExpressionTranslation.getCTypeOfPointerComponents());
+				cTypeOfPointerComponent, timesSizeOf, cTypeOfPointerComponent);
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(sum, zeroExpr, loc);
 	}
