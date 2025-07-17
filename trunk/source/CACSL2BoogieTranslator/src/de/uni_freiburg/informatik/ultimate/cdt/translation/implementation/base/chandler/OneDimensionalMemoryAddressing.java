@@ -167,16 +167,16 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				ExpressionFactory.constructIdentifierExpression(tuLoc, mTypeHandler.getBoogieTypeForSizeT(), SFO.SIZE,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, memoryAreaName));
 
-		// ensures #res!base == old(counterExpression);
+		// #res!base == old(counterExpression);
 		final var baseEqualCounterExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, resBaseExpr,
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression));
 		expressions.add(new Pair<>(baseEqualCounterExpr, Collections.emptySet()));
 
-		// ensures #res!offset = 0;
+		// #res!offset = 0;
 		final var offsetEqualZeroExpr = offsetEqualsZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
 		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
 
-		// ensures #res!base != 0;
+		// #res!base != 0;
 		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
 		expressions.add(new Pair<>(baseNotEqualZeroExpr, Collections.emptySet()));
 
@@ -198,7 +198,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			expressions.add(new Pair<>(baseGreaterThanInitialAllocsExpr, Collections.emptySet()));
 		}
 
-		// ensures StackAllocCounter == old(StackAllocCounter) + ~size
+		// StackAllocCounter == old(StackAllocCounter) + ~size
 		final var counterUpdateValueExpr =
 				ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, counterExpression,
 						ExpressionFactory.newBinaryExpression(tuLoc, Operator.ARITHPLUS, ExpressionFactory
