@@ -172,14 +172,14 @@ public final class ConstructRealloc {
 							hda.getArrayContentBoogieType());
 
 			final Expression select = ExpressionFactory
-					.constructFunctionApplication(ignoreLoc, mMemoryHandler.getNameOfHeapSelectFunction(hda),
+					.constructFunctionApplication(ignoreLoc, MemoryHandler.getNameOfHeapSelectFunction(hda),
 							new Expression[] { hda.getIdentifierExpression(),
 									MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
 							innerArrayBoogieType);
 
 			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
 					ExpressionFactory.constructFunctionApplication(ignoreLoc,
-							mMemoryHandler.getNameOfHeapStoreFunction(hda),
+							MemoryHandler.getNameOfHeapStoreFunction(hda),
 							new Expression[] { hda.getIdentifierExpression(),
 									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
