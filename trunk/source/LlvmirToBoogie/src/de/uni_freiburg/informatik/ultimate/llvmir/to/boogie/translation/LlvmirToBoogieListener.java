@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseListener;
@@ -220,8 +219,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 
-		final DefaultLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(),
-				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		final Body funcBody = new Body(location, mFuncLocalVars.toArray(VariableDeclaration[]::new),
 				mFuncBlock.toArray(Statement[]::new));
@@ -278,8 +277,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	@Override
 	public void exitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
 		final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
-		final DefaultLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(),
-				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		if (returnType.intType() != null) {
 			final String returnValue = ctx.value().constant().intConst().getText();
@@ -308,8 +307,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	public void exitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = ctx.GlobalIdent().getText();
-		final DefaultLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(),
-				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		if (type.intType() != null) {
 			final PrimitiveType intType = new PrimitiveType(null, "int");
@@ -348,8 +347,8 @@ public class LlvmirToBoogieListener extends LLVMIRBaseListener {
 	public void exitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) throws AssertionError {
 		final String identifier = ctx.LocalIdent().getText();
 		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
-		final DefaultLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(),
-				ctx.getStop().getLine(), ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		if (instructionType.loadInst() != null) {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
