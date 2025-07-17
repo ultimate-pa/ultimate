@@ -219,11 +219,21 @@ public class MemoryModel {
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 
+	/**
+	 * Converts a pointer to an int.
+	 *
+	 * @return The new int expression.
+	 */
 	public final ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		return mMemoryAddressing.convertPointerToInt(loc, rexp, newType);
 	}
 
+	/**
+	 * Converts an int to a pointer.
+	 *
+	 * @return The new pointer expression.
+	 */
 	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
 			final CPointer newType) {
 		return mMemoryAddressing.convertIntToPointer(loc, rexp, newType);
