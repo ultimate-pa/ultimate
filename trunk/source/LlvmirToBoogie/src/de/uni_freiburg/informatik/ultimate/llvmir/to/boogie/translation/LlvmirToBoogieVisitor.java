@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -186,6 +187,64 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		mDeclarations.add(newProcedure);
 	}
 
+	/**
+	 * Creates a variable declaration with a primitive type.
+	 *
+	 * This method is used to create variable declarations for primitive types like integers, booleans, etc.
+	 *
+	 * @param type       The type of the variable (e.g., "int", "bool").
+	 * @param identifier The identifier for the variable.
+	 * @param location   The location in the source code where this variable is declared.
+	 * @return A VariableDeclaration object representing the variable declaration.
+	 */
+	private static VariableDeclaration createVarDecWithPrimType(final String type, final String identifier,
+			final LlvmirLocation location) {
+		final PrimitiveType primType = new PrimitiveType(location, type);
+		final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, primType);
+		final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
+				new VarList[] { varList });
+
+		return varDecl;
+	}
+
+	/**
+	 * Converts a value context from the LLVM IR parse tree into a Boogie expression.
+	 *
+	 * This method handles both local identifiers and constant values, converting them into the appropriate Boogie
+	 * expressions (IdentifierExpression or IntegerLiteral).
+	 *
+	 * @param valueContext The value context from the LLVM IR parse tree.
+	 * @param location     The location in the source code where this value is used.
+	 * @return An Expression object representing the value.
+	 * @throws AssertionError if the value type is not supported.
+	 */
+	private static Expression getExpressionFromValue(final LLVMIRParser.ValueContext valueContext,
+			final LlvmirLocation location) throws AssertionError {
+		if (valueContext.LocalIdent() != null) {
+			final String leftOperandName = valueContext.LocalIdent().getText();
+			return new IdentifierExpression(location, unifyIdentifier(leftOperandName));
+		} else if (valueContext.constant() != null) {
+			if (valueContext.constant().intConst() != null) {
+				final int constValue = Integer.parseInt(valueContext.constant().intConst().getText());
+				if (constValue >= 0) {
+					return new IntegerLiteral(location, Integer.toString(constValue));
+				}
+				final IntegerLiteral absValue = new IntegerLiteral(location, Integer.toString(Math.abs(constValue)));
+				return new UnaryExpression(location, UnaryExpression.Operator.ARITHNEGATIVE, absValue);
+			} else if (valueContext.constant().boolConst() != null) {
+				final String boolValue = valueContext.constant().boolConst().getText();
+				return new IdentifierExpression(location, boolValue);
+			}
+			// TODO: Support for other constant operand types
+			throw new AssertionError(
+					"The support for iCmp instructions with constant operands other than integers and booleans is not implemented yet.");
+		} else {
+			// TODO: Support for other left operand types
+			throw new AssertionError(
+					"The support for iCmp instructions with operands other than constants or local identifiers is not implemented yet.");
+		}
+	}
+
 	@Override
 	public Void visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
@@ -309,11 +368,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		if (returnType.intType() != null) {
-			final String returnValue = ctx.value().constant().intConst().getText();
-			final IntegerLiteral returnLiteral = new IntegerLiteral(location, returnValue);
 			final VariableLHS returnVar = new VariableLHS(location, "ret");
 			final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
-					new LeftHandSide[] { returnVar }, new Expression[] { returnLiteral });
+					new LeftHandSide[] { returnVar },
+					new Expression[] { getExpressionFromValue(ctx.value(), location) });
 			final ReturnStatement returnStmt = new ReturnStatement(location);
 			body.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
 		} else {
@@ -341,11 +399,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		if (type.intType() != null) {
-			final PrimitiveType intType = new PrimitiveType(null, "int");
-			final VarList varList = new VarList(null, new String[] { unifyIdentifier(identifier) }, intType);
-			final VariableDeclaration varDecl = new VariableDeclaration(null, new Attribute[] {},
-					new VarList[] { varList });
-			mDeclarations.add(varDecl);
+			mDeclarations.add(createVarDecWithPrimType("int", identifier, location));
 
 			final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
 			final IntegerLiteral initValue = new IntegerLiteral(location, ctx.constant().intConst().getText());
@@ -386,11 +440,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		if (instructionType.loadInst() != null) {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
 			if (variableType.intType() != null) {
-				final PrimitiveType intType = new PrimitiveType(location, "int");
-				final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, intType);
-				final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
-						new VarList[] { varList });
-				body.addFuncLocalVar(varDecl);
+				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 				final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
 				final String nameOfGlobalVar = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
 						.getText();
@@ -406,11 +456,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 						"The support for types other than integers in load instructions is not implemented yet.");
 			}
 		} else if (instructionType.iCmpInst() != null) {
-			final PrimitiveType boolType = new PrimitiveType(location, "bool");
-			final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, boolType);
-			final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
-					new VarList[] { varList });
-			body.addFuncLocalVar(varDecl);
+			body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
 			Expression leftExpr = null;
 			Expression rightExpr = null;
 			Operator operator = null;
@@ -423,48 +469,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 			}
 
 			final LLVMIRParser.ValueContext leftOperandType = instructionType.iCmpInst().typeValue().value();
-			if (leftOperandType.constant() != null) {
-				if (leftOperandType.constant().intConst() != null) {
-					final int constValue = Integer.parseInt(leftOperandType.constant().intConst().getText());
-					final IntegerLiteral leftOperand = new IntegerLiteral(location, Integer.toString(constValue));
-					leftExpr = leftOperand;
-				} else {
-					// TODO: Support for other constant operand types
-					throw new AssertionError(
-							"The support for iCmp instructions with constant operands other than integers is not implemented yet.");
-				}
-			} else if (leftOperandType.LocalIdent() != null) {
-				final String leftOperandName = leftOperandType.LocalIdent().getText();
-				final IdentifierExpression leftOperand = new IdentifierExpression(location,
-						unifyIdentifier(leftOperandName));
-				leftExpr = leftOperand;
-			} else {
-				// TODO: Support for other left operand types
-				throw new AssertionError(
-						"The support for iCmp instructions with operands other than constants or local identifiers is not implemented yet.");
-			}
+			leftExpr = getExpressionFromValue(leftOperandType, location);
 
 			final LLVMIRParser.ValueContext rightOperandType = instructionType.iCmpInst().value();
-			if (rightOperandType.constant() != null) {
-				if (rightOperandType.constant().intConst() != null) {
-					final int constValue = Integer.parseInt(rightOperandType.constant().intConst().getText());
-					final IntegerLiteral rightOperand = new IntegerLiteral(location, Integer.toString(constValue));
-					rightExpr = rightOperand;
-				} else {
-					// TODO: Support for other constant operand types
-					throw new AssertionError(
-							"The support for iCmp instructions with constant operands other than integers is not implemented yet.");
-				}
-			} else if (rightOperandType.LocalIdent() != null) {
-				final String rightOperandName = rightOperandType.LocalIdent().getText();
-				final IdentifierExpression rightOperand = new IdentifierExpression(location,
-						unifyIdentifier(rightOperandName));
-				rightExpr = rightOperand;
-			} else {
-				// TODO: Support for other right operand types
-				throw new AssertionError(
-						"The support for iCmp instructions with operands other than constants or local identifiers is not implemented yet.");
-			}
+			rightExpr = getExpressionFromValue(rightOperandType, location);
 
 			final VariableLHS varLhs = new VariableLHS(null, unifyIdentifier(identifier));
 			final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
