@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -41,8 +43,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
@@ -69,6 +73,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 
+	private final HashMap<String, Integer> mLabelMap = new HashMap<>();
+	private final int mCurrentFreeLabelCount = 0;
+	private final int mCurrentLabelIndex = 0;
+
 	public LlvmirToBoogieVisitor(final IUltimateServiceProvider services, final ILogger logger, final String filename) {
 		assert services != null;
 		mServices = services;
@@ -94,7 +102,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		if (identifier == null || identifier.isEmpty()) {
 			return identifier;
 		}
-		return "#" + identifier.substring(1);
+		String result = identifier;
+		result = result.replace(":", "");
+		final char firstChar = result.charAt(0);
+		if (Character.isLetterOrDigit(firstChar)) {
+			return "#" + result;
+		}
+		return "#" + result.substring(1);
 	}
 
 	/**
@@ -113,10 +127,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 				new Expression[] {});
 
 		final PrimitiveType intType = new PrimitiveType(mLocation, "int");
-		final VarList varList = new VarList(mLocation, new String[] { "tmp" }, intType);
+		final VarList varList = new VarList(mLocation, new String[] { "#tmp" }, intType);
 		final VariableDeclaration varDecl = new VariableDeclaration(mLocation, new Attribute[] {},
 				new VarList[] { varList });
-		final VariableLHS varLhs = new VariableLHS(mLocation, "tmp");
+		final VariableLHS varLhs = new VariableLHS(mLocation, "#tmp");
 		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "#main",
 				new Expression[] {});
 		final Body startBody = new Body(mLocation, new VariableDeclaration[] { varDecl },
@@ -245,6 +259,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		}
 	}
 
+	/**
+	 * Handles the visit event for a compilation unit in the LLVM IR parse tree.
+	 *
+	 * This method initializes the location and creates the initial declarations for the Boogie translation. It then
+	 * visits all children of the compilation unit context to process function definitions and global variable
+	 * definitions.
+	 *
+	 * @param ctx The parse tree context for the compilation unit.
+	 * @return null, as this method does not return any value.
+	 */
 	@Override
 	public Void visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
@@ -269,6 +293,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	@Override
 	public Void visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
 		final FunctionBody body = new FunctionBody();
+		body.addFuncLocalVar(createVarDecWithPrimType("int", "#label", mLocation));
+
 		for (final ParseTree child : ctx.children) {
 			final FunctionBody childBody = (FunctionBody) child.accept(this);
 			if (childBody != null) {
@@ -322,8 +348,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	@Override
 	public FunctionBody visitFuncBody(final LLVMIRParser.FuncBodyContext ctx) {
 		final FunctionBody body = new FunctionBody();
-		for (final ParseTree child : ctx.children) {
-			final FunctionBody childBody = (FunctionBody) child.accept(this);
+		final List<LLVMIRParser.BasicBlockContext> basicBlocks = ctx.basicBlock();
+		for (final LLVMIRParser.BasicBlockContext childCtx : ctx.basicBlock()) {
+			final FunctionBody childBody = (FunctionBody) visit(childCtx);
 			if (childBody != null) {
 				body.merge(childBody);
 			}
@@ -331,24 +358,39 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		return body;
 	}
 
-	/**
-	 * Handles the visit event for a function body in the LLVM IR parse tree.
-	 *
-	 * This method processes the children of the function body context and merges their results into a single
-	 * FunctionBody object.
-	 *
-	 * @param ctx The parse tree context for the function body.
-	 * @return A FunctionBody object containing the merged results of the children.
-	 */
 	@Override
 	public FunctionBody visitBasicBlock(final LLVMIRParser.BasicBlockContext ctx) {
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 		final FunctionBody body = new FunctionBody();
+
+		final LLVMIRParser.FuncBodyContext funcBodyCtx = (LLVMIRParser.FuncBodyContext) ctx.getParent();
+		final List<LLVMIRParser.BasicBlockContext> blocks = funcBodyCtx.basicBlock();
+		final int index = blocks.indexOf(ctx);
+
+		body.setCurrentLabelIndex(index);
+
+		final String labelName = unifyIdentifier(ctx.LabelIdent().getText());
+		final Label label = new Label(location, labelName, new NamedAttribute[] {});
+		body.addLabel(labelName);
+		body.addFuncBlock(label);
+
 		for (final ParseTree child : ctx.children) {
 			final FunctionBody childBody = (FunctionBody) child.accept(this);
 			if (childBody != null) {
 				body.merge(childBody);
 			}
 		}
+
+		if (!(index == blocks.size() - 1)) {
+			final IntegerLiteral labelIndex = new IntegerLiteral(location,
+					Integer.toString(body.getCurrentLabelIndex()));
+			final VariableLHS labelVar = new VariableLHS(location, "#label");
+			final AssignmentStatement labelAssignment = new AssignmentStatement(location,
+					new LeftHandSide[] { labelVar }, new Expression[] { labelIndex });
+			body.addFuncBlock(labelAssignment);
+		}
+
 		return body;
 	}
 
