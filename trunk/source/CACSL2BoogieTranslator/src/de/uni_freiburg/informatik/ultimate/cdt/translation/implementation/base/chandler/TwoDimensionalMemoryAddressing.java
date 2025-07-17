@@ -246,6 +246,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	public List<Statement> constructUltimateInitStatements(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
 		final List<Statement> statements = new ArrayList<>();
 		// TODO 20211115 Matthias: added the following assume-base initialization for
 		// #valid[0] == 0. I presume that the assignment-case initialization is not
@@ -253,8 +255,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		if (true) {
 			// assume #valid[0] == 0 (i.e., the memory at the NULL-pointer is
 			// not allocated)
-			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final Expression zero =
+					mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 			final Expression literalThatRepresentsFalse = mBooleanArrayHelper.constructFalse();
 			final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
 					ExpressionFactory.constructNestedArrayAccessExpression(loc,
@@ -267,8 +269,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		} else {
 			// set #valid[0] = 0 (i.e., the memory at the NULL-pointer is
 			// not allocated)
-			final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			final Expression zero =
+					mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 			final Expression literalThatRepresentsFalse = mBooleanArrayHelper.constructFalse();
 			final AssignmentStatement assignment = MemoryHandler.constructOneDimensionalArrayUpdate(loc, zero,
 					MemoryModelExpressionHelper.getValidArrayLhs(loc, requiredMemoryModelFeatures,
@@ -280,13 +282,14 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		// Add assume(0 < #StackHeapBarrier) to ensure that the null
 		// pointer is on the heap.
-		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final Expression zero =
+				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 		final Expression zeroSmallerStackHeapBarrier =
-				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
-						zero, mExpressionTranslation.getCTypeOfPointerComponents(), MemoryModelExpressionHelper
-								.getStackHeapBarrier(loc, requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
-						mExpressionTranslation.getCTypeOfPointerComponents());
+				mExpressionTranslation
+						.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan, zero,
+								cTypeOfPointerComponent, MemoryModelExpressionHelper.getStackHeapBarrier(loc,
+										requiredMemoryModelFeatures, memoryModelDeclarationsHandler),
+								cTypeOfPointerComponent);
 
 		statements.add(new AssumeStatement(loc, zeroSmallerStackHeapBarrier));
 
@@ -329,12 +332,12 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public Expression doPointerArithmetic(final int operator, final ILocation loc, final Expression ptrAddress,
 			final RValue integer, final ICType valueType) {
+		final var pointerComponentType = mExpressionTranslation.getCTypeOfPointerComponents();
+
 		if (mTypeSizes.getSize(((CPrimitive) integer.getCType().getUnderlyingType()).getType()) != mTypeSizes
-				.getSize(mExpressionTranslation.getCTypeOfPointerComponents().getType())) {
+				.getSize(pointerComponentType.getType())) {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
-
-		final var pointerComponentType = mExpressionTranslation.getCTypeOfPointerComponents();
 
 		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
@@ -498,8 +501,10 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			return Collections.emptyList();
 		}
 
-		final Expression zeroNumericExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		final Expression zeroNumericExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 
 		final Expression valid = MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
@@ -528,9 +533,9 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		result.add(offsetZero);
 
 		// assert (~addr!base < #StackHeapBarrier);
-		final Expression inHeapArea = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-				IASTBinaryExpression.op_lessThan, addrBase, mExpressionTranslation.getCTypeOfPointerComponents(),
-				stackHeapBarrier, mExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression inHeapArea =
+				mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessThan,
+						addrBase, cTypeOfPointerComponent, stackHeapBarrier, cTypeOfPointerComponent);
 		final AssertStatement assertInHeapArea = new AssertStatement(loc, inHeapArea);
 		check.annotate(assertInHeapArea);
 		result.add(assertInHeapArea);
