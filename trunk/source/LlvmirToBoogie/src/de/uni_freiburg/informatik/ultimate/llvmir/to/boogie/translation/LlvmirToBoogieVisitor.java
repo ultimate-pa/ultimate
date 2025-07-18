@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
@@ -63,19 +64,16 @@ import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
 
-public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
+public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private Unit mResult;
 	private final String mFilename;
 	private LlvmirLocation mLocation;
+	private final String mLabelIdentifier = "#label";
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
-
-	private final HashMap<String, Integer> mLabelMap = new HashMap<>();
-	private final int mCurrentFreeLabelCount = 0;
-	private final int mCurrentLabelIndex = 0;
 
 	public LlvmirToBoogieVisitor(final IUltimateServiceProvider services, final ILogger logger, final String filename) {
 		assert services != null;
@@ -260,6 +258,47 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	}
 
 	/**
+	 * Retrieves the index of a label from the function body based on the provided identifier.
+	 *
+	 * This method traverses the parent hierarchy of the given context to find the function body and then searches for
+	 * the label with the specified identifier within that function body.
+	 *
+	 * @param ctx           The context from which to start searching for the function body.
+	 * @param incIdentifier The identifier of the label to find.
+	 * @return The index of the label in the function body.
+	 * @throws IllegalArgumentException if the context or identifier is null or empty, or if no label is found.
+	 */
+	private static int getLabelIndexFromFuncBody(final ParserRuleContext ctx, final String incIdentifier)
+			throws IllegalArgumentException {
+		if (ctx == null || incIdentifier == null || incIdentifier.isEmpty()) {
+			throw new IllegalArgumentException("Context and identifier must not be null or empty");
+		}
+		LLVMIRParser.FuncBodyContext funcBodyCtx = null;
+		ParserRuleContext tmpCtx = ctx;
+		while (funcBodyCtx == null) {
+			if (tmpCtx.getParent() instanceof LLVMIRParser.FuncBodyContext) {
+				funcBodyCtx = (LLVMIRParser.FuncBodyContext) tmpCtx.getParent();
+			} else if (tmpCtx.getParent() != null) {
+				tmpCtx = tmpCtx.getParent();
+			} else {
+				throw new IllegalArgumentException("No FuncBodyContext found in the parent hierarchy");
+			}
+		}
+		int labelIndex = -1;
+		final List<LLVMIRParser.BasicBlockContext> basicBlocks = funcBodyCtx.basicBlock();
+		for (final LLVMIRParser.BasicBlockContext block : basicBlocks) {
+			if (block.LabelIdent() != null && unifyIdentifier(block.LabelIdent().getText()).equals(incIdentifier)) {
+				labelIndex = basicBlocks.indexOf(block);
+				break;
+			}
+		}
+		if (labelIndex == -1) {
+			throw new IllegalArgumentException("No label found for identifier: " + incIdentifier);
+		}
+		return labelIndex;
+	}
+
+	/**
 	 * Handles the visit event for a compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and creates the initial declarations for the Boogie translation. It then
@@ -270,7 +309,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	 * @return null, as this method does not return any value.
 	 */
 	@Override
-	public Void visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
+	public FunctionBody visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 		createInitialDeclarations();
@@ -291,12 +330,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	 * @throws AssertionError if the return type is not supported.
 	 */
 	@Override
-	public Void visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
+	public FunctionBody visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
 		final FunctionBody body = new FunctionBody();
-		body.addFuncLocalVar(createVarDecWithPrimType("int", "#label", mLocation));
+		body.addFuncLocalVar(createVarDecWithPrimType("int", mLabelIdentifier, mLocation));
 
 		for (final ParseTree child : ctx.children) {
-			final FunctionBody childBody = (FunctionBody) child.accept(this);
+			final FunctionBody childBody = child.accept(this);
 			if (childBody != null) {
 				body.merge(childBody);
 			}
@@ -350,7 +389,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		final FunctionBody body = new FunctionBody();
 		final List<LLVMIRParser.BasicBlockContext> basicBlocks = ctx.basicBlock();
 		for (final LLVMIRParser.BasicBlockContext childCtx : ctx.basicBlock()) {
-			final FunctionBody childBody = (FunctionBody) visit(childCtx);
+			final FunctionBody childBody = visit(childCtx);
 			if (childBody != null) {
 				body.merge(childBody);
 			}
@@ -376,7 +415,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		body.addFuncBlock(label);
 
 		for (final ParseTree child : ctx.children) {
-			final FunctionBody childBody = (FunctionBody) child.accept(this);
+			final FunctionBody childBody = child.accept(this);
 			if (childBody != null) {
 				body.merge(childBody);
 			}
@@ -385,7 +424,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 		if (!(index == blocks.size() - 1)) {
 			final IntegerLiteral labelIndex = new IntegerLiteral(location,
 					Integer.toString(body.getCurrentLabelIndex()));
-			final VariableLHS labelVar = new VariableLHS(location, "#label");
+			final VariableLHS labelVar = new VariableLHS(location, mLabelIdentifier);
 			final AssignmentStatement labelAssignment = new AssignmentStatement(location,
 					new LeftHandSide[] { labelVar }, new Expression[] { labelIndex });
 			body.addFuncBlock(labelAssignment);
@@ -434,7 +473,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	 * @throws AssertionError if the type of the global variable is not supported.
 	 */
 	@Override
-	public Void visitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) {
+	public FunctionBody visitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = ctx.GlobalIdent().getText();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
@@ -465,8 +504,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	 * Handles the visit event for a local variable definition in the LLVM IR parse tree.
 	 *
 	 * This method translates the local variable definition into a Boogie variable declaration and initializes it based
-	 * on the type of instruction (load or iCmp). Currently, it supports load instructions for integers and iCmp
-	 * instructions for equality checks.
+	 * on the type of instruction.
 	 *
 	 * @param ctx The parse tree context for the local variable definition.
 	 * @throws AssertionError if the instruction type is not supported.
@@ -474,7 +512,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 	@Override
 	public FunctionBody visitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) {
 		final FunctionBody body = new FunctionBody();
-		final String identifier = ctx.LocalIdent().getText();
+		final String identifier = unifyIdentifier(ctx.LocalIdent().getText());
 		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
@@ -483,7 +521,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
 			if (variableType.intType() != null) {
 				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
-				final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final String nameOfGlobalVar = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
 						.getText();
 				final IdentifierExpression globalVarExpr = new IdentifierExpression(location,
@@ -516,14 +554,45 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor {
 			final LLVMIRParser.ValueContext rightOperandType = instructionType.iCmpInst().value();
 			rightExpr = getExpressionFromValue(rightOperandType, location);
 
-			final VariableLHS varLhs = new VariableLHS(null, unifyIdentifier(identifier));
+			final VariableLHS varLhs = new VariableLHS(null, identifier);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
 			body.addFuncBlock(assignment);
+		} else if (instructionType.phiInst() != null) {
+			body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
+			for (final LLVMIRParser.IncContext inc : instructionType.phiInst().inc()) {
+				final String incIdentifier = unifyIdentifier(inc.LocalIdent().getText());
+				final int labelIndex = getLabelIndexFromFuncBody(ctx, incIdentifier);
+				final IdentifierExpression incExpr = new IdentifierExpression(location, mLabelIdentifier);
+				final IntegerLiteral labelIndexLiteral = new IntegerLiteral(location, Integer.toString(labelIndex));
+				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPEQ, incExpr,
+						labelIndexLiteral);
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+						new Expression[] { getExpressionFromValue(inc.value(), location) });
+				final IfStatement ifStmt = new IfStatement(location, binaryExpr, new Statement[] { assignment },
+						new Statement[] {});
+				body.addFuncBlock(ifStmt);
+
+			}
+		} else if (instructionType.zExtInst() != null) {
+			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+			final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
+			final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
+			final VariableLHS zeroVarLhs = new VariableLHS(location, identifier);
+			final VariableLHS oneVarLhs = new VariableLHS(location, identifier);
+			final AssignmentStatement elseAssignment = new AssignmentStatement(location,
+					new LeftHandSide[] { zeroVarLhs }, new Expression[] { zeroLiteral });
+			final AssignmentStatement thenAssignment = new AssignmentStatement(location,
+					new LeftHandSide[] { oneVarLhs }, new Expression[] { oneLiteral });
+			final IfStatement ifStmt = new IfStatement(location,
+					getExpressionFromValue(instructionType.zExtInst().typeValue().value(), location),
+					new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
+			body.addFuncBlock(ifStmt);
 		} else {
 			// TODO: Support for other instructions
-			throw new AssertionError("The support for instructions other than load is not implemented yet.");
+			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
 
 		return body;
