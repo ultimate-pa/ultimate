@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -299,6 +300,23 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	}
 
 	/**
+	 * Creates an assignment statement to assign a label index to the label variable.
+	 *
+	 * This method constructs an assignment statement that assigns the specified label index to the label variable
+	 * identified by `mLabelIdentifier`.
+	 *
+	 * @param location   The location in the source code where this assignment occurs.
+	 * @param labelIndex The index of the label to be assigned.
+	 * @return An AssignmentStatement object representing the assignment.
+	 */
+	private AssignmentStatement createLabelAssignment(final LlvmirLocation location, final int labelIndex) {
+		final IntegerLiteral labelIndexLiteral = new IntegerLiteral(location, Integer.toString(labelIndex));
+		final VariableLHS labelVar = new VariableLHS(location, mLabelIdentifier);
+		return new AssignmentStatement(location, new LeftHandSide[] { labelVar },
+				new Expression[] { labelIndexLiteral });
+	}
+
+	/**
 	 * Handles the visit event for a compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and creates the initial declarations for the Boogie translation. It then
@@ -415,6 +433,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		body.addFuncBlock(label);
 
 		for (final ParseTree child : ctx.children) {
+			if (child.getChild(0) instanceof LLVMIRParser.CondBrTermContext
+					|| child.getChild(0) instanceof LLVMIRParser.BrTermContext) {
+				body.addFuncBlock(createLabelAssignment(location, body.getCurrentLabelIndex()));
+			}
 			final FunctionBody childBody = child.accept(this);
 			if (childBody != null) {
 				body.merge(childBody);
@@ -422,12 +444,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		}
 
 		if (!(index == blocks.size() - 1)) {
-			final IntegerLiteral labelIndex = new IntegerLiteral(location,
-					Integer.toString(body.getCurrentLabelIndex()));
-			final VariableLHS labelVar = new VariableLHS(location, mLabelIdentifier);
-			final AssignmentStatement labelAssignment = new AssignmentStatement(location,
-					new LeftHandSide[] { labelVar }, new Expression[] { labelIndex });
-			body.addFuncBlock(labelAssignment);
+			body.addFuncBlock(createLabelAssignment(location, body.getCurrentLabelIndex()));
 		}
 
 		return body;
@@ -574,7 +591,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				final IfStatement ifStmt = new IfStatement(location, binaryExpr, new Statement[] { assignment },
 						new Statement[] {});
 				body.addFuncBlock(ifStmt);
-
 			}
 		} else if (instructionType.zExtInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
@@ -594,6 +610,54 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			// TODO: Support for other instructions
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
+
+		return body;
+	}
+
+	/**
+	 * Handles the visit event for a branch terminator in the LLVM IR parse tree.
+	 *
+	 * This method processes the branch terminator and creates a GotoStatement to jump to the specified label.
+	 *
+	 * @param ctx The parse tree context for the branch terminator.
+	 * @return A FunctionBody object containing the GotoStatement.
+	 */
+	@Override
+	public FunctionBody visitBrTerm(final LLVMIRParser.BrTermContext ctx) {
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final FunctionBody body = new FunctionBody();
+		final String labelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
+		final GotoStatement gotoStmt = new GotoStatement(location, new String[] { labelIdentifier });
+		body.addFuncBlock(gotoStmt);
+
+		return body;
+	}
+
+	/**
+	 * Handles the visit event for a conditional branch terminator in the LLVM IR parse tree.
+	 *
+	 * This method processes the conditional branch terminator and creates an IfStatement to handle the condition, along
+	 * with GotoStatements for the true and false branches.
+	 *
+	 * @param ctx The parse tree context for the conditional branch terminator.
+	 * @return A FunctionBody object containing the IfStatement and GotoStatements.
+	 */
+	@Override
+	public FunctionBody visitCondBrTerm(final LLVMIRParser.CondBrTermContext ctx) {
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final FunctionBody body = new FunctionBody();
+
+		final String variableIdentifier = unifyIdentifier(ctx.value().LocalIdent().getText());
+		final String thenLabelIdentifier = unifyIdentifier(ctx.label(0).LocalIdent().getText());
+		final String elseLabelIdentifier = unifyIdentifier(ctx.label(1).LocalIdent().getText());
+		final GotoStatement thenGoto = new GotoStatement(location, new String[] { thenLabelIdentifier });
+		final GotoStatement elseGoto = new GotoStatement(location, new String[] { elseLabelIdentifier });
+		final IdentifierExpression variableExpr = new IdentifierExpression(location, variableIdentifier);
+		final IfStatement ifStmt = new IfStatement(location, variableExpr, new Statement[] { thenGoto },
+				new Statement[] { elseGoto });
+		body.addFuncBlock(ifStmt);
 
 		return body;
 	}
