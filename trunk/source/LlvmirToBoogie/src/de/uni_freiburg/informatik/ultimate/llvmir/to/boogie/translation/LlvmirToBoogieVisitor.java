@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -245,8 +246,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				final IntegerLiteral absValue = new IntegerLiteral(location, Integer.toString(Math.abs(constValue)));
 				return new UnaryExpression(location, UnaryExpression.Operator.ARITHNEGATIVE, absValue);
 			} else if (valueContext.constant().boolConst() != null) {
-				final String boolValue = valueContext.constant().boolConst().getText();
-				return new IdentifierExpression(location, boolValue);
+				return new BooleanLiteral(location, valueContext.constant().boolConst().getText().equals("true"));
 			}
 			// TODO: Support for other constant operand types
 			throw new AssertionError(
