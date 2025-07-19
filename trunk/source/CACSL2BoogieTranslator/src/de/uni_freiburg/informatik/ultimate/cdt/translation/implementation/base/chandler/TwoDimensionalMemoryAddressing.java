@@ -554,4 +554,22 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return result;
 	}
+
+	@Override
+	public Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
+		final Expression baseExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
+		final Expression offsetExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), offset);
+
+		final Expression integerExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), offset);
+
+		final Expression offsetMinus =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, offsetExpr,
+						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(baseExpr, offsetMinus, loc);
+
+	}
 }

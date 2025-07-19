@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -341,19 +340,6 @@ public abstract class ExpressionTranslation {
 	public abstract Optional<Expression> getTypeConstraint(final ILocation loc, final Expression expr,
 			final ICType cType);
 
-	public Expression constructNullPointer(final ILocation loc) {
-		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
-	}
-
-	public Expression constructPointerForIntegerValues(final ILocation loc, final BigInteger baseValue,
-			final BigInteger offsetValue) {
-		final Expression base =
-				mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), baseValue);
-		final Expression offset =
-				mTypeSizes.constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), offsetValue);
-		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
-	}
-
 	public Expression constructZero(final ILocation loc, final ICType cType) {
 		if (cType instanceof final CPrimitive cPrimitive) {
 			return switch (cPrimitive.getGeneralType()) {
@@ -365,7 +351,7 @@ public abstract class ExpressionTranslation {
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			return constructNullPointer(loc);
+			return mTypeHandler.memoryPointer().nullPointer(loc, getCTypeOfPointerComponents());
 		}
 		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}

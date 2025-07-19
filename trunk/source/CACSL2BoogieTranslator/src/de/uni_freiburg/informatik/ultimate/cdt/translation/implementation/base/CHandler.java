@@ -476,9 +476,8 @@ public class CHandler {
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
-
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
-				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
+				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mTypeHandler);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, functionTable, mSymbolTable,
 				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
 		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
@@ -572,7 +571,7 @@ public class CHandler {
 				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
-				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler);
+				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mTypeHandler);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
 				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
 		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
@@ -610,9 +609,10 @@ public class CHandler {
 	}
 
 	private List<ILibraryModel> getLibraryModels() {
-		final FunctionModelHelper helper = new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation,
-				mMemoryHandler, mTypeSizes, mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
-				mSettings.isSvcompMemtrackCompatibilityMode());
+		final FunctionModelHelper helper =
+				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
+						mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
+						mSettings.isSvcompMemtrackCompatibilityMode(), mTypeSizeComputer);
 		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
 				new FenvLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
@@ -631,7 +631,7 @@ public class CHandler {
 						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
 						mSettings.checkSignedIntegerBounds()),
 				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
-						mProcedureManager, mExpressionTranslation, mTypeSizeComputer),
+						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mTypeHandler),
 				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
 						mSettings.checkErrorFunction(), mExprResultTransformer),
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
@@ -706,7 +706,6 @@ public class CHandler {
 
 		// (alex:) new function pointers
 		int offset = 0;
-		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 		for (final String f : mFunctions) {
 			final String funcId = SFO.FUNCTION_ADDRESS + f;
 			final VarList varList = new VarList(loc, new String[] { funcId }, mTypeHandler.constructPointerType(loc));
@@ -717,10 +716,11 @@ public class CHandler {
 					mTypeHandler.getBoogiePointerType(), funcId, DeclarationInformation.DECLARATIONINFO_GLOBAL);
 
 			final BigInteger offsetValue = BigInteger.valueOf(offset);
+			final var funcPtr = mMemoryHandler.createFunctionPointer(loc, offsetValue);
+
 			mDeclarations.add(new Axiom(loc, new Attribute[0],
-					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr,
-							mExpressionTranslation.constructPointerForIntegerValues(loc,
-									functionPointerPointerBaseValue, offsetValue))));
+					ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, funcIdExpr, funcPtr)));
+
 			offset++;
 		}
 
@@ -743,8 +743,7 @@ public class CHandler {
 		}
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
-		mDeclarations.addAll(
-				((TypeHandler) mTypeHandler).constructTranslationDefinedDeclarations(loc, mExpressionTranslation));
+		mDeclarations.add(mTypeHandler.memoryPointer().typeDeclaration(loc));
 
 		/**
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
@@ -1763,6 +1762,19 @@ public class CHandler {
 		final String cId = node.getName().toString();
 
 		// deal with builtin constants
+
+		if ("NULL".equals(cId)) {
+			return new ExpressionResult(new RValue(
+					mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
+					CPointer.voidPointer()));
+		}
+		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
+			final ICType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final AuxVarInfo auxvar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, returnType, SFO.AUXVAR.NONDET);
+			final RValue rvalue = new RValue(auxvar.getExp(), returnType);
+			return new ExpressionResult(List.of(), rvalue, List.of(auxvar.getVarDec()), Set.of(auxvar));
+		}
+
 		final String cIdMp = mSymbolTable.applyMultiparseRenaming(node.getContainingFilename(), cId);
 		if (!mSymbolTable.containsCSymbol(node, cIdMp)) {
 			final var libraryConstant = mLibraryModelHandler.getConstantModels().get(cId);

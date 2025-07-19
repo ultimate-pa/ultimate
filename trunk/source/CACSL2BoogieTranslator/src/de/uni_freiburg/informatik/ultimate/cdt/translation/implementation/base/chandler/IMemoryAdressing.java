@@ -158,4 +158,11 @@ public interface IMemoryAdressing {
 	 */
 	ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp, final CPointer newType);
 
+	/**
+	 * Creates a function pointer, with the given offset.
+	 *
+	 * @return The function pointer.
+	 */
+	Expression createFunctionPointer(final ILocation loc, final BigInteger offset);
+
 }

@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -90,10 +91,12 @@ public class FunctionModelHelper {
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mSvcompMemtrackCompatibilityMode;
 
+	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
+
 	public FunctionModelHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
-			final boolean svcompMemtrackCompatibilityMode) {
+			final boolean svcompMemtrackCompatibilityMode, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -101,6 +104,7 @@ public class FunctionModelHelper {
 		mTypeHandler = typeHandler;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
+		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 	}
 
 	/**
@@ -249,8 +253,8 @@ public class FunctionModelHelper {
 	 */
 	public Statement createAnnotatedAssertOrAssume(final ILocation loc, final String functionName,
 			final boolean checkProperty, final Spec spec, final Expression expr, final String errorMsg) {
-		final boolean checkMemoryleakInMain = mCheckMemoryLeakInMain && mMemoryHandler
-				.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired();
+		final boolean checkMemoryleakInMain = mCheckMemoryLeakInMain
+				&& mMemoryHandler.getRequiredMemoryStructureFeatures().isMemoryStructureInfrastructureRequired();
 		if (!checkProperty && !checkMemoryleakInMain) {
 			return new AssumeStatement(loc, expr);
 		}
@@ -319,9 +323,11 @@ public class FunctionModelHelper {
 		builder.addAuxVarWithDeclaration(retvar);
 		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
 
+		final var nullPtr =
+				mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+
 		// one possible return value: NULL
-		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(),
-				mExpressionTranslation.constructNullPointer(loc));
+		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(), nullPtr);
 
 		// alternative option: return a nondeterministic string of nondeterministic length
 		final AuxVarInfo len = mAuxVarInfoBuilder.constructAuxVarInfo(loc, sizeT, SFO.AUXVAR.NONDET);

@@ -642,14 +642,15 @@ public class MemoryHandler {
 	 *            which takes a pointer to the object for which allocate.
 	 */
 	public Pair<RValue, CallStatement> getUltimateMemAllocInitCall(final ILocation actualLoc, final ICType cType) {
-		final BigInteger ptrBase = mFixedAddressCounter;
+		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
 		final Expression addressExpression =
-				mExpressionTranslation.constructPointerForIntegerValues(actualLoc, ptrBase, BigInteger.ZERO);
+				mTypeHandler.memoryPointer().initialPointer(actualLoc, mFixedAddressCounter, cTypeOfPointerComponent);
+
 		final RValue addressRValue = new RValue(addressExpression, cType);
 		final RValue ptrBaseRValue = new RValue(
-				mTypeSizes.constructLiteralForIntegerType(actualLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), ptrBase),
-				mExpressionTranslation.getCTypeOfPointerComponents());
+				mTypeSizes.constructLiteralForIntegerType(actualLoc, cTypeOfPointerComponent, mFixedAddressCounter),
+				cTypeOfPointerComponent);
 		final Expression size = mTypeSizeAndOffsetComputer.constructBytesizeExpression(actualLoc, cType);
 		final CallStatement ultimateAllocCall = getUltimateMemAllocInitCall(size, ptrBaseRValue, actualLoc);
 
@@ -2854,5 +2855,9 @@ public class MemoryHandler {
 	public final ExpressionResult convertIntToPointer(final ILocation loc, final ExpressionResult rexp,
 			final CPointer newType) {
 		return mMemoryModel.convertIntToPointer(loc, rexp, newType);
+	}
+
+	public final Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
+		return mMemoryModel.createFunctionPointer(loc, offset);
 	}
 }

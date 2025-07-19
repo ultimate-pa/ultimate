@@ -961,7 +961,7 @@ public class InitializationHandler {
 		} else if (cType instanceof CEnum) {
 			return mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		} else if (cType instanceof CPointer) {
-			return mExpressionTranslation.constructNullPointer(loc);
+			return mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}

@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.StringLiteralResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -97,6 +98,7 @@ public class CExpressionTranslator {
 	private final ExpressionResultTransformer mExprResultTransformer;
 	private final TypeSizes mTypeSizes;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
+	private final ITypeHandler mTypeHandler;
 
 	private final CheckMode mPointerSubtractionAndComparisonValidityCheckMode;
 	private final CheckMode mDivisionByZeroOfIntegerTypes;
@@ -108,11 +110,11 @@ public class CExpressionTranslator {
 	public CExpressionTranslator(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ExpressionResultTransformer exprResultTransformer,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizes typeSizes,
-			final StaticObjectsHandler staticObjectsHandler) {
+			final StaticObjectsHandler staticObjectsHandler, final ITypeHandler typeHandler) {
 		this(memoryHandler, expressionTranslation, exprResultTransformer, auxVarInfoBuilder, typeSizes,
 				staticObjectsHandler, settings.getPointerSubtractionAndComparisonValidityCheckMode(),
 				settings.getDivisionByZeroOfIntegerTypes(), settings.getDivisionByZeroOfFloatingTypes(),
-				settings.checkSignedIntegerBounds(), settings.enforceIfForConditional());
+				settings.checkSignedIntegerBounds(), settings.enforceIfForConditional(), typeHandler);
 	}
 
 	private CExpressionTranslator(final MemoryHandler memoryHandler, final ExpressionTranslation expressionTranslation,
@@ -120,13 +122,16 @@ public class CExpressionTranslator {
 			final TypeSizes typeSizes, final StaticObjectsHandler staticObjectsHandler,
 			final CheckMode pointerSubtractionAndComparisonValidityCheckMode,
 			final CheckMode divisionByZeroOfIntegerTypes, final CheckMode divisionByZeroOfFloatingTypes,
-			final CheckMode checkSignedIntegerBounds, final boolean enforceIfForConditional) {
+			final CheckMode checkSignedIntegerBounds, final boolean enforceIfForConditional,
+			final ITypeHandler typeHandler) {
 		mMemoryHandler = memoryHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
 		mExpressionTranslation = expressionTranslation;
 		mExprResultTransformer = exprResultTransformer;
 		mTypeSizes = typeSizes;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
+		mTypeHandler = typeHandler;
+
 		mPointerSubtractionAndComparisonValidityCheckMode = pointerSubtractionAndComparisonValidityCheckMode;
 		mDivisionByZeroOfIntegerTypes = divisionByZeroOfIntegerTypes;
 		mDivisionByZeroOfFloatingTypes = divisionByZeroOfFloatingTypes;
@@ -344,8 +349,10 @@ public class CExpressionTranslator {
 						operand.getLrValue().getValue());
 			} else {
 				final Expression rhsOfComparison;
+
 				if (inputType instanceof CPointer) {
-					rhsOfComparison = mExpressionTranslation.constructNullPointer(loc);
+					rhsOfComparison = mTypeHandler.memoryPointer().nullPointer(loc,
+							mExpressionTranslation.getCTypeOfPointerComponents());
 				} else if (inputType instanceof CEnum) {
 					final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 					rhsOfComparison = mExpressionTranslation.constructZero(loc, intType);
@@ -1163,6 +1170,6 @@ public class CExpressionTranslator {
 	public CExpressionTranslator disableChecksForUndefinedBehavior() {
 		return new CExpressionTranslator(mMemoryHandler, mExpressionTranslation, mExprResultTransformer,
 				mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, CheckMode.IGNORE, CheckMode.IGNORE,
-				CheckMode.IGNORE, CheckMode.IGNORE, mEnforceIfForConditional);
+				CheckMode.IGNORE, CheckMode.IGNORE, mEnforceIfForConditional, mTypeHandler);
 	}
 }

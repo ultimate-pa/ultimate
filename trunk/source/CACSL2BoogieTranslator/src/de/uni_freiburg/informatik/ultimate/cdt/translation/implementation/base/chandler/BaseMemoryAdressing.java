@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
+
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -27,6 +29,8 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 	TypeSizes mTypeSizes;
 	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	IPointerIntegerConversion mPointerIntegerConversion;
+
+	BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
 	public BaseMemoryAdressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,

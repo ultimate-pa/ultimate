@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -79,11 +80,12 @@ public class StringLibraryModel implements ILibraryModel {
 	private final ProcedureManager mProcedureManager;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
+	private final ITypeHandler mTypeHandler;
 
 	public StringLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final ProcedureManager procedureManager, final ExpressionTranslation expressionTranslation,
-			final TypeSizeAndOffsetComputer typeSizeComputer) {
+			final TypeSizeAndOffsetComputer typeSizeComputer, final ITypeHandler typeHandler) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -91,6 +93,7 @@ public class StringLibraryModel implements ILibraryModel {
 		mProcedureManager = procedureManager;
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizeComputer = typeSizeComputer;
+		mTypeHandler = typeHandler;
 	}
 
 	@Override
@@ -332,7 +335,8 @@ public class StringLibraryModel implements ILibraryModel {
 		final AuxVarInfo auxvarinfo = mAuxVarInfoBuilder.constructAuxVarInfo(loc, resultType, SFO.AUXVAR.NONDET);
 		builder.addAuxVarWithDeclaration(auxvarinfo);
 
-		final Expression nullExpr = mExpressionTranslation.constructNullPointer(loc);
+		final Expression nullExpr =
+				mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 
 		/*
 		 * if we are in memsafety-mode: add assertions that check that arg_s.lrVal.getValue is a valid pointer
