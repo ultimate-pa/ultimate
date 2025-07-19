@@ -346,4 +346,22 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		throw new UnsupportedOperationException(
 				"The check if the freed pointer is valid is not compatible with the 1D addressing mode!");
 	}
+
+	@Override
+	public Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
+		final Expression base = mTypeSizes.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
+
+		final Expression integerExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), offset);
+
+		final Expression baseMinus =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_minus, base,
+						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
+
+		final Expression zeroExpr =
+				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ZERO);
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(baseMinus, zeroExpr, loc);
+	}
 }

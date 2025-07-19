@@ -149,9 +149,9 @@ public final class ConstructRealloc {
 
 		// if (ptr == NULL) { return malloc(size) }
 		{
-			final Expression condition =
-					ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPEQ, ptrIdExprImpl,
-							mExpressionTranslation.constructNullPointer(ignoreLoc));
+			final Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc,
+					BinaryExpression.Operator.COMPEQ, ptrIdExprImpl, mTypeHandler.memoryPointer().nullPointer(ignoreLoc,
+							mExpressionTranslation.getCTypeOfPointerComponents()));
 			final Statement mallocCallStm =
 					mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP);
 			final Statement returnStm = new ReturnStatement(ignoreLoc);

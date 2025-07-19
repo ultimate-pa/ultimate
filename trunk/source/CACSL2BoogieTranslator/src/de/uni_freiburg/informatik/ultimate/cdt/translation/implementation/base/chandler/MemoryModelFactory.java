@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -99,7 +100,20 @@ public class MemoryModelFactory {
 			return new MemoryStructure_Unbounded(typeSizes, typeHandler);
 		default:
 			throw new UnsupportedOperationException(memoryStructurePreference + " is an invalid memory structure.");
+		}
+	}
 
+	public static IMemoryPointer createMemoryPointer(final TranslationSettings settings, final BoogieType boogieType,
+			final TypeSizes typeSizes) {
+		final var memoryAddressingPreference = settings.memoryAddressingPreference();
+
+		switch (memoryAddressingPreference) {
+		case One_Dimensional:
+		case Two_Dimensional:
+			return new TwoDimensionalPointer(boogieType, typeSizes);
+		default:
+			throw new UnsupportedOperationException(
+					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");
 		}
 	}
 }

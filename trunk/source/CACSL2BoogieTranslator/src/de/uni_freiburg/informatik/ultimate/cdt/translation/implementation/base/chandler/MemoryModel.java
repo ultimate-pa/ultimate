@@ -238,4 +238,13 @@ public class MemoryModel {
 			final CPointer newType) {
 		return mMemoryAddressing.convertIntToPointer(loc, rexp, newType);
 	}
+
+	/**
+	 * Creates a function pointer, with the given offset.
+	 *
+	 * @return The function pointer.
+	 */
+	public final Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
+		return mMemoryAddressing.createFunctionPointer(loc, offset);
+	}
 }

@@ -234,6 +234,7 @@ public class MainTranslator {
 		final PreprocessorHandler ppHandler = new PreprocessorHandler(reporter, locationFactory);
 		final ACSLHandler acslHandler = new ACSLHandler(witness != null, flatSymbolTable, expressionTranslation,
 				typeHandler, procedureManager, locationFactory, mainCHandler);
+
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
 				mainCHandler, ppHandler, acslHandler);
 
