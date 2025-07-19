@@ -247,4 +247,13 @@ public class MemoryModel {
 	public final Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
 		return mMemoryAddressing.createFunctionPointer(loc, offset);
 	}
+
+	/**
+	 * Adds an expression to a pointer.
+	 *
+	 * @return The new pointer.
+	 */
+	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
+		return mMemoryAddressing.addExpressionToPointer(loc, ptrExpr, expr);
+	}
 }

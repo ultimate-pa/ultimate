@@ -165,4 +165,10 @@ public interface IMemoryAdressing {
 	 */
 	Expression createFunctionPointer(final ILocation loc, final BigInteger offset);
 
+	/**
+	 * Adds an expression to a pointer.
+	 *
+	 * @return The new pointer.
+	 */
+	Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr);
 }

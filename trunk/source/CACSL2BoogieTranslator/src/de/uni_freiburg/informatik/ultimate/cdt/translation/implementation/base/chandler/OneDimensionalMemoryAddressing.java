@@ -295,16 +295,10 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	@Override
 	public Expression addIntegerConstantToPointer(final ILocation loc, final Expression ptrExpr,
 			final BigInteger integerConstant) {
-		final Expression base = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
-		final Expression offset = MemoryHandler.getPointerOffset(ptrExpr, loc);
-
 		final Expression integerExpr =
 				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), integerConstant);
-		final Expression basePlus =
-				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, base,
-						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(basePlus, offset, loc);
+		return addExpressionToPointer(loc, ptrExpr, integerExpr);
 	}
 
 	@Override
@@ -363,5 +357,17 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ZERO);
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(baseMinus, zeroExpr, loc);
+	}
+
+	@Override
+	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
+		final Expression base = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
+		final Expression offset = MemoryHandler.getPointerOffset(ptrExpr, loc);
+
+		final Expression basePlus =
+				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, base,
+						mTypeSizeAndOffsetComputer.getSizeT(), expr, mTypeSizeAndOffsetComputer.getSizeT());
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(basePlus, offset, loc);
 	}
 }
