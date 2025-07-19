@@ -1844,6 +1844,10 @@ public class MemoryHandler {
 		return mMemoryModel.addIntegerConstantToPointer(loc, ptrExpr, integerConstant);
 	}
 
+	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
+		return mMemoryModel.addExpressionToPointer(loc, ptrExpr, expr);
+	}
+
 	/**
 	 * Constructs specification that target of pointer is fully allocated. The specification checks that the address of
 	 * the pointer plus the size of the type that we read/write is smaller than or equal to the size of the allocated
