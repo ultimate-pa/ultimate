@@ -317,6 +317,29 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	}
 
 	/**
+	 * Creates an arithmetic assignment statement for a given identifier, left and right values, and an operator.
+	 *
+	 * This method constructs an assignment statement that performs an arithmetic operation (addition, subtraction,
+	 * multiplication, or division) on the left and right values and assigns the result to the specified identifier.
+	 *
+	 * @param location   The location in the source code where this assignment occurs.
+	 * @param identifier The identifier to which the result of the arithmetic operation will be assigned.
+	 * @param leftValue  The left operand value context from the LLVM IR parse tree.
+	 * @param rightValue The right operand value context from the LLVM IR parse tree.
+	 * @param operator   The operator to be used for the arithmetic operation.
+	 * @return An AssignmentStatement object representing the arithmetic assignment.
+	 */
+	private AssignmentStatement createArithmeticAssignment(final LlvmirLocation location, final String identifier,
+			final LLVMIRParser.ValueContext leftValue, final LLVMIRParser.ValueContext rightValue,
+			final Operator operator) {
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		final Expression leftExpr = getExpressionFromValue(leftValue, location);
+		final Expression rightExpr = getExpressionFromValue(rightValue, location);
+		final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
+		return new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { binaryExpr });
+	}
+
+	/**
 	 * Handles the visit event for a compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and creates the initial declarations for the Boogie translation. It then
@@ -608,42 +631,24 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			body.addFuncBlock(ifStmt);
 		} else if (instructionType.addInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final Expression leftExpr = getExpressionFromValue(instructionType.addInst().typeValue().value(), location);
-			final Expression rightExpr = getExpressionFromValue(instructionType.addInst().value(), location);
-			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHPLUS, leftExpr, rightExpr);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			body.addFuncBlock(
+					createArithmeticAssignment(location, identifier, instructionType.addInst().typeValue().value(),
+							instructionType.addInst().value(), Operator.ARITHPLUS));
 		} else if (instructionType.sDivInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final Expression leftExpr = getExpressionFromValue(instructionType.sDivInst().typeValue().value(),
-					location);
-			final Expression rightExpr = getExpressionFromValue(instructionType.sDivInst().value(), location);
-			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHDIV, leftExpr, rightExpr);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			body.addFuncBlock(
+					createArithmeticAssignment(location, identifier, instructionType.sDivInst().typeValue().value(),
+							instructionType.sDivInst().value(), Operator.ARITHDIV));
 		} else if (instructionType.subInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final Expression leftExpr = getExpressionFromValue(instructionType.subInst().typeValue().value(), location);
-			final Expression rightExpr = getExpressionFromValue(instructionType.subInst().value(), location);
-			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMINUS, leftExpr,
-					rightExpr);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			body.addFuncBlock(
+					createArithmeticAssignment(location, identifier, instructionType.subInst().typeValue().value(),
+							instructionType.subInst().value(), Operator.ARITHMINUS));
 		} else if (instructionType.mulInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final Expression leftExpr = getExpressionFromValue(instructionType.mulInst().typeValue().value(), location);
-			final Expression rightExpr = getExpressionFromValue(instructionType.mulInst().value(), location);
-			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMUL, leftExpr, rightExpr);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			body.addFuncBlock(
+					createArithmeticAssignment(location, identifier, instructionType.mulInst().typeValue().value(),
+							instructionType.mulInst().value(), Operator.ARITHMUL));
 		} else {
 			// TODO: Support for other instructions
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
