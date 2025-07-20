@@ -2864,4 +2864,9 @@ public class MemoryHandler {
 	public final Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
 		return mMemoryModel.createFunctionPointer(loc, offset);
 	}
+
+	public final Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT,
+			final IdentifierExpression len, final IdentifierExpression returnValue) {
+		return mMemoryModel.lastCharOfString(loc, sizeT, len, returnValue);
+	}
 }

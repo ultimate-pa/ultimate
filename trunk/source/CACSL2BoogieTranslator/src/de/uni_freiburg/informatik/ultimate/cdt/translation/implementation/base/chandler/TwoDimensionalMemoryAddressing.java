@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -578,5 +579,16 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 						mTypeSizeAndOffsetComputer.getSizeT(), expr, mTypeSizeAndOffsetComputer.getSizeT());
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(base, offsetPlus, loc);
+	}
+
+	@Override
+	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
+			final IdentifierExpression returnValue) {
+		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
+				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(MemoryHandler.getPointerBaseAddress(returnValue, loc),
+				lenMinusOne, loc);
 	}
 }

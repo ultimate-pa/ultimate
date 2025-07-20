@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
@@ -369,5 +370,16 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 						mTypeSizeAndOffsetComputer.getSizeT(), expr, mTypeSizeAndOffsetComputer.getSizeT());
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(basePlus, offset, loc);
+	}
+
+	@Override
+	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
+			final IdentifierExpression returnValue) {
+		final var lenMinusOne = mExpressionTranslation.constructArithmeticIntegerExpression(loc,
+				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
+				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(lenMinusOne,
+				MemoryHandler.getPointerOffset(returnValue, loc), loc);
 	}
 }
