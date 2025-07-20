@@ -597,12 +597,22 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			if (variableType.intType() != null) {
 				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
-				final String nameOfGlobalVar = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
-						.getText();
-				final IdentifierExpression globalVarExpr = new IdentifierExpression(location,
-						unifyIdentifier(nameOfGlobalVar));
+
+				String loadVarIdentifier = null;
+				if (instructionType.loadInst().typeValue().value().LocalIdent() != null) {
+					loadVarIdentifier = unifyIdentifier(
+							instructionType.loadInst().typeValue().value().LocalIdent().getText());
+				} else if (instructionType.loadInst().typeValue().value().constant() != null) {
+					loadVarIdentifier = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
+							.getText();
+				} else {
+					throw new AssertionError("Something went wrong while parsing the load instruction:");
+				}
+
+				final IdentifierExpression loadVarExpr = new IdentifierExpression(location,
+						unifyIdentifier(loadVarIdentifier));
 				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { globalVarExpr });
+						new Expression[] { loadVarExpr });
 				body.addFuncBlock(assignment);
 				// TODO
 			} else {
@@ -681,7 +691,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 		} else if (instructionType.callInst() != null) {
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
-			if (callIdentifier.equals("@__VERIFIER_nondent_int")) {
+			if (callIdentifier.equals("@__VERIFIER_nondet_int")) {
+				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
 				body.addFuncBlock(havocStmt);
@@ -772,10 +783,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
-		final String callIdentifier = ctx.value().LocalIdent().getText();
+		final String callIdentifier = ctx.value().constant().getText();
 		if (callIdentifier.equals("@__assert_fail")) {
 			final BooleanLiteral boolLit = new BooleanLiteral(location, false);
-			final AssertStatement assertStmt = new AssertStatement(location, boolLit);
+			final AssertStatement assertStmt = new AssertStatement(location, new NamedAttribute[] {}, boolLit);
 			body.addFuncBlock(assertStmt);
 		}
 
