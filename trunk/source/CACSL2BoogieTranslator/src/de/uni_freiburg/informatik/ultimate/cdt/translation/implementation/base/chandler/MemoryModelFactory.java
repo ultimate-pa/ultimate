@@ -40,7 +40,9 @@ public class MemoryModelFactory {
 							CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
 					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_NEUTRALITY,
-							!settings.getFunctionsCheckedForMemoryNeutrality().isEmpty()));
+							!settings.getFunctionsCheckedForMemoryNeutrality().isEmpty()),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS,
+							settings.useConstantArrays()));
 
 			final List<String> incompatibleActiveOptions =
 					incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
