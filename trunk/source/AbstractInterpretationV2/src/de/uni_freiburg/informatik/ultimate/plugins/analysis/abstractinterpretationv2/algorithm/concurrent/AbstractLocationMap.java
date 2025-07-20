@@ -34,7 +34,7 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 		return getAbstractLocation(mEntryLocs.get(threadName));
 	}
 
-	public Set<Integer> getAbstractFinalLoc(final String threadName) {
+	public Set<Integer> getAbstractFinalLocs(final String threadName) {
 		return mFinalLocations.get(threadName).stream().map(l -> getAbstractLocation(l)).collect(Collectors.toSet());
 	}
 
@@ -68,6 +68,7 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 	private void computeMaxAndFinalLocs() {
 		for (final LOC entryLoc : mEntryLocs.values()) {
 			final String ownerThreadString = entryLoc.getProcedure();
+			mFinalLocations.put(ownerThreadString, new HashSet<>());
 			final Set<Integer> abstractLocationSet = new HashSet<>();
 			int counter = 0;
 			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
@@ -79,7 +80,7 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 				}
 				abstractLocationSet.add(abstraction);
 				if (!iter.hasNext()) {
-					mFinalLocations.put(ownerThreadString, mFinalLocations.get(ownerThreadString));
+					mFinalLocations.get(ownerThreadString).add(loc);
 				}
 			}
 			mLocationCountMap.put(ownerThreadString, counter);
