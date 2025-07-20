@@ -267,4 +267,17 @@ public class MemoryModel {
 			final IdentifierExpression returnValue) {
 		return mMemoryAddressing.lastCharOfString(loc, sizeT, len, returnValue);
 	}
+
+	/**
+	 * Returns a pointer with the same base address but an offset of 0.
+	 *
+	 * @return A pointer with offset 0.
+	 */
+	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+		return MemoryHandler.constructPointerFromBaseAndOffset(MemoryHandler.getPointerBaseAddress(ptr, loc), zero,
+				loc);
+	}
 }
