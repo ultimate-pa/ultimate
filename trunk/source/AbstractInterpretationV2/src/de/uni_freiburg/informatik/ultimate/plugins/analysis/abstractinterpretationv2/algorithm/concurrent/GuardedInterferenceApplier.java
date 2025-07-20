@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 
 public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
@@ -114,11 +113,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				}
 				final var post = DisjunctiveAbstractState.createDisjunction(resultSet, mMaxParallelStates);
 
-				var moved = post;
+				final var moved = post;
 
-				if (interference.interf().action() instanceof final ForkThreadCurrent fork) {
-					moved = GuardedStateTransformer.setThreadsActive(Set.of(fork.getNameOfForkedProcedure()), post);
-				}
 				if (iteration <= mMaxItf) {
 					result = result.union(moved);
 				} else {
