@@ -91,8 +91,6 @@ public class FunctionModelHelper {
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mSvcompMemtrackCompatibilityMode;
 
-	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
-
 	public FunctionModelHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
@@ -104,7 +102,6 @@ public class FunctionModelHelper {
 		mTypeHandler = typeHandler;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
-		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 	}
 
 	/**
