@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -180,4 +181,12 @@ public interface IMemoryAdressing {
 	 */
 	Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
 			final IdentifierExpression returnValue);
+
+	/**
+	 * Creates the assume statement used in the handling of strchr.
+	 *
+	 * @return The statement.
+	 */
+	AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr, final Expression argSPtr,
+			final Expression nullPtrExpr, final Expression lengthArray);
 }

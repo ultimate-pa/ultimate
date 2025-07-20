@@ -382,4 +382,18 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		return MemoryHandler.constructPointerFromBaseAndOffset(lenMinusOne,
 				MemoryHandler.getPointerOffset(returnValue, loc), loc);
 	}
+
+	@Override
+	public AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
+		// TODO check if this is valid, we cannot check for in range in the one dimensional model
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		final var baseEqualNull = baseEqualsNull(loc, tmpExpr, cTypeOfPointerComponent, nullPtrExpr);
+		final var baseEqual = baseEqual(loc, tmpExpr, cTypeOfPointerComponent, argSPtr);
+
+		return new AssumeStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, baseEqualNull, baseEqual));
+
+	}
 }

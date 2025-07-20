@@ -125,4 +125,20 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 			final CPointer newType) {
 		return mPointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
 	}
+
+	protected Expression baseEqualsNull(final ILocation loc, final Expression tmpExpr,
+			final CPrimitive cTypeOfPointerComponent, final Expression nullPtrExpr) {
+		// res.base == 0
+		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
+				MemoryHandler.getPointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				MemoryHandler.getPointerBaseAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
+	}
+
+	protected Expression baseEqual(final ILocation loc, final Expression tmpExpr,
+			final CPrimitive cTypeOfPointerComponent, final Expression argSPtr) {
+		// res.base == arg_s.base
+		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
+				MemoryHandler.getPointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				MemoryHandler.getPointerBaseAddress(argSPtr, loc), cTypeOfPointerComponent);
+	}
 }

@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -279,5 +280,15 @@ public class MemoryModel {
 
 		return MemoryHandler.constructPointerFromBaseAndOffset(MemoryHandler.getPointerBaseAddress(ptr, loc), zero,
 				loc);
+	}
+
+	/**
+	 * Creates the assume statement used in the handling of strchr.
+	 *
+	 * @return The statement.
+	 */
+	public final AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
+		return mMemoryAddressing.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, lengthArray);
 	}
 }
