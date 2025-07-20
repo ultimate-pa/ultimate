@@ -81,14 +81,17 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 		// handle fork and join differently
 		final var forkedState = (transition instanceof final ForkThreadCurrent forkTransition)
-				? applyFork(oldstate, forkTransition)
+				? new GuardedInterferenceDomainState<STATE, ACTION, LOC>(oldstate.state(),
+						applyFork(oldstate.threadCounter(), forkTransition), oldstate.abstractLocationState())
 				: oldstate;
 
 		final var joinedState = (transition instanceof final JoinThreadCurrent joinTransition)
-				? applyJoin(forkedState, joinTransition)
+				? new GuardedInterferenceDomainState<STATE, ACTION, LOC>(oldstate.state(),
+						applyJoin(oldstate.threadCounter(), oldstate.abstractLocationState(), joinTransition),
+						oldstate.abstractLocationState())
 				: forkedState;
 
-		if (joinedState == null) {
+		if (joinedState.threadCounter() == null) {
 			return Collections.emptyList();
 		}
 
@@ -122,13 +125,13 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	}
 
 	public ThreadInstanceCounter<LOC> applyThreadCounter(final ThreadInstanceCounter<LOC> threadCounter,
-			final ACTION transition) {
+			final AbstractLocationState<LOC> absLocState, final ACTION transition) {
 		var newCounter = threadCounter;
 		if (transition instanceof final ForkThreadCurrent fork1) {
-			final boolean circular = isCircular(fork1);
-			final var forked = fork1.getNameOfForkedProcedure();
-			final var forkID = fork1.getForkStatement().getThreadID().length;
-			newCounter = newCounter.assignForkId(forked, forkID, (LOC) fork1.getSource(), circular);
+			newCounter = applyFork(threadCounter, fork1);
+		}
+		if (transition instanceof final JoinThreadCurrent join1) {
+			newCounter = applyJoin(threadCounter, absLocState, join1);
 		}
 		return newCounter;
 	}
@@ -139,54 +142,45 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 				absLocState.getLocationMap().getAbstractLocation(transition.getTarget()));
 	}
 
-	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyFork(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ForkThreadCurrent forkTransition) {
+	private ThreadInstanceCounter<LOC> applyFork(final ThreadInstanceCounter<LOC> counter,
+			final ForkThreadCurrent forkTransition) {
 		final boolean circular = isCircular(forkTransition);
 		final var forked = forkTransition.getNameOfForkedProcedure();
 		final int forkId = forkTransition.getForkStatement().getThreadID().length;
-		final var newState = oldstate.assignForkId(forked, forkId, (LOC) forkTransition.getSource(), circular);
-		final var x = newState.threadCounter().getAllForkIds();
-
-		return newState;
+		final var newCounter = counter.assignForkId(forked, forkId, (LOC) forkTransition.getSource(), circular);
+		return newCounter;
 	}
 
-	private GuardedInterferenceDomainState<STATE, ACTION, LOC> applyJoin(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state, final JoinThreadCurrent joinTransition) {
+	private ThreadInstanceCounter<LOC> applyJoin(final ThreadInstanceCounter<LOC> counter,
+			final AbstractLocationState<LOC> absLocState, final JoinThreadCurrent joinTransition) {
 		final int joinId = joinTransition.getJoinStatement().getThreadID().length;
 		// If multiple forked threads have the same ID, we cannot differentiate and know what we are joining
 		// (atleast with this method). So we lose precision by not joining at all.
-		final var joinedThreadName = computeNameOfJoinedProcedure(state, joinId);
+		final var joinedThreadName = computeNameOfJoinedProcedure(counter, joinId);
 		if (joinedThreadName.isPresent()) {
 
-			final var forkedThreadCount = state.threadCounter().getThreadInstances().get(joinedThreadName.get());
-			final var joinedState = state.unassignForkId(joinedThreadName.get(), joinId,
+			final var forkedThreadCount = counter.getThreadInstances().get(joinedThreadName.get());
+			final var joinedCounter = counter.unassignForkId(joinedThreadName.get(), joinId,
 					(LOC) joinTransition.getSource());
-			final var forkedThreadCountAfter = joinedState.threadCounter().getThreadInstances()
-					.get(joinedThreadName.get());
-			final var threadsFinalLocations = joinedState.abstractLocationState().getLocationMap()
-					.getAbstractFinalLocs(joinedThreadName.get());
-			final var statesLocations = joinedState.abstractLocationState().getTracker()
-					.getLocationForThread(joinedThreadName.get());
+			final var forkedThreadCountAfter = joinedCounter.getThreadInstances().get(joinedThreadName.get());
+			final var threadsFinalLocations = absLocState.getLocationMap().getAbstractFinalLocs(joinedThreadName.get());
+			final var statesLocations = absLocState.getTracker().getLocationForThread(joinedThreadName.get());
 
 			final boolean threadWasShutdown = (forkedThreadCount > 0 && forkedThreadCountAfter == 0);
 			final boolean stateIsInFinalLocation = threadsFinalLocations.containsAll(statesLocations);
 			if (threadWasShutdown && !stateIsInFinalLocation) {
 				return null;
 			}
-			return joinedState;
+			return joinedCounter;
 		}
-		return state;
+		return counter;
 	}
 
-	private Optional<String> computeNameOfJoinedProcedure(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state, final int forkId) {
+	private Optional<String> computeNameOfJoinedProcedure(final ThreadInstanceCounter<LOC> counter, final int forkId) {
 
-		final List<String> matchingThreads = state.threadCounter().getAllForkIds().entrySet().stream()
+		final List<String> matchingThreads = counter.getAllForkIds().entrySet().stream()
 				.filter(entry -> entry.getValue().contains(forkId)).map(Map.Entry::getKey).toList();
 		// if multiple threads or none contain that threadID as a forked thread, we dont do anything
-		if (matchingThreads.size() != 1) {
-			final var x = state.threadCounter().getAllForkIds();
-		}
 		return matchingThreads.size() == 1 ? Optional.of(matchingThreads.get(0)) : Optional.empty();
 	}
 
@@ -198,12 +192,13 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	public List<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> stateBeforeLeaving,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> secondState, final ACTION transition) {
-		throw new UnsupportedOperationException("Not implemented.");
+		throw new UnsupportedOperationException(
+				"Postop with stateBeforeLeaving not implemented for GuardedInterferenceDomain.");
 	}
 
 	@Override
 	public EvalResult evaluate(final GuardedInterferenceDomainState<STATE, ACTION, LOC> state, final Term formula,
 			final Script script) {
-		throw new UnsupportedOperationException("Not implemented.");
+		throw new UnsupportedOperationException("Evaluate not implemented for GuardedInterferenceDomain.");
 	}
 }

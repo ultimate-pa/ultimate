@@ -41,7 +41,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 			return Collections.emptyList();
 		}
 
-		final var threadCounterPost = postOp.applyThreadCounter(threadCounterIntersection, action);
+		final var threadCounterPost = postOp.applyThreadCounter(threadCounterIntersection, abslocIntersection, action);
 		final var absLocPost = postOp.applyAbstractLocation(abslocIntersection, action);
 
 		final var targetState = targetStateGuarded.state();
