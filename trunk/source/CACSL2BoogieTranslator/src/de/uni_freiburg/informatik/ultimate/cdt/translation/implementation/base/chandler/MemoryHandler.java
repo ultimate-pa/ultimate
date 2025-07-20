@@ -2873,4 +2873,10 @@ public class MemoryHandler {
 	public final Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
 		return mMemoryModel.initialPointerFromPointer(loc, ptr);
 	}
+
+	public final AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+			final Expression argSPtr, final Expression nullPtrExpr) {
+		final var lengthArray = getLengthArray(loc);
+		return mMemoryModel.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, lengthArray);
+	}
 }

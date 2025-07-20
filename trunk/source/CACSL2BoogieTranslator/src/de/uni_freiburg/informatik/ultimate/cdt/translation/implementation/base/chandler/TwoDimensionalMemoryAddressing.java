@@ -591,4 +591,48 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		return MemoryHandler.constructPointerFromBaseAndOffset(MemoryHandler.getPointerBaseAddress(returnValue, loc),
 				lenMinusOne, loc);
 	}
+
+	@Override
+	public AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr,
+			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
+
+		final var cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		// res.base == 0
+		final var baseEqualsNull = baseEqualsNull(loc, tmpExpr, cTypeOfPointerComponent, nullPtrExpr);
+
+		// res.offset == 0
+		final Expression offsetEqualsNull = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+				IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc), cTypeOfPointerComponent,
+				MemoryHandler.getPointerOffset(nullPtrExpr, loc), cTypeOfPointerComponent);
+
+		// res.base == 0 && res.offset == 0
+		final Expression equalsNull =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
+		// old solution did not work quickly..
+		// final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc,
+		// new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
+		// res.base == arg_s.base
+		final Expression baseEquals = baseEqual(loc, tmpExpr, cTypeOfPointerComponent, argSPtr);
+		// res.offset >= 0
+		final Expression offsetNonNegative = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+				IASTBinaryExpression.op_lessEqual,
+				mExpressionTranslation.constructLiteralForIntegerType(loc, cTypeOfPointerComponent,
+						new BigInteger("0")),
+				cTypeOfPointerComponent, MemoryHandler.getPointerOffset(tmpExpr, loc), cTypeOfPointerComponent);
+		// res.offset < length(arg_s.base)
+		final Expression offsetSmallerLength = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
+				IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
+				cTypeOfPointerComponent,
+				ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
+						new Expression[] { MemoryHandler.getPointerBaseAddress(argSPtr, loc) }),
+				cTypeOfPointerComponent);
+		// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
+		final Expression inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquals,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
+		// assume equalsNull or inRange
+		return new AssumeStatement(loc,
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
+
+	}
 }
