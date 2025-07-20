@@ -33,6 +33,7 @@ import java.util.List;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -329,14 +331,47 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * @param operator   The operator to be used for the arithmetic operation.
 	 * @return An AssignmentStatement object representing the arithmetic assignment.
 	 */
-	private AssignmentStatement createArithmeticAssignment(final LlvmirLocation location, final String identifier,
-			final LLVMIRParser.ValueContext leftValue, final LLVMIRParser.ValueContext rightValue,
-			final Operator operator) {
+	private static AssignmentStatement createArithmeticAssignment(final LlvmirLocation location,
+			final String identifier, final LLVMIRParser.ValueContext leftValue,
+			final LLVMIRParser.ValueContext rightValue, final Operator operator) {
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
 		final Expression leftExpr = getExpressionFromValue(leftValue, location);
 		final Expression rightExpr = getExpressionFromValue(rightValue, location);
 		final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
 		return new AssignmentStatement(location, new LeftHandSide[] { varLhs }, new Expression[] { binaryExpr });
+	}
+
+	/**
+	 * Converts a string representation of a comparison operator to its corresponding Boogie operator.
+	 *
+	 * This method maps the LLVM IR comparison operators (like "eq", "ne", "sle", etc.) to their Boogie equivalents
+	 * (like COMPEQ, COMPNEQ, COMPLEQ, etc.).
+	 *
+	 * @param operatorValue The string representation of the comparison operator.
+	 * @return The corresponding Boogie Operator.
+	 * @throws AssertionError if the operator is not supported.
+	 */
+	private static Operator getCompOperatorFromOperatorValue(final String operatorValue) {
+		switch (operatorValue) {
+		case "eq":
+			return Operator.COMPEQ;
+		case "ne":
+			return Operator.COMPNEQ;
+		case "sle":
+		case "ule":
+			return Operator.COMPLEQ;
+		case "slt":
+		case "ult":
+			return Operator.COMPLT;
+		case "sge":
+		case "uge":
+			return Operator.COMPGEQ;
+		case "sgt":
+		case "ugt":
+			return Operator.COMPGT;
+		default:
+			throw new AssertionError("Unsupported operator: " + operatorValue);
+		}
 	}
 
 	/**
@@ -579,14 +614,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
 			Expression leftExpr = null;
 			Expression rightExpr = null;
-			Operator operator = null;
-			final String OperatorValue = instructionType.iCmpInst().iPred().getText();
-			if (OperatorValue.equals("eq")) {
-				operator = Operator.COMPEQ;
-			} else {
-				// TODO: Support for other iCmp operators
-				throw new AssertionError("The support for iCmp operators other than eq is not implemented yet.");
-			}
+			final Operator operator = getCompOperatorFromOperatorValue(instructionType.iCmpInst().iPred().getText());
 
 			final LLVMIRParser.ValueContext leftOperandType = instructionType.iCmpInst().typeValue().value();
 			leftExpr = getExpressionFromValue(leftOperandType, location);
@@ -649,7 +677,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			body.addFuncBlock(
 					createArithmeticAssignment(location, identifier, instructionType.mulInst().typeValue().value(),
 							instructionType.mulInst().value(), Operator.ARITHMUL));
-		} else {
+		} else if (instructionType.allocaInst() != null) {
+			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+		} else if (instructionType.callInst() != null) {
+			final String callIdentifier = instructionType.callInst().value().constant().getText();
+			if (callIdentifier.equals("@__VERIFIER_nondent_int")) {
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
+				body.addFuncBlock(havocStmt);
+			}
+		}
+
+		else {
 			// TODO: Support for other instructions
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
@@ -700,6 +739,45 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		final IfStatement ifStmt = new IfStatement(location, variableExpr, new Statement[] { thenGoto },
 				new Statement[] { elseGoto });
 		body.addFuncBlock(ifStmt);
+
+		return body;
+	}
+
+	/**
+	 * Handles the visit event for a store instruction in the LLVM IR parse tree.
+	 *
+	 * This method processes the store instruction and creates an AssignmentStatement to assign a value to a variable.
+	 *
+	 * @param ctx The parse tree context for the store instruction.
+	 * @return A FunctionBody object containing the AssignmentStatement.
+	 */
+	@Override
+	public FunctionBody visitStoreInst(final LLVMIRParser.StoreInstContext ctx) {
+		final FunctionBody body = new FunctionBody();
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+
+		final String identifier = unifyIdentifier(ctx.typeValue(1).value().LocalIdent().getText());
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+				new Expression[] { getExpressionFromValue(ctx.typeValue(0).value(), location) });
+		body.addFuncBlock(assignment);
+
+		return body;
+	}
+
+	@Override
+	public FunctionBody visitCallInst(final LLVMIRParser.CallInstContext ctx) {
+		final FunctionBody body = new FunctionBody();
+		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+
+		final String callIdentifier = ctx.value().LocalIdent().getText();
+		if (callIdentifier.equals("@__assert_fail")) {
+			final BooleanLiteral boolLit = new BooleanLiteral(location, false);
+			final AssertStatement assertStmt = new AssertStatement(location, boolLit);
+			body.addFuncBlock(assertStmt);
+		}
 
 		return body;
 	}
