@@ -6,6 +6,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -255,5 +256,15 @@ public class MemoryModel {
 	 */
 	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
 		return mMemoryAddressing.addExpressionToPointer(loc, ptrExpr, expr);
+	}
+
+	/**
+	 * Returns a pointer to the last character of a string.
+	 *
+	 * @return The pointer.
+	 */
+	public Expression lastCharOfString(final ILocation loc, final CPrimitive sizeT, final IdentifierExpression len,
+			final IdentifierExpression returnValue) {
+		return mMemoryAddressing.lastCharOfString(loc, sizeT, len, returnValue);
 	}
 }
