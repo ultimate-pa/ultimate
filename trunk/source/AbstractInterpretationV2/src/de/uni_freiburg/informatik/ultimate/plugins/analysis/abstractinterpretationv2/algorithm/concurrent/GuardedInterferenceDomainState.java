@@ -16,10 +16,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ImmutableSet;
 public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
 		implements IAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> {
 	private final STATE mState;
-	private final ThreadInstanceCounter mThreadCounter;
+	private final ThreadInstanceCounter<LOC> mThreadCounter;
 	private final AbstractLocationState<LOC> mAbstractLocationState;
 
-	public GuardedInterferenceDomainState(final STATE state, final ThreadInstanceCounter threadCounter,
+	public GuardedInterferenceDomainState(final STATE state, final ThreadInstanceCounter<LOC> threadCounter,
 			final AbstractLocationState<LOC> abstractLocationState) {
 		mState = state;
 		mThreadCounter = threadCounter;
@@ -30,7 +30,7 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 		return mState;
 	}
 
-	public ThreadInstanceCounter threadCounter() {
+	public ThreadInstanceCounter<LOC> threadCounter() {
 		return mThreadCounter;
 	}
 
@@ -54,14 +54,17 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 				this.abstractLocationState().copyToNewState(newLoc));
 	}
 
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsActive(
-			final Collection<String> forkingStrings) {
-		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setThreadsActive(forkingStrings));
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> assignForkId(final String threadName, final int forkId,
+			final LOC forkLoc, final boolean inLoop) {
+		final var newThreadcounter = new ThreadInstanceCounter<>(
+				threadCounter().assignForkId(threadName, forkId, forkLoc, inLoop));
 		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
 	}
 
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> setThreadsInf(final Collection<String> forkingStrings) {
-		final var newThreadcounter = new ThreadInstanceCounter(threadCounter().setThreadsInf(forkingStrings));
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> unassignForkId(final String threadName, final int forkId,
+			final LOC forkLoc) {
+		final var newThreadcounter = new ThreadInstanceCounter<>(
+				threadCounter().unassignForkId(threadName, forkId, forkLoc));
 		return new GuardedInterferenceDomainState<>(this.state(), newThreadcounter, this.abstractLocationState());
 	}
 
@@ -228,5 +231,4 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 				&& Objects.equals(mThreadCounter, other.mThreadCounter)
 				&& (mState == null ? other.mState == null : mState.isEqualTo((STATE) other.mState));
 	}
-
 }
