@@ -47,13 +47,16 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 			final String procedure, final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
 		final var allForkLocs = new HashSet<LOC>();
 		var result = combineForkingStates(procedure, allForkLocs);
+
 		if (result != null) {
-			final boolean multipleThreads = wasForkedMultipleTimes(allForkLocs);
-			if (multipleThreads) {
-				result = GuardedStateTransformer.setThreadsInf(List.of(procedure), result);
-			} else {
-				result = GuardedStateTransformer.setThreadsActive(List.of(procedure), result);
+			for (final LOC loc : allForkLocs) {
+				final var edge = loc.getOutgoingEdges().iterator().next();
+				if (edge instanceof final ForkThreadCurrent fork) {
+					result = GuardedStateTransformer.assignForkId(procedure,
+							fork.getForkStatement().getThreadID().length, loc, mForksInLoop.contains(fork), result);
+				}
 			}
+			final boolean multipleThreads = wasForkedMultipleTimes(allForkLocs);
 			final var forkedInitialState = constructForkedInitialState(result, procedure, multipleThreads,
 					interferences);
 			return forkedInitialState;
@@ -128,7 +131,7 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> mainThreadEntryState(
 			final String procedure) {
 		var bottomState = mDomain.createBottomPreconditionState();
-		bottomState = bottomState.setThreadsActive(List.of(procedure));
+		bottomState = bottomState.assignForkId(procedure, 0, null, false);
 		final var locMap = mDomain.getAbstractLocationMap();
 		final var entryLoc = mEntryLocs.get(procedure);
 		bottomState = bottomState.initializeLocation(entryLoc, locMap,

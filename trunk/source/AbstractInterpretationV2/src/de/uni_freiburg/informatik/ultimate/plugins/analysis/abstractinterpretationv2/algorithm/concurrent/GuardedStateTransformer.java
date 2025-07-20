@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -20,39 +19,11 @@ public final class GuardedStateTransformer {
 		return states.stream().map(transformer).collect(Collectors.toSet());
 	}
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> ThreadInstanceCounter getThreadInstanceStateUnion(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
-		final ThreadInstanceCounter unionCounter = disj.getStates().stream().map(s -> s.threadCounter())
-				.reduce((a, b) -> a.union(b))
-				.orElseThrow(() -> new IllegalStateException("Trying to get threadinstancestate from empty list"));
-		return unionCounter;
-	}
-
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> AbstractLocationState<LOC> getAbstractLocationUnion(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
-		final AbstractLocationState<LOC> unionLoc = disj.getStates().stream().map(s -> s.abstractLocationState())
-				.reduce((a, b) -> a.union(b))
-				.orElseThrow(() -> new IllegalStateException("Trying to get abstractlocationstate from empty list"));
-		return unionLoc;
-	}
-
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> copyToNewStateLocation(
-			final LOC newLoc, final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
-		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
-		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.copyToNewStateLocation(newLoc)));
-	}
-
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> setThreadsActive(
-			final Collection<String> forkingStrings,
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> assignForkId(
+			final String threadName, final int forkId, final LOC forkLoc, final boolean inLoop,
 			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
 		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
-		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.setThreadsActive(forkingStrings)));
-	}
-
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> setThreadsInf(
-			final Collection<String> forkingStrings,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
-		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
-		return DisjunctiveAbstractState.createDisjunction(mapStates(states, s -> s.setThreadsInf(forkingStrings)));
+		return DisjunctiveAbstractState
+				.createDisjunction(mapStates(states, s -> s.assignForkId(threadName, forkId, forkLoc, inLoop)));
 	}
 }
