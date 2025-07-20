@@ -2869,4 +2869,8 @@ public class MemoryHandler {
 			final IdentifierExpression len, final IdentifierExpression returnValue) {
 		return mMemoryModel.lastCharOfString(loc, sizeT, len, returnValue);
 	}
+
+	public final Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
+		return mMemoryModel.initialPointerFromPointer(loc, ptr);
+	}
 }

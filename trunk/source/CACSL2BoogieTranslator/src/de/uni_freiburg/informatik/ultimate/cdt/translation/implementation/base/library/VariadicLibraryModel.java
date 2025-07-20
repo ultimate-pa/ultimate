@@ -31,7 +31,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
-import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 
@@ -149,10 +148,8 @@ public class VariadicLibraryModel implements ILibraryModel {
 
 		// Translate va_end(valist) to ULTIMATE.dealloc({ base: valist!base, offset: 0 }) to ensure the memory to be
 		// freed
-		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final Expression pointerWithoutOffset = MemoryHandler.constructPointerFromBaseAndOffset(
-				MemoryHandler.getPointerBaseAddress(pRex.getLrValue().getValue(), loc), zero, loc);
+		final Expression pointerWithoutOffset =
+				mMemoryHandler.initialPointerFromPointer(loc, pRex.getLrValue().getValue());
 		final RValue value = new RValue(pointerWithoutOffset, pRex.getCType());
 
 		/*
