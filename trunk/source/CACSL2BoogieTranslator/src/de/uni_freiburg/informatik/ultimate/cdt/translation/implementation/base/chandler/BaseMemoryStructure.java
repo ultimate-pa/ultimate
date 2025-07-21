@@ -125,9 +125,6 @@ public abstract class BaseMemoryStructure implements IMemoryStructure {
 	}
 
 	@Override
-	public abstract HeapDataArray getDataHeapArray(CPrimitives primitive);
-
-	@Override
 	public final HeapDataArray getPointerHeapArray() {
 		return mPointerArray;
 	}
