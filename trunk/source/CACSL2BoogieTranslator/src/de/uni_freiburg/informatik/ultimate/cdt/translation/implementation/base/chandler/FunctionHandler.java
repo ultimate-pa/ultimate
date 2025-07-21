@@ -621,10 +621,10 @@ public class FunctionHandler {
 		// frees are inserted in handleReturnStm
 		for (final Entry<LocalLValueILocationPair, Integer> entry : memoryHandler.getVariablesToBeFreed().entrySet()) {
 			if (entry.getValue() >= 1) {
-				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().llv, entry.getKey().loc));
+				resultBuilder.addStatement(memoryHandler.getDeallocCall(entry.getKey().mLlv, entry.getKey().mLoc));
 
 				resultBuilder.addStatement(
-						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLhs() }));
+						new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().mLlv.getLhs() }));
 			}
 		}
 

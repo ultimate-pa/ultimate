@@ -215,6 +215,7 @@ public final class TranslationSettings {
 		return mDivisionByZeroOfFloatingTypes;
 	}
 
+	@SuppressWarnings("static-method")
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(CPrimitives.LONG);
 	}

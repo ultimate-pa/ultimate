@@ -80,7 +80,6 @@ public class VariadicLibraryModel implements ILibraryModel {
 	private final ProcedureManager mProcedureManager;
 	private final ITypeHandler mTypeHandler;
 	private final ExpressionResultTransformer mExprResultTransformer;
-	private final ExpressionTranslation mExpressionTranslation;
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
 	public VariadicLibraryModel(final FunctionModelHelper helper, final MemoryHandler memoryHandler,
@@ -92,7 +91,6 @@ public class VariadicLibraryModel implements ILibraryModel {
 		mProcedureManager = procedureManager;
 		mTypeHandler = typeHandler;
 		mExprResultTransformer = exprResultTransformer;
-		mExpressionTranslation = expressionTranslation;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 	}
 

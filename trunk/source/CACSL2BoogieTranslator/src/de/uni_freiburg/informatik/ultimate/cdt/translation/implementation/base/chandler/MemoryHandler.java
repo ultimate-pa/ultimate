@@ -853,13 +853,13 @@ public class MemoryHandler {
 	public List<Statement> insertMallocs(final List<Statement> block) {
 		final List<Statement> mallocs = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeMalloced.currentScopeKeys()) {
-			mallocs.add(this.getUltimateMemAllocCall(llvp.llv, llvp.loc, MemoryArea.STACK));
+			mallocs.add(this.getUltimateMemAllocCall(llvp.mLlv, llvp.mLoc, MemoryArea.STACK));
 		}
 		final List<Statement> frees = new ArrayList<>();
 		for (final LocalLValueILocationPair llvp : mVariablesToBeFreed.currentScopeKeys()) {
 			// frees are inserted in handleReturnStm
-			frees.add(getDeallocCall(llvp.llv, llvp.loc));
-			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLhs() }));
+			frees.add(getDeallocCall(llvp.mLlv, llvp.mLoc));
+			frees.add(new HavocStatement(llvp.mLoc, new VariableLHS[] { (VariableLHS) llvp.mLlv.getLhs() }));
 		}
 		final List<Statement> newBlockAL = new ArrayList<>(mallocs);
 		newBlockAL.addAll(block);
@@ -1886,6 +1886,7 @@ public class MemoryHandler {
 	 * @param op
 	 *            One of the comparison operators defined in {@link IASTBinaryExpression}.
 	 */
+	@SuppressWarnings("unused")
 	private Expression constructPointerBinaryComparisonExpression(final ILocation loc, final int op,
 			final Expression left, final Expression right) {
 		return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, left,

@@ -142,15 +142,15 @@ public final class SFO {
 	/**
 	 * Sizeof constant prefix "#sizeof~".
 	 */
-	public static final String SIZEOF = "#sizeof~";
+	public static final String PRE_SIZEOF = "#sizeof~";
 	/**
 	 * Offset constant prefix "#offset~".
 	 */
-	public static final String OFFSET = "#offset~";
+	public static final String PRE_OFFSET = "#offset~";
 	/**
 	 * Identifier for the sizeof-pointer-constant.
 	 */
-	public static final String SIZEOF_POINTER_ID = SFO.SIZEOF + SFO.POINTER;
+	public static final String SIZEOF_POINTER_ID = SFO.PRE_SIZEOF + SFO.POINTER;
 	/**
 	 * Identifier for function pointers.
 	 */

@@ -139,8 +139,6 @@ public class TypeHandler implements ITypeHandler {
 	 */
 	private boolean mFloatingTypesNeeded = false;
 
-	private final CTranslationResultReporter mReporter;
-
 	private final INameHandler mNameHandler;
 
 	private final TypeSizes mTypeSizes;
@@ -163,7 +161,6 @@ public class TypeHandler implements ITypeHandler {
 	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
 			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler) {
-		mReporter = reporter;
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mDefinedTypes = new LinkedScopedHashMap<>();
@@ -182,7 +179,6 @@ public class TypeHandler implements ITypeHandler {
 			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
 			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler,
 			final TypeHandler prerunTypeHandler) {
-		mReporter = reporter;
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mSymboltable = symboltable;

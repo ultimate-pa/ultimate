@@ -122,6 +122,7 @@ public class LocationFactory {
 					Collections.unmodifiableSet(set.stream().map(a -> a.getFilePath()).collect(Collectors.toSet()));
 		}
 
+		@SuppressWarnings("unused")
 		public Set<String> getFilenames() {
 			return mFilenames;
 		}

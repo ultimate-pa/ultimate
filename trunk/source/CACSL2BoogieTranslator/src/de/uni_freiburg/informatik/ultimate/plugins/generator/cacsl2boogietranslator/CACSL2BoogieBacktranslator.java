@@ -734,8 +734,8 @@ public class CACSL2BoogieBacktranslator extends
 		// printCFG(cfg, mLogger::info);
 		final boolean oldValue = mGenerateBacktranslationWarnings;
 		mGenerateBacktranslationWarnings = false;
-		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, this::translateCFGEdge,
-				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger, mServices));
+		IBacktranslatedCFG<String, CACSLLocation> translated =
+				translateCFG(cfg, this::translateCFGEdge, (a, b, c) -> new CACSLBacktranslatedCFG(a, b, c));
 		translated = reduceCFGs(translated);
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
 		// printHondas(translated, mLogger::info);
@@ -771,6 +771,7 @@ public class CACSL2BoogieBacktranslator extends
 		return lastTarget;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public ProcedureContract<BacktranslatedACSLValue, BacktranslatedACSLValue> translateProcedureContract(
 			final ProcedureContract<Expression, ? extends Expression> oldContract, final ILocation context) {
