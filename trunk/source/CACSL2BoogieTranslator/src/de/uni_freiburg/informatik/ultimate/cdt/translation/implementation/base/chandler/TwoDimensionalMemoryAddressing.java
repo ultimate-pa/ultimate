@@ -54,19 +54,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * The two dimensional memory addressing.
  */
-public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
-
+public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimensionalPointer> {
 	public TwoDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations) {
-		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer);
+			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
+			final TwoDimensionalPointer pointer) {
+		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
 
 		mPointerIntegerConversion = switch (pointerIntegerMode) {
 		case NonBijectiveMapping:
-			yield new NonBijectiveMapping(exprTranslation, typeSizes);
+			yield new NonBijectiveMapping(exprTranslation, typeSizes, pointer);
 		case Overapproximate:
-			yield new OverapproximationUF(exprTranslation, functionDeclarations, typeHandler, typeSizes);
+			yield new OverapproximationUF(exprTranslation, functionDeclarations, typeHandler, typeSizes, pointer);
 		default:
 			throw new UnsupportedOperationException(
 					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
@@ -341,8 +341,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
+		final Expression pointerBase = mMemoryPointer.pointerBaseAddress(ptrAddress, loc);
+		final Expression pointerOffset = mMemoryPointer.pointerOffset(ptrAddress, loc);
 
 		final Expression timesSizeOf =
 				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), pointerComponentType);
@@ -350,7 +350,7 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerOffset,
 				pointerComponentType, timesSizeOf, pointerComponentType);
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		return mMemoryPointer.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}
 
 	@Override
@@ -362,13 +362,13 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT) {
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress, loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(baseAddress, loc);
+		final Expression pointerBase = mMemoryPointer.pointerBaseAddress(baseAddress, loc);
+		final Expression pointerOffset = mMemoryPointer.pointerOffset(baseAddress, loc);
 
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 				pointerOffset, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		return mMemoryPointer.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 	}
 
 	@Override
@@ -418,8 +418,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				ExpressionFactory.constructIdentifierExpression(loc, mTypeHandler.getBoogiePointerType(), ptrName,
 						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName));
 
-		final Expression ptrBase = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
-		final Expression ptrOffset = MemoryHandler.getPointerOffset(ptrExpr, loc);
+		final Expression ptrBase = mMemoryPointer.pointerBaseAddress(ptrExpr, loc);
+		final Expression ptrOffset = mMemoryPointer.pointerOffset(ptrExpr, loc);
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
 		final Expression lengthArray = MemoryModelExpressionHelper.getLengthArray(loc, requiredMemoryModelFeatures,
@@ -506,8 +506,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		final Expression stackHeapBarrier = MemoryModelExpressionHelper.getStackHeapBarrier(loc,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 
-		final Expression addrOffset = MemoryHandler.getPointerOffset(pointerToBeFreed.getValue(), loc);
-		final Expression addrBase = MemoryHandler.getPointerBaseAddress(pointerToBeFreed.getValue(), loc);
+		final Expression addrOffset = mMemoryPointer.pointerOffset(pointerToBeFreed.getValue(), loc);
+		final Expression addrBase = mMemoryPointer.pointerBaseAddress(pointerToBeFreed.getValue(), loc);
 		final Expression[] idcFree = { addrBase };
 
 		final List<Statement> result = new ArrayList<>();
@@ -564,20 +564,20 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, offsetExpr,
 						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(baseExpr, offsetMinus, loc);
+		return mMemoryPointer.constructPointerFromBaseAndOffset(baseExpr, offsetMinus, loc);
 
 	}
 
 	@Override
 	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
-		final Expression base = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
-		final Expression offset = MemoryHandler.getPointerOffset(ptrExpr, loc);
+		final Expression base = mMemoryPointer.pointerBaseAddress(ptrExpr, loc);
+		final Expression offset = mMemoryPointer.pointerOffset(ptrExpr, loc);
 
 		final Expression offsetPlus =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, offset,
 						mTypeSizeAndOffsetComputer.getSizeT(), expr, mTypeSizeAndOffsetComputer.getSizeT());
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(base, offsetPlus, loc);
+		return mMemoryPointer.constructPointerFromBaseAndOffset(base, offsetPlus, loc);
 	}
 
 	@Override
@@ -587,7 +587,7 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(MemoryHandler.getPointerBaseAddress(returnValue, loc),
+		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.pointerBaseAddress(returnValue, loc),
 				lenMinusOne, loc);
 	}
 
@@ -602,8 +602,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		// res.offset == 0
 		final Expression offsetEqualsNull = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-				IASTBinaryExpression.op_equals, MemoryHandler.getPointerOffset(tmpExpr, loc), cTypeOfPointerComponent,
-				MemoryHandler.getPointerOffset(nullPtrExpr, loc), cTypeOfPointerComponent);
+				IASTBinaryExpression.op_equals, mMemoryPointer.pointerOffset(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.pointerOffset(nullPtrExpr, loc), cTypeOfPointerComponent);
 
 		// res.base == 0 && res.offset == 0
 		final Expression equalsNull =
@@ -618,21 +618,28 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				IASTBinaryExpression.op_lessEqual,
 				mExpressionTranslation.constructLiteralForIntegerType(loc, cTypeOfPointerComponent,
 						new BigInteger("0")),
-				cTypeOfPointerComponent, MemoryHandler.getPointerOffset(tmpExpr, loc), cTypeOfPointerComponent);
+				cTypeOfPointerComponent, mMemoryPointer.pointerOffset(tmpExpr, loc), cTypeOfPointerComponent);
 		// res.offset < length(arg_s.base)
-		final Expression offsetSmallerLength = mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc,
-				IASTBinaryExpression.op_lessEqual, MemoryHandler.getPointerOffset(tmpExpr, loc),
-				cTypeOfPointerComponent,
-				ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
-						new Expression[] { MemoryHandler.getPointerBaseAddress(argSPtr, loc) }),
-				cTypeOfPointerComponent);
+		final Expression offsetSmallerLength = mExpressionTranslation
+				.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_lessEqual,
+						mMemoryPointer.pointerOffset(tmpExpr, loc), cTypeOfPointerComponent,
+						ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
+								new Expression[] { mMemoryPointer.pointerBaseAddress(argSPtr, loc) }),
+						cTypeOfPointerComponent);
 		// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
 		final Expression inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquals,
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetNonNegative, offsetSmallerLength));
 		// assume equalsNull or inRange
 		return new AssumeStatement(loc,
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
+	}
 
+	@Override
+	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
+				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+		return mMemoryPointer.constructPointerFromBaseAndOffset(mMemoryPointer.pointerBaseAddress(ptr, loc), zero, loc);
 	}
 
 	@Override
@@ -653,8 +660,8 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		if (pointerTargetFullyAllocated != CheckMode.IGNORE) {
 			// s.offset < length[s.base])
-			final Expression ptrOffset = MemoryHandler.getPointerOffset(ptr, loc);
-			final Expression ptrBase = MemoryHandler.getPointerBaseAddress(ptr, loc);
+			final Expression ptrOffset = mMemoryPointer.pointerOffset(ptr, loc);
+			final Expression ptrBase = mMemoryPointer.pointerBaseAddress(ptr, loc);
 
 			final Expression lengthArray = MemoryModelExpressionHelper.getLengthArray(loc, requiredMemoryModelFeatures,
 					memoryModelDeclarationsHandler);
@@ -691,18 +698,17 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		}
 		assert check == CheckMode.ASSUME : "missed a case?";
 		return new AssumeStatement(loc, expr);
-
 	}
 
 	@Override
 	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
 			final Expression destId, final Expression dest) {
 		final Expression basesDistinct = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
-				MemoryHandler.getPointerBaseAddress(src, loc), MemoryHandler.getPointerBaseAddress(src, loc));
+				mMemoryPointer.pointerBaseAddress(src, loc), mMemoryPointer.pointerBaseAddress(src, loc));
 		final Expression destDoesNotReachIntoSrc = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
-				MemoryHandler.getPointerOffset(dest, loc), MemoryHandler.getPointerOffset(srcId, loc));
+				mMemoryPointer.pointerOffset(dest, loc), mMemoryPointer.pointerOffset(srcId, loc));
 		final Expression srcDoesNotReachIntoDest = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
-				MemoryHandler.getPointerOffset(src, loc), MemoryHandler.getPointerOffset(destId, loc));
+				mMemoryPointer.pointerOffset(src, loc), mMemoryPointer.pointerOffset(destId, loc));
 		final Expression disjunction =
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, basesDistinct, ExpressionFactory
 						.newBinaryExpression(loc, Operator.LOGICAND, destDoesNotReachIntoSrc, srcDoesNotReachIntoDest));

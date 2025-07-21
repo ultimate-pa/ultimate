@@ -52,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
@@ -88,13 +88,14 @@ public class FunctionModelHelper {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TypeSizes mTypeSizes;
 	private final ITypeHandler mTypeHandler;
+	private final IMemoryPointer mMemoryPointer;
 	private final boolean mCheckMemoryLeakInMain;
 	private final boolean mSvcompMemtrackCompatibilityMode;
 
 	public FunctionModelHelper(final AuxVarInfoBuilder auxVarInfoBuilder,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
 			final TypeSizes typeSizes, final ITypeHandler typeHandler, final boolean checkMemoryLeakInMain,
-			final boolean svcompMemtrackCompatibilityMode, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final boolean svcompMemtrackCompatibilityMode, final IMemoryPointer memoryPointer) {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryHandler = memoryHandler;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -102,6 +103,7 @@ public class FunctionModelHelper {
 		mTypeHandler = typeHandler;
 		mCheckMemoryLeakInMain = checkMemoryLeakInMain;
 		mSvcompMemtrackCompatibilityMode = svcompMemtrackCompatibilityMode;
+		mMemoryPointer = memoryPointer;
 	}
 
 	/**
@@ -320,8 +322,7 @@ public class FunctionModelHelper {
 		builder.addAuxVarWithDeclaration(retvar);
 		builder.setLrValue(new LocalLValue(retvar.getLhs(), resultType, null));
 
-		final var nullPtr =
-				mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+		final var nullPtr = mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 
 		// one possible return value: NULL
 		final var setPtrToNull = StatementFactory.constructSingleAssignmentStatement(loc, retvar.getLhs(), nullPtr);

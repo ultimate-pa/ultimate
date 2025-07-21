@@ -95,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.DataRaceChecker;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.memoryhandler.ConstructMemcpyOrMemmove;
@@ -172,6 +171,8 @@ public class MemoryHandler {
 	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 	private final TranslationSettings mSettings;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	private final MemoryModel mMemoryModel;
 
 	/**
@@ -187,7 +188,7 @@ public class MemoryHandler {
 			final boolean smtBoolArrayWorkaround, final ITypeHandler typeHandler,
 			final ExpressionTranslation expressionTranslation, final ProcedureManager procedureManager,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final AuxVarInfoBuilder auxVarInfoBuilder,
-			final TranslationSettings settings) {
+			final TranslationSettings settings, final IMemoryPointer memoryPointer) {
 		mTypeHandler = typeHandler;
 		mTypeSizes = typeSizes;
 		mExpressionTranslation = expressionTranslation;
@@ -196,6 +197,7 @@ public class MemoryHandler {
 		mProcedureManager = procedureManager;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 		mSettings = settings;
+		mMemoryPointer = memoryPointer;
 
 		if (smtBoolArrayWorkaround) {
 			if (mSettings.isBitvectorTranslation()) {
@@ -211,7 +213,7 @@ public class MemoryHandler {
 				new MemoryModelDeclarationsHandler(mTypeHandler, mBooleanArrayHelper, getRwLockCounterType());
 
 		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
-				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations());
+				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
 
 		mVariablesToBeMalloced = new LinkedScopedHashMap<>();
 		mVariablesToBeFreed = new LinkedScopedHashMap<>();
@@ -239,8 +241,10 @@ public class MemoryHandler {
 		mVariablesToBeMalloced = prerunMemoryHandler.mVariablesToBeMalloced;
 		mVariablesToBeFreed = prerunMemoryHandler.mVariablesToBeFreed;
 		mMemoryModelDeclarationsHandler = prerunMemoryHandler.mMemoryModelDeclarationsHandler;
+		mMemoryPointer = prerunMemoryHandler.mMemoryPointer;
+
 		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
-				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations());
+				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
 
 		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures(mMemoryModel.metaDataDeclarations());// prerunMemoryHandler.mRequiredMemoryModelFeatures;
 	}
@@ -357,17 +361,17 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_MEMCPY)) {
-			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
-					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
-					mTypeSizes, dataRaceChecker);
+			final ConstructMemcpyOrMemmove cmcom =
+					new ConstructMemcpyOrMemmove(this, mProcedureManager, mTypeHandler, mTypeSizeAndOffsetComputer,
+							mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes, dataRaceChecker);
 			declarations.addAll(cmcom.declareMemcpyOrMemmove(main, MemoryModelDeclarations.C_MEMCPY));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_MEMMOVE)) {
-			final ConstructMemcpyOrMemmove cmcom = new ConstructMemcpyOrMemmove(this, mProcedureManager,
-					(TypeHandler) mTypeHandler, mTypeSizeAndOffsetComputer, mExpressionTranslation, mAuxVarInfoBuilder,
-					mTypeSizes, dataRaceChecker);
+			final ConstructMemcpyOrMemmove cmcom =
+					new ConstructMemcpyOrMemmove(this, mProcedureManager, mTypeHandler, mTypeSizeAndOffsetComputer,
+							mExpressionTranslation, mAuxVarInfoBuilder, mTypeSizes, dataRaceChecker);
 			declarations.addAll(cmcom.declareMemcpyOrMemmove(main, MemoryModelDeclarations.C_MEMMOVE));
 		}
 
@@ -378,8 +382,8 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_REALLOC)) {
-			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, (TypeHandler) mTypeHandler,
-					mTypeSizeAndOffsetComputer, mExpressionTranslation);
+			final ConstructRealloc cr = new ConstructRealloc(this, mProcedureManager, mTypeHandler,
+					mTypeSizeAndOffsetComputer, mExpressionTranslation, mMemoryPointer);
 			declarations.addAll(cr.declareRealloc(main, heapDataArrays));
 		}
 
@@ -627,7 +631,7 @@ public class MemoryHandler {
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
 		final Expression addressExpression =
-				mTypeHandler.memoryPointer().initialPointer(actualLoc, mFixedAddressCounter, cTypeOfPointerComponent);
+				mMemoryPointer.initialPointer(actualLoc, mFixedAddressCounter, cTypeOfPointerComponent);
 
 		final RValue addressRValue = new RValue(addressExpression, cType);
 		final RValue ptrBaseRValue = new RValue(
@@ -809,38 +813,6 @@ public class MemoryHandler {
 			final ICType valueType, final IASTNode hook) {
 		final ICType realValueType = valueType.getUnderlyingType();
 		return getWriteCall(loc, hlv, value, realValueType, HeapWriteMode.SELECT);
-	}
-
-	/**
-	 * Takes a pointer Expression and returns the pointers base address. If it is already given as a struct, then the
-	 * first field is returned, otherwise a StructAccessExpression pointer!base is returned.
-	 *
-	 * @param pointer
-	 */
-	public static Expression getPointerBaseAddress(final Expression pointer, final ILocation loc) {
-		if (pointer instanceof StructConstructor) {
-			return ((StructConstructor) pointer).getFieldValues()[0];
-		}
-		return ExpressionFactory.constructStructAccessExpression(loc, pointer, SFO.POINTER_BASE);
-	}
-
-	/**
-	 * Takes a pointer Expression and returns the pointers base address. If it is already given as a struct, then the
-	 * second field is returned, otherwise a StructAccessExpression pointer!offset is returned.
-	 *
-	 * @param pointer
-	 */
-	public static Expression getPointerOffset(final Expression pointer, final ILocation loc) {
-		if (pointer instanceof StructConstructor) {
-			return ((StructConstructor) pointer).getFieldValues()[1];
-		}
-		return ExpressionFactory.constructStructAccessExpression(loc, pointer, SFO.POINTER_OFFSET);
-	}
-
-	public static StructConstructor constructPointerFromBaseAndOffset(final Expression base, final Expression offset,
-			final ILocation loc) {
-		return ExpressionFactory.constructStructConstructor(loc, new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
-				new Expression[] { base, offset });
 	}
 
 	/**
@@ -1331,8 +1303,8 @@ public class MemoryHandler {
 			if (hda.getName().equals(SFO.POINTER)) {
 				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
 						mExpressionTranslation.getCTypeOfPointerComponents());
-				convertedValue = mTypeHandler.memoryPointer().nullPointer(ignoreLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents());
+				convertedValue =
+						mMemoryPointer.nullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents());
 			} else if (hda.getName().equals(SFO.REAL)) {
 				final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
 				exprRes = mExpressionTranslation.convertIntToFloat(ignoreLoc, exprRes, new CPrimitive(primitive));
@@ -1682,7 +1654,7 @@ public class MemoryHandler {
 					ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
 			conjuncts.add(eq);
 			final Expression conjunction = ExpressionFactory.and(loc, conjuncts);
-			final ASTType type = ((TypeHandler) mTypeHandler).byteSize2AstType(loc, cprimitive.getPrimitiveCategory(),
+			final ASTType type = mTypeHandler.byteSize2AstType(loc, cprimitive.getPrimitiveCategory(),
 					mTypeSizes.getSize(cprimitive));
 			final VarList[] parameters = { new VarList(loc, new String[] { "#valueAsBitvector" }, type) };
 			final QuantifierExpression qe =
@@ -2500,6 +2472,7 @@ public class MemoryHandler {
 			final HeapLValue baseAddress) {
 		return StatementFactory.constructAssignmentStatement(loc,
 				new VariableLHS[] { relevantHeapArray.getVariableLHS() },
+
 				mMemoryModel.rhsAssignmentStatementHda(loc, relevantHeapArray, baseAddress.getAddress()));
 	}
 

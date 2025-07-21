@@ -158,9 +158,9 @@ public class TypeHandler implements ITypeHandler {
 	private final HashRelation<String, String> mNamedIncompleteTypes = new HashRelation<>();
 	private final Map<String, ICType> mLibraryTypes = new HashMap<>();
 
-	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
-			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler) {
+	public TypeHandler(final INameHandler nameHandler, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings translationSettings, final LocationFactory locationFactory,
+			final StaticObjectsHandler staticObjectsHandler) {
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mDefinedTypes = new LinkedScopedHashMap<>();
@@ -169,16 +169,14 @@ public class TypeHandler implements ITypeHandler {
 		mTranslationSettings = translationSettings;
 		mLocationFactory = locationFactory;
 		mStaticObjectsHandler = staticObjectsHandler;
-
 		mMemoryPointer = MemoryModelFactory.createMemoryPointer(mTranslationSettings,
 				(BoogieType) cType2AstType(null, translationSettings.getCTypeOfPointerComponents()).getBoogieType(),
 				typeSizes);
 	}
 
-	public TypeHandler(final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final TypeSizes typeSizes, final FlatSymbolTable symboltable, final TranslationSettings translationSettings,
-			final LocationFactory locationFactory, final StaticObjectsHandler staticObjectsHandler,
-			final TypeHandler prerunTypeHandler) {
+	public TypeHandler(final INameHandler nameHandler, final TypeSizes typeSizes, final FlatSymbolTable symboltable,
+			final TranslationSettings translationSettings, final LocationFactory locationFactory,
+			final StaticObjectsHandler staticObjectsHandler, final TypeHandler prerunTypeHandler) {
 		mNameHandler = nameHandler;
 		mTypeSizes = typeSizes;
 		mSymboltable = symboltable;

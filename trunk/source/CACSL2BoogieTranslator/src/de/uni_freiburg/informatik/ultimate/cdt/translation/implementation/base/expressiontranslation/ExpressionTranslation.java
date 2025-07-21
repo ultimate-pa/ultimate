@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -81,17 +82,19 @@ public abstract class ExpressionTranslation {
 	protected final TypeSizes mTypeSizes;
 	protected final ITypeHandler mTypeHandler;
 	protected final FlatSymbolTable mSymboltable;
+	protected final IMemoryPointer mMemoryPointer;
 
 	protected final TranslationSettings mSettings;
 
 	public ExpressionTranslation(final TypeSizes typeSizes, final TranslationSettings translationSettings,
-			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
+			final ITypeHandler typeHandler, final FlatSymbolTable symboltable, final IMemoryPointer memoryPointer) {
 
 		mSettings = translationSettings;
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mSymboltable = symboltable;
 		mFunctionDeclarations = new FunctionDeclarations(typeHandler);
+		mMemoryPointer = memoryPointer;
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,
@@ -351,7 +354,7 @@ public abstract class ExpressionTranslation {
 				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
 			};
 		} else if (cType instanceof CPointer || cType instanceof CArray) {
-			return mTypeHandler.memoryPointer().nullPointer(loc, getCTypeOfPointerComponents());
+			return mMemoryPointer.nullPointer(loc, getCTypeOfPointerComponents());
 		}
 		throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
 	}

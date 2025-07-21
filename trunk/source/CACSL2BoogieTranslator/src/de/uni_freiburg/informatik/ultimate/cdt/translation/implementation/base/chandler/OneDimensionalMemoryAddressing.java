@@ -45,18 +45,19 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * The one dimensional memory addressing.
  */
-public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
+public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimensionalPointer> {
 	public OneDimensionalMemoryAddressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
 			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations) {
-		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer);
+			final PointerIntegerConversion pointerIntegerMode, final FunctionDeclarations functionDeclarations,
+			final OneDimensionalPointer pointer) {
+		super(typeHandler, exprTranslation, booleanArrayHelper, typeSizes, typeSizeAndOffsetComputer, pointer);
 
 		mPointerIntegerConversion = switch (pointerIntegerMode) {
 		case NonBijectiveMapping:
-			yield new NonBijectiveMappingOneDimensional(exprTranslation, typeSizes);
+			yield new NonBijectiveMappingOneDimensional(exprTranslation, pointer);
 		case Overapproximate:
-			yield new OverapproximationUF2OneDimensional(exprTranslation, functionDeclarations, typeHandler, typeSizes);
+			yield new OverapproximationUF2OneDimensional(exprTranslation, functionDeclarations, typeHandler, pointer);
 		default:
 			throw new UnsupportedOperationException(
 					"Pointer-Integer conversion not yet implemented " + pointerIntegerMode);
@@ -173,9 +174,9 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				ExpressionFactory.constructUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, counterExpression));
 		expressions.add(new Pair<>(baseEqualCounterExpr, Collections.emptySet()));
 
-		// #res!offset = 0;
-		final var offsetEqualZeroExpr = offsetEqualsZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
-		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
+		// // #res!offset = 0;
+		// final var offsetEqualZeroExpr = offsetEqualsZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
+		// expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
 
 		// #res!base != 0;
 		final var baseNotEqualZeroExpr = baseNotEqualZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
@@ -262,16 +263,14 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
+		final Expression pointerBase = mMemoryPointer.pointerBaseAddress(ptrAddress, loc);
 		final Expression timesSizeOf =
 				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), cTypeOfPointerComponent);
-		final Expression zeroExpr =
-				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, operator, pointerBase,
 				cTypeOfPointerComponent, timesSizeOf, cTypeOfPointerComponent);
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(sum, zeroExpr, loc);
+		return mMemoryPointer.createPointerFromBase(sum, loc);
 	}
 
 	@Override
@@ -283,14 +282,11 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT) {
 
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(baseAddress, loc);
-		final Expression zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-
+		final Expression pointerBase = mMemoryPointer.pointerBaseAddress(baseAddress, loc);
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 				pointerBase, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(sum, zeroExpr, loc);
+		return mMemoryPointer.createPointerFromBase(sum, loc);
 	}
 
 	@Override
@@ -354,22 +350,18 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_minus, base,
 						mTypeSizeAndOffsetComputer.getSizeT(), integerExpr, mTypeSizeAndOffsetComputer.getSizeT());
 
-		final Expression zeroExpr =
-				mTypeSizes.constructLiteralForIntegerType(loc, mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ZERO);
-
-		return MemoryHandler.constructPointerFromBaseAndOffset(baseMinus, zeroExpr, loc);
+		return mMemoryPointer.createPointerFromBase(baseMinus, loc);
 	}
 
 	@Override
 	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
-		final Expression base = MemoryHandler.getPointerBaseAddress(ptrExpr, loc);
-		final Expression offset = MemoryHandler.getPointerOffset(ptrExpr, loc);
+		final Expression base = mMemoryPointer.pointerBaseAddress(ptrExpr, loc);
 
 		final Expression basePlus =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, base,
 						mTypeSizeAndOffsetComputer.getSizeT(), expr, mTypeSizeAndOffsetComputer.getSizeT());
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(basePlus, offset, loc);
+		return mMemoryPointer.createPointerFromBase(basePlus, loc);
 	}
 
 	@Override
@@ -379,8 +371,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				IASTBinaryExpression.op_minus, mExpressionTranslation.applyWraparound(loc, sizeT, len), sizeT,
 				mTypeSizes.constructLiteralForIntegerType(loc, sizeT, BigInteger.ONE), sizeT);
 
-		return MemoryHandler.constructPointerFromBaseAndOffset(lenMinusOne,
-				MemoryHandler.getPointerOffset(returnValue, loc), loc);
+		return mMemoryPointer.createPointerFromBase(lenMinusOne, loc);
 	}
 
 	@Override
@@ -394,7 +385,6 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		return new AssumeStatement(loc,
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, baseEqualNull, baseEqual));
-
 	}
 
 	@Override
@@ -414,5 +404,10 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 			final Expression destId, final Expression dest) {
 		throw new UnsupportedOperationException(
 				"The string copy overlapping check is not compatible with the 1D addressing mode!");
+	}
+
+	@Override
+	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
+		return mMemoryPointer.createPointerFromBase(ptr, loc);
 	}
 }

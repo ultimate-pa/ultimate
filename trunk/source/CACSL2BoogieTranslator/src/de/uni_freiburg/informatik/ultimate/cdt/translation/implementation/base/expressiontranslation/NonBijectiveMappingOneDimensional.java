@@ -26,11 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.OneDimensionalPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -46,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class NonBijectiveMappingOneDimensional implements IPointerIntegerConversion {
 
-	protected final ExpressionTranslation mExpressionTranslation;
-	private final TypeSizes mTypeSizes;
+	private final ExpressionTranslation mExpressionTranslation;
+	private final OneDimensionalPointer mMemoryPointer;
 
 	public NonBijectiveMappingOneDimensional(final ExpressionTranslation expressionTranslation,
-			final TypeSizes typeSizes) {
+			final OneDimensionalPointer pointer) {
 		mExpressionTranslation = expressionTranslation;
-		mTypeSizes = typeSizes;
+		mMemoryPointer = pointer;
 	}
 
 	@Override
@@ -60,7 +57,7 @@ public class NonBijectiveMappingOneDimensional implements IPointerIntegerConvers
 			final CPrimitive newType) {
 
 		final RValue pointer = (RValue) rexp.getLrValue();
-		final Expression baseAddress = MemoryHandler.getPointerBaseAddress(pointer.getValue(), loc);
+		final Expression baseAddress = mMemoryPointer.pointerBaseAddress(pointer.getValue(), loc);
 
 		final RValue sum = new RValue(baseAddress, mExpressionTranslation.getCTypeOfPointerComponents());
 		final ExpressionResult newRExpr =
@@ -74,12 +71,8 @@ public class NonBijectiveMappingOneDimensional implements IPointerIntegerConvers
 		final ExpressionResult rexp =
 				mExpressionTranslation.convertIntToInt(loc, old, mExpressionTranslation.getCTypeOfPointerComponents());
 
-		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-
-		final RValue rVal =
-				new RValue(MemoryHandler.constructPointerFromBaseAndOffset(rexp.getLrValue().getValue(), zero, loc),
-						newType, false, false);
+		final RValue rVal = new RValue(mMemoryPointer.createPointerFromBase(rexp.getLrValue().getValue(), loc), newType,
+				false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}
 

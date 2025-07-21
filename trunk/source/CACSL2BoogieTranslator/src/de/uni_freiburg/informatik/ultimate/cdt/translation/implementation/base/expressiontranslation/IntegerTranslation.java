@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -78,8 +79,8 @@ public class IntegerTranslation extends ExpressionTranslation {
 	private final IFloatingPointHandler mFloatingPointHandler = new UnsupportedFloatingPointHandler();
 
 	public IntegerTranslation(final TypeSizes typeSizeConstants, final TranslationSettings settings,
-			final ITypeHandler typeHandler, final FlatSymbolTable symboltable) {
-		super(typeSizeConstants, settings, typeHandler, symboltable);
+			final ITypeHandler typeHandler, final FlatSymbolTable symboltable, final IMemoryPointer pointer) {
+		super(typeSizeConstants, settings, typeHandler, symboltable, pointer);
 		mBitabsTranslation = new BitabsTranslation(typeSizeConstants);
 	}
 

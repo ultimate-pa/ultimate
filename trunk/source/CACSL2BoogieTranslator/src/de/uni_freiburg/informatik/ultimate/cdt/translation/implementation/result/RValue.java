@@ -94,7 +94,7 @@ public class RValue extends LRValue {
 				return false;
 			}
 			final BoogieStructType bStructType = (BoogieStructType) bType;
-			if (bStructType.getFieldCount() != 2) {
+			if (bStructType.getFieldCount() != 2 && bStructType.getFieldCount() != 1) {
 				return false;
 			}
 			// TODO more checks

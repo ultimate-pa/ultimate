@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
@@ -64,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
@@ -79,12 +79,12 @@ public class StringLibraryModel implements ILibraryModel {
 	private final ProcedureManager mProcedureManager;
 	private final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
-	private final ITypeHandler mTypeHandler;
+	private final IMemoryPointer mMemoryPointer;
 
 	public StringLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final MemoryHandler memoryHandler,
 			final ProcedureManager procedureManager, final ExpressionTranslation expressionTranslation,
-			final TypeSizeAndOffsetComputer typeSizeComputer, final ITypeHandler typeHandler) {
+			final TypeSizeAndOffsetComputer typeSizeComputer, final IMemoryPointer pointer) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -92,7 +92,7 @@ public class StringLibraryModel implements ILibraryModel {
 		mProcedureManager = procedureManager;
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizeComputer = typeSizeComputer;
-		mTypeHandler = typeHandler;
+		mMemoryPointer = pointer;
 	}
 
 	@Override
@@ -344,7 +344,7 @@ public class StringLibraryModel implements ILibraryModel {
 				mMemoryHandler.constructMemsafetyChecksForPointerExpression(loc, argS.getLrValue().getValue()));
 
 		final Expression nullExpr =
-				mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+				mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		// the havocced/uninitialized variable that represents the return value
 		final Expression tmpExpr = auxvarinfo.getExp();// new IdentifierExpression(loc, tmpId);
 

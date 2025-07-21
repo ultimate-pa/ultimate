@@ -23,24 +23,26 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
-public abstract class BaseMemoryAdressing implements IMemoryAdressing {
+public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements IMemoryAdressing {
 	ITypeHandler mTypeHandler;
 	ExpressionTranslation mExpressionTranslation;
 	IBooleanArrayHelper mBooleanArrayHelper;
 	TypeSizes mTypeSizes;
 	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	IPointerIntegerConversion mPointerIntegerConversion;
+	T mMemoryPointer;
 
 	BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
 	public BaseMemoryAdressing(final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final T pointer) {
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
 		mBooleanArrayHelper = booleanArrayHelper;
 		mTypeSizes = typeSizes;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+		mMemoryPointer = pointer;
 	}
 
 	protected VariableDeclaration constructStackHeapBarrierConstant() {
@@ -107,7 +109,7 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final Expression ptrBase = MemoryHandler.getPointerBaseAddress(ptr, loc);
+		final Expression ptrBase = mMemoryPointer.pointerBaseAddress(ptr, loc);
 		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
 						memoryModelDeclarationsHandler),
@@ -131,16 +133,16 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 			final CPrimitive cTypeOfPointerComponent, final Expression nullPtrExpr) {
 		// res.base == 0
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-				MemoryHandler.getPointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
-				MemoryHandler.getPointerBaseAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
+				mMemoryPointer.pointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.pointerBaseAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
 	}
 
 	protected Expression baseEqual(final ILocation loc, final Expression tmpExpr,
 			final CPrimitive cTypeOfPointerComponent, final Expression argSPtr) {
 		// res.base == arg_s.base
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-				MemoryHandler.getPointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
-				MemoryHandler.getPointerBaseAddress(argSPtr, loc), cTypeOfPointerComponent);
+				mMemoryPointer.pointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.pointerBaseAddress(argSPtr, loc), cTypeOfPointerComponent);
 	}
 
 	@Override
@@ -148,8 +150,7 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 			final Expression baseAddress) {
 		return new Expression[] { ExpressionFactory.constructFunctionApplication(loc,
 				MemoryHandler.getNameOfHeapInitFunction(hda.getName()),
-				new Expression[] { hda.getIdentifierExpression(),
-						MemoryHandler.getPointerBaseAddress(baseAddress, loc) },
+				new Expression[] { hda.getIdentifierExpression(), mMemoryPointer.pointerBaseAddress(baseAddress, loc) },
 				(BoogieType) hda.getIdentifierExpression().getType()) };
 	}
 }

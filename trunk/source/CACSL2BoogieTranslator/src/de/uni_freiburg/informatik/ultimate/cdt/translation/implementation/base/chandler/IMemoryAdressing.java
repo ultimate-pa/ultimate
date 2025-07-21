@@ -214,4 +214,11 @@ public interface IMemoryAdressing {
 	 * @return The expression.
 	 */
 	Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda, final Expression baseAddress);
+
+	/**
+	 * Returns an initial pointer with the same base address. If 2D-Addressing, than the offset is 0.
+	 *
+	 * @return The initial pointer.
+	 */
+	Expression initialPointerFromPointer(final ILocation loc, final Expression ptr);
 }

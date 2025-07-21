@@ -36,4 +36,11 @@ public interface IMemoryPointer {
 	 * @return The pointer.
 	 */
 	Expression initialPointer(final ILocation loc, final BigInteger value, final CPrimitive cTypeOfPointerComponent);
+
+	/**
+	 * Returns the base pointer Address.
+	 *
+	 * @return The base address.
+	 */
+	Expression pointerBaseAddress(final Expression pointer, final ILocation loc);
 }

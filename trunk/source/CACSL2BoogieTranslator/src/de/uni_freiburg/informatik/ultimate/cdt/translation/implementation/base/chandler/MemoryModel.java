@@ -41,8 +41,8 @@ public class MemoryModel {
 
 	public MemoryModel(final TranslationSettings settings, final TypeSizes typeSizes, final ITypeHandler typeHandler,
 			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final FunctionDeclarations functionDeclarations) {
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final FunctionDeclarations functionDeclarations,
+			final IMemoryPointer pointer) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mExpressionTranslation = exprTranslation;
@@ -51,7 +51,7 @@ public class MemoryModel {
 		mFunctionDeclarations = functionDeclarations;
 
 		mMemoryAddressing = MemoryModelFactory.createMemoryAddressing(settings, mTypeHandler, mExpressionTranslation,
-				mBooleanArrayHelper, mTypeSizes, mTypeSizeAndOffsetComputer, mFunctionDeclarations);
+				mBooleanArrayHelper, mTypeSizes, mTypeSizeAndOffsetComputer, mFunctionDeclarations, pointer);
 		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
 	}
 
@@ -275,11 +275,7 @@ public class MemoryModel {
 	 * @return A pointer with offset 0.
 	 */
 	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
-		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-
-		return MemoryHandler.constructPointerFromBaseAndOffset(MemoryHandler.getPointerBaseAddress(ptr, loc), zero,
-				loc);
+		return mMemoryAddressing.initialPointerFromPointer(loc, ptr);
 	}
 
 	/**

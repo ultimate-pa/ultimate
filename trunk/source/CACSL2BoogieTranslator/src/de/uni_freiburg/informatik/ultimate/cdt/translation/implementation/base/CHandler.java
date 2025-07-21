@@ -169,6 +169,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CCharacterConstant;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.CStringLiteral;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.FunctionHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.LocalLValueILocationPair;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
@@ -406,6 +407,8 @@ public class CHandler {
 	private boolean mIsConcurrent;
 	private boolean mHasThreadLocalVars;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	/**
 	 * Constructor for CHandler in pre-run mode.
 	 *
@@ -420,7 +423,8 @@ public class CHandler {
 			final LocationFactory locationFactory, final TypeSizes typeSizes,
 			final Set<IASTDeclaration> reachableDeclarations, final ITypeHandler typeHandler,
 			final CTranslationResultReporter reporter, final INameHandler nameHandler,
-			final StaticObjectsHandler staticObjectsHandler, final Set<String> functions) {
+			final StaticObjectsHandler staticObjectsHandler, final Set<String> functions,
+			final IMemoryPointer pointer) {
 		mExpressionTranslation = exprTrans;
 		mIsPrerun = true;
 
@@ -436,6 +440,7 @@ public class CHandler {
 		mNameHandler = nameHandler;
 		mStaticObjectsHandler = staticObjectsHandler;
 		mFunctionTable = functionTable;
+		mMemoryPointer = pointer;
 
 		mFunctions = new LinkedHashSet<>(functions);
 		mVariablesOnHeap = new LinkedHashSet<>();
@@ -457,7 +462,8 @@ public class CHandler {
 
 		mAuxVarInfoBuilder = new AuxVarInfoBuilder(mNameHandler, mTypeHandler, mProcedureManager);
 		mMemoryHandler = new MemoryHandler(mTypeSizes, mNameHandler, settings.useSmtBoolArrayWorkaround(), mTypeHandler,
-				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings);
+				mExpressionTranslation, mProcedureManager, mTypeSizeComputer, mAuxVarInfoBuilder, mSettings,
+				mMemoryPointer);
 
 		mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, mExpressionTranslation, mTypeHandler,
 				mLocationFactory);
@@ -471,13 +477,13 @@ public class CHandler {
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, mProcedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap);
+				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
-				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
-				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mTypeHandler);
+				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mMemoryPointer);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, functionTable, mSymbolTable,
 				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
 		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
@@ -524,6 +530,7 @@ public class CHandler {
 		mFunctions = prerunCHandler.mFunctions;
 		mBacktranslator = prerunCHandler.mBacktranslator;
 		mLocationFactory = prerunCHandler.mLocationFactory;
+		mMemoryPointer = prerunCHandler.mMemoryPointer;
 
 		// reuse these parts of the old CHandler that do not have state that was created
 		// during the prerun
@@ -564,14 +571,14 @@ public class CHandler {
 						mTypeSizes, mAuxVarInfoBuilder, mTypeHandler, mTypeSizeComputer, mDataRaceChecker);
 		mFunctionHandler = new FunctionHandler(mLogger, mNameHandler, mExpressionTranslation, procedureManager,
 				mTypeHandler, mReporter, mAuxVarInfoBuilder, this, mLocationFactory, mSymbolTable,
-				mExprResultTransformer, mVariablesOnHeap);
+				mExprResultTransformer, mVariablesOnHeap, mMemoryPointer);
 		mArrayHandler = new ArrayHandler(mSettings, mExpressionTranslation, mTypeHandler, mTypeSizes,
 				mExprResultTransformer, mMemoryHandler, mLocationFactory);
 		mInitHandler = new InitializationHandler(mSettings, mMemoryHandler, mExpressionTranslation, mTypeHandler,
-				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer);
+				mAuxVarInfoBuilder, mTypeSizeComputer, mTypeSizes, this, mExprResultTransformer, mMemoryPointer);
 
 		mCExpressionTranslator = new CExpressionTranslator(mSettings, mMemoryHandler, mExpressionTranslation,
-				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mTypeHandler);
+				mExprResultTransformer, mAuxVarInfoBuilder, mTypeSizes, mStaticObjectsHandler, mMemoryPointer);
 		mLibraryModelHandler = new LibraryModelHandler(mLogger, prerunCHandler.mFunctionTable, mSymbolTable,
 				mSettings.checkErrorFunction(), mLocationFactory, getLibraryModels());
 		mTypeHandler.addLibraryTypes(mLibraryModelHandler.getTypeModels());
@@ -612,7 +619,8 @@ public class CHandler {
 		final FunctionModelHelper helper =
 				new FunctionModelHelper(mAuxVarInfoBuilder, mExpressionTranslation, mMemoryHandler, mTypeSizes,
 						mTypeHandler, mSettings.getFunctionsCheckedForMemoryNeutrality().contains("main"),
-						mSettings.isSvcompMemtrackCompatibilityMode(), mTypeSizeComputer);
+						mSettings.isSvcompMemtrackCompatibilityMode(), mMemoryPointer);
+
 		return List.of(new AssertLibraryModel(helper, mExprResultTransformer, mSettings.checkAssertions()),
 				new AtomicLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
 				new FenvLibraryModel(helper, mExprResultTransformer, mExpressionTranslation, mAuxVarInfoBuilder),
@@ -631,7 +639,7 @@ public class CHandler {
 						mExpressionTranslation, mAuxVarInfoBuilder, mMemoryHandler, mProcedureManager, mNameHandler,
 						mSettings.checkSignedIntegerBounds()),
 				new StringLibraryModel(helper, mExprResultTransformer, mAuxVarInfoBuilder, mMemoryHandler,
-						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mTypeHandler),
+						mProcedureManager, mExpressionTranslation, mTypeSizeComputer, mMemoryPointer),
 				new SvcompLibraryModel(helper, mAuxVarInfoBuilder, mExpressionTranslation, mNameHandler,
 						mSettings.checkErrorFunction(), mExprResultTransformer),
 				new TimeLibraryModel(helper, mExpressionTranslation, mAuxVarInfoBuilder),
@@ -743,7 +751,7 @@ public class CHandler {
 		}
 
 		// add type declarations introduced by the translation, e.g., $Pointer$
-		mDeclarations.add(mTypeHandler.memoryPointer().typeDeclaration(loc));
+		mDeclarations.add(mMemoryPointer.typeDeclaration(loc));
 
 		/**
 		 * For Notes on our handling of procedures see {@link FunctionHandler.handleFunctionDefinition(..)}. Short
@@ -1764,9 +1772,9 @@ public class CHandler {
 		// deal with builtin constants
 
 		if ("NULL".equals(cId)) {
-			return new ExpressionResult(new RValue(
-					mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
-					CPointer.voidPointer()));
+			return new ExpressionResult(
+					new RValue(mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
+							CPointer.voidPointer()));
 		}
 		if (List.of("__PRETTY_FUNCTION__", "__FUNCTION__", "__func__").contains(cId)) {
 			final ICType returnType = new CPointer(new CPrimitive(CPrimitives.CHAR));

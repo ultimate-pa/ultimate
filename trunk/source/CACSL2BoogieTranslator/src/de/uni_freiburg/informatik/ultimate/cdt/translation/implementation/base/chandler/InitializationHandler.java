@@ -155,11 +155,13 @@ public class InitializationHandler {
 
 	private final boolean mUseConstantArrays;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	public InitializationHandler(final TranslationSettings settings, final MemoryHandler memoryHandler,
 			final ExpressionTranslation expressionTranslation, final ITypeHandler typeHandler,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final TypeSizes typeSizes, final CHandler chandler,
-			final ExpressionResultTransformer exprResultTransformer) {
+			final TypeSizes typeSizes, final CHandler chandler, final ExpressionResultTransformer exprResultTransformer,
+			final IMemoryPointer memoryPointer) {
 		mMemoryHandler = memoryHandler;
 		mExpressionTranslation = expressionTranslation;
 		mTypeHandler = typeHandler;
@@ -170,6 +172,7 @@ public class InitializationHandler {
 		mExprResultTransformer = exprResultTransformer;
 		mUseConstantArrays = settings.useConstantArrays();
 		mUseSelectForArrayCellInitIfPossible = !settings.useStoreChains();
+		mMemoryPointer = memoryPointer;
 	}
 
 	/**
@@ -961,7 +964,7 @@ public class InitializationHandler {
 		} else if (cType instanceof CEnum) {
 			return mTypeSizes.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT), BigInteger.ZERO);
 		} else if (cType instanceof CPointer) {
-			return mTypeHandler.memoryPointer().nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
+			return mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents());
 		} else {
 			throw new UnsupportedOperationException("missing case?");
 		}
