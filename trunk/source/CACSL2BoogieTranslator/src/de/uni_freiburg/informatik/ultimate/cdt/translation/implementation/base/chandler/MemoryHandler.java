@@ -373,7 +373,7 @@ public class MemoryHandler {
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
 				.contains(MemoryModelDeclarations.C_STRCPY)) {
-			declarations.addAll(declareStrCpy(main, heapDataArrays));
+			declarations.addAll(declareStrCpy(main));
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryStructureDeclarations()
@@ -1123,7 +1123,7 @@ public class MemoryHandler {
 	 * @param heapDataArrays
 	 * @return
 	 */
-	private List<Declaration> declareStrCpy(final CHandler main, final Collection<HeapDataArray> heapDataArrays) {
+	private List<Declaration> declareStrCpy(final CHandler main) {
 
 		final MemoryModelDeclarations strcpyMmDecl = MemoryModelDeclarations.C_STRCPY;
 		final List<Declaration> strCpyDecl = new ArrayList<>();
