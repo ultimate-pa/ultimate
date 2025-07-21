@@ -396,4 +396,16 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, baseEqualNull, baseEqual));
 
 	}
+
+	@Override
+	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
+			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		if (pointerBaseValid == CheckMode.IGNORE && pointerTargetFullyAllocated == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException("The MemSafety checks are not compatible with the 1D addressing mode!");
+	}
 }

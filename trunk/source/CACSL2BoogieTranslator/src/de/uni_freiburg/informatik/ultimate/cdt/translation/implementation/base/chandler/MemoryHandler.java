@@ -124,11 +124,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryStructure;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -512,20 +509,6 @@ public class MemoryHandler {
 				{ ExpressionFactory.constructNestedArrayLHS(loc, arrayLhs, new Expression[] { index }) };
 		final Expression[] rhs = { value };
 		return StatementFactory.constructAssignmentStatement(loc, lhs, rhs);
-	}
-
-	/**
-	 * Construct expression that states that the base address of ptr is valid. Depending on the settings this expression
-	 * is one of the following
-	 * <ul>
-	 * <li>#valid[#ptr!base]
-	 * <li>#valid[#ptr!base] == 1
-	 * <li>#valid[#ptr!base] == 1bv1
-	 * </ul>
-	 */
-	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr) {
-		return mMemoryModel.constructPointerBaseValidityCheckExpr(loc, ptr, mRequiredMemoryModelFeatures,
-				mMemoryModelDeclarationsHandler);
 	}
 
 	/**
@@ -2779,70 +2762,12 @@ public class MemoryHandler {
 	 * Construct assert statements that do memsafety checks for {@link pointerValue} if the corresponding settings are
 	 * active. settings concerned are: - "Pointer base address is valid at dereference" - "Pointer to allocated memory
 	 * at dereference"
-	 *
-	 * @param loc
-	 *            TODO
-	 * @param pointerValue
-	 *            TODO
-	 * @param standardFunctionHandler
-	 *            TODO
-	 * @param expressionTranslation
-	 *            TODO
 	 */
 	public List<Statement> constructMemsafetyChecksForPointerExpression(final ILocation loc,
 			final Expression pointerValue) {
-		final List<Statement> result = new ArrayList<>();
-		if (mSettings.checkPointerDerefValidity() != CheckMode.IGNORE) {
-
-			// valid[s.base]
-			final Expression validBase = constructPointerBaseValidityCheckExpr(loc, pointerValue);
-
-			if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
-				final AssertStatement assertion = new AssertStatement(loc, validBase);
-				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-				chk.annotate(assertion);
-				result.add(assertion);
-			} else {
-				assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME : "missed a case?";
-				final Statement assume = new AssumeStatement(loc, validBase);
-				result.add(assume);
-			}
-		}
-
-		if (mSettings.checkPointerDerefValidity() != CheckMode.IGNORE) {
-			// s.offset < length[s.base])
-			final Expression ptrOffset = MemoryHandler.getPointerOffset(pointerValue, loc);
-			final Expression ptrBase = MemoryHandler.getPointerBaseAddress(pointerValue, loc);
-			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, getLengthArray(loc),
-					new Expression[] { ptrBase });
-
-			final Expression offsetSmallerLength =
-					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, ptrOffset, aae);
-
-			// s.offset >= 0;
-			final var zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
-					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-
-			final Expression offsetNonnegative = constructPointerBinaryComparisonExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, ptrOffset, zeroExpr);
-
-			final Expression aAndB =
-					// new BinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength, offsetNonnegative);
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
-							offsetNonnegative);
-
-			if (mSettings.checkPointerDerefValidity() == CheckMode.CHECK) {
-				final AssertStatement assertion = new AssertStatement(loc, aAndB);
-				final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
-				chk.annotate(assertion);
-				result.add(assertion);
-			} else {
-				assert mSettings.checkPointerDerefValidity() == CheckMode.ASSUME : "missed a case?";
-				final Statement assume = new AssumeStatement(loc, aAndB);
-				result.add(assume);
-			}
-		}
-		return result;
+		return mMemoryModel.constructMemSafeStatementsForPointerExpression(loc, pointerValue,
+				mSettings.checkPointerDerefValidity(), mSettings.checkPointerDerefValidity(),
+				mRequiredMemoryModelFeatures, mMemoryModelDeclarationsHandler);
 	}
 
 	public List<Statement> ultimateInitStatements(final ILocation loc) {

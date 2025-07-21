@@ -291,4 +291,17 @@ public class MemoryModel {
 			final Expression argSPtr, final Expression nullPtrExpr, final Expression lengthArray) {
 		return mMemoryAddressing.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, lengthArray);
 	}
+
+	/**
+	 * Constructs assert / assume statements for ptr memsafety checks.
+	 *
+	 * @return The statements.
+	 */
+	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
+			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryAddressing.constructMemSafeStatementsForPointerExpression(loc, ptr, pointerBaseValid,
+				pointerTargetFullyAllocated, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
 }
