@@ -199,4 +199,12 @@ public interface IMemoryAdressing {
 			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
+
+	/**
+	 * Construct the assume to check that src and dest don't overlap.
+	 *
+	 * @return The assume statement.
+	 */
+	Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
+			final Expression destId, final Expression dest);
 }

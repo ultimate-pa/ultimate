@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
@@ -1190,16 +1189,9 @@ public class MemoryHandler {
 			 */
 			final boolean checkForStringCopyOverlapingUndefindeBehaviour = false;
 			if (checkForStringCopyOverlapingUndefindeBehaviour) {
-				final Expression basesDistinct = ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPNEQ,
-						getPointerBaseAddress(currentSrc, ignoreLoc), getPointerBaseAddress(currentSrc, ignoreLoc));
-				final Expression destDoesNotReachIntoSrc = ExpressionFactory.newBinaryExpression(ignoreLoc,
-						Operator.COMPLT, getPointerOffset(currentDest, ignoreLoc), getPointerOffset(srcId, ignoreLoc));
-				final Expression srcDoesNotReachIntoDest = ExpressionFactory.newBinaryExpression(ignoreLoc,
-						Operator.COMPLT, getPointerOffset(currentSrc, ignoreLoc), getPointerOffset(destId, ignoreLoc));
-				final Expression disjunction = ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.LOGICOR,
-						basesDistinct, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.LOGICAND,
-								destDoesNotReachIntoSrc, srcDoesNotReachIntoDest));
-				loopBody.add(new AssertStatement(ignoreLoc, disjunction));
+				final var assumeStmt =
+						mMemoryModel.checksForStringCopyOverlapping(ignoreLoc, currentSrc, srcId, destId, currentDest);
+				loopBody.add(assumeStmt);
 			}
 
 			final Expression srcAcc;

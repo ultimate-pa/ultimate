@@ -693,4 +693,20 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		return new AssumeStatement(loc, expr);
 
 	}
+
+	@Override
+	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
+			final Expression destId, final Expression dest) {
+		final Expression basesDistinct = ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
+				MemoryHandler.getPointerBaseAddress(src, loc), MemoryHandler.getPointerBaseAddress(src, loc));
+		final Expression destDoesNotReachIntoSrc = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
+				MemoryHandler.getPointerOffset(dest, loc), MemoryHandler.getPointerOffset(srcId, loc));
+		final Expression srcDoesNotReachIntoDest = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLT,
+				MemoryHandler.getPointerOffset(src, loc), MemoryHandler.getPointerOffset(destId, loc));
+		final Expression disjunction =
+				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, basesDistinct, ExpressionFactory
+						.newBinaryExpression(loc, Operator.LOGICAND, destDoesNotReachIntoSrc, srcDoesNotReachIntoDest));
+
+		return new AssertStatement(loc, disjunction);
+	}
 }
