@@ -25,52 +25,20 @@ public class MemoryModelFactory {
 	public static IMemoryAdressing createMemoryAddressing(final TranslationSettings settings,
 			final ITypeHandler typeHandler, final ExpressionTranslation exprTranslation,
 			final IBooleanArrayHelper booleanArrayHelper, final TypeSizes typeSizes,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final FunctionDeclarations functionDeclarations) {
-		final var memoryAddressingPreference = settings.memoryAddressingPreference();
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final FunctionDeclarations functionDeclarations,
+			final IMemoryPointer pointer) {
 
-		switch (memoryAddressingPreference) {
-		case One_Dimensional:
-			final List<SimpleEntry<String, Boolean>> incompatibleOptions = List.of(
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY,
-							settings.getPointerBaseValidityMode() != CheckMode.IGNORE),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC,
-							settings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID,
-							settings.checkIfFreedPointerIsValid()),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN,
-							settings.checkMemoryLeakInMain()),
-					new SimpleEntry<>(
-							CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
-							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY,
-							settings.checkAllocationPurity()),
-					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS,
-							settings.useConstantArrays()));
-
-			final List<String> incompatibleActiveOptions =
-					incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
-
-			if (!incompatibleActiveOptions.isEmpty()) {
-				// TODO
-				// Workaround because too many Regression Tests failed,
-				// if any MemSafety option is set, then we use the 2D memory model
-				return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-						typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations);
-
-				// throw new UnsupportedOperationException(memoryAddressingPreference
-				// + " memory addressing is not compatible with the following active settings: "
-				// + String.join(", ", incompatibleActiveOptions));
-			}
+		if (pointer instanceof OneDimensionalPointer) {
 			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations);
-		case Two_Dimensional:
+					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations,
+					(OneDimensionalPointer) pointer);
+		} else if (pointer instanceof TwoDimensionalPointer) {
 			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
-					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations);
-		default:
-			throw new UnsupportedOperationException(
-					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");
+					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations,
+					(TwoDimensionalPointer) pointer);
 		}
+
+		throw new UnsupportedOperationException("Unknown pointer instance: " + pointer.getClass());
 	}
 
 	/**
@@ -111,6 +79,37 @@ public class MemoryModelFactory {
 
 		switch (memoryAddressingPreference) {
 		case One_Dimensional:
+			final List<SimpleEntry<String, Boolean>> incompatibleOptions = List.of(
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY,
+							settings.getPointerBaseValidityMode() != CheckMode.IGNORE),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC,
+							settings.getPointerTargetFullyAllocatedMode() != CheckMode.IGNORE),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID,
+							settings.checkIfFreedPointerIsValid()),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN,
+							settings.checkMemoryLeakInMain()),
+					new SimpleEntry<>(
+							CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
+							settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY,
+							settings.checkAllocationPurity()),
+					new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS,
+							settings.useConstantArrays()));
+
+			final List<String> incompatibleActiveOptions =
+					incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
+
+			if (!incompatibleActiveOptions.isEmpty()) {
+				// TODO
+				// Workaround because too many Regression Tests failed,
+				// if any MemSafety option is set, then we use the 2D memory model
+				return new TwoDimensionalPointer(boogieType, typeSizes);
+				// throw new UnsupportedOperationException(memoryAddressingPreference
+				// + " memory addressing is not compatible with the following active settings: "
+				// + String.join(", ", incompatibleActiveOptions));
+			}
+
+			return new OneDimensionalPointer(boogieType, typeSizes);
 		case Two_Dimensional:
 			return new TwoDimensionalPointer(boogieType, typeSizes);
 		default:

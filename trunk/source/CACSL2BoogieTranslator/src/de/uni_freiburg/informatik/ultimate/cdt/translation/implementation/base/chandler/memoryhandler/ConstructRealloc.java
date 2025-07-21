@@ -25,8 +25,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.HeapDataArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 /**
@@ -85,18 +86,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 public final class ConstructRealloc {
 	private final MemoryHandler mMemoryHandler;
 	private final ProcedureManager mProcedureManager;
-	private final TypeHandler mTypeHandler;
+	private final ITypeHandler mTypeHandler;
 	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	private final ExpressionTranslation mExpressionTranslation;
+	private final IMemoryPointer mMemoryPointer;
 
 	public ConstructRealloc(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
-			final TypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
-			final ExpressionTranslation expressionTranslation) {
+			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final ExpressionTranslation expressionTranslation, final IMemoryPointer memoryPointer) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
 		mExpressionTranslation = expressionTranslation;
+		mMemoryPointer = memoryPointer;
 	}
 
 	/**
@@ -150,8 +153,8 @@ public final class ConstructRealloc {
 		// if (ptr == NULL) { return malloc(size) }
 		{
 			final Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc,
-					BinaryExpression.Operator.COMPEQ, ptrIdExprImpl, mTypeHandler.memoryPointer().nullPointer(ignoreLoc,
-							mExpressionTranslation.getCTypeOfPointerComponents()));
+					BinaryExpression.Operator.COMPEQ, ptrIdExprImpl,
+					mMemoryPointer.nullPointer(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents()));
 			final Statement mallocCallStm =
 					mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP);
 			final Statement returnStm = new ReturnStatement(ignoreLoc);
@@ -174,14 +177,14 @@ public final class ConstructRealloc {
 			final Expression select = ExpressionFactory
 					.constructFunctionApplication(ignoreLoc, MemoryHandler.getNameOfHeapSelectFunction(hda.getName()),
 							new Expression[] { hda.getIdentifierExpression(),
-									MemoryHandler.getPointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
+									mMemoryPointer.pointerBaseAddress(ptrIdExprImpl, ignoreLoc), },
 							innerArrayBoogieType);
 
 			bodyStmt.add(StatementFactory.constructSingleAssignmentStatement(ignoreLoc, hda.getVariableLHS(),
 					ExpressionFactory.constructFunctionApplication(ignoreLoc,
 							MemoryHandler.getNameOfHeapStoreFunction(hda.getName()),
 							new Expression[] { hda.getIdentifierExpression(),
-									MemoryHandler.getPointerBaseAddress(resultExprImpl, ignoreLoc), select },
+									mMemoryPointer.pointerBaseAddress(resultExprImpl, ignoreLoc), select },
 							(BoogieType) hda.getVariableLHS().getType())));
 		}
 

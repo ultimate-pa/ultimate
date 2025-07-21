@@ -26,16 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation;
 
-import java.math.BigInteger;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.OneDimensionalPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -50,7 +47,7 @@ public class OverapproximationUF2OneDimensional implements IPointerIntegerConver
 	protected final ExpressionTranslation mExpressionTranslation;
 	private final FunctionDeclarations mFunctionDeclarations;
 	private final ITypeHandler mTypeHandler;
-	private final TypeSizes mTypeSizes;
+	private final OneDimensionalPointer mMemoryPointer;
 
 	/**
 	 * Defines the following conversion between pointers and integers. An integer n is converted to the pointer with
@@ -63,11 +60,11 @@ public class OverapproximationUF2OneDimensional implements IPointerIntegerConver
 
 	public OverapproximationUF2OneDimensional(final ExpressionTranslation expressionTranslation,
 			final FunctionDeclarations functionDeclarations, final ITypeHandler typeHandler,
-			final TypeSizes typeSizes) {
+			final OneDimensionalPointer pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mFunctionDeclarations = functionDeclarations;
 		mTypeHandler = typeHandler;
-		mTypeSizes = typeSizes;
+		mMemoryPointer = pointer;
 	}
 
 	@Override
@@ -101,10 +98,7 @@ public class OverapproximationUF2OneDimensional implements IPointerIntegerConver
 
 		final ExpressionResult convertedExpr =
 				mExpressionTranslation.convertIntToInt(loc, rexp, mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
-				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		final RValue rVal = new RValue(
-				MemoryHandler.constructPointerFromBaseAndOffset(convertedExpr.getLrValue().getValue(), zero, loc),
+		final RValue rVal = new RValue(mMemoryPointer.createPointerFromBase(convertedExpr.getLrValue().getValue(), loc),
 				newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(convertedExpr).setLrValue(rVal).build();
 	}

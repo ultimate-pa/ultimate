@@ -31,7 +31,7 @@ import java.math.BigInteger;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TwoDimensionalPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -50,18 +50,21 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 
 	protected final ExpressionTranslation mExpressionTranslation;
 	private final TypeSizes mTypeSizes;
+	private final TwoDimensionalPointer mMemoryPointer;
 
-	public NonBijectiveMapping(final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes) {
+	public NonBijectiveMapping(final ExpressionTranslation expressionTranslation, final TypeSizes typeSizes,
+			final TwoDimensionalPointer pointer) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizes = typeSizes;
+		mMemoryPointer = pointer;
 	}
 
 	@Override
 	public ExpressionResult convertPointerToInt(final ILocation loc, final ExpressionResult rexp,
 			final CPrimitive newType) {
 		final RValue pointer = (RValue) rexp.getLrValue();
-		final Expression baseAddress = MemoryHandler.getPointerBaseAddress(pointer.getValue(), loc);
-		final Expression offset = MemoryHandler.getPointerOffset(pointer.getValue(), loc);
+		final Expression baseAddress = mMemoryPointer.pointerBaseAddress(pointer.getValue(), loc);
+		final Expression offset = mMemoryPointer.pointerOffset(pointer.getValue(), loc);
 		final Expression sumExpr = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_plus, baseAddress, mExpressionTranslation.getCTypeOfPointerComponents(), offset,
 				mExpressionTranslation.getCTypeOfPointerComponents());
@@ -79,7 +82,7 @@ public class NonBijectiveMapping implements IPointerIntegerConversion {
 		final Expression zero = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 		final RValue rVal =
-				new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc),
+				new RValue(mMemoryPointer.constructPointerFromBaseAndOffset(zero, rexp.getLrValue().getValue(), loc),
 						newType, false, false);
 		return new ExpressionResultBuilder().addAllExceptLrValue(rexp).setLrValue(rVal).build();
 	}

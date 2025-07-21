@@ -180,6 +180,8 @@ public class FunctionHandler {
 
 	private final Set<String> mDefinedFunctions;
 
+	private final IMemoryPointer mMemoryPointer;
+
 	/**
 	 *
 	 * @param logger
@@ -200,7 +202,7 @@ public class FunctionHandler {
 			final ITypeHandler typeHandler, final CTranslationResultReporter reporter,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final CHandler chandler, final LocationFactory locFac,
 			final FlatSymbolTable symbolTable, final ExpressionResultTransformer expressionResultTransformer,
-			final Set<IASTNode> variablesOnHeap) {
+			final Set<IASTNode> variablesOnHeap, final IMemoryPointer pointer) {
 		mLogger = logger;
 		mNameHandler = nameHandler;
 		mExpressionTranslation = expressionTranslation;
@@ -216,6 +218,7 @@ public class FunctionHandler {
 		mVariablesOnHeap = variablesOnHeap;
 		mCalledFunctions = new HashSet<>();
 		mDefinedFunctions = new HashSet<>();
+		mMemoryPointer = pointer;
 	}
 
 	/**
@@ -582,13 +585,11 @@ public class FunctionHandler {
 					&& returnValue.getLrValue().getCType() instanceof CPrimitive
 					&& returnValue.getLrValue().getValue() instanceof IntegerLiteral
 					&& "0".equals(((IntegerLiteral) returnValue.getLrValue().getValue()).getValue())) {
-				returnValue =
-						new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
-								.setLrValue(new RValue(
-										mTypeHandler.memoryPointer().nullPointer(loc,
-												mExpressionTranslation.getCTypeOfPointerComponents()),
-										functionResultType))
-								.build();
+				returnValue = new ExpressionResultBuilder().addAllExceptLrValue(returnValue)
+						.setLrValue(new RValue(
+								mMemoryPointer.nullPointer(loc, mExpressionTranslation.getCTypeOfPointerComponents()),
+								functionResultType))
+						.build();
 			}
 
 			if (outParams.length == 0) {
