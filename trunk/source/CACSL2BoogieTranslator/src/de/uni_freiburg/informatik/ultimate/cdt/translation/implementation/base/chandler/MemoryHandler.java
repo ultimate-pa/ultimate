@@ -253,10 +253,6 @@ public class MemoryHandler {
 		return mRequiredMemoryModelFeatures;
 	}
 
-	public IMemoryStructure getMemoryStructure() {
-		return mMemoryModel.memoryStructure();
-	}
-
 	public Expression calculateSizeOf(final ILocation loc, final ICType cType) {
 		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
@@ -298,8 +294,7 @@ public class MemoryHandler {
 		final ArrayList<Declaration> declarations =
 				new ArrayList<>(mMemoryModel.constructMetaData(mRequiredMemoryModelFeatures));
 
-		final Collection<HeapDataArray> heapDataArrays =
-				mMemoryModel.memoryStructure().getDataHeapArrays(mRequiredMemoryModelFeatures);
+		final Collection<HeapDataArray> heapDataArrays = mMemoryModel.getDataHeapArrays(mRequiredMemoryModelFeatures);
 
 		// add memory arrays and read/write procedures
 		for (final HeapDataArray heapDataArray : heapDataArrays) {
@@ -313,23 +308,23 @@ public class MemoryHandler {
 		// add store function (to be able to assign subarrays at pointer base addresses)
 		for (final CPrimitives prim : mRequiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			if (mRequiredMemoryModelFeatures.isDataOnHeapStoreFunctionRequired(prim)) {
-				declareDataOnHeapStoreFunction(mMemoryModel.memoryStructure().getDataHeapArray(prim));
-				declareDataOnHeapSelectFunction(mMemoryModel.memoryStructure().getDataHeapArray(prim));
+				declareDataOnHeapStoreFunction(mMemoryModel.getDataHeapArray(prim));
+				declareDataOnHeapSelectFunction(mMemoryModel.getDataHeapArray(prim));
 			}
 		}
 		if (mRequiredMemoryModelFeatures.isPointerOnHeapStoreFunctionRequired()) {
-			declareDataOnHeapStoreFunction(mMemoryModel.memoryStructure().getPointerHeapArray());
-			declareDataOnHeapSelectFunction(mMemoryModel.memoryStructure().getPointerHeapArray());
+			declareDataOnHeapStoreFunction(mMemoryModel.getPointerHeapArray());
+			declareDataOnHeapSelectFunction(mMemoryModel.getPointerHeapArray());
 		}
 
 		// add init function (interface to smt const arrays)
 		for (final CPrimitives prim : mRequiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			if (mRequiredMemoryModelFeatures.isDataOnHeapInitFunctionRequired(prim)) {
-				declareDataOnHeapInitFunction(mMemoryModel.memoryStructure().getDataHeapArray(prim));
+				declareDataOnHeapInitFunction(mMemoryModel.getDataHeapArray(prim));
 			}
 		}
 		if (mRequiredMemoryModelFeatures.isPointerOnHeapInitFunctionRequired()) {
-			declareDataOnHeapInitFunction(mMemoryModel.memoryStructure().getPointerHeapArray());
+			declareDataOnHeapInitFunction(mMemoryModel.getPointerHeapArray());
 		}
 
 		declarations.addAll(declareDeallocation(main, tuLoc));
@@ -649,11 +644,11 @@ public class MemoryHandler {
 	private HeapDataArray determineMemoryArrayForType(final ICType type) {
 		if (type instanceof CPointer) {
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			return mMemoryModel.memoryStructure().getPointerHeapArray();
+			return mMemoryModel.getPointerHeapArray();
 		}
 		if (type instanceof final CPrimitive primitive) {
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive.getType());
-			return mMemoryModel.memoryStructure().getDataHeapArray(primitive.getType());
+			return mMemoryModel.getDataHeapArray(primitive.getType());
 		}
 		throw new AssertionError("There is no memory array for the type " + type);
 	}
@@ -746,11 +741,11 @@ public class MemoryHandler {
 
 	private String determineReadProcedureForPointer() {
 		mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-		return mMemoryModel.memoryStructure().getReadPointerProcedureName();
+		return mMemoryModel.getReadPointerProcedureName();
 	}
 
 	private String determineReadProcedureForPrimitive(final CPrimitives prim) {
-		return mMemoryModel.memoryStructure().getReadProcedureName(prim);
+		return mMemoryModel.getReadProcedureName(prim);
 	}
 
 	/**
@@ -1039,9 +1034,8 @@ public class MemoryHandler {
 							inParamProduct, new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, procName));
 
 			final Expression stepsize;
-			if (mMemoryModel.memoryStructure() instanceof MemoryStructure_SingleBitprecise) {
-				final int resolution =
-						((MemoryStructure_SingleBitprecise) mMemoryModel.memoryStructure()).getResolution();
+			if (mMemoryModel.isSingleBitPreciseStructure()) {
+				final int resolution = mMemoryModel.singleBitPreciseResolution();
 				stepsize = mTypeSizes.constructLiteralForIntegerType(ignoreLoc, sizeT, BigInteger.valueOf(resolution));
 			} else {
 				final IdentifierExpression inParamSizeOfFieldsExpr = ExpressionFactory.constructIdentifierExpression(
@@ -1475,8 +1469,8 @@ public class MemoryHandler {
 	private List<Declaration> constructWriteProcedures(final CHandler main, final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
-		for (final ReadWriteDefinition rda : mMemoryModel.memoryStructure()
-				.getReadWriteDefinitionForHeapDataArray(heapDataArray, mRequiredMemoryModelFeatures)) {
+		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
+				mRequiredMemoryModelFeatures)) {
 			final Collection<Procedure> writeDeclaration =
 					constructWriteProcedure(main, loc, heapDataArrays, heapDataArray, rda);
 			result.addAll(writeDeclaration);
@@ -1487,8 +1481,8 @@ public class MemoryHandler {
 	private List<Declaration> constructReadProcedures(final CHandler main, final ILocation loc,
 			final HeapDataArray heapDataArray) {
 		final List<Declaration> result = new ArrayList<>();
-		for (final ReadWriteDefinition rda : mMemoryModel.memoryStructure()
-				.getReadWriteDefinitionForHeapDataArray(heapDataArray, mRequiredMemoryModelFeatures)) {
+		for (final ReadWriteDefinition rda : mMemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray,
+				mRequiredMemoryModelFeatures)) {
 			result.addAll(constructSingleReadProcedure(main, loc, heapDataArray, rda));
 		}
 		return result;
@@ -1578,8 +1572,7 @@ public class MemoryHandler {
 		}
 
 		final boolean floating2bitvectorTransformationNeeded =
-				mMemoryModel.memoryStructure() instanceof MemoryStructure_SingleBitprecise
-						&& rda.getRepresentativeType().isFloatingType();
+				mMemoryModel.isSingleBitPreciseStructure() && rda.getRepresentativeType().isFloatingType();
 
 		final Expression nonFPBVReturnValue = ExpressionFactory.constructIdentifierExpression(loc,
 				mTypeHandler.getBoogieTypeForBoogieASTType(valueAstType), "#value",
@@ -1779,7 +1772,7 @@ public class MemoryHandler {
 			result = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
 		}
 
-		if (mMemoryModel.memoryStructure() instanceof MemoryStructure_SingleBitprecise && resultType.isFloatingType()) {
+		if (mMemoryModel.isSingleBitPreciseStructure() && resultType.isFloatingType()) {
 			return mExpressionTranslation.transformBitvectorToFloat(loc, result, ((CPrimitive) resultType).getType());
 		}
 		return result;
@@ -2120,12 +2113,12 @@ public class MemoryHandler {
 		return switch (writeMode) {
 		case SELECT:
 			mRequiredMemoryModelFeatures.reportPointerInitWriteRequired();
-			yield mMemoryModel.memoryStructure().getInitPointerProcedureName();
+			yield mMemoryModel.getInitPointerProcedureName();
 		case STORE_CHECKED:
-			yield mMemoryModel.memoryStructure().getWritePointerProcedureName();
+			yield mMemoryModel.getWritePointerProcedureName();
 		case STORE_UNCHECKED:
 			mRequiredMemoryModelFeatures.reportPointerUncheckedWriteRequired();
-			yield mMemoryModel.memoryStructure().getUncheckedWritePointerProcedureName();
+			yield mMemoryModel.getUncheckedWritePointerProcedureName();
 		};
 	}
 
@@ -2152,12 +2145,12 @@ public class MemoryHandler {
 		return switch (writeMode) {
 		case SELECT:
 			mRequiredMemoryModelFeatures.reportInitWriteRequired(valueType.getType());
-			yield mMemoryModel.memoryStructure().getInitWriteProcedureName(valueType.getType());
+			yield mMemoryModel.getInitWriteProcedureName(valueType.getType());
 		case STORE_CHECKED:
-			yield mMemoryModel.memoryStructure().getWriteProcedureName(valueType.getType());
+			yield mMemoryModel.getWriteProcedureName(valueType.getType());
 		case STORE_UNCHECKED:
 			mRequiredMemoryModelFeatures.reportUncheckedWriteRequired(valueType.getType());
-			yield mMemoryModel.memoryStructure().getUncheckedWriteProcedureName(valueType.getType());
+			yield mMemoryModel.getUncheckedWriteProcedureName(valueType.getType());
 		};
 	}
 
@@ -2440,19 +2433,19 @@ public class MemoryHandler {
 			assert !(baseType instanceof CNamed);
 			if (baseType instanceof CPointer) {
 				mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-				final HeapDataArray hda = mMemoryModel.memoryStructure().getPointerHeapArray();
+				final HeapDataArray hda = mMemoryModel.getPointerHeapArray();
 				mRequiredMemoryModelFeatures.reportPointerOnHeapInitFunctionRequired();
 				relevantHeapArrays.add(hda);
 			} else if (baseType instanceof final CPrimitive cPrimitive) {
 				final CPrimitives primitive = cPrimitive.getType();
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
-				final HeapDataArray hda = mMemoryModel.memoryStructure().getDataHeapArray(primitive);
+				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
 				relevantHeapArrays.add(hda);
 			} else if (baseType instanceof CEnum) {
 				final CPrimitives primitive = CPrimitives.INT;
 				mRequiredMemoryModelFeatures.reportDataOnHeapRequired(primitive);
-				final HeapDataArray hda = mMemoryModel.memoryStructure().getDataHeapArray(primitive);
+				final HeapDataArray hda = mMemoryModel.getDataHeapArray(primitive);
 				mRequiredMemoryModelFeatures.reportDataOnHeapInitFunctionRequired(primitive);
 				relevantHeapArrays.add(hda);
 			} else {
@@ -2765,5 +2758,9 @@ public class MemoryHandler {
 			final Expression argSPtr, final Expression nullPtrExpr) {
 		final var lengthArray = getLengthArray(loc);
 		return mMemoryModel.strChrAssumeStatement(loc, tmpExpr, argSPtr, nullPtrExpr, lengthArray);
+	}
+
+	public Collection<HeapDataArray> getDataHeapArrays(final RequiredMemoryModelFeatures requiredFeatures) {
+		return mMemoryModel.getDataHeapArrays(requiredFeatures);
 	}
 }

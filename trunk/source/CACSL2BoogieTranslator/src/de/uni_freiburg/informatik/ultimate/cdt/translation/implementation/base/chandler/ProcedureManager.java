@@ -261,8 +261,8 @@ public class ProcedureManager {
 		 * they are added lazily on demand.
 		 *
 		 */
-		final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryStructure()
-				.getDataHeapArrays(memoryHandler.getRequiredMemoryStructureFeatures());
+		final Collection<HeapDataArray> heapDataArrays =
+				memoryHandler.getDataHeapArrays(memoryHandler.getRequiredMemoryStructureFeatures());
 		if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 			for (final HeapDataArray hda : heapDataArrays) {
 				procInfo.addModifiedGlobal(hda.getVariableLHS());
