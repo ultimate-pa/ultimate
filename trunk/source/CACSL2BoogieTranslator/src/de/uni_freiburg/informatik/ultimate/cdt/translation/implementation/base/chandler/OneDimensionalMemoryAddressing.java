@@ -408,4 +408,11 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing {
 
 		throw new UnsupportedOperationException("The MemSafety checks are not compatible with the 1D addressing mode!");
 	}
+
+	@Override
+	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
+			final Expression destId, final Expression dest) {
+		throw new UnsupportedOperationException(
+				"The string copy overlapping check is not compatible with the 1D addressing mode!");
+	}
 }

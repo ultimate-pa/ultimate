@@ -304,4 +304,14 @@ public class MemoryModel {
 		return mMemoryAddressing.constructMemSafeStatementsForPointerExpression(loc, ptr, pointerBaseValid,
 				pointerTargetFullyAllocated, requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
+
+	/**
+	 * Construct the assume to check that src and dest don't overlap.
+	 *
+	 * @return The assume statement.
+	 */
+	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
+			final Expression destId, final Expression dest) {
+		return mMemoryAddressing.checksForStringCopyOverlapping(loc, src, srcId, destId, dest);
+	}
 }
