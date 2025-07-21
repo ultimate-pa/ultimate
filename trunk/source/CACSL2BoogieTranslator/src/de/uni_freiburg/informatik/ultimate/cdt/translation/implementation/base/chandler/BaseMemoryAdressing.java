@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.IPointerIntegerConversion;
@@ -140,5 +141,15 @@ public abstract class BaseMemoryAdressing implements IMemoryAdressing {
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
 				MemoryHandler.getPointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
 				MemoryHandler.getPointerBaseAddress(argSPtr, loc), cTypeOfPointerComponent);
+	}
+
+	@Override
+	public Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda,
+			final Expression baseAddress) {
+		return new Expression[] { ExpressionFactory.constructFunctionApplication(loc,
+				MemoryHandler.getNameOfHeapInitFunction(hda.getName()),
+				new Expression[] { hda.getIdentifierExpression(),
+						MemoryHandler.getPointerBaseAddress(baseAddress, loc) },
+				(BoogieType) hda.getIdentifierExpression().getType()) };
 	}
 }

@@ -207,4 +207,11 @@ public interface IMemoryAdressing {
 	 */
 	Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
 			final Expression destId, final Expression dest);
+
+	/**
+	 * Constructs the rhs for the assignment statement of an heap data array.
+	 *
+	 * @return The expression.
+	 */
+	Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda, final Expression baseAddress);
 }

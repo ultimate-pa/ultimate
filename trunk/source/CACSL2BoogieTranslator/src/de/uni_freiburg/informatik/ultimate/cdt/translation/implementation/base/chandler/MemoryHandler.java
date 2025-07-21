@@ -2496,27 +2496,23 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private static Statement getInitializationForHeapArrayAtAddress(final ILocation loc,
-			final HeapDataArray relevantHeapArray, final HeapLValue baseAddress) {
+	private Statement getInitializationForHeapArrayAtAddress(final ILocation loc, final HeapDataArray relevantHeapArray,
+			final HeapLValue baseAddress) {
 		return StatementFactory.constructAssignmentStatement(loc,
 				new VariableLHS[] { relevantHeapArray.getVariableLHS() },
-				new Expression[] { ExpressionFactory.constructFunctionApplication(loc,
-						getNameOfHeapInitFunction(relevantHeapArray),
-						new Expression[] { relevantHeapArray.getIdentifierExpression(),
-								getPointerBaseAddress(baseAddress.getAddress(), loc) },
-						(BoogieType) relevantHeapArray.getIdentifierExpression().getType()) });
+				mMemoryModel.rhsAssignmentStatementHda(loc, relevantHeapArray, baseAddress.getAddress()));
 	}
 
-	private static String getNameOfHeapInitFunction(final HeapDataArray relevantHeapArray) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.INIT_TO_ZERO_AT_ADDRESS + relevantHeapArray.getName();
+	public static String getNameOfHeapInitFunction(final String hdaName) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.INIT_TO_ZERO_AT_ADDRESS + hdaName;
 	}
 
-	public static String getNameOfHeapStoreFunction(final HeapDataArray relevantHeapArray) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.STORE_SUBARRAY_AT_ADDRESS + relevantHeapArray.getName();
+	public static String getNameOfHeapStoreFunction(final String hdaName) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.STORE_SUBARRAY_AT_ADDRESS + hdaName;
 	}
 
-	public static String getNameOfHeapSelectFunction(final HeapDataArray relevantHeapArray) {
-		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.SELECT_SUBARRAY_AT_ADDRESS + relevantHeapArray.getName();
+	public static String getNameOfHeapSelectFunction(final String hdaName) {
+		return SFO.AUXILIARY_FUNCTION_PREFIX + SFO.SELECT_SUBARRAY_AT_ADDRESS + hdaName;
 	}
 
 	/**
@@ -2558,7 +2554,7 @@ public class MemoryHandler {
 
 		// register the FunctionDeclaration so it will be added at the end of translation
 		mExpressionTranslation.getFunctionDeclarations().declareFunction(ignoreLoc,
-				getNameOfHeapStoreFunction(heapDataArray), attributes, hdaBoogieType.toASTType(ignoreLoc),
+				getNameOfHeapStoreFunction(heapDataArray.getName()), attributes, hdaBoogieType.toASTType(ignoreLoc),
 				hdaBoogieType.toASTType(ignoreLoc), astTypeOfPointerComponents,
 				innerArrayBoogieType.toASTType(ignoreLoc));
 	}
@@ -2599,8 +2595,9 @@ public class MemoryHandler {
 				constructExpandAndSmtDefinedAttributesForSubArraySelect(heapDataArray, subarraysToStore);
 
 		mExpressionTranslation.getFunctionDeclarations().declareFunction(ignoreLoc,
-				getNameOfHeapSelectFunction(heapDataArray), attributes, innerArrayBoogieType.toASTType(ignoreLoc),
-				hdaBoogieType.toASTType(ignoreLoc), astTypeOfPointerComponents);
+				getNameOfHeapSelectFunction(heapDataArray.getName()), attributes,
+				innerArrayBoogieType.toASTType(ignoreLoc), hdaBoogieType.toASTType(ignoreLoc),
+				astTypeOfPointerComponents);
 
 	}
 
@@ -2645,7 +2642,7 @@ public class MemoryHandler {
 
 		// register the FunctionDeclaration so it will be added at the end of translation
 		mExpressionTranslation.getFunctionDeclarations().declareFunction(ignoreLoc,
-				getNameOfHeapInitFunction(heapDataArray), attributes,
+				getNameOfHeapInitFunction(heapDataArray.getName()), attributes,
 				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
 				((BoogieType) heapDataArray.getIdentifierExpression().getType()).toASTType(ignoreLoc),
 				astTypeOfPointerComponents);
