@@ -53,13 +53,6 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
 	}
 
-	protected static Expression offsetEqualsZeroExpr(final ILocation tuLoc, final Expression resultExpr,
-			final Expression zeroNumericValueExpr) {
-		return ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
-				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_OFFSET),
-				zeroNumericValueExpr);
-	}
-
 	protected static Expression baseNotEqualZeroExpr(final ILocation tuLoc, final Expression resultExpr,
 			final Expression zeroNumericValueExpr) {
 		return ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,

@@ -185,7 +185,9 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
 
 		// #res!offset == 0
-		final var offsetEqualZeroExpr = offsetEqualsZeroExpr(tuLoc, resultExpr, zeroNumericValueExpr);
+		final var offsetEqualZeroExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_OFFSET),
+				zeroNumericValueExpr);
 		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
 
 		// #res!base != 0
