@@ -189,4 +189,14 @@ public interface IMemoryAdressing {
 	 */
 	AssumeStatement strChrAssumeStatement(final ILocation loc, final Expression tmpExpr, final Expression argSPtr,
 			final Expression nullPtrExpr, final Expression lengthArray);
+
+	/**
+	 * Constructs assert / assume statements for ptr memsafety checks.
+	 *
+	 * @return The statements.
+	 */
+	List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
+			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }

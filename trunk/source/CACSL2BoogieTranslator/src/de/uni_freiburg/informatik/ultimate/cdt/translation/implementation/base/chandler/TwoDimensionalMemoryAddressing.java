@@ -633,4 +633,63 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, equalsNull, inRange));
 
 	}
+
+	@Override
+	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
+			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		final List<Statement> result = new ArrayList<>();
+
+		if (pointerBaseValid != CheckMode.IGNORE) {
+
+			// valid[s.base]
+			final Expression validBase = constructPointerBaseValidityCheckExpr(loc, ptr, requiredMemoryModelFeatures,
+					memoryModelDeclarationsHandler);
+			final var stmt = statementDependentOnCheck(loc, pointerBaseValid, validBase);
+			result.add(stmt);
+		}
+
+		if (pointerTargetFullyAllocated != CheckMode.IGNORE) {
+			// s.offset < length[s.base])
+			final Expression ptrOffset = MemoryHandler.getPointerOffset(ptr, loc);
+			final Expression ptrBase = MemoryHandler.getPointerBaseAddress(ptr, loc);
+
+			final Expression lengthArray = MemoryModelExpressionHelper.getLengthArray(loc, requiredMemoryModelFeatures,
+					memoryModelDeclarationsHandler);
+
+			final Expression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc, lengthArray,
+					new Expression[] { ptrBase });
+
+			final Expression offsetSmallerLength =
+					constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan, ptrOffset, aae);
+
+			// s.offset >= 0;
+			final var zeroExpr = mTypeSizes.constructLiteralForIntegerType(loc,
+					mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+
+			final Expression offsetNonnegative = constructPointerBinaryComparisonExpression(loc,
+					IASTBinaryExpression.op_greaterEqual, ptrOffset, zeroExpr);
+
+			final Expression aAndB = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, offsetSmallerLength,
+					offsetNonnegative);
+
+			final var stmt = statementDependentOnCheck(loc, pointerTargetFullyAllocated, aAndB);
+			result.add(stmt);
+		}
+		return result;
+	}
+
+	@SuppressWarnings("static-method")
+	private Statement statementDependentOnCheck(final ILocation loc, final CheckMode check, final Expression expr) {
+		if (check == CheckMode.CHECK) {
+			final AssertStatement assertion = new AssertStatement(loc, expr);
+			final Check chk = new Check(Spec.MEMORY_DEREFERENCE);
+			chk.annotate(assertion);
+			return assertion;
+		}
+		assert check == CheckMode.ASSUME : "missed a case?";
+		return new AssumeStatement(loc, expr);
+
+	}
 }
