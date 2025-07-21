@@ -314,4 +314,14 @@ public class MemoryModel {
 			final Expression destId, final Expression dest) {
 		return mMemoryAddressing.checksForStringCopyOverlapping(loc, src, srcId, destId, dest);
 	}
+
+	/**
+	 * Constructs the rhs for the assignment statement of an heap data array.
+	 *
+	 * @return The expression.
+	 */
+	public Expression[] rhsAssignmentStatementHda(final ILocation loc, final HeapDataArray hda,
+			final Expression baseAddress) {
+		return mMemoryAddressing.rhsAssignmentStatementHda(loc, hda, baseAddress);
+	}
 }
