@@ -1356,9 +1356,8 @@ public class MemoryHandler {
 			if (hda.getName().equals(SFO.POINTER)) {
 				exprRes = mExpressionTranslation.convertIntToInt(ignoreLoc, exprRes,
 						mExpressionTranslation.getCTypeOfPointerComponents());
-				final Expression zero = mTypeSizes.constructLiteralForIntegerType(ignoreLoc,
-						mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.getLrValue().getValue(), ignoreLoc);
+				convertedValue = mTypeHandler.memoryPointer().nullPointer(ignoreLoc,
+						mExpressionTranslation.getCTypeOfPointerComponents());
 			} else if (hda.getName().equals(SFO.REAL)) {
 				final CPrimitives primitive = getFloatingCprimitiveThatFitsBest(hda.getSize());
 				exprRes = mExpressionTranslation.convertIntToFloat(ignoreLoc, exprRes, new CPrimitive(primitive));
