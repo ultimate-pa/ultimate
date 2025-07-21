@@ -421,7 +421,6 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 		final Expression ptrOffset = MemoryHandler.getPointerOffset(ptrExpr, loc);
 		final CPrimitive cTypeOfPointerComponent = mExpressionTranslation.getCTypeOfPointerComponents();
 
-		//
 		final Expression lengthArray = MemoryModelExpressionHelper.getLengthArray(loc, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 		final Expression aae =
@@ -430,7 +429,6 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				constructPointerBinaryArithmeticExpression(loc, IASTBinaryExpression.op_plus, size, ptrOffset);
 		Expression leq = constructPointerBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual, sum, aae);
 
-		//
 		final Expression zeroNumericLiteral =
 				mTypeSizes.constructLiteralForIntegerType(loc, cTypeOfPointerComponent, BigInteger.ZERO);
 
