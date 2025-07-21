@@ -243,6 +243,7 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing {
 				Collections.singleton((VariableLHS) CTranslationUtil.convertExpressionToLHS(validArrayExpr))));
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public List<Statement> constructUltimateInitStatements(final ILocation loc,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,

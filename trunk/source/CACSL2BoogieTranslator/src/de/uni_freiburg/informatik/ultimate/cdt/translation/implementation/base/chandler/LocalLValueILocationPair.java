@@ -31,11 +31,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 
 public class LocalLValueILocationPair {
 
-	LocalLValue llv;
-	ILocation loc;
+	LocalLValue mLlv;
+	ILocation mLoc;
 
 	public LocalLValueILocationPair(final LocalLValue llv, final ILocation loc) {
-		this.llv = llv;
-		this.loc = loc;
+		this.mLlv = llv;
+		this.mLoc = loc;
 	}
 }

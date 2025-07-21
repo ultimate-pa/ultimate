@@ -52,6 +52,7 @@ public class CStringLiteral {
 	/**
 	 * Type of this string's characters.
 	 */
+	@SuppressWarnings("unused")
 	private final CharacterType mCharacterType;
 
 	/**
@@ -105,12 +106,13 @@ public class CStringLiteral {
 		mByteValues = ISOIEC9899TC3.convertCharacterSequenceToByteSequence(mNumericalValues, mSignednessOfChar);
 	}
 
+	@SuppressWarnings("static-method")
 	private String stripQuotes(final char[] chars, final int offset) {
 		if (chars[offset] == '\"' && chars[chars.length - 1] == '\"') {
 			return new String(chars, offset + 1, chars.length - 2 - offset);
-		} else {
-			throw new UnsupportedOperationException("unsupported representation of string literal " + chars);
 		}
+		throw new UnsupportedOperationException("unsupported representation of string literal " + new String(chars));
+
 	}
 
 	public List<BigInteger> getByteValues() {

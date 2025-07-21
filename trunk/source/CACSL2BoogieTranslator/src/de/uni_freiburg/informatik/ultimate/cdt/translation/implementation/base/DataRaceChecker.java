@@ -120,6 +120,7 @@ public final class DataRaceChecker {
 	 * @param lrVal
 	 *            The value being read
 	 */
+	@SuppressWarnings({ "unused" })
 	public void checkOnRead(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -165,6 +166,7 @@ public final class DataRaceChecker {
 	 * @param lrVal
 	 *            The value being written
 	 */
+	@SuppressWarnings("unused")
 	public void checkOnWrite(final ExpressionResultBuilder erb, final ILocation loc, final LRValue lrVal) {
 		if (mProcedureManager.isGlobalScope()) {
 			// TODO find a cleaner way to fix this
@@ -259,6 +261,7 @@ public final class DataRaceChecker {
 		throw new IllegalArgumentException("unknown type of LHS: " + lhs);
 	}
 
+	@SuppressWarnings("deprecation")
 	private static boolean isRaceImpossible(final LRValue lrVal) {
 		if (lrVal.getCType().isAtomic()) {
 			// Atomic types cannot lead to data races
@@ -410,8 +413,8 @@ public final class DataRaceChecker {
 				BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogiePointerType() }, getBoolType());
 		final ASTType astType = new ArrayType(loc, boogieType, new String[0],
 				new ASTType[] { mTypeHandler.constructPointerType(loc) }, getBoolASTType());
-		final VarList vlV = new VarList(loc,
-				new String[] { MemoryModelDeclarations.ULTIMATE_DATA_RACE_MEMORY.getName() }, astType);
+		final VarList vlV =
+				new VarList(loc, new String[] { MemoryModelDeclarations.ULTIMATE_DATA_RACE_MEMORY.getName() }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { vlV });
 	}
 

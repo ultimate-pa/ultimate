@@ -91,7 +91,7 @@ public abstract class ExpressionTranslation {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		mSymboltable = symboltable;
-		mFunctionDeclarations = new FunctionDeclarations(typeHandler, typeSizes);
+		mFunctionDeclarations = new FunctionDeclarations(typeHandler);
 	}
 
 	public final Expression constructBinaryComparisonExpression(final ILocation loc, final int nodeOperator,

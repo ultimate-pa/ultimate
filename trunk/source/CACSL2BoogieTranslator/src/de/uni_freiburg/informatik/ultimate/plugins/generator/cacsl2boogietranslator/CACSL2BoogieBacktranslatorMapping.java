@@ -60,8 +60,8 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 	}
 
 	@Override
-	public void putVar(final String boogieId, final String cId, final ICType cType, final DeclarationInformation decInfo,
-			final boolean isOnHeap) {
+	public void putVar(final String boogieId, final String cId, final ICType cType,
+			final DeclarationInformation decInfo, final boolean isOnHeap) {
 		mVar2CVar.put(new Pair<>(boogieId, normalize(decInfo)), new Triple<>(cId, cType, isOnHeap));
 	}
 
@@ -112,6 +112,7 @@ public class CACSL2BoogieBacktranslatorMapping implements ICACSL2BoogieBacktrans
 
 	// Normalizes DeclarationInformation so that parameters of procedure implementations are identified with the
 	// corresponding parameters in the procedure's declaration.
+	@SuppressWarnings({ "static-method", "deprecation" })
 	private DeclarationInformation normalize(final DeclarationInformation decInfo) {
 		switch (decInfo.getStorageClass()) {
 		case IMPLEMENTATION_INPARAM:

@@ -3096,6 +3096,7 @@ public class CHandler {
 		return mReachableDeclarations == null || mReachableDeclarations.contains(node);
 	}
 
+	@SuppressWarnings("unused")
 	private void checkUnsupportedPointerCast(final ExpressionResult expr, final ILocation loc, final ICType newCType) {
 		if (!POINTER_CAST_IS_UNSUPPORTED_SYNTAX || !(newCType instanceof CPointer)
 				|| !(expr.getLrValue().getCType() instanceof CPointer)) {
@@ -3269,6 +3270,7 @@ public class CHandler {
 		return result;
 	}
 
+	@SuppressWarnings("static-method")
 	private Result skipOrSideEffects(final ResultWithSideEffects result) {
 		if (result.hasNoSideEffects()) {
 			return new SkipResult();
@@ -3397,6 +3399,7 @@ public class CHandler {
 	 *
 	 * @return
 	 */
+	@SuppressWarnings("unused")
 	private ExpressionResultBuilder assignOrHavocUnionNeighbours(final ILocation loc, final RValue rVal,
 			final Collection<ExpressionResult> neighbourUnionFields, final RValue rightHandSideWithConversionsApplied,
 			final ExpressionResultBuilder builderIn, final IASTNode hook) {

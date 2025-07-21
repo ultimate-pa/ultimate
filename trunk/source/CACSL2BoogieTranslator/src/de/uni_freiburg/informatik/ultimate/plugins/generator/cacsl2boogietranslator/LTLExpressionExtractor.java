@@ -128,6 +128,7 @@ public class LTLExpressionExtractor {
 			return super.transform(node);
 		}
 
+		@SuppressWarnings("static-method")
 		private void addAdditionalInfo(final BinaryExpression node, final Expression expr) {
 			expr.setLocation(node.getLocation());
 			expr.setFileName(node.getFileName());

@@ -85,14 +85,11 @@ public class StaticObjectsHandler {
 	private final Map<TypeDeclaration, CDeclaration> mTypeDeclarationToCDeclaration;
 	private final Map<String, TypeDeclaration> mIncompleteType2TypeDecl;
 
-	private final ILogger mLogger;
-
 	public StaticObjectsHandler(final ILogger logger) {
 		mStatementsForUltimateInit = new ArrayList<>();
 		mTypeDeclarationToCDeclaration = new LinkedHashMap<>();
 		mIncompleteType2TypeDecl = new HashMap<>();
 		mIsFrozen = false;
-		mLogger = logger;
 	}
 
 	/**

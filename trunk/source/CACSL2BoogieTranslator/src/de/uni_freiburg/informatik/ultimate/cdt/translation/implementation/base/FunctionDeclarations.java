@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -57,7 +56,6 @@ public class FunctionDeclarations {
 	 */
 	private final LinkedHashMap<String, FunctionDeclaration> mDeclaredFunctions = new LinkedHashMap<>();
 	private final ITypeHandler mTypeHandler;
-	private final TypeSizes mTypeSizeConstants;
 	public static final String BUILTIN_IDENTIFIER = "builtin";
 	public static final String SMTDEFINED_IDENTIFIER = "smtdefined";
 	public static final String OVERAPPROX_IDENTIFIER = "overapproximation";
@@ -68,9 +66,8 @@ public class FunctionDeclarations {
 	 */
 	private boolean mIsFinished;
 
-	public FunctionDeclarations(final ITypeHandler typeHandler, final TypeSizes typeSizeConstants) {
+	public FunctionDeclarations(final ITypeHandler typeHandler) {
 		mTypeHandler = typeHandler;
-		mTypeSizeConstants = typeSizeConstants;
 	}
 
 	public void declareFunction(final ILocation loc, final String prefixedFunctionName, final Attribute[] attributes,

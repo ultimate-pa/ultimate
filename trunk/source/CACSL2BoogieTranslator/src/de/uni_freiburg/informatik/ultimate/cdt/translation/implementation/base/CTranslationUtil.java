@@ -447,9 +447,9 @@ public class CTranslationUtil {
 			final ICType valueType = getValueTypeOfNestedArray((CArray) underlyingType).getUnderlyingType();
 			if (isAggregateOrUnionType(valueType)) {
 				return extractNonAggregateNonUnionTypes(valueType);
-			} else {
-				return Collections.singleton(valueType.getUnderlyingType());
 			}
+			return Collections.singleton(valueType.getUnderlyingType());
+
 		} else if (underlyingType instanceof CStructOrUnion) {
 			final Set<ICType> result = new HashSet<>();
 			for (final ICType fieldType : ((CStructOrUnion) underlyingType).getFieldTypes()) {
@@ -506,9 +506,8 @@ public class CTranslationUtil {
 			} else {
 				throw new AssertionError("missing case");
 			}
-		} else {
-			throw new AssertionError("missing case");
 		}
+		throw new AssertionError("missing case");
 	}
 
 	/**
