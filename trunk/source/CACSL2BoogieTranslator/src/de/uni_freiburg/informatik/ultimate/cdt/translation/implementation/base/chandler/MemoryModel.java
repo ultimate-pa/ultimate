@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -13,10 +14,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -55,8 +58,70 @@ public class MemoryModel {
 		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
 	}
 
-	public IMemoryStructure memoryStructure() {
-		return mMemoryStructure;
+	public int singleBitPreciseResolution() {
+		assert mMemoryStructure instanceof MemoryStructure_SingleBitprecise;
+		return ((MemoryStructure_SingleBitprecise) mMemoryStructure).getResolution();
+	}
+
+	public boolean isSingleBitPreciseStructure() {
+		return mMemoryStructure instanceof MemoryStructure_SingleBitprecise;
+	}
+
+	public String getReadProcedureName(final CPrimitives primitive) {
+		return mMemoryStructure.getReadProcedureName(primitive);
+	}
+
+	public String getUncheckedReadProcedureName(final CPrimitives primitive) {
+		return mMemoryStructure.getUncheckedReadProcedureName(primitive);
+	}
+
+	public String getWriteProcedureName(final CPrimitives primitive) {
+		return mMemoryStructure.getWriteProcedureName(primitive);
+	}
+
+	public String getUncheckedWriteProcedureName(final CPrimitives primitive) {
+		return mMemoryStructure.getUncheckedWriteProcedureName(primitive);
+	}
+
+	public String getInitWriteProcedureName(final CPrimitives primitive) {
+		return mMemoryStructure.getInitWriteProcedureName(primitive);
+	}
+
+	public String getReadPointerProcedureName() {
+		return mMemoryStructure.getReadPointerProcedureName();
+	}
+
+	public String getUncheckedReadPointerProcedureName() {
+		return mMemoryStructure.getUncheckedReadPointerProcedureName();
+	}
+
+	public String getWritePointerProcedureName() {
+		return mMemoryStructure.getWritePointerProcedureName();
+	}
+
+	public String getUncheckedWritePointerProcedureName() {
+		return mMemoryStructure.getUncheckedWritePointerProcedureName();
+	}
+
+	public String getInitPointerProcedureName() {
+		return mMemoryStructure.getInitPointerProcedureName();
+	}
+
+	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
+		return mMemoryStructure.getDataHeapArray(primitive);
+	}
+
+	public HeapDataArray getPointerHeapArray() {
+		return mMemoryStructure.getPointerHeapArray();
+	}
+
+	public Collection<HeapDataArray> getDataHeapArrays(final RequiredMemoryModelFeatures requiredFeatures) {
+		return mMemoryStructure.getDataHeapArrays(requiredFeatures);
+	}
+
+	List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda,
+			final RequiredMemoryModelFeatures requiredMemoryStructureFeatures) {
+		return mMemoryStructure.getReadWriteDefinitionForHeapDataArray(hda, requiredMemoryStructureFeatures);
 	}
 
 	/**

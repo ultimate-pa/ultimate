@@ -175,8 +175,8 @@ public class ProcedureManager {
 	 * Returns declarations for all procedures that will appear in the translated program. Ensures that the modifies
 	 * clauses of all procedures are transitive with respect to the call graph.
 	 * <p>
-	 * Special case regarding Memory Structure: if one memory-array is included, all active memory arrays have to
-	 * be included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
+	 * Special case regarding Memory Structure: if one memory-array is included, all active memory arrays have to be
+	 * included (f.i. we have procedure modifies memory_int, and memoryHandler.isFloatMMArray == true, and
 	 * memoryHandler.isIntMMArray == true, memoryHandler.isPointerMMArray == false, then we have to add memory_real to
 	 * the modifies clause of procedure
 	 *
@@ -261,8 +261,8 @@ public class ProcedureManager {
 		 * they are added lazily on demand.
 		 *
 		 */
-		final Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryStructure()
-				.getDataHeapArrays(memoryHandler.getRequiredMemoryStructureFeatures());
+		final Collection<HeapDataArray> heapDataArrays =
+				memoryHandler.getDataHeapArrays(memoryHandler.getRequiredMemoryStructureFeatures());
 		if (containsOneHeapDataArray(currModClause, heapDataArrays)) {
 			for (final HeapDataArray hda : heapDataArrays) {
 				procInfo.addModifiedGlobal(hda.getVariableLHS());
