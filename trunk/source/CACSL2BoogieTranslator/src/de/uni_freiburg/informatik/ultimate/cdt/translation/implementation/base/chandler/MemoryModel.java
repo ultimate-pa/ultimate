@@ -12,18 +12,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -32,30 +28,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * The memory model consisting of a MemoryAdressing and a MemoryStructure.
  */
 public class MemoryModel {
-	private final TypeSizes mTypeSizes;
-	private final ITypeHandler mTypeHandler;
-	private final IBooleanArrayHelper mBooleanArrayHelper;
-	private final ExpressionTranslation mExpressionTranslation;
-	private final TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
-	private final FunctionDeclarations mFunctionDeclarations;
-
 	private final IMemoryAdressing mMemoryAddressing;
 	private final IMemoryStructure mMemoryStructure;
 
-	public MemoryModel(final TranslationSettings settings, final TypeSizes typeSizes, final ITypeHandler typeHandler,
-			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
-			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, final FunctionDeclarations functionDeclarations,
-			final IMemoryPointer pointer) {
-		mTypeSizes = typeSizes;
-		mTypeHandler = typeHandler;
-		mExpressionTranslation = exprTranslation;
-		mBooleanArrayHelper = booleanArrayHelper;
-		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
-		mFunctionDeclarations = functionDeclarations;
-
-		mMemoryAddressing = MemoryModelFactory.createMemoryAddressing(settings, mTypeHandler, mExpressionTranslation,
-				mBooleanArrayHelper, mTypeSizes, mTypeSizeAndOffsetComputer, mFunctionDeclarations, pointer);
-		mMemoryStructure = MemoryModelFactory.createMemoryStructure(settings, mTypeSizes, mTypeHandler);
+	public MemoryModel(final IMemoryAdressing memoryAdressing, final IMemoryStructure memoryStructure) {
+		mMemoryAddressing = memoryAdressing;
+		mMemoryStructure = memoryStructure;
 	}
 
 	public int singleBitPreciseResolution() {
