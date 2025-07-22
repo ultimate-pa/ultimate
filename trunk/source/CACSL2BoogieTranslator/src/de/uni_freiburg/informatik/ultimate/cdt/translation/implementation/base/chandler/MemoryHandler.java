@@ -211,8 +211,8 @@ public class MemoryHandler {
 		mMemoryModelDeclarationsHandler =
 				new MemoryModelDeclarationsHandler(mTypeHandler, mBooleanArrayHelper, getRwLockCounterType());
 
-		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
-				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
+		mMemoryModel = MemoryModelFactory.create(settings, typeHandler, expressionTranslation, mBooleanArrayHelper,
+				typeSizes, typeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), memoryPointer);
 
 		mVariablesToBeMalloced = new LinkedScopedHashMap<>();
 		mVariablesToBeFreed = new LinkedScopedHashMap<>();
@@ -242,8 +242,8 @@ public class MemoryHandler {
 		mMemoryModelDeclarationsHandler = prerunMemoryHandler.mMemoryModelDeclarationsHandler;
 		mMemoryPointer = prerunMemoryHandler.mMemoryPointer;
 
-		mMemoryModel = new MemoryModel(mSettings, mTypeSizes, mTypeHandler, mExpressionTranslation, mBooleanArrayHelper,
-				mTypeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
+		mMemoryModel = MemoryModelFactory.create(settings, typeHandler, expressionTranslation, mBooleanArrayHelper,
+				typeSizes, typeSizeAndOffsetComputer, mExpressionTranslation.getFunctionDeclarations(), mMemoryPointer);
 
 		mRequiredMemoryModelFeatures = new RequiredMemoryModelFeatures(mMemoryModel.metaDataDeclarations());// prerunMemoryHandler.mRequiredMemoryModelFeatures;
 	}
