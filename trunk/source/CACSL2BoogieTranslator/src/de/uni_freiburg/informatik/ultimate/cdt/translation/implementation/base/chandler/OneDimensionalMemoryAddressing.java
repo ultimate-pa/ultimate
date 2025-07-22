@@ -260,7 +260,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
 		}
 
-		final Expression pointerBase = mMemoryPointer.pointerBaseAddress(ptrAddress, loc);
+		final Expression pointerBase = mMemoryPointer.pointerAddress(ptrAddress, loc);
 		final Expression timesSizeOf =
 				multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), cTypeOfPointerComponent);
 
@@ -279,7 +279,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 	public Expression constructAddressForStructField(final ILocation loc, final Expression baseAddress,
 			final Offset fieldOffset, final CPrimitive sizeT) {
 
-		final Expression pointerBase = mMemoryPointer.pointerBaseAddress(baseAddress, loc);
+		final Expression pointerBase = mMemoryPointer.pointerAddress(baseAddress, loc);
 		final Expression sum = mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus,
 				pointerBase, sizeT, fieldOffset.getAddressOffsetAsExpression(loc), sizeT);
 
@@ -312,7 +312,7 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 
 	@Override
 	public Expression addExpressionToPointer(final ILocation loc, final Expression ptrExpr, final Expression expr) {
-		final Expression base = mMemoryPointer.pointerBaseAddress(ptrExpr, loc);
+		final Expression base = mMemoryPointer.pointerAddress(ptrExpr, loc);
 
 		final Expression basePlus =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, base,

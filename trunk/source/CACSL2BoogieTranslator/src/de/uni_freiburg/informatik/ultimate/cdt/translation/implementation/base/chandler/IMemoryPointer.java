@@ -42,5 +42,5 @@ public interface IMemoryPointer {
 	 *
 	 * @return The base address.
 	 */
-	Expression pointerBaseAddress(final Expression pointer, final ILocation loc);
+	Expression pointerAddress(final Expression pointer, final ILocation loc);
 }

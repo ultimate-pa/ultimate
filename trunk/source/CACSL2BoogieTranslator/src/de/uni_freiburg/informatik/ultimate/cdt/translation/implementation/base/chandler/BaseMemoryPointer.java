@@ -21,7 +21,7 @@ public abstract class BaseMemoryPointer implements IMemoryPointer {
 	 * @return The base address.
 	 */
 	@Override
-	public Expression pointerBaseAddress(final Expression pointer, final ILocation loc) {
+	public Expression pointerAddress(final Expression pointer, final ILocation loc) {
 		if (pointer instanceof StructConstructor) {
 			return ((StructConstructor) pointer).getFieldValues()[0];
 		}

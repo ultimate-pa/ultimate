@@ -223,7 +223,7 @@ public class MemoryModel {
 			final String procedureName, final CheckMode mode,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructPointerBaseValidityCheck(loc, ptrName, procedureName, mode,
+		return mMemoryAddressing.constructPointerValidityCheck(loc, ptrName, procedureName, mode,
 				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
 	}
 
@@ -235,7 +235,7 @@ public class MemoryModel {
 	Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		return mMemoryAddressing.constructPointerBaseValidityCheckExpr(loc, ptr, requiredMemoryModelFeatures,
+		return mMemoryAddressing.constructPointerValidityCheckExpr(loc, ptr, requiredMemoryModelFeatures,
 				memoryModelDeclarationsHandler);
 	}
 

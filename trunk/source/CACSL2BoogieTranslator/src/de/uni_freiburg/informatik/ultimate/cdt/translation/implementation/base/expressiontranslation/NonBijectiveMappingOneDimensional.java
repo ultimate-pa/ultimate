@@ -57,7 +57,7 @@ public class NonBijectiveMappingOneDimensional implements IPointerIntegerConvers
 			final CPrimitive newType) {
 
 		final RValue pointer = (RValue) rexp.getLrValue();
-		final Expression baseAddress = mMemoryPointer.pointerBaseAddress(pointer.getValue(), loc);
+		final Expression baseAddress = mMemoryPointer.pointerAddress(pointer.getValue(), loc);
 
 		final RValue sum = new RValue(baseAddress, mExpressionTranslation.getCTypeOfPointerComponents());
 		final ExpressionResult newRExpr =
