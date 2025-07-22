@@ -22,7 +22,7 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 	public GuardedInterferenceDomainState(final STATE state, final ThreadInstanceCounter<LOC> threadCounter,
 			final AbstractLocationState<LOC> abstractLocationState) {
 		mState = state;
-		mThreadCounter = threadCounter;
+		mThreadCounter = new ThreadInstanceCounter<>(threadCounter);
 		mAbstractLocationState = abstractLocationState;
 	}
 

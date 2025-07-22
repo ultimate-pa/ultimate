@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,7 +32,6 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
 
 	private final int mMaxParallelStates;
-	private boolean mApplyInterferences = true;
 	private final GuardedInterferenceCache<STATE, ACTION, LOC> mCache;
 
 	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mRelInterferingDomain;
@@ -58,62 +56,44 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		return mItfApplier;
 	}
 
-	public void disAbleInterferences() {
-		mApplyInterferences = false;
-	}
-
-	public void enableInterferences() {
-		mApplyInterferences = true;
-	}
-
 	@Override
 	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
-//		mLogger.warn("=====");
-//		mLogger.warn("Postop:");
-//		mLogger.warn("thread:" + transition.getPrecedingProcedure());
-//		mLogger.warn("node:" + transition.getSource());
-//		mLogger.warn("node:" + transition.getTransformula());
 		if (oldstate.isStateBottom()) {
 			return List.of(oldstate);
 		}
 		mCurrentThreadName = transition.getPrecedingProcedure();
 
 		// handle fork and join differently
-		final var forkedState = (transition instanceof final ForkThreadCurrent forkTransition)
-				? new GuardedInterferenceDomainState<STATE, ACTION, LOC>(oldstate.state(),
-						applyFork(oldstate.threadCounter(), forkTransition), oldstate.abstractLocationState())
-				: oldstate;
-
-		final var joinedState = (transition instanceof final JoinThreadCurrent joinTransition)
-				? new GuardedInterferenceDomainState<STATE, ACTION, LOC>(oldstate.state(),
-						applyJoin(oldstate.threadCounter(), oldstate.abstractLocationState(), joinTransition),
-						oldstate.abstractLocationState())
-				: forkedState;
-
-		if (joinedState.threadCounter() == null) {
-			return Collections.emptyList();
+		// TODO: make deep copy of abstractlocaation like for counter
+		final ThreadInstanceCounter<LOC> counter = new ThreadInstanceCounter<>(oldstate.threadCounter());
+		final ThreadInstanceCounter<LOC> newCounter;
+		if (transition instanceof final ForkThreadCurrent fork) {
+			newCounter = applyFork(counter, fork);
+		} else if (transition instanceof final JoinThreadCurrent join) {
+			newCounter = applyJoin(counter, oldstate.abstractLocationState(), join);
+		} else {
+			newCounter = new ThreadInstanceCounter<>(oldstate.threadCounter());
 		}
+
+		if (newCounter == null) {
+			var bottomState = mRelInterferingDomain.createBottomState().addVariables(oldstate.getVariables());
+			bottomState = bottomState.initializeLocation(transition.getTarget(),
+					oldstate.abstractLocationState().getLocationMap(), oldstate.threadCounter().getThreadNameSet());
+			return List.of(bottomState);
+		}
+		final var newLocation = oldstate.abstractLocationState().movedTo(mCurrentThreadName,
+				oldstate.abstractLocationState().getLocationMap().getAbstractLocation(transition.getTarget()));
 
 		// 1. normal poststate
-//		mLogger.warn("calculating Postop:");
-		final var states = mUnderlyingPostOp.apply(joinedState.state(), transition);
-//		mLogger.warn("finished Postop:");
+		final var states = mUnderlyingPostOp.apply(oldstate.state(), transition);
 
 		// adjust abstract location according to new location
-		final var guardedStates = states
-				.stream().filter(s -> !s.isBottom()).map(
-						s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, joinedState.threadCounter(),
-								joinedState.abstractLocationState().movedTo(mCurrentThreadName,
-										oldstate.abstractLocationState().getLocationMap()
-												.getAbstractLocation(transition.getTarget()))))
+		final var guardedStates = states.stream().filter(s -> !s.isBottom())
+				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newCounter, newLocation))
 				.collect(Collectors.toSet());
 
-		if (!mApplyInterferences) {
-			return guardedStates;
-		}
 		// 2. apply interferences
-//		mLogger.warn("Doing interferences inside Postop:");
 		final var disj = DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates);
 		final var afterItfs = mItfApplier.stateAfterInterferences(disj, mCurrentThreadName, mCache);
 //		mLogger.warn("=====");
@@ -127,11 +107,11 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	public ThreadInstanceCounter<LOC> applyThreadCounter(final ThreadInstanceCounter<LOC> threadCounter,
 			final AbstractLocationState<LOC> absLocState, final ACTION transition) {
 		var newCounter = threadCounter;
-		if (transition instanceof final ForkThreadCurrent fork1) {
-			newCounter = applyFork(threadCounter, fork1);
+		if (transition instanceof final ForkThreadCurrent fork) {
+			newCounter = applyFork(threadCounter, fork);
 		}
-		if (transition instanceof final JoinThreadCurrent join1) {
-			newCounter = applyJoin(threadCounter, absLocState, join1);
+		if (transition instanceof final JoinThreadCurrent join) {
+			newCounter = applyJoin(threadCounter, absLocState, join);
 		}
 		return newCounter;
 	}
@@ -144,7 +124,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 	private ThreadInstanceCounter<LOC> applyFork(final ThreadInstanceCounter<LOC> counter,
 			final ForkThreadCurrent forkTransition) {
-		final boolean circular = isCircular(forkTransition);
+		final boolean circular = isCircular(forkTransition)
+				|| (counter.getThreadInstances().get(forkTransition.getPrecedingProcedure()) > 1);
 		final var forked = forkTransition.getNameOfForkedProcedure();
 		final int forkId = forkTransition.getForkStatement().getThreadID().length;
 		final var newCounter = counter.assignForkId(forked, forkId, (LOC) forkTransition.getSource(), circular);
@@ -166,7 +147,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 			final var threadsFinalLocations = absLocState.getLocationMap().getAbstractFinalLocs(joinedThreadName.get());
 			final var statesLocations = absLocState.getTracker().getLocationForThread(joinedThreadName.get());
 
-			final boolean threadWasShutdown = (forkedThreadCount > 0 && forkedThreadCountAfter == 0);
+			final boolean threadWasShutdown = (forkedThreadCount > 0 && forkedThreadCountAfter == 0)
+					|| joinedCounter.getAllForkIds().get(joinedThreadName.get()).isEmpty();
 			final boolean stateIsInFinalLocation = threadsFinalLocations.containsAll(statesLocations);
 			if (threadWasShutdown && !stateIsInFinalLocation) {
 				return null;

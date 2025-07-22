@@ -80,7 +80,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		final InterferenceApplier<STATE, ACTION, LOC> itfApplier = new InterferenceApplier<>(cache);
 		int iteration = 0;
 		boolean changed = true;
-		mPostOp.disAbleInterferences();
 		while (changed) {
 			iteration++;
 			if (iteration % 10 == 0) {
@@ -132,7 +131,6 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				break;
 			}
 		}
-		mPostOp.enableInterferences();
 		return result;
 	}
 

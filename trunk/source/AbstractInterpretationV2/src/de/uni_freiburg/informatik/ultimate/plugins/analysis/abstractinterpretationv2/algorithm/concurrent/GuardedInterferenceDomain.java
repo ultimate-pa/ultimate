@@ -18,7 +18,7 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 	private final IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> mGuardedInterferenceDomainPostOperator;
 	private final IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> mWideningOperator;
-	private final ThreadInstanceCounterFactory mThreadInstanceCounterFactory;
+	private final ThreadInstanceCounterFactory<LOC> mThreadInstanceCounterFactory;
 
 	private final AbstractLocationMap<LOC> mAbstractLocationMap;
 	public boolean mWiden = false;
@@ -33,7 +33,7 @@ public class GuardedInterferenceDomain<STATE extends IAbstractState<STATE>, ACTI
 			final ILogger logger, final AbstractLocationMap<LOC> locationMap, final int maxSize, final int maxItf,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferences,
 			final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
-		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory(cfg);
+		mThreadInstanceCounterFactory = new ThreadInstanceCounterFactory<>(cfg);
 		mAbstractLocationMap = locationMap;
 		mUnderlyingDomain = underlying;
 		mGuardedInterferenceDomainPostOperator = new GuardedInterferenceDomainPostOperator<>(cfg, logger,

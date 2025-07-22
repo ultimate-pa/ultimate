@@ -44,6 +44,10 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		final var threadCounterPost = postOp.applyThreadCounter(threadCounterIntersection, abslocIntersection, action);
 		final var absLocPost = postOp.applyAbstractLocation(abslocIntersection, action);
 
+		if (threadCounterPost == null || absLocPost == null) {
+			return Collections.emptyList();
+		}
+
 		final var targetState = targetStateGuarded.state();
 		final var interferingState = interferingStateGuarded.state();
 		final var triple = new StateItfPrestatePair<>(targetState, interferingState, action);

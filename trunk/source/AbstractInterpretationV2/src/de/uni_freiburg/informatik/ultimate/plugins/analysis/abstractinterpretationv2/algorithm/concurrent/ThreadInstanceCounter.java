@@ -22,35 +22,52 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 	private final Map<String, List<Integer>> mForkIds;
 	private final Set<LOC> mSeenForks;
 
-	public ThreadInstanceCounter(final ThreadInstanceCounter<LOC> counter, final Map<String, List<Integer>> map,
-			final Set<LOC> set) {
-		mThreadNameSet = counter.mThreadNameSet;
-		mThreadInstances = counter.mThreadInstances;
-		mForkIds = map;
-		mSeenForks = set;
+	public ThreadInstanceCounter(final ThreadInstanceCounter<LOC> other) {
+		mThreadInstances = new HashMap<>(other.mThreadInstances);
+		mThreadNameSet = new HashSet<>(other.mThreadNameSet);
+		mForkIds = new HashMap<>();
+		for (final Map.Entry<String, List<Integer>> entry : other.mForkIds.entrySet()) {
+			mForkIds.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+		}
+		mSeenForks = new HashSet<>(other.mSeenForks);
 	}
 
-	public ThreadInstanceCounter(final Map<String, Integer> threadMap, final Map<String, List<Integer>> map,
-			final Set<LOC> set) {
-		mThreadNameSet = threadMap.keySet();
+	public ThreadInstanceCounter(final Map<String, Integer> threadMap, final Map<String, List<Integer>> forkMap,
+			final Set<LOC> seenForks) {
 		mThreadInstances = new HashMap<>(threadMap);
-		mForkIds = map;
-		mSeenForks = set;
+		mThreadNameSet = new HashSet<>(threadMap.keySet());
+		mForkIds = new HashMap<>();
+		for (final Map.Entry<String, List<Integer>> entry : forkMap.entrySet()) {
+			mForkIds.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+		}
+		mSeenForks = new HashSet<>(seenForks);
 	}
 
 	public ThreadInstanceCounter(final Map<String, Integer> threadMap) {
-		mThreadNameSet = threadMap.keySet();
-		mThreadInstances = new HashMap<>(threadMap);
-		mForkIds = new HashMap<>();
-		mSeenForks = new HashSet<>();
+		this(threadMap, threadMap.keySet().stream().collect(Collectors.toMap(t -> t, t -> new ArrayList<>())),
+				Collections.emptySet());
 	}
 
-	public ThreadInstanceCounter(final ThreadInstanceCounter<LOC> other) {
-		mThreadInstances = new HashMap<>(other.getThreadInstances());
-		mThreadNameSet = new HashSet<>();
-		getThreadNameSet().addAll(getThreadInstances().keySet());
-		mForkIds = other.mForkIds;
-		mSeenForks = other.mSeenForks;
+	public ThreadInstanceCounter(final ThreadInstanceCounter<LOC> other, final Map<String, List<Integer>> forkMap,
+			final Set<LOC> seenForks) {
+		this(other.getThreadInstances(), forkMap, seenForks);
+	}
+
+	public Map<String, Integer> getThreadInstances() {
+		return Collections.unmodifiableMap(mThreadInstances);
+	}
+
+	public Set<String> getThreadNameSet() {
+		return Collections.unmodifiableSet(mThreadNameSet);
+	}
+
+	public Map<String, List<Integer>> getForkIds() {
+		return mForkIds.entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, entry -> Collections.unmodifiableList(entry.getValue())));
+	}
+
+	public Set<LOC> getSeenForks() {
+		return Collections.unmodifiableSet(mSeenForks);
 	}
 
 	public ThreadInstanceCounter<LOC> assignForkId(final String threadName, final int forkId, final LOC forkLoc,
@@ -65,10 +82,10 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		}
 		final var mapCopy = new HashMap<>(mForkIds);
 		final var setCopy = new HashSet<>(mSeenForks);
-		mapCopy.computeIfAbsent(threadName, k -> new ArrayList<>()).add(forkId);
+		mapCopy.get(threadName).add(forkId);
 		setCopy.add(forkLoc);
 
-		ThreadInstanceCounter<LOC> oldCounter;
+		final ThreadInstanceCounter<LOC> oldCounter;
 		if (inLoop || mapCopy.get(threadName).size() > 1) {
 			oldCounter = setThreadsInf(Set.of(threadName));
 		} else {
@@ -85,13 +102,15 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		if (list != null) {
 			list.remove(Integer.valueOf(forkId));
 		}
-		setCopy.remove(forkLoc);
 
 		// sets threads inactive only if theyre forked count is 1 (We abstract away anything aobve 1 to inf, so we
 		// cannot know how many joins it would take to get it to 0).
-		final var oldCounter = setThreadsInActive(Set.of(threadName));
+		var newCounter = new ThreadInstanceCounter<>(this);
+		if (list.isEmpty()) {
+			newCounter = newCounter.setThreadsInActive(Set.of(threadName));
+		}
 
-		return new ThreadInstanceCounter<>(oldCounter, mapCopy, setCopy);
+		return new ThreadInstanceCounter<>(newCounter, mapCopy, setCopy);
 	}
 
 	public List<Integer> getForkIds(final String threadId) {
@@ -111,14 +130,6 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		mForkIds.clear();
 	}
 
-	public Set<String> getThreadNameSet() {
-		return mThreadNameSet;
-	}
-
-	public Map<String, Integer> getThreadInstances() {
-		return new HashMap<>(mThreadInstances);
-	}
-
 	public ThreadInstanceCounter<LOC> setThreadsActive(final Collection<String> threadName) {
 		final var newInstanceMap = new HashMap<>(mThreadInstances);
 		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) < 1)
@@ -128,7 +139,7 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 
 	public ThreadInstanceCounter<LOC> setThreadsInActive(final Collection<String> threadName) {
 		final var newInstanceMap = new HashMap<>(mThreadInstances);
-		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) == 1)
+		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) > 0)
 				.forEach(p -> newInstanceMap.put(p, 0));
 		return new ThreadInstanceCounter<>(newInstanceMap, mForkIds, mSeenForks);
 	}
@@ -230,6 +241,7 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 				resulString.append(", forkids: ").append(mForkIds.get(thread));
 			}
 		}
+		resulString.append(" " + mForkIds);
 		return resulString.toString();
 	}
 
