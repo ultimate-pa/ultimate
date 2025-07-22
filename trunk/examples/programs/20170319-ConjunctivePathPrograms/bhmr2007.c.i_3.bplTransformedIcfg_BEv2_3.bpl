@@ -1,3 +1,4 @@
+//#Safe
 procedure ULTIMATE.start() returns ()
 modifies ;
 {

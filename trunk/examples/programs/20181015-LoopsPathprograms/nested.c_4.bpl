@@ -1,3 +1,4 @@
+//#Safe
 var ~last~0 : int;
 
 procedure ULTIMATE.start() returns ()

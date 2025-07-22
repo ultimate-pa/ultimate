@@ -1,3 +1,4 @@
+//#Safe
 implementation ULTIMATE.start() returns (){
     var #in~argc : int, #in~argv.base : int, #in~argv.offset : int;
     var main_#in~argc : int;

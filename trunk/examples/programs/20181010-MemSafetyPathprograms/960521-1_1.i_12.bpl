@@ -1,3 +1,4 @@
+//#Safe
 var ~b~0.base : int;
 
 var ~a~0.base : int;

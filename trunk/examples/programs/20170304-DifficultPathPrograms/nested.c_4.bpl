@@ -1,3 +1,4 @@
+//#Safe
 var ~last : int;
 
 implementation ULTIMATE.start() returns (){

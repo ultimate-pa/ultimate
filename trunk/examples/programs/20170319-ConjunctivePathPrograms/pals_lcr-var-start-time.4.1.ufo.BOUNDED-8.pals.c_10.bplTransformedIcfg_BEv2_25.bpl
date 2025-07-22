@@ -1,3 +1,4 @@
+//#Safe
 var ~send4 : int;
 
 var ~alive2 : int;

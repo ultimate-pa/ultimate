@@ -1,3 +1,4 @@
+//#Unsafe
 var ~tmp~0.offset : int;
 
 var #valid : [int]int;

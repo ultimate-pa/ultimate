@@ -1,3 +1,4 @@
+//#Safe
 var #NULL.base : int, #NULL.offset : int;
 
 var #valid : [int]int;

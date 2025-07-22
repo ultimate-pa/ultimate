@@ -1,3 +1,4 @@
+//#Safe
 var ~#list~0.base : int;
 
 var #memory_$Pointer$.base : [int][int]int;

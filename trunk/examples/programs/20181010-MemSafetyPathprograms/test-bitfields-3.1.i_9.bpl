@@ -1,3 +1,4 @@
+//#Safe
 var ~#d~0.offset : int;
 
 var ~#d~0.base : int;

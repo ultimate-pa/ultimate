@@ -1,3 +1,4 @@
+//#Safe
 var ~__BLAST_NONDET~0 : int;
 
 procedure ULTIMATE.start() returns ()

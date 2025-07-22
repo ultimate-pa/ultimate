@@ -1,3 +1,4 @@
+//#Safe
 var ~p1_old : int;
 
 var ~send2 : int;

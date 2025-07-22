@@ -1,3 +1,4 @@
+//#Safe
 var ~INFINITY : int;
 
 implementation ULTIMATE.start() returns (){

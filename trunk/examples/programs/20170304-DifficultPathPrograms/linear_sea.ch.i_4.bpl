@@ -1,3 +1,4 @@
+//#Safe
 var ~SIZE : int;
 
 var #NULL.base : int, #NULL.offset : int;

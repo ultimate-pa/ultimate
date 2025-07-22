@@ -1,3 +1,4 @@
+//#Safe
 function { :overapproximation "bitwiseAnd" } ~bitwiseAnd(in0 : int, in1 : int) returns (out : int);
 function { :overapproximation "shiftRight" } ~shiftRight(in0 : int, in1 : int) returns (out : int);
 implementation ULTIMATE.start() returns (){

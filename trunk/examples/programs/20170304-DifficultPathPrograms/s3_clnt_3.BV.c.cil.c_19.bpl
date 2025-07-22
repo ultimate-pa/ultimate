@@ -1,3 +1,4 @@
+//#Safe
 function { :overapproximation "bitwiseOr" } ~bitwiseOr(in0 : int, in1 : int) returns (out : int);
 implementation ULTIMATE.start() returns (){
     var main_#res : int;

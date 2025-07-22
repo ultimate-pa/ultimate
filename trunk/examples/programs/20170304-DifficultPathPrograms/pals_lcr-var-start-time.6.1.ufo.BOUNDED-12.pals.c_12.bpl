@@ -1,3 +1,4 @@
+//#Safe
 type ~msg_t = int;
 const #funAddr~node1.base : int;
 const #funAddr~node1.offset : int;

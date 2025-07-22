@@ -1,3 +1,4 @@
+//#Safe
 implementation ULTIMATE.start() returns (){
     var main_#res : int;
     var main_#t~ret49 : int;
