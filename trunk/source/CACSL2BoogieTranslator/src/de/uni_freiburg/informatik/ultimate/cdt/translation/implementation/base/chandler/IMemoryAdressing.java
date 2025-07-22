@@ -113,7 +113,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The specifications.
 	 */
-	List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+	List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName, final CheckMode mode,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
@@ -123,7 +123,7 @@ public interface IMemoryAdressing {
 	 *
 	 * @return The expression.
 	 */
-	Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
+	Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 

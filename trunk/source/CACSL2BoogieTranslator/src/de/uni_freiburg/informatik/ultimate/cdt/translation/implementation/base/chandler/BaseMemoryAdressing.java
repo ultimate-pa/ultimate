@@ -105,10 +105,10 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 	}
 
 	@Override
-	public Expression constructPointerBaseValidityCheckExpr(final ILocation loc, final Expression ptr,
+	public Expression constructPointerValidityCheckExpr(final ILocation loc, final Expression ptr,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		final Expression ptrBase = mMemoryPointer.pointerBaseAddress(ptr, loc);
+		final Expression ptrBase = mMemoryPointer.pointerAddress(ptr, loc);
 		final ArrayAccessExpression aae = ExpressionFactory.constructNestedArrayAccessExpression(loc,
 				MemoryModelExpressionHelper.getValidArray(loc, requiredMemoryModelFeatures,
 						memoryModelDeclarationsHandler),
@@ -132,16 +132,16 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 			final CPrimitive cTypeOfPointerComponent, final Expression nullPtrExpr) {
 		// res.base == 0
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-				mMemoryPointer.pointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
-				mMemoryPointer.pointerBaseAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
+				mMemoryPointer.pointerAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.pointerAddress(nullPtrExpr, loc), cTypeOfPointerComponent);
 	}
 
 	protected Expression baseEqual(final ILocation loc, final Expression tmpExpr,
 			final CPrimitive cTypeOfPointerComponent, final Expression argSPtr) {
 		// res.base == arg_s.base
 		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(loc, IASTBinaryExpression.op_equals,
-				mMemoryPointer.pointerBaseAddress(tmpExpr, loc), cTypeOfPointerComponent,
-				mMemoryPointer.pointerBaseAddress(argSPtr, loc), cTypeOfPointerComponent);
+				mMemoryPointer.pointerAddress(tmpExpr, loc), cTypeOfPointerComponent,
+				mMemoryPointer.pointerAddress(argSPtr, loc), cTypeOfPointerComponent);
 	}
 
 	@Override
@@ -149,12 +149,12 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 			final Expression baseAddress) {
 		return new Expression[] { ExpressionFactory.constructFunctionApplication(loc,
 				MemoryHandler.getNameOfHeapInitFunction(hda.getName()),
-				new Expression[] { hda.getIdentifierExpression(), mMemoryPointer.pointerBaseAddress(baseAddress, loc) },
+				new Expression[] { hda.getIdentifierExpression(), mMemoryPointer.pointerAddress(baseAddress, loc) },
 				(BoogieType) hda.getIdentifierExpression().getType()) };
 	}
 
 	@Override
-	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+	public List<Specification> constructPointerValidityCheck(final ILocation loc, final String ptrName,
 			final String procedureName, final CheckMode mode,
 			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
 			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
