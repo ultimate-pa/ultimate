@@ -17,7 +17,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -30,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.NonBijectiveMappingOneDimensional;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.OverapproximationUF2OneDimensional;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
@@ -38,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -299,46 +296,6 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 	}
 
 	@Override
-	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
-			final String procedureName, final CheckMode mode,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
-		throw new UnsupportedOperationException(
-				"The pointer base validity check is not compatible with the 1D addressing mode!");
-	}
-
-	@Override
-	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
-			final String ptrName, final String procedureName, final CheckMode mode,
-			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (mode == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
-		throw new UnsupportedOperationException(
-				"The target pointer fully allocated check is not compatible with the 1D addressing mode!");
-	}
-
-	@Override
-	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
-			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
-
-		if (!isPointerCheckRequired) {
-			return Collections.emptyList();
-		}
-
-		throw new UnsupportedOperationException(
-				"The check if the freed pointer is valid is not compatible with the 1D addressing mode!");
-	}
-
-	@Override
 	public Expression createFunctionPointer(final ILocation loc, final BigInteger offset) {
 		final Expression base = mTypeSizes.constructLiteralForIntegerType(loc,
 				mExpressionTranslation.getCTypeOfPointerComponents(), functionPointerPointerBaseValue);
@@ -385,25 +342,6 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 
 		return new AssumeStatement(loc,
 				ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, baseEqualNull, baseEqual));
-	}
-
-	@Override
-	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
-			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
-			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
-			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
-		if (pointerBaseValid == CheckMode.IGNORE && pointerTargetFullyAllocated == CheckMode.IGNORE) {
-			return Collections.emptyList();
-		}
-
-		throw new UnsupportedOperationException("The MemSafety checks are not compatible with the 1D addressing mode!");
-	}
-
-	@Override
-	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
-			final Expression destId, final Expression dest) {
-		throw new UnsupportedOperationException(
-				"The string copy overlapping check is not compatible with the 1D addressing mode!");
 	}
 
 	@Override

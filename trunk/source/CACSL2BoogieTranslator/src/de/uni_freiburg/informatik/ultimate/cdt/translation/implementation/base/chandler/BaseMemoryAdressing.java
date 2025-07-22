@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
+import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -9,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
@@ -19,9 +23,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
 public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements IMemoryAdressing {
 	ITypeHandler mTypeHandler;
@@ -145,5 +151,68 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 				MemoryHandler.getNameOfHeapInitFunction(hda.getName()),
 				new Expression[] { hda.getIdentifierExpression(), mMemoryPointer.pointerBaseAddress(baseAddress, loc) },
 				(BoogieType) hda.getIdentifierExpression().getType()) };
+	}
+
+	@Override
+	public List<Specification> constructPointerBaseValidityCheck(final ILocation loc, final String ptrName,
+			final String procedureName, final CheckMode mode,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException("The pointer base validity check is not compatible with the selected: "
+				+ this.getClass() + " addressing mode!");
+	}
+
+	@Override
+	public List<Specification> constructPointerTargetFullyAllocatedCheck(final ILocation loc, final Expression size,
+			final String ptrName, final String procedureName, final CheckMode mode,
+			final Boolean isBitVectorTranslation, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		if (mode == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException(
+				"The target pointer fully allocated check is not compatible with the selected: " + this.getClass()
+						+ "  " + "addressing mode!");
+	}
+
+	@Override
+	public List<Statement> getChecksForFreeCall(final ILocation loc, final RValue pointerToBeFreed,
+			final boolean isPointerCheckRequired, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		assert pointerToBeFreed.getCType().getUnderlyingType() instanceof CPointer;
+
+		if (!isPointerCheckRequired) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException(
+				"The check if the freed pointer is valid is not compatible with the selected: " + this.getClass()
+						+ "  addressing mode!");
+	}
+
+	@Override
+	public List<Statement> constructMemSafeStatementsForPointerExpression(final ILocation loc, final Expression ptr,
+			final CheckMode pointerBaseValid, final CheckMode pointerTargetFullyAllocated,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		if (pointerBaseValid == CheckMode.IGNORE && pointerTargetFullyAllocated == CheckMode.IGNORE) {
+			return Collections.emptyList();
+		}
+
+		throw new UnsupportedOperationException(
+				"The MemSafety checks are not compatible with the selected: " + this.getClass() + "  addressing mode!");
+	}
+
+	@Override
+	public Statement checksForStringCopyOverlapping(final ILocation loc, final Expression src, final Expression srcId,
+			final Expression destId, final Expression dest) {
+		throw new UnsupportedOperationException(
+				"The string copy overlapping check is not compatible with the selected: " + this.getClass()
+						+ "  addressing mode!");
 	}
 }
