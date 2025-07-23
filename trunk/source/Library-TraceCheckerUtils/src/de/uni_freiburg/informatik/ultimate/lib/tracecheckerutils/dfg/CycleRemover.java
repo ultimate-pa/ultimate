@@ -65,7 +65,8 @@ public class CycleRemover {
 	}
 
 	/**
-	 * Computes a feedback Vertex Set of the Data Flow Graph, by removing a Node for every Cycle in the Graph
+	 * Computes a (possibly non-optimal) feedback Vertex Set of the Data Flow Graph, by removing nodes iteratively from
+	 * every non-trivial SCC of the graph, checking if the graph becomes cycle-free at every step
 	 *
 	 * @param dfg    the Data Flow Graph to work on
 	 * @param logger the Logger
@@ -80,11 +81,27 @@ public class CycleRemover {
 				successors, new DefaultStronglyConnectedComponentFactory<>(), dfg.getNodeList().size(),
 				dfg.getNodeList());
 		final Set<IcfgEdge> fvs = new HashSet<>();
-		for (final StronglyConnectedComponent<DfgNode> ball : scc.getBalls()) {
-			// choose just any node of the ball
-			final DfgNode node = ball.getNodes().iterator().next();
-			fvs.add(node.getCorrespondingDFGEdge());
+		Collection<StronglyConnectedComponent<DfgNode>> balls = scc.getBalls();
+		final DfgContainer cloned = cloneDfg(dfg);
+		while (balls.size() > 0) {
+			for (final StronglyConnectedComponent<DfgNode> ball : balls) {
+				// choose just any node of the ball
+				final DfgNode node = ball.getNodes().iterator().next();
+				fvs.add(node.getCorrespondingDFGEdge());
+				cloned.getEdgeRelation().removeDomainElement(node);
+				cloned.getEdgeRelation().removeRangeElement(node);
+				cloned.getNodeList().remove(node);
+			}
+			final ISuccessorProvider<DfgNode> successorsCloned = node -> {
+				final Collection<DfgNode> successorsOfNode = cloned.getEdgeRelation().getImage(node);
+				return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
+			};
+			final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> sccCloned = new SccComputation<>(logger,
+					successorsCloned, new DefaultStronglyConnectedComponentFactory<>(), cloned.getNodeList().size(),
+					cloned.getNodeList());
+			balls = sccCloned.getBalls();
 		}
+
 		return fvs;
 	}
 
