@@ -36,6 +36,8 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mRelInterferingDomain;
 
+	private final IIcfg<?> mIcfg;
+
 	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
 			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
@@ -50,6 +52,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 		mMaxParallelStates = maxParallelStates;
 		mCache = cache;
+		mIcfg = cfg;
 	}
 
 	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
@@ -79,7 +82,7 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		if (newCounter == null) {
 			var bottomState = mRelInterferingDomain.createBottomState().addVariables(oldstate.getVariables());
 			bottomState = bottomState.initializeLocation(transition.getTarget(),
-					oldstate.abstractLocationState().getLocationMap(), oldstate.threadCounter().getThreadNameSet());
+					oldstate.abstractLocationState().getLocationMap(), mIcfg.getProcedureEntryNodes().keySet());
 			return List.of(bottomState);
 		}
 		final var newLocation = oldstate.abstractLocationState().movedTo(mCurrentThreadName,
