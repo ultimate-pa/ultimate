@@ -27,14 +27,28 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessAssumption;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
@@ -76,7 +90,8 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 
 	protected abstract String getLocationDescription();
 
-	protected ExpressionResult instrument(final ILocation loc, final IDispatcher dispatcher) {
+	protected ExpressionResult instrument(final ILocation loc, final IDispatcher dispatcher,
+			final boolean checkValidity) {
 		ACSLNode acslNode = null;
 		try {
 			checkForQuantifiers(mInvariant);
@@ -87,7 +102,12 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 		} catch (final Exception e) {
 			throw new AssertionError(e);
 		}
-		return (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
+		final ExpressionResult assertResult = (ExpressionResult) dispatcher.dispatch(acslNode, mMatchedAstNode);
+		if (checkValidity) {
+			return assertResult;
+		}
+		return new ExpressionResultBuilder(assertResult)
+				.resetStatements(AssertReplacer.replaceAsserts(assertResult.getStatements())).build();
 	}
 
 	/**
@@ -98,6 +118,27 @@ public abstract class ExtractedWitnessInvariant implements IExtractedWitnessEntr
 		if (invariant.contains("exists") || invariant.contains("forall")) {
 			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
 					"invariant contains quantifiers");
+		}
+	}
+
+	private static final class AssertReplacer extends BoogieTransformer {
+		public static List<Statement> replaceAsserts(final List<Statement> statements) {
+			return Arrays.asList(new AssertReplacer().processStatements(statements.toArray(Statement[]::new)));
+		}
+
+		@Override
+		protected Statement processStatement(final Statement statement) {
+			if (statement instanceof final AssertStatement assertSt) {
+				final Expression assertion = assertSt.getFormula();
+				final ILocation loc = assertSt.getLocation();
+				final Statement assumption = new AssumeStatement(loc, assertion);
+				new WitnessAssumption(false).annotate(assumption);
+				final Statement negatedAssumption = new AssumeStatement(loc, ExpressionFactory.not(loc, assertion));
+				new WitnessAssumption(true).annotate(negatedAssumption);
+				return new IfStatement(loc, new WildcardExpression(loc, BoogieType.TYPE_BOOL),
+						new Statement[] { assumption }, new Statement[] { negatedAssumption });
+			}
+			return super.processStatement(statement);
 		}
 	}
 }
