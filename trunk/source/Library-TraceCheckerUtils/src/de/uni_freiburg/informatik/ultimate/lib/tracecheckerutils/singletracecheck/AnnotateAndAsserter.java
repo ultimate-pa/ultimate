@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.As
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmallConstantsFirst;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.AssertOrderSmtFeatureHeuristic;
 import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.IAssertOrder;
+import de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.assertorders.WitnessGuidedAssertOrder;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -102,8 +103,11 @@ public class AnnotateAndAsserter<L extends IAction> {
 		// Report benchmark
 		mTcbg.reportNewCodeBlocks(mSSA.getCounterexample().length());
 
-		final List<Set<Integer>> partitions =
-				getAssertOrder(mAssertCodeBlocksOrder).partition(mSSA.getCounterexample());
+		// TODO: For testing, WitnessGuidedAssertOrder is hardcoded here.
+		// What is the best way to handle this here? If we are not using witness guided verification, we just use the
+		// underlying assert order from getAssertOrder here (as there are no WitnessAssumptions in this case).
+		final List<Set<Integer>> partitions = new WitnessGuidedAssertOrder<>(getAssertOrder(mAssertCodeBlocksOrder))
+				.partition(mSSA.getCounterexample());
 
 		mLogger.info(String.format("Assert order %s partitioned %s statements into %s equivalence classes.",
 				mAssertCodeBlocksOrder, mSSA.getCounterexample().length(), partitions.size()));
