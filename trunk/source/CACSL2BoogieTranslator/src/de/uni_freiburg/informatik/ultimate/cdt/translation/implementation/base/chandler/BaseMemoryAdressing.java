@@ -3,18 +3,19 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
@@ -24,10 +25,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements IMemoryAdressing {
 	ITypeHandler mTypeHandler;
@@ -37,6 +38,7 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 	TypeSizeAndOffsetComputer mTypeSizeAndOffsetComputer;
 	IPointerIntegerConversion mPointerIntegerConversion;
 	T mMemoryPointer;
+	IMemoryManagementStrategy mMemoryManagementStrategy;
 
 	BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 
@@ -59,31 +61,6 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 						mTypeHandler.cType2AstType(ignoreLoc, mExpressionTranslation.getCTypeOfPointerComponents())) });
 	}
 
-	protected static Expression baseNotEqualZeroExpr(final ILocation tuLoc, final Expression resultExpr,
-			final Expression zeroNumericValueExpr) {
-		return ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
-				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
-				zeroNumericValueExpr);
-	}
-
-	protected Expression baseGreaterThanBarrier(final ILocation tuLoc, final Expression stackHeapBarrierExpr,
-			final Expression resultExpr) {
-		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-				IASTBinaryExpression.op_lessThan, stackHeapBarrierExpr,
-				mExpressionTranslation.getCTypeOfPointerComponents(),
-				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
-				mExpressionTranslation.getCTypeOfPointerComponents());
-	}
-
-	protected Expression baseSmallerThanBarrier(final ILocation tuLoc, final Expression stackHeapBarrierExpr,
-			final Expression resultExpr) {
-		return mExpressionTranslation.constructBinaryComparisonIntegerExpression(tuLoc,
-				IASTBinaryExpression.op_lessThan,
-				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_BASE),
-				mExpressionTranslation.getCTypeOfPointerComponents(), stackHeapBarrierExpr,
-				mExpressionTranslation.getCTypeOfPointerComponents());
-	}
-
 	/**
 	 * Multiply an integerExpresion with the size of another type.
 	 *
@@ -102,6 +79,38 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 	 */
 	private Expression calculateSizeOf(final ILocation loc, final ICType cType) {
 		return mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
+	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructMallocSpecificationExpressions(final ILocation tuLoc,
+			final MemoryArea memoryArea, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryManagementStrategy.constructMallocSpecificationExpressions(tuLoc, memoryArea,
+				requiredMemoryModelFeatures, memoryModelDeclarationsHandler);
+	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructDeallocSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryManagementStrategy.constructDeallocSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
+	}
+
+	@Override
+	public List<Statement> constructUltimateInitStatements(final ILocation loc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler, final BigInteger fixedAddressCounter) {
+		return mMemoryManagementStrategy.constructUltimateInitStatements(loc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler, fixedAddressCounter);
+	}
+
+	@Override
+	public List<Pair<Expression, Set<VariableLHS>>> constructAllocInitSpecificationExpressions(final ILocation tuLoc,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+		return mMemoryManagementStrategy.constructAllocInitSpecificationExpressions(tuLoc, requiredMemoryModelFeatures,
+				memoryModelDeclarationsHandler);
 	}
 
 	@Override
