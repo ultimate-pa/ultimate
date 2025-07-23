@@ -76,6 +76,7 @@ public final class TranslationSettings {
 	private final boolean mCheckErrorFunction;
 	private final boolean mCheckAssertions;
 	private final boolean mCheckAcsl;
+	private final boolean mCheckWitnesses;
 	private final boolean mIsSvcompMemtrackCompatibilityMode;
 	private final CheckMode mCheckSignedIntegerBounds;
 	private final boolean mCheckDataRaces;
@@ -99,6 +100,7 @@ public final class TranslationSettings {
 
 		mCheckAssertions = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ASSERTIONS);
 		mCheckAcsl = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_ACSL);
+		mCheckWitnesses = ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_WITNESSES);
 		mEntryFunction = ups.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
 		mCheckErrorFunction = ups.getBoolean(CACSLPreferenceInitializer.LABEL_ERROR);
 		mSmtBoolArraysWorkaround = ups.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
@@ -159,10 +161,11 @@ public final class TranslationSettings {
 			final CheckMode checkPointerSubtractionAndComparisonValidity,
 			final MemoryStructure memoryStructurePreference, final boolean fpToIeeeBvExtension,
 			final boolean smtBoolArraysWorkaround, final String entryFunction, final boolean checkErrorFunction,
-			final boolean checkAssertions, final boolean checkAcsl, final boolean isSvcompMemtrackCompatibilityMode,
-			final Set<String> functionsCheckedForMemoryNeutrality, final CheckMode checkSignedIntegerBounds,
-			final boolean checkDataRaces, final boolean useConstantArrays, final boolean useStoreChains,
-			final boolean enableFesetround, final FloatingPointRoundingMode initialRoundingMode,
+			final boolean checkAssertions, final boolean checkAcsl, final boolean checkWitnesses,
+			final boolean isSvcompMemtrackCompatibilityMode, final Set<String> functionsCheckedForMemoryNeutrality,
+			final CheckMode checkSignedIntegerBounds, final boolean checkDataRaces, final boolean useConstantArrays,
+			final boolean useStoreChains, final boolean enableFesetround,
+			final FloatingPointRoundingMode initialRoundingMode,
 			final boolean adaptMemoryStructureResolutionOnPointerCasts, final int stringOverapproximationThreshold,
 			final UndefinedFunctionBehaviour undefinedFunctionBehaviour, final boolean enforceIfForConditional,
 			final MemoryAddressing memoryAddressingPreference, final boolean fixedAddressesForInitialization) {
@@ -183,6 +186,7 @@ public final class TranslationSettings {
 		mCheckErrorFunction = checkErrorFunction;
 		mCheckAssertions = checkAssertions;
 		mCheckAcsl = checkAcsl;
+		mCheckWitnesses = checkWitnesses;
 		mIsSvcompMemtrackCompatibilityMode = isSvcompMemtrackCompatibilityMode;
 		mFunctionsCheckedForMemoryNeutrality = functionsCheckedForMemoryNeutrality;
 		mCheckSignedIntegerBounds = checkSignedIntegerBounds;
@@ -275,6 +279,10 @@ public final class TranslationSettings {
 		return mCheckAcsl;
 	}
 
+	public boolean checkWitnesses() {
+		return mCheckWitnesses;
+	}
+
 	public boolean isSvcompMemtrackCompatibilityMode() {
 		return mIsSvcompMemtrackCompatibilityMode;
 	}
@@ -341,9 +349,9 @@ public final class TranslationSettings {
 				mPointerIntegerConversion, mCheckIfFreedPointerIsValid, mCheckPointerDerefValidity,
 				mCheckPointerSubtractionAndComparisonValidity, memoryStructure, mFpToIeeeBvExtension,
 				mSmtBoolArraysWorkaround, mEntryFunction, mCheckErrorFunction, mCheckAssertions, mCheckAcsl,
-				mIsSvcompMemtrackCompatibilityMode, mFunctionsCheckedForMemoryNeutrality, mCheckSignedIntegerBounds,
-				mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround, mInitialRoundingMode,
-				mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
+				mCheckWitnesses, mIsSvcompMemtrackCompatibilityMode, mFunctionsCheckedForMemoryNeutrality,
+				mCheckSignedIntegerBounds, mCheckDataRaces, mUseConstantArrays, mUseStoreChains, mEnableFesetround,
+				mInitialRoundingMode, mAdaptMemoryStructureResolutionOnPointerCasts, mStringOverapproximationThreshold,
 				mUndefinedFunctionBehaviour, mEnforceIfForConditional, mMemoryAddressing,
 				mFixedAddressesForInitialization);
 	}

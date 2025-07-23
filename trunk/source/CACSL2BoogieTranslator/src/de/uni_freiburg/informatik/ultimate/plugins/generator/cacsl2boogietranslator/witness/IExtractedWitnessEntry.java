@@ -42,5 +42,5 @@ public interface IExtractedWitnessEntry {
 	 * Transform an expression result using the information from the given witness entry
 	 */
 	ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult);
+			final ExpressionResult expressionResult, boolean checkValidity);
 }

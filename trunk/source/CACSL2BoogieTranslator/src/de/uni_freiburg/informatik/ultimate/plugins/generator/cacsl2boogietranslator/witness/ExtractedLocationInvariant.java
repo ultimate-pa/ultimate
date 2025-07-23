@@ -60,13 +60,20 @@ public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult) {
-		final ExpressionResult invariantExprResult = instrument(loc, dispatcher);
+			final ExpressionResult expressionResult, final boolean checkValidity) {
+		final ExpressionResult invariantExprResult = instrument(loc, dispatcher, checkValidity);
 		final ExpressionResultBuilder erb =
 				new ExpressionResultBuilder(expressionResult).addAllExceptLrValueAndStatements(invariantExprResult);
 
-		// Make sure that the location invariant (incl. all auxiliary statements) is executed atomically.
-		final Statement invariant = StatementFactory.constructAtomicStatement(loc, invariantExprResult.getStatements());
+		final List<Statement> witnessStatements;
+		if (checkValidity) {
+			// Make sure that the location invariant (incl. all auxiliary statements) is executed atomically.
+			final Statement invariant =
+					StatementFactory.constructAtomicStatement(loc, invariantExprResult.getStatements());
+			witnessStatements = List.of(invariant);
+		} else {
+			witnessStatements = invariantExprResult.getStatements();
+		}
 
 		// Insert the location invariant at the appropriate location.
 		if (mIsBefore) {
@@ -75,9 +82,9 @@ public class ExtractedLocationInvariant extends ExtractedWitnessInvariant {
 			final List<Statement> labels =
 					statements.stream().takeWhile(Label.class::isInstance).collect(Collectors.toList());
 			final List<Statement> remainder = statements.subList(labels.size(), statements.size());
-			return erb.resetStatements(labels).addStatement(invariant).addStatements(remainder).build();
+			return erb.resetStatements(labels).addStatements(witnessStatements).addStatements(remainder).build();
 		}
-		return erb.addStatement(invariant).build();
+		return erb.addStatements(witnessStatements).build();
 	}
 
 	@Override

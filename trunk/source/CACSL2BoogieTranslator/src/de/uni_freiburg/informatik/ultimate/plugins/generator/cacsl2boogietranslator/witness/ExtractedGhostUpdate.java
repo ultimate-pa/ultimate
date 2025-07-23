@@ -159,7 +159,7 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult) {
+			final ExpressionResult expressionResult, final boolean checkValidity) {
 		final String functionName = getNameOfCalledFunction();
 		if (functionName == null) {
 			// TODO: Support other statements, also not only function calls
