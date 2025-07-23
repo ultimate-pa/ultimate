@@ -176,10 +176,12 @@ public class MainDispatcher implements IDispatcher {
 	private final PreprocessorHandler mPreprocessorHandler;
 	private final IACSLHandler mAcslHandler;
 	private IASTNode mAcslHook;
+	private final TranslationSettings mSettings;
 
 	public MainDispatcher(final ILogger logger, final IExtractedCorrectnessWitness witness,
 			final LocationFactory locFac, final ITypeHandler typeHandler, final CHandler cHandler,
-			final PreprocessorHandler preprocessorHandler, final IACSLHandler acslHandler) {
+			final PreprocessorHandler preprocessorHandler, final IACSLHandler acslHandler,
+			final TranslationSettings settings) {
 		mLogger = logger;
 		mWitness = witness;
 		mLocationFactory = locFac;
@@ -187,6 +189,7 @@ public class MainDispatcher implements IDispatcher {
 		mCHandler = cHandler;
 		mPreprocessorHandler = preprocessorHandler;
 		mAcslHandler = acslHandler;
+		mSettings = settings;
 	}
 
 	@Override
@@ -285,10 +288,10 @@ public class MainDispatcher implements IDispatcher {
 		// Ensure that invariants are evaluated before the ghost variables are updated and that the order of ghost
 		// updates is preserved. Therefore iterate over these objects in reverse order.
 		for (int i = matchedGhostUpdates.size() - 1; i >= 0; i--) {
-			rtr = matchedGhostUpdates.get(i).transform(loc, this, rtr);
+			rtr = matchedGhostUpdates.get(i).transform(loc, this, rtr, mSettings.checkWitnesses());
 		}
 		for (final ExtractedWitnessInvariant entry : matchedWitnessInvariants) {
-			rtr = entry.transform(loc, this, rtr);
+			rtr = entry.transform(loc, this, rtr, mSettings.checkWitnesses());
 		}
 		return rtr;
 	}

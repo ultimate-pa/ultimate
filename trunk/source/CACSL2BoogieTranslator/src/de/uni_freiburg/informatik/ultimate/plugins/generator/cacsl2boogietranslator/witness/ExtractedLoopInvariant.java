@@ -59,8 +59,8 @@ public class ExtractedLoopInvariant extends ExtractedWitnessInvariant {
 
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult) {
-		final ExpressionResult invariantExprResult = instrument(loc, dispatcher);
+			final ExpressionResult expressionResult, final boolean checkValidity) {
+		final ExpressionResult invariantExprResult = instrument(loc, dispatcher, checkValidity);
 		final Expression loopInvariant = tryToExtractLoopInvariant(invariantExprResult);
 		final List<Statement> statements = new ArrayList<>();
 		boolean hasLoop = false;

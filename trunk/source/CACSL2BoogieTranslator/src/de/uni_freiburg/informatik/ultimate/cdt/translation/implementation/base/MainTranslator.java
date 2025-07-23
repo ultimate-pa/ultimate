@@ -244,7 +244,7 @@ public class MainTranslator {
 				typeHandler, procedureManager, locationFactory, mainCHandler, memoryPointer);
 
 		final MainDispatcher mainDispatcher = new MainDispatcher(mLogger, witness, locationFactory, typeHandler,
-				mainCHandler, ppHandler, acslHandler);
+				mainCHandler, ppHandler, acslHandler, translationSettings);
 
 		final CHandlerTranslationResult result = mainDispatcher.dispatch(nodes);
 

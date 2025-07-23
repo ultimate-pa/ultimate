@@ -181,7 +181,7 @@ public class ExtractedGhostUpdate implements IExtractedWitnessEntry {
 
 	@Override
 	public ExpressionResult transform(final ILocation loc, final IDispatcher dispatcher,
-			final ExpressionResult expressionResult) {
+			final ExpressionResult expressionResult, final boolean checkValidity) {
 		final ExpressionResult witness = instrument(loc, dispatcher);
 		if (!mInstrumentAtomically) {
 			final List<Statement> statements = new ArrayList<>();
