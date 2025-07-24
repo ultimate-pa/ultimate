@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2025 Christof Schuster (christof.schuster@gmx.de)
+ *
+ * This file is part of the ULTIMATE TraceCheckerUtils Library.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.dfg;
 
 import java.util.ArrayList;
@@ -33,13 +58,8 @@ public class CycleRemover {
 	 * @return all IcfgEdges of the original Cfg that are in contained in some Dfg loop
 	 */
 	public static Set<IcfgEdge> getBallEdges(final DfgContainer dfg, final ILogger logger) {
-		final ISuccessorProvider<DfgNode> successors = node -> {
-			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
-			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
-		};
-		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
-				successors, new DefaultStronglyConnectedComponentFactory<>(), dfg.getNodeList().size(),
-				dfg.getNodeList());
+
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = getScc(dfg, logger);
 
 		final Set<DfgNode> cyclicNodes = new HashSet<>();
 		for (final StronglyConnectedComponent<DfgNode> ball : scc.getBalls()) {
@@ -73,13 +93,7 @@ public class CycleRemover {
 	 * @return the feedback Vertex Set as a Set of IcfgEdges that can be removed
 	 */
 	public static Set<IcfgEdge> computeFeedbackVertexHeuristic(final DfgContainer dfg, final ILogger logger) {
-		final ISuccessorProvider<DfgNode> successors = node -> {
-			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
-			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
-		};
-		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
-				successors, new DefaultStronglyConnectedComponentFactory<>(), dfg.getNodeList().size(),
-				dfg.getNodeList());
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = getScc(dfg, logger);
 		final Set<IcfgEdge> fvs = new HashSet<>();
 		Collection<StronglyConnectedComponent<DfgNode>> balls = scc.getBalls();
 		final DfgContainer cloned = cloneDfg(dfg);
@@ -92,13 +106,7 @@ public class CycleRemover {
 				cloned.getEdgeRelation().removeRangeElement(node);
 				cloned.getNodeList().remove(node);
 			}
-			final ISuccessorProvider<DfgNode> successorsCloned = node -> {
-				final Collection<DfgNode> successorsOfNode = cloned.getEdgeRelation().getImage(node);
-				return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
-			};
-			final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> sccCloned = new SccComputation<>(logger,
-					successorsCloned, new DefaultStronglyConnectedComponentFactory<>(), cloned.getNodeList().size(),
-					cloned.getNodeList());
+			final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> sccCloned = getScc(cloned, logger);
 			balls = sccCloned.getBalls();
 		}
 
@@ -114,14 +122,8 @@ public class CycleRemover {
 	 * @return the feedback Vertex Set as a Set of IcfgEdges that can be removed
 	 */
 	public static Set<IcfgEdge> computeFeedbackVertexBruteForce(final DfgContainer originalDfg, final ILogger logger) {
-		final ISuccessorProvider<DfgNode> successors = node -> {
-			final Collection<DfgNode> successorsOfNode = originalDfg.getEdgeRelation().getImage(node);
-			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
-		};
-		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
-				successors, new DefaultStronglyConnectedComponentFactory<>(), originalDfg.getNodeList().size(),
-				originalDfg.getNodeList());
 
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = getScc(originalDfg, logger);
 		final Set<DfgNode> cyclicNodes = new HashSet<>();
 		if (scc.getBalls().size() == 0) {
 			logger.info("Found no Cycles, returning empty Set");
@@ -156,10 +158,9 @@ public class CycleRemover {
 		return null;
 	}
 
-	// returns whether the given Dfg is cyclic, if the number of SCCs of the Dfg are the trivial size then it is not
-	// cyclic
-	private static boolean isCyclic(final DfgContainer dfg, final ILogger logger) {
-		// TODO Auto-generated method stub
+	// shorthand for the verbose way of getting a Scc of a dfg
+	private static SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> getScc(final DfgContainer dfg,
+			final ILogger logger) {
 		final ISuccessorProvider<DfgNode> successors = node -> {
 			final Collection<DfgNode> successorsOfNode = dfg.getEdgeRelation().getImage(node);
 			return successorsOfNode != null ? successorsOfNode.iterator() : Collections.emptyIterator();
@@ -167,6 +168,14 @@ public class CycleRemover {
 		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = new SccComputation<>(logger,
 				successors, new DefaultStronglyConnectedComponentFactory<>(), dfg.getNodeList().size(),
 				dfg.getNodeList());
+		return scc;
+	}
+
+	// returns whether the given Dfg is cyclic, if the number of SCCs of the Dfg are the trivial size then it is not
+	// cyclic
+	private static boolean isCyclic(final DfgContainer dfg, final ILogger logger) {
+		// TODO Auto-generated method stub
+		final SccComputation<DfgNode, StronglyConnectedComponent<DfgNode>> scc = getScc(dfg, logger);
 		return scc.getBalls().size() > 0;
 	}
 
