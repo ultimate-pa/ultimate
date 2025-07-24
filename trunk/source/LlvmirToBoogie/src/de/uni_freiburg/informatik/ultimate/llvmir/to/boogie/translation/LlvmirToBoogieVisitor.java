@@ -62,6 +62,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseVisitor;
@@ -787,6 +789,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		if (callIdentifier.equals("@__assert_fail")) {
 			final BooleanLiteral boolLit = new BooleanLiteral(location, false);
 			final AssertStatement assertStmt = new AssertStatement(location, new NamedAttribute[] {}, boolLit);
+			final Check chk = new Check(Spec.ASSERT);
+			chk.annotate(assertStmt);
 			body.addFuncBlock(assertStmt);
 		}
 
