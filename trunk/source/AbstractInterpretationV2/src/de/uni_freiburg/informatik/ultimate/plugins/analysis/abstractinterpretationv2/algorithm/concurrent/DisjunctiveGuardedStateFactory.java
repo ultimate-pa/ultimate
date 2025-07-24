@@ -46,14 +46,16 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	public DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> getInitialState(
 			final String procedure, final AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> interferences) {
 		final var allForkLocs = new HashSet<LOC>();
-		var result = combineForkingStates(procedure, allForkLocs);
+		final var multipleForkLocs = new HashSet<LOC>();
+		var result = combineForkingStates(procedure, allForkLocs, multipleForkLocs);
 
 		if (result != null) {
 			for (final LOC loc : allForkLocs) {
 				final var edge = loc.getOutgoingEdges().iterator().next();
 				if (edge instanceof final ForkThreadCurrent fork) {
+					final var forkUsedMultipleTimes = mForksInLoop.contains(fork) || multipleForkLocs.contains(loc);
 					result = GuardedStateTransformer.assignForkId(procedure,
-							fork.getForkStatement().getThreadID().length, loc, mForksInLoop.contains(fork), result);
+							fork.getForkStatement().getThreadID().length, loc, forkUsedMultipleTimes, result);
 				}
 			}
 			final boolean multipleThreads = wasForkedMultipleTimes(allForkLocs);
@@ -66,12 +68,16 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 	}
 
 	private DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> combineForkingStates(
-			final String procedure, final HashSet<LOC> allForkLocs) {
+			final String procedure, final HashSet<LOC> allForkLocs, final HashSet<LOC> multipliedForks) {
 		final Set<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> forkStates = new HashSet<>();
 		for (final LOC loc : mAnalyzer.getForkLocations(procedure)) {
 			final var state = mStateStorage.getAbstractState(loc);
 			if (state == null) {
 				return null;
+			}
+			if (state.getSingleState(GuardedInterferenceDomainState::union).threadCounter().getThreadInstances()
+					.get(loc.getProcedure()) > 1) {
+				multipliedForks.add(loc);
 			}
 			allForkLocs.add(loc);
 			final var movedState = translateForkLocIntoInitialState(loc, state, procedure);
@@ -92,10 +98,9 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 		final var globalImmutableMap = inputState.getStates().iterator().next().abstractLocationState()
 				.getLocationMap();
 		final var proceduresEntryLoc = globalImmutableMap.getEntryLoc(procedure);
+		// TODO: unsafe
+		final var afterForkLocation = globalImmutableMap.getAbstractLocation((LOC) loc.getOutgoingNodes().getFirst());
 		for (final var singleState : inputState.getStates()) {
-			// TODO: unsafe
-			final var afterForkLocation = globalImmutableMap
-					.getAbstractLocation((LOC) loc.getOutgoingNodes().getFirst());
 			final var executedFork = singleState.movedTo(loc.getProcedure(), afterForkLocation);
 			final var movedOwnershipLocation = new AbstractLocationState<>(proceduresEntryLoc,
 					executedFork.abstractLocationState());
@@ -120,7 +125,6 @@ public class DisjunctiveGuardedStateFactory<UNDERLYINGSTATE extends IAbstractSta
 					}
 				}
 			}
-
 		}
 		if (forks > 1 || isCircular) {
 			return true;
