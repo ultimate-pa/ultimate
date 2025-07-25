@@ -78,6 +78,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	private final String mFilename;
 	private LlvmirLocation mLocation;
 	private final String mLabelIdentifier = "#label";
+	private final static String mUndefIdentifier = "#undef";
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 
@@ -251,6 +252,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				return new UnaryExpression(location, UnaryExpression.Operator.ARITHNEGATIVE, absValue);
 			} else if (valueContext.constant().boolConst() != null) {
 				return new BooleanLiteral(location, valueContext.constant().boolConst().getText().equals("true"));
+			} else if (valueContext.constant().undefConst() != null) {
+				return new IdentifierExpression(location, mUndefIdentifier);
 			}
 			// TODO: Support for other constant operand types
 			throw new AssertionError(
@@ -411,6 +414,11 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	public FunctionBody visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
 		final FunctionBody body = new FunctionBody();
 		body.addFuncLocalVar(createVarDecWithPrimType("int", mLabelIdentifier, mLocation));
+
+		body.addFuncLocalVar(createVarDecWithPrimType("int", mUndefIdentifier, mLocation));
+		final VariableLHS undefVar = new VariableLHS(mLocation, mUndefIdentifier);
+		final HavocStatement havocStmt = new HavocStatement(mLocation, new VariableLHS[] { undefVar });
+		body.addFuncBlock(havocStmt);
 
 		for (final ParseTree child : ctx.children) {
 			final FunctionBody childBody = child.accept(this);
@@ -657,18 +665,29 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			}
 		} else if (instructionType.zExtInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
-			final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
-			final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
-			final VariableLHS zeroVarLhs = new VariableLHS(location, identifier);
-			final VariableLHS oneVarLhs = new VariableLHS(location, identifier);
-			final AssignmentStatement elseAssignment = new AssignmentStatement(location,
-					new LeftHandSide[] { zeroVarLhs }, new Expression[] { zeroLiteral });
-			final AssignmentStatement thenAssignment = new AssignmentStatement(location,
-					new LeftHandSide[] { oneVarLhs }, new Expression[] { oneLiteral });
-			final IfStatement ifStmt = new IfStatement(location,
-					getExpressionFromValue(instructionType.zExtInst().typeValue().value(), location),
-					new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
-			body.addFuncBlock(ifStmt);
+			final String type = instructionType.zExtInst().typeValue().firstClassType().concreteType().intType()
+					.getText();
+			if (type.equals("i1")) {
+				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
+				final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
+				final VariableLHS zeroVarLhs = new VariableLHS(location, identifier);
+				final VariableLHS oneVarLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement elseAssignment = new AssignmentStatement(location,
+						new LeftHandSide[] { zeroVarLhs }, new Expression[] { zeroLiteral });
+				final AssignmentStatement thenAssignment = new AssignmentStatement(location,
+						new LeftHandSide[] { oneVarLhs }, new Expression[] { oneLiteral });
+				final IfStatement ifStmt = new IfStatement(location,
+						getExpressionFromValue(instructionType.zExtInst().typeValue().value(), location),
+						new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
+				body.addFuncBlock(ifStmt);
+			} else {
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+						new Expression[] {
+								getExpressionFromValue(instructionType.zExtInst().typeValue().value(), location) });
+				body.addFuncBlock(assignment);
+			}
+
 		} else if (instructionType.addInst() != null) {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 			body.addFuncBlock(
@@ -693,12 +712,39 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 		} else if (instructionType.callInst() != null) {
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
-			if (callIdentifier.equals("@__VERIFIER_nondet_int")) {
+			if (callIdentifier.equals("@__VERIFIER_nondet_int") || callIdentifier.equals("@__VERIFIER_nondet_short")
+					|| callIdentifier.equals("@__VERIFIER_nondet_ulong")
+					|| callIdentifier.equals("@__VERIFIER_nondet_uint128")
+					|| callIdentifier.equals("@__VERIFIER_nondet_char")
+					|| callIdentifier.equals("@__VERIFIER_nondet_uchar")) {
 				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
 				body.addFuncBlock(havocStmt);
 			}
+		} else if (instructionType.selectInst() != null) {
+			final Expression ifExpr = getExpressionFromValue(instructionType.selectInst().typeValue(0).value(),
+					location);
+			final Expression thenExpr = getExpressionFromValue(instructionType.selectInst().typeValue(1).value(),
+					location);
+			final Expression elseExpr = getExpressionFromValue(instructionType.selectInst().typeValue(2).value(),
+					location);
+			final String type = instructionType.selectInst().typeValue(1).firstClassType().concreteType().intType()
+					.getText();
+			if (type.equals("i1")) {
+				body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
+			} else {
+				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+			}
+			final VariableLHS thenVarLhs = new VariableLHS(location, identifier);
+			final VariableLHS elseVarLhs = new VariableLHS(location, identifier);
+			final AssignmentStatement thenAssignment = new AssignmentStatement(location,
+					new LeftHandSide[] { thenVarLhs }, new Expression[] { thenExpr });
+			final AssignmentStatement elseAssignment = new AssignmentStatement(location,
+					new LeftHandSide[] { elseVarLhs }, new Expression[] { elseExpr });
+			final IfStatement ifStmt = new IfStatement(location, ifExpr, new Statement[] { thenAssignment },
+					new Statement[] { elseAssignment });
+			body.addFuncBlock(ifStmt);
 		}
 
 		else {
