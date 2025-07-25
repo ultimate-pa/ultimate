@@ -13,11 +13,14 @@ ARG DIR_BUILD="/home/build"
 ARG DIR_ULTIMATE="${DIR_BUILD}/ultimate"
 ARG DIR_OUTPUT="${DIR_ULTIMATE}/${REPO_DIR_BUILD}"
 ARG DIR_TOOLS="${DIR_ULTIMATE}/${REPO_DIR_TOOLS}"
+ARG USER_NAME="ultimate"
+ARG USER_GROUP="ultimate"
+ARG USER_HOME="/home/${USER_NAME}"
 
 #------------------------------------------------------------------------------
 # 1st build stage: compile and materialize Ultimate
 #------------------------------------------------------------------------------
-FROM debian:bookworm AS build
+FROM alpine:3 AS build
 
 ARG REPO_URL="https://github.com/ultimate-pa/ultimate.git"
 ARG REPO_BRANCH="dev"
@@ -29,11 +32,9 @@ ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 
 # install build dependencies for an entire Ultimate build
-RUN apt-get update && \
-    apt-get install -y "git" \
+RUN apk add --no-cache "git" \
                        "maven" \
-                       "openjdk-21-jdk" && \
-    rm -rf /var/lib/apt/lists/*
+                       "openjdk21"
 
 # clone fresh Ultimate Git repository
 RUN mkdir -p "${DIR_BUILD}" && \
@@ -46,7 +47,7 @@ RUN mvn -f "${REPO_MAVEN_ROOT}" clean package -P materialize
 #------------------------------------------------------------------------------
 # 2nd build stage: package common Ultimate artifacts shared by all products
 #------------------------------------------------------------------------------
-FROM debian:bookworm AS ultimate-common
+FROM alpine:3 AS ultimate-common
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -54,22 +55,30 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 # install runtime dependencies for all Ultimate products
-RUN apt-get update && \
-    apt-get install -y "apt-utils" && \
-    apt-get install -y "openjdk-11-jre" && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache "libc6-compat" \
+                       "openjdk21-jre-headless"
 
-# prepare installation directory for an Ultimate product
-RUN mkdir -p "${DIR_ULTIMATE}"
-WORKDIR "${DIR_ULTIMATE}"
+# add the non-root user 'ultimate' for the Ultimate products and prepare
+# installation directory for an Ultimate product
+RUN mkdir -p "${USER_HOME}" && \
+    addgroup "${USER_GROUP}" && \
+    adduser -G "${USER_GROUP}" -H -h "${USER_HOME}" -D "${USER_NAME}" && \
+    chown -R "${USER_NAME}:${USER_GROUP}" "${USER_HOME}"
+WORKDIR "${USER_HOME}"
 
 # install alread compiled tools for all Ultimate products
 COPY --from=build "${DIR_TOOLS}/cvc4" "/usr/bin/cvc4"
 COPY --from=build "${DIR_TOOLS}/ltl2ba" "/usr/bin/ltl2ba"
 COPY --from=build "${DIR_TOOLS}/mathsat" "/usr/bin/mathsat"
 COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
+
+# add Welcome script to print Ultimate version
+ADD "welcome.sh" "/etc/profile.d/welcome.sh"
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate CLI
@@ -82,13 +91,19 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 # install already built Ultimate CLI product
-COPY --from=build "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "/usr/bin/Ultimate"
 
-# default entry point to print installed Ultimate CLI version
-CMD ["Ultimate", "-version"]
+# run the Ultimate CLI product as non-root user
+USER "${USER_NAME}"
+
+# default entry point to print installed Ultimate version
+ENTRYPOINT ["/bin/sh", "-l"]
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate Debug UI
@@ -101,25 +116,26 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 # install graphical dependencies for Ultimate Debug UI product
-RUN apt-get update && \
-    apt-get install -y "libswt-gtk-4-jni" && \
-    apt-get install -y "libswt-gtk-4-java" && \
-    apt-get install -y "xauth" && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache "openjdk21-jre" \
+                       "libcanberra-gtk3" \
+                       "dbus-x11" \
+                       "ttf-freefont" \
+                       "xauth"
 
 # install already built Ultimate Debug UI product
-COPY --from=build "${DIR_OUTPUT}/Debug-E4/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/UltimateDebug" "/usr/bin/UltimateDebug"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/Debug-E4/linux/gtk/x86_64" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/UltimateDebug" "/usr/bin/UltimateDebug"
 
-# run the Ultimate Debug UI product as non-root user 'ultimate'
-RUN useradd --no-create-home --home-dir "${DIR_ULTIMATE}" ultimate && \
-    chown -R ultimate:ultimate "${DIR_ULTIMATE}"
-USER ultimate
+# run the Ultimate Debug UI product as non-root user
+#USER "${USER_NAME}"
 
 # default entry point to print installed Ultimate version
-CMD ["UltimateDebug", "-version"]
+ENTRYPOINT ["/bin/sh", "-l"]
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate ReqAnalyzer
@@ -132,13 +148,19 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 # install already built Ultimate ReqAnalyzer product
-COPY --from=build "${DIR_OUTPUT}/ReqAnalyzer/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/ReqAnalyzer" "/usr/bin/ReqAnalyzer"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/ReqAnalyzer/linux/gtk/x86_64" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/ReqAnalyzer" "/usr/bin/ReqAnalyzer"
+
+# run the Ultimate ReqAnalyzer product as non-root user
+USER "${USER_NAME}"
 
 # default entry point to print installed Ultimate version
-CMD ["ReqAnalyzer", "-version"]
+ENTRYPOINT ["/bin/sh", "-l"]
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate DeltaDebugger
@@ -151,13 +173,16 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 # install already built Ultimate DeltaDebugger product
-COPY --from=build "${DIR_OUTPUT}/DeltaDebugger/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/DeltaDebugger/linux/gtk/x86_64" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "/usr/bin/Ultimate"
 
 # default entry point to print installed Ultimate version
-CMD ["Ultimate", "-version"]
+ENTRYPOINT ["/bin/sh", "-l"]
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate Eliminator
@@ -170,13 +195,19 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 # install already built Ultimate Eliminator product
-COPY --from=build "${DIR_OUTPUT}/UltimateEliminator/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/Ultimate" "/usr/bin/Ultimate"
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/UltimateEliminator/linux/gtk/x86_64" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/Ultimate" "/usr/bin/Ultimate"
+
+# run the Ultimate Eliminator product as non-root user
+USER "${USER_NAME}"
 
 # default entry point to print installed Ultimate version
-CMD ["Ultimate", "-version"]
+ENTRYPOINT ["/bin/sh", "-l"]
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate WebBackend
@@ -189,6 +220,9 @@ ARG DIR_BUILD
 ARG DIR_ULTIMATE
 ARG DIR_OUTPUT
 ARG DIR_TOOLS
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
 
 ARG REPO_DIR_WEBSITE_CONFIG="releaseScripts/website-config"
 ARG DIR_WEBSITE_CONFIG="${DIR_ULTIMATE}/${REPO_DIR_WEBSITE_CONFIG}"
@@ -206,30 +240,32 @@ ENV ULTIMATE_LOG_LEVEL="INFO"
 ENV ULTIMATE_DIR_TMP="/tmp/ultimate"
 ENV ULTIMATE_TIMEOUT=90
 
-# install 'dockerize' for automatic configuration file creation
-ENV DOCKERIZE_VERSION="v0.9.5"
-RUN apt-get update && \
-    apt-get install -y "wget" \
-                       "curl" && \
-    wget -q -O - "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" | tar xzf - -C "/usr/local/bin" && \
-    apt-get autoremove -yqq --purge "wget" && \
-    rm -rf /var/lib/apt/lists/*
-
-# install already built Ultimate product
-COPY --from=build "${DIR_OUTPUT}/WebBackend/linux/gtk/x86_64" "${DIR_ULTIMATE}"
-RUN ln -s "${DIR_ULTIMATE}/WebBackend" "/usr/bin/WebBackend"
-
-# add configuration files and templates for 'dockerize' and Ultimate
-COPY --from=build "${DIR_WEBSITE_CONFIG}/backend/settings_whitelist.json" "${DIR_ULTIMATE}/settings_whitelist.json"
-ADD "web.config.properties.tpl" "${DIR_ULTIMATE}/web.config.properties.tpl"
-ADD "WebBackend.ini.tpl" "${DIR_ULTIMATE}/WebBackend.ini.tpl"
-RUN rm -f "${DIR_ULTIMATE}/WebBackend.ini"
-
-ENV ULTIMATE_BACKEND_SETTINGS_WHITELIST="${DIR_ULTIMATE}/settings_whitelist.json"
-ENV ULTIMATE_BACKEND_SETTINGS_FILE="${DIR_ULTIMATE}/web.config.properties"
-
 # create directory to store temporary files
 RUN mkdir -p "${ULTIMATE_DIR_TMP}"
+
+# install 'dockerize' for automatic configuration file creation
+ENV DOCKERIZE_VERSION="v0.9.5"
+RUN apk add --no-cache "wget" \
+                       "openssl" \
+                       "curl" && \
+    wget -q -O - "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" | tar xzf - -C "/usr/local/bin" && \
+    apk del --no-cache "wget"
+
+# install already built Ultimate WebBackend product
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/WebBackend/linux/gtk/x86_64" "${USER_HOME}"
+RUN ln -s "${USER_HOME}/WebBackend" "/usr/bin/WebBackend"
+
+# run the Ultimate WebBackend product as non-root user
+USER "${USER_NAME}"
+
+# add configuration files and templates for 'dockerize' and Ultimate
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_WEBSITE_CONFIG}/backend/settings_whitelist.json" "${USER_HOME}/settings_whitelist.json"
+ADD "web.config.properties.tpl" "${USER_HOME}/web.config.properties.tpl"
+ADD "WebBackend.ini.tpl" "${USER_HOME}/WebBackend.ini.tpl"
+RUN rm -f "${USER_HOME}/WebBackend.ini"
+
+ENV ULTIMATE_BACKEND_SETTINGS_WHITELIST="${USER_HOME}/settings_whitelist.json"
+ENV ULTIMATE_BACKEND_SETTINGS_FILE="${USER_HOME}/web.config.properties"
 
 # expose communication port of the Webbackend
 EXPOSE "${ULTIMATE_BACKEND_PORT}"
@@ -239,6 +275,6 @@ HEALTHCHECK --interval=1m --timeout=10s --start-period=20s \
     CMD curl -f "http://${ULTIMATE_BACKEND_HOST}:${ULTIMATE_BACKEND_PORT}${ULTIMATE_BACKEND_ROUTE}" || exit 1
 
 # default entry point to automatically configure and start the Ultimate Webbackend product
-CMD dockerize -template "web.config.properties.tpl:web.config.properties" \
-              -template "WebBackend.ini.tpl:WebBackend.ini" \
-              WebBackend
+ENTRYPOINT ["dockerize", "-template", "web.config.properties.tpl:web.config.properties", \
+                         "-template", "WebBackend.ini.tpl:WebBackend.ini", \
+                         "WebBackend"]

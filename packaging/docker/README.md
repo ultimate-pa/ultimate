@@ -38,7 +38,7 @@ To do this, a graphic connection to the host system must be established via the 
 ```shell
 docker run -it --network host \
            -e DISPLAY=$DISPLAY \
-           -v <XAUTHORITY>:/home/build/ultimate/.Xauthority \
+           -v <XAUTHORITY>:/home/ultimate/.Xauthority \
            -v /tmp/.X11-unix:/tmp/.X11-unix \
            ultimate-debug
 ```
