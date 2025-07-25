@@ -50,10 +50,10 @@ public class WitnessGuidedAssertOrder<L extends IAction> implements IAssertOrder
 		final var startEnd = computeStartEnd(counterexample);
 		final List<Set<Integer>> underlyingPartitions = mUnderlying.partition(counterexample);
 		// We use the following partitioning:
-		// 1) We first assert the first and shortest statements between starting with a negated witness assumption
-		// and ending with a witness assumption.
-		// 2) Then, the statements before this negated witness assumption are asserted.
-		// 3) Finally, the statements after this witness assumption are asserted.
+		// 1) We first assert the last and shortest block of statements starting with a witness assumption and ending
+		// with a negated witness assumption.
+		// 2) Then, the statements before this witness assumption are asserted.
+		// 3) Finally, the statements after this negated witness assumption are asserted.
 
 		// The first block is already sufficient for infeasibility, if the corresponding invariants in the witness
 		// are inductive invariants. If the first invariant is indeed an invariant, but not inductive, we also need
@@ -79,17 +79,17 @@ public class WitnessGuidedAssertOrder<L extends IAction> implements IAssertOrder
 	}
 
 	private Pair<Integer, Integer> computeStartEnd(final Counterexample<L> counterexample) {
-		int end = counterexample.length() - 1;
-		for (int i = 0; i < counterexample.length(); i++) {
-			if (isMatchingWitnessAssumption(counterexample.getWord().getSymbol(i), true)) {
-				end = i;
+		int start = 0;
+		for (int i = counterexample.length() - 1; i >= 0; i--) {
+			if (isMatchingWitnessAssumption(counterexample.getWord().getSymbol(i), false)) {
+				start = i;
 				break;
 			}
 		}
-		int start = 0;
-		for (int i = end; i >= 0; i--) {
-			if (isMatchingWitnessAssumption(counterexample.getWord().getSymbol(i), false)) {
-				start = i;
+		int end = counterexample.length() - 1;
+		for (int i = start; i < counterexample.length(); i++) {
+			if (isMatchingWitnessAssumption(counterexample.getWord().getSymbol(i), true)) {
+				end = i;
 				break;
 			}
 		}
