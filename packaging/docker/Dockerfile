@@ -17,7 +17,7 @@ ARG DIR_TOOLS="${DIR_ULTIMATE}/${REPO_DIR_TOOLS}"
 #------------------------------------------------------------------------------
 # 1st build stage: compile and materialize Ultimate
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS build
+FROM debian:bookworm AS build
 
 ARG REPO_URL="https://github.com/ultimate-pa/ultimate.git"
 ARG REPO_BRANCH="dev"
@@ -32,7 +32,7 @@ ARG DIR_OUTPUT
 RUN apt-get update && \
     apt-get install -y "git" \
                        "maven" \
-                       "openjdk-11-jdk" && \
+                       "openjdk-21-jdk" && \
     rm -rf /var/lib/apt/lists/*
 
 # clone fresh Ultimate Git repository
@@ -46,7 +46,7 @@ RUN mvn -f "${REPO_MAVEN_ROOT}" clean package -P materialize
 #------------------------------------------------------------------------------
 # 2nd build stage: package common Ultimate artifacts shared by all products
 #------------------------------------------------------------------------------
-FROM debian:bullseye AS ultimate-common
+FROM debian:bookworm AS ultimate-common
 
 ARG REPO_DIR_BUILD
 ARG REPO_DIR_TOOLS
@@ -207,7 +207,7 @@ ENV ULTIMATE_DIR_TMP="/tmp/ultimate"
 ENV ULTIMATE_TIMEOUT=90
 
 # install 'dockerize' for automatic configuration file creation
-ENV DOCKERIZE_VERSION="v0.7.0"
+ENV DOCKERIZE_VERSION="v0.9.5"
 RUN apt-get update && \
     apt-get install -y "wget" \
                        "curl" && \
