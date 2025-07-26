@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.tracecheckerutils.dfg;
 
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author christof.schuster@gmx.de
  */
 public class DfgContainer {
+	private static final boolean MULTI_LINE_TO_STRING = true;
 	private final HashRelation<DfgNode, DfgNode> mEdgeRelation;
 	private final Set<DfgNode> mNodeList;
 
@@ -63,7 +65,25 @@ public class DfgContainer {
 
 	@Override
 	public String toString() {
-		return "DfgContainer [mEdgeRelation=" + mEdgeRelation + ", mNodeList=" + mNodeList + "]";
+		if (!MULTI_LINE_TO_STRING) {
+			return "DfgContainer [mEdgeRelation=" + mEdgeRelation + ", mNodeList=" + mNodeList + "]";
+		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Nodes:");
+		sb.append(System.lineSeparator());
+		for (final DfgNode node : mNodeList) {
+			sb.append(node);
+			sb.append(System.lineSeparator());
+		}
+		sb.append("Edges:");
+		sb.append(System.lineSeparator());
+		for (final Entry<DfgNode, DfgNode> entry : mEdgeRelation) {
+			sb.append(entry.getKey());
+			sb.append("    --->    ");
+			sb.append(entry.getValue());
+			sb.append(System.lineSeparator());
+		}
+		return sb.toString();
 	}
 
 	@Override
