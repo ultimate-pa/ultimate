@@ -44,9 +44,10 @@ public class GuardedInterferenceDomainState<STATE extends IAbstractState<STATE>,
 				new AbstractLocationState<>(location, globalMap, threadNames));
 	}
 
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int newLocation) {
+	public GuardedInterferenceDomainState<STATE, ACTION, LOC> movedTo(final String threadName, final int locationOrigin,
+			final int locationTarget) {
 		return new GuardedInterferenceDomainState<>(this.state(), this.threadCounter(),
-				this.abstractLocationState().movedTo(threadName, newLocation));
+				this.abstractLocationState().movedTo(threadName, locationOrigin, locationTarget));
 	}
 
 	public GuardedInterferenceDomainState<STATE, ACTION, LOC> copyToNewStateLocation(final LOC newLoc) {

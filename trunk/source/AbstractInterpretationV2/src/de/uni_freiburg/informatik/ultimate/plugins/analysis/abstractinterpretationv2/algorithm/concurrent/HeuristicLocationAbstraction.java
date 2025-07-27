@@ -42,6 +42,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 		mServices = services;
 		for (final String thread : mIcfg.getProcedureEntryNodes().keySet()) {
 			mWrittenByThread.put(thread, new HashSet<>());
+			mPerThreadLocationCounterMap.put(thread, 0);
 		}
 		mMutexVarSplitMap = broadMutexSplitting(false);
 		mMutexVarSplitMapWithExitMarked = broadMutexSplitting(true);
@@ -93,7 +94,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	}
 
 	private int getAndIncrementThreadLocationCounter(final String thread) {
-		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, 0);
+		final int counter = mPerThreadLocationCounterMap.getOrDefault(thread, -1);
 		mPerThreadLocationCounterMap.put(thread, counter + 1);
 		return counter;
 	}

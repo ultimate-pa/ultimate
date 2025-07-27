@@ -17,7 +17,7 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		mAbstractLocationMap = globalMap;
 		final var tracker = new AbstractLocationGlobalTracker(threadNameSet, mAbstractLocationMap);
 		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
-		mLocationTracker = tracker.movedTo(location.getProcedure(), abstractLocation);
+		mLocationTracker = tracker.movedTo(location.getProcedure(), -1, abstractLocation);
 	}
 
 	public AbstractLocationState(final LOC location, final AbstractLocationMap<LOC> locMap,
@@ -25,14 +25,14 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		mAbstractLocationMap = locMap;
 		final var track = new AbstractLocationGlobalTracker(tracker);
 		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
-		mLocationTracker = track.movedTo(location.getProcedure(), abstractLocation);
+		mLocationTracker = track.movedTo(location.getProcedure(), -1, abstractLocation);
 	}
 
 	public AbstractLocationState(final LOC location, final AbstractLocationState<LOC> other) {
 		mAbstractLocationMap = other.mAbstractLocationMap;
 		final var track = new AbstractLocationGlobalTracker(other.mLocationTracker);
 		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
-		mLocationTracker = track.movedTo(location.getProcedure(), abstractLocation);
+		mLocationTracker = track.movedTo(location.getProcedure(), -1, abstractLocation);
 	}
 
 	public AbstractLocationState(final AbstractLocationMap<LOC> locMap, final AbstractLocationGlobalTracker tracker) {
@@ -66,12 +66,39 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return new AbstractLocationState<>(mAbstractLocationMap, trackIntersection);
 	}
 
+	public AbstractLocationState<LOC> intersectSelf(final AbstractLocationState<LOC> other) {
+		final var trackIntersection = mLocationTracker.selfinterSect(other.getTracker());
+		if (trackIntersection == null) {
+			return null;
+		}
+		return new AbstractLocationState<>(mAbstractLocationMap, trackIntersection);
+	}
+
 	public AbstractLocationState<LOC> copyToNewState(final LOC newLoc) {
 		return new AbstractLocationState<>(newLoc, mAbstractLocationMap, mLocationTracker);
 	}
 
-	public AbstractLocationState<LOC> movedTo(final String threadName, final int newLocationInt) {
-		return new AbstractLocationState<>(mAbstractLocationMap, mLocationTracker.movedTo(threadName, newLocationInt));
+	public AbstractLocationState<LOC> movedTo(final String threadName, final int locationOrigin,
+			final int locationTarget) {
+		return new AbstractLocationState<>(mAbstractLocationMap,
+				mLocationTracker.movedTo(threadName, locationOrigin, locationTarget));
+	}
+
+	public AbstractLocationState<LOC> movedToInf(final String threadName, final int locationOrigin,
+			final int locationTarget, final int abstractEntryLoc) {
+		return new AbstractLocationState<>(mAbstractLocationMap,
+				mLocationTracker.movedInf(threadName, locationOrigin, locationTarget, abstractEntryLoc));
+	}
+
+	public AbstractLocationState<LOC> selfMovedTo(final String threadName, final int newLocationInt) {
+		return new AbstractLocationState<>(mAbstractLocationMap,
+				mLocationTracker.selfMoved(threadName, newLocationInt));
+	}
+
+	public AbstractLocationState<LOC> selfMovedToInf(final String threadName, final int newLocationInt,
+			final int abstractEntryLoc) {
+		return new AbstractLocationState<>(mAbstractLocationMap,
+				mLocationTracker.selfMovedInf(threadName, newLocationInt, abstractEntryLoc));
 	}
 
 	public SubsetResult isSubsetOf(final AbstractLocationState<LOC> other) {
@@ -91,6 +118,8 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		final StringBuilder s = new StringBuilder();
 		mLocationTracker.threadLocationMap().keySet()
 				.forEach(k -> s.append(k + ":" + mLocationTracker.getLocationForThread(k).toString() + " "));
+		mLocationTracker.threadLocationMap().keySet()
+				.forEach(k -> s.append(k + "(SELF):" + mLocationTracker.getLocationForSelfThread(k).toString() + " "));
 		return s.toString();
 	}
 

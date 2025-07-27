@@ -168,8 +168,8 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 		final var initialFactory = new DisjunctiveGuardedStateFactory<>(mStateStorage, mAnalyzer, mMaxParallelStates,
 				newDomain, mEntryLocs, mIfcg, mCache);
 		final var paramsWithInterferences = mParams.setStorage(mStateStorage.copy())
-				.setVariableProvider(new InterferingVariableProvider<>(mVarProvider,
-						initialFactory.getInitialState(procedure, interferences)))
+				.setVariableProvider(
+						new InterferingVariableProvider<>(mVarProvider, initialFactory.getInitialState(procedure)))
 				.setDomain(newDomain);
 		final var fixpointEngine = mFixpointEngineFactory.constructFixpointEngine(paramsWithInterferences);
 		return fixpointEngine;
@@ -191,7 +191,7 @@ public class FixpointEngineGuardedConcurrent<UNDERLYINGSTATE extends IAbstractSt
 
 	private AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeNewInterferences() {
 		final var newInterferences = InterferenceCreator.computeInterferences(mEntryLocs, mIfcg, mStateStorage,
-				mTransitionProvider, mLocationAbstraction, mLocationAbstractionCalculator);
+				mTransitionProvider, mLocationAbstraction);
 		return newInterferences;
 	}
 
