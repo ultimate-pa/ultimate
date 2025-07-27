@@ -105,6 +105,10 @@ textarea {
 
 .navbar {
   z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 4px;     /* erlaubt Zeilenumbruch */
+  justify-content: flex-start; /* linke Ausrichtung */
 }
 
 .nav-link,
@@ -133,10 +137,15 @@ textarea {
  * Hide visually and from screen readers
  */
 
-.hidden {
-  display: none !important;
+.disable {
+	pointer-events: none;
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
+.hidden {
+	display: none !important;
+}
 
 /*
  * Break text into multilines.

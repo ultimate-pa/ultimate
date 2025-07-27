@@ -23,7 +23,14 @@ js: [ "redirect_legacy_urls.js" ]
           <a class="link-primary" href="{{ tool.url | relative_url }}">{{tool.title}}</a>
           <span class="float-end">
           {% for lang in tool.languages %}
-          <span class="badge bg-secondary">{{lang.language}}</span>
+		  <span class="badge rounded-pill
+		    {% if lang.language == 'C' %} text-bg-danger
+		    {% elsif lang.language == 'Boogie' %} text-bg-warning
+			{% elsif lang.language == 'Smt' %} text-bg-success
+			{% elsif lang.language == 'automata_script' %} text-bg-info
+		    {% else %} text-bg-secondary
+		    {% endif %}
+		  ">{{lang.language}}</span>
           {% endfor %}</span></div>
         <div class="card-body text-black-70">
           <p class="card-text text-justify">{{tool.description}}</p>

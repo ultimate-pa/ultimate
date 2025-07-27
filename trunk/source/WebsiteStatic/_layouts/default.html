@@ -39,21 +39,25 @@
           aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
-    
-        <div class="collapse navbar-collapse" id="navbar_content">
-          <ul class="navbar-nav" id="navbar_breadcrumb">
+		<ul class="navbar-nav" id="navbar_breadcrumb">
           {% if page.url != '/' %}
             <li class="nav-item active">
               <a class="nav-link" href="{{ page.url | relative_url }}">{{ page.title }} <span class="sr-only">(current)</span></a>
             </li>
           {% endif %}
           </ul>
+    </nav>
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="collapse navbar-collapse" id="navbar_content">
+          
         </div>
       </nav>
       <div id="content" class="d-flex flex-column flex-grow-1 p-5">
         {{ content }}
       </div>
       <footer class="bg-light py-2">
+		<p id="version_info_text" class="float-end mx-2"></p>
+		<a class="float-end mx-2"  href="{{ 'privacy-policy/' | relative_url }}">Privacy Policy</a>
         <a class="float-end mx-2" href="{{ 'imprint/' | relative_url }}">Imprint</a>
       </footer>
     </div>

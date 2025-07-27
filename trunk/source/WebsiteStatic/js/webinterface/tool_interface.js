@@ -307,11 +307,15 @@ function refresh_navbar() {
 
 		set_available_code_samples(_CONTEXT.current_worker.id);
 		set_available_frontend_settings(_CONTEXT.current_worker.language);
-		$('#navbar_execute_interface').removeClass('hidden');
+		$('#navbar_execute_interface').removeClass('disable');
+		$('#editor').removeClass('disable');
+		$('#create_persistence_link').removeClass('disable');
 	} else {
-		$('#navbar_sample_select_dropdown').addClass('hidden');
-		$('#navbar_execute_interface').addClass('hidden');
-		$('#navbar_settings_select_dropdown').addClass('hidden');
+		$('#navbar_sample_select_dropdown').addClass('disable');
+		$('#editor').addClass('disable');
+		$('#create_persistence_link').addClass('disable');
+		$('#navbar_execute_interface').addClass('disable');
+		$('#navbar_settings_select_dropdown').addClass('disable');
 	}
 }
 
@@ -605,7 +609,7 @@ function set_available_code_samples(worker_id) {
 	}
 
 	if (example_entries.length > 0) {
-		$('#navbar_sample_select_dropdown').removeClass('hidden');
+		$('#navbar_sample_select_dropdown').removeClass('disable');
 	}
 	samples_menu.html(example_entries);
 	$('.sample-selection').on({
@@ -699,11 +703,11 @@ function set_available_frontend_settings(language) {
 	// Show the settings
 	settings_menu.html(settings_entries);
 	if (settings_entries.length > 0) {
-		$('#settings_header').removeClass('hidden');
+		$('#settings_header').removeClass('disable');
 	} else {
-		$('#settings_header').addClass('hidden');
+		$('#settings_header').addClass('disable');
 	}
-	$('#navbar_settings_select_dropdown').removeClass('hidden');
+	$('#navbar_settings_select_dropdown').removeClass('disable');
 
 	// Prevent setting menu from closing when clicking checkboxes or selections.
 	$('.form-check, .form-control').on('click', function (e) {
@@ -729,7 +733,7 @@ function set_execute_spinner(activate) {
 			'<span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span> Running ...'
 		);
 	} else {
-		exec_button.html('Execute');
+		exec_button.html('Execute <span class="oi oi-play-circle"></span>');
 		set_canceling_spinner(false);
 		cancel_button.addClass('hidden');
 	}
@@ -739,12 +743,12 @@ function set_canceling_spinner(activate) {
 	let cancel_button = $('#navbar_cancel_interface');
 	let exec_button = $('#navbar_execute_interface');
 	if (activate) {
-		exec_button.addClass('hidden');
+		exec_button.addClass('disable');
 		cancel_button.html(
 			'<span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>Canceling ... '
 		);
 	} else {
-		exec_button.removeClass('hidden');
-		cancel_button.html('(Click to cancel)');
+		exec_button.removeClass('disable');
+		cancel_button.html('Cancel execute');
 	}
 }

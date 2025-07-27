@@ -9,7 +9,7 @@ const _CONFIG = {
 	},
 	editor: {
 		// Default content of the editor.
-		init_code: '// Enter code here ...',
+		init_code: '// Choose language first to enter code here ...',
 		// default_msg_orientation: one of ["bottom" | "left"], 
 		//                          determines the ultimate response messages default orientation.
 		default_msg_orientation: "left"
