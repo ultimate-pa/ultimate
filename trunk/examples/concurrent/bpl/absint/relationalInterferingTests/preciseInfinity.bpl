@@ -15,12 +15,10 @@ modifies mutex, x;
 procedure one()
 modifies mutex, x;
 {
-    while (true) {
-        if (!mutex) {
-            mutex := true;
-            break;
-        }
-    }
+  atomic {
+    assume !mutex;
+    mutex := true;
+  }
 
     x := x + 1;
     assert x == 1;

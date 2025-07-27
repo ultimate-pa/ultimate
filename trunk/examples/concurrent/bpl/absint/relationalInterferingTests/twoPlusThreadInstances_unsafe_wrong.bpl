@@ -12,7 +12,7 @@ modifies x;
 {
     x := 1;
     fork 1 one();
-    fork 2 one();
+    fork 2,2 one();
     assert x < 10;
 }
 
