@@ -13,17 +13,17 @@ import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 
-// TODO: Replace Integer usage with value-abstraction, so we can call abstractions on this
-// TODO: make immutable
 public class ThreadInstanceCounter<LOC extends IcfgLocation> {
-	private final Map<String, Integer> mThreadInstances;
+	private final Map<String, IntervalDomainValue> mThreadCounts;
 	private final Set<String> mThreadNameSet;
 	private final Map<String, List<Integer>> mForkIds;
 	private final Set<LOC> mSeenForks;
 
 	public ThreadInstanceCounter(final ThreadInstanceCounter<LOC> other) {
-		mThreadInstances = new HashMap<>(other.mThreadInstances);
+		mThreadCounts = new HashMap<>(other.mThreadCounts);
 		mThreadNameSet = new HashSet<>(other.mThreadNameSet);
 		mForkIds = new HashMap<>();
 		for (final Map.Entry<String, List<Integer>> entry : other.mForkIds.entrySet()) {
@@ -32,9 +32,9 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		mSeenForks = new HashSet<>(other.mSeenForks);
 	}
 
-	public ThreadInstanceCounter(final Map<String, Integer> threadMap, final Map<String, List<Integer>> forkMap,
-			final Set<LOC> seenForks) {
-		mThreadInstances = new HashMap<>(threadMap);
+	public ThreadInstanceCounter(final Map<String, IntervalDomainValue> threadMap,
+			final Map<String, List<Integer>> forkMap, final Set<LOC> seenForks) {
+		mThreadCounts = new HashMap<>(threadMap);
 		mThreadNameSet = new HashSet<>(threadMap.keySet());
 		mForkIds = new HashMap<>();
 		for (final Map.Entry<String, List<Integer>> entry : forkMap.entrySet()) {
@@ -43,7 +43,7 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		mSeenForks = new HashSet<>(seenForks);
 	}
 
-	public ThreadInstanceCounter(final Map<String, Integer> threadMap) {
+	public ThreadInstanceCounter(final Map<String, IntervalDomainValue> threadMap) {
 		this(threadMap, threadMap.keySet().stream().collect(Collectors.toMap(t -> t, t -> new ArrayList<>())),
 				Collections.emptySet());
 	}
@@ -53,21 +53,12 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		this(other.getThreadInstances(), forkMap, seenForks);
 	}
 
-	public Map<String, Integer> getThreadInstances() {
-		return Collections.unmodifiableMap(mThreadInstances);
+	public Map<String, IntervalDomainValue> getThreadInstances() {
+		return Collections.unmodifiableMap(mThreadCounts);
 	}
 
 	public Set<String> getThreadNameSet() {
 		return Collections.unmodifiableSet(mThreadNameSet);
-	}
-
-	public Map<String, List<Integer>> getForkIds() {
-		return mForkIds.entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, entry -> Collections.unmodifiableList(entry.getValue())));
-	}
-
-	public Set<LOC> getSeenForks() {
-		return Collections.unmodifiableSet(mSeenForks);
 	}
 
 	public ThreadInstanceCounter<LOC> assignForkId(final String threadName, final int forkId, final LOC forkLoc,
@@ -113,11 +104,6 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		return new ThreadInstanceCounter<>(newCounter, mapCopy, setCopy);
 	}
 
-	public List<Integer> getForkIds(final String threadId) {
-		final List<Integer> forkList = mForkIds.get(threadId);
-		return forkList == null ? List.of() : Collections.unmodifiableList(forkList);
-	}
-
 	public Map<String, List<Integer>> getAllForkIds() {
 		final Map<String, List<Integer>> copy = new HashMap<>();
 		for (final Map.Entry<String, List<Integer>> entry : mForkIds.entrySet()) {
@@ -131,33 +117,41 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 	}
 
 	public ThreadInstanceCounter<LOC> setThreadsActive(final Collection<String> threadName) {
-		final var newInstanceMap = new HashMap<>(mThreadInstances);
-		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) < 1)
-				.forEach(p -> newInstanceMap.put(p, 1));
+		final var newInstanceMap = new HashMap<>(mThreadCounts);
+		final IntervalDomainValue one = new IntervalDomainValue(1, 1);
+		threadName.stream().filter(p -> newInstanceMap.get(p) != null)
+				.filter(p -> newInstanceMap.get(p).getUpper() != null)
+				.filter(p -> newInstanceMap.get(p).getUpper().getValue().intValue() < 1)
+				.forEach(p -> newInstanceMap.put(p, one));
 		return new ThreadInstanceCounter<>(newInstanceMap, mForkIds, mSeenForks);
 	}
 
 	public ThreadInstanceCounter<LOC> setThreadsInActive(final Collection<String> threadName) {
-		final var newInstanceMap = new HashMap<>(mThreadInstances);
-		threadName.stream().filter(p -> newInstanceMap.get(p) != null).filter(p -> newInstanceMap.get(p) > 0)
-				.forEach(p -> newInstanceMap.put(p, 0));
+		final var newInstanceMap = new HashMap<>(mThreadCounts);
+		final IntervalDomainValue zero = new IntervalDomainValue(0, 0);
+		threadName.stream().filter(p -> newInstanceMap.get(p) != null)
+				.filter(p -> newInstanceMap.get(p).getUpper().getValue().intValue() > 0)
+				.forEach(p -> newInstanceMap.put(p, zero));
 		return new ThreadInstanceCounter<>(newInstanceMap, mForkIds, mSeenForks);
 	}
 
+	// make threadcounter [x, inf] from [x,y]
 	public ThreadInstanceCounter<LOC> setThreadsInf(final Collection<String> threadName) {
-		final var newInstanceMap = new HashMap<>(mThreadInstances);
-		threadName.stream().filter(p -> newInstanceMap.get(p) != null).forEach(p -> newInstanceMap.put(p, 2));
+		final var newInstanceMap = new HashMap<>(mThreadCounts);
+		threadName.stream().filter(p -> newInstanceMap.get(p) != null).forEach(p -> newInstanceMap.put(p,
+				new IntervalDomainValue(newInstanceMap.get(p).getLower(), new IntervalValue())));
 		return new ThreadInstanceCounter<>(newInstanceMap, mForkIds, mSeenForks);
 	}
 
 	public ThreadInstanceCounter<LOC> union(final ThreadInstanceCounter<LOC> other) {
-		final Map<String, Integer> newThreadMap = new HashMap<>();
+		final Map<String, IntervalDomainValue> newThreadMap = new HashMap<>();
 		final var mapCopy = new HashMap<>(mForkIds);
 		final var setCopy = new HashSet<>(mSeenForks);
 		for (final String thread : mThreadNameSet) {
-			newThreadMap.put(thread,
-					Math.max(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
+			newThreadMap.put(thread, (getThreadInstances().get(thread).merge(other.getThreadInstances().get(thread))));
 		}
+		// Union of two lists, we dont want to duplicate. Would need unique identifier to properly union,
+		// since pure Integer forkIDs not distinguishable. But matches current Ultimate fork translation
 		final Map<String, List<Integer>> mapUnion = Stream.of(mForkIds, other.mForkIds)
 				.flatMap(map -> map.entrySet().stream())
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue()), (l1, l2) -> {
@@ -172,42 +166,25 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 	}
 
 	public ThreadInstanceCounter<LOC> intersect(final ThreadInstanceCounter<LOC> other) {
-		final Map<String, Integer> newThreadMap = new HashMap<>();
+		final Map<String, IntervalDomainValue> newThreadMap = new HashMap<>();
 		for (final String thread : mThreadNameSet) {
-			newThreadMap.put(thread,
-					Math.max(getThreadInstances().get(thread), other.getThreadInstances().get(thread)));
-			// intersection would be none for the ghost variables -> we need to make state false
-			if (getThreadInstances().get(thread) != other.getThreadInstances().get(thread)
-					&& (getThreadInstances().get(thread) == 0 || other.getThreadInstances().get(thread) == 0)) {
+			final var intersection = getThreadInstances().get(thread).intersect(other.getThreadInstances().get(thread));
+			if (intersection.isBottom()) {
 				return null;
 			}
-			if ((getThreadInstances().get(thread) == other.getThreadInstances().get(thread))) {
-				newThreadMap.put(thread, getThreadInstances().get(thread));
-				// edge case, for observing thread 1==2, so an interference of an observer could shrink us from 2->1
-			} else if ((getThreadInstances().get(thread) == 2 || other.getThreadInstances().get(thread) == 2)) {
-				newThreadMap.put(thread, 2);
-			} else {
-				return null;
-			}
+			newThreadMap.put(thread, (intersection));
 		}
-		if (!mForkIds.equals(other.mForkIds)) {
-			return null;
-		}
-		if (!mSeenForks.equals(other.mSeenForks)) {
-			return null;
-		}
-		final Map<String, List<Integer>> mapCopy = mForkIds.entrySet().stream()
-				.collect(Collectors.toMap(Map.Entry::getKey, e -> new ArrayList<>(e.getValue())));
-
+		// TODO: this only works if we care about THIS, not other counter. Implement proper intersection if needed
+		final var mapCopy = new HashMap<>(mForkIds);
 		final var setCopy = new HashSet<>(mSeenForks);
 		return new ThreadInstanceCounter<>(newThreadMap, mapCopy, setCopy);
 	}
 
 	public boolean isEqualTo(final ThreadInstanceCounter<LOC> other) {
 		for (final String thread : other.getThreadInstances().keySet()) {
-			final Integer count = mThreadInstances.get(thread);
-			final Integer otherCount = other.getThreadInstances().get(thread);
-			if (count != otherCount) {
+			final var count = mThreadCounts.get(thread);
+			final var otherCount = other.getThreadInstances().get(thread);
+			if (!count.isAbstractionEqual(otherCount)) {
 				return false;
 			}
 		}
@@ -217,12 +194,9 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 	public SubsetResult isSubsetOf(final ThreadInstanceCounter<LOC> other) {
 		final SubsetResult result = SubsetResult.EQUAL;
 		for (final String thread : mThreadNameSet) {
-			final int leftCount = mThreadInstances.get(thread);
-			final int rightCount = other.getThreadInstances().get(thread);
-			// We say anything above 0 is equal for now, since seeing another thread as being forked 1 or 2 times
-			// does not change anything for our current model.
-			// TODO:
-			if (!(leftCount == rightCount)) {
+			final var leftCount = mThreadCounts.get(thread);
+			final var rightCount = other.getThreadInstances().get(thread);
+			if (!(leftCount.isContainedIn(rightCount))) {
 				return SubsetResult.NONE;
 			}
 		}
@@ -234,14 +208,13 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		final StringBuilder resulString = new StringBuilder();
 		for (final String thread : mThreadNameSet) {
 			if (resulString.isEmpty()) {
-				resulString.append(thread).append("=").append(mThreadInstances.get(thread));
+				resulString.append(thread).append("=").append(mThreadCounts.get(thread));
 				resulString.append(", forkids: ").append(mForkIds.get(thread));
 			} else {
-				resulString.append(" ").append(thread).append("=").append(mThreadInstances.get(thread));
+				resulString.append(" ").append(thread).append("=").append(mThreadCounts.get(thread));
 				resulString.append(", forkids: ").append(mForkIds.get(thread));
 			}
 		}
-		resulString.append(" " + mForkIds);
 		return resulString.toString();
 	}
 
@@ -253,11 +226,11 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		if (!(o instanceof final ThreadInstanceCounter other)) {
 			return false;
 		}
-		return mThreadInstances.equals(other.mThreadInstances);
+		return mThreadCounts.equals(other.mThreadCounts);
 	}
 
 	@Override
 	public int hashCode() {
-		return mThreadInstances.hashCode();
+		return mThreadCounts.hashCode();
 	}
 }

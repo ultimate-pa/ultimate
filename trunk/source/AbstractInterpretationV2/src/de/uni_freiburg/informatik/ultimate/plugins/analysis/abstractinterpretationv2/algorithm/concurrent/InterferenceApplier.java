@@ -34,15 +34,31 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		}
 		final var threadCounterIntersection = targetStateGuarded.threadCounter()
 				.intersect(interferingStateGuarded.threadCounter());
-		final var abslocIntersection = targetStateGuarded.abstractLocationState()
-				.intersect(interferingStateGuarded.abstractLocationState());
+		AbstractLocationState<LOC> abslocIntersection;
+		if (isSelfInterfering) {
+			// TODO
+			abslocIntersection = targetStateGuarded.abstractLocationState()
+					.intersectSelf(interferingStateGuarded.abstractLocationState());
+		} else {
+			abslocIntersection = targetStateGuarded.abstractLocationState()
+					.intersect(interferingStateGuarded.abstractLocationState());
+		}
 
-		if (threadCounterIntersection == null || abslocIntersection == null) {
+		// TODO: cleanup
+		if (threadCounterIntersection == null || threadCounterIntersection.getThreadInstances().values().stream()
+				.anyMatch(c -> c == null || c.isBottom()) || abslocIntersection == null) {
 			return Collections.emptyList();
 		}
 
 		final var threadCounterPost = postOp.applyThreadCounter(threadCounterIntersection, abslocIntersection, action);
-		final var absLocPost = postOp.applyAbstractLocation(abslocIntersection, action);
+		final var intervalCounterValue = interferingStateGuarded.threadCounter().getThreadInstances()
+				.get(action.getPrecedingProcedure());
+		if (intervalCounterValue.isBottom()) {
+			return Collections.emptyList();
+		}
+		final boolean isinfinite = targetStateGuarded.threadCounter().getThreadInstances()
+				.get(action.getPrecedingProcedure()).getUpper().isInfinity();
+		final var absLocPost = postOp.applyAbstractLocation(abslocIntersection, action, isSelfInterfering, isinfinite);
 
 		if (threadCounterPost == null || absLocPost == null) {
 			return Collections.emptyList();

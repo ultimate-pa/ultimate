@@ -30,7 +30,10 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 				}
 				// We can remove interferences where our targetstate sourcethread is not active from the beginning,
 				// no amount of other interferences applied to the state will enable this interference to be valid
-				if (interference.preState().threadCounter().getThreadInstances().get(ownerThread) == 0) {
+				final var interferingThreadsPerspective = interference.preState().threadCounter().getThreadInstances()
+						.get(ownerThread).getUpper();
+				if (interferingThreadsPerspective == null || (!interferingThreadsPerspective.isInfinity()
+						&& interferingThreadsPerspective.getValue().intValue() == 0)) {
 					continue;
 				}
 				allInterferences.add(new InterferenceWithSourceThread<>(interference, interferenceThreadName));
@@ -51,32 +54,59 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 		 * Special check for self-interference, then locations have to be handled differently. ATM we ignore locations,
 		 * which is a sound, but unprecise, overapproximtation.
 		 */
-		if (interference.preState().threadCounter().getThreadInstances().get(interferenceThreadName) > 1) {
-			return true;
-		}
+//		if (interference.preState().threadCounter().getThreadInstances().get(interferenceThreadName) > 1) {
+//			return true;
+//		}
 		/*
 		 * Check if interference comes from location which the interfered state thinks the interfering thread could be
 		 * in. If not, it cannot be interfered by it.
 		 */
-		final Set<Integer> possibleInterferingThreadLocations = singleState.abstractLocationState().getTracker()
-				.getLocationForThread(interferenceThreadName);
 		final int actualInterferenceThreadLocation = abstractLocationMap
 				.getAbstractLocation(interference.action().getSource());
+		if (ownerThread.equals(interferenceThreadName)) {
+			final Set<Integer> selfLocation = singleState.abstractLocationState().getTracker()
+					.getLocationForSelfThread(interferenceThreadName);
+			if ((!selfLocation.contains(actualInterferenceThreadLocation))) {
+				return false;
+			}
+			return true;
+		}
+		final Set<Integer> possibleInterferingThreadLocations = singleState.abstractLocationState().getTracker()
+				.getLocationForThread(interferenceThreadName);
+		if (nonMainThreadCanMove(singleState, interferenceThreadName, actualInterferenceThreadLocation)) {
+			return true;
+		}
 		if ((!possibleInterferingThreadLocations.contains(actualInterferenceThreadLocation))) {
 			return false;
 		}
 		return true;
 	}
 
+	private boolean nonMainThreadCanMove(final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
+			final String interferenceThreadName, final int actualInterferenceThreadLocation) {
+		final var nonMainThreadLocations = singleState.abstractLocationState().getTracker()
+				.getLocationForSelfThread(interferenceThreadName);
+		if (nonMainThreadLocations.contains(actualInterferenceThreadLocation)) {
+			return true;
+		}
+		return false;
+	}
+
 	private boolean interferingThreadIsActiveInState(final String ownerThread, final String interferenceThreadName,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
 		final var interferingThreadCount = singleState.threadCounter().getThreadInstances().get(interferenceThreadName);
+		if (interferingThreadCount.getUpper() == null) {
+			return false;
+		}
+		if (interferingThreadCount.getUpper().isInfinity()) {
+			return true;
+		}
 		// Unforked threads cant interfere
-		if (interferingThreadCount < 1) {
+		if (interferingThreadCount.getUpper().getValue().intValue() < 1) {
 			return false;
 		}
 		// Self interference only when more than 1 threadinstance active
-		if (interferingThreadCount < 2 && ownerThread.equals(interferenceThreadName)) {
+		if (interferingThreadCount.getUpper().getValue().intValue() < 2 && ownerThread.equals(interferenceThreadName)) {
 			return false;
 		}
 		return true;

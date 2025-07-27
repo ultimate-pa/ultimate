@@ -19,8 +19,7 @@ public class InterferenceCreator {
 			final Map<String, ? extends LOC> mEntryLocs, final IIcfg<? extends LOC> icfg,
 			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
 			final ITransitionProvider<ACTION, LOC> mTransitionProvider,
-			final AbstractLocationMap<LOC> mLocationAbstraction,
-			final LocationAbstraction<LOC> locationAbstractionCalculator) {
+			final AbstractLocationMap<LOC> mLocationAbstraction) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
 		// Seems to not make much difference in state amount actually
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
@@ -30,8 +29,7 @@ public class InterferenceCreator {
 			while (iter.hasNext()) {
 				final LOC loc = iter.next();
 				for (final IcfgEdge edge : loc.getOutgoingEdges()) {
-					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction,
-							locationAbstractionCalculator, loc)) {
+					if (!isInterferingTransition((ACTION) edge, icfg, mLocationAbstraction)) {
 						continue;
 					}
 					final var disjPreState = mStateStorage
@@ -61,8 +59,7 @@ public class InterferenceCreator {
 	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
 	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> boolean isInterferingTransition(
 			final ACTION transition, final IIcfg<? extends LOC> icfg,
-			final AbstractLocationMap<LOC> mLocationAbstraction,
-			final LocationAbstraction<LOC> locationAbstractionCalculator, final LOC loc) {
+			final AbstractLocationMap<LOC> mLocationAbstraction) {
 		if (mLocationAbstraction.getAbstractLocation(transition.getSource()) != mLocationAbstraction
 				.getAbstractLocation(transition.getTarget())) {
 			return true;
