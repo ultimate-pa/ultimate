@@ -7,11 +7,13 @@
 # common build arguments for multi-staged Docker build
 #------------------------------------------------------------------------------
 ARG REPO_MAVEN_ROOT="trunk/source/BA_MavenParentUltimate"
+ARG REPO_FRONTEND_ROOT="trunk/source/WebsiteStatic"
 ARG REPO_DIR_BUILD="trunk/source/BA_SiteRepository/target/products"
 ARG REPO_DIR_TOOLS="releaseScripts/default/adds"
 ARG DIR_BUILD="/home/build"
 ARG DIR_ULTIMATE="${DIR_BUILD}/ultimate"
 ARG DIR_OUTPUT="${DIR_ULTIMATE}/${REPO_DIR_BUILD}"
+ARG DIR_OUTPUT_FRONTEND="${DIR_ULTIMATE}/${REPO_FRONTEND_ROOT}"
 ARG DIR_TOOLS="${DIR_ULTIMATE}/${REPO_DIR_TOOLS}"
 ARG USER_NAME="ultimate"
 ARG USER_GROUP="ultimate"
@@ -43,6 +45,40 @@ RUN mkdir -p "${DIR_BUILD}" && \
 # build all Ultimate products
 WORKDIR "${DIR_ULTIMATE}"
 RUN mvn -f "${REPO_MAVEN_ROOT}" clean package -P materialize
+
+#------------------------------------------------------------------------------
+# 2nd build stage: compile and build the Ultimate web interface
+#------------------------------------------------------------------------------
+FROM build AS build-webfrontend
+
+ARG REPO_FRONTEND_ROOT
+ARG REPO_DIR_BUILD
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT
+
+# install build dependencies for building the Ultimate web frontend
+RUN apk add --no-cache "gcc" \
+                       "g++" \
+                       "make" \
+                       "libc-dev" \
+                       "libc++-dev" \
+                       "linux-headers" \
+                       "python3" \
+                       "ruby-full" \
+                       "ruby-dev"
+
+# build the Ultimate web frontend
+WORKDIR "${REPO_FRONTEND_ROOT}"
+
+# patch the Jekyll installation to work under Ruby 3.4+
+RUN echo -e "gem 'csv'\n" \
+            "gem 'base64'\n" \
+            "gem 'bigdecimal'\n" \
+            "gem 'logger'" >> Gemfile
+
+ENV PATH "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64:${PATH}"
+RUN python3 scripts/build.py
 
 #------------------------------------------------------------------------------
 # 2nd build stage: package common Ultimate artifacts shared by all products
@@ -79,6 +115,78 @@ COPY --from=build "${DIR_TOOLS}/z3" "/usr/bin/z3"
 
 # add Welcome script to print Ultimate version
 ADD "welcome.sh" "/etc/profile.d/welcome.sh"
+
+#------------------------------------------------------------------------------
+# 2nd build stage: package Ultimate web frontend
+#------------------------------------------------------------------------------
+FROM alpine:3 AS ultimate-webfrontend
+
+ARG REPO_DIR_BUILD
+ARG REPO_DIR_TOOLS
+ARG DIR_BUILD
+ARG DIR_ULTIMATE
+ARG DIR_OUTPUT_FRONTEND
+ARG USER_NAME
+ARG USER_GROUP
+ARG USER_HOME
+
+ENV ULTIMATE_FRONTEND_DEBUG="false"
+ENV ULTIMATE_FRONTEND_MSG_ORIENTATION="left"
+
+ENV ULTIMATE_FRONTEND_PROTOCOL="http"
+ENV ULTIMATE_FRONTEND_HOST="localhost"
+ENV ULTIMATE_FRONTEND_PORT="80"
+ENV ULTIMATE_FRONTEND_ROUTE="/website"
+
+ENV ULTIMATE_BACKEND_PROTOCOL="http"
+ENV ULTIMATE_BACKEND_HOST="localhost"
+ENV ULTIMATE_BACKEND_PORT=8080
+ENV ULTIMATE_BACKEND_ROUTE="/api"
+
+# install runtime dependencies for the Ultimate web frontend
+RUN apk add --no-cache "gcc" \
+                       "g++" \
+                       "make" \
+                       "libc-dev" \
+                       "libc++-dev" \
+                       "linux-headers" \
+                       "ruby-full" \
+                       "ruby-dev"
+
+# install 'dockerize' for automatic configuration file creation
+ENV DOCKERIZE_VERSION="v0.9.5"
+RUN apk add --no-cache "wget" \
+                       "openssl" \
+                       "curl" && \
+    wget -q -O - "https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-alpine-linux-amd64-${DOCKERIZE_VERSION}.tar.gz" | tar xzf - -C "/usr/local/bin" && \
+    apk del --no-cache "wget"
+
+# add the non-root user 'ultimate' for the Ultimate web frontend and prepare
+# installation directory
+RUN mkdir -p "${USER_HOME}" && \
+    addgroup "${USER_GROUP}" && \
+    adduser -G "${USER_GROUP}" -H -h "${USER_HOME}" -D "${USER_NAME}" && \
+    chown -R "${USER_NAME}:${USER_GROUP}" "${USER_HOME}"
+WORKDIR "${USER_HOME}"
+
+# install already built Ultimate web frontend
+COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build-webfrontend "${DIR_OUTPUT_FRONTEND}" "${USER_HOME}"
+ADD "config.js.tpl" "${USER_HOME}/config.js.tpl"
+
+# install Jekyll to serve the Ultimate web frontend
+RUN bundle install
+
+# run the Ultimate web frontend as non-root user
+USER "${USER_NAME}"
+
+# define health check to supervise the Ultimate web frontend's availability
+HEALTHCHECK --interval=1m --timeout=10s --start-period=20s \
+    CMD curl -f "${ULTIMATE_FRONTEND_PROTOCOL}://${ULTIMATE_FRONTEND_HOST}:${ULTIMATE_FRONTEND_PORT}${ULTIMATE_FRONTEND_ROUTE}/" || exit 1
+
+# default entry point to serve the Ultimate web frontend
+ENTRYPOINT dockerize -template "config.js.tpl:js/webinterface/config.js" \
+                     bundle exec jekyll serve --host "${ULTIMATE_FRONTEND_HOST}" \
+                                              --port "${ULTIMATE_FRONTEND_PORT}"
 
 #------------------------------------------------------------------------------
 # 3rd build stage: package Ultimate CLI

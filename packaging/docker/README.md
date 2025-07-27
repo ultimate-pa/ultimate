@@ -15,6 +15,7 @@ where `PRODUCT` is a placeholder for one of the products
   - `ultimate-deltadebugger`
   - `ultimate-eliminator`
   - `ultimate-webbackend`
+  - `ultimate-webfrontend`
 
 shipped with the Ultimate program analysis framework.
 
@@ -49,6 +50,12 @@ The `XAUTHORITY` file is mounted into the container by Docker along with a tempo
 The Ultimate Debug UI application then uses this connection to render its graphical interface outside of the container on the host system.
 
 
-## Configure Ultimate Webbackend
+## Run Ultimate WebBackend and Frontend
 
-The specific Ultimate `PRODUCT` called `ultimate-webbackend` requires an extensive and valid configuration for the Web service to start.
+The specific Ultimate `PRODUCT`s called `ultimate-webbackend` and `ultimate-webfrontend` require an extensive and valid configuration for the Web service to start.
+An example configuration is provided by a Docker Compose setup that can be configured by environemnt variables in the `ultimate-webbackend.env` and `ultimate-webfrontend.env` file.
+After optional adjustment of the configuration, the setup can be provisioned using Docker Compose:
+```shell
+docker compose up
+```
+The frontend of the Web service can be reached via the following URL in the web browser when using the example configuration: [http://localhost:80/website/](http://localhost:80/website/).

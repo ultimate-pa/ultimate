@@ -1,12 +1,25 @@
 version: "2"
+
 services:
   ultimate-webbackend:
     build:
       dockerfile: "Dockerfile"
       target: "ultimate-webbackend"
     image: "ultimate-webbackend"
-    env_file:
-      - "ultimate-webbackend.env"
+    env_file: "ultimate-webbackend.env"
     ports:
       - "8080:8080"
     restart: "unless-stopped"
+
+  ultimate-webfrontend:
+    build:
+      dockerfile: "Dockerfile"
+      target: "ultimate-webfrontend"
+    image: "ultimate-webfrontend"
+    env_file: "ultimate-webfrontend.env"
+    ports:
+      - "80:80"
+    restart: "unless-stopped"
+    depends_on:
+      ultimate-webbackend:
+        condition: service_healthy
