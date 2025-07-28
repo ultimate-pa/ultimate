@@ -35,7 +35,7 @@ public class IcfgInterpreterPreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(SettingLabel.EXECUTION_SEED.text(), -301796050, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(SettingLabel.OUTPUT_METHOD.text(), OutputMethod.PRINT_TO_TERMINAL,
 						PreferenceType.Radio, OutputMethod.values()),
-				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.text(), 5, PreferenceType.Integer,
+				new UltimatePreferenceItem<>(SettingLabel.EXECUTIONS_PER_ENTRYPOINT.text(), 1, PreferenceType.Integer,
 						validatePositive),
 				new UltimatePreferenceItem<>(SettingLabel.VARIANTS_PER_HAVOC_EDGE.text(), 3, PreferenceType.Integer,
 						validatePositive),

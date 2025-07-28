@@ -200,46 +200,11 @@ public class ExecutionProducer {
 
 		if (formula.getFormula() instanceof final ApplicationTerm app
 				&& app.getFunction().getName().equals(SMTLIBConstants.OR)) {
-			// check if we have two opposite assignments like:
-			// ((var x = true && guardA) || (var y = false && guardB))
-			final Term[] subTerms = app.getParameters();
-			if (subTerms.length != 2) {
-				return List.of();
-			}
-
-			final InterpretedIcfgEdge icfgEdgeA = new InterpretedIcfgEdgeBuilder(edge, auxVars)
-					.addUpdates(extractUpdates(formula, script, subTerms[0]))
-					.makeGuardFromTerm(services, mngScript, formula, subTerms[0]).finish();
-
-			final InterpretedIcfgEdge icfgEdgeB = new InterpretedIcfgEdgeBuilder(edge, auxVars)
-					.addUpdates(extractUpdates(formula, script, subTerms[1]))
-					.makeGuardFromTerm(services, mngScript, formula, subTerms[1]).finish();
-
-			final Term notGuardB = SmtUtils.not(script, icfgEdgeB.getGuardTerm());
-			if (SmtUtils.checkEquivalence(icfgEdgeA.getGuardTerm(), notGuardB, script) != LBool.UNSAT) {
-				// the two have guards that are not opposites
-
-				IcfgInterpreterObserver.getLogger()
-						.error("This plug-in does not handle or terms that encode different paths of a program.\n"
-								+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
-								+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
-				return List.of(new UntranslatableIcfgEdge(edge));
-			}
-
-			final Term notUpdatesB = SmtUtils.not(script, icfgEdgeB.getUpdateTerm(script));
-			if (SmtUtils.checkEquivalence(icfgEdgeA.getUpdateTerm(script), notUpdatesB, script) != LBool.UNSAT) {
-				// the two have updates that are not opposites
-				IcfgInterpreterObserver.getLogger()
-						.error("This plug-in does not handle or terms that encode different paths of a program.\n"
-								+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
-								+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
-				return List.of(new UntranslatableIcfgEdge(edge));
-			}
-
-			System.out.println(icfgEdgeA.toString());
-			System.out.println(icfgEdgeB.toString());
-			System.out.println("\n\n");
-			return List.of(icfgEdgeA, icfgEdgeB);
+			IcfgInterpreterObserver.getLogger()
+					.error("This plug-in does not handle or terms that encode different paths of a program.\n"
+							+ "Try using SingleStatement in your Icfg / Cfg Builder settings\nOffending Term:\n"
+							+ app.toStringDirect() + "\nof Transition\n" + formula.toStringDirect());
+			return List.of(new UntranslatableIcfgEdge(edge));
 		}
 
 		try {
@@ -308,6 +273,14 @@ public class ExecutionProducer {
 
 		// TODO make havoc updates that execute "assume array[index] < value" etc
 		final List<SolvedEquation> arrayEquations = equations.stream().filter(eq -> eq.isSelect()).toList();
+
+		if (arrayEquations.size() > 0) {
+			// Get equations where select is compared to a constant (select < 5), not an assigned var (select = var <==>
+			// var = select)
+			// List<SolvedEquation> updatingEquations = arrayEquations.stream().filter(eq ->
+			// Set.of(eq.getRhs().getFreeVars()).stream().anyMatch(var -> formula.getAssignedVars())).toList();
+			System.out.println("yo");
+		}
 
 		// For each equation, the set of InVars / OutVars that are used. They need to come before / after all
 		// equations that define these variables.
@@ -654,9 +627,13 @@ public class ExecutionProducer {
 				throw new AssertionError("Cannot add steps to finished Execution.");
 			}
 
-			int index = states().size() - 1;
+			final List<InterpretedIcfgEdge> newEdges = new ArrayList<>(edges());
+			final List<Map<Term, Value>> newStates = new ArrayList<>(
+					states().stream().map(map -> new HashMap<>(map)).toList());
 
-			Map<Term, Value> previousState = states().get(index);
+			int index = newStates.size() - 1;
+
+			Map<Term, Value> previousState = newStates.get(index);
 			final Set<Term> currentVars = new HashSet<>(nextState.keySet());
 			nextEdge.removeSafe(currentVars);
 
@@ -693,12 +670,9 @@ public class ExecutionProducer {
 				if (index < 0) {
 					break;
 				}
-				previousState = states().get(index);
+				previousState = newStates.get(index);
 			}
 
-			final List<InterpretedIcfgEdge> newEdges = new ArrayList<>(edges());
-			final List<Map<Term, Value>> newStates = new ArrayList<>(
-					states().stream().map(map -> new HashMap<>(map)).toList());
 			newStates.add(nextState);
 			newEdges.add(nextEdge);
 

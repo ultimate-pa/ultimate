@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
@@ -60,47 +59,40 @@ public class NonDeterministicChoice {
 	}
 
 	public IntValue havocInt(final IntegerRestriction values) {
-		final int length = mRandom.nextInt(2, mHavocBits);
+		final int length;// mRandom.nextInt(2, mHavocBits);
+		if (values != null && values.getValueCount() != null) {
+			length = values.getValueCount().getValue().bitCount();
+		} else {
+			length = mHavocBits;
+		}
+
 		return havocInt(values, length);
 	}
 
 	private IntValue havocInt(final IntegerRestriction values, final int length) {
-		IntValue randBigInt = new IntValue(new BigInteger(length, mRandom));
+		IntValue randBigInt = null;
 
-		// Make sure that negative numbers can appear
-		if (mRandom.nextBoolean()) {
-			randBigInt = randBigInt.negate();
-		}
+		if (values != null) {
+			final IntValue minimum = values.getMinimum();
+			final IntValue maximum = values.getMaximum();
 
-		if (values == null) {
-			return randBigInt;
-		}
-
-		final IntValue minimum = values.getMinimum();
-		final IntValue maximum = values.getMaximum();
-		final IntValue valueCount = values.getValueCount();
-		final Set<IntValue> inEqual = values.getInequal();
-
-		if (minimum == null) {
-			if (maximum != null && randBigInt.compareTo(maximum) > 0) {
-				randBigInt = maximum.subtract(randBigInt.subtract(maximum).abs());
+			while (values.getInequal().contains(randBigInt) || randBigInt == null) {
+				randBigInt = new IntValue(new BigInteger(length, mRandom));
+				if (minimum != null) {
+					randBigInt = randBigInt.add(minimum);
+				}
+				if (maximum != null) {
+					randBigInt = randBigInt.mod(maximum);
+				}
 			}
 		} else {
-			if (maximum == null) {
-				if (randBigInt.compareTo(minimum) < 0) {
-					randBigInt = minimum.add(minimum.subtract(randBigInt).abs());
-				}
-			} else {
-				randBigInt = randBigInt.abs().mod(valueCount).add(minimum);
+			randBigInt = new IntValue(new BigInteger(length, mRandom));
+			if (mRandom.nextBoolean()) {
+				// 50/50 for value to be negative
+				randBigInt = randBigInt.negate();
 			}
 		}
 
-		while (inEqual.contains(randBigInt)) {
-			randBigInt = randBigInt.add(IntValue.ONE);
-			if (maximum != null && randBigInt.compareTo(maximum) >= 0) {
-				randBigInt = minimum;
-			}
-		}
 		return randBigInt;
 	}
 

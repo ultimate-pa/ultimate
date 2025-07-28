@@ -25,7 +25,6 @@ procedure main() {
     while(initialPass || 0 < index) {
         initialPass := false;
         while(left < right) {
-
             havoc temp;
             assume left <= temp && temp <= right;
             pivot := randomArray[temp];

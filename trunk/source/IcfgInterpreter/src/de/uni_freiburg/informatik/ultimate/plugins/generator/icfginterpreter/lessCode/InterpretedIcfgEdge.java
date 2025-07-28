@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.icfginterpreter.lessCode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBConstants;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -51,10 +49,10 @@ public class InterpretedIcfgEdge {
 	 * For each variable defined in the guard, a havoc update that can be used to narrow the restriction such that a
 	 * variable havoced in
 	 */
-	private final Map<Term, HavocUpdate> mGuardRestrictions;
+	private final Map<Term, RestrictionParser> mGuardRestrictions;
 
 	private InterpretedIcfgEdge(final Term guard, final Update[] updateVariants, final IcfgEdge edge,
-			final Set<TermVariable> auxVars, final Map<Term, HavocUpdate> guardRestrictions) {
+			final Set<TermVariable> auxVars, final Map<Term, RestrictionParser> guardRestrictions) {
 		mGuard = guard;
 		mGuardVars = Set.of(mGuard.getFreeVars());
 		final List<ApplicationTerm> guardSelects = Util.extractSelects(guard);
@@ -150,7 +148,7 @@ public class InterpretedIcfgEdge {
 
 			Restriction<?> restriction;
 			final Restriction<?> existingRestriction = havocRestrictions.remove(var);
-			final HavocUpdate guardRestriction = mGuardRestrictions.get(var);
+			final RestrictionParser guardRestriction = mGuardRestrictions.get(var);
 			if (!useGuardRestrictions || guardRestriction == null) {
 				restriction = existingRestriction;
 			} else if (!state.keySet().containsAll(guardRestriction.getFreeVars())) {
@@ -158,7 +156,11 @@ public class InterpretedIcfgEdge {
 				restriction = existingRestriction;
 			} else {
 				try {
-					restriction = guardRestriction.getRestriction(state, ndc).combine(existingRestriction);
+					if (existingRestriction != null) {
+						restriction = existingRestriction.combine(guardRestriction.getRestriction(state, ndc));
+					} else {
+						restriction = guardRestriction.getRestriction(state, ndc);
+					}
 				} catch (final EmptyRangeException a) {
 					// The new range contains no values. The guard will be false!
 					restriction = existingRestriction;
@@ -184,9 +186,15 @@ public class InterpretedIcfgEdge {
 			final Restriction<?> existingRestriction = havocRestrictions.remove(select.a());
 			final Restriction<?> restriction;
 			if (useGuardRestrictions) {
-				final HavocUpdate restrictionBuilder = mGuardRestrictions.get(select.a());
+				final RestrictionParser restrictionBuilder = mGuardRestrictions.get(select.a());
+
 				if (restrictionBuilder != null) {
-					restriction = restrictionBuilder.getRestriction(state, ndc).combine(existingRestriction);
+					final Restriction<?> guardRestriction = restrictionBuilder.getRestriction(state, ndc);
+					if (guardRestriction != null) {
+						restriction = guardRestriction.combine(existingRestriction);
+					} else {
+						restriction = existingRestriction;
+					}
 				} else {
 					restriction = existingRestriction;
 				}
@@ -244,11 +252,6 @@ public class InterpretedIcfgEdge {
 		return mGuard;
 	}
 
-	public Term getUpdateTerm(final Script script) {
-		final List<Term> updateTerms = Arrays.asList(mUpdates).stream().map((update) -> update.toTerm(script)).toList();
-		return SmtUtils.and(script, updateTerms);
-	}
-
 	public Update[] getUpdates() {
 		return mUpdates;
 	}
@@ -276,7 +279,7 @@ public class InterpretedIcfgEdge {
 		private Term mGuardTerm;
 		private final IcfgEdge mGraphEdge;
 		private final Set<TermVariable> mAuxVariables;
-		private Map<Term, HavocUpdate> mGuardRestrictions;
+		private Map<Term, RestrictionParser> mGuardRestrictions;
 
 		public InterpretedIcfgEdgeBuilder(final IcfgEdge edge, final Set<TermVariable> auxVars) {
 			mGraphEdge = edge;
@@ -319,7 +322,7 @@ public class InterpretedIcfgEdge {
 			final Equations equations = EqualityExtractor.extract(mGuardTerm, script, formula);
 			final List<SolvedEquation> solvedEquations = new ArrayList<>(equations.solveForAllVars(script));
 
-			final Map<Term, HavocUpdate> guardRestrictions = new HashMap<>();
+			final Map<Term, RestrictionParser> guardRestrictions = new HashMap<>();
 			while (!solvedEquations.isEmpty()) {
 				final Term solvedFor = solvedEquations.get(0).getLhs();
 
@@ -332,7 +335,7 @@ public class InterpretedIcfgEdge {
 						.filter(eq -> eq.getLhs().equals(solvedFor)).toList();
 				solvedEquations.removeAll(varEquations);
 
-				HavocUpdate havoc;
+				RestrictionParser parser;
 				if (solvedFor instanceof ApplicationTerm at) {
 					TermVariable arrayVar = null;
 					while (arrayVar == null) {
@@ -346,12 +349,12 @@ public class InterpretedIcfgEdge {
 						}
 					}
 
-					havoc = new HavocUpdate(at, arrayVar, varEquations, false);
+					parser = new RestrictionParser(arrayVar, at, varEquations);
 				} else {
-					havoc = new HavocUpdate((TermVariable) solvedFor, varEquations, false);
+					parser = new RestrictionParser((TermVariable) solvedFor, varEquations);
 				}
 
-				guardRestrictions.put(solvedFor, havoc);
+				guardRestrictions.put(solvedFor, parser);
 			}
 			mGuardRestrictions = Map.copyOf(guardRestrictions);
 		}
