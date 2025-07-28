@@ -25,8 +25,7 @@ public class InitialStateFactory<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 	public InitialStateFactory(
 			final IAbstractStateStorage<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> stateStorage,
 			final ConcurrentIcfgAnalyzer<ACTION, LOC> analyzer, final int maxStates,
-			final InterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> domain,
-			final Map<String, ? extends LOC> entryLocs,
+			final InterferenceDomain<UNDERLYINGSTATE, ACTION, LOC> domain, final Map<String, ? extends LOC> entryLocs,
 			final InterferenceCache<UNDERLYINGSTATE, ACTION, LOC> cache) {
 		mStateStorage = stateStorage;
 		mAnalyzer = analyzer;
@@ -62,11 +61,13 @@ public class InitialStateFactory<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 				return null;
 			}
 			allForkLocs.add(initialLoc);
+			final boolean selfInterfering = initialLoc.getProcedure().equals(procedure);
 			final var movedState = translateForkLocIntoInitialState(state, procedure);
 			final var afterForkStates = movedState.getStates().stream()
 					.map(s -> new InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>(s.state(),
 							postOperator.applyThreadCounter(s.threadCounter(), s.abstractLocationState(), transition),
-							postOperator.applyAbstractLocation(s.abstractLocationState(), transition, false, false)))
+							postOperator.applyAbstractLocation(s.abstractLocationState(), transition, selfInterfering,
+									false)))
 					.toList();
 			final var clearedState = removeLocalVars(
 					DisjunctiveAbstractState.createDisjunction(afterForkStates, mMaxParallelStates));
@@ -110,8 +111,8 @@ public class InitialStateFactory<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 				translatedForkStates.add(forkState);
 			}
 		}
-		final var applier = ((InterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain
-				.getPostOperator()).getItfApplier();
+		final var applier = ((InterferenceDomainPostOperator<UNDERLYINGSTATE, ACTION, LOC>) mDomain.getPostOperator())
+				.getItfApplier();
 		final var cleanedStart = DisjunctiveAbstractState.createDisjunction(translatedForkStates, mMaxParallelStates);
 		final var interferenceDomainDisj = applier.computeInterferenceFixpoint(cleanedStart, procedure, mCache);
 		return interferenceDomainDisj;
