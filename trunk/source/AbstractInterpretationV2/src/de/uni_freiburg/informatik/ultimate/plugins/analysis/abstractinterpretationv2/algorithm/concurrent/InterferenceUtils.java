@@ -95,11 +95,11 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 	private boolean interferingThreadIsActiveInState(final String ownerThread, final String interferenceThreadName,
 			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
 		final var interferingThreadCount = singleState.threadCounter().getThreadInstances().get(interferenceThreadName);
-		if (interferingThreadCount.getUpper() == null) {
-			return false;
-		}
 		if (interferingThreadCount.getUpper().isInfinity()) {
 			return true;
+		}
+		if (interferingThreadCount.getUpper() == null) {
+			return false;
 		}
 		// Unforked threads cant interfere
 		if (interferingThreadCount.getUpper().getValue().intValue() < 1) {

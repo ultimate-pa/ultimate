@@ -169,10 +169,14 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 		// (atleast with this method). So we lose precision by not joining at all.
 		final var joinedThreadName = computeNameOfJoinedProcedure(counter, joinId);
 		if (joinedThreadName.isPresent()) {
-			final var forkedThreadCount = counter.getThreadInstances().get(joinedThreadName.get()).getUpper().getValue()
-					.intValue();
 			final var joinedCounter = counter.unassignForkId(joinedThreadName.get(), joinId,
 					(LOC) joinTransition.getSource());
+			final var upperVal = counter.getThreadInstances().get(joinedThreadName.get()).getUpper();
+			if (upperVal.getValue() == null) {
+				return joinedCounter;
+			}
+			final var forkedThreadCount = counter.getThreadInstances().get(joinedThreadName.get()).getUpper().getValue()
+					.intValue();
 			final var forkedThreadCountAfter = joinedCounter.getThreadInstances().get(joinedThreadName.get()).getUpper()
 					.getValue().intValue();
 			final var threadsFinalLocations = absLocState.getLocationMap().getAbstractFinalLocs(joinedThreadName.get());

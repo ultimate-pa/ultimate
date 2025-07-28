@@ -112,15 +112,11 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		return Collections.unmodifiableMap(copy);
 	}
 
-	public void reset() {
-		mForkIds.clear();
-	}
-
 	public ThreadInstanceCounter<LOC> setThreadsActive(final Collection<String> threadName) {
 		final var newInstanceMap = new HashMap<>(mThreadCounts);
 		final IntervalDomainValue one = new IntervalDomainValue(1, 1);
 		threadName.stream().filter(p -> newInstanceMap.get(p) != null)
-				.filter(p -> newInstanceMap.get(p).getUpper() != null)
+				.filter(p -> newInstanceMap.get(p).getUpper().getValue() != null)
 				.filter(p -> newInstanceMap.get(p).getUpper().getValue().intValue() < 1)
 				.forEach(p -> newInstanceMap.put(p, one));
 		return new ThreadInstanceCounter<>(newInstanceMap, mForkIds, mSeenForks);
@@ -130,6 +126,7 @@ public class ThreadInstanceCounter<LOC extends IcfgLocation> {
 		final var newInstanceMap = new HashMap<>(mThreadCounts);
 		final IntervalDomainValue zero = new IntervalDomainValue(0, 0);
 		threadName.stream().filter(p -> newInstanceMap.get(p) != null)
+				.filter(p -> newInstanceMap.get(p).getUpper().getValue() != null)
 				.filter(p -> newInstanceMap.get(p).getUpper().getValue().intValue() > 0)
 				.forEach(p -> newInstanceMap.put(p, zero));
 		return new ThreadInstanceCounter<>(newInstanceMap, mForkIds, mSeenForks);
