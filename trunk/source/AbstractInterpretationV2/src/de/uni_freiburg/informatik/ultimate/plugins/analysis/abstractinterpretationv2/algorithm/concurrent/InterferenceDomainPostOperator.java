@@ -21,47 +21,47 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 
-public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
-		implements IAbstractPostOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION> {
+public class InterferenceDomainPostOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
+		implements IAbstractPostOperator<InterferenceDomainState<STATE, ACTION, LOC>, ACTION> {
 
 	private final ILogger mLogger;
 
 	private String mCurrentThreadName;
 	private final IAbstractPostOperator<STATE, ACTION> mUnderlyingPostOp;
-	private final GuardedInterferenceApplier<STATE, ACTION, LOC> mItfApplier;
+	private final InterferenceFIxpoint<STATE, ACTION, LOC> mItfApplier;
 	private final Set<IIcfgForkTransitionThreadCurrent<IcfgLocation>> mforksInLoop;
 
 	private final int mMaxParallelStates;
-	private final GuardedInterferenceCache<STATE, ACTION, LOC> mCache;
+	private final InterferenceCache<STATE, ACTION, LOC> mCache;
 
-	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mRelInterferingDomain;
+	private final InterferenceDomain<STATE, ACTION, LOC> mRelInterferingDomain;
 
 	private final IIcfg<?> mIcfg;
 
-	public GuardedInterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
+	public InterferenceDomainPostOperator(final IIcfg<?> cfg, final ILogger logger,
 			final IAbstractPostOperator<STATE, ACTION> postOp,
-			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
-			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
+			final InterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
+			final StaticAbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
 			final AbstractInterferenceState<STATE, ACTION, LOC> interferences,
-			final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
+			final InterferenceCache<STATE, ACTION, LOC> cache) {
 		mRelInterferingDomain = relationalInterferingDomain;
 		mLogger = logger;
 		mUnderlyingPostOp = postOp;
-		mItfApplier = new GuardedInterferenceApplier<>(cfg, logger, relationalInterferingDomain, globalMap, maxItf,
-				maxParallelStates, interferences, cache);
+		mItfApplier = new InterferenceFIxpoint<>(cfg, logger, relationalInterferingDomain, globalMap, maxItf,
+				maxParallelStates, interferences);
 		mforksInLoop = IcfgUtils.getForksInLoop(cfg);
 		mMaxParallelStates = maxParallelStates;
 		mCache = cache;
 		mIcfg = cfg;
 	}
 
-	public GuardedInterferenceApplier<STATE, ACTION, LOC> getItfApplier() {
+	public InterferenceFIxpoint<STATE, ACTION, LOC> getItfApplier() {
 		return mItfApplier;
 	}
 
 	@Override
-	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
+	public Collection<InterferenceDomainState<STATE, ACTION, LOC>> apply(
+			final InterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
 		if (oldstate.isStateBottom()) {
 			return List.of(oldstate);
 		}
@@ -94,18 +94,18 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 
 		// adjust abstract location according to new location
 		final var guardedStates = states.stream().filter(s -> !s.isBottom())
-				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, newCounter, newLocation))
+				.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, newCounter, newLocation))
 				.collect(Collectors.toSet());
 
 		// 2. apply interferences
 		final var disj = DisjunctiveAbstractState.createDisjunction(guardedStates, mMaxParallelStates);
-		final var afterItfs = mItfApplier.stateAfterInterferences(disj, mCurrentThreadName, mCache);
+		final var afterItfs = mItfApplier.computeInterferenceFixpoint(disj, mCurrentThreadName, mCache);
 //		mLogger.warn("=====");
 		return afterItfs.getStates();
 	}
 
-	private GuardedInterferenceDomainState<STATE, ACTION, LOC> createCompatibleBottomState(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
+	private InterferenceDomainState<STATE, ACTION, LOC> createCompatibleBottomState(
+			final InterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
 		// TODO Auto-generated method stub
 		var bottomState = mRelInterferingDomain.createBottomState().addVariables(oldstate.getVariables());
 		bottomState = bottomState.initializeLocation(transition.getTarget(),
@@ -205,15 +205,15 @@ public class GuardedInterferenceDomainPostOperator<STATE extends IAbstractState<
 	}
 
 	@Override
-	public List<GuardedInterferenceDomainState<STATE, ACTION, LOC>> apply(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> stateBeforeLeaving,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> secondState, final ACTION transition) {
+	public List<InterferenceDomainState<STATE, ACTION, LOC>> apply(
+			final InterferenceDomainState<STATE, ACTION, LOC> stateBeforeLeaving,
+			final InterferenceDomainState<STATE, ACTION, LOC> secondState, final ACTION transition) {
 		throw new UnsupportedOperationException(
 				"Postop with stateBeforeLeaving not implemented for GuardedInterferenceDomain.");
 	}
 
 	@Override
-	public EvalResult evaluate(final GuardedInterferenceDomainState<STATE, ACTION, LOC> state, final Term formula,
+	public EvalResult evaluate(final InterferenceDomainState<STATE, ACTION, LOC> state, final Term formula,
 			final Script script) {
 		throw new UnsupportedOperationException("Evaluate not implemented for GuardedInterferenceDomain.");
 	}

@@ -6,18 +6,18 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class GuardedStateWideningOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
-		implements IAbstractStateBinaryOperator<GuardedInterferenceDomainState<STATE, ACTION, LOC>> {
+public class InterferenceDomainWideningOperator<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>
+		implements IAbstractStateBinaryOperator<InterferenceDomainState<STATE, ACTION, LOC>> {
 	private final IAbstractDomain<STATE, ACTION> mUnderlyingDomain;
 
-	public GuardedStateWideningOperator(final IAbstractDomain<STATE, ACTION> underlying) {
+	public InterferenceDomainWideningOperator(final IAbstractDomain<STATE, ACTION> underlying) {
 		mUnderlyingDomain = underlying;
 	}
 
 	@Override
-	public GuardedInterferenceDomainState<STATE, ACTION, LOC> apply(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> first,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> second) {
+	public InterferenceDomainState<STATE, ACTION, LOC> apply(
+			final InterferenceDomainState<STATE, ACTION, LOC> first,
+			final InterferenceDomainState<STATE, ACTION, LOC> second) {
 		if (first.state() == null || first.state().isBottom()) {
 			return second;
 		}
@@ -28,6 +28,6 @@ public class GuardedStateWideningOperator<STATE extends IAbstractState<STATE>, A
 		final var widenedTC = first.threadCounter().union(second.threadCounter());
 		final AbstractLocationState<LOC> joinedLoc = first.abstractLocationState()
 				.union(second.abstractLocationState());
-		return new GuardedInterferenceDomainState<>(widenedState, widenedTC, joinedLoc);
+		return new InterferenceDomainState<>(widenedState, widenedTC, joinedLoc);
 	}
 }

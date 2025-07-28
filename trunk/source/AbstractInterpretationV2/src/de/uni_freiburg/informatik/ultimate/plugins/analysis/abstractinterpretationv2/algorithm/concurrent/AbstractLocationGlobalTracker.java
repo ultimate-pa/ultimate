@@ -14,7 +14,7 @@ public class AbstractLocationGlobalTracker {
 	private final Map<String, Set<Integer>> mThreadLocationMap;
 	private final Map<String, Set<Integer>> mSelfMap;
 
-	public AbstractLocationGlobalTracker(final Set<String> threadNameSet, final AbstractLocationMap<?> globalMap) {
+	public AbstractLocationGlobalTracker(final Set<String> threadNameSet, final StaticAbstractLocationMap<?> globalMap) {
 		// initially all threads at line/location = x as defined by globalMap
 		mThreadLocationMap = threadNameSet.stream()
 				.collect(Collectors.toMap(t -> t, t -> Set.of(globalMap.getAbstractEntryLoc(t))));

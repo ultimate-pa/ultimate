@@ -52,8 +52,8 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * Location-abstraction algorithm: Increment location-abstraction counter label at any location which contains a
 	 * potential mutex guard.
 	 */
-	public AbstractLocationMap<LOC> mutexSplitting() {
-		final AbstractLocationMap<LOC> x = new AbstractLocationMap<>(l -> {
+	public StaticAbstractLocationMap<LOC> mutexSplitting() {
+		final StaticAbstractLocationMap<LOC> x = new StaticAbstractLocationMap<>(l -> {
 			final var outgoing = l.getOutgoingEdges();
 			final String sourceThread = l.getProcedure();
 			if (shouldDifferentiate(outgoing)) {
@@ -69,16 +69,16 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * potential mutex guard, or any location which writes or reads a variable contained in a mutex guard, if it occurs
 	 * before a mutex guard.
 	 */
-	public AbstractLocationMap<LOC> mutexVarSplitting() {
-		return new AbstractLocationMap<>(this::mutexVarSplitFun, mIcfg.getProcedureEntryNodes());
+	public StaticAbstractLocationMap<LOC> mutexVarSplitting() {
+		return new StaticAbstractLocationMap<>(this::mutexVarSplitFun, mIcfg.getProcedureEntryNodes());
 	}
 
 	/*
 	 * Location-abstraction algorithm: Increment location-abstraction counter label at any location which contains a
 	 * potential mutex guard, or any location which writes or reads a variable contained in a mutex guard.
 	 */
-	public AbstractLocationMap<LOC> mutexVarSplittingNoCutoff() {
-		return new AbstractLocationMap<>(this::mutexVarSplitFunNoCutoff, mIcfg.getProcedureEntryNodes());
+	public StaticAbstractLocationMap<LOC> mutexVarSplittingNoCutoff() {
+		return new StaticAbstractLocationMap<>(this::mutexVarSplitFunNoCutoff, mIcfg.getProcedureEntryNodes());
 	}
 
 	private int mutexVarSplitFun(final LOC loc) {

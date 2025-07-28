@@ -27,8 +27,8 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 	}
 
 	public void printResults(final ILogger logger, final int iteration,
-			final Map<String, AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
-			final Map<String, ? extends LOC> entryLocs, final AbstractLocationMap<LOC> globMap, final Script script) {
+			final Map<String, AbsIntResult<InterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
+			final Map<String, ? extends LOC> entryLocs, final StaticAbstractLocationMap<LOC> globMap, final Script script) {
 		logger.error(" ");
 		entryLocs.keySet().stream().forEach(l -> logger.error("Thread " + l + " " + globMap.getAbstractEntryLoc(l)));
 		logger.error(" ");
@@ -40,9 +40,9 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 
 	private void printPrecisionLosses(final int iteration) {
 		// debug info for precision losses
-		if (GuardedInterferenceApplier.iterationsReached > mMaxInterferenceFixpointUnwindings) {
+		if (InterferenceFIxpoint.iterationsReached > mMaxInterferenceFixpointUnwindings) {
 			mLogger.warn("Possible precision loss, widened during one or more interference fixpoint(s). Iterations: "
-					+ GuardedInterferenceApplier.iterationsReached + ", with max being: "
+					+ InterferenceFIxpoint.iterationsReached + ", with max being: "
 					+ mMaxInterferenceFixpointUnwindings);
 		}
 		if (iteration > mMaxUnwindings) {
@@ -56,13 +56,13 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 	}
 
 	public void printResultCfgAnnotations(
-			final Map<String, AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
+			final Map<String, AbsIntResult<InterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC>> resultSet,
 			final ILogger logger, final Map<String, ? extends LOC> entryLocs, final Script script) {
 		final Set<IcfgLocation> seenLocs = new HashSet<>();
 		for (final String thread : resultSet.keySet()) {
 			logger.error("\n");
 			logger.error("Annotated CFG for " + thread);
-			final AbsIntResult<GuardedInterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC> result = resultSet
+			final AbsIntResult<InterferenceDomainState<STATE, ACTION, LOC>, ACTION, LOC> result = resultSet
 					.get(thread);
 			for (final LOC location : result.getLoc2Term().keySet()) {
 				if (entryLocs.containsValue(location)) {
@@ -87,13 +87,13 @@ public class FixpointPrintHelper<STATE extends IAbstractState<STATE>, ACTION ext
 			}
 			logger.error("Amount of parallel states: " + parallelStateAmount);
 			logger.error("Unioned State: "
-					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
+					+ ((InterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
 							.state());
 			logger.error("Unioned ThreadCounter: "
-					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
+					+ ((InterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
 							.threadCounter());
 			logger.error("Unioned AbstractLocation: "
-					+ ((GuardedInterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
+					+ ((InterferenceDomainState<STATE, ACTION, LOC>) result.getLoc2SingleStates().get(loc))
 							.abstractLocationState());
 			if (loc.getOutgoingEdges().size() != 0) {
 				logger.error("|");

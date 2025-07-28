@@ -17,16 +17,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.DataStructureUtil
 
 public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private static int UNIQUEINT = 0;
-	private final GuardedInterferenceCache<STATE, ACTION, LOC> mCache;
+	private final InterferenceCache<STATE, ACTION, LOC> mCache;
 
-	public InterferenceApplier(final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
+	public InterferenceApplier(final InterferenceCache<STATE, ACTION, LOC> cache) {
 		mCache = cache;
 	}
 
-	public Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToState(
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> interferingStateGuarded, final ACTION action,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> targetStateGuarded,
-			final GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC> postOp, final boolean isSelfInterfering,
+	public Collection<InterferenceDomainState<STATE, ACTION, LOC>> applyInterferenceToState(
+			final InterferenceDomainState<STATE, ACTION, LOC> interferingStateGuarded, final ACTION action,
+			final InterferenceDomainState<STATE, ACTION, LOC> targetStateGuarded,
+			final InterferenceDomainPostOperator<STATE, ACTION, LOC> postOp, final boolean isSelfInterfering,
 			final IIcfg<?> cfg) {
 
 		if (targetStateGuarded.isBottom() || interferingStateGuarded.isBottom()) {
@@ -69,9 +69,9 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		final var triple = new StateItfPrestatePair<>(targetState, interferingState, action);
 		final var cached = mCache.getItfCache().get(triple);
 		if (cached != null) {
-			GuardedInterferenceDomain.applierCacheHits++;
+			InterferenceDomain.applierCacheHits++;
 			return cached.stream()
-					.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
+					.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
 					.toList();
 		}
 
@@ -120,7 +120,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		}
 		// postop
 		var postState = postOp.applyState(intersectionState, action).stream().filter(s -> !s.isBottom()).toList();
-		GuardedInterferenceDomain.postoperatorCalls++;
+		InterferenceDomain.postoperatorCalls++;
 
 		// TODO: sound?
 		if (postState.isEmpty()) {
@@ -144,7 +144,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 			}
 		}
 		final var postStateWithGuard = postState.stream()
-				.map(s -> new GuardedInterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
+				.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
 				.toList();
 
 		mCache.getItfCache().put(triple, postState);

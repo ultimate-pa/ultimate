@@ -15,7 +15,7 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 
 	public Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> createValidInterferenceThreadPairs(
 			final String ownerThread, final AbstractInterferenceState<STATE, ACTION, LOC> interferences2,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result) {
+			final DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result) {
 		final Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> allInterferences = new LinkedHashSet<>();
 
 		final var interferingThreads = result.getStates().iterator().next().threadCounter().getThreadNameSet();
@@ -43,9 +43,9 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 		return allInterferences;
 	}
 
-	public boolean stateIsInterferableBy(final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
+	public boolean stateIsInterferableBy(final InterferenceDomainState<STATE, ACTION, LOC> singleState,
 			final String ownerThread, final String interferenceThreadName,
-			final Interference<STATE, ACTION, LOC> interference, final AbstractLocationMap<LOC> abstractLocationMap) {
+			final Interference<STATE, ACTION, LOC> interference, final StaticAbstractLocationMap<LOC> abstractLocationMap) {
 		// Is thread of interference even active/forked
 		if (!interferingThreadIsActiveInState(ownerThread, interferenceThreadName, singleState)) {
 			return false;
@@ -82,7 +82,7 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 		return true;
 	}
 
-	private boolean nonMainThreadCanMove(final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState,
+	private boolean nonMainThreadCanMove(final InterferenceDomainState<STATE, ACTION, LOC> singleState,
 			final String interferenceThreadName, final int actualInterferenceThreadLocation) {
 		final var nonMainThreadLocations = singleState.abstractLocationState().getTracker()
 				.getLocationForSelfThread(interferenceThreadName);
@@ -93,7 +93,7 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 	}
 
 	private boolean interferingThreadIsActiveInState(final String ownerThread, final String interferenceThreadName,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> singleState) {
+			final InterferenceDomainState<STATE, ACTION, LOC> singleState) {
 		final var interferingThreadCount = singleState.threadCounter().getThreadInstances().get(interferenceThreadName);
 		if (interferingThreadCount.getUpper().isInfinity()) {
 			return true;

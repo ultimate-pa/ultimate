@@ -16,18 +16,18 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		mEntryLocs = entryLocs;
 	}
 
-	public AbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction,
+	public StaticAbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction,
 			final IUltimateServiceProvider services, final IIcfg<? extends LOC> icfg) {
 		// TODO: enum for setting strings
 		// TODO: parametrize countervalues
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
-		final AbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
-		case "Singleton" -> new AbstractLocationMap<>((l -> 1), mEntryLocs);
+		final StaticAbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
+		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 1), mEntryLocs);
 		case "Split only at Guards" -> mHeuristicLocationAbstraction.mutexSplitting();
 		case "Mutex Guard and Vars Splitting" -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		case "Mutex Guard and Vars Splitting no Cutoff" -> mHeuristicLocationAbstraction.mutexVarSplittingNoCutoff();
 		case "Fully precise" ->
-			new AbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
+			new StaticAbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
 		default -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		};
 		return absMap;

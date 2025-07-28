@@ -11,10 +11,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
-	private final IAbstractStateBinaryOperator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> mWideningOperator;
+	private final IAbstractStateBinaryOperator<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> mWideningOperator;
 
 	public InterferenceWideningOperator(
-			final IAbstractStateBinaryOperator<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> wideningOp) {
+			final IAbstractStateBinaryOperator<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> wideningOp) {
 		mWideningOperator = wideningOp;
 	}
 
@@ -37,7 +37,7 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 				final var oldInterference = oldMap.get(act);
 				final var newInterference = newMap.get(act);
 
-				final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> widenedState;
+				final InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> widenedState;
 
 				if (oldInterference == null) {
 					widenedState = newInterference.preState();
@@ -58,9 +58,9 @@ public class InterferenceWideningOperator<UNDERLYINGSTATE extends IAbstractState
 		return set.stream().collect(Collectors.toMap(Interference::action, i -> i));
 	}
 
-	private GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> combineStates(
-			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> disjunctiveAbstractState,
-			final GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> disjunctiveAbstractState2) {
+	private InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> combineStates(
+			final InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> disjunctiveAbstractState,
+			final InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> disjunctiveAbstractState2) {
 		if (disjunctiveAbstractState == null) {
 			return disjunctiveAbstractState2;
 		}

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 
-public final class AbstractLocationMap<LOC extends IcfgLocation> {
+public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 	private final Map<LOC, Integer> mMap = new ConcurrentHashMap<>();
 	private final Function<LOC, Integer> mMappingFunction;
 	private final Map<String, ? extends LOC> mEntryLocs;
@@ -22,7 +22,7 @@ public final class AbstractLocationMap<LOC extends IcfgLocation> {
 	private final Map<String, Integer> mMaxParallelLocationStates;
 	private final Map<String, Set<LOC>> mFinalLocations = new HashMap<>();
 
-	public AbstractLocationMap(final Function<LOC, Integer> mappingFunction,
+	public StaticAbstractLocationMap(final Function<LOC, Integer> mappingFunction,
 			final Map<String, ? extends LOC> entryLocs) {
 		mMappingFunction = mappingFunction;
 		mEntryLocs = entryLocs;

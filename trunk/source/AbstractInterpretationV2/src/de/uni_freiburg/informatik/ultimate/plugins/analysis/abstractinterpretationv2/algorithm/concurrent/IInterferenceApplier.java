@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 public interface IInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
-	Collection<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyInterferencesToState(
-			GuardedInterferenceDomainState<STATE, ACTION, LOC> state, Interference<STATE, ACTION, LOC> interference);
+	Collection<InterferenceDomainState<STATE, ACTION, LOC>> applyInterferencesToState(
+			InterferenceDomainState<STATE, ACTION, LOC> state, Interference<STATE, ACTION, LOC> interference);
 
 }

@@ -19,24 +19,14 @@ record StateItfPair<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTra
 record IntersectionPair<STATE extends IAbstractState<STATE>>(STATE state1, STATE state2) {
 }
 
-public class GuardedInterferenceCache<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
-	private final Map<StateItfPair<STATE, ACTION, LOC>, Collection<STATE>> postOpCache = new LRUCache<>(10000);
+public class InterferenceCache<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 	private final Map<StateItfPrestatePair<STATE, ACTION, LOC>, Collection<STATE>> itfCache = new LRUCache<>(10000);
-	private final Map<IntersectionPair<STATE>, STATE> intersectionCache = new LRUCache<>(10000);
 
-	public GuardedInterferenceCache() {
-	}
-
-	public Map<StateItfPair<STATE, ACTION, LOC>, Collection<STATE>> getPostOpCache() {
-		return postOpCache;
+	public InterferenceCache() {
 	}
 
 	public Map<StateItfPrestatePair<STATE, ACTION, LOC>, Collection<STATE>> getItfCache() {
 		return itfCache;
-	}
-
-	public Map<IntersectionPair<STATE>, STATE> getIntersectionCache() {
-		return intersectionCache;
 	}
 
 	private class LRUCache<K, V> extends LinkedHashMap<K, V> {

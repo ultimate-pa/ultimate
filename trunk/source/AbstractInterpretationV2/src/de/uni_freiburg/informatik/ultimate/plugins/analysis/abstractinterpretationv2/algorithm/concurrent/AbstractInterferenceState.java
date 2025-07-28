@@ -34,7 +34,7 @@ public class AbstractInterferenceState<STATE extends IAbstractState<STATE>, ACTI
 	}
 
 	public void addInterference(final String threadName, final ACTION action,
-			final GuardedInterferenceDomainState<STATE, ACTION, LOC> state) {
+			final InterferenceDomainState<STATE, ACTION, LOC> state) {
 		if (state == null) {
 			return;
 		}

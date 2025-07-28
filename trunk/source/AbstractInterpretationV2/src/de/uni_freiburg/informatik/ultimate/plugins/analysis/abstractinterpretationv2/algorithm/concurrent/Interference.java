@@ -5,7 +5,7 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public record Interference<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation>(
-		ACTION action, GuardedInterferenceDomainState<STATE, ACTION, LOC> preState) {
+		ACTION action, InterferenceDomainState<STATE, ACTION, LOC> preState) {
 	boolean isEqualTo(final Interference<STATE, ACTION, LOC> other) {
 		return preState().isEqualTo(other.preState());
 	}

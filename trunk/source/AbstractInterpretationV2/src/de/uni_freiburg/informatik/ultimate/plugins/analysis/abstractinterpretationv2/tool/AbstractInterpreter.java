@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineGuardedConcurrent;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.FixpointEngineConcurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.concurrent.ThreadModularAbsintPrefs;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.IcfgTransitionProvider;
@@ -122,7 +122,7 @@ public final class AbstractInterpreter {
 							p);
 
 			final IFixpointEngine<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> engine =
-					new FixpointEngineGuardedConcurrent<>(services, (FixpointEngineParameters) params,
+					new FixpointEngineConcurrent<>(services, (FixpointEngineParameters) params,
 							(IFixpointEngineFactory) factory, root, threadModPrefs);
 			return engine;
 		}

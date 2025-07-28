@@ -9,9 +9,9 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstrac
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public final class GuardedStateTransformer {
+public final class DisjItfStateTransformer {
 
-	public GuardedStateTransformer() {
+	public DisjItfStateTransformer() {
 		throw new AssertionError("Should not instantiate this class, call the statiic methods");
 	}
 
@@ -19,10 +19,10 @@ public final class GuardedStateTransformer {
 		return states.stream().map(transformer).collect(Collectors.toSet());
 	}
 
-	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> assignForkId(
+	public static <STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> assignForkId(
 			final String threadName, final int forkId, final LOC forkLoc, final boolean inLoop,
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> disj) {
-		final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
+			final DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> disj) {
+		final Set<InterferenceDomainState<STATE, ACTION, LOC>> states = disj.getStates();
 		return DisjunctiveAbstractState
 				.createDisjunction(mapStates(states, s -> s.assignForkId(threadName, forkId, forkLoc, inLoop)));
 	}

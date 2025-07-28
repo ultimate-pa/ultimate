@@ -8,34 +8,36 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 
 public class AbstractLocationState<LOC extends IcfgLocation> {
 	// global mapping of loc -> int, determined at beginning
-	private final AbstractLocationMap<LOC> mAbstractLocationMap;
+	private final StaticAbstractLocationMap<LOC> mAbstractLocationMap;
 	// state of other thread locs, changed by interferences
 	private final AbstractLocationGlobalTracker mLocationTracker;
+	private final int NOPREVIOUSLOCATION = -1;
 
-	public AbstractLocationState(final LOC location, final AbstractLocationMap<LOC> globalMap,
+	public AbstractLocationState(final LOC location, final StaticAbstractLocationMap<LOC> globalMap,
 			final Set<String> threadNameSet) {
 		mAbstractLocationMap = globalMap;
 		final var tracker = new AbstractLocationGlobalTracker(threadNameSet, mAbstractLocationMap);
 		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
-		mLocationTracker = tracker.movedTo(location.getProcedure(), -1, abstractLocation);
+		mLocationTracker = tracker.movedTo(location.getProcedure(), NOPREVIOUSLOCATION, abstractLocation);
 	}
 
-	public AbstractLocationState(final LOC location, final AbstractLocationMap<LOC> locMap,
+	public AbstractLocationState(final LOC location, final StaticAbstractLocationMap<LOC> locMap,
 			final AbstractLocationGlobalTracker tracker) {
 		mAbstractLocationMap = locMap;
 		final var track = new AbstractLocationGlobalTracker(tracker);
 		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
-		mLocationTracker = track.movedTo(location.getProcedure(), -1, abstractLocation);
+		mLocationTracker = track.movedTo(location.getProcedure(), NOPREVIOUSLOCATION, abstractLocation);
 	}
 
 	public AbstractLocationState(final LOC location, final AbstractLocationState<LOC> other) {
 		mAbstractLocationMap = other.mAbstractLocationMap;
 		final var track = new AbstractLocationGlobalTracker(other.mLocationTracker);
 		final var abstractLocation = mAbstractLocationMap.getAbstractLocation(location);
-		mLocationTracker = track.movedTo(location.getProcedure(), -1, abstractLocation);
+		mLocationTracker = track.movedTo(location.getProcedure(), NOPREVIOUSLOCATION, abstractLocation);
 	}
 
-	public AbstractLocationState(final AbstractLocationMap<LOC> locMap, final AbstractLocationGlobalTracker tracker) {
+	public AbstractLocationState(final StaticAbstractLocationMap<LOC> locMap,
+			final AbstractLocationGlobalTracker tracker) {
 		mAbstractLocationMap = locMap;
 		mLocationTracker = new AbstractLocationGlobalTracker(tracker);
 	}
@@ -44,7 +46,7 @@ public class AbstractLocationState<LOC extends IcfgLocation> {
 		return mLocationTracker;
 	}
 
-	public AbstractLocationMap<LOC> getLocationMap() {
+	public StaticAbstractLocationMap<LOC> getLocationMap() {
 		return mAbstractLocationMap;
 	}
 

@@ -14,11 +14,11 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
+public class InterferenceFIxpoint<STATE extends IAbstractState<STATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> {
 
 	private final ILogger mLogger;
-	private final GuardedInterferenceDomain<STATE, ACTION, LOC> mGuardedInterferenceDomain;
-	private final AbstractLocationMap<LOC> mAbstractLocationMap;
+	private final InterferenceDomain<STATE, ACTION, LOC> mGuardedInterferenceDomain;
+	private final StaticAbstractLocationMap<LOC> mAbstractLocationMap;
 	private final int mMaxItf;
 	private final int mMaxParallelStates;
 	private final AbstractInterferenceState<STATE, ACTION, LOC> mInterferences;
@@ -26,15 +26,14 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 
 	public static int iterationsReached = 0;
 	private Set<InterferenceWithSourceThread<STATE, ACTION, LOC>> mAllInterfs;
-	private GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC> mPostOp;
-	private final Map<InterferenceWithSourceThread<STATE, ACTION, LOC>, Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>>> mSeenStatesMap;
+	private InterferenceDomainPostOperator<STATE, ACTION, LOC> mPostOp;
+	private final Map<InterferenceWithSourceThread<STATE, ACTION, LOC>, Set<InterferenceDomainState<STATE, ACTION, LOC>>> mSeenStatesMap;
 	private final IIcfg<?> mCfg;
 
-	public GuardedInterferenceApplier(final IIcfg<?> cfg, final ILogger logger,
-			final GuardedInterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
-			final AbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
-			final AbstractInterferenceState<STATE, ACTION, LOC> interferences,
-			final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
+	public InterferenceFIxpoint(final IIcfg<?> cfg, final ILogger logger,
+			final InterferenceDomain<STATE, ACTION, LOC> relationalInterferingDomain,
+			final StaticAbstractLocationMap<LOC> globalMap, final int maxItf, final int maxParallelStates,
+			final AbstractInterferenceState<STATE, ACTION, LOC> interferences) {
 		mLogger = logger;
 		mGuardedInterferenceDomain = relationalInterferingDomain;
 		mInterferences = interferences;
@@ -43,7 +42,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mMaxParallelStates = maxParallelStates;
 		iterationsReached = 0;
 		// TODO: why needed
-		mPostOp = (GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain
+		mPostOp = (InterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain
 				.getPostOperator();
 		mAllInterfs = new HashSet<>();
 		mItfUtils = new InterferenceUtils<>();
@@ -51,16 +50,25 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 		mCfg = cfg;
 	}
 
-	public DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> stateAfterInterferences(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
-			final String ownerThread, final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
-		if (result.getStates().isEmpty()) {
+	public DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> computeInterferenceFixpoint(
+			final DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result,
+			final String ownerThread, final InterferenceCache<STATE, ACTION, LOC> cache) {
+		if (!prepareAndFilterItfs(result, ownerThread)) {
 			return result;
+		}
+		return applyFixpoint(result, ownerThread, cache);
+	}
+
+	private boolean prepareAndFilterItfs(
+			final DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result,
+			final String ownerThread) {
+		if (result.getStates().isEmpty()) {
+			return false;
 		}
 		final var validInterferenceThreadPairs = mItfUtils.createValidInterferenceThreadPairs(ownerThread,
 				mInterferences, result);
 		if (validInterferenceThreadPairs.isEmpty()) {
-			return result;
+			return false;
 		}
 		mSeenStatesMap.clear();
 		for (final var itf : validInterferenceThreadPairs) {
@@ -69,14 +77,14 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 		}
 		mAllInterfs = validInterferenceThreadPairs;
-		mPostOp = (GuardedInterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain
+		mPostOp = (InterferenceDomainPostOperator<STATE, ACTION, LOC>) mGuardedInterferenceDomain
 				.getPostOperator();
-		return applyFixpointSingle(result, ownerThread, cache);
+		return true;
 	}
 
-	private DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> applyFixpointSingle(
-			DisjunctiveAbstractState<GuardedInterferenceDomainState<STATE, ACTION, LOC>> result,
-			final String ownerThread, final GuardedInterferenceCache<STATE, ACTION, LOC> cache) {
+	private DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> applyFixpoint(
+			DisjunctiveAbstractState<InterferenceDomainState<STATE, ACTION, LOC>> result,
+			final String ownerThread, final InterferenceCache<STATE, ACTION, LOC> cache) {
 		final InterferenceApplier<STATE, ACTION, LOC> itfApplier = new InterferenceApplier<>(cache);
 		int iteration = 0;
 		boolean changed = true;
@@ -87,8 +95,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 			}
 			final var oldResult = result;
 			for (final var interference : mAllInterfs) {
-				GuardedInterferenceDomain.totalInnerInterferenceIterations++;
-				final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> interferable;
+				InterferenceDomain.totalInnerInterferenceIterations++;
+				final Set<InterferenceDomainState<STATE, ACTION, LOC>> interferable;
 				interferable = result.getStates().stream().filter(s -> !mSeenStatesMap.get(interference).contains(s))
 						.filter(s -> mItfUtils.stateIsInterferableBy(s, ownerThread, interference.sourceThread(),
 								interference.interf(), mAbstractLocationMap))
@@ -100,8 +108,8 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 
 				final boolean isSelfInterference = ownerThread.equals(interference.sourceThread());
 
-				final Set<GuardedInterferenceDomainState<STATE, ACTION, LOC>> resultSet = new HashSet<>();
-				for (final GuardedInterferenceDomainState<STATE, ACTION, LOC> single : interferable) {
+				final Set<InterferenceDomainState<STATE, ACTION, LOC>> resultSet = new HashSet<>();
+				for (final InterferenceDomainState<STATE, ACTION, LOC> single : interferable) {
 					final var singlepost = itfApplier.applyInterferenceToState(interference.interf().preState(),
 							interference.interf().action(), single, mPostOp, isSelfInterference, mCfg);
 					resultSet.addAll(singlepost);
@@ -126,7 +134,7 @@ public class GuardedInterferenceApplier<STATE extends IAbstractState<STATE>, ACT
 				changed = false;
 			}
 			if (!changed) {
-				GuardedInterferenceDomain.maxStatesInOneItf = Math.max(GuardedInterferenceDomain.maxStatesInOneItf,
+				InterferenceDomain.maxStatesInOneItf = Math.max(InterferenceDomain.maxStatesInOneItf,
 						result.getStates().size());
 				break;
 			}

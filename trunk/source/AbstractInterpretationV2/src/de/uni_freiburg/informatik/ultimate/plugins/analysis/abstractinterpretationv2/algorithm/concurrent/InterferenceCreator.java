@@ -17,9 +17,9 @@ public class InterferenceCreator {
 
 	public static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC> computeInterferences(
 			final Map<String, ? extends LOC> mEntryLocs, final IIcfg<? extends LOC> icfg,
-			final IAbstractStateStorage<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
+			final IAbstractStateStorage<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, LOC> mStateStorage,
 			final ITransitionProvider<ACTION, LOC> mTransitionProvider,
-			final AbstractLocationMap<LOC> mLocationAbstraction) {
+			final StaticAbstractLocationMap<LOC> mLocationAbstraction) {
 		// do we want multiple guardedStates to be represented in an interference prestate, or just the union
 		// Seems to not make much difference in state amount actually
 		final var result = new AbstractInterferenceState<UNDERLYINGSTATE, ACTION, LOC>(
@@ -46,12 +46,12 @@ public class InterferenceCreator {
 	}
 
 	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> Interference<UNDERLYINGSTATE, ACTION, LOC> computeInterference(
-			final DisjunctiveAbstractState<GuardedInterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
+			final DisjunctiveAbstractState<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> preState,
 			final IcfgEdge edge) {
 		final Interference<UNDERLYINGSTATE, ACTION, LOC> interference;
 		{
 			interference = new Interference<>((ACTION) edge,
-					preState.getSingleState(GuardedInterferenceDomainState::union));
+					preState.getSingleState(InterferenceDomainState::union));
 		}
 		return interference;
 	}
@@ -59,7 +59,7 @@ public class InterferenceCreator {
 	// with naive location abstraction we cannot skip any interferences, even if they are a "skip"
 	private static <UNDERLYINGSTATE extends IAbstractState<UNDERLYINGSTATE>, ACTION extends IIcfgTransition<LOC>, LOC extends IcfgLocation> boolean isInterferingTransition(
 			final ACTION transition, final IIcfg<? extends LOC> icfg,
-			final AbstractLocationMap<LOC> mLocationAbstraction) {
+			final StaticAbstractLocationMap<LOC> mLocationAbstraction) {
 		if (mLocationAbstraction.getAbstractLocation(transition.getSource()) != mLocationAbstraction
 				.getAbstractLocation(transition.getTarget())) {
 			return true;
