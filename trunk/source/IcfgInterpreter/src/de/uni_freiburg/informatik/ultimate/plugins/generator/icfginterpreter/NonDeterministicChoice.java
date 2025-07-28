@@ -76,10 +76,13 @@ public class NonDeterministicChoice {
 			final IntValue minimum = values.getMinimum();
 			final IntValue maximum = values.getMaximum();
 
-			while (values.getInequal().contains(randBigInt) || randBigInt == null) {
+			while (randBigInt == null || values.getInequal().contains(randBigInt)) {
 				randBigInt = new IntValue(new BigInteger(length, mRandom));
 				if (minimum != null) {
 					randBigInt = randBigInt.add(minimum);
+				} else if (mRandom.nextBoolean()) {
+					// 50/50 for value to be negative
+					randBigInt = randBigInt.negate();
 				}
 				if (maximum != null) {
 					randBigInt = randBigInt.mod(maximum);
