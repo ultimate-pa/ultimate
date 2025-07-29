@@ -51,6 +51,8 @@ RUN mvn -f "${REPO_MAVEN_ROOT}" clean package -P materialize
 #------------------------------------------------------------------------------
 FROM build AS build-webfrontend
 
+ARG ULTIMATE_FRONTEND_BASEURL="/website"
+
 ARG REPO_FRONTEND_ROOT
 ARG REPO_DIR_BUILD
 ARG DIR_BUILD
@@ -71,7 +73,7 @@ RUN apk add --no-cache "gcc" \
 # build the Ultimate web frontend
 WORKDIR "${REPO_FRONTEND_ROOT}"
 ENV PATH "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64:${PATH}"
-RUN python3 scripts/build.py
+RUN python3 scripts/build.py --baseurl "${ULTIMATE_FRONTEND_BASEURL}"
 
 #------------------------------------------------------------------------------
 # 2nd build stage: package common Ultimate artifacts shared by all products

@@ -15,6 +15,8 @@ services:
     build:
       dockerfile: "Dockerfile"
       target: "ultimate-webfrontend"
+      args:
+      	ULTIMATE_FRONTEND_BASEURL: "/website"
     image: "ultimate-webfrontend"
     env_file: "ultimate-webfrontend.env"
     ports:
