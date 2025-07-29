@@ -233,7 +233,7 @@ COPY --chown="${USER_NAME}:${USER_GROUP}" --from=build "${DIR_OUTPUT}/Debug-E4/l
 RUN ln -s "${USER_HOME}/UltimateDebug" "/usr/bin/UltimateDebug"
 
 # run the Ultimate Debug UI product as non-root user
-#USER "${USER_NAME}"
+USER "${USER_NAME}"
 
 # default entry point to print installed Ultimate version
 ENTRYPOINT ["/bin/sh", "-l"]
