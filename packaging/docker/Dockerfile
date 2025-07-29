@@ -70,13 +70,6 @@ RUN apk add --no-cache "gcc" \
 
 # build the Ultimate web frontend
 WORKDIR "${REPO_FRONTEND_ROOT}"
-
-# patch the Jekyll installation to work under Ruby 3.4+
-RUN echo -e "gem 'csv'\n" \
-            "gem 'base64'\n" \
-            "gem 'bigdecimal'\n" \
-            "gem 'logger'" >> Gemfile
-
 ENV PATH "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64:${PATH}"
 RUN python3 scripts/build.py
 
