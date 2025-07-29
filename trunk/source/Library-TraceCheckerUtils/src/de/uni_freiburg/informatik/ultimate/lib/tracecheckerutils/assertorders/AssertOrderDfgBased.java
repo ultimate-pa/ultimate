@@ -67,7 +67,7 @@ public class AssertOrderDfgBased<L extends IAction> implements IAssertOrder<L> {
 				(Set<? extends IIcfgTransition<?>>) counterexample.getWord().asSet(), Collections.emptySet(),
 				x -> true);
 
-		final DfgContainer dfg = DfgBuilder.buildDfg(pp.getPathProgram().getInitialNodes().iterator().next(), mLogger);
+		final DfgContainer dfg = DfgBuilder.buildDfg(pp.getPathProgram().getInitialNodes(), mLogger);
 		final Set<IcfgEdge> outsideBallEdges = CycleRemover.getOutsideBallEdges(dfg, mLogger);
 
 		final Set<IcfgEdge> removedEdges;

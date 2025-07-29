@@ -52,13 +52,13 @@ public class DfgBuilder {
 	/**
 	 * Build a Data Flow Graph from a Root Node of a boogie Control Flow Graph.
 	 *
-	 * @param cfgRoot the root node of a Control Flow Graph as a IcfgLocation
-	 * @param logger  the Logger
+	 * @param cfgRoots the root nodes of a Control Flow Graph as a Set of IcfgLocations
+	 * @param logger   the Logger
 	 * @return a data flow graph in form of a node List and an edge relation
 	 *
 	 */
-	public static DfgContainer buildDfg(final IcfgLocation cfgRoot, final ILogger logger) {
-		final BuildContext context = new BuildContext(cfgRoot, logger);
+	public static DfgContainer buildDfg(final Set<IcfgLocation> cfgRoots, final ILogger logger) {
+		final BuildContext context = new BuildContext(cfgRoots, logger);
 		final DfgContainer dfg = context.buildDfg(false);
 		return dfg;
 	}
@@ -67,13 +67,13 @@ public class DfgBuilder {
 	 * Build a Data Flow Graph from a Root Node of a boogie Control Flow Graph, with the difference that "Uses" now also
 	 * have edges to other "Uses"
 	 *
-	 * @param cfgRoot the root node of a Control Flow Graph as a IcfgLocation
-	 * @param logger  the Logger
+	 * @param cfgRoots the root nodes of a Control Flow Graph as a Set of IcfgLocations
+	 * @param logger   the Logger
 	 * @return a data flow graph in form of a node List and an edge relation
 	 *
 	 */
-	public static DfgContainer buildDfgUseToUse(final IcfgLocation cfgRoot, final ILogger logger) {
-		final BuildContext context = new BuildContext(cfgRoot, logger);
+	public static DfgContainer buildDfgUseToUse(final Set<IcfgLocation> cfgRoots, final ILogger logger) {
+		final BuildContext context = new BuildContext(cfgRoots, logger);
 		final DfgContainer dfg = context.buildDfg(true);
 		return dfg;
 	}
@@ -89,10 +89,10 @@ public class DfgBuilder {
 		private final Map<IcfgEdge, DfgNode> mEdgeBacklinks = new HashMap<>();
 		private final HashRelation<DfgNode, DfgNode> mEdgeRelation = new HashRelation<>();
 		private final ILogger mLogger;
-		private final IcfgLocation mCfgRootNode;
+		private final Set<IcfgLocation> mCfgRootNodes;
 
-		private BuildContext(final IcfgLocation cfgRootNode, final ILogger logger) {
-			mCfgRootNode = cfgRootNode;
+		private BuildContext(final Set<IcfgLocation> cfgRootNodes, final ILogger logger) {
+			mCfgRootNodes = cfgRootNodes;
 			mLogger = logger;
 		}
 
@@ -112,11 +112,10 @@ public class DfgBuilder {
 
 		// traverses the CFG edges and creates a corresponding Node in the node list
 		private void buildNodeList() {
-			mLogger.debug("Handling " + mCfgRootNode.toString());
 			// traverse CFG edges depth-first and get a list of DFG nodes
 			final Set<IcfgEdge> visited = new HashSet<>();
 			final Stack<IcfgLocation> stack = new Stack<>();
-			stack.add(mCfgRootNode);
+			stack.addAll(mCfgRootNodes);
 			while (!stack.isEmpty()) {
 				final IcfgLocation node = stack.pop();
 				for (final IcfgEdge edge : node.getOutgoingEdges()) {
