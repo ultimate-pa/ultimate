@@ -72,7 +72,7 @@ RUN apk add --no-cache "gcc" \
 
 # build the Ultimate web frontend
 WORKDIR "${REPO_FRONTEND_ROOT}"
-ENV PATH "${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64:${PATH}"
+ENV PATH="${DIR_OUTPUT}/CLI-E4/linux/gtk/x86_64:${PATH}"
 RUN python3 scripts/build.py --baseurl "${ULTIMATE_FRONTEND_BASEURL}"
 
 #------------------------------------------------------------------------------
@@ -330,17 +330,14 @@ ARG USER_HOME
 ARG REPO_DIR_WEBSITE_CONFIG="releaseScripts/website-config"
 ARG DIR_WEBSITE_CONFIG="${DIR_ULTIMATE}/${REPO_DIR_WEBSITE_CONFIG}"
 
+ARG ULTIMATE_DIR_TMP="/tmp/ultimate"
+
 ENV ULTIMATE_BACKEND_HOST="localhost"
 ENV ULTIMATE_BACKEND_PORT=8080
 ENV ULTIMATE_BACKEND_ROUTE="/api"
 
-ENV ULTIMATE_FRONTEND_SERVE="False"
-ENV ULTIMATE_FRONTEND_PATH="/some/path"
-ENV ULTIMATE_FRONTEND_ROUTE="/website"
 ENV ULTIMATE_LOG_PATH="/dev/stdout"
 ENV ULTIMATE_LOG_LEVEL="INFO"
-
-ENV ULTIMATE_DIR_TMP="/tmp/ultimate"
 ENV ULTIMATE_TIMEOUT=90
 
 # create directory to store temporary files
@@ -369,6 +366,11 @@ RUN rm -f "${USER_HOME}/WebBackend.ini"
 
 ENV ULTIMATE_BACKEND_SETTINGS_WHITELIST="${USER_HOME}/settings_whitelist.json"
 ENV ULTIMATE_BACKEND_SETTINGS_FILE="${USER_HOME}/web.config.properties"
+
+# Serving the frontend from the backend is not supported by this Docker image
+ENV ULTIMATE_FRONTEND_SERVE="False"
+ENV ULTIMATE_FRONTEND_PATH="${USER_HOME}"
+ENV ULTIMATE_FRONTEND_ROUTE="/website"
 
 # expose communication port of the Webbackend
 EXPOSE "${ULTIMATE_BACKEND_PORT}"
