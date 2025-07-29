@@ -28,19 +28,21 @@ The local server will use the webinterface settings specified in `trunk/source/W
 Hence, start by copying the file `trunk/source/WebsiteStatic/js/webinterface/config.dist.js` and edit the copy if necessary (the edited file should not be committed).
 Then start the local server by running
 ```sh
-jekyll serve
+bundle exec jekyll serve
 ```
 
 The website will then be available under `http://localhost:4000/website/`.
 The `website/` suffix mirrors the URL when serving the website from `WebBackend`, but can be overriden with the `--baseurl` parameter.
 For instance, the following command will serve the website from `http://localhost:4000/`:
 ```sh
-jekyll serve --baseurl "/"
+bundle exec jekyll serve --baseurl "/"
 ```
 
 Serving the website in this way is useful for development:
 If you make changes to the website source code, jekyll will automatically recompile the website,
 and your changes should show up in the browser immediately.
+
+> If you are running jekyll inside a docker container, you may have to use the option `--host 0.0.0.0` to make the website accessible outside the container.
 
 
 ### 1.1 Website Structure
