@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,6 +17,8 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ForkThreadCurrent;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.JoinThreadCurrent;
 
@@ -79,15 +80,13 @@ public class InterferenceDomainPostOperator<STATE extends IAbstractState<STATE>,
 			newCounter = new ThreadInstanceCounter<>(oldstate.threadCounter());
 		}
 		if (newCounter == null) {
-			return List.of(createCompatibleBottomState(oldstate, transition));
+			return List.of();
 		}
 
-		final int locationOrigin = oldstate.abstractLocationState().getLocationMap()
-				.getAbstractLocation(transition.getSource());
-		final int locationTarget = oldstate.abstractLocationState().getLocationMap()
-				.getAbstractLocation(transition.getTarget());
-		final var newLocation = oldstate.abstractLocationState().movedTo(mCurrentThreadName, locationOrigin,
-				locationTarget);
+		final var threadCount = oldstate.threadCounter().getThreadInstances().get(transition.getPrecedingProcedure());
+		final var isInfinite = threadCount.getUpper().isInfinity() || threadCount.getUpper().getValue().intValue() > 1;
+
+		final var newLocation = applyAbstractLocation(oldstate.abstractLocationState(), transition, false, isInfinite);
 
 		// 1. normal poststate
 		final var states = mUnderlyingPostOp.apply(oldstate.state(), transition);
@@ -102,15 +101,6 @@ public class InterferenceDomainPostOperator<STATE extends IAbstractState<STATE>,
 		final var afterItfs = mItfApplier.computeInterferenceFixpoint(disj, mCurrentThreadName, mCache);
 //		mLogger.warn("=====");
 		return afterItfs.getStates();
-	}
-
-	private InterferenceDomainState<STATE, ACTION, LOC> createCompatibleBottomState(
-			final InterferenceDomainState<STATE, ACTION, LOC> oldstate, final ACTION transition) {
-		// TODO Auto-generated method stub
-		var bottomState = mRelInterferingDomain.createBottomState().addVariables(oldstate.getVariables());
-		bottomState = bottomState.initializeLocation(transition.getTarget(),
-				oldstate.abstractLocationState().getLocationMap(), mIcfg.getProcedureEntryNodes().keySet());
-		return bottomState;
 	}
 
 	public Collection<STATE> applyState(final STATE state, final ACTION transition) {
@@ -131,15 +121,7 @@ public class InterferenceDomainPostOperator<STATE extends IAbstractState<STATE>,
 
 	public AbstractLocationState<LOC> applyAbstractLocation(final AbstractLocationState<LOC> absLocState,
 			final ACTION transition, final boolean isSelfInterfering, final boolean isinfinite) {
-		if (isSelfInterfering && isinfinite) {
-			final var abstractEntryLoc = absLocState.getLocationMap()
-					.getAbstractEntryLoc(transition.getPrecedingProcedure());
-			return absLocState.selfMovedToInf(transition.getPrecedingProcedure(),
-					absLocState.getLocationMap().getAbstractLocation(transition.getTarget()), abstractEntryLoc);
-		} else if (isSelfInterfering) {
-			return absLocState.selfMovedTo(transition.getPrecedingProcedure(),
-					absLocState.getLocationMap().getAbstractLocation(transition.getTarget()));
-		} else if (isinfinite) {
+		if (isinfinite || isSelfInterfering) {
 			final var abstractEntryLoc = absLocState.getLocationMap()
 					.getAbstractEntryLoc(transition.getPrecedingProcedure());
 			return absLocState.movedToInf(transition.getPrecedingProcedure(),
@@ -167,37 +149,34 @@ public class InterferenceDomainPostOperator<STATE extends IAbstractState<STATE>,
 		final int joinId = joinTransition.getJoinStatement().getThreadID().length;
 		// If multiple forked threads have the same ID, we cannot differentiate and know what we are joining
 		// (atleast with this method). So we lose precision by not joining at all.
-		final var joinedThreadName = computeNameOfJoinedProcedure(counter, joinId);
-		if (joinedThreadName.isPresent()) {
-			final var joinedCounter = counter.unassignForkId(joinedThreadName.get(), joinId,
+		final var matchingThreads = computeNameOfJoinedProcedure(counter, joinId);
+		if (matchingThreads.size() == 1) {
+			final var joinedThreadName = matchingThreads.getFirst();
+			final var zeroVal = new IntervalDomainValue(0, 0);
+			final var joinedCounter = counter.unassignForkId(joinedThreadName, joinId,
 					(LOC) joinTransition.getSource());
-			final var upperVal = counter.getThreadInstances().get(joinedThreadName.get()).getUpper();
-			if (upperVal.getValue() == null) {
-				return joinedCounter;
-			}
-			final var forkedThreadCount = counter.getThreadInstances().get(joinedThreadName.get()).getUpper().getValue()
-					.intValue();
-			final var forkedThreadCountAfter = joinedCounter.getThreadInstances().get(joinedThreadName.get()).getUpper()
-					.getValue().intValue();
-			final var threadsFinalLocations = absLocState.getLocationMap().getAbstractFinalLocs(joinedThreadName.get());
-			final var statesLocations = absLocState.getTracker().getLocationForThread(joinedThreadName.get());
 
-			final boolean threadWasShutdown = (forkedThreadCount > 0 && forkedThreadCountAfter == 0)
-					|| joinedCounter.getAllForkIds().get(joinedThreadName.get()).isEmpty();
-			final boolean stateIsInFinalLocation = threadsFinalLocations.containsAll(statesLocations);
+			final var counterValueAfterFork = joinedCounter.getThreadInstances().get(joinedThreadName);
+			final boolean threadWasShutdown = counterValueAfterFork.isLessOrEqual(zeroVal).equals(BooleanValue.TRUE)
+					|| joinedCounter.getAllForkIds().get(joinedThreadName).isEmpty();
+
+			final var statesLocations = absLocState.getTracker().getLocationForThread(joinedThreadName);
+			final var threadsFinalLocation = absLocState.getLocationMap().getAbstractFinalLoc(joinedThreadName);
+			final boolean stateIsInFinalLocation = statesLocations.contains(threadsFinalLocation);
 			if (threadWasShutdown && !stateIsInFinalLocation) {
 				return null;
 			}
 			return joinedCounter;
+		} else if (matchingThreads.size() > 1) {
+			return counter;
+		} else {
+			return null;
 		}
-		return counter;
 	}
 
-	private Optional<String> computeNameOfJoinedProcedure(final ThreadInstanceCounter<LOC> counter, final int forkId) {
-		final List<String> matchingThreads = counter.getAllForkIds().entrySet().stream()
-				.filter(entry -> entry.getValue().contains(forkId)).map(Map.Entry::getKey).toList();
-		// if multiple threads or none contain that threadID as a forked thread, we dont do anything
-		return matchingThreads.size() == 1 ? Optional.of(matchingThreads.get(0)) : Optional.empty();
+	private List<String> computeNameOfJoinedProcedure(final ThreadInstanceCounter<LOC> counter, final int forkId) {
+		return counter.getAllForkIds().entrySet().stream().filter(entry -> entry.getValue().contains(forkId))
+				.map(Map.Entry::getKey).toList();
 	}
 
 	public boolean isCircular(final ForkThreadCurrent fork1) {

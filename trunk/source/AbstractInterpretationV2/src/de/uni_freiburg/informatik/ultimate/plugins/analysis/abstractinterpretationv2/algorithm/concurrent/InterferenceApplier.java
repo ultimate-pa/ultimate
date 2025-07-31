@@ -32,6 +32,12 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		if (targetStateGuarded.isBottom() || interferingStateGuarded.isBottom()) {
 			return Collections.emptyList();
 		}
+		final var intervalCounterValue = interferingStateGuarded.threadCounter().getThreadInstances()
+				.get(action.getPrecedingProcedure());
+		if (intervalCounterValue.isBottom()) {
+			return Collections.emptyList();
+		}
+
 		final var threadCounterIntersection = targetStateGuarded.threadCounter()
 				.intersect(interferingStateGuarded.threadCounter());
 		AbstractLocationState<LOC> abslocIntersection;
@@ -51,11 +57,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 		}
 
 		final var threadCounterPost = postOp.applyThreadCounter(threadCounterIntersection, abslocIntersection, action);
-		final var intervalCounterValue = interferingStateGuarded.threadCounter().getThreadInstances()
-				.get(action.getPrecedingProcedure());
-		if (intervalCounterValue.isBottom()) {
-			return Collections.emptyList();
-		}
+
 		final boolean isinfinite = targetStateGuarded.threadCounter().getThreadInstances()
 				.get(action.getPrecedingProcedure()).getUpper().isInfinity();
 		final var absLocPost = postOp.applyAbstractLocation(abslocIntersection, action, isSelfInterfering, isinfinite);
@@ -144,8 +146,7 @@ public class InterferenceApplier<STATE extends IAbstractState<STATE>, ACTION ext
 			}
 		}
 		final var postStateWithGuard = postState.stream()
-				.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost))
-				.toList();
+				.map(s -> new InterferenceDomainState<STATE, ACTION, LOC>(s, threadCounterPost, absLocPost)).toList();
 
 		mCache.getItfCache().put(triple, postState);
 		return postStateWithGuard;

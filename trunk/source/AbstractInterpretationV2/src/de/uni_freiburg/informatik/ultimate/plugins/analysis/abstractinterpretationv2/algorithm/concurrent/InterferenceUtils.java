@@ -45,51 +45,24 @@ public class InterferenceUtils<STATE extends IAbstractState<STATE>, ACTION exten
 
 	public boolean stateIsInterferableBy(final InterferenceDomainState<STATE, ACTION, LOC> singleState,
 			final String ownerThread, final String interferenceThreadName,
-			final Interference<STATE, ACTION, LOC> interference, final StaticAbstractLocationMap<LOC> abstractLocationMap) {
+			final Interference<STATE, ACTION, LOC> interference,
+			final StaticAbstractLocationMap<LOC> abstractLocationMap) {
 		// Is thread of interference even active/forked
 		if (!interferingThreadIsActiveInState(ownerThread, interferenceThreadName, singleState)) {
 			return false;
 		}
-		/*
-		 * Special check for self-interference, then locations have to be handled differently. ATM we ignore locations,
-		 * which is a sound, but unprecise, overapproximtation.
-		 */
-//		if (interference.preState().threadCounter().getThreadInstances().get(interferenceThreadName) > 1) {
-//			return true;
-//		}
 		/*
 		 * Check if interference comes from location which the interfered state thinks the interfering thread could be
 		 * in. If not, it cannot be interfered by it.
 		 */
 		final int actualInterferenceThreadLocation = abstractLocationMap
 				.getAbstractLocation(interference.action().getSource());
-		if (ownerThread.equals(interferenceThreadName)) {
-			final Set<Integer> selfLocation = singleState.abstractLocationState().getTracker()
-					.getLocationForSelfThread(interferenceThreadName);
-			if ((!selfLocation.contains(actualInterferenceThreadLocation))) {
-				return false;
-			}
-			return true;
-		}
 		final Set<Integer> possibleInterferingThreadLocations = singleState.abstractLocationState().getTracker()
 				.getLocationForThread(interferenceThreadName);
-		if (nonMainThreadCanMove(singleState, interferenceThreadName, actualInterferenceThreadLocation)) {
-			return true;
-		}
 		if ((!possibleInterferingThreadLocations.contains(actualInterferenceThreadLocation))) {
 			return false;
 		}
 		return true;
-	}
-
-	private boolean nonMainThreadCanMove(final InterferenceDomainState<STATE, ACTION, LOC> singleState,
-			final String interferenceThreadName, final int actualInterferenceThreadLocation) {
-		final var nonMainThreadLocations = singleState.abstractLocationState().getTracker()
-				.getLocationForSelfThread(interferenceThreadName);
-		if (nonMainThreadLocations.contains(actualInterferenceThreadLocation)) {
-			return true;
-		}
-		return false;
 	}
 
 	private boolean interferingThreadIsActiveInState(final String ownerThread, final String interferenceThreadName,

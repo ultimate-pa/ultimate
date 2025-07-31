@@ -6,27 +6,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 
 public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 	private final Map<LOC, Integer> mMap = new ConcurrentHashMap<>();
 	private final Function<LOC, Integer> mMappingFunction;
-	private final Map<String, ? extends LOC> mEntryLocs;
+	private final Map<String, LOC> mEntryLocs;
 	// say we are thread 1, how many combinations of lcoations can thread 2 and thread 3 be in ?
 	// assuming both have 2 abstract locations each -> 2*2 combinations
 	// TOOD: just a heuristic upper limit(?) atm, make precise. (Need deterministic state reduction then too though)
 	final Map<String, Integer> mLocationCountMap = new HashMap<>();
 	private final Map<String, Integer> mMaxParallelLocationStates;
-	private final Map<String, Set<LOC>> mFinalLocations = new HashMap<>();
+	private final Map<String, LOC> mFinalLocations = new HashMap<>();
+	private final IIcfg<LOC> mCfg;
 
-	public StaticAbstractLocationMap(final Function<LOC, Integer> mappingFunction,
-			final Map<String, ? extends LOC> entryLocs) {
+	public StaticAbstractLocationMap(final Function<LOC, Integer> mappingFunction, final IIcfg<?> cfg) {
 		mMappingFunction = mappingFunction;
-		mEntryLocs = entryLocs;
 		mMaxParallelLocationStates = new HashMap<>();
+		mCfg = (IIcfg<LOC>) cfg;
+		mEntryLocs = mCfg.getProcedureEntryNodes();
 		computeMaxAndFinalLocs();
 	}
 
@@ -34,8 +35,10 @@ public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 		return getAbstractLocation(mEntryLocs.get(threadName));
 	}
 
-	public Set<Integer> getAbstractFinalLocs(final String threadName) {
-		return mFinalLocations.get(threadName).stream().map(l -> getAbstractLocation(l)).collect(Collectors.toSet());
+	// -1 bei exit locs, und hole sie manuell aus icfg
+	// icfg.getgprocedureexitnodes
+	public Integer getAbstractFinalLoc(final String threadName) {
+		return getAbstractLocation(mCfg.getProcedureExitNodes().get(threadName));
 	}
 
 	public LOC getEntryLoc(final String threadName) {
@@ -66,9 +69,9 @@ public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 	}
 
 	private void computeMaxAndFinalLocs() {
+		mEntryLocs.keySet().forEach(t -> mFinalLocations.put(t, mCfg.getProcedureExitNodes().get(t)));
 		for (final LOC entryLoc : mEntryLocs.values()) {
 			final String ownerThreadString = entryLoc.getProcedure();
-			mFinalLocations.put(ownerThreadString, new HashSet<>());
 			final Set<Integer> abstractLocationSet = new HashSet<>();
 			int counter = 0;
 			final IcfgLocationIterator<LOC> iter = new IcfgLocationIterator<>(entryLoc);
@@ -79,9 +82,6 @@ public final class StaticAbstractLocationMap<LOC extends IcfgLocation> {
 					counter++;
 				}
 				abstractLocationSet.add(abstraction);
-				if (!iter.hasNext()) {
-					mFinalLocations.get(ownerThreadString).add(loc);
-				}
 			}
 			mLocationCountMap.put(ownerThreadString, counter);
 		}

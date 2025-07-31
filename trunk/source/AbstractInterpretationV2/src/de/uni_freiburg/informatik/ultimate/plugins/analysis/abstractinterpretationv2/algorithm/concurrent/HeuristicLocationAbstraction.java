@@ -60,7 +60,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 				return getAndIncrementThreadLocationCounter(sourceThread);
 			}
 			return getThreadLocationCounter(sourceThread);
-		}, mIcfg.getProcedureEntryNodes());
+		}, mIcfg);
 		return x;
 	}
 
@@ -70,7 +70,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * before a mutex guard.
 	 */
 	public StaticAbstractLocationMap<LOC> mutexVarSplitting() {
-		return new StaticAbstractLocationMap<>(this::mutexVarSplitFun, mIcfg.getProcedureEntryNodes());
+		return new StaticAbstractLocationMap<>(this::mutexVarSplitFun, mIcfg);
 	}
 
 	/*
@@ -78,7 +78,7 @@ public class HeuristicLocationAbstraction<LOC extends IcfgLocation> {
 	 * potential mutex guard, or any location which writes or reads a variable contained in a mutex guard.
 	 */
 	public StaticAbstractLocationMap<LOC> mutexVarSplittingNoCutoff() {
-		return new StaticAbstractLocationMap<>(this::mutexVarSplitFunNoCutoff, mIcfg.getProcedureEntryNodes());
+		return new StaticAbstractLocationMap<>(this::mutexVarSplitFunNoCutoff, mIcfg);
 	}
 
 	private int mutexVarSplitFun(final LOC loc) {

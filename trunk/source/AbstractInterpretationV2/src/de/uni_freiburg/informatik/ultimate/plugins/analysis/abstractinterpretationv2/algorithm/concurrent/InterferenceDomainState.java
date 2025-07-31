@@ -50,9 +50,10 @@ public class InterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION
 				this.abstractLocationState().movedTo(threadName, locationOrigin, locationTarget));
 	}
 
-	public InterferenceDomainState<STATE, ACTION, LOC> copyToNewStateLocation(final LOC newLoc) {
+	public InterferenceDomainState<STATE, ACTION, LOC> movedToInf(final String threadName, final int locationOrigin,
+			final int locationTarget, final int abstractEntryLoc) {
 		return new InterferenceDomainState<>(this.state(), this.threadCounter(),
-				this.abstractLocationState().copyToNewState(newLoc));
+				this.abstractLocationState().movedToInf(threadName, locationOrigin, locationTarget, abstractEntryLoc));
 	}
 
 	public InterferenceDomainState<STATE, ACTION, LOC> assignForkId(final String threadName, final int forkId,
@@ -71,28 +72,22 @@ public class InterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION
 
 	@Override
 	public InterferenceDomainState<STATE, ACTION, LOC> addVariable(final IProgramVarOrConst variable) {
-		return new InterferenceDomainState<>(mState.addVariable(variable), mThreadCounter,
-				mAbstractLocationState);
+		return new InterferenceDomainState<>(mState.addVariable(variable), mThreadCounter, mAbstractLocationState);
 	}
 
 	@Override
 	public InterferenceDomainState<STATE, ACTION, LOC> removeVariable(final IProgramVarOrConst variable) {
-		return new InterferenceDomainState<>(mState.removeVariable(variable), mThreadCounter,
-				mAbstractLocationState);
+		return new InterferenceDomainState<>(mState.removeVariable(variable), mThreadCounter, mAbstractLocationState);
 	}
 
 	@Override
-	public InterferenceDomainState<STATE, ACTION, LOC> addVariables(
-			final Collection<IProgramVarOrConst> variables) {
-		return new InterferenceDomainState<>(mState.addVariables(variables), mThreadCounter,
-				mAbstractLocationState);
+	public InterferenceDomainState<STATE, ACTION, LOC> addVariables(final Collection<IProgramVarOrConst> variables) {
+		return new InterferenceDomainState<>(mState.addVariables(variables), mThreadCounter, mAbstractLocationState);
 	}
 
 	@Override
-	public InterferenceDomainState<STATE, ACTION, LOC> removeVariables(
-			final Collection<IProgramVarOrConst> variables) {
-		return new InterferenceDomainState<>(mState.removeVariables(variables), mThreadCounter,
-				mAbstractLocationState);
+	public InterferenceDomainState<STATE, ACTION, LOC> removeVariables(final Collection<IProgramVarOrConst> variables) {
+		return new InterferenceDomainState<>(mState.removeVariables(variables), mThreadCounter, mAbstractLocationState);
 	}
 
 	@Override
@@ -115,8 +110,7 @@ public class InterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION
 	@Override
 	public InterferenceDomainState<STATE, ACTION, LOC> patch(
 			final InterferenceDomainState<STATE, ACTION, LOC> dominator) {
-		return new InterferenceDomainState<>(mState.patch(dominator.state()), mThreadCounter,
-				mAbstractLocationState);
+		return new InterferenceDomainState<>(mState.patch(dominator.state()), mThreadCounter, mAbstractLocationState);
 	}
 
 	@Override
@@ -129,10 +123,8 @@ public class InterferenceDomainState<STATE extends IAbstractState<STATE>, ACTION
 	}
 
 	@Override
-	public InterferenceDomainState<STATE, ACTION, LOC> union(
-			final InterferenceDomainState<STATE, ACTION, LOC> other) {
-		return new InterferenceDomainState<>(mState.union(other.state()),
-				mThreadCounter.union(other.threadCounter()),
+	public InterferenceDomainState<STATE, ACTION, LOC> union(final InterferenceDomainState<STATE, ACTION, LOC> other) {
+		return new InterferenceDomainState<>(mState.union(other.state()), mThreadCounter.union(other.threadCounter()),
 				mAbstractLocationState.union(other.abstractLocationState()));
 	}
 

@@ -39,7 +39,6 @@ public class InitialStateFactory<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 			final String procedure) {
 		final var allForkLocs = new HashSet<LOC>();
 		final var result = applyPostopAndTranslateForkStates(procedure, allForkLocs);
-
 		if (result != null) {
 			final var forkedInitialState = filterStatesAndApplyItfs(result, procedure);
 			return forkedInitialState;
@@ -85,13 +84,10 @@ public class InitialStateFactory<UNDERLYINGSTATE extends IAbstractState<UNDERLYI
 		final Set<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>> translateDomainStates = new HashSet<>();
 		final var globalImmutableMap = inputState.getStates().iterator().next().abstractLocationState()
 				.getLocationMap();
-		final var proceduresEntryLoc = globalImmutableMap.getEntryLoc(procedure);
+		final var abstractProceduresEntryLoc = globalImmutableMap.getAbstractEntryLoc(procedure);
 		for (final var singleState : inputState.getStates()) {
-			final var movedOwnershipLocation = new AbstractLocationState<>(proceduresEntryLoc,
-					singleState.abstractLocationState());
-			final InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC> movedOwnership = new InterferenceDomainState<>(
-					singleState.state(), singleState.threadCounter(), movedOwnershipLocation);
-			translateDomainStates.add(movedOwnership);
+			translateDomainStates
+					.add(singleState.movedToInf(procedure, -1, abstractProceduresEntryLoc, abstractProceduresEntryLoc));
 		}
 		return DisjunctiveAbstractState.createDisjunction(translateDomainStates, mMaxParallelStates);
 	}

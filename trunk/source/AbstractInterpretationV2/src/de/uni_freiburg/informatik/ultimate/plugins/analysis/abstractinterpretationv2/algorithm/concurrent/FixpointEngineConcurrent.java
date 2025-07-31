@@ -68,7 +68,7 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 		mMaxInterferenceFixpointUnwindings = threadModPrefs.maxItf();
 		InterferenceFIxpoint.iterationsReached = 0;
 		mCfg = icfg;
-		mLocationAbstractionCalculator = new LocationAbstraction<>(mEntryLocs);
+		mLocationAbstractionCalculator = new LocationAbstraction<>();
 		final StaticAbstractLocationMap<LOC> absMap = mLocationAbstractionCalculator
 				.computeLocationAbstraction(threadModPrefs.locationAbstraction(), services, icfg);
 		mLocationAbstraction = absMap;
@@ -79,8 +79,8 @@ public class FixpointEngineConcurrent<UNDERLYINGSTATE extends IAbstractState<UND
 		}
 		params.setMaxParallelStates(1);
 		mCache = new InterferenceCache<>();
-		mDomain = new InterferenceDomain<>(mCfg, mUnderlyingDomain, mLogger, mLocationAbstraction,
-				mMaxParallelStates, mMaxInterferenceFixpointUnwindings,
+		mDomain = new InterferenceDomain<>(mCfg, mUnderlyingDomain, mLogger, mLocationAbstraction, mMaxParallelStates,
+				mMaxInterferenceFixpointUnwindings,
 				new AbstractInterferenceState<>(icfg.getCfgSmtToolkit().getProcedures()), mCache);
 		mParams = (FixpointEngineParameters<InterferenceDomainState<UNDERLYINGSTATE, ACTION, LOC>, ACTION, VARDECL, LOC>) params
 				.setDomain((IAbstractDomain<UNDERLYINGSTATE, ACTION>) mDomain);

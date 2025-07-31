@@ -8,12 +8,10 @@ import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.I
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class LocationAbstraction<LOC extends IcfgLocation> {
-	private final Map<String, ? extends LOC> mEntryLocs;
 	private final Map<String, Integer> mPerThreadLocationCounterMap = new HashMap<>();
 	private HeuristicLocationAbstraction<LOC> mHeuristicLocationAbstraction;
 
-	public LocationAbstraction(final Map<String, ? extends LOC> entryLocs) {
-		mEntryLocs = entryLocs;
+	public LocationAbstraction() {
 	}
 
 	public StaticAbstractLocationMap<LOC> computeLocationAbstraction(final String locationAbstraction,
@@ -22,12 +20,12 @@ public class LocationAbstraction<LOC extends IcfgLocation> {
 		// TODO: parametrize countervalues
 		mHeuristicLocationAbstraction = new HeuristicLocationAbstraction<>(services, icfg);
 		final StaticAbstractLocationMap<LOC> absMap = switch (locationAbstraction) {
-		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 1), mEntryLocs);
+		case "Singleton" -> new StaticAbstractLocationMap<>((l -> 1), icfg);
 		case "Split only at Guards" -> mHeuristicLocationAbstraction.mutexSplitting();
 		case "Mutex Guard and Vars Splitting" -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		case "Mutex Guard and Vars Splitting no Cutoff" -> mHeuristicLocationAbstraction.mutexVarSplittingNoCutoff();
 		case "Fully precise" ->
-			new StaticAbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), mEntryLocs);
+			new StaticAbstractLocationMap<>((l -> getAndIncrementThreadLocationCounter(l.getProcedure())), icfg);
 		default -> mHeuristicLocationAbstraction.mutexVarSplitting();
 		};
 		return absMap;
