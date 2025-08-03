@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
@@ -380,6 +381,30 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	}
 
 	/**
+	 * Creates a havoc statement for arithmetic or logic instructions.
+	 *
+	 * This method generates a havoc statement for arithmetic or logic instructions based on the type of the
+	 * instruction. It creates a local variable with either "bool" or "int" type and adds a havoc statement to the
+	 * function body.
+	 *
+	 * @param body       The function body to which the havoc statement will be added.
+	 * @param typeValue  The type value context from the LLVM IR parse tree.
+	 * @param location   The location in the source code where this instruction is defined.
+	 * @param identifier The identifier for the local variable to be created.
+	 */
+	private static void createHavocStatementFromTypeValue(final FunctionBody body,
+			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier) {
+		if (typeValue.firstClassType().concreteType().intType().getText().equals("i1")) {
+			body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
+		} else {
+			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+		}
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
+		body.addFuncBlock(havocStmt);
+	}
+
+	/**
 	 * Handles the visit event for a compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and creates the initial declarations for the Boogie translation. It then
@@ -441,11 +466,28 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		final ArrayList<VarList> outParams = new ArrayList<>();
 		final ArrayList<Specification> spec = new ArrayList<>();
 
+		for (final LLVMIRParser.ParamContext param : ctx.funcHeader().params().param()) {
+			PrimitiveType paramType = null;
+			if (param.type().intType().getText().equals("i1")) {
+				paramType = new PrimitiveType(location, "bool");
+			} else {
+				paramType = new PrimitiveType(location, "int");
+			}
+			final VarList varList = new VarList(location,
+					new String[] { unifyIdentifier(param.LocalIdent().getText()) }, paramType);
+			inParams.add(varList);
+		}
+
 		if (returnType.getText().equals("void")) {
 			// Nothing gets returned
 		} else if (returnType.intType() != null) {
-			final PrimitiveType intType = new PrimitiveType(location, "int");
-			final VarList retVarList = new VarList(location, new String[] { "ret" }, intType);
+			PrimitiveType returnTypePrim = null;
+			if (returnType.intType().getText().equals("i1")) {
+				returnTypePrim = new PrimitiveType(location, "bool");
+			} else {
+				returnTypePrim = new PrimitiveType(location, "int");
+			}
+			final VarList retVarList = new VarList(location, new String[] { "ret" }, returnTypePrim);
 			outParams.add(retVarList);
 		} else {
 			// TODO: Support for other types
@@ -529,23 +571,30 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	@Override
 	public FunctionBody visitRetTerm(final LLVMIRParser.RetTermContext ctx) {
 		final FunctionBody body = new FunctionBody();
-		final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
+
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
-		if (returnType.intType() != null) {
-			final VariableLHS returnVar = new VariableLHS(location, "ret");
-			final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
-					new LeftHandSide[] { returnVar },
-					new Expression[] { getExpressionFromValue(ctx.value(), location) });
+		if (ctx.value() == null) {
+			// If there is no value, we assume a void return type
 			final ReturnStatement returnStmt = new ReturnStatement(location);
-			body.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
+			body.addFuncBlock(returnStmt);
 		} else {
-			// TODO: Support for other types
-			throw new AssertionError("The support for return types other than integers is not implemented yet.");
+			final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
+			if (returnType.intType() != null) {
+				final VariableLHS returnVar = new VariableLHS(location, "ret");
+				final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
+						new LeftHandSide[] { returnVar },
+						new Expression[] { getExpressionFromValue(ctx.value(), location) });
+				final ReturnStatement returnStmt = new ReturnStatement(location);
+				body.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
+			} else {
+				// TODO: Support for other types
+				throw new AssertionError("The support for return types other than integers is not implemented yet.");
+			}
 		}
-
 		return body;
+
 	}
 
 	/**
@@ -709,18 +758,38 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					createArithmeticAssignment(location, identifier, instructionType.mulInst().typeValue().value(),
 							instructionType.mulInst().value(), Operator.ARITHMUL));
 		} else if (instructionType.allocaInst() != null) {
-			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+			if (instructionType.allocaInst().type().intType().getText().equals("i1")) {
+				body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
+			} else {
+				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+			}
 		} else if (instructionType.callInst() != null) {
+			if (instructionType.callInst().type().type().intType().getText().equals("i1")) {
+				body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
+			} else {
+				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+			}
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
 			if (callIdentifier.equals("@__VERIFIER_nondet_int") || callIdentifier.equals("@__VERIFIER_nondet_short")
 					|| callIdentifier.equals("@__VERIFIER_nondet_ulong")
 					|| callIdentifier.equals("@__VERIFIER_nondet_uint128")
 					|| callIdentifier.equals("@__VERIFIER_nondet_char")
 					|| callIdentifier.equals("@__VERIFIER_nondet_uchar")) {
-				body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
 				body.addFuncBlock(havocStmt);
+			} else {
+				final ArrayList<Expression> args = new ArrayList<>();
+				for (final LLVMIRParser.ArgContext arg : instructionType.callInst().args().arg()) {
+					args.add(getExpressionFromValue(arg.value(), location));
+				}
+				final FunctionApplication funcApp = new FunctionApplication(location,
+						unifyIdentifier(instructionType.callInst().value().constant().getText()),
+						args.toArray(Expression[]::new));
+				final VariableLHS varLhs = new VariableLHS(location, identifier);
+				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+						new Expression[] { funcApp });
+				body.addFuncBlock(assignment);
 			}
 		} else if (instructionType.selectInst() != null) {
 			final Expression ifExpr = getExpressionFromValue(instructionType.selectInst().typeValue(0).value(),
@@ -745,6 +814,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final IfStatement ifStmt = new IfStatement(location, ifExpr, new Statement[] { thenAssignment },
 					new Statement[] { elseAssignment });
 			body.addFuncBlock(ifStmt);
+		} else if (instructionType.addInst() != null) {
+			createHavocStatementFromTypeValue(body, instructionType.addInst().typeValue(), location, identifier);
+		} else if (instructionType.orInst() != null) {
+			createHavocStatementFromTypeValue(body, instructionType.orInst().typeValue(), location, identifier);
+		} else if (instructionType.xorInst() != null) {
+			createHavocStatementFromTypeValue(body, instructionType.xorInst().typeValue(), location, identifier);
+		} else if (instructionType.shlInst() != null) {
+			createHavocStatementFromTypeValue(body, instructionType.shlInst().typeValue(), location, identifier);
+		} else if (instructionType.aShrInst() != null) {
+			createHavocStatementFromTypeValue(body, instructionType.aShrInst().typeValue(), location, identifier);
+		} else if (instructionType.lShrInst() != null) {
+			createHavocStatementFromTypeValue(body, instructionType.lShrInst().typeValue(), location, identifier);
 		}
 
 		else {
@@ -832,12 +913,22 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
 		final String callIdentifier = ctx.value().constant().getText();
-		if (callIdentifier.equals("@__assert_fail")) {
+		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error")) {
 			final BooleanLiteral boolLit = new BooleanLiteral(location, false);
 			final AssertStatement assertStmt = new AssertStatement(location, new NamedAttribute[] {}, boolLit);
 			final Check chk = new Check(Spec.ASSERT);
 			chk.annotate(assertStmt);
 			body.addFuncBlock(assertStmt);
+		} else if (callIdentifier.equals("@printf")) {
+			// This call can be ignored as it is not relevant for the Boogie translation
+		} else {
+			final ArrayList<Expression> args = new ArrayList<>();
+			for (final LLVMIRParser.ArgContext arg : ctx.args().arg()) {
+				args.add(getExpressionFromValue(arg.value(), location));
+			}
+			final CallStatement callStmt = new CallStatement(location, false, new VariableLHS[] {},
+					unifyIdentifier(callIdentifier), args.toArray(Expression[]::new));
+			body.addFuncBlock(callStmt);
 		}
 
 		return body;
