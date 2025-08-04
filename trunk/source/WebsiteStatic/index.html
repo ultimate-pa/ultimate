@@ -36,8 +36,8 @@ js: [ "redirect_legacy_urls.js" ]
           <p class="card-text text-justify">{{tool.description}}</p>
         </div>
         <div class="card-footer text-right">
-          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary">Read more</a>
-          <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary">Try online</a>
+          <a href="{{ tool.url | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(80%);">Read more</a>
+          <a href="{{ 'webinterface/?tool=' | append: tool.tool_id | relative_url }}" class="btn btn-secondary rounded" style="border-radius: 6px !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); filter: brightness(80%);">Try online</a>
         </div>
       </div>
       {% endfor %}
