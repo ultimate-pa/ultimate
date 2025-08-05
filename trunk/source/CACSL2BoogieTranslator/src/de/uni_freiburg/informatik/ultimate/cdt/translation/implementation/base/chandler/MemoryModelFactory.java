@@ -152,13 +152,9 @@ public class MemoryModelFactory {
 					incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
 
 			if (!incompatibleActiveOptions.isEmpty()) {
-				// TODO
-				// Workaround because too many Regression Tests failed,
-				// if any MemSafety option is set, then we use the 2D memory model
-				return new TwoDimensionalPointer(boogieType, typeSizes);
-				// throw new UnsupportedOperationException(memoryAddressingPreference
-				// + " memory addressing is not compatible with the following active settings: "
-				// + String.join(", ", incompatibleActiveOptions));
+				throw new UnsupportedOperationException(memoryAddressingPreference
+						+ " memory addressing is not compatible with the following active settings: "
+						+ String.join(", ", incompatibleActiveOptions));
 			}
 
 			return new OneDimensionalPointer(boogieType, typeSizes);
