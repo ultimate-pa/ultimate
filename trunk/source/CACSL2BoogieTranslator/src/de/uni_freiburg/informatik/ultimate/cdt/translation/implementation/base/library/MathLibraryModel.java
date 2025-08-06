@@ -356,18 +356,19 @@ public class MathLibraryModel implements ILibraryModel {
 			final ILocation loc, final String name) {
 		final FloatFunction floatFunction = FloatFunction.decode(name);
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
-		final RValue rvalue =
-				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue());
-		return new ExpressionResultBuilder().addAllExceptLrValue(arg).setLrValue(rvalue).build();
+		return new ExpressionResultBuilder().addAllExceptLrValue(arg).addAllIncludingLrValue(
+				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue()))
+				.build();
 	}
 
 	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final FloatFunction floatFunction = FloatFunction.decode(name);
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
-		final RValue rvalue = mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
-				(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue());
-		return new ExpressionResultBuilder().addAllExceptLrValue(args).setLrValue(rvalue).build();
+		return new ExpressionResultBuilder().addAllExceptLrValue(args)
+				.addAllIncludingLrValue(mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
+						(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue()))
+				.build();
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,

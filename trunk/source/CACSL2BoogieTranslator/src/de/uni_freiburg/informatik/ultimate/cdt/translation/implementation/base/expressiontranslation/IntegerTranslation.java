@@ -622,14 +622,14 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
+	public ExpressionResult constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue argument) {
 		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
 				+ floatFunction.getFunctionName());
 	}
 
 	@Override
-	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
+	public ExpressionResult constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue first, final RValue second) {
 		throw new UnsupportedOperationException("floating point operation not supported in non-bitprecise translation: "
 				+ floatFunction.getFunctionName());

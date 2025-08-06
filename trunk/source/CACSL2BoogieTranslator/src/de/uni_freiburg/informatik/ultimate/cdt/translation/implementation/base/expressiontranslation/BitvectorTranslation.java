@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
@@ -1032,7 +1033,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public RValue constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
+	public ExpressionResult constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue argument) {
 		final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 		switch (floatFunction.getFunctionName()) {
@@ -1045,7 +1046,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { getCurrentRoundingMode(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			return new ExpressionResult(new RValue(expr, resultType));
 		}
 		case "trunc": {
 			checkIsFloatPrimitive(argument);
@@ -1056,7 +1057,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { SmtRoundingMode.RTZ.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			return new ExpressionResult(new RValue(expr, resultType));
 		}
 		case "round": {
 			checkIsFloatPrimitive(argument);
@@ -1067,7 +1068,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { SmtRoundingMode.RNA.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			return new ExpressionResult(new RValue(expr, resultType));
 		}
 		case "lround": {
 			checkIsFloatPrimitive(argument);
@@ -1082,7 +1083,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue rval = new RValue(expr, resultType);
 			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
 
-			return (RValue) convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONG)).getLrValue();
+			return new ExpressionResult(
+					convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONG)).getLrValue());
 		}
 		case "llround": {
 			checkIsFloatPrimitive(argument);
@@ -1097,8 +1099,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue rval = new RValue(expr, resultType);
 			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
 
-			return (RValue) convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONGLONG))
-					.getLrValue();
+			return new ExpressionResult(
+					convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONGLONG)).getLrValue());
 		}
 		case "floor": {
 			checkIsFloatPrimitive(argument);
@@ -1113,7 +1115,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { SmtRoundingMode.RTN.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			return new ExpressionResult(new RValue(expr, resultType));
 		}
 		case "ceil": {
 			checkIsFloatPrimitive(argument);
@@ -1124,7 +1126,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { SmtRoundingMode.RTP.getBoogieIdentifierExpression(), argument.getValue() },
 					mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			return new ExpressionResult(new RValue(expr, resultType));
 		}
 		case "sin":
 			// TODO Create correct BoogieFunction using SMT functions. See
@@ -1150,14 +1152,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final CPrimitive resultType = (CPrimitive) argument.getCType().getUnderlyingType();
 			final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
 					new Expression[] { argument.getValue() }, mTypeHandler.getBoogieTypeForCType(resultType));
-			return new RValue(expr, resultType);
+			return new ExpressionResult(new RValue(expr, resultType));
 		}
 		case "isnan":
-			return constructSmtFloatClassificationFunction(loc, "fp.isNaN", argument);
+			return new ExpressionResult(constructSmtFloatClassificationFunction(loc, "fp.isNaN", argument));
 		case "isinf":
-			return constructSmtFloatClassificationFunction(loc, "fp.isInfinite", argument);
+			return new ExpressionResult(constructSmtFloatClassificationFunction(loc, "fp.isInfinite", argument));
 		case "isnormal":
-			return constructSmtFloatClassificationFunction(loc, "fp.isNormal", argument);
+			return new ExpressionResult(constructSmtFloatClassificationFunction(loc, "fp.isNormal", argument));
 		case "isfinite":
 		case "finite": {
 			final Expression isNormal;
@@ -1177,7 +1179,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			}
 			final Expression resultExpr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
 					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNormal, isSubnormal), isZero);
-			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT), true);
+			return new ExpressionResult(new RValue(resultExpr, new CPrimitive(CPrimitives.INT), true));
 		}
 		case "fpclassify": {
 			final Expression isInfinite;
@@ -1216,7 +1218,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 									ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
 											handleNumberClassificationMacro(loc, "FP_SUBNORMAL").getValue(),
 											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
-			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
+			return new ExpressionResult(new RValue(resultExpr, new CPrimitive(CPrimitives.INT)));
 		}
 		case "builtin_isinf_sign": {
 			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
@@ -1229,7 +1231,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 							constructLiteralForIntegerType(loc, intType, BigInteger.ONE),
 							constructLiteralForIntegerType(loc, intType, BigInteger.ONE.negate())),
 					constructLiteralForIntegerType(loc, intType, BigInteger.ZERO));
-			return new RValue(resultExpr, intType);
+			return new ExpressionResult(new RValue(resultExpr, intType));
 		}
 		case "signbit":
 			// TODO: Handle negative NaN correctly
@@ -1259,14 +1261,14 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public RValue constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
+	public ExpressionResult constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
 			final RValue first, final RValue second) {
 		// TODO Auto-generated method stub
 		switch (floatFunction.getFunctionName()) {
 		case "fmin":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.min");
+			return new ExpressionResult(delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.min"));
 		case "fmax":
-			return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.max");
+			return new ExpressionResult(delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.max"));
 		case "remainder":
 			// TODO: Remove until unsoundness can be investigated
 			break;
@@ -1290,8 +1292,8 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final FloatFunction isNaN = FloatFunction.decode("isnan");
 
 			// if (first || second) is NaN -> NaN
-			final RValue firstIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, first);
-			final RValue secondIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, second);
+			final LRValue firstIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, first).getLrValue();
+			final LRValue secondIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, second).getLrValue();
 
 			// if first>second, first - second, else +0
 			final CPrimitive typeFirst = (CPrimitive) first.getCType().getUnderlyingType();
@@ -1314,7 +1316,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final Expression firstNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc, firstIsNaN.getValue(),
 					first.getValue(), secondNaNExpr);
 
-			return new RValue(firstNaNExpr, typeFirst);
+			return new ExpressionResult(new RValue(firstNaNExpr, typeFirst));
 		case "copysign":
 			// TODO: Handle negative NaN, check unsoundness
 			// if second is negative, return arithneg of abs(first), else return abs(first)
