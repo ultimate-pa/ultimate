@@ -82,7 +82,7 @@ public class MathLibraryModel implements ILibraryModel {
 			"isfinite",
 
 			// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
-			"isinf", "__isinf",
+			"isinf", "__isinf", "__builtin_isinf_sign",
 
 			// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
 			"isnan", "__isnan",

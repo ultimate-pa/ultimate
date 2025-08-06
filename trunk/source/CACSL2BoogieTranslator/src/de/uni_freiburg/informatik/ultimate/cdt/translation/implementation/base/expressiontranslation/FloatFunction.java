@@ -47,6 +47,7 @@ public class FloatFunction {
 	private static final String[] FLOAT_FUNCTIONS = { "fpclassify", // see 7.12.3.1
 			"isfinite", "finite", // see 7.12.3.2
 			"isinf", // see 7.12.3.3
+			"builtin_isinf_sign", // Only part of GNU-C
 			"isnan", // see 7.12.3.4
 			"isnormal", // see 7.12.3.5
 			"signbit", // see 7.12.3.6

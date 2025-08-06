@@ -1218,6 +1218,19 @@ public class BitvectorTranslation extends ExpressionTranslation {
 											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
 			return new RValue(resultExpr, new CPrimitive(CPrimitives.INT));
 		}
+		case "builtin_isinf_sign": {
+			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+			final Expression isInfinite =
+					constructSmtFloatClassificationFunction(loc, "fp.isInfinite", argument).getValue();
+			final Expression isPositive =
+					constructSmtFloatClassificationFunction(loc, "fp.isPositive", argument).getValue();
+			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
+					ExpressionFactory.constructIfThenElseExpression(loc, isPositive,
+							constructLiteralForIntegerType(loc, intType, BigInteger.ONE),
+							constructLiteralForIntegerType(loc, intType, BigInteger.ONE.negate())),
+					constructLiteralForIntegerType(loc, intType, BigInteger.ZERO));
+			return new RValue(resultExpr, intType);
+		}
 		case "signbit":
 			// TODO: Handle negative NaN correctly
 			// final Expression isNegative;
