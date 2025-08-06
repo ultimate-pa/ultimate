@@ -36,6 +36,12 @@ Overapproximation:
 - task: ffs-nonzero.c
   settings: KojakC-Reach-32Bit-Default.epf
   toolchain: KojakC.xml
+- task: ffs.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
+- task: ffs-nonzero.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml
 
 TIMEOUT:
 - task: ffs.c
