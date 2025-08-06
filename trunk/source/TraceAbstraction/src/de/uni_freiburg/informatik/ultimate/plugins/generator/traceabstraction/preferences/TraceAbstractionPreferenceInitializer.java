@@ -524,7 +524,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final Integer DEF_THREAD_LIMIT_PER_CEX = 1;
 	// Parallel CEGAR counterexample search stragies
 	// ========================================================================
-	public static final String LABEL_GOALSET = "IsEmpty with Goal Set ";
+	public static final String LABEL_GOALSET = "Search using Goal Set ";
 	public static final boolean DEF_GOALSET = false;
 	public static final String LABEL_PARALLELSEARCH_ACTIVE_CEX_ONLY = "Consider only active in Search Strategy";
 	public static final boolean DEF_PARALLELSEARCH_ACTIVE_CEX_ONLY = false;
@@ -834,6 +834,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_USE_ISEMPTYHEURISIC, DEF_USE_ISEMPTYHEURISIC,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_GOALSET, DEF_GOALSET, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_MINIMIZE_ABSTRACTION_PER_WORKER, DEF_MINIMIZE_ABSTRACTION_PER_WORKER,
 						PreferenceType.Boolean));
 
