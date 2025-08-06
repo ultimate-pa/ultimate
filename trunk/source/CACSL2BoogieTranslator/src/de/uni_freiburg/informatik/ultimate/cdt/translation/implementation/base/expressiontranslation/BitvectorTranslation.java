@@ -43,13 +43,17 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -78,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
@@ -1250,6 +1255,32 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					"not yet supported float operation " + floatFunction.getFunctionName());
 		}
 
+	}
+
+	private ExpressionResult overapproximateUnaryFloatFunction(final ILocation loc, final String functionName,
+			final RValue argument, final AuxVarInfo auxvarinfo, final Expression negInfValue,
+			final Expression posInfValue, final List<Expression> assumptionsForOverapproximation) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		builder.addAuxVarWithDeclaration(auxvarinfo);
+		final IdentifierExpression auxvar = auxvarinfo.getExp();
+		final CPrimitive resultType = (CPrimitive) argument.getCType();
+		builder.setLrValue(new RValue(auxvar, resultType));
+		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
+		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxvarLhs });
+		final AssumeStatement assume =
+				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
+		final Statement overapproxSt = new AtomicStatement(loc, new Statement[] { havoc, assume });
+		new OverapproxVariable(functionName, loc).annotate(overapproxSt);
+		final Expression isnan = constructSmtFloatClassificationFunction(loc, "fp.isNaN", argument).getValue();
+		final Expression isinf = constructSmtFloatClassificationFunction(loc, "fp.isInfinite", argument).getValue();
+		final Expression ispos = constructSmtFloatClassificationFunction(loc, "fp.isPositive", argument).getValue();
+		final Statement resultStatement = StatementFactory.constructIfStatement(loc, isnan,
+				List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, argument.getValue())),
+				List.of(StatementFactory.constructIfStatement(loc, isinf,
+						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs,
+								ExpressionFactory.constructIfThenElseExpression(loc, ispos, posInfValue, negInfValue))),
+						List.of(overapproxSt))));
+		return builder.addStatement(resultStatement).build();
 	}
 
 	private static void checkIsFloatPrimitive(final RValue argument) {
