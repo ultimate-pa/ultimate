@@ -92,7 +92,7 @@ public class InterpolatingTraceCheckCraig<L extends IAction> extends Interpolati
 					"incremental assertion is not available for Craig_NestedInterpolation");
 		}
 		mInstantiateArrayExt = instantiateArrayExt;
-		if (isCorrect() == LBool.UNSAT) {
+		if (isCorrect() == LBool.UNSAT && !csToolkit.quickCheck()) {
 			InterpolantComputationStatus ics = new InterpolantComputationStatus();
 			try {
 				computeInterpolants(interpolation);

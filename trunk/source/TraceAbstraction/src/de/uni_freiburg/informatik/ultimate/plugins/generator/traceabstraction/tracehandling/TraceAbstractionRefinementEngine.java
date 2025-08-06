@@ -75,6 +75,19 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 	private final IRefinementEngineResult<L, Collection<QualifiedTracePredicates>> mAfeResult;
 	private final RefinementEngineStatisticsGenerator mAfeStatistics;
 
+	boolean mQuickCheck = false;
+	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
+			final ITARefinementStrategy<L> strategy, final boolean quickCheck) {
+		mLogger = logger;
+		mStrategy = strategy;
+		mQuickCheck = quickCheck;
+		final AutomatonFreeRefinementEngine<L> afEngine =
+				new AutomatonFreeRefinementEngine<>(services, logger, strategy, quickCheck);
+		mAfeResult = afEngine.getResult();
+		mAfeStatistics = afEngine.getRefinementEngineStatistics();
+		generateProof();
+	}
+
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final ITARefinementStrategy<L> strategy) {
 		mLogger = logger;
@@ -93,7 +106,7 @@ public final class TraceAbstractionRefinementEngine<L extends IIcfgTransition<?>
 
 	private void generateProof() {
 		final LBool cexResult = mAfeResult.getCounterexampleFeasibility();
-		if (cexResult != LBool.UNSAT) {
+		if (cexResult != LBool.UNSAT || mQuickCheck) {
 			mInterpolantAutomaton = null;
 			mUsedTracePredicates = null;
 			return;

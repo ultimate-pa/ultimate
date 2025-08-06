@@ -73,7 +73,7 @@ public class StatementSequence extends CodeBlock implements IIcfgInternalTransit
 		this(serialNumber, source, target, Collections.singletonList(st), logger);
 	}
 
-	StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public StatementSequence(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final List<Statement> stmts, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mStatements = new ArrayList<>();

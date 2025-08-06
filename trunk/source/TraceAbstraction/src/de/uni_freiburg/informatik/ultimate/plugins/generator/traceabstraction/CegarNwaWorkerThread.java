@@ -159,7 +159,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 				// in this setting we dont use error automata
 				mThreadResult =
 						new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
-								mCsToolkit.getManagedScript(), mCounterexample, null, true);
+								mCsToolkit.getManagedScript(), mCounterexample, null, true, false);
 				mBlockingQueueForResults.put(mThreadResult);
 				return mThreadResult;
 			}
@@ -378,7 +378,7 @@ public class CegarNwaWorkerThread<L extends IIcfgTransition<?>, A extends IAutom
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
 				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
-				mRefinementResult.somePerfectSequenceFound());
+				mRefinementResult.somePerfectSequenceFound(), false);
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 

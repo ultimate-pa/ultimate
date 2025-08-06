@@ -58,6 +58,7 @@ public class CfgSmtToolkit {
 	private final IcfgEdgeFactory mIcfgEdgeFactory;
 	private final ConcurrencyInformation mConcurrencyInformation;
 	private final SmtFunctionsAndAxioms mSmtFunctionsAndAxioms;
+	boolean mQuickCheck = false;
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript,
 			final IIcfgSymbolTable symbolTable, final Set<String> procedures,
@@ -151,6 +152,14 @@ public class CfgSmtToolkit {
 	 */
 	public ConcurrencyInformation getConcurrencyInformation() {
 		return mConcurrencyInformation;
+	}
+
+	public void setQuickCheck() {
+		mQuickCheck = true;
+	}
+
+	public boolean quickCheck() {
+		return mQuickCheck;
 	}
 
 }

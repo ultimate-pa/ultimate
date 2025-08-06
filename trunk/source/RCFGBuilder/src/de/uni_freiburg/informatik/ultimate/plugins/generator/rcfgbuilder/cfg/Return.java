@@ -48,7 +48,7 @@ public class Return extends CodeBlock implements IIcfgReturnTransition<IcfgLocat
 
 	private final Call mCorrespondingCall;
 
-	Return(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+	public Return(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final Call correspondingCall, final ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCorrespondingCall = correspondingCall;

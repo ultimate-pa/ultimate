@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -128,11 +129,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			mLogger.info(startMessage());
 		}
 		mActiveCounterexamples = counterexamples;
-		if (mActiveCounterexamples.isEmpty()) {
-			mAcceptingRun = super.getAcceptingRun();
-		} else {
+
 			mAcceptingRun = getAcceptingRunParallel(mActiveCounterexamples.keySet());
-		}
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
@@ -325,7 +324,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			} else {
 				throw new AssertionError("Unexpected Predicate");
 			}
-
+			final IcfgLocation a = ((ISLPredicate) succ).getProgramPoint();
+			// LoopEntryAnnotation
+			if (!mNoLoopsMode && a.getPayload().getAnnotations().containsKey("LoopEntryAnnotation")) {
+				// return false; //
+			}
 			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 				if (symbol == counterexample.getSymbol(position - 1)) {
 					return true;
@@ -536,10 +539,22 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 
 		mVisitedPairs.clear(); // reset visited Pairs, then add start of subsearch
 		if (counterexamples.isEmpty()) {
-			final IsEmptyHeuristic<LETTER, STATE> runsearch =
+			final IsEmptyHeuristic<LETTER, STATE> runsearch;
+			if (mGoalStates != null) {
+				final Predicate<STATE> funIsForbiddenState = a -> false;
+				final Predicate<STATE> asd = a -> mGoalStates.contains(a);
+				final Set<STATE> startset = new HashSet<>(mStartStates);
+				runsearch =
+						new IsEmptyHeuristic<>(mServices, mOperand,
+								startset, funIsForbiddenState, asd,
+					IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
+					mNoLoopsMode);
+			}else{
+				runsearch =
 					new IsEmptyHeuristic<>(mServices, mOperand,
 							IHeuristic.getHeuristic(AStarHeuristic.PARALLEL, null, 0), new ArrayList<>(mCurrentPrefix),
 							mNoLoopsMode);
+			}
 			// final IsEmpty<LETTER, STATE> runsearch = new IsEmpty<>(super.mServices, mOperand, mCurrentPrefix);
 			final NestedRun<LETTER, STATE> run = runsearch.getNestedRun();
 			if (run == null) {

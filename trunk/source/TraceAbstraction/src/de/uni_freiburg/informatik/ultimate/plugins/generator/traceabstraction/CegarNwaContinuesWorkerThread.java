@@ -66,7 +66,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 
-public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>> {
+public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A extends IAutomaton<L, IPredicate>>
+		implements ICegarNwaWorkerThread<L, A> {
 
 	private final ILogger mLogger;
 	private final TAPreferences mPref;
@@ -181,7 +182,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				if (mUseGoalSetForIsEmpty && !isCexResult.getFirst().equals(LBool.UNSAT)) {
 					// in this setting we dont use error automata
 					mThreadResult = new WorkerThreadResult<>(null, null, null, false, null, false, AutomatonType.ERROR,
-							mCsToolkit.getManagedScript(), mCounterexample, null, true);
+							mCsToolkit.getManagedScript(), mCounterexample, null, true, false);
 					mBlockingQueueForResults.put(mThreadResult);
 					continue;
 				}
@@ -268,8 +269,8 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		return IPostconditionProvider.constructDefaultPostconditionProvider();
 	}
 
-	protected Pair<LBool, IProgramExecution<L, Term>>
-			isCounterexampleFeasible(final ITARefinementStrategy<L> strategy) {
+	protected Pair<LBool, IProgramExecution<L, Term>> isCounterexampleFeasible(
+			final ITARefinementStrategy<L> strategy) {
 		IStatisticsDataProvider refinementEngineStats = null;
 		try {
 			if (mPref.hasLimitPathProgramCount() && mPref.getLimitPathProgramCount() < mStrategyFactory
@@ -473,7 +474,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		final WorkerThreadResult<L, A> workerResult = new WorkerThreadResult<>(subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, enhanceMode, useErrorAutomaton, automatonType,
 				mCsToolkit.getManagedScript(), mCounterexample, mPredicateFactory,
-				mRefinementResult.somePerfectSequenceFound());
+				mRefinementResult.somePerfectSequenceFound(), false);
 
 		// TODO missing a lot of stuff from NwaCegarLoop
 

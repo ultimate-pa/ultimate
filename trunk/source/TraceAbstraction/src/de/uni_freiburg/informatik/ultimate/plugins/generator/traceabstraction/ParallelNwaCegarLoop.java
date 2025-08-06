@@ -104,7 +104,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private final PathProgramCache<L> mProgramCache = new PathProgramCache<>(mLogger);
 
 	// Strategies
-	private final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
+	public final HashMap<Integer, NestedRun<L, ?>> mActiveCounterexamples = new HashMap<>();
 	private Set<Integer> mCounterexamplesToBeRemovedFromActiveCexMap = new HashSet<>();
 	private final HashMap<HashSet<L>, ParallelRefinementStrategy<L>> mPpStrategyMap = new HashMap<>();
 	private boolean mVisitLoopsOnlyOnce; // a strategy where we focus on spread before pathprograms
@@ -130,6 +130,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	private int mIterationsWithMaxThreads = 0;
 	private int mIterationsWithOneThread = 0;
 	private final int mExceptionInWorker = 0;
+
+	private long mRefinementTime = 0;
 
 	/**
 	 *
@@ -188,8 +190,8 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 	/*
 	 * sets up the worker with its own cfg script and its own RefinementStrategy
 	 */
-	private CegarNwaContinuesWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
-			final IcfgLocation currentErrorLoc, final int id) throws InterruptedException {
+	private ICegarNwaWorkerThread<L, A> setUpContinuesWorker(final IUltimateServiceProvider iterationServices,
+			final int id, final boolean quickCheck) throws InterruptedException {
 		// mCsToolkit needs to give new mgdScript for each thread
 
 		final CfgSmtToolkit freshToolKit =
@@ -232,7 +234,12 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		final TaCheckAndRefinementPreferences<L> taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences<>(getServices(), mPref, mInterpolationTechnique,
 						mSimplificationTechnique, freshToolKit, predicateFactory, mIcfg);
-
+		if (quickCheck) {
+			return new CegarNWAContiuesIndependentWorkerThread<>(mLogger, mPref, id, mResultBuilder,
+					mCegarLoopBenchmark, iterationServices, freshToolKit, mIcfg, predicateFactory,
+					taCheckAndRefinementPrefs, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
+					mComputeHoareAnnotation, this, WorkerGeneralizationMode.YES, mWorkerResultQueue, mWorkerTaskQueue);
+		}
 		// start worker
 		return new CegarNwaContinuesWorkerThread<>(mLogger, mPref, id, mResultBuilder, mCegarLoopBenchmark,
 				iterationServices, freshToolKit, mIcfg, predicateFactory, taCheckAndRefinementPrefs,
@@ -346,15 +353,17 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		boolean didntFindCexLastIteration = false;
 		final IcfgLocation currentErrorLoc = getErrorLocFromCounterexample();
 		final IUltimateServiceProvider iterationServices = createIterationTimer(currentErrorLoc);
+		mWorkerTaskQueue.add(mCounterexample);
 		for (int i = 0; i < mThreadLimit; i++) {
 			try {
 				if (mPref.mUseContinuesWorker) {
-					setUpContinuesWorker(iterationServices, currentErrorLoc, i);
+					setUpContinuesWorker(iterationServices, i, false);// (i == 3)); // TODO setting for quickcheckworker
 				}
 			} catch (final InterruptedException e) {
 				throw new AssertionError("TODO");
 			}
 		}
+		mRunningThreads = +1;
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			abortIfTimeout();
 			boolean abstractionWasRefined = false;
@@ -366,6 +375,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 				// go through all done Futures
 				while (workerResult != null) {
+					final long time = System.nanoTime() / 1000000000;
 					try {
 						mLogger.info("Main: A Thread is Done");
 
@@ -383,18 +393,18 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 						// Refine abstraction
 						mLogger.info("Refining Abstraction");
+
 						mRefinementsDone += 1;
-
-						assert mRefinementsDone <= mCounterexamplesChecked * mThreadsPerCex;
-
+						// assert mRefinementsDone <= mCounterexamplesChecked * mThreadsPerCex;
 						refinement(workerResult);
-						abstractionWasRefined = true;
+						abstractionWasRefined = workerResult.getAutomatonType().equals(AutomatonType.FLOYD_HOARE);
 
 						// Not sure if necessary
 						workerResult.garbageCollect();
 
 						// If new abstraction is empty terminate immediately
 						if (isSafeThenTerminate()) {
+							updateAndPrintStatistics();
 							return;
 						}
 
@@ -409,6 +419,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 
 					}
 					workerResult = mWorkerResultQueue.poll();
+					mRefinementTime += ((System.nanoTime() / 1000000000) - time);
 				}
 				mLogger.info("No more worker results to process");
 				assert workerResult == null;
@@ -423,15 +434,26 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 				mLogger.warn("Worker was interrupted! " + ie);
 			}
 			if (abstractionWasRefined && !mPref.minimizeAbstractionPerWorker) {
-				minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
+				// minimizeAbstractionIfEnabled(); // TODO warning uses NWA CEGAR loop
 			}
 
 			// need a new counterexample if the last one was used
 			// or the abstraction was refined and we hope to find a better one
 			// dont search for counterexamples unnecessarily BUSY WAITING!
-			if ((mCounterexample == null && !didntFindCexLastIteration) || abstractionWasRefined) {
+			if (abstractionWasRefined) {
+				mLogger.info("Searching for Counterexample");
+				if (mPref.considerOnlyActiveCounterexamplesInIsEmptyParallel) {
+					mActiveCounterexamples.clear();
+				}
+				mCounterexample = searchForErrorTrace(false);
+				if (mCounterexample == null) {
+					didntFindCexLastIteration = true;
+				}
+			} else if ((mCounterexample == null && !didntFindCexLastIteration)
+					|| mWorkerTaskQueue.isEmpty()) {
 				mLogger.info("Searching for Counterexample");
 				mCounterexample = searchForErrorTrace(false);
+
 				if (mCounterexample == null) {
 					didntFindCexLastIteration = true;
 				}
@@ -440,11 +462,11 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			// Doesnt Need to come before search because of initial counterexample, we skip search
 			// mCounterexample can be null if no counterexample was found, but threads are still running
 			while (mRunningThreads < mThreadLimit && mCounterexample != null) {
+				assert mRunningThreads >= 0;
 				startWorker();
 				// mCounterexample is being checked, make sure next thread gets a new one
 				mCounterexample = searchForErrorTrace(true);
 			}
-
 			updateAndPrintStatistics();
 		}
 		mExec.shutdownNow();
@@ -477,6 +499,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mLogger.info("SearchTime: " + mSearchTime + " s");
 		mLogger.info("WorkerSetUpTime: " + mWorkerSetUpTime + " s");
 		mLogger.info("ExceptionInWorker: " + mExceptionInWorker);
+		mLogger.info("mRefinementTime: " + mRefinementTime);
 
 	}
 
@@ -603,8 +626,7 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 			throws InterruptedException {
 		WorkerThreadResult<L, A> doneFuture = null;
 
-		if (mRunningThreads >= mThreadLimit || didntFindCexLastIteration
-				|| (mWorkerResultQueue.isEmpty() && mRunningThreads > 0)) {
+		if (mRunningThreads >= mThreadLimit || didntFindCexLastIteration) {
 			assert mRunningThreads > 0;
 			mLogger.info("All threads busy, going to sleep.");
 			// No busy waiting via BlockingQueue
@@ -652,15 +674,17 @@ public class ParallelNwaCegarLoop<L extends IIcfgTransition<?>, A extends IAutom
 		mAbstraction = diff.getResult();
 
 		if (mPref.minimizeAbstractionPerWorker) {
-			minimizeAbstractionIfEnabled(stateFactoryForRefinement,
-					new PredicateFactoryResultChecking(mPredicateFactory));
+			// minimizeAbstractionIfEnabled(stateFactoryForRefinement,
+			// new PredicateFactoryResultChecking(mPredicateFactory));
 		}
 
 		if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
 			updatePathProgramMapAndExecutors(threadResult, stateFactoryForRefinement);
 		}
+		if (!threadResult.fromSATonlyWorker()) {
+			mRunningThreads -= 1;
+		}
 
-		mRunningThreads -= 1;
 		// Kill the worker script
 		if (!mPref.mUseContinuesWorker) {
 			((HistoryRecordingScript) threadResult.getWorkerMgdScript().getScript()).exit();
@@ -1119,7 +1143,7 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 	private IRun<L, ?> mCounterexample;
 	PredicateFactory mPredicateFactory;
 	private final boolean mWasPerfect;
-
+	private final boolean mSatOnlyWorker;
 	/**
 	 * @param automatonType
 	 * @param predicateFactory
@@ -1131,7 +1155,7 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final InterpolantAutomatonEnhancement enhanceMode, final boolean useErrorAutomaton,
 			final AutomatonType automatonType, final ManagedScript mgdScript, final IRun<L, ?> counterexample,
-			final PredicateFactory predicateFactory, final boolean wasPerfect) {
+			final PredicateFactory predicateFactory, final boolean wasPerfect, final boolean satOnlyWorker) {
 		mSubtrahend = subtrahend;
 		mAutomatonType = automatonType;
 		mUseErrorAutomaton = useErrorAutomaton;
@@ -1142,6 +1166,11 @@ final class WorkerThreadResult<L extends IIcfgTransition<?>, A extends IAutomato
 		mCounterexample = counterexample;
 		mPredicateFactory = predicateFactory;
 		mWasPerfect = wasPerfect;
+		mSatOnlyWorker = satOnlyWorker;
+	}
+
+	public boolean fromSATonlyWorker() {
+		return mSatOnlyWorker;
 	}
 
 	public IIpTcStrategyModule<?, L> getModule() {

@@ -76,6 +76,19 @@ public final class AutomatonFreeRefinementEngine<L extends IAction>
 	private String mUsedTraceCheckFingerprint;
 	private final IUltimateServiceProvider mServices;
 
+	private boolean mQuickCheck = false;
+
+	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
+			final IRefinementStrategy<L> strategy, final boolean quickCheck) {
+		mServices = services;
+		mLogger = logger;
+		mStrategy = strategy;
+		mQuickCheck = quickCheck;
+		mRefinementEngineStatistics = new RefinementEngineStatisticsGenerator();
+		mFeasibility = executeStrategy();
+		mRefinementEngineStatistics.finishRefinementEngineRun();
+	}
+
 	public AutomatonFreeRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final IRefinementStrategy<L> strategy) {
 		mServices = services;
@@ -126,7 +139,7 @@ public final class AutomatonFreeRefinementEngine<L extends IAction>
 		}
 
 		// trace was feasible, return
-		if (feasibilityResult == LBool.SAT) {
+		if (feasibilityResult == LBool.SAT || mQuickCheck) {
 			mLogger.info("Strategy %s found a feasible trace", mStrategy.getName());
 			return feasibilityResult;
 		}

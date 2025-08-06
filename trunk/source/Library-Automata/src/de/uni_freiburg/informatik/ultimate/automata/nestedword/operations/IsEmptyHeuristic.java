@@ -140,6 +140,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				heuristic, wayPoints, noLoopMode);
 	}
 
+
 	/**
 	 * Constructor that is not restricted to emptiness checks. The set of startStates defines where the run that we
 	 * search has to start. The set of forbiddenStates defines states that the run must not visit. The set of goalStates
@@ -153,7 +154,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 	}
 
-	private IsEmptyHeuristic(final AutomataLibraryServices services,
+	public IsEmptyHeuristic(final AutomataLibraryServices services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final Set<STATE> startStates,
 			final Predicate<STATE> funIsForbiddenState, final Predicate<STATE> funIsGoalState,
 			final IHeuristic<STATE, LETTER> heuristic, final ArrayList<Pair<STATE, LETTER>> wayPoints,
