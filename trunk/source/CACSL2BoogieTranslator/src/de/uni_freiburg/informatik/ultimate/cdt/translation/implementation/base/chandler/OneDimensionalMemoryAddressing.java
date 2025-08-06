@@ -223,6 +223,6 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 
 	@Override
 	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
-		return mMemoryPointer.createPointerFromBase(ptr, loc);
+		return mMemoryPointer.createPointerFromBase(mMemoryPointer.pointerAddress(ptr, loc), loc);
 	}
 }
