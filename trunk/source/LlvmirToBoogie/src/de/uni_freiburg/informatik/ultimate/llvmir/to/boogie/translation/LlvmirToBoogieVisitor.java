@@ -128,7 +128,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Constructs a specification from a given identifier and location.
 	 *
-	 * This method creates a ModifiesSpecification that indicates the specified variable is modified in the Boogie AST.
+	 * This method constructs a ModifiesSpecification that indicates the specified variable is modified in the Boogie
+	 * AST.
 	 *
 	 * @param identifier The identifier of the variable to be modified.
 	 * @param location   The location in the source code where this specification is defined.
@@ -142,8 +143,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Constructs an initial procedure with the given parameters.
 	 *
-	 * This method creates a Procedure object representing the initial procedure in the Boogie AST, including its body,
-	 * variable declarations, statements, and specifications.
+	 * This method constructs a Procedure object representing the initial procedure in the Boogie AST, including its
+	 * body, variable declarations, statements, and specifications.
 	 *
 	 * @param location   The location in the source code where this procedure is defined.
 	 * @param identifier The identifier for the procedure.
@@ -160,14 +161,14 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Creates initial declarations for global variables and the ULTIMATE.start procedure.
+	 * Constructs initial declarations for global variables and the ULTIMATE.start procedure.
 	 *
 	 * This method initializes the global variables and constructs the ULTIMATE.start procedure that will be executed at
-	 * the start of the program. It also creates an #init procedure for global variable initialization.
+	 * the start of the program. It also constructs an #init procedure for global variable initialization.
 	 *
 	 * Using addFirst ensures that the initial declarations are at the beginning of the Boogie AST unit.
 	 */
-	private void createInitialDeclarations() {
+	private void constructInitialDeclarations() {
 		final ArrayList<Statement> stmts = new ArrayList<>();
 		final ArrayList<Specification> specs = new ArrayList<>();
 		final ArrayList<Declaration> decls = new ArrayList<>();
@@ -202,7 +203,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Constructs a variable declaration from a type and identifier.
 	 *
-	 * This method creates a VariableDeclaration object with the specified type and identifier, using the provided
+	 * This method constructs a VariableDeclaration object with the specified type and identifier, using the provided
 	 * location for the declaration.
 	 *
 	 * @param type       The type of the variable (e.g., "int", "bool").
@@ -217,7 +218,19 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		return new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
 	}
 
-	// TODO: Javadoc
+	/**
+	 * Constructs a variable declaration from a type context, identifier, result, and location.
+	 *
+	 * This method constructs a VariableDeclaration object based on the provided type context and identifier, adding
+	 * necessary havoc statements and assumptions to the result.
+	 *
+	 * @param typeContext The type context from which to extract the type information.
+	 * @param identifier  The identifier for the variable.
+	 * @param result      The result to which havoc statements and assumptions will be added.
+	 * @param location    The location in the source code where this variable is declared.
+	 * @return A VariableDeclaration object representing the variable declaration.
+	 * @throws AssertionError if the type context is not supported or does not contain an intType.
+	 */
 	private static VariableDeclaration constructVarDecFromTypeContext(final ParserRuleContext typeContext,
 			final String identifier, final Result result, final LlvmirLocation location) throws AssertionError {
 		final LLVMIRParser.IntTypeContext intType;
@@ -261,7 +274,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 	}
 
-	// TODO: Javadoc
+	/**
+	 * Constructs an expression from a value context, type context, and location.
+	 *
+	 * This method constructs an Expression based on the provided value context, type context, and location. It handles
+	 * both local identifiers and constants, converting them into appropriate expressions.
+	 *
+	 * @param valueContext The context containing the value to be converted into an expression.
+	 * @param typeContext  The context containing the type information for the value.
+	 * @param location     The location in the source code where this value is defined.
+	 * @return An Expression representing the value.
+	 * @throws AssertionError if the value type is not supported.
+	 */
 	private static Expression constructExpressionFromValue(final LLVMIRParser.ValueContext valueContext,
 			final ParserRuleContext typeContext, final LlvmirLocation location) throws AssertionError {
 		if (valueContext.LocalIdent() != null) {
@@ -275,7 +299,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		}
 	}
 
-	// TODO: Javadoc
+	/**
+	 * Constructs an expression from a constant value based on the provided constant context and type context.
+	 *
+	 * This method handles different types of constants (integer, boolean, undef) and constructs the corresponding
+	 * expression. It also ensures that integer constants are adjusted to fit within the specified bit length.
+	 *
+	 * @param constantContext The context containing the constant value.
+	 * @param typeContext     The context containing the type information for the constant.
+	 * @param location        The location in the source code where this constant is defined.
+	 * @return An Expression representing the constant value.
+	 * @throws AssertionError if the constant type is not supported.
+	 */
 	private static Expression constructExpressionFromConstant(final LLVMIRParser.ConstantContext constantContext,
 			final ParserRuleContext typeContext, final LlvmirLocation location) throws AssertionError {
 		if (constantContext.intConst() != null) {
@@ -371,7 +406,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Creates an assignment statement to assign a label index to the label variable.
+	 * Constructs an assignment statement to assign a label index to the label variable.
 	 *
 	 * This method constructs an assignment statement that assigns the specified label index to the label variable
 	 * identified by `mLabelIdentifier`.
@@ -380,7 +415,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @param labelIndex The index of the label to be assigned.
 	 * @return An AssignmentStatement object representing the assignment.
 	 */
-	private static AssignmentStatement createLabelAssignment(final LlvmirLocation location, final int labelIndex) {
+	private static AssignmentStatement constructLabelAssignment(final LlvmirLocation location, final int labelIndex) {
 		final IntegerLiteral labelIndexLiteral = new IntegerLiteral(location, Integer.toString(labelIndex));
 		final VariableLHS labelVar = new VariableLHS(location, mLabelIdentifier);
 		return new AssignmentStatement(location, new LeftHandSide[] { labelVar },
@@ -421,18 +456,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Creates a havoc statement for arithmetic or logic instructions.
+	 * Constructs a havoc statement for arithmetic or logic instructions.
 	 *
 	 * This method generates a havoc statement for arithmetic or logic instructions based on the type of the
-	 * instruction. It creates a local variable with either "bool" or "int" type and adds a havoc statement to the
+	 * instruction. It constructs a local variable with either "bool" or "int" type and adds a havoc statement to the
 	 * result.
 	 *
 	 * @param result     The result to which the havoc statement will be added.
 	 * @param typeValue  The type value context from the LLVM IR parse tree.
 	 * @param location   The location in the source code where this instruction is defined.
-	 * @param identifier The identifier for the local variable to be created.
+	 * @param identifier The identifier for the local variable to be constructed.
 	 */
-	private static void createHavocStatementFromTypeValue(final Result result,
+	private static void constructHavocStatementFromTypeValue(final Result result,
 			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier) {
 		final LLVMIRParser.ConcreteTypeContext tpyeContext = typeValue.firstClassType().concreteType();
 		result.addFuncLocalVar(constructVarDecFromTypeContext(tpyeContext, identifier, result, location));
@@ -442,7 +477,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Creates an expression that converts an unsigned integer to a signed integer based on the specified bit length.
+	 * Constructs an expression that converts an unsigned integer to a signed integer based on the specified bit length.
 	 *
 	 * This method checks if the given expression is greater than or equal to the maximum value for the specified bit
 	 * length. If it is, it subtracts the maximum value from the expression to convert it to a signed representation.
@@ -452,7 +487,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @param location  The location in the source code where this conversion occurs.
 	 * @return An IfThenElseExpression representing the signed conversion.
 	 */
-	private static Expression createSignedExpression(final Expression expr, final int bitLength,
+	private static Expression constructSignedExpression(final Expression expr, final int bitLength,
 			final LlvmirLocation location) {
 		final IntegerLiteral condLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength - 1));
 		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, condLiteral);
@@ -465,7 +500,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for the compilation unit in the LLVM IR parse tree.
 	 *
-	 * This method initializes the location and processes the children of the compilation unit context to create
+	 * This method initializes the location and processes the children of the compilation unit context to construct
 	 * declarations and the final Boogie AST unit.
 	 *
 	 * @param ctx The parse tree context for the compilation unit.
@@ -478,7 +513,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 		visitChildren(ctx);
 
-		createInitialDeclarations();
+		constructInitialDeclarations();
 		mResult = new Unit(mLocation, mDeclarations.toArray(Declaration[]::new));
 		return null;
 	}
@@ -583,7 +618,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for a basic block in the LLVM IR parse tree.
 	 *
-	 * This method processes the basic block context, creates a label for it, and processes its children to generate
+	 * This method processes the basic block context, constructs a label for it, and processes its children to generate
 	 * statements for the Boogie AST. It also handles terminators like conditional and unconditional branches.
 	 *
 	 * @param ctx The parse tree context for the basic block.
@@ -606,7 +641,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		for (final ParseTree child : ctx.children) {
 			if (child.getChild(0) instanceof LLVMIRParser.CondBrTermContext
 					|| child.getChild(0) instanceof LLVMIRParser.BrTermContext) {
-				result.addFuncBlock(createLabelAssignment(location, index));
+				result.addFuncBlock(constructLabelAssignment(location, index));
 			}
 			final Result childResult = child.accept(this);
 			if (childResult != null) {
@@ -616,7 +651,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 		// TODO: Add comment that explains why we add a label assignment here
 		if (!(index == blocks.size() - 1)) {
-			result.addFuncBlock(createLabelAssignment(location, index));
+			result.addFuncBlock(constructLabelAssignment(location, index));
 		}
 
 		return result;
@@ -625,7 +660,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for a return term in the LLVM IR parse tree.
 	 *
-	 * This method processes the return statement, handling both void returns and returns with values. It creates
+	 * This method processes the return statement, handling both void returns and returns with values. It constructs
 	 * appropriate Boogie statements based on the return type.
 	 *
 	 * @param ctx The parse tree context for the return term.
@@ -755,8 +790,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				final int bitLength = getBitLengthFromType(typeContext);
 				if (operator == Operator.COMPLEQ || operator == Operator.COMPLT || operator == Operator.COMPGEQ
 						|| operator == Operator.COMPGT) {
-					leftExpr = createSignedExpression(leftExpr, bitLength, location);
-					rightExpr = createSignedExpression(rightExpr, bitLength, location);
+					leftExpr = constructSignedExpression(leftExpr, bitLength, location);
+					rightExpr = constructSignedExpression(rightExpr, bitLength, location);
 				}
 			}
 
@@ -834,7 +869,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location,
 						Integer.toString(1 << newBitLength));
 				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
-						createSignedExpression(
+						constructSignedExpression(
 								constructExpressionFromValue(instructionType.sExtInst().typeValue().value(),
 										oldTypeContext, location),
 								oldBitLength, location),
@@ -871,15 +906,15 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression rightExpr = constructExpressionFromValue(instructionType.sDivInst().value(), typeContext,
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHDIV,
-					createSignedExpression(leftExpr, bitLength, location),
-					createSignedExpression(rightExpr, bitLength, location));
+					constructSignedExpression(leftExpr, bitLength, location),
+					constructSignedExpression(rightExpr, bitLength, location));
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
 			result.addFuncBlock(assignment);
 
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD,
-					createSignedExpression(leftExpr, bitLength, location),
-					createSignedExpression(rightExpr, bitLength, location));
+					constructSignedExpression(leftExpr, bitLength, location),
+					constructSignedExpression(rightExpr, bitLength, location));
 			final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
 			final BinaryExpression leftBinaryExpr = new BinaryExpression(location, Operator.COMPNEQ, signedExpr,
 					zeroLiteral);
@@ -950,8 +985,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression rightExpr = constructExpressionFromValue(instructionType.sRemInst().value(), typeContext,
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
-					createSignedExpression(leftExpr, bitLength, location),
-					createSignedExpression(rightExpr, bitLength, location));
+					constructSignedExpression(leftExpr, bitLength, location),
+					constructSignedExpression(rightExpr, bitLength, location));
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
 			result.addFuncBlock(assignment);
@@ -965,7 +1000,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					rightBinaryExpr);
 			final IdentifierExpression identifierExpr = new IdentifierExpression(location, identifier);
 			final BinaryExpression binaryExpr2 = new BinaryExpression(location, Operator.ARITHMINUS, identifierExpr,
-					createSignedExpression(rightBinaryExpr, bitLength, location));
+					constructSignedExpression(rightBinaryExpr, bitLength, location));
 			final VariableLHS varLhs2 = new VariableLHS(location, identifier);
 			final AssignmentStatement thenAssignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs2 },
 					new Expression[] { binaryExpr2 });
@@ -974,13 +1009,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			result.addFuncBlock(ifStmt);
 
 			final BinaryExpression leftBinaryExpr2 = new BinaryExpression(location, Operator.COMPGT,
-					createSignedExpression(leftExpr, bitLength, location), zeroLiteral);
+					constructSignedExpression(leftExpr, bitLength, location), zeroLiteral);
 			final BinaryExpression rightBinaryExpr2 = new BinaryExpression(location, Operator.COMPLT,
-					createSignedExpression(rightExpr, bitLength, location), zeroLiteral);
+					constructSignedExpression(rightExpr, bitLength, location), zeroLiteral);
 			final BinaryExpression condBinaryExpr2 = new BinaryExpression(location, Operator.LOGICAND, leftBinaryExpr2,
 					rightBinaryExpr2);
 			final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHMINUS, identifierExpr,
-					createSignedExpression(rightBinaryExpr2, bitLength, location));
+					constructSignedExpression(rightBinaryExpr2, bitLength, location));
 			final AssignmentStatement thenAssignment2 = new AssignmentStatement(location,
 					new LeftHandSide[] { varLhs2 }, new Expression[] { binaryExpr3 });
 			final IfStatement ifStmt2 = new IfStatement(location, condBinaryExpr2, new Statement[] { thenAssignment2 },
@@ -1081,17 +1116,17 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Statement[] { elseAssignment });
 			result.addFuncBlock(ifStmt);
 		} else if (instructionType.andInst() != null) {
-			createHavocStatementFromTypeValue(result, instructionType.addInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.addInst().typeValue(), location, identifier);
 		} else if (instructionType.orInst() != null) {
-			createHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier);
 		} else if (instructionType.xorInst() != null) {
-			createHavocStatementFromTypeValue(result, instructionType.xorInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.xorInst().typeValue(), location, identifier);
 		} else if (instructionType.shlInst() != null) {
-			createHavocStatementFromTypeValue(result, instructionType.shlInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.shlInst().typeValue(), location, identifier);
 		} else if (instructionType.aShrInst() != null) {
-			createHavocStatementFromTypeValue(result, instructionType.aShrInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.aShrInst().typeValue(), location, identifier);
 		} else if (instructionType.lShrInst() != null) {
-			createHavocStatementFromTypeValue(result, instructionType.lShrInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.lShrInst().typeValue(), location, identifier);
 		} else {
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
@@ -1101,7 +1136,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for a branch terminator in the LLVM IR parse tree.
 	 *
-	 * This method processes the branch terminator and creates a GotoStatement to jump to the specified label.
+	 * This method processes the branch terminator and constructs a GotoStatement to jump to the specified label.
 	 *
 	 * @param ctx The parse tree context for the branch terminator.
 	 * @return A Result object containing the GotoStatement.
@@ -1121,8 +1156,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for a conditional branch terminator in the LLVM IR parse tree.
 	 *
-	 * This method processes the conditional branch terminator and creates an IfStatement to handle the condition, along
-	 * with GotoStatements for the true and false branches.
+	 * This method processes the conditional branch terminator and constructs an IfStatement to handle the condition,
+	 * along with GotoStatements for the true and false branches.
 	 *
 	 * @param ctx The parse tree context for the conditional branch terminator.
 	 * @return A Result object containing the IfStatement and GotoStatements.
@@ -1149,7 +1184,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for a store instruction in the LLVM IR parse tree.
 	 *
-	 * This method processes the store instruction and creates an AssignmentStatement to assign a value to a variable.
+	 * This method processes the store instruction and constructs an AssignmentStatement to assign a value to a
+	 * variable.
 	 *
 	 * @param ctx The parse tree context for the store instruction.
 	 * @return A Result object containing the AssignmentStatement.
@@ -1173,8 +1209,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Handles the visit event for a call instruction in the LLVM IR parse tree.
 	 *
-	 * This method processes the call instruction and creates a CallStatement or an AssertStatement based on the called
-	 * function.
+	 * This method processes the call instruction and constructs a CallStatement or an AssertStatement based on the
+	 * called function.
 	 *
 	 * @param ctx The parse tree context for the call instruction.
 	 * @return A Result object containing the CallStatement or AssertStatement.
