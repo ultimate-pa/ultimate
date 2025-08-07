@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -70,39 +71,46 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRBaseVisitor;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LLVMIRParser;
 import de.uni_freiburg.informatik.ultimate.lib.llvmir.LlvmirLocation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
+public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private Unit mResult;
 	private final String mFilename;
 	private LlvmirLocation mLocation;
-	private final String mLabelIdentifier = "#label";
+	private final static String mLabelIdentifier = "#label";
 	private final static String mUndefIdentifier = "#undef";
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
+	private final HashMap<String, Pair<Declaration, Statement>> mGlobalVars = new HashMap<>();
 
 	public LlvmirToBoogieVisitor(final IUltimateServiceProvider services, final ILogger logger, final String filename) {
 		assert services != null;
 		mServices = services;
 		mLogger = logger;
+		mResult = null;
 		mFilename = filename;
 		mLocation = null;
 		mLogger.info("Starting translation of LLVM IR to Boogie for file: " + mFilename);
 	}
 
 	public Unit getResult() {
+		if (mResult == null) {
+			mLogger.error("Translation result is null. Ensure that visitCompilationUnit was called successfully.");
+			throw new IllegalStateException("Translation result is null");
+		}
 		return mResult;
 	}
 
 	/**
-	 * Unifies the identifier by ensuring it starts with a # character.
+	 * Unifies the identifier by removing colons and ensuring it starts with a valid character.
 	 *
-	 * This method is used to standardize the identifiers in the Boogie AST, as they are expected to start with #.
+	 * This method is used to ensure that identifiers in the Boogie AST conform to the expected format.
 	 *
-	 * @param identifier The original identifier from the LLVM IR parse tree.
-	 * @return The unified identifier starting with #, or the original identifier if it is null or empty.
+	 * @param identifier The identifier to be unified.
+	 * @return A unified identifier string.
 	 */
 	private static String unifyIdentifier(final String identifier) {
 		if (identifier == null || identifier.isEmpty()) {
@@ -111,98 +119,84 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		String result = identifier;
 		result = result.replace(":", "");
 		final char firstChar = result.charAt(0);
-		if (Character.isLetterOrDigit(firstChar)) {
-			return "#" + result;
+		if (Character.isLetterOrDigit(firstChar) || firstChar == '#') {
+			return result;
 		}
-		return "#" + result.substring(1);
+		return result.substring(1);
 	}
 
 	/**
-	 * Creates the initial declarations for the Boogie translation, specifically an #init procedure and a ULTIMATE.start
-	 * procedure that calls #init and #main.
+	 * Constructs a specification from a given identifier and location.
 	 *
-	 * The #init procedure is empty, while the ULTIMATE.start procedure initializes the program by calling both #init
-	 * and #main.
+	 * This method creates a ModifiesSpecification that indicates the specified variable is modified in the Boogie AST.
+	 *
+	 * @param identifier The identifier of the variable to be modified.
+	 * @param location   The location in the source code where this specification is defined.
+	 * @return A Specification object representing the modifies specification for the given identifier.
+	 */
+	private static Specification constructSpecFromIdentifier(final String identifier, final LlvmirLocation location) {
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		return new ModifiesSpecification(location, false, new VariableLHS[] { varLhs });
+	}
+
+	/**
+	 * Constructs an initial procedure with the given parameters.
+	 *
+	 * This method creates a Procedure object representing the initial procedure in the Boogie AST, including its body,
+	 * variable declarations, statements, and specifications.
+	 *
+	 * @param location   The location in the source code where this procedure is defined.
+	 * @param identifier The identifier for the procedure.
+	 * @param varDecls   The variable declarations for the procedure.
+	 * @param stmts      The statements in the body of the procedure.
+	 * @param specs      The specifications for the procedure.
+	 * @return A Procedure object representing the initial procedure.
+	 */
+	private static Procedure constructInitialProcedure(final LlvmirLocation location, final String identifier,
+			final VariableDeclaration[] varDecls, final Statement[] stmts, final Specification[] specs) {
+		final Body body = new Body(location, varDecls, stmts);
+		return new Procedure(location, new Attribute[] {}, identifier, new String[] {}, new VarList[] {},
+				new VarList[] {}, specs, body);
+	}
+
+	/**
+	 * Creates initial declarations for global variables and the ULTIMATE.start procedure.
+	 *
+	 * This method initializes the global variables and constructs the ULTIMATE.start procedure that will be executed at
+	 * the start of the program. It also creates an #init procedure for global variable initialization.
+	 *
+	 * Using addFirst ensures that the initial declarations are at the beginning of the Boogie AST unit.
 	 */
 	private void createInitialDeclarations() {
-		final Body initBody = new Body(mLocation, new VariableDeclaration[] {}, new Statement[] {});
-		final Procedure initProcedure = new Procedure(mLocation, new Attribute[] {}, "#init", new String[] {},
-				new VarList[] {}, new VarList[] {}, new Specification[] {}, initBody);
-		mDeclarations.add(initProcedure);
+		final ArrayList<Statement> stmts = new ArrayList<>();
+		final ArrayList<Specification> specs = new ArrayList<>();
+		final ArrayList<Declaration> decls = new ArrayList<>();
+		for (final String key : mGlobalVars.keySet()) {
+			final Pair<Declaration, Statement> pair = mGlobalVars.get(key);
+			if (pair == null) {
+				mLogger.error("No pair found for global variable: " + key);
+				continue;
+			}
+			decls.add(pair.getFirst());
+			stmts.add(pair.getSecond());
+			specs.add(constructSpecFromIdentifier(unifyIdentifier(key), (LlvmirLocation) pair.getSecond().getLoc()));
+		}
+
+		mDeclarations.addFirst(constructInitialProcedure(mLocation, "#init", new VariableDeclaration[] {},
+				stmts.toArray(Statement[]::new), specs.toArray(Specification[]::new)));
+
+		final VariableLHS varLhs = new VariableLHS(mLocation, "#tmp");
+		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "main",
+				new Expression[] {});
+		final VariableDeclaration varDecl = createVarDecWithPrimType("int", "#tmp", mLocation);
 		final CallStatement initCall = new CallStatement(mLocation, false, new VariableLHS[] {}, "#init",
 				new Expression[] {});
 
-		final PrimitiveType intType = new PrimitiveType(mLocation, "int");
-		final VarList varList = new VarList(mLocation, new String[] { "#tmp" }, intType);
-		final VariableDeclaration varDecl = new VariableDeclaration(mLocation, new Attribute[] {},
-				new VarList[] { varList });
-		final VariableLHS varLhs = new VariableLHS(mLocation, "#tmp");
-		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "#main",
-				new Expression[] {});
-		final Body startBody = new Body(mLocation, new VariableDeclaration[] { varDecl },
-				new Statement[] { initCall, mainCall });
-		final Procedure startProcedure = new Procedure(mLocation, new Attribute[] {}, "ULTIMATE.start", new String[] {},
-				new VarList[] {}, new VarList[] {}, new Specification[] {}, startBody);
-		mDeclarations.add(startProcedure);
-	}
+		mDeclarations
+				.addFirst(constructInitialProcedure(mLocation, "ULTIMATE.start", new VariableDeclaration[] { varDecl },
+						new Statement[] { initCall, mainCall }, specs.toArray(Specification[]::new)));
 
-	/**
-	 * Retrieves the #init procedure from the list of declarations.
-	 *
-	 * @return The #init procedure.
-	 * @throws IllegalStateException if no #init procedure is found.
-	 */
-	private Procedure getInitProcedure() throws IllegalStateException {
-		return (Procedure) mDeclarations.stream()
-				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#init"))
-				.findFirst().orElseThrow(() -> new IllegalStateException("No #init declaration found"));
-	}
-
-	/**
-	 * Retrieves the ULTIMATE.start procedure from the list of declarations.
-	 *
-	 * @return The ULTIMATE.start procedure.
-	 * @throws IllegalStateException if no ULTIMATE.start procedure is found.
-	 */
-	private Procedure getStartProcedure() throws IllegalStateException {
-		return (Procedure) mDeclarations.stream().filter(
-				decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("ULTIMATE.start"))
-				.findFirst().orElseThrow(() -> new IllegalStateException("No ULTIMATE.start declaration found"));
-	}
-
-	/**
-	 * Updates the #init procedure with a new statement and modifies specification.
-	 *
-	 * This method removes the existing procedure from the declarations, creates a new body with the provided statement
-	 * and modifies specification, and then adds the updated procedure back to the declarations.
-	 *
-	 * @param procedure    The procedure to be updated.
-	 * @param stmt         The statement to be added to the procedure body, can be null.
-	 * @param modifiesSpec The modifies specification to be added, can be null.
-	 * @throws IllegalArgumentException if the procedure is null.
-	 */
-	private void updateProcedure(final Procedure procedure, final Statement stmt, final Specification modifiesSpec)
-			throws IllegalArgumentException {
-		if (procedure == null) {
-			throw new IllegalArgumentException("Procedure cannot be null");
-		}
-		mDeclarations.remove(procedure);
-		final ArrayList<Statement> newBlock = new ArrayList<>(Arrays.asList(procedure.getBody().getBlock()));
-		if (stmt != null) {
-			newBlock.add(stmt);
-		}
-		final ArrayList<Specification> newSpecs = new ArrayList<>(Arrays.asList(procedure.getSpecification()));
-		if (modifiesSpec != null) {
-			newSpecs.add(modifiesSpec);
-		}
-
-		final Body newBody = new Body(procedure.getBody().getLocation(), procedure.getBody().getLocalVars(),
-				newBlock.toArray(new Statement[0]));
-		final Procedure newProcedure = new Procedure(procedure.getLocation(), procedure.getAttributes(),
-				procedure.getIdentifier(), procedure.getTypeParams(), procedure.getInParams(), procedure.getOutParams(),
-				newSpecs.toArray(new Specification[0]), newBody);
-
-		mDeclarations.add(newProcedure);
+		mDeclarations.addAll(0, decls);
 	}
 
 	/**
@@ -219,17 +213,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final LlvmirLocation location) {
 		final PrimitiveType primType = new PrimitiveType(location, type);
 		final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, primType);
-		final VariableDeclaration varDecl = new VariableDeclaration(location, new Attribute[] {},
-				new VarList[] { varList });
-
-		return varDecl;
+		return new VariableDeclaration(location, new Attribute[] {}, new VarList[] { varList });
 	}
 
 	/**
 	 * Creates a variable declaration with a primitive type based on the provided type string and identifier.
 	 *
-	 * This method constructs a VariableDeclaration object with the specified type and identifier, ensuring that the
-	 * identifier is unified to start with a # character.
+	 * This method constructs a VariableDeclaration object with the specified type and identifier.
 	 *
 	 * @param typeString The string representation of the type (e.g., "i32").
 	 * @param identifier The identifier for the variable.
@@ -237,7 +227,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * @return A VariableDeclaration object representing the variable declaration.
 	 */
 	private static VariableDeclaration createVarDecFromConcreteType(final LLVMIRParser.ConcreteTypeContext typeContext,
-			final String identifier, final FunctionBody body, final LlvmirLocation location) throws AssertionError {
+			final String identifier, final Result result, final LlvmirLocation location) throws AssertionError {
 		if (typeContext.intType() != null) {
 			final String typeString = typeContext.intType().getText();
 			final String typeIdentifier = typeString.equals("i1") ? "bool" : "int";
@@ -245,21 +235,21 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				final int bitLength = Integer.parseInt(typeString.substring(1));
 				final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-				body.addFuncBlock(havocStmt);
+				result.addFuncBlock(havocStmt);
 
 				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
 				final IdentifierExpression identExpr = new IdentifierExpression(location, unifyIdentifier(identifier));
 				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, identExpr,
 						zeroLiteral);
 				final AssumeStatement assumeStmt = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr);
-				body.addFuncBlock(assumeStmt);
+				result.addFuncBlock(assumeStmt);
 
 				final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(bitLength));
 				final BinaryExpression signedExpr = new BinaryExpression(location, Operator.COMPLT, identExpr,
 						bitLengthLiteral);
 				final AssumeStatement signedAssumeStmt = new AssumeStatement(location, new NamedAttribute[] {},
 						signedExpr);
-				body.addFuncBlock(signedAssumeStmt);
+				result.addFuncBlock(signedAssumeStmt);
 			}
 			final PrimitiveType type = new PrimitiveType(location, typeIdentifier);
 			final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, type);
@@ -271,18 +261,17 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	/**
 	 * Creates a variable declaration from a type context and identifier.
 	 *
-	 * This method constructs a VariableDeclaration object based on the provided type context and identifier, ensuring
-	 * that the identifier is unified to start with a # character.
+	 * This method constructs a VariableDeclaration object based on the provided type context and identifier.
 	 *
 	 * @param typeContext The type context from the LLVM IR parse tree.
 	 * @param identifier  The identifier for the variable.
-	 * @param body        The function body to which this variable declaration will be added.
+	 * @param result      The result to which this variable declaration will be added.
 	 * @param location    The location in the source code where this variable is declared.
 	 * @return A VariableDeclaration object representing the variable declaration.
 	 * @throws AssertionError if the type context is not supported.
 	 */
 	private static VariableDeclaration createVarDecFromType(final LLVMIRParser.TypeContext typeContext,
-			final String identifier, final FunctionBody body, final LlvmirLocation location) throws AssertionError {
+			final String identifier, final Result result, final LlvmirLocation location) throws AssertionError {
 		if (typeContext.intType() != null) {
 			final String typeString = typeContext.intType().getText();
 			final String typeIdentifier = typeString.equals("i1") ? "bool" : "int";
@@ -290,21 +279,21 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				final int bitLength = Integer.parseInt(typeString.substring(1));
 				final VariableLHS varLhs = new VariableLHS(location, unifyIdentifier(identifier));
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-				body.addFuncBlock(havocStmt);
+				result.addFuncBlock(havocStmt);
 
 				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
 				final IdentifierExpression identExpr = new IdentifierExpression(location, unifyIdentifier(identifier));
 				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, identExpr,
 						zeroLiteral);
 				final AssumeStatement assumeStmt = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr);
-				body.addFuncBlock(assumeStmt);
+				result.addFuncBlock(assumeStmt);
 
 				final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(bitLength));
 				final BinaryExpression signedExpr = new BinaryExpression(location, Operator.COMPLT, identExpr,
 						bitLengthLiteral);
 				final AssumeStatement signedAssumeStmt = new AssumeStatement(location, new NamedAttribute[] {},
 						signedExpr);
-				body.addFuncBlock(signedAssumeStmt);
+				result.addFuncBlock(signedAssumeStmt);
 			}
 			final PrimitiveType type = new PrimitiveType(location, typeIdentifier);
 			final VarList varList = new VarList(location, new String[] { unifyIdentifier(identifier) }, type);
@@ -369,20 +358,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final String leftOperandName = valueContext.LocalIdent().getText();
 			return new IdentifierExpression(location, unifyIdentifier(leftOperandName));
 		} else if (valueContext.constant() != null) {
-			if (valueContext.constant().intConst() != null) {
-				final int bitLength = Integer.parseInt(typeContext.intType().getText().substring(1));
-				final int constValue = Integer.parseInt(valueContext.constant().intConst().getText());
-				final int modulus = 1 << bitLength;
-				final int modValue = ((constValue % modulus) + modulus) % modulus;
-				return new IntegerLiteral(location, Integer.toString(modValue));
-			} else if (valueContext.constant().boolConst() != null) {
-				return new BooleanLiteral(location, valueContext.constant().boolConst().getText().equals("true"));
-			} else if (valueContext.constant().undefConst() != null) {
-				return new IdentifierExpression(location, mUndefIdentifier);
-			}
-			// TODO: Support for other constant operand types
-			throw new AssertionError(
-					"The support for iCmp instructions with constant operands other than integers and booleans is not implemented yet.");
+			return getExpressionFromTypeConstant(valueContext.constant(), typeContext, location);
 		} else {
 			// TODO: Support for other left operand types
 			throw new AssertionError(
@@ -471,7 +447,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * @param labelIndex The index of the label to be assigned.
 	 * @return An AssignmentStatement object representing the assignment.
 	 */
-	private AssignmentStatement createLabelAssignment(final LlvmirLocation location, final int labelIndex) {
+	private static AssignmentStatement createLabelAssignment(final LlvmirLocation location, final int labelIndex) {
 		final IntegerLiteral labelIndexLiteral = new IntegerLiteral(location, Integer.toString(labelIndex));
 		final VariableLHS labelVar = new VariableLHS(location, mLabelIdentifier);
 		return new AssignmentStatement(location, new LeftHandSide[] { labelVar },
@@ -516,20 +492,20 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 *
 	 * This method generates a havoc statement for arithmetic or logic instructions based on the type of the
 	 * instruction. It creates a local variable with either "bool" or "int" type and adds a havoc statement to the
-	 * function body.
+	 * result.
 	 *
-	 * @param body       The function body to which the havoc statement will be added.
+	 * @param result     The result to which the havoc statement will be added.
 	 * @param typeValue  The type value context from the LLVM IR parse tree.
 	 * @param location   The location in the source code where this instruction is defined.
 	 * @param identifier The identifier for the local variable to be created.
 	 */
-	private static void createHavocStatementFromTypeValue(final FunctionBody body,
+	private static void createHavocStatementFromTypeValue(final Result result,
 			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier) {
 		final LLVMIRParser.ConcreteTypeContext tpyeContext = typeValue.firstClassType().concreteType();
-		body.addFuncLocalVar(createVarDecFromConcreteType(tpyeContext, identifier, body, location));
+		result.addFuncLocalVar(createVarDecFromConcreteType(tpyeContext, identifier, result, location));
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
 		final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-		body.addFuncBlock(havocStmt);
+		result.addFuncBlock(havocStmt);
 	}
 
 	/**
@@ -554,23 +530,22 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	}
 
 	/**
-	 * Handles the visit event for a compilation unit in the LLVM IR parse tree.
+	 * Handles the visit event for the compilation unit in the LLVM IR parse tree.
 	 *
-	 * This method initializes the location and creates the initial declarations for the Boogie translation. It then
-	 * visits all children of the compilation unit context to process function definitions and global variable
-	 * definitions.
+	 * This method initializes the location and processes the children of the compilation unit context to create
+	 * declarations and the final Boogie AST unit.
 	 *
 	 * @param ctx The parse tree context for the compilation unit.
-	 * @return null, as this method does not return any value.
+	 * @return A Result object containing the final Boogie AST unit.
 	 */
 	@Override
-	public FunctionBody visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
+	public Result visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-		createInitialDeclarations();
 
 		visitChildren(ctx);
 
+		createInitialDeclarations();
 		mResult = new Unit(mLocation, mDeclarations.toArray(Declaration[]::new));
 		return null;
 	}
@@ -585,30 +560,30 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * @throws AssertionError if the return type is not supported.
 	 */
 	@Override
-	public FunctionBody visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
-		final FunctionBody body = new FunctionBody();
+	public Result visitFuncDef(final LLVMIRParser.FuncDefContext ctx) throws AssertionError {
+		final Result result = new Result();
 
-		body.addFuncLocalVar(createVarDecWithPrimType("int", mUndefIdentifier, mLocation));
+		result.addFuncLocalVar(createVarDecWithPrimType("int", mUndefIdentifier, mLocation));
 		final VariableLHS undefVar = new VariableLHS(mLocation, mUndefIdentifier);
 		final HavocStatement havocStmt = new HavocStatement(mLocation, new VariableLHS[] { undefVar });
-		body.addFuncBlock(havocStmt);
+		result.addFuncBlock(havocStmt);
 
 		for (final ParseTree child : ctx.children) {
-			final FunctionBody childBody = child.accept(this);
-			if (childBody != null) {
-				body.merge(childBody);
+			final Result childResult = child.accept(this);
+			if (childResult != null) {
+				result.merge(childResult);
 			}
 		}
 
-		body.addFuncLocalVar(createVarDecWithPrimType("int", mLabelIdentifier, mLocation));
+		result.addFuncLocalVar(createVarDecWithPrimType("int", mLabelIdentifier, mLocation));
 		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
-		final Body funcBody = new Body(location, body.getFuncLocalVars().toArray(VariableDeclaration[]::new),
-				body.getFuncBlock().toArray(Statement[]::new));
+		final Body body = new Body(location, result.getFuncLocalVars().toArray(VariableDeclaration[]::new),
+				result.getFuncBlock().toArray(Statement[]::new));
 		final ArrayList<Attribute> attributes = new ArrayList<>();
 		final ArrayList<String> typeParams = new ArrayList<>();
 		final ArrayList<VarList> inParams = new ArrayList<>();
@@ -646,7 +621,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 
 		final Procedure procedure = new Procedure(location, attributes.toArray(Attribute[]::new), funcName,
 				typeParams.toArray(String[]::new), inParams.toArray(VarList[]::new), outParams.toArray(VarList[]::new),
-				spec.toArray(Specification[]::new), funcBody);
+				spec.toArray(Specification[]::new), body);
 		mDeclarations.add(procedure);
 
 		return null;
@@ -655,71 +630,79 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	/**
 	 * Handles the visit event for a function body in the LLVM IR parse tree.
 	 *
-	 * This method processes the children of the function body context and merges their results into a single
-	 * FunctionBody object.
+	 * This method processes the children of the function body context and merges their results into a single Result
+	 * object.
 	 *
 	 * @param ctx The parse tree context for the function body.
-	 * @return A FunctionBody object containing the merged results of the children.
+	 * @return A Result object containing the merged results of the children.
 	 */
 	@Override
-	public FunctionBody visitFuncBody(final LLVMIRParser.FuncBodyContext ctx) {
-		final FunctionBody body = new FunctionBody();
-		final List<LLVMIRParser.BasicBlockContext> basicBlocks = ctx.basicBlock();
+	public Result visitFuncBody(final LLVMIRParser.FuncBodyContext ctx) {
+		final Result result = new Result();
 		for (final LLVMIRParser.BasicBlockContext childCtx : ctx.basicBlock()) {
-			final FunctionBody childBody = visit(childCtx);
-			if (childBody != null) {
-				body.merge(childBody);
+			final Result childResult = visit(childCtx);
+			if (childResult != null) {
+				result.merge(childResult);
 			}
 		}
-		return body;
+		return result;
 	}
 
+	/**
+	 * Handles the visit event for a basic block in the LLVM IR parse tree.
+	 *
+	 * This method processes the basic block context, creates a label for it, and processes its children to generate
+	 * statements for the Boogie AST. It also handles terminators like conditional and unconditional branches.
+	 *
+	 * @param ctx The parse tree context for the basic block.
+	 * @return A Result object containing the generated statements for the basic block.
+	 */
 	@Override
-	public FunctionBody visitBasicBlock(final LLVMIRParser.BasicBlockContext ctx) {
+	public Result visitBasicBlock(final LLVMIRParser.BasicBlockContext ctx) {
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-		final FunctionBody body = new FunctionBody();
+		final Result result = new Result();
 
 		final LLVMIRParser.FuncBodyContext funcBodyCtx = (LLVMIRParser.FuncBodyContext) ctx.getParent();
 		final List<LLVMIRParser.BasicBlockContext> blocks = funcBodyCtx.basicBlock();
 		final int index = blocks.indexOf(ctx);
 
-		body.setCurrentLabelIndex(index);
-
 		final String labelName = unifyIdentifier(ctx.LabelIdent().getText());
 		final Label label = new Label(location, labelName, new NamedAttribute[] {});
-		body.addLabel(labelName);
-		body.addFuncBlock(label);
+		result.addFuncBlock(label);
 
 		for (final ParseTree child : ctx.children) {
 			if (child.getChild(0) instanceof LLVMIRParser.CondBrTermContext
 					|| child.getChild(0) instanceof LLVMIRParser.BrTermContext) {
-				body.addFuncBlock(createLabelAssignment(location, body.getCurrentLabelIndex()));
+				result.addFuncBlock(createLabelAssignment(location, index));
 			}
-			final FunctionBody childBody = child.accept(this);
-			if (childBody != null) {
-				body.merge(childBody);
+			final Result childResult = child.accept(this);
+			if (childResult != null) {
+				result.merge(childResult);
 			}
 		}
 
+		// TODO: Add comment that explains why we add a label assignment here
 		if (!(index == blocks.size() - 1)) {
-			body.addFuncBlock(createLabelAssignment(location, body.getCurrentLabelIndex()));
+			result.addFuncBlock(createLabelAssignment(location, index));
 		}
 
-		return body;
+		return result;
 	}
 
 	/**
-	 * Handles the visit event for a return terminator in the LLVM IR parse tree.
+	 * Handles the visit event for a return term in the LLVM IR parse tree.
 	 *
-	 * Currently, it only supports integer return types.
+	 * This method processes the return statement, handling both void returns and returns with values. It creates
+	 * appropriate Boogie statements based on the return type.
 	 *
-	 * @param ctx The parse tree context for the return terminator.
+	 * @param ctx The parse tree context for the return term.
+	 * @return A Result object containing the generated statements for the return term.
 	 * @throws AssertionError if the return type is not supported.
 	 */
 	@Override
-	public FunctionBody visitRetTerm(final LLVMIRParser.RetTermContext ctx) {
-		final FunctionBody body = new FunctionBody();
+	public Result visitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
+		final Result result = new Result();
 
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
@@ -727,7 +710,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		if (ctx.value() == null) {
 			// If there is no value, we assume a void return type
 			final ReturnStatement returnStmt = new ReturnStatement(location);
-			body.addFuncBlock(returnStmt);
+			result.addFuncBlock(returnStmt);
 		} else {
 			final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
 			if (returnType.intType() != null) {
@@ -736,13 +719,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						new LeftHandSide[] { returnVar },
 						new Expression[] { getExpressionFromConcreteTypeValue(ctx.value(), returnType, location) });
 				final ReturnStatement returnStmt = new ReturnStatement(location);
-				body.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
+				result.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
 			} else {
 				// TODO: Support for other types
 				throw new AssertionError("The support for return types other than integers is not implemented yet.");
 			}
 		}
-		return body;
+		return result;
 
 	}
 
@@ -753,64 +736,30 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * on the type of the constant value.
 	 *
 	 * @param ctx The parse tree context for the global variable definition.
-	 * @return A FunctionBody object containing the variable declaration and initialization statements.
+	 * @return A Result object containing the variable declaration and initialization statements.
 	 * @throws AssertionError if the type is not supported.
 	 */
 	@Override
-	public FunctionBody visitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
-		final FunctionBody body = new FunctionBody();
+	public Result visitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = unifyIdentifier(ctx.GlobalIdent().getText());
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
-		if (type.intType() != null) {
-			mDeclarations.add(createVarDecWithPrimType("int", identifier, location));
-			final String typeString = type.intType().getText() == "i1" ? "bool" : "int";
-			if (typeString.equals("int")) {
-				final int bitLength = Integer.parseInt(type.intType().getText().substring(1));
-				final VariableLHS variableLhs = new VariableLHS(location, identifier);
-				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { variableLhs });
-				final Specification havocSpec = new ModifiesSpecification(mLocation, false,
-						new VariableLHS[] { variableLhs });
-				updateProcedure(getInitProcedure(), havocStmt, havocSpec);
-				updateProcedure(getStartProcedure(), null, havocSpec);
-
-				final IntegerLiteral intLit = new IntegerLiteral(location, Integer.toString(0));
-				final IdentifierExpression identifierExpr = new IdentifierExpression(location, identifier);
-				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPEQ, identifierExpr,
-						intLit);
-				final AssumeStatement assumeStmt = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr);
-				final Specification assumeSpec = new ModifiesSpecification(mLocation, false,
-						new VariableLHS[] { variableLhs });
-				updateProcedure(getInitProcedure(), assumeStmt, assumeSpec);
-				updateProcedure(getStartProcedure(), null, assumeSpec);
-
-				final IntegerLiteral rightValue = new IntegerLiteral(location, Integer.toString(1 << bitLength));
-				final IdentifierExpression leftExpr = new IdentifierExpression(location, identifier);
-				final BinaryExpression binaryExpr2 = new BinaryExpression(location, Operator.COMPLT, leftExpr,
-						rightValue);
-				final AssumeStatement assumeStmt2 = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr2);
-				final Specification assumeSpec2 = new ModifiesSpecification(mLocation, false,
-						new VariableLHS[] { variableLhs });
-				updateProcedure(getInitProcedure(), assumeStmt2, assumeSpec2);
-				updateProcedure(getStartProcedure(), null, assumeSpec2);
-			}
-			final VariableLHS varLhs = new VariableLHS(location, identifier);
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { getExpressionFromTypeConstant(ctx.constant(), type, location) });
-			final Specification modifiesSpec = new ModifiesSpecification(mLocation, false,
-					new VariableLHS[] { varLhs });
-			updateProcedure(getInitProcedure(), assignment, modifiesSpec);
-			updateProcedure(getStartProcedure(), null, modifiesSpec);
-
-			body.addFuncLocalVar(createVarDecWithPrimType(typeString, identifier, location));
-		} else {
-			// TODO: Support for other types
+		if (type.intType() == null) {
 			throw new AssertionError("The support for types other than integers is not implemented yet.");
 		}
 
-		return body;
+		final String typeString = type.intType().getText().equals("i1") ? "bool" : "int";
+		final VariableDeclaration varDecl = createVarDecWithPrimType(typeString, identifier, location);
+
+		final VariableLHS varLhs = new VariableLHS(location, identifier);
+		final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+				new Expression[] { getExpressionFromTypeConstant(ctx.constant(), type, location) });
+
+		mGlobalVars.put(identifier, new Pair<>(varDecl, assignment));
+
+		return null;
 	}
 
 	/**
@@ -823,8 +772,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * @throws AssertionError if the instruction type is not supported.
 	 */
 	@Override
-	public FunctionBody visitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) {
-		final FunctionBody body = new FunctionBody();
+	public Result visitLocalDefInst(final LLVMIRParser.LocalDefInstContext ctx) {
+		final Result result = new Result();
 		final String identifier = unifyIdentifier(ctx.LocalIdent().getText());
 		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
@@ -833,7 +782,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		if (instructionType.loadInst() != null) {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
 			if (variableType.intType() != null) {
-				body.addFuncLocalVar(createVarDecFromType(variableType, identifier, body, location));
+				result.addFuncLocalVar(createVarDecFromType(variableType, identifier, result, location));
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 
 				String loadVarIdentifier = null;
@@ -851,7 +800,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						unifyIdentifier(loadVarIdentifier));
 				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 						new Expression[] { loadVarExpr });
-				body.addFuncBlock(assignment);
+				result.addFuncBlock(assignment);
 				// TODO
 			} else {
 				// TODO: Support for other types
@@ -859,7 +808,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						"The support for types other than integers in load instructions is not implemented yet.");
 			}
 		} else if (instructionType.iCmpInst() != null) {
-			body.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
+			result.addFuncLocalVar(createVarDecWithPrimType("bool", identifier, location));
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.iCmpInst().typeValue().firstClassType()
 					.concreteType();
 
@@ -886,10 +835,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 		} else if (instructionType.phiInst() != null) {
 			final LLVMIRParser.TypeContext typeContext = instructionType.phiInst().type();
-			body.addFuncLocalVar(createVarDecFromType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromType(typeContext, identifier, result, location));
 			for (final LLVMIRParser.IncContext inc : instructionType.phiInst().inc()) {
 				final String incIdentifier = unifyIdentifier(inc.LocalIdent().getText());
 				final int labelIndex = getLabelIndexFromFuncBody(ctx, incIdentifier);
@@ -902,10 +851,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						new Expression[] { getExpressionFromTypeValue(inc.value(), typeContext, location) });
 				final IfStatement ifStmt = new IfStatement(location, binaryExpr, new Statement[] { assignment },
 						new Statement[] {});
-				body.addFuncBlock(ifStmt);
+				result.addFuncBlock(ifStmt);
 			}
 		} else if (instructionType.zExtInst() != null) {
-			body.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
+			result.addFuncLocalVar(createVarDecWithPrimType("int", identifier, location));
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.zExtInst().typeValue().firstClassType()
 					.concreteType();
 			if (typeContext.intType().getText().equals("i1")) {
@@ -921,13 +870,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						location, getExpressionFromConcreteTypeValue(instructionType.zExtInst().typeValue().value(),
 								typeContext, location),
 						new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
-				body.addFuncBlock(ifStmt);
+				result.addFuncBlock(ifStmt);
 			} else {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 						new Expression[] { getExpressionFromConcreteTypeValue(
 								instructionType.zExtInst().typeValue().value(), typeContext, location) });
-				body.addFuncBlock(assignment);
+				result.addFuncBlock(assignment);
 			}
 		} else if (instructionType.sExtInst() != null) {
 			final LLVMIRParser.TypeContext newTypeContext = instructionType.sExtInst().type();
@@ -935,7 +884,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					.firstClassType().concreteType();
 			final String newTypeString = newTypeContext.intType().getText();
 			final String oldTypeString = oldTypeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromType(newTypeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromType(newTypeContext, identifier, result, location));
 			if (oldTypeContext.intType() != null && oldTypeString.equals("i1")) {
 				final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
 				final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
@@ -949,7 +898,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						getExpressionFromConcreteTypeValue(instructionType.sExtInst().typeValue().value(),
 								oldTypeContext, location),
 						new Statement[] { thenAssignment }, new Statement[] { elseAssignment });
-				body.addFuncBlock(ifStmt);
+				result.addFuncBlock(ifStmt);
 			} else {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final int oldBitLength = Integer.parseInt(oldTypeString.substring(1));
@@ -964,13 +913,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 						bitLengthLiteral);
 				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 						new Expression[] { binaryExpr });
-				body.addFuncBlock(assignment);
+				result.addFuncBlock(assignment);
 			}
 		} else if (instructionType.addInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.addInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -983,12 +932,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { signedExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 		} else if (instructionType.sDivInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.sDivInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -1000,7 +949,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					createSignedExpression(rightExpr, bitLength, location));
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD,
 					createSignedExpression(leftExpr, bitLength, location),
@@ -1021,7 +970,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final VariableLHS varLhs2 = new VariableLHS(location, identifier);
 			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs2 },
 					new Expression[] { ifThenElseExpr });
-			body.addFuncBlock(assignment2);
+			result.addFuncBlock(assignment2);
 
 			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
 			final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHMOD, identifierExpr,
@@ -1029,12 +978,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final VariableLHS varLhs3 = new VariableLHS(location, identifier);
 			final AssignmentStatement assignment3 = new AssignmentStatement(location, new LeftHandSide[] { varLhs3 },
 					new Expression[] { binaryExpr3 });
-			body.addFuncBlock(assignment3);
+			result.addFuncBlock(assignment3);
 		} else if (instructionType.uDivInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.uDivInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -1047,12 +996,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { signedExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 		} else if (instructionType.uRemInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.uRemInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -1065,12 +1014,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { signedExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 		} else if (instructionType.sRemInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.sRemInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -1082,7 +1031,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					createSignedExpression(rightExpr, bitLength, location));
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 
 			final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
 			final BinaryExpression leftBinaryExpr = new BinaryExpression(location, Operator.COMPLT, binaryExpr,
@@ -1099,7 +1048,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					new Expression[] { binaryExpr2 });
 			final IfStatement ifStmt = new IfStatement(location, condBinaryExpr, new Statement[] { thenAssignment },
 					new Statement[] {});
-			body.addFuncBlock(ifStmt);
+			result.addFuncBlock(ifStmt);
 
 			final BinaryExpression leftBinaryExpr2 = new BinaryExpression(location, Operator.COMPGT,
 					createSignedExpression(leftExpr, bitLength, location), zeroLiteral);
@@ -1113,19 +1062,19 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					new LeftHandSide[] { varLhs2 }, new Expression[] { binaryExpr3 });
 			final IfStatement ifStmt2 = new IfStatement(location, condBinaryExpr2, new Statement[] { thenAssignment2 },
 					new Statement[] {});
-			body.addFuncBlock(ifStmt2);
+			result.addFuncBlock(ifStmt2);
 
 			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
 			final BinaryExpression binaryExpr4 = new BinaryExpression(location, Operator.ARITHMOD, identifierExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr4 });
-			body.addFuncBlock(assignment2);
+			result.addFuncBlock(assignment2);
 		} else if (instructionType.subInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.subInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -1139,12 +1088,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { signedExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 		} else if (instructionType.mulInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.mulInst().typeValue().firstClassType()
 					.concreteType();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 			final int bitLength = Integer.parseInt(typeString.substring(1));
 			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final Expression leftExpr = getExpressionFromConcreteTypeValue(
@@ -1157,15 +1106,15 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { signedExpr });
-			body.addFuncBlock(assignment);
+			result.addFuncBlock(assignment);
 		} else if (instructionType.allocaInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.allocaInst().typeValue()
 					.firstClassType().concreteType();
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext, identifier, result, location));
 		} else if (instructionType.callInst() != null) {
 			final LLVMIRParser.TypeContext typeContext = instructionType.callInst().type();
 			final String typeString = typeContext.intType().getText();
-			body.addFuncLocalVar(createVarDecFromType(typeContext, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromType(typeContext, identifier, result, location));
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
 			if (callIdentifier.equals("@__VERIFIER_nondet_int") || callIdentifier.equals("@__VERIFIER_nondet_short")
 					|| callIdentifier.equals("@__VERIFIER_nondet_ushort")
@@ -1178,7 +1127,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					|| callIdentifier.equals("@__VERIFIER_nondet_uchar") || callIdentifier.equals("@printf")) {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
-				body.addFuncBlock(havocStmt);
+				result.addFuncBlock(havocStmt);
 			} else {
 				final ArrayList<Expression> args = new ArrayList<>();
 				for (final LLVMIRParser.ArgContext arg : instructionType.callInst().args().arg()) {
@@ -1187,7 +1136,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final CallStatement callStmt = new CallStatement(location, false, new VariableLHS[] {},
 						unifyIdentifier(callIdentifier), args.toArray(Expression[]::new));
-				body.addFuncBlock(callStmt);
+				result.addFuncBlock(callStmt);
 			}
 		} else if (instructionType.selectInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext0 = instructionType.selectInst().typeValue(0)
@@ -1201,7 +1150,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					instructionType.selectInst().typeValue(1).value(), typeContext1, location);
 			final Expression elseExpr = getExpressionFromConcreteTypeValue(
 					instructionType.selectInst().typeValue(2).value(), typeContext1, location);
-			body.addFuncLocalVar(createVarDecFromConcreteType(typeContext1, identifier, body, location));
+			result.addFuncLocalVar(createVarDecFromConcreteType(typeContext1, identifier, result, location));
 			final VariableLHS thenVarLhs = new VariableLHS(location, identifier);
 			final VariableLHS elseVarLhs = new VariableLHS(location, identifier);
 			final AssignmentStatement thenAssignment = new AssignmentStatement(location,
@@ -1210,26 +1159,26 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 					new LeftHandSide[] { elseVarLhs }, new Expression[] { elseExpr });
 			final IfStatement ifStmt = new IfStatement(location, ifExpr, new Statement[] { thenAssignment },
 					new Statement[] { elseAssignment });
-			body.addFuncBlock(ifStmt);
+			result.addFuncBlock(ifStmt);
 		} else if (instructionType.andInst() != null) {
-			createHavocStatementFromTypeValue(body, instructionType.addInst().typeValue(), location, identifier);
+			createHavocStatementFromTypeValue(result, instructionType.addInst().typeValue(), location, identifier);
 		} else if (instructionType.orInst() != null) {
-			createHavocStatementFromTypeValue(body, instructionType.orInst().typeValue(), location, identifier);
+			createHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier);
 		} else if (instructionType.xorInst() != null) {
-			createHavocStatementFromTypeValue(body, instructionType.xorInst().typeValue(), location, identifier);
+			createHavocStatementFromTypeValue(result, instructionType.xorInst().typeValue(), location, identifier);
 		} else if (instructionType.shlInst() != null) {
-			createHavocStatementFromTypeValue(body, instructionType.shlInst().typeValue(), location, identifier);
+			createHavocStatementFromTypeValue(result, instructionType.shlInst().typeValue(), location, identifier);
 		} else if (instructionType.aShrInst() != null) {
-			createHavocStatementFromTypeValue(body, instructionType.aShrInst().typeValue(), location, identifier);
+			createHavocStatementFromTypeValue(result, instructionType.aShrInst().typeValue(), location, identifier);
 		} else if (instructionType.lShrInst() != null) {
-			createHavocStatementFromTypeValue(body, instructionType.lShrInst().typeValue(), location, identifier);
+			createHavocStatementFromTypeValue(result, instructionType.lShrInst().typeValue(), location, identifier);
 		}
 
 		else {
 			// TODO: Support for other instructions
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
-		return body;
+		return result;
 	}
 
 	/**
@@ -1238,18 +1187,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * This method processes the branch terminator and creates a GotoStatement to jump to the specified label.
 	 *
 	 * @param ctx The parse tree context for the branch terminator.
-	 * @return A FunctionBody object containing the GotoStatement.
+	 * @return A Result object containing the GotoStatement.
 	 */
 	@Override
-	public FunctionBody visitBrTerm(final LLVMIRParser.BrTermContext ctx) {
+	public Result visitBrTerm(final LLVMIRParser.BrTermContext ctx) {
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-		final FunctionBody body = new FunctionBody();
+		final Result result = new Result();
 		final String labelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
 		final GotoStatement gotoStmt = new GotoStatement(location, new String[] { labelIdentifier });
-		body.addFuncBlock(gotoStmt);
+		result.addFuncBlock(gotoStmt);
 
-		return body;
+		return result;
 	}
 
 	/**
@@ -1259,13 +1208,13 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * with GotoStatements for the true and false branches.
 	 *
 	 * @param ctx The parse tree context for the conditional branch terminator.
-	 * @return A FunctionBody object containing the IfStatement and GotoStatements.
+	 * @return A Result object containing the IfStatement and GotoStatements.
 	 */
 	@Override
-	public FunctionBody visitCondBrTerm(final LLVMIRParser.CondBrTermContext ctx) {
+	public Result visitCondBrTerm(final LLVMIRParser.CondBrTermContext ctx) {
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
-		final FunctionBody body = new FunctionBody();
+		final Result result = new Result();
 
 		final String variableIdentifier = unifyIdentifier(ctx.value().LocalIdent().getText());
 		final String thenLabelIdentifier = unifyIdentifier(ctx.label(0).LocalIdent().getText());
@@ -1275,9 +1224,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		final IdentifierExpression variableExpr = new IdentifierExpression(location, variableIdentifier);
 		final IfStatement ifStmt = new IfStatement(location, variableExpr, new Statement[] { thenGoto },
 				new Statement[] { elseGoto });
-		body.addFuncBlock(ifStmt);
+		result.addFuncBlock(ifStmt);
 
-		return body;
+		return result;
 	}
 
 	/**
@@ -1286,11 +1235,11 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 	 * This method processes the store instruction and creates an AssignmentStatement to assign a value to a variable.
 	 *
 	 * @param ctx The parse tree context for the store instruction.
-	 * @return A FunctionBody object containing the AssignmentStatement.
+	 * @return A Result object containing the AssignmentStatement.
 	 */
 	@Override
-	public FunctionBody visitStoreInst(final LLVMIRParser.StoreInstContext ctx) {
-		final FunctionBody body = new FunctionBody();
+	public Result visitStoreInst(final LLVMIRParser.StoreInstContext ctx) {
+		final Result result = new Result();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
@@ -1299,14 +1248,23 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 		final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 				new Expression[] { getExpressionFromConcreteTypeValue(ctx.typeValue(0).value(),
 						ctx.typeValue(0).firstClassType().concreteType(), location) });
-		body.addFuncBlock(assignment);
+		result.addFuncBlock(assignment);
 
-		return body;
+		return result;
 	}
 
+	/**
+	 * Handles the visit event for a call instruction in the LLVM IR parse tree.
+	 *
+	 * This method processes the call instruction and creates a CallStatement or an AssertStatement based on the called
+	 * function.
+	 *
+	 * @param ctx The parse tree context for the call instruction.
+	 * @return A Result object containing the CallStatement or AssertStatement.
+	 */
 	@Override
-	public FunctionBody visitCallInst(final LLVMIRParser.CallInstContext ctx) {
-		final FunctionBody body = new FunctionBody();
+	public Result visitCallInst(final LLVMIRParser.CallInstContext ctx) {
+		final Result result = new Result();
 		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
 				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
 
@@ -1316,7 +1274,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			final AssertStatement assertStmt = new AssertStatement(location, new NamedAttribute[] {}, boolLit);
 			final Check chk = new Check(Spec.ASSERT);
 			chk.annotate(assertStmt);
-			body.addFuncBlock(assertStmt);
+			result.addFuncBlock(assertStmt);
 		} else if (callIdentifier.equals("@printf")) {
 			// This call can be ignored as it is not relevant for the Boogie translation
 		} else {
@@ -1326,9 +1284,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<FunctionBody> {
 			}
 			final CallStatement callStmt = new CallStatement(location, false, new VariableLHS[] {},
 					unifyIdentifier(callIdentifier), args.toArray(Expression[]::new));
-			body.addFuncBlock(callStmt);
+			result.addFuncBlock(callStmt);
 		}
 
-		return body;
+		return result;
 	}
 }
