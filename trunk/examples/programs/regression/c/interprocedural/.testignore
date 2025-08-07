@@ -8,3 +8,6 @@ TIMEOUT:
 - task: Tschingelhorn-Safe.c
   settings: AutomizerC-BitvectorTranslation.epf
   toolchain: AutomizerC.xml
+- task: BoolToIntForImplicitlyDeclaredFunctionCall.c
+  settings: AutomizerC-Reach-32Bit-Default-1D.epf
+  toolchain: AutomizerC.xml

@@ -72,9 +72,6 @@ Overapproximation:
 - task: bug-undeclared-function-symbol.c
   settings: AutomizerC-Reach-32Bit-Default-1D.epf
   toolchain: AutomizerC.xml
-- task: BoolToIntForImplicitlyDeclaredFunctionCall.c
-  settings: AutomizerC-Reach-32Bit-Default-1D.epf
-  toolchain: AutomizerC.xml
 - task: ACSL-contractOnDeclaration.c
   settings: AutomizerC-Reach-32Bit-Default-1D.epf
   toolchain: AutomizerC.xml
