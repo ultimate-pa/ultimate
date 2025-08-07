@@ -5,7 +5,8 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie;single
 Bundle-Version: 0.3.0
 Export-Package: de.uni_freiburg.informatik.ultimate.llvmir.to.boogie,
  de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation
-Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.util,
+ de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.llvmir,
  org.antlr.antlr4-runtime

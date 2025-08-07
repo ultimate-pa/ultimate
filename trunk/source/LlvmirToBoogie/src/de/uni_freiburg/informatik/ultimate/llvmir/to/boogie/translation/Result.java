@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -37,17 +36,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 /**
  * Instances of this class are used to represent the body of a function in the Boogie AST.
  */
-public class FunctionBody {
+public class Result {
 	private final ArrayList<VariableDeclaration> mFuncLocalVars;
 	private final ArrayList<Statement> mFuncBlock;
-	private final HashMap<String, Integer> mLabelMap;
-	private int mCurrentFreeLabelCount = 0;
-	private int mCurrentLabelIndex = -1;
 
-	public FunctionBody() {
+	public Result() {
 		mFuncLocalVars = new ArrayList<>();
 		mFuncBlock = new ArrayList<>();
-		mLabelMap = new HashMap<>();
 	}
 
 	public ArrayList<VariableDeclaration> getFuncLocalVars() {
@@ -56,29 +51,6 @@ public class FunctionBody {
 
 	public ArrayList<Statement> getFuncBlock() {
 		return mFuncBlock;
-	}
-
-	public HashMap<String, Integer> getLabelMap() {
-		return mLabelMap;
-	}
-
-	public int getCurrentFreeLabelCount() {
-		return mCurrentFreeLabelCount;
-	}
-
-	public int getCurrentLabelIndex() {
-		return mCurrentLabelIndex;
-	}
-
-	public void setCurrentLabelIndex(final int currentLabelIndex) {
-		if (currentLabelIndex < 0) {
-			throw new IllegalArgumentException("Label index must be non-negative");
-		}
-		mCurrentLabelIndex = currentLabelIndex;
-	}
-
-	public void incrementCurrentLabelIndex() {
-		mCurrentLabelIndex++;
 	}
 
 	public void addFuncLocalVar(final VariableDeclaration funcLocalVar) {
@@ -97,18 +69,13 @@ public class FunctionBody {
 		mFuncBlock.addAll(funcBlocks);
 	}
 
-	public void addLabel(final String label) {
-		mLabelMap.put(label, mCurrentFreeLabelCount);
-		mCurrentFreeLabelCount++;
-	}
-
 	/**
 	 * Merges the local variables and statements of another FunctionBody into this one.
 	 *
 	 * @param other the FunctionBody to merge with
 	 * @return this FunctionBody after merging
 	 */
-	public FunctionBody merge(final FunctionBody other) {
+	public Result merge(final Result other) {
 		mFuncLocalVars.addAll(other.getFuncLocalVars());
 		mFuncBlock.addAll(other.getFuncBlock());
 		return this;
