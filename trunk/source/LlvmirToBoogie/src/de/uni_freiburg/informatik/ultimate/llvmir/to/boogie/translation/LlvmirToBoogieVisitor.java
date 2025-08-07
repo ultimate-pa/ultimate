@@ -639,6 +639,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		result.addFuncBlock(label);
 
 		for (final ParseTree child : ctx.children) {
+			// If the child is a branching term (CondBrTerm or BrTerm), we add an assignment to the label variable, it
+			// is necessary to know the last visited label to properly handle phi instructions.
 			if (child.getChild(0) instanceof LLVMIRParser.CondBrTermContext
 					|| child.getChild(0) instanceof LLVMIRParser.BrTermContext) {
 				result.addFuncBlock(constructLabelAssignment(location, index));
@@ -649,7 +651,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			}
 		}
 
-		// TODO: Add comment that explains why we add a label assignment here
+		// If this is not the last block, we add an assignment to the label variable, it is necessary to know the last
+		// visited label to properly handle phi instructions.
 		if (!(index == blocks.size() - 1)) {
 			result.addFuncBlock(constructLabelAssignment(location, index));
 		}
