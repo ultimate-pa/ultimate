@@ -32,8 +32,8 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 
 /**
  *
@@ -101,7 +101,7 @@ public abstract class LRValue {
 	 * called a null pointer constant. footnote: The macro NULL is defined in <stddef.h> (and other headers) as a null
 	 * pointer constant; see 7.19.
 	 */
-	public boolean isNullPointerConstant() {
+	public boolean isNullPointerConstant(final IMemoryPointer memoryPointer) {
 		if (!getCType().isVoidPointerType() && !getCType().isArithmeticType()) {
 			return false;
 		}
@@ -119,13 +119,7 @@ public abstract class LRValue {
 		}
 
 		if (value instanceof StructConstructor) {
-			final StructConstructor sc = (StructConstructor) value;
-			if (sc.getFieldValues().length == 2 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
-					&& sc.getFieldIdentifiers()[1].equals(SFO.POINTER_OFFSET)
-					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))
-					&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[1]))) {
-				return true;
-			}
+			return memoryPointer.isNullPointer(value);
 		}
 		return false;
 	}

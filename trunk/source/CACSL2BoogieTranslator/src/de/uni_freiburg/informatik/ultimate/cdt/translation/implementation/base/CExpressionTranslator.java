@@ -746,7 +746,7 @@ public class CExpressionTranslator {
 		} else if (secondArgIsVoid && thirdArgIsVoid) {
 			/* C11 6.5.15.5 If both operands have void type, the result has void type. */
 			resultCType = new CPrimitive(CPrimitives.VOID);
-		} else if (opPositive.getLrValue().isNullPointerConstant()
+		} else if (opPositive.getLrValue().isNullPointerConstant(mMemoryPointer)
 				|| opPositive.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
 			// allows the second disjunct above. Maybe a GNU extension?
@@ -768,7 +768,7 @@ public class CExpressionTranslator {
 				resultCType = opNegative.getLrValue().getCType();
 			}
 
-		} else if (opNegative.getLrValue().isNullPointerConstant()
+		} else if (opNegative.getLrValue().isNullPointerConstant(mMemoryPointer)
 				|| opNegative.getLrValue().getCType().getUnderlyingType().isIntegerType()) {
 			// TODO 2018-11-17 Matthias: I could not find a reference in the C standard that
 			// allows the second disjunct above. Maybe a GNU extension?

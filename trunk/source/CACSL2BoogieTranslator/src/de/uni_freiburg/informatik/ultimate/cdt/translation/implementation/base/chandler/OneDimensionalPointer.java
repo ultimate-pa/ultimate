@@ -6,10 +6,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -91,5 +93,16 @@ public class OneDimensionalPointer extends BaseMemoryPointer {
 			final Expression rightPointer, final String component, final ExpressionTranslation expressionTranslation) {
 		assert component.equals(SFO.POINTER_BASE) : "Illegal use of pointer component: " + component + " in 1D pointer";
 		return pointerComponentRelation(loc, op, leftPointer, rightPointer, component, expressionTranslation);
+	}
+
+	@Override
+	public boolean isNullPointer(final Expression ptr) {
+		final StructConstructor sc = (StructConstructor) ptr;
+		if (sc.getFieldValues().length == 1 && sc.getFieldIdentifiers()[0].equals(SFO.POINTER_BASE)
+				&& BigInteger.ZERO.equals(CTranslationUtil.extractIntegerValue(sc.getFieldValues()[0]))) {
+			return true;
+		}
+
+		return false;
 	}
 }
