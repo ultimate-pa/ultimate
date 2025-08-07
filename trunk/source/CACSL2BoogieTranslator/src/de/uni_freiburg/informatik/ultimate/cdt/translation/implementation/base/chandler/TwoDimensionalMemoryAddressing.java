@@ -518,4 +518,13 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 
 		return new AssertStatement(loc, disjunction);
 	}
+
+	@Override
+	public Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
+			final ICType pointsToType) {
+		final Expression ptr1Offset = mMemoryPointer.pointerOffset(ptr1, loc);
+		final Expression ptr2Offset = mMemoryPointer.pointerOffset(ptr2, loc);
+
+		return pointerComponentSubtraction(loc, ptr1Offset, ptr2Offset, pointsToType);
+	}
 }

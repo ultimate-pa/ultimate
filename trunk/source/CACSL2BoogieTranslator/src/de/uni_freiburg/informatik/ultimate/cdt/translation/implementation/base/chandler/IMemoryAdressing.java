@@ -221,4 +221,12 @@ public interface IMemoryAdressing {
 	 * @return The initial pointer.
 	 */
 	Expression initialPointerFromPointer(final ILocation loc, final Expression ptr);
+
+	/**
+	 * Subtracts two pointers.
+	 *
+	 * @return An {@link Expression} that represents the difference of two Pointers.
+	 */
+	Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
+			final ICType pointsToType);
 }
