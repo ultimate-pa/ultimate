@@ -291,7 +291,8 @@ public class CExpressionTranslator {
 
 			addBaseEqualityCheck(loc, baseEquality, builder);
 
-			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType);
+			expr = mMemoryHandler.doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(),
+					pointsToType);
 
 		} else {
 			throw new UnsupportedOperationException("non-standard case of pointer arithmetic");
@@ -1024,33 +1025,6 @@ public class CExpressionTranslator {
 		default:
 			throw new AssertionError("unknown value");
 		}
-	}
-
-	/**
-	 * Subtract two pointers.
-	 *
-	 * @param pointsToType
-	 *            {@link ICType} of the objects to which the pointers point.
-	 * @param leftPtr
-	 *            Boogie {@link Expression} that represents the left pointer.
-	 * @param rightPtr
-	 *            Boogie {@link Expression} that represents the right pointer.
-	 *
-	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
-	 */
-	private Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
-			final ICType pointsToType) {
-		final Expression ptr1Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
-		final Expression ptr2Offset = ExpressionFactory.constructStructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
-		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
-				IASTBinaryExpression.op_minus, ptr1Offset, mExpressionTranslation.getCTypeOfPointerComponents(),
-				ptr2Offset, mExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
-		final CPrimitive typesizeType = mExpressionTranslation.getCTypeOfPointerComponents();
-		final Expression offsetDifferenceDividedByTypesize =
-				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_divide,
-						offsetDifference, mExpressionTranslation.getCTypeOfPointerComponents(), typesize, typesizeType);
-		return offsetDifferenceDividedByTypesize;
 	}
 
 	/**

@@ -2763,4 +2763,21 @@ public class MemoryHandler {
 	public Collection<HeapDataArray> getDataHeapArrays(final RequiredMemoryModelFeatures requiredFeatures) {
 		return mMemoryModel.getDataHeapArrays(requiredFeatures);
 	}
+
+	/**
+	 * Subtract two pointers.
+	 *
+	 * @param pointsToType
+	 *            {@link ICType} of the objects to which the pointers point.
+	 * @param leftPtr
+	 *            Boogie {@link Expression} that represents the left pointer.
+	 * @param rightPtr
+	 *            Boogie {@link Expression} that represents the right pointer.
+	 *
+	 * @return An {@link Expression} that represents the difference of two Pointers according to C11 6.5.6.9.
+	 */
+	public Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
+			final ICType pointsToType) {
+		return mMemoryModel.doPointerSubtraction(loc, ptr1, ptr2, pointsToType);
+	}
 }

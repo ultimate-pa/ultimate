@@ -363,4 +363,14 @@ public class MemoryModel {
 			final Expression baseAddress) {
 		return mMemoryAddressing.rhsAssignmentStatementHda(loc, hda, baseAddress);
 	}
+
+	/**
+	 * Constructs an expression representing a pointer subtraction.
+	 *
+	 * @return The expression.
+	 */
+	public Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
+			final ICType pointsToType) {
+		return mMemoryAddressing.doPointerSubtraction(loc, ptr1, ptr2, pointsToType);
+	}
 }

@@ -225,4 +225,13 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 	public Expression initialPointerFromPointer(final ILocation loc, final Expression ptr) {
 		return mMemoryPointer.createPointerFromBase(mMemoryPointer.pointerAddress(ptr, loc), loc);
 	}
+
+	@Override
+	public Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
+			final ICType pointsToType) {
+		final Expression ptr1Base = mMemoryPointer.pointerAddress(ptr1, loc);
+		final Expression ptr2Base = mMemoryPointer.pointerAddress(ptr2, loc);
+
+		return pointerComponentSubtraction(loc, ptr1Base, ptr2Base, pointsToType);
+	}
 }

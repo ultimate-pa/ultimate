@@ -224,4 +224,25 @@ public abstract class BaseMemoryAdressing<T extends IMemoryPointer> implements I
 				"The string copy overlapping check is not compatible with the selected: " + this.getClass()
 						+ "  addressing mode!");
 	}
+
+	/**
+	 * Creates a valid expression representing a pointer subtractions of a pointer component. The component is either
+	 * base or offset.
+	 *
+	 * @return The expression.
+	 */
+	protected Expression pointerComponentSubtraction(final ILocation loc, final Expression ptrComp1,
+			final Expression ptrComp2, final ICType pointsToType) {
+		final CPrimitive typesizeType = mExpressionTranslation.getCTypeOfPointerComponents();
+
+		final Expression offsetDifference = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_minus, ptrComp1, typesizeType, ptrComp2, typesizeType);
+
+		final Expression typesize = mTypeSizeAndOffsetComputer.constructBytesizeExpression(loc, pointsToType);
+
+		final Expression offsetDifferenceDividedByTypesize = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_divide, offsetDifference, typesizeType, typesize, typesizeType);
+
+		return offsetDifferenceDividedByTypesize;
+	}
 }
