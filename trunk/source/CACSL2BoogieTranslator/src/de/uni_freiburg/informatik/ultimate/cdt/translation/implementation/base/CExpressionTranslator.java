@@ -46,12 +46,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
@@ -179,32 +177,15 @@ public class CExpressionTranslator {
 					(CPrimitive) left.getLrValue().getCType().getUnderlyingType(), right.getLrValue().getValue(),
 					(CPrimitive) right.getLrValue().getCType().getUnderlyingType());
 		} else if (lType instanceof CPointer && rType instanceof CPointer) {
-			final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals,
-					left.getLrValue().getValue(), right.getLrValue().getValue(), SFO.POINTER_BASE);
-			final Expression offsetRelation = constructPointerComponentRelation(loc, op, left.getLrValue().getValue(),
-					right.getLrValue().getValue(), SFO.POINTER_OFFSET);
-			switch (mPointerSubtractionAndComparisonValidityCheckMode) {
-			case CHECK:
-				final Statement assertStm = new AssertStatement(loc, baseEquality);
-				final Check chk = new Check(Spec.ILLEGAL_POINTER_ARITHMETIC);
-				chk.annotate(assertStm);
-				result.addStatement(assertStm);
-				expr = offsetRelation;
-				break;
-			case ASSUME:
-				final Statement assumeStm = new AssumeStatement(loc, baseEquality);
-				result.addStatement(assumeStm);
-				expr = offsetRelation;
-				break;
-			case IGNORE:
-				// use conjunction
-				expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
-				// TODO: Do not use conjunction. Use nondeterministic value
-				// if baseEquality does not hold.
-				break;
-			default:
-				throw new AssertionError("unknown value");
-			}
+
+			final Expression baseEquality = mMemoryPointer.constructPointerComponentRelation(loc,
+					IASTBinaryExpression.op_equals, left.getLrValue().getValue(), right.getLrValue().getValue(),
+					SFO.POINTER_BASE, mExpressionTranslation);
+
+			expr = mMemoryPointer.pointerRelationExpression(loc, baseEquality,
+					mPointerSubtractionAndComparisonValidityCheckMode, mExpressionTranslation, op, left, right);
+
+			result = addBaseEqualityCheck(loc, baseEquality, result);
 
 		} else {
 			throw new UnsupportedOperationException("unsupported " + lType + ", " + rType);
@@ -303,7 +284,13 @@ public class CExpressionTranslator {
 				pointsToType = leftPointsToType;
 			}
 			builder = new ExpressionResultBuilder().addAllExceptLrValue(left, right);
-			addBaseEqualityCheck(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), builder);
+
+			final Expression baseEquality = mMemoryPointer.constructPointerComponentRelation(loc,
+					IASTBinaryExpression.op_equals, left.getLrValue().getValue(), right.getLrValue().getValue(),
+					SFO.POINTER_BASE, mExpressionTranslation);
+
+			addBaseEqualityCheck(loc, baseEquality, builder);
+
 			expr = doPointerSubtraction(loc, left.getLrValue().getValue(), right.getLrValue().getValue(), pointsToType);
 
 		} else {
@@ -972,45 +959,6 @@ public class CExpressionTranslator {
 	}
 
 	/**
-	 * Construct {@link Expression} that compares a component of two pointers.
-	 *
-	 * @param loc
-	 * @param op
-	 *            Comparison operation.
-	 * @param leftPointer
-	 *            Boogie expression that represents pointer.
-	 * @param rightPointer
-	 *            Boogie expression that represents pointer.
-	 * @param component
-	 *            Defines which component is compared. Either "base" or "offset"
-	 */
-	private Expression constructPointerComponentRelation(final ILocation loc, final int op,
-			final Expression leftPointer, final Expression rightPointer, final String component) {
-		assert component.equals(SFO.POINTER_BASE) || component.equals(SFO.POINTER_OFFSET) : "unknown pointer component";
-		final StructAccessExpression leftComponent =
-				ExpressionFactory.constructStructAccessExpression(loc, leftPointer, component);
-		final StructAccessExpression rightComponent =
-				ExpressionFactory.constructStructAccessExpression(loc, rightPointer, component);
-		switch (op) {
-		case IASTBinaryExpression.op_equals:
-		case IASTBinaryExpression.op_notequals: {
-			return mExpressionTranslation.constructBinaryEqualityExpression(loc, op, leftComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents(), rightComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents());
-		}
-		case IASTBinaryExpression.op_lessThan:
-		case IASTBinaryExpression.op_lessEqual:
-		case IASTBinaryExpression.op_greaterThan:
-		case IASTBinaryExpression.op_greaterEqual:
-			return mExpressionTranslation.constructBinaryComparisonExpression(loc, op, leftComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents(), rightComponent,
-					mExpressionTranslation.getCTypeOfPointerComponents());
-		default:
-			throw new IllegalArgumentException("op " + op);
-		}
-	}
-
-	/**
 	 * Add checks for integer overflows. Construct arithmetic operation and add an assert statement that checks if the
 	 * result is in the range of the corresponding C data type (i.e. check for overflow wrt. max and min value). Note
 	 * that we do not check if a given expression is in the range. We explicitly construct a new expression for the
@@ -1058,15 +1006,8 @@ public class CExpressionTranslator {
 	 * @param erb
 	 *            {@link ExpressionResultBuilder} to which the additional statements are added.
 	 */
-	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression leftPtr,
-			final Expression rightPtr, final ExpressionResultBuilder erb) {
-
-		if (mPointerSubtractionAndComparisonValidityCheckMode == CheckMode.IGNORE) {
-			// do not check anything
-			return erb;
-		}
-		final Expression baseEquality = constructPointerComponentRelation(loc, IASTBinaryExpression.op_equals, leftPtr,
-				rightPtr, SFO.POINTER_BASE);
+	private ExpressionResultBuilder addBaseEqualityCheck(final ILocation loc, final Expression baseEquality,
+			final ExpressionResultBuilder erb) {
 		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
 		case CHECK:
 			final Statement assertStm = new AssertStatement(loc, baseEquality);
@@ -1079,7 +1020,7 @@ public class CExpressionTranslator {
 			erb.addStatement(assumeStm);
 			return erb;
 		case IGNORE:
-			throw new AssertionError("case handled before");
+			return erb;
 		default:
 			throw new AssertionError("unknown value");
 		}
