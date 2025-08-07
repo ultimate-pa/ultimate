@@ -92,8 +92,7 @@ public class NonDetStrategy<T extends TwoDimensionalMemoryAddressing> extends Ba
 
 		// #res!offset == 0
 		final var offsetEqualZeroExpr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
-				ExpressionFactory.constructStructAccessExpression(tuLoc, resultExpr, SFO.POINTER_OFFSET),
-				zeroNumericValueExpr);
+				mMemoryAddressing.mMemoryPointer.pointerOffset(resultExpr, tuLoc), zeroNumericValueExpr);
 		expressions.add(new Pair<>(offsetEqualZeroExpr, Collections.emptySet()));
 
 		// #res!base != 0
