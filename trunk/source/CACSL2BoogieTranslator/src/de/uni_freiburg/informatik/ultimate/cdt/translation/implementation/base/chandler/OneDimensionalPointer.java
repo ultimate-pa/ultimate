@@ -10,9 +10,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
 public class OneDimensionalPointer extends BaseMemoryPointer {
 	final BoogieType mComponentType;
@@ -62,5 +65,31 @@ public class OneDimensionalPointer extends BaseMemoryPointer {
 	public Expression createPointerFromBase(final Expression base, final ILocation loc) {
 		return ExpressionFactory.constructStructConstructor(loc, new String[] { SFO.POINTER_BASE },
 				new Expression[] { base });
+	}
+
+	@Override
+	public Expression pointerRelationExpression(final ILocation loc, final Expression baseEquality,
+			final CheckMode mPointerSubtractionAndComparisonValidityCheckMode,
+			final ExpressionTranslation expressionTranslation, final int op, final ExpressionResult left,
+			final ExpressionResult right) {
+
+		switch (mPointerSubtractionAndComparisonValidityCheckMode) {
+		case CHECK:
+		case ASSUME:
+			return ExpressionFactory.createBooleanLiteral(loc, true);
+		case IGNORE:
+			return baseEquality;
+		// TODO: Do not use conjunction. Use nondeterministic value
+		// if baseEquality does not hold.
+		default:
+			throw new AssertionError("unknown value");
+		}
+	}
+
+	@Override
+	public Expression constructPointerComponentRelation(final ILocation loc, final int op, final Expression leftPointer,
+			final Expression rightPointer, final String component, final ExpressionTranslation expressionTranslation) {
+		assert component.equals(SFO.POINTER_BASE) : "Illegal use of pointer component: " + component + " in 1D pointer";
+		return pointerComponentRelation(loc, op, leftPointer, rightPointer, component, expressionTranslation);
 	}
 }
