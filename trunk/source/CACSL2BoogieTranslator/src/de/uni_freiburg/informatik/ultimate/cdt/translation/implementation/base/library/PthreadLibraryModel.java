@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
@@ -96,11 +97,13 @@ public class PthreadLibraryModel implements ILibraryModel {
 	private final TypeSizes mTypeSizes;
 	private final ProcedureManager mProcedureManager;
 	private final ThreadIdManager mThreadIdManager;
+	private final IMemoryPointer mMemoryPointer;
 
 	public PthreadLibraryModel(final FunctionModelHelper helper, final FlatSymbolTable symboltable,
 			final AuxVarInfoBuilder auxVarInfoBuilder, final ExpressionResultTransformer exprResultTransformer,
 			final ExpressionTranslation expressionTranslation, final MemoryHandler memoryHandler,
-			final ITypeHandler typeHandler, final TypeSizes typeSizes, final ProcedureManager procedureManager) {
+			final ITypeHandler typeHandler, final TypeSizes typeSizes, final ProcedureManager procedureManager,
+			final IMemoryPointer memoryPointer) {
 		mHelper = helper;
 		mSymboltable = symboltable;
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
@@ -112,6 +115,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		mProcedureManager = procedureManager;
 		mThreadIdManager = new ThreadIdManager(mAuxVarInfoBuilder, mExprResultTransformer, mExpressionTranslation,
 				mMemoryHandler, mTypeHandler, mTypeSizes, null /* TODO */, symboltable);
+		mMemoryPointer = memoryPointer;
 	}
 
 	@Override
@@ -273,7 +277,7 @@ public class PthreadLibraryModel implements ILibraryModel {
 		}
 
 		final JoinStatement js;
-		if (argAddressOfResultPointerLr.isNullPointerConstant()) {
+		if (argAddressOfResultPointerLr.isNullPointerConstant(mMemoryPointer)) {
 			js = new JoinStatement(loc, threadId, new VariableLHS[0]);
 			builder.addStatement(js);
 		} else {

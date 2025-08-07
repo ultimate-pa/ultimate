@@ -66,4 +66,10 @@ public interface IMemoryPointer {
 	Expression constructPointerComponentRelation(final ILocation loc, final int op, final Expression leftPointer,
 			final Expression rightPointer, final String component, ExpressionTranslation expressionTranslation);
 
+	/**
+	 * Checks if a given Expression is a null pointer.
+	 *
+	 * @return If it's a null pointer.
+	 */
+	boolean isNullPointer(final Expression ptr);
 }
