@@ -80,8 +80,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private Unit mResult;
 	private final String mFilename;
 	private LlvmirLocation mLocation;
-	private final static String mLabelIdentifier = "#label";
-	private final static String mUndefIdentifier = "#undef";
+	private final static String mLabelIdentifier = "aux#label";
+	private final static String mUndefIdentifier = "aux#undef";
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 	private final HashMap<String, Pair<Declaration, Statement>> mGlobalVars = new HashMap<>();
@@ -119,10 +119,12 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		String result = identifier;
 		result = result.replace(":", "");
 		final char firstChar = result.charAt(0);
-		if (Character.isLetterOrDigit(firstChar) || firstChar == '#') {
+		if (result.startsWith("aux#")) {
 			return result;
+		} else if (Character.isLetterOrDigit(firstChar)) {
+			return '#' + result;
 		}
-		return result.substring(1);
+		return '#' + result.substring(1);
 	}
 
 	/**
@@ -164,7 +166,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * Constructs initial declarations for global variables and the ULTIMATE.start procedure.
 	 *
 	 * This method initializes the global variables and constructs the ULTIMATE.start procedure that will be executed at
-	 * the start of the program. It also constructs an #init procedure for global variable initialization.
+	 * the start of the program. It also constructs an aux#init procedure for global variable initialization.
 	 *
 	 * Using addFirst ensures that the initial declarations are at the beginning of the Boogie AST unit.
 	 */
@@ -183,14 +185,14 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			specs.add(constructSpecFromIdentifier(unifyIdentifier(key), (LlvmirLocation) pair.getSecond().getLoc()));
 		}
 
-		mDeclarations.addFirst(constructInitialProcedure(mLocation, "#init", new VariableDeclaration[] {},
+		mDeclarations.addFirst(constructInitialProcedure(mLocation, "aux#init", new VariableDeclaration[] {},
 				stmts.toArray(Statement[]::new), specs.toArray(Specification[]::new)));
 
-		final VariableLHS varLhs = new VariableLHS(mLocation, "#tmp");
-		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "main",
+		final VariableLHS varLhs = new VariableLHS(mLocation, "aux#tmp");
+		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "#main",
 				new Expression[] {});
-		final VariableDeclaration varDecl = constructVarDecFromString("int", "#tmp", mLocation);
-		final CallStatement initCall = new CallStatement(mLocation, false, new VariableLHS[] {}, "#init",
+		final VariableDeclaration varDecl = constructVarDecFromString("int", "aux#tmp", mLocation);
+		final CallStatement initCall = new CallStatement(mLocation, false, new VariableLHS[] {}, "aux#init",
 				new Expression[] {});
 
 		mDeclarations
