@@ -31,6 +31,8 @@
 
   <tasks name="SVCOMP-Concurrency">
     <includesfile>${benchmark_path}/../../../trunk/examples/svcomp/Concurrency.set</includesfile>
+    <!-- Exclude pthread-wmm to speedup evaluation -->
+    <exclude>${benchmark_path}/../../../trunk/examples/svcomp/pthread-wmm/*.yml</exclude>
     <propertyfile>${benchmark_path}/../../../trunk/examples/svcomp/properties/unreach-call.prp</propertyfile>
   </tasks>
 </benchmark>
