@@ -1069,8 +1069,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Expression[] { signedExpr });
 			result.addFuncBlock(assignment);
 		} else if (instructionType.allocaInst() != null) {
-			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.allocaInst().typeValue()
-					.firstClassType().concreteType();
+			final LLVMIRParser.TypeContext typeContext = instructionType.allocaInst().type();
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, result, location));
 		} else if (instructionType.callInst() != null) {
 			final LLVMIRParser.TypeContext typeContext = instructionType.callInst().type();
