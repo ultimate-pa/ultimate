@@ -1072,7 +1072,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final LLVMIRParser.TypeContext typeContext = instructionType.allocaInst().type();
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, result, location));
 		} else if (instructionType.callInst() != null) {
-			final LLVMIRParser.TypeContext typeContext = instructionType.callInst().type();
+			final LLVMIRParser.TypeContext typeContext = instructionType.callInst().type().type();
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, result, location));
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
 			if (callIdentifier.equals("@__VERIFIER_nondet_int") || callIdentifier.equals("@__VERIFIER_nondet_short")
