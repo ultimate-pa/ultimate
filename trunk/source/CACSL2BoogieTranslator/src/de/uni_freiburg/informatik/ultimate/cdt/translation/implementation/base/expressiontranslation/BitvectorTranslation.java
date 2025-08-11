@@ -1039,7 +1039,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public ExpressionResult constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue argument) {
+			final RValue argument, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 		switch (floatFunction.getFunctionName()) {
 		case "sqrt": {
@@ -1293,7 +1293,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public ExpressionResult constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue first, final RValue second) {
+			final RValue first, final RValue second, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		// TODO Auto-generated method stub
 		switch (floatFunction.getFunctionName()) {
 		case "fmin":
@@ -1318,13 +1318,15 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			// copies the sign of firts element to remainder value
 			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
 			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
-			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first);
+			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first, auxVarInfoBuilder);
 		case "fdim":
 			final FloatFunction isNaN = FloatFunction.decode("isnan");
 
 			// if (first || second) is NaN -> NaN
-			final LRValue firstIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, first).getLrValue();
-			final LRValue secondIsNaN = constructOtherUnaryFloatOperation(loc, isNaN, second).getLrValue();
+			final LRValue firstIsNaN =
+					constructOtherUnaryFloatOperation(loc, isNaN, first, auxVarInfoBuilder).getLrValue();
+			final LRValue secondIsNaN =
+					constructOtherUnaryFloatOperation(loc, isNaN, second, auxVarInfoBuilder).getLrValue();
 
 			// if first>second, first - second, else +0
 			final CPrimitive typeFirst = (CPrimitive) first.getCType().getUnderlyingType();

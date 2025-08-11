@@ -436,10 +436,10 @@ public abstract class ExpressionTranslation {
 	public abstract Expression getCurrentRoundingMode();
 
 	public abstract ExpressionResult constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,
-			RValue argument);
+			RValue argument, final AuxVarInfoBuilder auxVarInfoBuilder);
 
 	public abstract ExpressionResult constructOtherBinaryFloatOperation(ILocation loc, FloatFunction floatFunction,
-			RValue first, RValue second);
+			RValue first, RValue second, final AuxVarInfoBuilder auxVarInfoBuilder);
 
 	public abstract void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type);
 

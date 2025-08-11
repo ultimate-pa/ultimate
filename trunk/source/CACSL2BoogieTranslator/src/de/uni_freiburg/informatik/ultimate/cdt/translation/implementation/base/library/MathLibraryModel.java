@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -136,15 +137,17 @@ public class MathLibraryModel implements ILibraryModel {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final CExpressionTranslator mCEpressionTranslator;
 	private final INameHandler mNameHandler;
+	private final AuxVarInfoBuilder mAuxVarInfoBuilder;
 
 	public MathLibraryModel(final FunctionModelHelper helper, final ExpressionResultTransformer exprResultTransformer,
 			final ExpressionTranslation expressionTranslation, final CExpressionTranslator cEpressionTranslator,
-			final INameHandler nameHandler) {
+			final INameHandler nameHandler, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		mHelper = helper;
 		mExprResultTransformer = exprResultTransformer;
 		mExpressionTranslation = expressionTranslation;
 		mCEpressionTranslator = cEpressionTranslator;
 		mNameHandler = nameHandler;
+		mAuxVarInfoBuilder = auxVarInfoBuilder;
 	}
 
 	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
@@ -356,8 +359,8 @@ public class MathLibraryModel implements ILibraryModel {
 			final ILocation loc, final String name) {
 		final FloatFunction floatFunction = FloatFunction.decode(name);
 		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
-		return new ExpressionResultBuilder().addAllExceptLrValue(arg).addAllIncludingLrValue(
-				mExpressionTranslation.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue()))
+		return new ExpressionResultBuilder().addAllExceptLrValue(arg).addAllIncludingLrValue(mExpressionTranslation
+				.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue(), mAuxVarInfoBuilder))
 				.build();
 	}
 
@@ -367,7 +370,7 @@ public class MathLibraryModel implements ILibraryModel {
 		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
 		return new ExpressionResultBuilder().addAllExceptLrValue(args)
 				.addAllIncludingLrValue(mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
-						(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue()))
+						(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue(), mAuxVarInfoBuilder))
 				.build();
 	}
 
