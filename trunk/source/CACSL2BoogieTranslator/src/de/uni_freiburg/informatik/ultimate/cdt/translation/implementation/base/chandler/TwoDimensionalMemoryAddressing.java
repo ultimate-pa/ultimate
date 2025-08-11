@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
@@ -36,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -526,5 +529,37 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 		final Expression ptr2Offset = mMemoryPointer.pointerOffset(ptr2, loc);
 
 		return pointerComponentSubtraction(loc, ptr1Offset, ptr2Offset, pointsToType);
+	}
+
+	@Override
+	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
+			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
+			final IdentifierExpression ptrIdExprImpl) {
+
+		final IdentifierExpression resultExprImpl = ExpressionFactory.constructIdentifierExpression(loc, pointerType,
+				SFO.RES, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, procName));
+
+		final List<Statement> stmts = new ArrayList<>();
+
+		// mem~X[res.base] := mem~X[ptr.base]
+		for (final HeapDataArray hda : heapDataArrays) {
+			final BoogieType innerArrayBoogieType =
+					BoogieType.createArrayType(0, new BoogieType[] { mTypeHandler.getBoogieTypeForPointerComponents() },
+							hda.getArrayContentBoogieType());
+
+			final Expression select = ExpressionFactory.constructFunctionApplication(loc,
+					MemoryHandler.getNameOfHeapSelectFunction(hda.getName()), new Expression[] {
+							hda.getIdentifierExpression(), mMemoryPointer.pointerAddress(ptrIdExprImpl, loc), },
+					innerArrayBoogieType);
+
+			stmts.add(StatementFactory.constructSingleAssignmentStatement(loc, hda.getVariableLHS(),
+					ExpressionFactory.constructFunctionApplication(loc,
+							MemoryHandler.getNameOfHeapStoreFunction(hda.getName()),
+							new Expression[] { hda.getIdentifierExpression(),
+									mMemoryPointer.pointerAddress(resultExprImpl, loc), select },
+							(BoogieType) hda.getVariableLHS().getType())));
+		}
+
+		return stmts;
 	}
 }

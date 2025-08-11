@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -372,5 +373,12 @@ public class MemoryModel {
 	public Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
 			final ICType pointsToType) {
 		return mMemoryAddressing.doPointerSubtraction(loc, ptr1, ptr2, pointsToType);
+	}
+
+	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
+			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
+			final IdentifierExpression ptrIdExprImpl) {
+		return mMemoryAddressing.constructReallocBodyStatements(loc, procName, heapDataArrays, pointerType,
+				ptrIdExprImpl);
 	}
 }

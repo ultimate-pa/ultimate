@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -229,4 +231,8 @@ public interface IMemoryAdressing {
 	 */
 	Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
 			final ICType pointsToType);
+
+	List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
+			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
+			final IdentifierExpression ptrIdExprImpl);
 }
