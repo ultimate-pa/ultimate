@@ -61,8 +61,8 @@ public class FloatFunction {
 			"remainder", // see 7.12.10.2
 			"copysign", // see 7.12.11.1
 			"fmod", // see 7.12.10.1
-			"fdim" // see 7.12.12.1
-	};
+			"fdim", // see 7.12.12.1
+			"cos", "sin", "expm1", "exp", "log", "erf", "tanh" };
 
 	private static final String[] TYPE_SUFFIXES = { "f", "d", "l" };
 

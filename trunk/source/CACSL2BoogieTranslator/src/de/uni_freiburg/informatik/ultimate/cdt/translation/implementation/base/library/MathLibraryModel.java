@@ -114,7 +114,21 @@ public class MathLibraryModel implements ILibraryModel {
 			"floor", "floorf", "floorl",
 
 			// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
-			"ceil", "ceilf", "ceilr");
+			"ceil", "ceilf", "ceilr",
+
+			"cos", "cosf", "cosl",
+
+			"sin", "sinf", "sinl",
+
+			"exp", "expf", "expl",
+
+			"expm1", "expm1f", "expm1l",
+
+			"log", "logf", "logl",
+
+			"erf", "erff", "erfl",
+
+			"tanh", "tanhf", "tanhl");
 
 	private static final List<String> BINARY_FUNCTIONS = List.of(
 			// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
@@ -152,41 +166,6 @@ public class MathLibraryModel implements ILibraryModel {
 
 	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
 		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
-
-		// https://en.cppreference.com/w/c/numeric/math/sin
-		result.add(new Pair<>("sin", CPrimitives.DOUBLE));
-		result.add(new Pair<>("sinf", CPrimitives.FLOAT));
-		result.add(new Pair<>("sinl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/exp
-		result.add(new Pair<>("exp", CPrimitives.DOUBLE));
-		result.add(new Pair<>("expf", CPrimitives.FLOAT));
-		result.add(new Pair<>("expl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/expm1
-		result.add(new Pair<>("expm1", CPrimitives.DOUBLE));
-		result.add(new Pair<>("expm1f", CPrimitives.FLOAT));
-		result.add(new Pair<>("expm1l", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/tanh
-		result.add(new Pair<>("tanh", CPrimitives.DOUBLE));
-		result.add(new Pair<>("tanhf", CPrimitives.FLOAT));
-		result.add(new Pair<>("tanhl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/erf
-		result.add(new Pair<>("erf", CPrimitives.DOUBLE));
-		result.add(new Pair<>("erff", CPrimitives.FLOAT));
-		result.add(new Pair<>("erfl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/log
-		result.add(new Pair<>("log", CPrimitives.DOUBLE));
-		result.add(new Pair<>("logf", CPrimitives.FLOAT));
-		result.add(new Pair<>("logl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/cos
-		result.add(new Pair<>("cos", CPrimitives.DOUBLE));
-		result.add(new Pair<>("cosf", CPrimitives.FLOAT));
-		result.add(new Pair<>("cosl", CPrimitives.LONGDOUBLE));
 
 		// https://en.cppreference.com/w/c/numeric/math/log1p
 		result.add(new Pair<>("log1p", CPrimitives.DOUBLE));
