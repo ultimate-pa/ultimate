@@ -316,6 +316,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private static Expression constructExpressionFromConstant(final LLVMIRParser.ConstantContext constantContext,
 			final ParserRuleContext typeContext, final LlvmirLocation location) throws AssertionError {
 		if (constantContext.intConst() != null) {
+			if (typeContext.getText().equals("i1")) {
+				return new BooleanLiteral(location, constantContext.intConst().getText().equals("1"));
+			}
 			final int bitLength = getBitLengthFromType(typeContext);
 			final int constValue = Integer.parseInt(constantContext.intConst().getText());
 			final int modValue = euclideanMod(constValue, bitLength);
