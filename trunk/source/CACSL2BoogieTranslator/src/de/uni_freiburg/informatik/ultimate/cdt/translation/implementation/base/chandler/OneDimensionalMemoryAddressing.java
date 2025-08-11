@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -13,8 +14,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
@@ -233,5 +236,13 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 		final Expression ptr2Base = mMemoryPointer.pointerAddress(ptr2, loc);
 
 		return pointerComponentSubtraction(loc, ptr1Base, ptr2Base, pointsToType);
+	}
+
+	@Override
+	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
+			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
+			final IdentifierExpression ptrIdExprImpl) {
+		// TODO: Implementation for realloc
+		throw new UnsupportedOperationException("Realloc is currently not supported in the 1D memory addressing!");
 	}
 }
