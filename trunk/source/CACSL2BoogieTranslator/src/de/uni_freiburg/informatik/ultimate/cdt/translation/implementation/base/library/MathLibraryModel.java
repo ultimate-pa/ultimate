@@ -80,10 +80,6 @@ public class MathLibraryModel implements ILibraryModel {
 			// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
 			"fpclassify", "__fpclassify", "__fpclassifyf", "__fpclassifyl",
 
-			// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
-			"finite", "__finite", "finitef", "__finitef", "finitel", "__finitel", "isinff", "__isinff", "isinfl",
-			"__isinfl", "isnanf", "isnanl", "__isnanf", "__isnanl",
-
 			// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 			"isnormal",
 
@@ -335,12 +331,31 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("isnan", this::handleIsNan));
 		result.add(new FunctionModel("__isnan", this::handleIsNan));
 
+		// see https://linux.die.net/man/3/isnanf (! NOT PART OF ANSI-C)
+		result.add(new FunctionModel("isnanf", this::handleIsNan));
+		result.add(new FunctionModel("isnanl", this::handleIsNan));
+		result.add(new FunctionModel("__isnanf", this::handleIsNan));
+		result.add(new FunctionModel("__isnanl", this::handleIsNan));
+
 		// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
 		result.add(new FunctionModel("isinf", this::handleIsInf));
 		result.add(new FunctionModel("__isinf", this::handleIsInf));
 
+		// see https://linux.die.net/man/3/isinff (! NOT PART OF ANSI-C)
+		result.add(new FunctionModel("isinff", this::handleIsFinite));
+		result.add(new FunctionModel("isinfl", this::handleIsFinite));
+		result.add(new FunctionModel("__isinff", this::handleIsFinite));
+		result.add(new FunctionModel("__isinfl", this::handleIsFinite));
+
 		// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
 		result.add(new FunctionModel("isfinite", this::handleIsFinite));
+
+		// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
+		result.add(new FunctionModel("finite", this::handleIsFinite));
+		result.add(new FunctionModel("finitel", this::handleIsFinite));
+		result.add(new FunctionModel("__finite", this::handleIsFinite));
+		result.add(new FunctionModel("__finitef", this::handleIsFinite));
+		result.add(new FunctionModel("__finitel", this::handleIsFinite));
 
 		/** various float builtins **/
 		result.add(new FunctionModel("nan",
