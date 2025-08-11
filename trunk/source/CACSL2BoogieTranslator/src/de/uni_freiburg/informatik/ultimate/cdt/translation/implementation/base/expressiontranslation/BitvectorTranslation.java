@@ -1023,50 +1023,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue argument, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 		switch (floatFunction.getFunctionName()) {
-		case "sqrt":
-			checkIsFloatPrimitive(argument);
-			return new ExpressionResult(new RValue(sqrt(loc, argument.getValue(), argumentType), argumentType));
-		case "trunc":
-			checkIsFloatPrimitive(argument);
-			return new ExpressionResult(new RValue(
-					roundToIntegral(loc, argument.getValue(), argumentType, SmtRoundingMode.RTZ), argumentType));
-		case "round":
-			checkIsFloatPrimitive(argument);
-			return new ExpressionResult(new RValue(
-					roundToIntegral(loc, argument.getValue(), argumentType, SmtRoundingMode.RNA), argumentType));
-		case "lround": {
-			checkIsFloatPrimitive(argument);
-			final RValue rval = new RValue(roundToIntegral(loc, argument.getValue(), argumentType, SmtRoundingMode.RNA),
-					argumentType);
-			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
-			return new ExpressionResult(
-					convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONG)).getLrValue());
-		}
-		case "llround": {
-			checkIsFloatPrimitive(argument);
-			final RValue rval = new RValue(roundToIntegral(loc, argument.getValue(), argumentType, SmtRoundingMode.RNA),
-					argumentType);
-			final ExpressionResult exprResult = new ExpressionResultBuilder().setLrValue(rval).build();
-			return new ExpressionResult(
-					convertFloatToIntNonBool(loc, exprResult, new CPrimitive(CPrimitives.LONGLONG)).getLrValue());
-		}
-		case "floor":
-			checkIsFloatPrimitive(argument);
-			// TODO: Its the wrong return type. We need to get the bv type for this float type and pass it to this
-			// declare function thing.
-			// We also need to declare the matching
-			return new ExpressionResult(new RValue(
-					roundToIntegral(loc, argument.getValue(), argumentType, SmtRoundingMode.RTN), argumentType));
-		case "ceil":
-			checkIsFloatPrimitive(argument);
-			return new ExpressionResult(new RValue(
-					roundToIntegral(loc, argument.getValue(), argumentType, SmtRoundingMode.RTP), argumentType));
-		case "fabs":
-			checkIsFloatPrimitive(argument);
-			return new ExpressionResult(new RValue(abs(loc, argument.getValue(), argumentType), argumentType));
-		case "isnan":
-			return new ExpressionResult(
-					new RValue(isNan(loc, argument.getValue(), argumentType), new CPrimitive(CPrimitives.INT), true));
 		case "isinf":
 			return new ExpressionResult(new RValue(isInfinite(loc, argument.getValue(), argumentType),
 					new CPrimitive(CPrimitives.INT), true));

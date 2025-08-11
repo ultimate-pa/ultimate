@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
@@ -79,42 +80,12 @@ public class MathLibraryModel implements ILibraryModel {
 			// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
 			"fpclassify", "__fpclassify", "__fpclassifyf", "__fpclassifyl",
 
-			// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
-			"isfinite",
-
-			// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
-			"isinf", "__isinf", "__builtin_isinf_sign",
-
-			// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
-			"isnan", "__isnan",
-
 			// see https://linux.die.net/man/3/finite (! NOT PART OF ANSI-C)
 			"finite", "__finite", "finitef", "__finitef", "finitel", "__finitel", "isinff", "__isinff", "isinfl",
 			"__isinfl", "isnanf", "isnanl", "__isnanf", "__isnanl",
 
 			// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 			"isnormal",
-
-			// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
-			"sqrt", "sqrtf", "sqrtl",
-
-			// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
-			"fabs", "fabsf", "fabsl",
-
-			// see 7.12.9.8 or http://en.cppreference.com/w/c/numeric/math/trunc
-			"trunc", "truncf", "truncl",
-
-			// see 7.12.9.6 or http://en.cppreference.com/w/c/numeric/math/round
-			"round", "roundf", "roundl",
-
-			// see 7.12.9.7 or http://en.cppreference.com/w/c/numeric/math/round
-			"lround", "lroundf", "lroundl", "llround", "llroundf", "llroundl",
-
-			// see 7.12.9.2 or http://en.cppreference.com/w/c/numeric/math/floor
-			"floor", "floorf", "floorl",
-
-			// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
-			"ceil", "ceilf", "ceilr",
 
 			"cos", "cosf", "cosl",
 
@@ -295,6 +266,82 @@ public class MathLibraryModel implements ILibraryModel {
 			result.add(new FunctionModel(binary, this::handleBinaryFloatFunction));
 		}
 
+		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
+		result.add(new FunctionModel("sqrt",
+				(main, node, loc, name) -> handleSqrt(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("sqrtf",
+				(main, node, loc, name) -> handleSqrt(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("sqrtl",
+				(main, node, loc, name) -> handleSqrt(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		// see 7.12.9.8 or http://en.cppreference.com/w/c/numeric/math/trunc
+		result.add(new FunctionModel("trunc", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RTZ)));
+		result.add(new FunctionModel("truncf", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RTZ)));
+		result.add(new FunctionModel("truncl", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RTZ)));
+
+		// see 7.12.9.2 or http://en.cppreference.com/w/c/numeric/math/floor
+		result.add(new FunctionModel("floor", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RTN)));
+		result.add(new FunctionModel("floorf", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RTN)));
+		result.add(new FunctionModel("floorl", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RTN)));
+
+		// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
+		result.add(new FunctionModel("ceil", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RTP)));
+		result.add(new FunctionModel("ceilf", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RTP)));
+		result.add(new FunctionModel("ceill", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RTP)));
+
+		// see 7.12.9.6 or http://en.cppreference.com/w/c/numeric/math/round
+		result.add(new FunctionModel("round", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("roundf", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("roundl", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RNA)));
+
+		// see 7.12.9.7 or http://en.cppreference.com/w/c/numeric/math/round
+		result.add(new FunctionModel("lround", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
+				name, new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONG), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("lroundf", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
+				name, new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONG), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("lroundl", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
+				name, new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONG), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("llround", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
+				name, new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONGLONG), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("llroundf",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONGLONG), SmtRoundingMode.RNA)));
+		result.add(new FunctionModel("llroundl",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONGLONG),
+						SmtRoundingMode.RNA)));
+
+		// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
+		result.add(new FunctionModel("fabs",
+				(main, node, loc, name) -> handleFabs(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("fabsf",
+				(main, node, loc, name) -> handleFabs(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("fabsl",
+				(main, node, loc, name) -> handleFabs(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		// see 7.12.3.4 or http://en.cppreference.com/w/c/numeric/math/isnan
+		result.add(new FunctionModel("isnan", this::handleIsNan));
+		result.add(new FunctionModel("__isnan", this::handleIsNan));
+
+		// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
+		result.add(new FunctionModel("isinf", this::handleIsInf));
+		result.add(new FunctionModel("__isinf", this::handleIsInf));
+
+		// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
+		result.add(new FunctionModel("isfinite", this::handleIsFinite));
+
 		/** various float builtins **/
 		result.add(new FunctionModel("nan",
 				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))));
@@ -317,8 +364,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__builtin_islessequal", this::handleIsLessEqual));
 		result.add(new FunctionModel("__builtin_isunordered", this::handleIsUnordered));
 		result.add(new FunctionModel("__builtin_islessgreater", this::handleIsLessGreater));
-		result.add(new FunctionModel("__builtin_isnan",
-				(main, node, loc, name) -> handleUnaryFloatFunction(main, node, loc, "isnan")));
+		result.add(new FunctionModel("__builtin_isnan", this::handleIsNan));
 
 		result.add(new FunctionModel("isgreater", this::handleIsGreater));
 		result.add(new FunctionModel("isgreaterequal", this::handleIsGreaterEqual));
@@ -387,6 +433,21 @@ public class MathLibraryModel implements ILibraryModel {
 				newRtr.add(mExprResultTransformer.convertIfNecessary(loc, arg, typeDeterminedByName));
 			}
 			return newRtr;
+		}
+		return rtr;
+	}
+
+	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final int numberOfArgs, final CPrimitive type) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, numberOfArgs, name, arguments);
+		final List<ExpressionResult> rtr = new ArrayList<>();
+		for (final IASTInitializerClause argument : arguments) {
+			final ExpressionResult decayedArgument =
+					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, argument);
+			final ExpressionResult convertedArgument =
+					mExprResultTransformer.convertIfNecessary(loc, decayedArgument, type);
+			rtr.add(convertedArgument);
 		}
 		return rtr;
 	}
@@ -518,6 +579,77 @@ public class MathLibraryModel implements ILibraryModel {
 				new ExpressionResultBuilder().addAllExceptLrValue(lessThan, greaterThan).setLrValue(lrVal).build();
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
+	}
+
+	private ExpressionResult handleSqrt(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult).setLrValue(
+				new RValue(mExpressionTranslation.sqrt(loc, argumentResult.getLrValue().getValue(), type), type))
+				.build();
+	}
+
+	private ExpressionResult handleRound(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type, final SmtRoundingMode roundingMode) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult).setLrValue(new RValue(
+				mExpressionTranslation.roundToIntegral(loc, argumentResult.getLrValue().getValue(), type, roundingMode),
+				type)).build();
+	}
+
+	private ExpressionResult handleRoundWithIntConversion(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type, final CPrimitive resultType,
+			final SmtRoundingMode roundingMode) {
+		return mExpressionTranslation.convertFloatToInt(loc,
+				handleRound(main, node, loc, name, resultType, roundingMode), resultType);
+	}
+
+	private ExpressionResult handleFabs(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(
+						new RValue(mExpressionTranslation.abs(loc, argumentResult.getLrValue().getValue(), type), type))
+				.build();
+	}
+
+	private ExpressionResult handleIsNan(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(mExpressionTranslation.isNan(loc, argumentResult.getLrValue().getValue(),
+						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
+				.build();
+	}
+
+	private ExpressionResult handleIsInf(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(mExpressionTranslation.isInfinite(loc, argumentResult.getLrValue().getValue(),
+						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
+				.build();
+	}
+
+	private ExpressionResult handleIsFinite(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final Expression argument = argumentResult.getLrValue().getValue();
+		final CPrimitive type = (CPrimitive) argumentResult.getCType();
+		final Expression resultExpr = ExpressionFactory.or(loc, mExpressionTranslation.isNormal(loc, argument, type),
+				mExpressionTranslation.isSubnormal(loc, argument, type),
+				mExpressionTranslation.isZero(loc, argument, type));
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitives.INT), true)).build();
 	}
 
 	@Override
