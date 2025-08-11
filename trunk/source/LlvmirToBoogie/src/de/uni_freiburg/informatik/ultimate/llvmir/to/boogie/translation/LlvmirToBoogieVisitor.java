@@ -1165,7 +1165,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Statement[] { elseAssignment });
 			result.addFuncBlock(ifStmt);
 		} else if (instructionType.andInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.addInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.andInst().typeValue(), location, identifier);
 		} else if (instructionType.orInst() != null) {
 			constructHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier);
 		} else if (instructionType.xorInst() != null) {
