@@ -185,21 +185,56 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			specs.add(constructSpecFromIdentifier(unifyIdentifier(key), (LlvmirLocation) pair.getSecond().getLoc()));
 		}
 
-		mDeclarations.addFirst(constructInitialProcedure(mLocation, "aux#init", new VariableDeclaration[] {},
+		final String initIdentifier = "aux#init";
+		mDeclarations.addFirst(constructInitialProcedure(mLocation, initIdentifier, new VariableDeclaration[] {},
 				stmts.toArray(Statement[]::new), specs.toArray(Specification[]::new)));
-
-		final VariableLHS varLhs = new VariableLHS(mLocation, "aux#tmp");
-		final CallStatement mainCall = new CallStatement(mLocation, false, new VariableLHS[] { varLhs }, "#main",
-				new Expression[] {});
-		final VariableDeclaration varDecl = constructVarDecFromString("int", "aux#tmp", mLocation);
-		final CallStatement initCall = new CallStatement(mLocation, false, new VariableLHS[] {}, "aux#init",
+		final CallStatement initCall = new CallStatement(mLocation, false, new VariableLHS[] {}, initIdentifier,
 				new Expression[] {});
 
-		mDeclarations
-				.addFirst(constructInitialProcedure(mLocation, "ULTIMATE.start", new VariableDeclaration[] { varDecl },
-						new Statement[] { initCall, mainCall }, specs.toArray(Specification[]::new)));
+		VariableLHS[] lhsVars;
+		VariableDeclaration[] varDecls;
+		final String mainReturnType = getMainReturnType();
+		if (mainReturnType.equals("void")) {
+			lhsVars = new VariableLHS[] {};
+			varDecls = new VariableDeclaration[] {};
+		} else {
+			final String tmpVarIdentifier = "aux#tmp";
+			final VariableLHS varLhs = new VariableLHS(mLocation, tmpVarIdentifier);
+			lhsVars = new VariableLHS[] { varLhs };
+			varDecls = new VariableDeclaration[] {
+					constructVarDecFromString(mainReturnType, tmpVarIdentifier, mLocation) };
+		}
+		final CallStatement mainCall = new CallStatement(mLocation, false, lhsVars, "#main", new Expression[] {});
+
+		mDeclarations.addFirst(constructInitialProcedure(mLocation, "ULTIMATE.start", varDecls,
+				new Statement[] { initCall, mainCall }, specs.toArray(Specification[]::new)));
 
 		mDeclarations.addAll(0, decls);
+	}
+
+	/**
+	 * Retrieves the return type of the #main procedure.
+	 *
+	 * This method searches for the #main procedure in the declarations and returns its return type as a String. If no
+	 * such procedure is found, it throws an IllegalStateException.
+	 *
+	 * @return The return type of the #main procedure.
+	 * @throws IllegalStateException if no #main procedure is found in the declarations.
+	 */
+	private String getMainReturnType() throws IllegalStateException {
+		final Procedure main = (Procedure) mDeclarations.stream()
+				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#main"))
+				.findFirst().orElseThrow(() -> new IllegalStateException("No ULTIMATE.start declaration found"));
+		final String retString = main.getOutParams().length > 0 ? main.getOutParams()[0].getType().toString() : "void";
+		if (retString.equals("void")) {
+			return retString;
+		} else if (retString.equals("PrimitiveType[bool]")) {
+			return "bool";
+		} else if (retString.equals("PrimitiveType[int]")) {
+			return "int";
+		} else {
+			throw new IllegalStateException("Unsupported return type for #main: " + retString);
+		}
 	}
 
 	/**
