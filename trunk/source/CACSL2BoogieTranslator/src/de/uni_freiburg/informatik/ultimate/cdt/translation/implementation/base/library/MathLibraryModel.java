@@ -31,6 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,14 +77,7 @@ public class MathLibraryModel implements ILibraryModel {
 			"tgammal", "gammal", "lgammal_r", "nextafterl", "nexttowardl", "scalbnl", "ilogbl", "scalblnl", "remquol",
 			"lrintl", "llrintl", "fmal", "scalbl", "signgam;", "modf", "modff", "modfl" };
 
-	private static final List<String> UNARY_FUNCTIONS = List.of(
-			// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
-			"fpclassify", "__fpclassify", "__fpclassifyf", "__fpclassifyl",
-
-			// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
-			"isnormal",
-
-			"cos", "cosf", "cosl",
+	private static final List<String> UNARY_FUNCTIONS = List.of("cos", "cosf", "cosl",
 
 			"sin", "sinf", "sinl",
 
@@ -340,6 +334,7 @@ public class MathLibraryModel implements ILibraryModel {
 		// see 7.12.3.3 or http://en.cppreference.com/w/c/numeric/math/isinf
 		result.add(new FunctionModel("isinf", this::handleIsInf));
 		result.add(new FunctionModel("__isinf", this::handleIsInf));
+		result.add(new FunctionModel("__builtin_isinf_sign", this::handleIsInfSign));
 
 		// see https://linux.die.net/man/3/isinff (! NOT PART OF ANSI-C)
 		result.add(new FunctionModel("isinff", this::handleIsFinite));
@@ -356,6 +351,47 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__finite", this::handleIsFinite));
 		result.add(new FunctionModel("__finitef", this::handleIsFinite));
 		result.add(new FunctionModel("__finitel", this::handleIsFinite));
+
+		// see 7.12.3.1 or http://en.cppreference.com/w/c/numeric/math/fpclassify
+		result.add(new FunctionModel("fpclassify", this::handleFpClassify));
+		result.add(new FunctionModel("__fpclassify", this::handleFpClassify));
+		result.add(new FunctionModel("__fpclassifyf", this::handleFpClassify));
+		result.add(new FunctionModel("__fpclassifyl", this::handleFpClassify));
+
+		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
+		result.add(new FunctionModel("isnormal", this::handleIsNormal));
+
+		// https://en.cppreference.com/w/c/numeric/math/copysign
+
+		// TODO: Handle negative NaN, check unsoundness
+		// if second is negative, return arithneg of abs(first), else return abs(first)
+		// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
+		// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
+		//
+		// final String smtNegativeFunctionName = "fp.isNegative";
+		// final RValue secondNegativeRvalue =
+		// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
+		// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
+		// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
+		// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
+		// absoluteValue.getValue(), resultType);
+		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
+		// negative, absoluteValue.getValue());
+		// return new RValue(resultExpr, resultType);
+
+		// https://en.cppreference.com/w/c/numeric/math/signbit
+
+		// TODO: Handle negative NaN correctly
+		// final Expression isNegative;
+		// final String smtFunctionName = "fp.isNegative";
+		// final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
+		// isNegative = rvalue.getValue();
+		//
+		// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
+		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
+		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
+		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
+		// return new RValue(resultExpr, cPrimitive);
 
 		/** various float builtins **/
 		result.add(new FunctionModel("nan",
@@ -652,6 +688,26 @@ public class MathLibraryModel implements ILibraryModel {
 				.build();
 	}
 
+	private ExpressionResult handleIsInfSign(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final Expression argument = argumentResult.getLrValue().getValue();
+		final CPrimitive type = (CPrimitive) argumentResult.getCType();
+		final Expression isInfinite = mExpressionTranslation.isInfinite(loc, argument, type);
+		final Expression isPositive = mExpressionTranslation.isPositive(loc, argument, type);
+		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
+				ExpressionFactory.constructIfThenElseExpression(loc, isPositive,
+						mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ONE),
+						mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ONE.negate())),
+				mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO));
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitives.INT))).build();
+	}
+
 	private ExpressionResult handleIsFinite(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name) {
 		final IASTInitializerClause[] arguments = node.getArguments();
@@ -665,6 +721,45 @@ public class MathLibraryModel implements ILibraryModel {
 				mExpressionTranslation.isZero(loc, argument, type));
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
 				.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitives.INT), true)).build();
+	}
+
+	private ExpressionResult handleFpClassify(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final Expression argument = argumentResult.getLrValue().getValue();
+		final CPrimitive type = (CPrimitive) argumentResult.getCType();
+		final Expression isInfinite = mExpressionTranslation.isInfinite(loc, argument, type);
+		final Expression isNan = mExpressionTranslation.isNan(loc, argument, type);
+		final Expression isNormal = mExpressionTranslation.isNormal(loc, argument, type);
+		final Expression isSubnormal = mExpressionTranslation.isSubnormal(loc, argument, type);
+		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
+				mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_INFINITE").getValue(),
+				ExpressionFactory.constructIfThenElseExpression(loc, isNan,
+						mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
+						ExpressionFactory.constructIfThenElseExpression(loc, isNormal,
+								mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
+								ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
+										mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_SUBNORMAL")
+												.getValue(),
+										mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_ZERO")
+												.getValue()))));
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitives.INT))).build();
+	}
+
+	private ExpressionResult handleIsNormal(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
+				.setLrValue(new RValue(mExpressionTranslation.isNormal(loc, argumentResult.getLrValue().getValue(),
+						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
+				.build();
 	}
 
 	@Override

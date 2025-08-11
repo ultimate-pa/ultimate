@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
@@ -1023,60 +1022,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 			final RValue argument, final AuxVarInfoBuilder auxVarInfoBuilder) {
 		final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
 		switch (floatFunction.getFunctionName()) {
-		case "isinf":
-			return new ExpressionResult(new RValue(isInfinite(loc, argument.getValue(), argumentType),
-					new CPrimitive(CPrimitives.INT), true));
-		case "isnormal":
-			return new ExpressionResult(new RValue(isNormal(loc, argument.getValue(), argumentType),
-					new CPrimitive(CPrimitives.INT), true));
-		case "isfinite":
-		case "finite": {
-			final Expression isNormal = isNormal(loc, argument.getValue(), argumentType);
-			final Expression isSubnormal = isSubnormal(loc, argument.getValue(), argumentType);
-			final Expression isZero = isZero(loc, argument.getValue(), argumentType);
-			final Expression resultExpr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR,
-					ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, isNormal, isSubnormal), isZero);
-			return new ExpressionResult(new RValue(resultExpr, new CPrimitive(CPrimitives.INT), true));
-		}
-		case "fpclassify": {
-			final Expression isInfinite = isInfinite(loc, argument.getValue(), argumentType);
-			final Expression isNan = isNan(loc, argument.getValue(), argumentType);
-			final Expression isNormal = isNormal(loc, argument.getValue(), argumentType);
-			final Expression isSubnormal = isSubnormal(loc, argument.getValue(), argumentType);
-			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
-					handleNumberClassificationMacro(loc, "FP_INFINITE").getValue(),
-					ExpressionFactory.constructIfThenElseExpression(loc, isNan,
-							handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
-							ExpressionFactory.constructIfThenElseExpression(loc, isNormal,
-									handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
-									ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
-											handleNumberClassificationMacro(loc, "FP_SUBNORMAL").getValue(),
-											handleNumberClassificationMacro(loc, "FP_ZERO").getValue()))));
-			return new ExpressionResult(new RValue(resultExpr, new CPrimitive(CPrimitives.INT)));
-		}
-		case "builtin_isinf_sign": {
-			final CPrimitive intType = new CPrimitive(CPrimitives.INT);
-			final Expression isInfinite = isInfinite(loc, argument.getValue(), argumentType);
-			final Expression isPositive = isPositive(loc, argument.getValue(), argumentType);
-			final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
-					ExpressionFactory.constructIfThenElseExpression(loc, isPositive,
-							constructLiteralForIntegerType(loc, intType, BigInteger.ONE),
-							constructLiteralForIntegerType(loc, intType, BigInteger.ONE.negate())),
-					constructLiteralForIntegerType(loc, intType, BigInteger.ZERO));
-			return new ExpressionResult(new RValue(resultExpr, intType));
-		}
-		case "signbit":
-			// TODO: Handle negative NaN correctly
-			// final Expression isNegative;
-			// final String smtFunctionName = "fp.isNegative";
-			// final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
-			// isNegative = rvalue.getValue();
-			//
-			// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-			// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
-			// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
-			// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
-			// return new RValue(resultExpr, cPrimitive);
 		case "cos": {
 			final Expression nan = createNan(loc, argumentType);
 			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
@@ -1294,23 +1239,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					first.getValue(), secondNaNExpr);
 
 			return new ExpressionResult(new RValue(firstNaNExpr, typeFirst));
-		case "copysign":
-			// TODO: Handle negative NaN, check unsoundness
-			// if second is negative, return arithneg of abs(first), else return abs(first)
-			// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
-			// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
-			//
-			// final String smtNegativeFunctionName = "fp.isNegative";
-			// final RValue secondNegativeRvalue =
-			// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
-			// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
-			// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
-			// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
-			// absoluteValue.getValue(), resultType);
-			// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
-			// negative, absoluteValue.getValue());
-			// return new RValue(resultExpr, resultType);
-			break;
 		default:
 			break;
 		}
