@@ -1000,10 +1000,10 @@ public class MemoryHandler {
 		inParams = new VarList[] { inParamPtrVl, inParamAmountOfFieldsVl, inParamSizeOfFieldsVl, inParamProductVl };
 		outParams = new VarList[] {};
 
-		final Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
+		final Procedure memInitProcDecl = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
 				outParams, new Specification[0], null);
 
-		mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, memCpyProcDecl);
+		mProcedureManager.beginCustomProcedure(main, ignoreLoc, procName, memInitProcDecl);
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
 		final List<Statement> stmt = new ArrayList<>();
@@ -1053,9 +1053,9 @@ public class MemoryHandler {
 				decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt.size()]), procName);
 
 		// add the procedure implementation
-		final Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
+		final Procedure memInitProc = new Procedure(ignoreLoc, new Attribute[0], procName, new String[0], inParams,
 				outParams, null, procBody);
-		decls.add(memCpyProc);
+		decls.add(memInitProc);
 
 		mProcedureManager.endCustomProcedure(main, procName);
 		return decls;
