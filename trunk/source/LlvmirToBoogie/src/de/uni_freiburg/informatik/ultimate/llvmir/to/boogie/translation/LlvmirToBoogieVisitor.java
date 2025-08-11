@@ -224,7 +224,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private String getMainReturnType() throws IllegalStateException {
 		final Procedure main = (Procedure) mDeclarations.stream()
 				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#main"))
-				.findFirst().orElseThrow(() -> new IllegalStateException("No ULTIMATE.start declaration found"));
+				.findFirst().orElseThrow(() -> new IllegalStateException("No #main declaration found"));
 		final String retString = main.getOutParams().length > 0 ? main.getOutParams()[0].getType().toString() : "void";
 		if (retString.equals("void")) {
 			return retString;
