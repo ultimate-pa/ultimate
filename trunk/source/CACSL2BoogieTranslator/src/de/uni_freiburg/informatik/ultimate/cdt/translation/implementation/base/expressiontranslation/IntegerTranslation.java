@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -612,11 +613,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public ExpressionResult createNanOrInfinity(final ILocation loc, final String name) {
-		throw new UnsupportedOperationException("createNanOrInfinity is unsupported in non-bitprecise translation");
-	}
-
-	@Override
 	public Expression getCurrentRoundingMode() {
 		throw new UnsupportedOperationException("getRoundingMode is unsupported in non-bitprecise translation");
 	}
@@ -801,5 +797,88 @@ public class IntegerTranslation extends ExpressionTranslation {
 			final CPrimitive resultType, final Expression lhsOperand, final Expression rhsOperand,
 			final ExpressionResult exprResult) {
 		return constructOverflowCheck(loc, resultType, exprResult.getLrValue().getValue());
+	}
+
+	@Override
+	public Expression roundToIntegral(final ILocation loc, final Expression argument, final CPrimitive type,
+			final SmtRoundingMode roundingMode) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression sqrt(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression abs(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression isNan(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression isInfinite(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression isNormal(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression isZero(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression isSubnormal(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression isPositive(final ILocation loc, final Expression argument, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression createNan(final ILocation loc, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression createPlusInfinity(final ILocation loc, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression createMinusInfinity(final ILocation loc, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression createPlusZero(final ILocation loc, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression createMinusZero(final ILocation loc, final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression min(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
+			final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
+	}
+
+	@Override
+	public Expression max(final ILocation loc, final Expression firstArgument, final Expression secondArgument,
+			final CPrimitive type) {
+		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 }

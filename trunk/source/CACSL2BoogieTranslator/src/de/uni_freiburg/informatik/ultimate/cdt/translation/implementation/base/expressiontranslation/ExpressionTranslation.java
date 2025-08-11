@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -407,32 +408,6 @@ public abstract class ExpressionTranslation {
 
 	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
 
-	public abstract ExpressionResult createNanOrInfinity(ILocation loc, String name);
-
-	public ExpressionResult createNan(final ILocation loc, final CPrimitive cPrimitive) {
-		if (!cPrimitive.isFloatingType()) {
-			throw new IllegalArgumentException("can only create NaN for floating types");
-		}
-		final String s;
-		switch (cPrimitive.getType()) {
-		case FLOAT: {
-			s = "nanf";
-			break;
-		}
-		case DOUBLE: {
-			s = "nan";
-			break;
-		}
-		case LONGDOUBLE: {
-			s = "nanl";
-			break;
-		}
-		default:
-			throw new IllegalArgumentException("can only create NaN for floating types");
-		}
-		return createNanOrInfinity(loc, s);
-	}
-
 	public abstract Expression getCurrentRoundingMode();
 
 	public abstract ExpressionResult constructOtherUnaryFloatOperation(ILocation loc, FloatFunction floatFunction,
@@ -605,6 +580,39 @@ public abstract class ExpressionTranslation {
 	 * lowest bits that fit in type.
 	 */
 	public abstract Expression convertInfinitePrecisionExpression(ILocation loc, Expression exp, CPrimitive type);
+
+	public abstract Expression roundToIntegral(ILocation loc, Expression argument, CPrimitive type,
+			SmtRoundingMode roundingMode);
+
+	public abstract Expression sqrt(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression abs(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression isNan(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression isInfinite(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression isNormal(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression isZero(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression isSubnormal(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression isPositive(ILocation loc, Expression argument, CPrimitive type);
+
+	public abstract Expression createNan(ILocation loc, CPrimitive type);
+
+	public abstract Expression createPlusInfinity(ILocation loc, CPrimitive type);
+
+	public abstract Expression createMinusInfinity(ILocation loc, CPrimitive type);
+
+	public abstract Expression createPlusZero(ILocation loc, CPrimitive type);
+
+	public abstract Expression createMinusZero(final ILocation loc, final CPrimitive type);
+
+	public abstract Expression min(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
+
+	public abstract Expression max(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
 
 	public static Statement modelUnsupportedFeature(final ILocation loc, final String reason) {
 		final Statement assertFalse = new AssertStatement(loc, ExpressionFactory.createBooleanLiteral(loc, false));

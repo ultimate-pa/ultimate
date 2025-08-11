@@ -296,16 +296,21 @@ public class MathLibraryModel implements ILibraryModel {
 		}
 
 		/** various float builtins **/
-		result.add(new FunctionModel("nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, name)));
-		result.add(new FunctionModel("nanf", (main, node, loc, name) -> handleNaNOrInfinity(loc, name)));
-		result.add(new FunctionModel("nanl", (main, node, loc, name) -> handleNaNOrInfinity(loc, name)));
-		result.add(new FunctionModel("__builtin_nan", (main, node, loc, name) -> handleNaNOrInfinity(loc, "nan")));
-		result.add(new FunctionModel("__builtin_nanf", (main, node, loc, name) -> handleNaNOrInfinity(loc, "nanf")));
-		result.add(new FunctionModel("__builtin_nanl", (main, node, loc, name) -> handleNaNOrInfinity(loc, "nanl")));
-		result.add(new FunctionModel("__builtin_inff", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inff")));
-		result.add(new FunctionModel("__builtin_huge_val", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inf")));
-		result.add(
-				new FunctionModel("__builtin_huge_valf", (main, node, loc, name) -> handleNaNOrInfinity(loc, "inff")));
+		result.add(new FunctionModel("nan",
+				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("nanf",
+				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("nanl",
+				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.LONGDOUBLE))));
+		result.add(new FunctionModel("__builtin_nan",
+				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("__builtin_nanf",
+				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("__builtin_nanl",
+				(main, node, loc, name) -> handleNan(loc, new CPrimitive(CPrimitives.LONGDOUBLE))));
+		result.add(new FunctionModel("__builtin_inff", (main, node, loc, name) -> handleInf(loc)));
+		result.add(new FunctionModel("__builtin_huge_val", (main, node, loc, name) -> handleInf(loc)));
+		result.add(new FunctionModel("__builtin_huge_valf", (main, node, loc, name) -> handleInf(loc)));
 		result.add(new FunctionModel("__builtin_isgreater", this::handleIsGreater));
 		result.add(new FunctionModel("__builtin_isgreaterequal", this::handleIsGreaterEqual));
 		result.add(new FunctionModel("__builtin_isless", this::handleIsLess));
@@ -330,8 +335,13 @@ public class MathLibraryModel implements ILibraryModel {
 		return Arrays.asList(UNSUPPORTED_FLOAT_OPERATIONS);
 	}
 
-	private Result handleNaNOrInfinity(final ILocation loc, final String methodName) {
-		return mExpressionTranslation.createNanOrInfinity(loc, methodName);
+	private ExpressionResult handleNan(final ILocation loc, final CPrimitive type) {
+		return new ExpressionResult(new RValue(mExpressionTranslation.createNan(loc, type), type));
+	}
+
+	private ExpressionResult handleInf(final ILocation loc) {
+		final CPrimitive type = new CPrimitive(CPrimitives.DOUBLE);
+		return new ExpressionResult(new RValue(mExpressionTranslation.createPlusInfinity(loc, type), type));
 	}
 
 	private Result handleUnaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -454,19 +464,14 @@ public class MathLibraryModel implements ILibraryModel {
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
 		final ExpressionResult rightRvaluedResult =
 				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[1]);
-		final ExpressionResult nanLResult =
-				mExpressionTranslation.createNan(loc, (CPrimitive) leftRvaluedResult.getLrValue().getCType());
-		final ExpressionResult nanRResult =
-				mExpressionTranslation.createNan(loc, (CPrimitive) rightRvaluedResult.getLrValue().getCType());
-		final Expression leftExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-				leftRvaluedResult.getLrValue().getValue(), nanLResult.getLrValue().getValue());
-		final Expression rightExpr = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
-				rightRvaluedResult.getLrValue().getValue(), nanRResult.getLrValue().getValue());
+		final Expression leftExpr = mExpressionTranslation.isNan(loc, leftRvaluedResult.getLrValue().getValue(),
+				(CPrimitive) leftRvaluedResult.getCType());
+		final Expression rightExpr = mExpressionTranslation.isNan(loc, rightRvaluedResult.getLrValue().getValue(),
+				(CPrimitive) rightRvaluedResult.getCType());
 		final Expression expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, leftExpr, rightExpr);
 		final LRValue lrVal = new RValue(expr, new CPrimitive(CPrimitives.INT), true);
 		final ExpressionResult rtr = new ExpressionResultBuilder()
-				.addAllExceptLrValue(leftRvaluedResult, rightRvaluedResult, nanLResult, nanRResult).setLrValue(lrVal)
-				.build();
+				.addAllExceptLrValue(leftRvaluedResult, rightRvaluedResult).setLrValue(lrVal).build();
 		assert CTranslationUtil.isAuxVarMapComplete(mNameHandler, rtr.getDeclarations(), rtr.getAuxVars());
 		return rtr;
 	}
@@ -531,9 +536,8 @@ public class MathLibraryModel implements ILibraryModel {
 
 	@Override
 	public Collection<ConstantModel> getConstantModels() {
-		return List.of(new ConstantModel("NAN", loc -> mExpressionTranslation.createNanOrInfinity(loc, "NAN")),
-				new ConstantModel("INFINITY", loc -> mExpressionTranslation.createNanOrInfinity(loc, "INFINITY")),
-				new ConstantModel("inf", loc -> mExpressionTranslation.createNanOrInfinity(loc, "inf")),
+		return List.of(new ConstantModel("NAN", loc -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))),
+				new ConstantModel("INFINITY", loc -> handleInf(loc)), new ConstantModel("inf", loc -> handleInf(loc)),
 				// Check if id is number classification macro according to 7.12.6 of C11.
 				modelNumberClassificationMacro("FP_NAN"), modelNumberClassificationMacro("FP_INFINITE"),
 				modelNumberClassificationMacro("FP_ZERO"), modelNumberClassificationMacro("FP_SUBNORMAL"),
