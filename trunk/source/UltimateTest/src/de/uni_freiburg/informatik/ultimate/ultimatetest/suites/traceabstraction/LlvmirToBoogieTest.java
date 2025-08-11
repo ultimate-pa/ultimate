@@ -52,7 +52,7 @@ public class LlvmirToBoogieTest extends AbstractTraceAbstractionTestSuite {
 	};
 
 	private static final String[] mUltimateRepository = {
-			"examples/programs/regression/ll",
+			"examples/programs/regression/relevant_opt_ll",
 	};
 
 	private static final String[] mSettings = {

@@ -277,11 +277,11 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (typeContext instanceof LLVMIRParser.TypeContext) {
 			intType = ((LLVMIRParser.TypeContext) typeContext).intType();
 		} else {
-			throw new AssertionError("Unsupported type context for variable declaration: " + typeContext.getText());
+			throw new AssertionError("Unsupported type context for variable declaration:");
 		}
 
 		if (intType == null) {
-			throw new AssertionError("Type context does not contain an intType: " + typeContext.getText());
+			throw new AssertionError("Type context does not contain an intType:");
 		}
 
 		final String typeString = intType.getText();
@@ -1110,7 +1110,14 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final LLVMIRParser.TypeContext typeContext = instructionType.allocaInst().type();
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, result, location));
 		} else if (instructionType.callInst() != null) {
-			final LLVMIRParser.TypeContext typeContext = instructionType.callInst().type().type();
+			LLVMIRParser.TypeContext typeContext;
+			if (instructionType.callInst().type().type() != null) {
+				typeContext = instructionType.callInst().type().type();
+			} else if (instructionType.callInst().type() != null) {
+				typeContext = instructionType.callInst().type();
+			} else {
+				throw new AssertionError("The support for call instructions without a type is not implemented yet.");
+			}
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, result, location));
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
 			if (callIdentifier.equals("@__VERIFIER_nondet_int") || callIdentifier.equals("@__VERIFIER_nondet_short")
