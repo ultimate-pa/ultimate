@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 
 /**
- * Instances of this class are used to represent the body of a function in the Boogie AST.
+ * Instances of this class are used to represent the result of a visitor function in the Boogie AST.
  */
 public class Result {
 	private final ArrayList<VariableDeclaration> mFuncLocalVars;
@@ -70,10 +70,10 @@ public class Result {
 	}
 
 	/**
-	 * Merges the local variables and statements of another FunctionBody into this one.
+	 * Merges the local variables and statements of another Result into this one.
 	 *
-	 * @param other the FunctionBody to merge with
-	 * @return this FunctionBody after merging
+	 * @param other the Result to merge with
+	 * @return this Result after merging
 	 */
 	public Result merge(final Result other) {
 		mFuncLocalVars.addAll(other.getFuncLocalVars());
