@@ -77,20 +77,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Model of functions from math.h (C11 7.12, https://en.cppreference.com/w/c/header/math)
  */
 public class MathLibraryModel implements ILibraryModel {
+	// Number classification macros according to 7.12.6 of C11
 	private enum Classification {
 		NAN("FP_NAN", 0), INFINITE("FP_INFINITE", 1), ZERO("FPZERO", 2), SUBNORMAL("FP_SUBNORMAL", 3),
 		NORMAL("FP_NORMAL", 4);
 
-		private final String mConstantName;
+		private final String mName;
 		private final int mValue;
 
-		Classification(final String fieldName, final int value) {
-			mConstantName = fieldName;
+		Classification(final String name, final int value) {
+			mName = name;
 			mValue = value;
 		}
 
-		public String getConstantName() {
-			return mConstantName;
+		public String getName() {
+			return mName;
 		}
 
 		public Expression asExpression(final ILocation loc, final ExpressionTranslation exprTranslation) {
@@ -357,6 +358,7 @@ public class MathLibraryModel implements ILibraryModel {
 		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 		result.add(new FunctionModel("isnormal", this::handleIsNormal));
 
+		// see 7.12.4.5 or https://en.cppreference.com/w/c/numeric/math/cos
 		result.add(new FunctionModel("cos",
 				(main, node, loc, name) -> handleCos(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("cosf",
@@ -364,6 +366,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("cosl",
 				(main, node, loc, name) -> handleCos(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		// see 7.12.4.6 or https://en.cppreference.com/w/c/numeric/math/sin
 		result.add(new FunctionModel("sin",
 				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("sinf",
@@ -371,6 +374,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("sinl",
 				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		// see 7.12.6.1 or https://en.cppreference.com/w/c/numeric/math/exp
 		result.add(new FunctionModel("exp",
 				(main, node, loc, name) -> handleExp(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("expf",
@@ -378,6 +382,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("expl",
 				(main, node, loc, name) -> handleExp(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		// see 7.12.6.3 or https://en.cppreference.com/w/c/numeric/math/expm1
 		result.add(new FunctionModel("expm1",
 				(main, node, loc, name) -> handleExpm1(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("expm1f",
@@ -385,6 +390,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("expm1l",
 				(main, node, loc, name) -> handleExpm1(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		// see 7.12.8.1 or https://en.cppreference.com/w/c/numeric/math/erf
 		result.add(new FunctionModel("erf",
 				(main, node, loc, name) -> handleErf(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("erff",
@@ -392,6 +398,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("erfl",
 				(main, node, loc, name) -> handleErf(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		// see 7.12.5.6 or https://en.cppreference.com/w/c/numeric/math/tanh
 		result.add(new FunctionModel("tanh",
 				(main, node, loc, name) -> handleTanh(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("tanhf",
@@ -399,6 +406,7 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("tanhl",
 				(main, node, loc, name) -> handleTanh(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		// see 7.12.6.7 or https://en.cppreference.com/w/c/numeric/math/log
 		result.add(new FunctionModel("log",
 				(main, node, loc, name) -> handleLog(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new FunctionModel("logf",
@@ -760,6 +768,11 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression isNan = mExpressionTranslation.isNan(loc, argument, type);
 		final Expression isNormal = mExpressionTranslation.isNormal(loc, argument, type);
 		final Expression isSubnormal = mExpressionTranslation.isSubnormal(loc, argument, type);
+		// if (isinf(x)) return FP_INFINITE;
+		// else if (isnan(x)) return FP_NAN;
+		// else if (isnormal(x)) return FP_NORMAL;
+		// else if (issubnormal(x)) return FP_SUBNORMAL;
+		// else return FP_ZERO;
 		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
 				Classification.INFINITE.asExpression(loc, mExpressionTranslation),
 				ExpressionFactory.constructIfThenElseExpression(loc, isNan,
@@ -797,6 +810,10 @@ public class MathLibraryModel implements ILibraryModel {
 				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
 		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		// x = 0 ==> cos(x) = 1
+		// x = -oo ==> cos(x) = NaN
+		// x = oo ==> cos(x) = NaN
+		// -1 <= cos(x) <= 1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, nan, nan, one,
 				List.of(greaterMinusOne, smallerOne));
 	}
@@ -813,6 +830,10 @@ public class MathLibraryModel implements ILibraryModel {
 				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
 		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		// x = 0 ==> sin(x) = 0
+		// x = -oo ==> sin(x) = NaN
+		// x = oo ==> sin(x) = NaN
+		// -1 <= sin(x) <= 1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, nan, nan,
 				argumentResult.getLrValue().getValue(), List.of(greaterMinusOne, smallerOne));
 	}
@@ -824,14 +845,22 @@ public class MathLibraryModel implements ILibraryModel {
 		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
 		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
 		final Expression positive = mExpressionTranslation.isPositive(loc, auxVar.getExp(), type);
-		final Expression smallerOneForNegativeValues =
-				ExpressionFactory.or(loc, mExpressionTranslation.isPositive(loc, argument, type),
-						mExpressionTranslation.constructBinaryComparisonExpression(loc,
-								IASTBinaryExpression.op_lessThan, auxVar.getExp(), type, one, type));
+		final Expression smallerOneForNegativeValues = ExpressionFactory.or(loc,
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterEqual,
+						argument, type,
+						mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ZERO), type),
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessThan,
+						auxVar.getExp(), type, one, type));
 		final Expression overLinear = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, mExpressionTranslation
 						.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, argument, type, one, type),
 				type);
+		// x = 0 ==> exp(x) = 1
+		// x = -oo ==> exp(x) = +0
+		// x = oo ==> exp(x) = oo
+		// exp(x) >= 0
+		// x < 0 ==> exp(x) < 1
+		// exp(x) >= x+1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar,
 				mExpressionTranslation.createPlusZero(loc, type), argument, one,
 				List.of(positive, smallerOneForNegativeValues, overLinear));
@@ -840,6 +869,7 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleExpm1(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final ExpressionResult expResult = handleExp(main, node, loc, name, type);
+		// expm1(x) = exp(x) - 1
 		final Expression resMinusOne = mExpressionTranslation.constructArithmeticExpression(loc,
 				IASTBinaryExpression.op_minus, expResult.getLrValue().getValue(), type,
 				mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE), type);
@@ -857,6 +887,10 @@ public class MathLibraryModel implements ILibraryModel {
 				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
 		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		// x = 0 ==> erf(x) = 0
+		// x = -oo ==> erf(x) = -1
+		// x = oo ==> erf(x) = 1
+		// -1 <= erf(x) <= 1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, minusOne, one,
 				argumentResult.getLrValue().getValue(), List.of(greaterMinusOne, smallerOne));
 	}
@@ -872,6 +906,10 @@ public class MathLibraryModel implements ILibraryModel {
 				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
 		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
 				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		// x = 0 ==> tanh(x) = 0
+		// x = -oo ==> tanh(x) = -1
+		// x = oo ==> tanh(x) = 1
+		// -1 <= tanh(x) <= 1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, minusOne, one,
 				argumentResult.getLrValue().getValue(), List.of(greaterMinusOne, smallerOne));
 	}
@@ -902,6 +940,13 @@ public class MathLibraryModel implements ILibraryModel {
 						auxVar.getExp(), type, mExpressionTranslation.constructArithmeticExpression(loc,
 								IASTBinaryExpression.op_minus, argument, type, one, type),
 						type));
+		// x = 0 ==> log(x) = -oo
+		// x = -oo ==> log(x) = NaN
+		// x = oo ==> log(x) = oo
+		// x < 0 ==> log(x) = NaN
+		// x = 1 ==> log(x) = 0
+		// x > 1 ==> log(x) > 0
+		// x >= 0 ==> log(x) < x-1
 		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar,
 				mExpressionTranslation.createNan(loc, type), argument,
 				mExpressionTranslation.createMinusInfinity(loc, type),
@@ -943,8 +988,8 @@ public class MathLibraryModel implements ILibraryModel {
 		return builder.addStatement(resultStatement).build();
 	}
 
-	// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the fmin/fmax
-	// functions choose the numeric value.
+	// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the numeric value
+	// is choosen.
 	private ExpressionResult handleFmin(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
@@ -954,8 +999,8 @@ public class MathLibraryModel implements ILibraryModel {
 				.build();
 	}
 
-	// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the fmin/fmax
-	// functions choose the numeric value.
+	// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the numeric value
+	// is choosen.
 	private ExpressionResult handleFmax(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type) {
 		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
@@ -1000,9 +1045,8 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new ConstantModel("NAN", loc -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))));
 		result.add(new ConstantModel("INFINITY", loc -> handleInf(loc)));
 		result.add(new ConstantModel("inf", loc -> handleInf(loc)));
-		// Check if id is number classification macro according to 7.12.6 of C11.
 		for (final Classification c : Classification.values()) {
-			result.add(new ConstantModel(c.getConstantName(), loc -> new ExpressionResult(
+			result.add(new ConstantModel(c.getName(), loc -> new ExpressionResult(
 					new RValue(c.asExpression(loc, mExpressionTranslation), new CPrimitive(CPrimitives.INT)))));
 		}
 		return result;
