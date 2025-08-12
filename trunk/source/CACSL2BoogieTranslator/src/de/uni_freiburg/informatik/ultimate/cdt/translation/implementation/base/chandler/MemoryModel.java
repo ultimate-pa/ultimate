@@ -487,6 +487,11 @@ public class MemoryModel {
 		return mMemoryAddressing.doPointerSubtraction(loc, ptr1, ptr2, pointsToType);
 	}
 
+	/**
+	 * Constructs the statements that are present in the body of the Boogie realloc implementation.
+	 *
+	 * @return The statements.
+	 */
 	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
 			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
 			final IdentifierExpression ptrIdExprImpl) {
