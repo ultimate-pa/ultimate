@@ -77,6 +77,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Model of functions from math.h (C11 7.12, https://en.cppreference.com/w/c/header/math)
  */
 public class MathLibraryModel implements ILibraryModel {
+	private enum Classification {
+		NAN("FP_NAN", 0), INFINITE("FP_INFINITE", 1), ZERO("FPZERO", 2), SUBNORMAL("FP_SUBNORMAL", 3),
+		NORMAL("FP_NORMAL", 4);
+
+		private final String mConstantName;
+		private final int mValue;
+
+		Classification(final String fieldName, final int value) {
+			mConstantName = fieldName;
+			mValue = value;
+		}
+
+		public String getConstantName() {
+			return mConstantName;
+		}
+
+		public Expression asExpression(final ILocation loc, final ExpressionTranslation exprTranslation) {
+			return exprTranslation.constructLiteralForIntegerType(loc, new CPrimitive(CPrimitives.INT),
+					BigInteger.valueOf(mValue));
+		}
+	}
+
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS = { "frexp", "ldexp", "pow", "hypot", "cbrt", "drem",
 			"significand", "j0", "j1", "jn", "y0", "y1", "yn", "erfc", "lgamma", "tgamma", "gamma", "lgamma_r",
 			"nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo", "lrint", "llrint", "fma", "scalb",
@@ -739,16 +761,14 @@ public class MathLibraryModel implements ILibraryModel {
 		final Expression isNormal = mExpressionTranslation.isNormal(loc, argument, type);
 		final Expression isSubnormal = mExpressionTranslation.isSubnormal(loc, argument, type);
 		final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isInfinite,
-				mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_INFINITE").getValue(),
+				Classification.INFINITE.asExpression(loc, mExpressionTranslation),
 				ExpressionFactory.constructIfThenElseExpression(loc, isNan,
-						mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_NAN").getValue(),
+						Classification.NAN.asExpression(loc, mExpressionTranslation),
 						ExpressionFactory.constructIfThenElseExpression(loc, isNormal,
-								mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_NORMAL").getValue(),
+								Classification.NORMAL.asExpression(loc, mExpressionTranslation),
 								ExpressionFactory.constructIfThenElseExpression(loc, isSubnormal,
-										mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_SUBNORMAL")
-												.getValue(),
-										mExpressionTranslation.handleNumberClassificationMacro(loc, "FP_ZERO")
-												.getValue()))));
+										Classification.SUBNORMAL.asExpression(loc, mExpressionTranslation),
+										Classification.ZERO.asExpression(loc, mExpressionTranslation)))));
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
 				.setLrValue(new RValue(resultExpr, new CPrimitive(CPrimitives.INT))).build();
 	}
@@ -974,18 +994,17 @@ public class MathLibraryModel implements ILibraryModel {
 				new TypeModel("double_t", new CPrimitive(CPrimitives.DOUBLE)));
 	}
 
-	private ConstantModel modelNumberClassificationMacro(final String name) {
-		return new ConstantModel(name,
-				loc -> new ExpressionResult(mExpressionTranslation.handleNumberClassificationMacro(loc, name)));
-	}
-
 	@Override
 	public Collection<ConstantModel> getConstantModels() {
-		return List.of(new ConstantModel("NAN", loc -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))),
-				new ConstantModel("INFINITY", loc -> handleInf(loc)), new ConstantModel("inf", loc -> handleInf(loc)),
-				// Check if id is number classification macro according to 7.12.6 of C11.
-				modelNumberClassificationMacro("FP_NAN"), modelNumberClassificationMacro("FP_INFINITE"),
-				modelNumberClassificationMacro("FP_ZERO"), modelNumberClassificationMacro("FP_SUBNORMAL"),
-				modelNumberClassificationMacro("FP_NORMAL"));
+		final List<ConstantModel> result = new ArrayList<>();
+		result.add(new ConstantModel("NAN", loc -> handleNan(loc, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new ConstantModel("INFINITY", loc -> handleInf(loc)));
+		result.add(new ConstantModel("inf", loc -> handleInf(loc)));
+		// Check if id is number classification macro according to 7.12.6 of C11.
+		for (final Classification c : Classification.values()) {
+			result.add(new ConstantModel(c.getConstantName(), loc -> new ExpressionResult(
+					new RValue(c.asExpression(loc, mExpressionTranslation), new CPrimitive(CPrimitives.INT)))));
+		}
+		return result;
 	}
 }

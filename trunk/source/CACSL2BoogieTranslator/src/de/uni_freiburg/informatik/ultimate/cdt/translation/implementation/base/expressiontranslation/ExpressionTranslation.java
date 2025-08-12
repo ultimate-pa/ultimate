@@ -443,36 +443,6 @@ public abstract class ExpressionTranslation {
 	}
 
 	/**
-	 * Translate number classification macros according to 7.12.6 of C11. Although the standard allows any distinct
-	 * integers, we take 0,1,2,3,4 because gcc on Matthias' Linux system uses these numbers.
-	 */
-	public RValue handleNumberClassificationMacro(final ILocation loc, final String cId) {
-		final int number;
-		switch (cId) {
-		case "FP_NAN":
-			number = 0;
-			break;
-		case "FP_INFINITE":
-			number = 1;
-			break;
-		case "FP_ZERO":
-			number = 2;
-			break;
-		case "FP_SUBNORMAL":
-			number = 3;
-			break;
-		case "FP_NORMAL":
-			number = 4;
-			break;
-		default:
-			throw new IllegalArgumentException("no number classification macro " + cId);
-		}
-		final CPrimitive type = new CPrimitive(CPrimitives.INT);
-		final Expression expr = mTypeSizes.constructLiteralForIntegerType(loc, type, BigInteger.valueOf(number));
-		return new RValue(expr, type);
-	}
-
-	/**
 	 * Generate the attributes for the Boogie code that make sure that we either - translate to the desired SMT
 	 * functions, or - let Ultimate overapproximate
 	 */
