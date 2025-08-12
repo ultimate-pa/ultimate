@@ -227,15 +227,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				.filter(decl -> decl instanceof Procedure && ((Procedure) decl).getIdentifier().equals("#main"))
 				.findFirst().orElseThrow(() -> new IllegalStateException("No #main declaration found"));
 		final String retString = main.getOutParams().length > 0 ? main.getOutParams()[0].getType().toString() : "void";
-		if (retString.equals("void")) {
-			return retString;
-		} else if (retString.equals("PrimitiveType[bool]")) {
-			return "bool";
-		} else if (retString.equals("PrimitiveType[int]")) {
-			return "int";
-		} else {
-			throw new IllegalStateException("Unsupported return type for #main: " + retString);
-		}
+		return retString.contains("int") ? "int" : retString.contains("bool") ? "bool" : "void";
 	}
 
 	/**
