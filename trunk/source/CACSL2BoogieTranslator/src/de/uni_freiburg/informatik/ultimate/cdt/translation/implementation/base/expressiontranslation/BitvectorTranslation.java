@@ -43,16 +43,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
@@ -74,14 +70,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResultBuilder;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.FloatingPointRoundingMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BitvectorConstant.BvOp;
@@ -1015,254 +1009,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 					DeclarationInformation.DECLARATIONINFO_GLOBAL);
 		}
 		return mCurrentRoundingMode;
-	}
-
-	@Override
-	public ExpressionResult constructOtherUnaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue argument, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		final CPrimitive argumentType = (CPrimitive) argument.getCType().getUnderlyingType();
-		switch (floatFunction.getFunctionName()) {
-		case "cos": {
-			final Expression nan = createNan(loc, argumentType);
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
-			final Expression greaterNegOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE.negate()), argumentType);
-			final Expression smallerOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_lessEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argumentType);
-			return overapproximateUnaryFloatFunction(loc, "cos", argument, auxVar, nan, nan,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE),
-					List.of(greaterNegOne, smallerOne));
-		}
-		case "sin": {
-			final Expression nan = createNan(loc, argumentType);
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
-			final Expression greaterNegOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE.negate()), argumentType);
-			final Expression smallerOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_lessEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argumentType);
-			return overapproximateUnaryFloatFunction(loc, "sin", argument, auxVar, nan, nan, argument.getValue(),
-					List.of(greaterNegOne, smallerOne));
-		}
-		case "exp": {
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
-			final Expression positive = isPositive(loc, auxVar.getExp(), argumentType);
-			final Expression smallerOneForNegativeValues =
-					ExpressionFactory.or(loc, isPositive(loc, argument.getValue(), argumentType),
-							constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_lessThan,
-									auxVar.getExp(), argumentType,
-									constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argumentType));
-			final Expression overLinear = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), argumentType,
-					constructArithmeticFloatingPointExpression(loc, IASTBinaryExpression.op_plus, argument.getValue(),
-							argumentType, constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE),
-							argumentType),
-					argumentType);
-			return overapproximateUnaryFloatFunction(loc, "exp", argument, auxVar, createPlusZero(loc, argumentType),
-					argument.getValue(), constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE),
-					List.of(positive, smallerOneForNegativeValues, overLinear));
-		}
-		case "expm1":
-			final ExpressionResult expResult =
-					constructOtherUnaryFloatOperation(loc, FloatFunction.decode("exp"), argument, auxVarInfoBuilder);
-			final Expression resultExpr = constructArithmeticExpression(loc, IASTBinaryExpression.op_minus,
-					expResult.getLrValue().getValue(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argumentType);
-			return new ExpressionResultBuilder(expResult).resetLrValue(new RValue(resultExpr, argumentType)).build();
-		case "erf": {
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
-			final Expression greaterNegOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE.negate()), argumentType);
-			final Expression smallerOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_lessEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argumentType);
-			return overapproximateUnaryFloatFunction(loc, "erf", argument, auxVar,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE.negate()),
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argument.getValue(),
-					List.of(greaterNegOne, smallerOne));
-		}
-		case "log": {
-			final Expression nan = createNan(loc, argumentType);
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
-			final Expression nanForNegative = ExpressionFactory.or(loc,
-					isPositive(loc, argument.getValue(), argumentType), isNan(loc, auxVar.getExp(), argumentType));
-			final Expression one = constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE);
-			final Expression zeroForOne = ExpressionFactory.or(loc,
-					constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_notequals,
-							argument.getValue(), argumentType, one, argumentType),
-					constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_equals,
-							auxVar.getExp(), argumentType, createPlusZero(loc, argumentType), argumentType));
-			final Expression positiveForGreaterOne = ExpressionFactory.or(loc,
-					constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_lessEqual,
-							argument.getValue(), argumentType, one, argumentType),
-					constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_greaterThan,
-							auxVar.getExp(), argumentType,
-							constructLiteralForFloatingType(loc, argumentType, BigDecimal.ZERO), argumentType));
-			final Expression sublinear = ExpressionFactory.or(loc,
-					ExpressionFactory.not(loc, isPositive(loc, argument.getValue(), argumentType)),
-					constructBinaryComparisonFloatingPointExpression(loc, IASTBinaryExpression.op_lessEqual,
-							auxVar.getExp(), argumentType,
-							constructArithmeticFloatingPointExpression(loc, IASTBinaryExpression.op_minus,
-									argument.getValue(), argumentType, one, argumentType),
-							argumentType));
-			return overapproximateUnaryFloatFunction(loc, "log", argument, auxVar, nan, argument.getValue(),
-					createMinusInfinity(loc, argumentType),
-					List.of(nanForNegative, zeroForOne, positiveForGreaterOne, sublinear));
-		}
-		case "tanh": {
-			final AuxVarInfo auxVar = auxVarInfoBuilder.constructAuxVarInfo(loc, argumentType, AUXVAR.RETURNED);
-			final Expression greaterNegOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE.negate()), argumentType);
-			final Expression smallerOne = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_lessEqual, auxVar.getExp(), argumentType,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argumentType);
-			return overapproximateUnaryFloatFunction(loc, "tanh", argument, auxVar,
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE.negate()),
-					constructLiteralForFloatingType(loc, argumentType, BigDecimal.ONE), argument.getValue(),
-					List.of(greaterNegOne, smallerOne));
-		}
-		default:
-			throw new UnsupportedOperationException(
-					"not yet supported float operation " + floatFunction.getFunctionName());
-		}
-
-	}
-
-	private ExpressionResult overapproximateUnaryFloatFunction(final ILocation loc, final String functionName,
-			final RValue argument, final AuxVarInfo auxvarinfo, final Expression negInfValue,
-			final Expression posInfValue, final Expression zeroValue,
-			final List<Expression> assumptionsForOverapproximation) {
-		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-		builder.addAuxVarWithDeclaration(auxvarinfo);
-		final IdentifierExpression auxvar = auxvarinfo.getExp();
-		final CPrimitive resultType = (CPrimitive) argument.getCType();
-		builder.setLrValue(new RValue(auxvar, resultType));
-		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
-		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxvarLhs });
-		final AssumeStatement assume =
-				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
-		final Statement overapproxSt = new AtomicStatement(loc, new Statement[] { havoc, assume });
-		new OverapproxVariable(functionName, loc).annotate(overapproxSt);
-		final Statement resultStatement =
-				StatementFactory.constructIfStatement(loc, isZero(loc, argument.getValue(), resultType),
-						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, zeroValue)),
-						List.of(StatementFactory.constructIfStatement(loc, isNan(loc, argument.getValue(), resultType),
-								List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs,
-										argument.getValue())),
-								List.of(StatementFactory.constructIfStatement(loc,
-										isInfinite(loc, argument.getValue(), resultType),
-										List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs,
-												ExpressionFactory.constructIfThenElseExpression(loc,
-														isPositive(loc, argument.getValue(), resultType), posInfValue,
-														negInfValue))),
-										List.of(overapproxSt))))));
-		return builder.addStatement(resultStatement).build();
-	}
-
-	private static void checkIsFloatPrimitive(final RValue argument) {
-		if (!(argument.getCType().getUnderlyingType() instanceof CPrimitive)
-				|| !((CPrimitive) argument.getCType().getUnderlyingType()).getType().isFloatingtype()) {
-			throw new IllegalArgumentException(
-					"can apply float operation only to floating type, but saw " + argument.getCType());
-		}
-	}
-
-	@Override
-	public ExpressionResult constructOtherBinaryFloatOperation(final ILocation loc, final FloatFunction floatFunction,
-			final RValue first, final RValue second, final AuxVarInfoBuilder auxVarInfoBuilder) {
-		// TODO Auto-generated method stub
-		switch (floatFunction.getFunctionName()) {
-		case "fmin":
-			if (!first.getCType().equals(second.getCType())) {
-				throw new IllegalArgumentException("No mixed type arguments allowed");
-			}
-			return new ExpressionResult(new RValue(
-					min(loc, first.getValue(), second.getValue(), (CPrimitive) first.getCType()), first.getCType()));
-		case "fmax":
-			if (!first.getCType().equals(second.getCType())) {
-				throw new IllegalArgumentException("No mixed type arguments allowed");
-			}
-			return new ExpressionResult(new RValue(
-					max(loc, first.getValue(), second.getValue(), (CPrimitive) first.getCType()), first.getCType()));
-		case "remainder":
-			// TODO: Remove until unsoundness can be investigated
-			break;
-		// return delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
-		case "fmod":
-			/**
-			 * 7.12.10.1 The fmod functions
-			 *
-			 * The fmod functions compute the floating-point remainder of x/y.
-			 *
-			 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has
-			 * the same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error
-			 * occurs or the fmod functions return zero is implementation- defined.
-			 */
-			// fmod guarantees that the return value is the same sign as the first argument (x)
-			// copies the sign of firts element to remainder value
-			final RValue remainderValue = delegateOtherBinaryFloatOperationToSmt(loc, first, second, "fp.rem");
-			final FloatFunction copySignFunction = FloatFunction.decode("copysign");
-			return constructOtherBinaryFloatOperation(loc, copySignFunction, remainderValue, first, auxVarInfoBuilder);
-		case "fdim":
-			final FloatFunction isNaN = FloatFunction.decode("isnan");
-
-			// if (first || second) is NaN -> NaN
-			final LRValue firstIsNaN =
-					constructOtherUnaryFloatOperation(loc, isNaN, first, auxVarInfoBuilder).getLrValue();
-			final LRValue secondIsNaN =
-					constructOtherUnaryFloatOperation(loc, isNaN, second, auxVarInfoBuilder).getLrValue();
-
-			// if first>second, first - second, else +0
-			final CPrimitive typeFirst = (CPrimitive) first.getCType().getUnderlyingType();
-			final CPrimitive typeSecond = (CPrimitive) second.getCType().getUnderlyingType();
-
-			final Expression comparison = constructBinaryComparisonFloatingPointExpression(loc,
-					IASTBinaryExpression.op_greaterThan, first.getValue(), typeFirst, second.getValue(), typeSecond);
-
-			final Expression subtraction = constructArithmeticFloatingPointExpression(loc,
-					IASTBinaryExpression.op_minus, first.getValue(), typeFirst, second.getValue(), typeSecond);
-
-			final Expression zero = constructLiteralForFloatingType(loc, typeFirst, BigDecimal.ZERO);
-
-			final Expression resultExprFdim =
-					ExpressionFactory.constructIfThenElseExpression(loc, comparison, subtraction, zero);
-
-			final Expression secondNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
-					secondIsNaN.getValue(), second.getValue(), resultExprFdim);
-
-			final Expression firstNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc, firstIsNaN.getValue(),
-					first.getValue(), secondNaNExpr);
-
-			return new ExpressionResult(new RValue(firstNaNExpr, typeFirst));
-		default:
-			break;
-		}
-		throw new UnsupportedOperationException("not yet supported float operation " + floatFunction.getFunctionName());
-	}
-
-	private RValue delegateOtherBinaryFloatOperationToSmt(final ILocation loc, final RValue first, final RValue second,
-			final String smtFunctionName) {
-		checkIsFloatPrimitive(first);
-		checkIsFloatPrimitive(second);
-		final CPrimitive firstArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
-
-		final CPrimitive secondArgumentType = (CPrimitive) first.getCType().getUnderlyingType();
-		if (!firstArgumentType.equals(secondArgumentType)) {
-			throw new IllegalArgumentException("No mixed type arguments allowed");
-		}
-		declareFloatingPointFunction(loc, smtFunctionName, false, false, firstArgumentType, firstArgumentType,
-				secondArgumentType);
-		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, firstArgumentType);
-		final CPrimitive resultType = firstArgumentType;
-		final Expression expr = ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { first.getValue(), second.getValue() },
-				mTypeHandler.getBoogieTypeForCType(resultType));
-		return new RValue(expr, resultType);
 	}
 
 	@Override

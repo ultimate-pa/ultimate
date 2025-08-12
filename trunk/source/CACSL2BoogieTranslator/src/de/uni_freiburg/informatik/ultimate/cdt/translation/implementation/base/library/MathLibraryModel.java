@@ -31,6 +31,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.library;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,14 +43,21 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AtomicStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CExpressionTranslator;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.IDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.FloatFunction;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfo;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
@@ -59,7 +67,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.OverapproxVariable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -76,36 +86,6 @@ public class MathLibraryModel implements ILibraryModel {
 			"hypotl", "cbrtl", "dreml", "significandl", "j0l", "j1l", "jnl", "y0l", "y1l", "ynl", "erfcl", "lgammal",
 			"tgammal", "gammal", "lgammal_r", "nextafterl", "nexttowardl", "scalbnl", "ilogbl", "scalblnl", "remquol",
 			"lrintl", "llrintl", "fmal", "scalbl", "signgam;", "modf", "modff", "modfl" };
-
-	private static final List<String> UNARY_FUNCTIONS = List.of("cos", "cosf", "cosl",
-
-			"sin", "sinf", "sinl",
-
-			"exp", "expf", "expl",
-
-			"expm1", "expm1f", "expm1l",
-
-			"log", "logf", "logl",
-
-			"erf", "erff", "erfl",
-
-			"tanh", "tanhf", "tanhl");
-
-	private static final List<String> BINARY_FUNCTIONS = List.of(
-			// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
-			// NaN arguments are treated as missing data: if one argument is a NaN and the
-			// other numeric, then the
-			// fmin/fmax functions choose the numeric value.
-			"fmax", "fmaxf", "fmaxl",
-
-			// see 7.12.12.3 or http://en.cppreference.com/w/c/numeric/math/fmin
-			"fmin", "fminf", "fminl",
-
-			// see 7.12.10.1 or http://en.cppreference.com/w/c/numeric/math/fmod
-			"fmod", "fmodf", "fmodl",
-
-			// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
-			"fdim", "fdimf", "fdiml");
 
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
@@ -249,12 +229,6 @@ public class MathLibraryModel implements ILibraryModel {
 			result.add(new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> mHelper
 					.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(overapprox.getSecond()))));
 		}
-		for (final String unary : UNARY_FUNCTIONS) {
-			result.add(new FunctionModel(unary, this::handleUnaryFloatFunction));
-		}
-		for (final String binary : BINARY_FUNCTIONS) {
-			result.add(new FunctionModel(binary, this::handleBinaryFloatFunction));
-		}
 
 		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
 		result.add(new FunctionModel("sqrt",
@@ -361,6 +335,79 @@ public class MathLibraryModel implements ILibraryModel {
 		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 		result.add(new FunctionModel("isnormal", this::handleIsNormal));
 
+		result.add(new FunctionModel("cos",
+				(main, node, loc, name) -> handleCos(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("cosf",
+				(main, node, loc, name) -> handleCos(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("cosl",
+				(main, node, loc, name) -> handleCos(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		result.add(new FunctionModel("sin",
+				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("sinf",
+				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("sinl",
+				(main, node, loc, name) -> handleSin(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		result.add(new FunctionModel("exp",
+				(main, node, loc, name) -> handleExp(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("expf",
+				(main, node, loc, name) -> handleExp(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("expl",
+				(main, node, loc, name) -> handleExp(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		result.add(new FunctionModel("expm1",
+				(main, node, loc, name) -> handleExpm1(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("expm1f",
+				(main, node, loc, name) -> handleExpm1(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("expm1l",
+				(main, node, loc, name) -> handleExpm1(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		result.add(new FunctionModel("erf",
+				(main, node, loc, name) -> handleErf(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("erff",
+				(main, node, loc, name) -> handleErf(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("erfl",
+				(main, node, loc, name) -> handleErf(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		result.add(new FunctionModel("tanh",
+				(main, node, loc, name) -> handleTanh(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("tanhf",
+				(main, node, loc, name) -> handleTanh(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("tanhl",
+				(main, node, loc, name) -> handleTanh(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		result.add(new FunctionModel("log",
+				(main, node, loc, name) -> handleLog(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("logf",
+				(main, node, loc, name) -> handleLog(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("logl",
+				(main, node, loc, name) -> handleLog(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
+		result.add(new FunctionModel("fmax",
+				(main, node, loc, name) -> handleFmax(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("fmax",
+				(main, node, loc, name) -> handleFmax(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("fmax",
+				(main, node, loc, name) -> handleFmax(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		// see 7.12.12.3 or http://en.cppreference.com/w/c/numeric/math/fmin
+		result.add(new FunctionModel("fmin",
+				(main, node, loc, name) -> handleFmin(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("fminf",
+				(main, node, loc, name) -> handleFmin(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("fminl",
+				(main, node, loc, name) -> handleFmin(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		// see 7.12.12.1 or https://en.cppreference.com/w/c/numeric/math/fdim
+		result.add(new FunctionModel("fdim",
+				(main, node, loc, name) -> handleFdim(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("fdimf",
+				(main, node, loc, name) -> handleFdim(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("fdiml",
+				(main, node, loc, name) -> handleFdim(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
 		// https://en.cppreference.com/w/c/numeric/math/copysign
 
 		// TODO: Handle negative NaN, check unsoundness
@@ -392,6 +439,9 @@ public class MathLibraryModel implements ILibraryModel {
 		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
 		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
 		// return new RValue(resultExpr, cPrimitive);
+
+		// https://en.cppreference.com/w/c/numeric/math/remainder
+		// TODO: Remove until unsoundness can be investigated
 
 		/** various float builtins **/
 		result.add(new FunctionModel("nan",
@@ -439,53 +489,6 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleInf(final ILocation loc) {
 		final CPrimitive type = new CPrimitive(CPrimitives.DOUBLE);
 		return new ExpressionResult(new RValue(mExpressionTranslation.createPlusInfinity(loc, type), type));
-	}
-
-	private Result handleUnaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		final FloatFunction floatFunction = FloatFunction.decode(name);
-		final ExpressionResult arg = handleFloatArguments(main, node, loc, name, 1, floatFunction).get(0);
-		return new ExpressionResultBuilder().addAllExceptLrValue(arg).addAllIncludingLrValue(mExpressionTranslation
-				.constructOtherUnaryFloatOperation(loc, floatFunction, (RValue) arg.getLrValue(), mAuxVarInfoBuilder))
-				.build();
-	}
-
-	private Result handleBinaryFloatFunction(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name) {
-		final FloatFunction floatFunction = FloatFunction.decode(name);
-		final List<ExpressionResult> args = handleFloatArguments(main, node, loc, name, 2, floatFunction);
-		return new ExpressionResultBuilder().addAllExceptLrValue(args)
-				.addAllIncludingLrValue(mExpressionTranslation.constructOtherBinaryFloatOperation(loc, floatFunction,
-						(RValue) args.get(0).getLrValue(), (RValue) args.get(1).getLrValue(), mAuxVarInfoBuilder))
-				.build();
-	}
-
-	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name, final int numberOfArgs, final FloatFunction floatFunction) {
-		final IASTInitializerClause[] arguments = node.getArguments();
-		mHelper.checkArguments(loc, numberOfArgs, name, arguments);
-		if (floatFunction == null) {
-			throw new IllegalArgumentException(
-					"Ultimate declared float handling for " + name + ", but is not known float function");
-		}
-		final List<ExpressionResult> rtr = new ArrayList<>();
-		for (final IASTInitializerClause argument : arguments) {
-			final ExpressionResult decayedArgument =
-					mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, argument);
-			final ExpressionResult convertedArgument =
-					mExprResultTransformer.convertIfNecessary(loc, decayedArgument, floatFunction.getType());
-			rtr.add(convertedArgument);
-		}
-
-		final CPrimitive typeDeterminedByName = floatFunction.getType();
-		if (typeDeterminedByName != null) {
-			final List<ExpressionResult> newRtr = new ArrayList<>();
-			for (final ExpressionResult arg : rtr) {
-				newRtr.add(mExprResultTransformer.convertIfNecessary(loc, arg, typeDeterminedByName));
-			}
-			return newRtr;
-		}
-		return rtr;
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,
@@ -759,6 +762,206 @@ public class MathLibraryModel implements ILibraryModel {
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult)
 				.setLrValue(new RValue(mExpressionTranslation.isNormal(loc, argumentResult.getLrValue().getValue(),
 						(CPrimitive) argumentResult.getCType()), new CPrimitive(CPrimitives.INT), true))
+				.build();
+	}
+
+	private ExpressionResult handleCos(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		final Expression nan = mExpressionTranslation.createNan(loc, type);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
+		final Expression minusOne =
+				mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE.negate());
+		final Expression greaterMinusOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
+		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, nan, nan, one,
+				List.of(greaterMinusOne, smallerOne));
+	}
+
+	private ExpressionResult handleSin(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		final Expression nan = mExpressionTranslation.createNan(loc, type);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
+		final Expression minusOne =
+				mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE.negate());
+		final Expression greaterMinusOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
+		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, nan, nan,
+				argumentResult.getLrValue().getValue(), List.of(greaterMinusOne, smallerOne));
+	}
+
+	private ExpressionResult handleExp(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		final Expression argument = argumentResult.getLrValue().getValue();
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
+		final Expression positive = mExpressionTranslation.isPositive(loc, auxVar.getExp(), type);
+		final Expression smallerOneForNegativeValues =
+				ExpressionFactory.or(loc, mExpressionTranslation.isPositive(loc, argument, type),
+						mExpressionTranslation.constructBinaryComparisonExpression(loc,
+								IASTBinaryExpression.op_lessThan, auxVar.getExp(), type, one, type));
+		final Expression overLinear = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, mExpressionTranslation
+						.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, argument, type, one, type),
+				type);
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar,
+				mExpressionTranslation.createPlusZero(loc, type), argument, one,
+				List.of(positive, smallerOneForNegativeValues, overLinear));
+	}
+
+	private ExpressionResult handleExpm1(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult expResult = handleExp(main, node, loc, name, type);
+		final Expression resMinusOne = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_minus, expResult.getLrValue().getValue(), type,
+				mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE), type);
+		return new ExpressionResultBuilder(expResult).resetLrValue(new RValue(resMinusOne, type)).build();
+	}
+
+	private ExpressionResult handleErf(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
+		final Expression minusOne =
+				mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE.negate());
+		final Expression greaterMinusOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
+		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, minusOne, one,
+				argumentResult.getLrValue().getValue(), List.of(greaterMinusOne, smallerOne));
+	}
+
+	private ExpressionResult handleTanh(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
+		final Expression minusOne =
+				mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE.negate());
+		final Expression greaterMinusOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterEqual, auxVar.getExp(), type, minusOne, type);
+		final Expression smallerOne = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_lessEqual, auxVar.getExp(), type, one, type);
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar, minusOne, one,
+				argumentResult.getLrValue().getValue(), List.of(greaterMinusOne, smallerOne));
+	}
+
+	private ExpressionResult handleLog(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
+		final Expression argument = argumentResult.getLrValue().getValue();
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		final Expression one = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ONE);
+		final Expression nanForNegative =
+				ExpressionFactory.or(loc, mExpressionTranslation.isPositive(loc, argument, type),
+						mExpressionTranslation.isNan(loc, auxVar.getExp(), type));
+		final Expression zeroForOne = ExpressionFactory.or(loc,
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_notequals,
+						argument, type, one, type),
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
+						auxVar.getExp(), type, mExpressionTranslation.createPlusZero(loc, type), type));
+		final Expression positiveForGreaterOne = ExpressionFactory.or(loc,
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
+						argument, type, one, type),
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_greaterThan,
+						auxVar.getExp(), type,
+						mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ZERO), type));
+		final Expression sublinear = ExpressionFactory.or(loc,
+				ExpressionFactory.not(loc, mExpressionTranslation.isPositive(loc, argument, type)),
+				mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_lessEqual,
+						auxVar.getExp(), type, mExpressionTranslation.constructArithmeticExpression(loc,
+								IASTBinaryExpression.op_minus, argument, type, one, type),
+						type));
+		return overapproximateUnaryFloatFunction(loc, name, argumentResult, auxVar,
+				mExpressionTranslation.createNan(loc, type), argument,
+				mExpressionTranslation.createMinusInfinity(loc, type),
+				List.of(nanForNegative, zeroForOne, positiveForGreaterOne, sublinear));
+	}
+
+	private ExpressionResult overapproximateUnaryFloatFunction(final ILocation loc, final String functionName,
+			final ExpressionResult argumentResult, final AuxVarInfo auxvarinfo, final Expression negInfValue,
+			final Expression posInfValue, final Expression zeroValue,
+			final List<Expression> assumptionsForOverapproximation) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(argumentResult);
+		builder.addAuxVarWithDeclaration(auxvarinfo);
+		final IdentifierExpression auxvar = auxvarinfo.getExp();
+		final CPrimitive resultType = (CPrimitive) argumentResult.getCType();
+		final Expression argument = argumentResult.getLrValue().getValue();
+		builder.setLrValue(new RValue(auxvar, resultType));
+		final VariableLHS auxvarLhs = auxvarinfo.getLhs();
+		final HavocStatement havoc = new HavocStatement(loc, new VariableLHS[] { auxvarLhs });
+		final AssumeStatement assume =
+				new AssumeStatement(loc, ExpressionFactory.and(loc, assumptionsForOverapproximation));
+		final Statement overapproxSt = new AtomicStatement(loc, new Statement[] { havoc, assume });
+		new OverapproxVariable(functionName, loc).annotate(overapproxSt);
+		final Expression isZero = mExpressionTranslation.isZero(loc, argument, resultType);
+		final Expression isNan = mExpressionTranslation.isNan(loc, argument, resultType);
+		final Expression isInfinite = mExpressionTranslation.isInfinite(loc, argument, resultType);
+		final Expression isPositive = mExpressionTranslation.isPositive(loc, argument, resultType);
+		final Statement resultStatement =
+				StatementFactory.constructIfStatement(loc, isZero,
+						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, zeroValue)),
+						List.of(StatementFactory.constructIfStatement(loc, isNan,
+								List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxvarLhs, argument)),
+								List.of(StatementFactory.constructIfStatement(
+										loc, isInfinite, List
+												.of(StatementFactory
+														.constructSingleAssignmentStatement(loc, auxvarLhs,
+																ExpressionFactory.constructIfThenElseExpression(loc,
+																		isPositive, posInfValue, negInfValue))),
+										List.of(overapproxSt))))));
+		return builder.addStatement(resultStatement).build();
+	}
+
+	// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the fmin/fmax
+	// functions choose the numeric value.
+	private ExpressionResult handleFmin(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
+				.setLrValue(new RValue(mExpressionTranslation.min(loc, arguments.get(0).getLrValue().getValue(),
+						arguments.get(1).getLrValue().getValue(), type), type))
+				.build();
+	}
+
+	// NaN arguments are treated as missing data: if one argument is a NaN and the other numeric, then the fmin/fmax
+	// functions choose the numeric value.
+	private ExpressionResult handleFmax(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments)
+				.setLrValue(new RValue(mExpressionTranslation.max(loc, arguments.get(0).getLrValue().getValue(),
+						arguments.get(1).getLrValue().getValue(), type), type))
+				.build();
+	}
+
+	private ExpressionResult handleFdim(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
+		final Expression first = arguments.get(0).getLrValue().getValue();
+		final Expression second = arguments.get(1).getLrValue().getValue();
+		final Expression comparison = mExpressionTranslation.constructBinaryComparisonExpression(loc,
+				IASTBinaryExpression.op_greaterThan, first, type, second, type);
+		final Expression subtraction = mExpressionTranslation.constructArithmeticExpression(loc,
+				IASTBinaryExpression.op_minus, first, type, second, type);
+		final Expression zero = mExpressionTranslation.constructLiteralForFloatingType(loc, type, BigDecimal.ZERO);
+		final Expression resultExprFdim =
+				ExpressionFactory.constructIfThenElseExpression(loc, comparison, subtraction, zero);
+		final Expression secondNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
+				mExpressionTranslation.isNan(loc, second, type), second, resultExprFdim);
+		final Expression firstNaNExpr = ExpressionFactory.constructIfThenElseExpression(loc,
+				mExpressionTranslation.isNan(loc, first, type), first, secondNaNExpr);
+		return new ExpressionResultBuilder().addAllExceptLrValue(arguments).setLrValue(new RValue(firstNaNExpr, type))
 				.build();
 	}
 
