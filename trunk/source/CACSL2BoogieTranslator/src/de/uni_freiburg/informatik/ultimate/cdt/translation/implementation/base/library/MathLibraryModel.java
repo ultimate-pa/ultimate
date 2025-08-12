@@ -654,8 +654,8 @@ public class MathLibraryModel implements ILibraryModel {
 	private ExpressionResult handleRoundWithIntConversion(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type, final CPrimitive resultType,
 			final SmtRoundingMode roundingMode) {
-		return mExpressionTranslation.convertFloatToInt(loc,
-				handleRound(main, node, loc, name, resultType, roundingMode), resultType);
+		return mExpressionTranslation.convertFloatToInt(loc, handleRound(main, node, loc, name, type, roundingMode),
+				resultType);
 	}
 
 	private ExpressionResult handleFabs(final IDispatcher main, final IASTFunctionCallExpression node,
