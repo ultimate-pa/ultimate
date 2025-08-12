@@ -13,14 +13,18 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.BaseMemoryStructure.ReadWriteDefinition;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer.Offset;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -32,7 +36,115 @@ public class MemoryModel {
 	private final IMemoryAdressing mMemoryAddressing;
 	private final IMemoryStructure mMemoryStructure;
 
-	public MemoryModel(final IMemoryAdressing memoryAdressing, final IMemoryStructure memoryStructure) {
+	/**
+	 * This enum represents the valid combinations of memory structure and memory adressing.
+	 */
+	private enum Combinations {
+		ONE_Dimensional_SingleBitPrecise(OneDimensionalMemoryAddressing.class, MemoryStructure_SingleBitprecise.class),
+		ONE_Dimensional_MultiBitPrecise(OneDimensionalMemoryAddressing.class, MemoryStructure_MultiBitprecise.class),
+		ONE_Dimensional_Unbounded(OneDimensionalMemoryAddressing.class, MemoryStructure_Unbounded.class),
+		TWO_Dimensional_MultiBitPrecise(TwoDimensionalMemoryAddressing.class, MemoryStructure_MultiBitprecise.class),
+		TWO_Dimensional_SingleBitPrecise(TwoDimensionalMemoryAddressing.class, MemoryStructure_SingleBitprecise.class),
+		TWO_Dimensional_Unbounded(TwoDimensionalMemoryAddressing.class, MemoryStructure_Unbounded.class);
+
+		private final Class<? extends IMemoryAdressing> mAddressingType;
+		private final Class<? extends IMemoryStructure> mStructureType;
+
+		Combinations(final Class<? extends IMemoryAdressing> addressingType,
+				final Class<? extends IMemoryStructure> structureType) {
+			mAddressingType = addressingType;
+			mStructureType = structureType;
+		}
+
+		/**
+		 * Checks if the given combination is a valid one.
+		 *
+		 * @return If it is valid.
+		 */
+		public static boolean isValid(final Class<? extends IMemoryAdressing> addressingType,
+				final Class<? extends IMemoryStructure> structureType) {
+			for (final var value : values()) {
+				if (value.mAddressingType.equals(addressingType) && value.mStructureType.equals(structureType)) {
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
+	/**
+	 * The factory method that creates a memory model with a valid combination of addressing and structure.
+	 *
+	 * @return The memory model.
+	 */
+	public static MemoryModel create(final TranslationSettings settings, final ITypeHandler typeHandler,
+			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
+			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final FunctionDeclarations functionDeclarations, final IMemoryPointer pointer) {
+		final var addressing = createAddressing(settings, typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
+				typeSizeAndOffsetComputer, functionDeclarations, pointer);
+		final var structure = createStructure(settings, typeSizes, typeHandler);
+
+		if (!Combinations.isValid(addressing.getClass(), structure.getClass())) {
+			throw new UnsupportedOperationException("The combination of addressing: " + addressing.getClass()
+					+ " and structure " + structure.getClass() + " is invalid!");
+		}
+
+		return new MemoryModel(addressing, structure);
+	}
+
+	/**
+	 * The factory method for creating the concrete memory structure instance.
+	 *
+	 * @return A concrete instance of IMemoryAdressing.
+	 */
+	private static IMemoryAdressing createAddressing(final TranslationSettings settings, final ITypeHandler typeHandler,
+			final ExpressionTranslation exprTranslation, final IBooleanArrayHelper booleanArrayHelper,
+			final TypeSizes typeSizes, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
+			final FunctionDeclarations functionDeclarations, final IMemoryPointer pointer) {
+
+		if (pointer instanceof final OneDimensionalPointer p) {
+			return new OneDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
+					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);
+		} else if (pointer instanceof final TwoDimensionalPointer p) {
+			return new TwoDimensionalMemoryAddressing(typeHandler, exprTranslation, booleanArrayHelper, typeSizes,
+					typeSizeAndOffsetComputer, settings.getPointerIntegerCastMode(), functionDeclarations, p);
+		}
+
+		throw new UnsupportedOperationException("Unknown pointer instance: " + pointer.getClass());
+	}
+
+	/**
+	 * The factory method for creating the concrete memory structure instance.
+	 *
+	 * @return A concrete instance of IMemoryStructure.
+	 */
+	private static IMemoryStructure createStructure(final TranslationSettings settings, final TypeSizes typeSizes,
+			final ITypeHandler typeHandler) {
+		final var memoryStructurePreference = settings.getMemoryStructurePreference();
+		if (memoryStructurePreference.isBitVectorRepresentation() && !settings.isBitvectorTranslation()) {
+			throw new UnsupportedOperationException("Memory Structure: " + memoryStructurePreference
+					+ " is only available in using the bitprecise translation");
+		}
+
+		switch (memoryStructurePreference) {
+		case HoenickeLindenmann_1ByteResolution:
+		case HoenickeLindenmann_2ByteResolution:
+		case HoenickeLindenmann_4ByteResolution:
+		case HoenickeLindenmann_8ByteResolution:
+			return new MemoryStructure_SingleBitprecise(memoryStructurePreference.getByteSize(), typeSizes,
+					typeHandler);
+		case HoenickeLindenmann_Original:
+			if (settings.isBitvectorTranslation()) {
+				return new MemoryStructure_MultiBitprecise(typeSizes, typeHandler);
+			}
+			return new MemoryStructure_Unbounded(typeSizes, typeHandler);
+		default:
+			throw new UnsupportedOperationException(memoryStructurePreference + " is an invalid memory structure.");
+		}
+	}
+
+	private MemoryModel(final IMemoryAdressing memoryAdressing, final IMemoryStructure memoryStructure) {
 		mMemoryAddressing = memoryAdressing;
 		mMemoryStructure = memoryStructure;
 	}
