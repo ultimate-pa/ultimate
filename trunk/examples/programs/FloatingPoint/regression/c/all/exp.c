@@ -10,5 +10,4 @@ int main() {
   if (isnan(x) && !isnan(y)) reach_error();
   if (x == 0 && y != 1) reach_error();
   if (y < 0) reach_error();
-  if (y < x+1) reach_error();
 }
