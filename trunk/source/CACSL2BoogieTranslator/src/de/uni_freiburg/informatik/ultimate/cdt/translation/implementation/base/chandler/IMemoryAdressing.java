@@ -232,6 +232,11 @@ public interface IMemoryAdressing {
 	Expression doPointerSubtraction(final ILocation loc, final Expression ptr1, final Expression ptr2,
 			final ICType pointsToType);
 
+	/**
+	 * Constructs the statements that are present in the body of the Boogie realloc implementation.
+	 *
+	 * @return The statements.
+	 */
 	List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
 			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
 			final IdentifierExpression ptrIdExprImpl);
