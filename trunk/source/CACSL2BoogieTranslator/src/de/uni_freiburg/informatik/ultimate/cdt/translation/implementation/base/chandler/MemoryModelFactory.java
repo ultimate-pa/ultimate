@@ -46,9 +46,9 @@ public class MemoryModelFactory {
 						+ String.join(", ", incompatibleActiveOptions));
 			}
 
-			return new OneDimensionalPointer(boogieType, typeSizes);
+			return OneDimensionalPointer.create(settings, boogieType, typeSizes);
 		case Two_Dimensional:
-			return new TwoDimensionalPointer(boogieType, typeSizes);
+			return TwoDimensionalPointer.create(settings, boogieType, typeSizes);
 		default:
 			throw new UnsupportedOperationException(
 					"MemoryAddressing: " + memoryAddressingPreference + " not implemented yet.");

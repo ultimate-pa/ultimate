@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.IMemoryPointer;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryPointerFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StaticObjectsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -169,7 +169,7 @@ public class TypeHandler implements ITypeHandler {
 		mTranslationSettings = translationSettings;
 		mLocationFactory = locationFactory;
 		mStaticObjectsHandler = staticObjectsHandler;
-		mMemoryPointer = MemoryModelFactory.createMemoryPointer(mTranslationSettings,
+		mMemoryPointer = MemoryPointerFactory.create(mTranslationSettings,
 				(BoogieType) cType2AstType(null, translationSettings.getCTypeOfPointerComponents()).getBoogieType(),
 				typeSizes);
 	}

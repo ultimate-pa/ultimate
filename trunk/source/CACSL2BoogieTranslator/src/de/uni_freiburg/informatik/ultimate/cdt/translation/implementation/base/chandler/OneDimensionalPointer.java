@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
 import java.math.BigInteger;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
@@ -12,17 +14,52 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.CheckMode;
 
 public class OneDimensionalPointer extends BaseMemoryPointer {
 	final BoogieType mComponentType;
 
-	public OneDimensionalPointer(final BoogieType componentType, final TypeSizes typeSizes) {
+	/**
+	 * The factory method that creates a OneDimensionalPointer instance. Ensures, that an instance is only created iff
+	 * the settings are compatible.
+	 *
+	 * @return The instance.
+	 */
+	public static OneDimensionalPointer create(final TranslationSettings settings, final BoogieType boogieType,
+			final TypeSizes typeSizes) {
+		final List<SimpleEntry<String, Boolean>> incompatibleOptions = List.of(
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_DEREF_VALIDITY,
+						settings.checkPointerDerefValidity() != CheckMode.IGNORE),
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID,
+						settings.checkIfFreedPointerIsValid()),
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN,
+						settings.checkMemoryLeakInMain()),
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
+						settings.getPointerSubtractionAndComparisonValidityCheckMode() != CheckMode.IGNORE),
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_CHECK_ALLOCATION_PURITY,
+						settings.checkAllocationPurity()),
+				new SimpleEntry<>(CACSLPreferenceInitializer.LABEL_USE_CONSTANT_ARRAYS, settings.useConstantArrays()));
+
+		final List<String> incompatibleActiveOptions =
+				incompatibleOptions.stream().filter(SimpleEntry::getValue).map(SimpleEntry::getKey).toList();
+
+		if (!incompatibleActiveOptions.isEmpty()) {
+			throw new UnsupportedOperationException(
+					" The 1D memory addressing is not compatible with the following active settings: "
+							+ String.join(", ", incompatibleActiveOptions));
+		}
+
+		return new OneDimensionalPointer(boogieType, typeSizes);
+	}
+
+	private OneDimensionalPointer(final BoogieType componentType, final TypeSizes typeSizes) {
 		super(typeSizes);
 		mComponentType = componentType;
 		mBoogieType =

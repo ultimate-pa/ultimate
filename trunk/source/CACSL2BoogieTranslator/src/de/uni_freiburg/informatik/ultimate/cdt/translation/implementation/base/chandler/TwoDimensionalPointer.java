@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CTranslationUtil;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -23,10 +24,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class TwoDimensionalPointer extends BaseMemoryPointer {
 	final BoogieType mComponentType;
 
-	public TwoDimensionalPointer(final BoogieType componentType, final TypeSizes typeSizes) {
+	/**
+	 * The factory method that creates a TwoDimensionalPointer instance.
+	 *
+	 * @return The instance.
+	 */
+	public static TwoDimensionalPointer create(final TranslationSettings settings, final BoogieType boogieType,
+			final TypeSizes typeSizes) {
+		return new TwoDimensionalPointer(boogieType, typeSizes);
+	}
+
+	private TwoDimensionalPointer(final BoogieType componentType, final TypeSizes typeSizes) {
 		super(typeSizes);
 		mComponentType = componentType;
-
 		mBoogieType = BoogieType.createStructType(new String[] { SFO.POINTER_BASE, SFO.POINTER_OFFSET },
 				new BoogieType[] { mComponentType, mComponentType });
 	}
