@@ -311,10 +311,10 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("__builtin_isinf_sign", this::handleIsInfSign));
 
 		// see https://linux.die.net/man/3/isinff (! NOT PART OF ANSI-C)
-		result.add(new FunctionModel("isinff", this::handleIsFinite));
-		result.add(new FunctionModel("isinfl", this::handleIsFinite));
-		result.add(new FunctionModel("__isinff", this::handleIsFinite));
-		result.add(new FunctionModel("__isinfl", this::handleIsFinite));
+		result.add(new FunctionModel("isinff", this::handleIsInf));
+		result.add(new FunctionModel("isinfl", this::handleIsInf));
+		result.add(new FunctionModel("__isinff", this::handleIsInf));
+		result.add(new FunctionModel("__isinfl", this::handleIsInf));
 
 		// see 7.12.3.2 or http://en.cppreference.com/w/c/numeric/math/isfinite
 		result.add(new FunctionModel("isfinite", this::handleIsFinite));
