@@ -965,7 +965,7 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression createPlusInfinity(final ILocation loc, final CPrimitive type) {
+	public Expression createInfinity(final ILocation loc, final CPrimitive type) {
 		return createConstant(loc, SMT_LIB_PLUS_INF, type);
 	}
 
@@ -977,11 +977,6 @@ public class BitvectorTranslation extends ExpressionTranslation {
 	@Override
 	public Expression createPlusZero(final ILocation loc, final CPrimitive type) {
 		return createConstant(loc, SMT_LIB_PLUS_ZERO, type);
-	}
-
-	@Override
-	public Expression createMinusZero(final ILocation loc, final CPrimitive type) {
-		return createConstant(loc, SMT_LIB_MINUS_ZERO, type);
 	}
 
 	private Expression createConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {

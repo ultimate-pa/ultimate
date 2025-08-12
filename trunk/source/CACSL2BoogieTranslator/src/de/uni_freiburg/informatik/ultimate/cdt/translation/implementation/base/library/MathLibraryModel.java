@@ -488,7 +488,7 @@ public class MathLibraryModel implements ILibraryModel {
 
 	private ExpressionResult handleInf(final ILocation loc) {
 		final CPrimitive type = new CPrimitive(CPrimitives.DOUBLE);
-		return new ExpressionResult(new RValue(mExpressionTranslation.createPlusInfinity(loc, type), type));
+		return new ExpressionResult(new RValue(mExpressionTranslation.createInfinity(loc, type), type));
 	}
 
 	private List<ExpressionResult> handleFloatArguments(final IDispatcher main, final IASTFunctionCallExpression node,

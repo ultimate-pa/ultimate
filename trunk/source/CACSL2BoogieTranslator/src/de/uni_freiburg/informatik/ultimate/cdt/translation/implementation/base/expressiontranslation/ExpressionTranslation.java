@@ -596,13 +596,11 @@ public abstract class ExpressionTranslation {
 
 	public abstract Expression createNan(ILocation loc, CPrimitive type);
 
-	public abstract Expression createPlusInfinity(ILocation loc, CPrimitive type);
+	public abstract Expression createInfinity(ILocation loc, CPrimitive type);
 
 	public abstract Expression createMinusInfinity(ILocation loc, CPrimitive type);
 
 	public abstract Expression createPlusZero(ILocation loc, CPrimitive type);
-
-	public abstract Expression createMinusZero(final ILocation loc, final CPrimitive type);
 
 	public abstract Expression min(ILocation loc, Expression firstArgument, Expression secondArgument, CPrimitive type);
 

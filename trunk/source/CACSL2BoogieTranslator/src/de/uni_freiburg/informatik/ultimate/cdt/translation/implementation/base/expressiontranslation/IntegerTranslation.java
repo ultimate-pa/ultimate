@@ -837,7 +837,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 	}
 
 	@Override
-	public Expression createPlusInfinity(final ILocation loc, final CPrimitive type) {
+	public Expression createInfinity(final ILocation loc, final CPrimitive type) {
 		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 
@@ -848,11 +848,6 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression createPlusZero(final ILocation loc, final CPrimitive type) {
-		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
-	}
-
-	@Override
-	public Expression createMinusZero(final ILocation loc, final CPrimitive type) {
 		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 
