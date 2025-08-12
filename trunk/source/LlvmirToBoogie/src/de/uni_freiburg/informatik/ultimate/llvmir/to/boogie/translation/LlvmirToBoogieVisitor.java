@@ -399,22 +399,23 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @param ctx           The context from which to start searching for the function body.
 	 * @param incIdentifier The identifier of the label to find.
 	 * @return The index of the label in the function body.
-	 * @throws IllegalArgumentException if the context or identifier is null or empty, or if no label is found.
+	 * @throws AssertionError if the context or identifier is null or empty, or if no label is found.
 	 */
 	private static int getLabelIndexFromFuncBody(final ParserRuleContext ctx, final String incIdentifier)
-			throws IllegalArgumentException {
+			throws AssertionError {
 		if (ctx == null || incIdentifier == null || incIdentifier.isEmpty()) {
-			throw new IllegalArgumentException("Context and identifier must not be null or empty");
+			throw new AssertionError("Context and identifier must not be null or empty");
 		}
 		LLVMIRParser.FuncBodyContext funcBodyCtx = null;
 		ParserRuleContext tmpCtx = ctx;
 		while (funcBodyCtx == null) {
+			if (tmpCtx.getParent() == null) {
+				throw new AssertionError("No FuncBodyContext found in the parent hierarchy");
+			}
 			if (tmpCtx.getParent() instanceof LLVMIRParser.FuncBodyContext) {
 				funcBodyCtx = (LLVMIRParser.FuncBodyContext) tmpCtx.getParent();
-			} else if (tmpCtx.getParent() != null) {
-				tmpCtx = tmpCtx.getParent();
 			} else {
-				throw new IllegalArgumentException("No FuncBodyContext found in the parent hierarchy");
+				tmpCtx = tmpCtx.getParent();
 			}
 		}
 		int labelIndex = -1;
@@ -426,7 +427,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			}
 		}
 		if (labelIndex == -1) {
-			throw new IllegalArgumentException("No label found for identifier: " + incIdentifier);
+			throw new AssertionError("No label found for identifier: " + incIdentifier);
 		}
 		return labelIndex;
 	}
