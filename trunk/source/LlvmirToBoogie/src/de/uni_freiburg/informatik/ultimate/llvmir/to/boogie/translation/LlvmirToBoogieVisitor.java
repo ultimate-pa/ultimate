@@ -128,6 +128,20 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
+	 * Constructs a location object from the given context.
+	 *
+	 * This method creates a LlvmirLocation object that represents the location of a specific context in the source
+	 * code. It uses the filename, line numbers, and character positions from the context to create the location.
+	 *
+	 * @param ctx The ParserRuleContext from which to extract the location information.
+	 * @return A LlvmirLocation object representing the location in the source code.
+	 */
+	private LlvmirLocation constructLocation(final ParserRuleContext ctx) {
+		return new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
+				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+	}
+
+	/**
 	 * Constructs a specification from a given identifier and location.
 	 *
 	 * This method constructs a ModifiesSpecification that indicates the specified variable is modified in the Boogie
@@ -523,8 +537,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
-		mLocation = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		mLocation = constructLocation(ctx);
 
 		visitChildren(ctx);
 
@@ -562,8 +575,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final String funcName = unifyIdentifier(ctx.funcHeader().GlobalIdent().getText());
 		final LLVMIRParser.TypeContext returnType = ctx.funcHeader().type();
 
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 
 		final Body body = new Body(location, result.getFuncLocalVars().toArray(VariableDeclaration[]::new),
 				result.getFuncBlock().toArray(Statement[]::new));
@@ -641,8 +653,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitBasicBlock(final LLVMIRParser.BasicBlockContext ctx) {
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 		final Result result = new Result();
 
 		final LLVMIRParser.FuncBodyContext funcBodyCtx = (LLVMIRParser.FuncBodyContext) ctx.getParent();
@@ -689,8 +700,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	public Result visitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
 		final Result result = new Result();
 
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 
 		if (ctx.value() == null) {
 			// If there is no value, we assume a void return type
@@ -727,8 +737,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	public Result visitGlobalDef(final LLVMIRParser.GlobalDefContext ctx) throws AssertionError {
 		final LLVMIRParser.TypeContext type = ctx.type();
 		final String identifier = unifyIdentifier(ctx.GlobalIdent().getText());
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 
 		if (type.intType() == null) {
 			throw new AssertionError("The support for types other than integers is not implemented yet.");
@@ -760,8 +769,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final Result result = new Result();
 		final String identifier = unifyIdentifier(ctx.LocalIdent().getText());
 		final LLVMIRParser.ValueInstructionContext instructionType = ctx.valueInstruction();
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 
 		if (instructionType.loadInst() != null) {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
@@ -1173,8 +1181,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitBrTerm(final LLVMIRParser.BrTermContext ctx) {
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 		final Result result = new Result();
 		final String labelIdentifier = unifyIdentifier(ctx.label().LocalIdent().getText());
 		final GotoStatement gotoStmt = new GotoStatement(location, new String[] { labelIdentifier });
@@ -1194,8 +1201,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	@Override
 	public Result visitCondBrTerm(final LLVMIRParser.CondBrTermContext ctx) {
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 		final Result result = new Result();
 
 		final String variableIdentifier = unifyIdentifier(ctx.value().LocalIdent().getText());
@@ -1223,8 +1229,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	@Override
 	public Result visitStoreInst(final LLVMIRParser.StoreInstContext ctx) {
 		final Result result = new Result();
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 
 		final String identifier = unifyIdentifier(ctx.typeValue(1).value().LocalIdent().getText());
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
@@ -1248,8 +1253,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	@Override
 	public Result visitCallInst(final LLVMIRParser.CallInstContext ctx) {
 		final Result result = new Result();
-		final LlvmirLocation location = new LlvmirLocation(mFilename, ctx.getStart().getLine(), ctx.getStop().getLine(),
-				ctx.getStart().getCharPositionInLine(), ctx.getStop().getCharPositionInLine());
+		final LlvmirLocation location = constructLocation(ctx);
 
 		final String callIdentifier = ctx.value().constant().getText();
 		if (callIdentifier.equals("@__assert_fail") || callIdentifier.equals("@__VERIFIER_error")) {
