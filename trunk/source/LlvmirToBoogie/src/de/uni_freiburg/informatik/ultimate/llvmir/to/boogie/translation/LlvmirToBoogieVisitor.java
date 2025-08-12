@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -508,11 +509,14 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @param identifier The identifier for the local variable to be constructed.
 	 */
 	private static void constructHavocStatementFromTypeValue(final Result result,
-			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier) {
+			final LLVMIRParser.TypeValueContext typeValue, final LlvmirLocation location, final String identifier,
+			final String reason) {
 		final LLVMIRParser.ConcreteTypeContext tpyeContext = typeValue.firstClassType().concreteType();
 		result.addFuncLocalVar(constructVarDecFromTypeContext(tpyeContext, identifier, result, location));
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
 		final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
+		final Overapprox overapprox = new Overapprox(reason, location);
+		overapprox.annotate(havocStmt);
 		result.addFuncBlock(havocStmt);
 	}
 
@@ -1165,17 +1169,23 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Statement[] { elseAssignment });
 			result.addFuncBlock(ifStmt);
 		} else if (instructionType.andInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.andInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.andInst().typeValue(), location, identifier,
+					"andInst");
 		} else if (instructionType.orInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.orInst().typeValue(), location, identifier,
+					"orInst");
 		} else if (instructionType.xorInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.xorInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.xorInst().typeValue(), location, identifier,
+					"xorInst");
 		} else if (instructionType.shlInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.shlInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.shlInst().typeValue(), location, identifier,
+					"shlInst");
 		} else if (instructionType.aShrInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.aShrInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.aShrInst().typeValue(), location, identifier,
+					"aShrInst");
 		} else if (instructionType.lShrInst() != null) {
-			constructHavocStatementFromTypeValue(result, instructionType.lShrInst().typeValue(), location, identifier);
+			constructHavocStatementFromTypeValue(result, instructionType.lShrInst().typeValue(), location, identifier,
+					"lShrInst");
 		} else {
 			throw new AssertionError("The support for the given instruction is not implemented yet.");
 		}
