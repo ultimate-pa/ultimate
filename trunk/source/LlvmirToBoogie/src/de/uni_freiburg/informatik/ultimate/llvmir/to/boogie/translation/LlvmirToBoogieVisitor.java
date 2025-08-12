@@ -700,7 +700,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	@Override
 	public Result visitRetTerm(final LLVMIRParser.RetTermContext ctx) throws AssertionError {
 		final Result result = new Result();
-
 		final LlvmirLocation location = constructLocation(ctx);
 
 		if (ctx.value() == null) {
@@ -709,16 +708,15 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			result.addFuncBlock(returnStmt);
 		} else {
 			final LLVMIRParser.ConcreteTypeContext returnType = ctx.concreteType();
-			if (returnType.intType() != null) {
-				final VariableLHS returnVar = new VariableLHS(location, "ret");
-				final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
-						new LeftHandSide[] { returnVar },
-						new Expression[] { constructExpressionFromValue(ctx.value(), returnType, location) });
-				final ReturnStatement returnStmt = new ReturnStatement(location);
-				result.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
-			} else {
+			if (returnType.intType() == null) {
 				throw new AssertionError("The support for return types other than integers is not implemented yet.");
 			}
+			final VariableLHS returnVar = new VariableLHS(location, "ret");
+			final AssignmentStatement assignmentStmt = new AssignmentStatement(location,
+					new LeftHandSide[] { returnVar },
+					new Expression[] { constructExpressionFromValue(ctx.value(), returnType, location) });
+			final ReturnStatement returnStmt = new ReturnStatement(location);
+			result.addFuncBlocks(Arrays.asList(assignmentStmt, returnStmt));
 		}
 		return result;
 
@@ -774,30 +772,28 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 		if (instructionType.loadInst() != null) {
 			final LLVMIRParser.TypeContext variableType = instructionType.loadInst().type();
-			if (variableType.intType() != null) {
-				result.addFuncLocalVar(constructVarDecFromTypeContext(variableType, identifier, location));
-				final VariableLHS varLhs = new VariableLHS(location, identifier);
-
-				String loadVarIdentifier = null;
-				if (instructionType.loadInst().typeValue().value().LocalIdent() != null) {
-					loadVarIdentifier = unifyIdentifier(
-							instructionType.loadInst().typeValue().value().LocalIdent().getText());
-				} else if (instructionType.loadInst().typeValue().value().constant() != null) {
-					loadVarIdentifier = instructionType.loadInst().typeValue().value().constant().GlobalIdent()
-							.getText();
-				} else {
-					throw new AssertionError("Something went wrong while parsing the load instruction:");
-				}
-
-				final IdentifierExpression loadVarExpr = new IdentifierExpression(location,
-						unifyIdentifier(loadVarIdentifier));
-				final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-						new Expression[] { loadVarExpr });
-				result.addFuncBlock(assignment);
-			} else {
+			if (variableType.intType() == null) {
 				throw new AssertionError(
 						"The support for types other than integers in load instructions is not implemented yet.");
 			}
+			result.addFuncLocalVar(constructVarDecFromTypeContext(variableType, identifier, location));
+			final VariableLHS varLhs = new VariableLHS(location, identifier);
+
+			String loadVarIdentifier = null;
+			if (instructionType.loadInst().typeValue().value().LocalIdent() != null) {
+				loadVarIdentifier = unifyIdentifier(
+						instructionType.loadInst().typeValue().value().LocalIdent().getText());
+			} else if (instructionType.loadInst().typeValue().value().constant() != null) {
+				loadVarIdentifier = instructionType.loadInst().typeValue().value().constant().GlobalIdent().getText();
+			} else {
+				throw new AssertionError("Something went wrong while parsing the load instruction:");
+			}
+
+			final IdentifierExpression loadVarExpr = new IdentifierExpression(location,
+					unifyIdentifier(loadVarIdentifier));
+			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
+					new Expression[] { loadVarExpr });
+			result.addFuncBlock(assignment);
 		} else if (instructionType.iCmpInst() != null) {
 			result.addFuncLocalVar(constructVarDecFromString("bool", identifier, location));
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.iCmpInst().typeValue().firstClassType()
