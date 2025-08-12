@@ -387,9 +387,9 @@ public class MathLibraryModel implements ILibraryModel {
 		// see 7.12.12.2 or http://en.cppreference.com/w/c/numeric/math/fmax
 		result.add(new FunctionModel("fmax",
 				(main, node, loc, name) -> handleFmax(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
-		result.add(new FunctionModel("fmax",
+		result.add(new FunctionModel("fmaxf",
 				(main, node, loc, name) -> handleFmax(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
-		result.add(new FunctionModel("fmax",
+		result.add(new FunctionModel("fmaxl",
 				(main, node, loc, name) -> handleFmax(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
 		// see 7.12.12.3 or http://en.cppreference.com/w/c/numeric/math/fmin
