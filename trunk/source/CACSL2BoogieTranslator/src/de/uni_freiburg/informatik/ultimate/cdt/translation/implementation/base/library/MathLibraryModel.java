@@ -162,6 +162,17 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("nearbyintl", CPrimitives.LONGDOUBLE));
 
 		// http://en.cppreference.com/w/c/numeric/math/signbit
+		// TODO: Handle negative NaN correctly
+		// final Expression isNegative;
+		// final String smtFunctionName = "fp.isNegative";
+		// final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
+		// isNegative = rvalue.getValue();
+		//
+		// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
+		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
+		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
+		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
+		// return new RValue(resultExpr, cPrimitive);
 		result.add(new Pair<>("signbit", CPrimitives.INT));
 		result.add(new Pair<>("__signbit", CPrimitives.INT));
 		result.add(new Pair<>("__signbitl", CPrimitives.INT));
@@ -229,11 +240,27 @@ public class MathLibraryModel implements ILibraryModel {
 		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
 
 		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
+		// TODO: Only overapproximated until unsoundness can be investigated
 		result.add(new Pair<>("remainder", CPrimitives.DOUBLE));
 		result.add(new Pair<>("remainderf", CPrimitives.FLOAT));
 		result.add(new Pair<>("remainderl", CPrimitives.LONGDOUBLE));
 
 		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
+		// TODO: Handle negative NaN, check unsoundness
+		// if second is negative, return arithneg of abs(first), else return abs(first)
+		// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
+		// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
+		//
+		// final String smtNegativeFunctionName = "fp.isNegative";
+		// final RValue secondNegativeRvalue =
+		// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
+		// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
+		// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
+		// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
+		// absoluteValue.getValue(), resultType);
+		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
+		// negative, absoluteValue.getValue());
+		// return new RValue(resultExpr, resultType);
 		result.add(new Pair<>("copysign", CPrimitives.DOUBLE));
 		result.add(new Pair<>("copysignf", CPrimitives.FLOAT));
 		result.add(new Pair<>("copysignl", CPrimitives.LONGDOUBLE));
@@ -437,41 +464,6 @@ public class MathLibraryModel implements ILibraryModel {
 				(main, node, loc, name) -> handleFdim(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
 		result.add(new FunctionModel("fdiml",
 				(main, node, loc, name) -> handleFdim(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
-
-		// https://en.cppreference.com/w/c/numeric/math/copysign
-
-		// TODO: Handle negative NaN, check unsoundness
-		// if second is negative, return arithneg of abs(first), else return abs(first)
-		// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
-		// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
-		//
-		// final String smtNegativeFunctionName = "fp.isNegative";
-		// final RValue secondNegativeRvalue =
-		// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
-		// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
-		// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
-		// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
-		// absoluteValue.getValue(), resultType);
-		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
-		// negative, absoluteValue.getValue());
-		// return new RValue(resultExpr, resultType);
-
-		// https://en.cppreference.com/w/c/numeric/math/signbit
-
-		// TODO: Handle negative NaN correctly
-		// final Expression isNegative;
-		// final String smtFunctionName = "fp.isNegative";
-		// final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
-		// isNegative = rvalue.getValue();
-		//
-		// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
-		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
-		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
-		// return new RValue(resultExpr, cPrimitive);
-
-		// https://en.cppreference.com/w/c/numeric/math/remainder
-		// TODO: Remove until unsoundness can be investigated
 
 		/** various float builtins **/
 		result.add(new FunctionModel("nan",
