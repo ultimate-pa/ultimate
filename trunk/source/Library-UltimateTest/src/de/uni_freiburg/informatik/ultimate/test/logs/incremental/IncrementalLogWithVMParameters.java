@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
+import de.uni_freiburg.informatik.ultimate.version.UltimateVersion;
 
 public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 
@@ -72,7 +73,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 			sb.append(indent).append(String.format("Test Suite Parameters: Timeout=%s s", mDeadline / 1000))
 					.append(CoreUtil.getPlatformLineSeparator());
 			sb.append(indent).append("Ultimate Git: ");
-			final String version = CoreUtil.readGitVersion(getClass().getClassLoader());
+			final String version = UltimateVersion.getGitVersion();
 			if (version != null) {
 				sb.append(version);
 			} else {

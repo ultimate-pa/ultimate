@@ -25,9 +25,6 @@
 		<sonar-version>5.0.0.4389</sonar-version>
 		<!-- https://mvnrepository.com/artifact/org.jacoco/jacoco-maven-plugin -->
 		<jacoco-version>0.8.12</jacoco-version>
-		<!-- https://mvnrepository.com/artifact/io.github.git-commit-id/git-commit-id-maven-plugin -->
-		<!-- https://github.com/git-commit-id/git-commit-id-maven-plugin -->
-		<git-commit-id-version>9.0.1</git-commit-id-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-clean-plugin -->
 		<maven-clean-version>3.4.0</maven-clean-version>
 		<!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-antrun-plugin -->
@@ -219,52 +216,6 @@
 			</plugin>
 
 			<plugin>
-				<groupId>io.github.git-commit-id</groupId>
-				<artifactId>git-commit-id-maven-plugin</artifactId>
-				<version>${git-commit-id-version}</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>revision</goal>
-						</goals>
-						<phase>initialize</phase>
-					</execution>
-				</executions>
-
-				<configuration>
-					<generateGitPropertiesFile>true</generateGitPropertiesFile>
-					<generateGitPropertiesFilename>${workspaceDir}/CoreRCP/version.properties</generateGitPropertiesFilename>
-					<dotGitDirectory>${workspaceDir}/../../.git</dotGitDirectory>
-					<format>properties</format>
-					<useNativeGit>true</useNativeGit>
-
-					<skipPoms>false</skipPoms>
-					<runOnlyOnce>true</runOnlyOnce>
-					<commitIdGenerationMode>flat</commitIdGenerationMode>
-					<gitDescribe>
-						<skip>false</skip>
-						<!-- when the build is triggered while the repo is in "dirty state", 
-							append this suffix -->
-						<dirty>-m</dirty>
-						<!-- Only consider tags matching the given pattern. This can be used 
-							to avoid leaking private tags from the repository. -->
-						<match>*</match>
-						<tags>true</tags>
-					</gitDescribe>
-
-					<includeOnlyProperties>
-						<includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
-						<includeOnlyProperty>^git.commit.id.abbrev$</includeOnlyProperty>
-						<includeOnlyProperty>^git.dirty$</includeOnlyProperty>
-						<includeOnlyProperty>^git.build.version$</includeOnlyProperty>
-						<includeOnlyProperty>^git.branch$</includeOnlyProperty>
-					</includeOnlyProperties>
-
-				</configuration>
-			</plugin>
-
-
-			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-compiler-plugin</artifactId>
 				<version>${tycho-version}</version>
@@ -385,6 +336,7 @@
 		<module>../UltimateCLI</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../UltimateEliminatorController</module>
+		<module>../UltimateVersion</module>
 		<module>../WebBackend</module>
 		<module>../WitnessParser</module>
 		<module>../WitnessPrinter</module>
