@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class MathLibraryModel implements ILibraryModel {
 	// Number classification macros according to 7.12.6 of C11
 	private enum Classification {
-		NAN("FP_NAN", 0), INFINITE("FP_INFINITE", 1), ZERO("FPZERO", 2), SUBNORMAL("FP_SUBNORMAL", 3),
+		NAN("FP_NAN", 0), INFINITE("FP_INFINITE", 1), ZERO("FP_ZERO", 2), SUBNORMAL("FP_SUBNORMAL", 3),
 		NORMAL("FP_NORMAL", 4);
 
 		private final String mName;
