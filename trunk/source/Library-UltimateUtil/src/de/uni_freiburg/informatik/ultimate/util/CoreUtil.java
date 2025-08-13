@@ -56,7 +56,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -116,47 +115,6 @@ public class CoreUtil {
 			}
 		}
 		return sb.toString();
-	}
-
-	/**
-	 * @param cl
-	 *            A classloader that has access to version.properties (i.e., the one the core uses)
-	 * @return a string describing the state of the current git repository or null iff version.properties does not
-	 *         exist.
-	 */
-	public static String readGitVersion(final ClassLoader cl) {
-		final Properties properties = new Properties();
-		final String unknown = "?";
-		final String dirtyFormat = "%s-%s-m";
-		try {
-			final InputStream prop = cl.getResourceAsStream("version.properties");
-			if (prop == null) {
-				return String.format(dirtyFormat, unknown, unknown);
-			}
-			properties.load(prop);
-		} catch (final IOException e) {
-			return null;
-		}
-
-		final String branch = properties.getProperty("git.branch", unknown).replace('/', '.');
-		final String fullHash = properties.getProperty("git.commit.id", unknown).replace('/', '.');
-		final String hash = properties.getProperty("git.commit.id.abbrev", unknown);
-		final String dirty = properties.getProperty("git.dirty", unknown);
-
-		final String actualBranch;
-		if (fullHash.equals(branch)) {
-			actualBranch = unknown;
-		} else {
-			actualBranch = branch;
-		}
-
-		final String format;
-		if ("true".equals(dirty)) {
-			format = dirtyFormat;
-		} else {
-			format = "%s-%s";
-		}
-		return String.format(format, actualBranch, hash);
 	}
 
 	/**

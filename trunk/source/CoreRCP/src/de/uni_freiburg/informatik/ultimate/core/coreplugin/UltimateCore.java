@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.ep.UltimateExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.version.UltimateVersion;
 import jakarta.xml.bind.JAXBException;
 
 /**
@@ -421,7 +422,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		}
 
 		final String major = headers.get("Bundle-Version");
-		final String gitVersion = CoreUtil.readGitVersion(getClass().getClassLoader());
+		final String gitVersion = UltimateVersion.getGitVersion();
 		if (gitVersion == null) {
 			return major;
 		}
