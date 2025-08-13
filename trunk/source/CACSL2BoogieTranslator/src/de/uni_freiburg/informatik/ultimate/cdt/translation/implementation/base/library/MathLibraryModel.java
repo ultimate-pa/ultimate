@@ -162,17 +162,8 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("nearbyintl", CPrimitives.LONGDOUBLE));
 
 		// http://en.cppreference.com/w/c/numeric/math/signbit
-		// TODO: Handle negative NaN correctly
-		// final Expression isNegative;
-		// final String smtFunctionName = "fp.isNegative";
-		// final RValue rvalue = constructSmtFloatClassificationFunction(loc, smtFunctionName, argument);
-		// isNegative = rvalue.getValue();
-		//
-		// final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
-		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegative,
-		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ONE),
-		// mTypeSizes.constructLiteralForIntegerType(loc, cPrimitive, BigInteger.ZERO));
-		// return new RValue(resultExpr, cPrimitive);
+		// TODO: Handle negative NaN correctly, only overapproximated until then
+		// signbit(x) := isNegative(x) ? 1 : 0;
 		result.add(new Pair<>("signbit", CPrimitives.INT));
 		result.add(new Pair<>("__signbit", CPrimitives.INT));
 		result.add(new Pair<>("__signbitl", CPrimitives.INT));
@@ -246,24 +237,27 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("remainderl", CPrimitives.LONGDOUBLE));
 
 		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
-		// TODO: Handle negative NaN, check unsoundness
 		// if second is negative, return arithneg of abs(first), else return abs(first)
-		// final FloatFunction absfloatFunction = FloatFunction.decode("fabs");
-		// final RValue absoluteValue = constructOtherUnaryFloatOperation(loc, absfloatFunction, first);
-		//
-		// final String smtNegativeFunctionName = "fp.isNegative";
-		// final RValue secondNegativeRvalue =
-		// constructSmtFloatClassificationFunction(loc, smtNegativeFunctionName, second);
-		// final Expression isNegativeSecond = secondNegativeRvalue.getValue();
-		// final CPrimitive resultType = (CPrimitive) first.getCType().getUnderlyingType();
-		// final Expression negative = constructUnaryFloatingPointExpression(loc, IASTUnaryExpression.op_minus,
-		// absoluteValue.getValue(), resultType);
-		// final Expression resultExpr = ExpressionFactory.constructIfThenElseExpression(loc, isNegativeSecond,
-		// negative, absoluteValue.getValue());
-		// return new RValue(resultExpr, resultType);
+		// TODO: Handle negative NaN, check unsoundness
 		result.add(new Pair<>("copysign", CPrimitives.DOUBLE));
 		result.add(new Pair<>("copysignf", CPrimitives.FLOAT));
 		result.add(new Pair<>("copysignl", CPrimitives.LONGDOUBLE));
+
+		/**
+		 * 7.12.10.1 The fmod functions
+		 *
+		 * The fmod functions compute the floating-point remainder of x/y.
+		 *
+		 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has the
+		 * same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error occurs or the
+		 * fmod functions return zero is implementation- defined.
+		 */
+		// fmod guarantees that the return value is the same sign as the first argument (x)
+		// fmod(x,y) := copysign(remainder(x,y), x)
+		// TODO: Only overapproximated until unsoundness can be investigated
+		result.add(new Pair<>("fmod", CPrimitives.DOUBLE));
+		result.add(new Pair<>("fmodf", CPrimitives.FLOAT));
+		result.add(new Pair<>("fmodl", CPrimitives.LONGDOUBLE));
 
 		return result;
 	}
