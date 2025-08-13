@@ -164,7 +164,7 @@ public class CddToSmt {
 		return rtr;
 	}
 
-	private Term toSmtForRange(final int childIdx, final String varname, final int[] limits) {
+	public Term toSmtForRange(final int childIdx, final String varname, final int[] limits) {
 		final Term var = getTermVarTerm(varname);
 
 		if (childIdx == 0) {

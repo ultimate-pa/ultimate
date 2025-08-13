@@ -648,4 +648,13 @@ public class RtInconcistencyConditionGenerator {
 
 	}
 
+	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
+			final int rTIPreCheckRange, boolean preCheckFullSet, boolean onlyPreCheck) {
+		final RTInconsistencyPreCheck rtiPreCheck = new RTInconsistencyPreCheck();
+
+		// TODO Auto-generated method stub
+		return rtiPreCheck.doRtiPreCheck(reqPeas, mLogger, mScript, mCddToSmt, mServices, mManagedScript,
+				rTIPreCheckRange, preCheckFullSet, onlyPreCheck);
+	}
+
 }

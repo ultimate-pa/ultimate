@@ -59,7 +59,36 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_RT_INCONSISTENCY = "Check rt-inconsistency";
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
+	
+	public static final String LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK = "rt-inconsistency pre-check";
+	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK = false;
+	private static final String DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK = """
+			This settings makes a Pre-Check before the actual rt-inconsistency Check. This should reduce the time for the rt-inconsistency check""";
+	
+	
 
+	public static final String LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY = "rt-inconsistency pre-check only";
+	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY  = false;
+	private static final String DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY  = """
+			Disables the actual rt-inconsistency check and only uses the pre-check. This should be used for a fast check with possible false positives.""";
+	
+	
+	public static final String LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS = "number of chain-link requirements for rt-inconsistency";
+	private static final int DEF_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS = 0;
+	private static final String DESC_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS = """
+			This settings makes the range for chain link requirements for the rt-inconsistency check. The value is different from the rt-range, since
+			the size is counted diefferently. The rt-range is the number of requirements that are checked at once, while the chain-link requirements
+			is the size of the chain of requirements that are checked at once, with any additional number of requriements.\\
+		   	This setting overwrites the range set for the rt-inconsisteny check.
+			""";
+	
+	public static final String LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET= "Check full set";
+	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET = false;
+	private static final String DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET = """
+			This settings checks the complete set for rt-inconsicies. Warning: This can take a very long time!
+			""";
+	
+	
 	public static final String LABEL_GEN_FAILURE_PATH = "Generate failure path for rt-inconsistency";
 	private static final boolean DEF_GEN_FAILURE_PATH = false;
 	private static final String DESC_GEN_FAILURE_PATH = """
@@ -136,8 +165,20 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY, DEF_CHECK_RT_INCONSISTENCY,
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
-
+				new UltimatePreferenceItemGroup("Rt-Inconsistency Pre-Check",
+						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK, DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK,
+								DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS, DEF_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS,
+								DESC_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS,PreferenceType.Integer,
+								IUltimatePreferenceItemValidator.ONLY_POSITIVE),
+						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET, DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET,
+								DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK_FULL_SET, PreferenceType.Boolean),
+						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY,
+								DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY, DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK_ONLY,
+								PreferenceType.Boolean)
+						),
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",
+						
 						new UltimatePreferenceItem<>(LABEL_GEN_FAILURE_PATH, DEF_GEN_FAILURE_PATH,
 								DESC_GEN_FAILURE_PATH, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_USE_EPSILON, DEF_USE_EPSILON, DESC_USE_EPSILON,
