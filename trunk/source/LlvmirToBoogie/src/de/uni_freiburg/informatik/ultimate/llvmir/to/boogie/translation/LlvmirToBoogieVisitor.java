@@ -317,8 +317,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (valueContext.constant() != null) {
 			return constructExpressionFromConstant(valueContext.constant(), typeContext, location);
 		} else {
-			throw new AssertionError(
-					"The support for iCmp instructions with operands other than constants or local identifiers is not implemented yet.");
+			throw new AssertionError("Unsupported value type: " + valueContext.getText());
 		}
 	}
 
@@ -349,8 +348,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (constantContext.undefConst() != null) {
 			return new IdentifierExpression(location, mUndefIdentifier);
 		}
-		throw new AssertionError(
-				"The support for iCmp instructions with constant operands other than integers and booleans is not implemented yet.");
+		throw new AssertionError("Unsupported constant type: " + constantContext.getText());
 	}
 
 	/**
