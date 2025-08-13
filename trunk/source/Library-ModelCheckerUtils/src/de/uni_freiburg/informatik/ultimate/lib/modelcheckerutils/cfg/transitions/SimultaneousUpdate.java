@@ -126,10 +126,11 @@ public class SimultaneousUpdate {
 	}
 
 	public static SimultaneousUpdate fromTransFormula(final IUltimateServiceProvider services,
-			final UnmodifiableTransFormula tfIn,
+			final TransFormula tfIn,
 			final ManagedScript mgdScript) throws SimultaneousUpdateException {
 
-		final UnmodifiableTransFormula tf = TransFormulaUtils.transferTransformula(mgdScript, tfIn);
+		final UnmodifiableTransFormula tf =
+				TransFormulaUtils.transferTransformula(mgdScript, (UnmodifiableTransFormula) tfIn);
 
 		final Set<IProgramVar> havocedVars = new HashSet<>();
 		final Set<IProgramVar> assignmentCandidates = new HashSet<>();
