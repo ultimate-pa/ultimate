@@ -89,12 +89,15 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 	private static final boolean DEBUG_ONLY_FIRST_NON_TRIVIAL_RT_INCONSISTENCY = false;
 
+	private static final boolean RTI_PRE_CHECK = false;
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final PeaResultUtil mPeaResultUtil;
 	private final BoogieLocation mUnitLocation;
 
 	private boolean mCheckVacuity;
+	private boolean mRTIPreCheck;
 	private int mCombinationNum;
 	private boolean mCheckConsistency;
 	private boolean mCheckComplement;
@@ -130,6 +133,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// set preferences
 		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
+		mRTIPreCheck =  prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK);
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
 			final int length = mReqPeas.size();
@@ -354,8 +358,15 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		}
 
 		final List<Statement> stmtList = new ArrayList<>();
-		final List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = CrossProducts.subArrays(
+		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
+		if(!mRTIPreCheck) {
+			subsets = CrossProducts.subArrays(
 				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
+		} else {
+
+			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mCombinationNum);
+		}
+
 		int subsetsSize = subsets.size();
 		if (subsetsSize > 10000) {
 			mLogger.warn("Computing rt-inconsistency assertions for " + subsetsSize

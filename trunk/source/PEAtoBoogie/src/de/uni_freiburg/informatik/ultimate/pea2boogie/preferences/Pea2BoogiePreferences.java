@@ -59,6 +59,11 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_RT_INCONSISTENCY = "Check rt-inconsistency";
 	private static final boolean DEF_CHECK_RT_INCONSISTENCY = true;
 	private static final String DESC_CHECK_RT_INCONSISTENCY = null;
+	
+	public static final String LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK = "rt-inconsistency pre-check";
+	private static final boolean DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK = true;
+	private static final String DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK = """
+			This settings makes a Pre-Check before the actual rt-inconsistency Check. This should reduce the time for the rt-inconsistency check""";;
 
 	public static final String LABEL_GEN_FAILURE_PATH = "Generate failure path for rt-inconsistency";
 	private static final boolean DEF_GEN_FAILURE_PATH = false;
@@ -138,6 +143,8 @@ public class Pea2BoogiePreferences extends UltimatePreferenceInitializer {
 						DESC_CHECK_RT_INCONSISTENCY, PreferenceType.Boolean),
 
 				new UltimatePreferenceItemGroup("Rt-Inconsistency",
+						new UltimatePreferenceItem<>(LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK, DEF_CHECK_RT_INCONSISTENCY_PRE_CHECK,
+								DESC_CHECK_RT_INCONSISTENCY_PRE_CHECK, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_GEN_FAILURE_PATH, DEF_GEN_FAILURE_PATH,
 								DESC_GEN_FAILURE_PATH, PreferenceType.Boolean),
 						new UltimatePreferenceItem<>(LABEL_USE_EPSILON, DEF_USE_EPSILON, DESC_USE_EPSILON,
