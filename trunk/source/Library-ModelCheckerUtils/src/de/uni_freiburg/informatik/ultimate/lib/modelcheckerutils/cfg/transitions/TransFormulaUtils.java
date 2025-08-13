@@ -1326,7 +1326,7 @@ public final class TransFormulaUtils {
 		return sb.toString();
 	}
 
-	private static Set<TermVariable> transferSet(final Script script, final Set<TermVariable> inputSet) {
+	public static Set<TermVariable> transferSet(final Script script, final Set<TermVariable> inputSet) {
 		final Set<TermVariable> outSet = new HashSet<>();
 		for (final TermVariable var : inputSet) {
 			outSet.add((TermVariable) ((HistoryRecordingScript) script).transferTermToWorker(var));

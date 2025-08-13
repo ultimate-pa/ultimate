@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.errorabstraction.ErrorGeneralizationEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
@@ -98,7 +99,7 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
 
-	StrategyFactory<L> mStrategyFactory = null;
+
 	private final WorkerGeneralizationMode mGeneralize;
 	INestedWordAutomaton<L, IPredicate> mAbstraction;
 	private final HashMap<Integer, NestedRun<L, ?>> mCounterexamples = new HashMap<>();
@@ -388,38 +389,27 @@ public class CegarNWAContiuesIndependentWorkerThread<L extends IIcfgTransition<?
 	 */
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
 
-		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
-		// final PathProgramCache<L> mainCache = mMainThread.getCurrentProgramCache();
-		// cacheCopy.copyCache(mainCache);
+		final PathProgramCache<L> cacheNotNeeded = new PathProgramCache<>(mLogger);
 		final StrategyFactory<L> mStrategyFactory =
 				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheCopy);
+						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheNotNeeded);
 
-		final HashSet<L> pathProgramRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
 
 		final ITARefinementStrategy<L> strategy;
-		// if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
-		// final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
-		// // setup the strategy from getRefinementStrategy() such that the factory has the modules
-		// strategy =
-		// strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-		// new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-		// predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-		// mPref.getRefinementStrategy(), mainCach, parallelStrategy);
-		//
-		// // start worker
-		// return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed,
-		// mResultBuilder, mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory,
-		// predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-		// mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode, this, parallelStrategy.generalize(),
-		// mWorkerResultQueue, mWorkerTaskQueue);
-		// }
-		// setup up a default strategy for example CAMEL
-		strategy =
-				mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-						new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-						mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-						mPref.getRefinementStrategy(), cacheCopy);
+		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7) {
+			strategy =
+					mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+							RefinementStrategy.ACCELERATED_TRACE_CHECK, cacheNotNeeded);
+		} else {
+			strategy =
+					mStrategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
+							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+							mPref.getRefinementStrategy(), cacheNotNeeded);
+		}
+
 		return strategy;
 	}
 

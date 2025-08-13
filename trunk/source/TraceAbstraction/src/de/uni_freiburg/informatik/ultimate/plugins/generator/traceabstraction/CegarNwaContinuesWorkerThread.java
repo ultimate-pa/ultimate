@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
@@ -57,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IpTcStrategyModuleAcceleratedTraceCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.StrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
@@ -113,7 +113,7 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	private final ParallelNwaCegarLoop<L, A> mMainThread;
 
-	StrategyFactory<L> mStrategyFactory = null;
+	StrategyFactory<L> mStrategyFactory;
 	private final WorkerGeneralizationMode mGeneralize;
 
 	public CegarNwaContinuesWorkerThread(final ILogger logger, final TAPreferences pref, final int id,
@@ -140,7 +140,6 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 		mServices = services;
 		mCsToolkit = csToolkit;
 		mIcfg = icfg;
-		// mStrategyFactory = strategyFactory;
 		mTaCheckAndRefinementPrefs = taCheckAndRefinementPrefs;
 		mPredicateFactory = predicateFactory;
 		mPredicateFactoryInterpolantAutomata = predicateFactoryInterpolantAutomata;
@@ -160,6 +159,13 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 				throw new AssertionError(e);
 			}
 		});
+
+		final Thread.UncaughtExceptionHandler exhandler = (th, ex) -> {
+			// TODO seems to work not sure if it is usefull
+			mMainThread.reportFailedContinuesWorkerThread();
+		    System.out.println("Uncaught exception: " + ex);
+		};
+		workerThread.setUncaughtExceptionHandler(exhandler);
 		workerThread.start();
 	}
 
@@ -226,38 +232,25 @@ public class CegarNwaContinuesWorkerThread<L extends IIcfgTransition<?>, A exten
 	private ITARefinementStrategy<L> setUpStrategy(final Counterexample<L> counterexample) throws InterruptedException {
 
 
-		final PathProgramCache<L> cacheCopy = new PathProgramCache<>(mLogger);
-		final PathProgramCache<L> mainCache = mMainThread.getCurrentProgramCache();
-		cacheCopy.copyCache(mainCache);
-		final StrategyFactory<L> mStrategyFactory =
+		mStrategyFactory =
 				new StrategyFactory<>(mLogger, mPref, mTaCheckAndRefinementPrefs, mIcfg, mPredicateFactory,
-						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz, cacheCopy);
-
-		final HashSet<L> pathProgramRepresentative = new HashSet<>(mCounterexample.getWord().asSet());
+						mPredicateFactoryInterpolantAutomata, mMainThread.mTransitionClazz,
+						mMainThread.getCurrentProgramCache());
 
 		final ITARefinementStrategy<L> strategy;
-		// if (mPref.getRefinementStrategy().equals(RefinementStrategy.PARALLEL)) {
-		// final ParallelRefinementStrategy<L> parallelStrategy = mPpStrategyMap.get(pathProgramRepresentative);
-		// // setup the strategy from getRefinementStrategy() such that the factory has the modules
-		// strategy =
-		// strategyFactory.constructStrategy(getServices(), counterexample, mAbstraction,
-		// new SubtaskIterationIdentifier(mTaskIdentifier, getIteration()),
-		// predicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-		// mPref.getRefinementStrategy(), mainCach, parallelStrategy);
-		//
-		// // start worker
-		// return new CegarNwaWorkerThread<>(mLogger, mPref, mCounterexample, mAStarRandomHeuristicSeed,
-		// mResultBuilder, mCegarLoopBenchmark, iterationServices, freshToolKit, strategyFactory,
-		// predicateFactory, predicateFactoryInterpolantAutomata, stateFactoryForRefinement,
-		// mComputeHoareAnnotation, strategy, currentErrorLoc, mRootNode, this, parallelStrategy.generalize(),
-		// mWorkerResultQueue, mWorkerTaskQueue);
-		// }
-		// setup up a default strategy for example CAMEL
-		strategy =
-				mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
-						new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
-						mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
-						mPref.getRefinementStrategy(), cacheCopy);
+		if (mStrategyFactory.getPathProgramCache().getPathProgramCount(mCounterexample.getWord()) == 7) {
+			strategy =
+					mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+							RefinementStrategy.ACCELERATED_TRACE_CHECK);
+		} else {
+			strategy =
+					mStrategyFactory.constructStrategy(getServices(), counterexample, mMainThread.getAbstraction(),
+							new SubtaskIterationIdentifier(mMainThread.mTaskIdentifier, mIteration),
+							mPredicateFactoryInterpolantAutomata, getPreconditionProvider(), getPostconditionProvider(),
+							mPref.getRefinementStrategy());
+		}
 		return strategy;
 	}
 

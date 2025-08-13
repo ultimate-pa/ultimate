@@ -189,13 +189,12 @@ public class StrategyFactory<L extends IIcfgTransition<?>> {
 			final Counterexample<L> counterexample, final IAutomaton<L, IPredicate> abstraction,
 			final TaskIdentifier taskIdentifier, final IEmptyStackStateFactory<IPredicate> emptyStackFactory,
 			final IPreconditionProvider preconditionProvider, final IPostconditionProvider postconditionProvider,
-			final RefinementStrategy strategyType, final PathProgramCache<L> mainCache) {
+			final RefinementStrategy strategyType) {
 		final IPredicateUnifier predicateUnifier = constructPredicateUnifier(services);
 		final IPredicate precondition = preconditionProvider.constructPrecondition(predicateUnifier);
 		final IPredicate postcondition = postconditionProvider.constructPostcondition(predicateUnifier);
 		// Since we copy the cache, we need to add the cex to the main here and the copy in construct strategy
 		// However, not sure if we really need the copy but i think it thread safer this way
-		mainCache.addRun(counterexample.getWord());
 		return constructStrategy(services, counterexample, abstraction, taskIdentifier, emptyStackFactory,
 				predicateUnifier, precondition, postcondition, strategyType);
 	}

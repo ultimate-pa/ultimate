@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -301,20 +302,23 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		return new PQState(currentScore, returnPred, symbol, succ, state, activeCounterexamples, false, true);
 	}
 
-	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE succ, final LETTER symbol,
+	private boolean increaseScore(final NestedRun<LETTER, ?> counterexample, final STATE state, final STATE succ,
+			final LETTER symbol,
 			final int position) {
-		if (mNoLoopsMode && false) { // TODO this is bad we want a real no loop tracking and actually disalow loops for
-							// real
-			return increaseScoreNoLoops(counterexample, succ, symbol, position);
+		final boolean stateBasedScore = true;
+		if (stateBasedScore) {
+			return increaseScoreBasedOnStates(counterexample, succ);
 		}
-		return increaseScoreDefault(counterexample, succ, symbol, position);
+		return increaseScoreDefault(counterexample, state, succ, symbol, position);
 	}
 
 	/**
 	 * increases the score only if a previous counterexample took this edge * AND @position is equal to the position of
 	 * the @succ in the counterexample (Prefixes match)
+	 *
+	 * @param succ
 	 */
-	private boolean increaseScoreDefault(final NestedRun<LETTER, ?> counterexample, final STATE succ,
+	private boolean increaseScoreDefault(final NestedRun<LETTER, ?> counterexample, final STATE state, final STATE succ,
 			final LETTER symbol, final int position) {
 		if (counterexample.getLength() > position) {
 			IcfgLocation programPoint = null;
@@ -324,11 +328,22 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			} else {
 				throw new AssertionError("Unexpected Predicate");
 			}
-			final IcfgLocation a = ((ISLPredicate) succ).getProgramPoint();
-			// LoopEntryAnnotation
-			if (!mNoLoopsMode && a.getPayload().getAnnotations().containsKey("LoopEntryAnnotation")) {
-				// return false; //
-			}
+			final IcfgLocation a = ((ISLPredicate) state).getProgramPoint();
+			/*
+			 * We have the following problem:
+			 * If we have an edge that is a loop body, often for loop
+			 * Then it can be just one assume statement and a selfloop on the state.
+			 * We will detect this as diverging from previous cex and falsy claim we found a new cex
+			 * even tho it is semantically the same.
+			 */
+			/*
+			 * Solution, if we have a loop. One more iteration does not count as "new counterexample"
+			 * So the cost has to be the same at the loop head, if we already entered once!
+			 */
+
+			// if (a.getPayload().getAnnotations().containsKey(LoopEntryAnnotation.class.getName())) {
+			// return true;
+			// }
 			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
 				if (symbol == counterexample.getSymbol(position - 1)) {
 					return true;
@@ -346,19 +361,11 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	 *
 	 * Might save CPU time but not good, we want to use multiple thread per PathProgram
 	 */
-	private boolean increaseScoreNoLoops(final NestedRun<LETTER, ?> counterexample, final STATE succ,
-			final LETTER symbol, final int position) {
-		for (int i = 0; i < counterexample.getLength(); i++) {
-			IcfgLocation programPoint = null;
-			final STATE stateInCEx = (STATE) counterexample.getStateAtPosition(i);
-			if (stateInCEx instanceof ISLPredicate) {
-				programPoint = ((ISLPredicate) stateInCEx).getProgramPoint();
-			} else {
-				throw new AssertionError("Unexpected Predicate");
-			}
-			if (programPoint.equals(((ISLPredicate) succ).getProgramPoint())) {
-				return true;
-			}
+	private boolean increaseScoreBasedOnStates(final NestedRun<LETTER, ?> counterexample, final STATE succ) {
+
+		final Set<?> stateSet = new HashSet<>(counterexample.getStateSequence());
+		if (stateSet.contains(succ)) {
+			return true;
 		}
 		return false;
 	}
@@ -371,7 +378,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScore(counterexample, succ, symbol, position)) {
+			if (increaseScore(counterexample, state, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -388,7 +395,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScore(counterexample, succ, symbol, position)) {
+			if (increaseScore(counterexample, state, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -405,7 +412,7 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 		int currentScore = 0;
 		for (final int cexHash : counterexamples) {
 			final NestedRun<LETTER, ?> counterexample = mActiveCounterexamples.get(cexHash);
-			if (increaseScore(counterexample, succ, symbol, position)) {
+			if (increaseScore(counterexample, state, succ, symbol, position)) {
 				currentScore += 1;
 				activeCounterexamples.add(cexHash);
 			}
@@ -422,6 +429,9 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 	private PriorityQueue<PQState> pickSuccToExplore(final int position, final STATE state, final STATE stateK,
 			final ArrayList<Integer> counterexamples) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));
+
+
+
 		if (mSummaryReturnPred.containsKey(state)) {
 			if (!mSummaryReturnSymbol.containsKey(state)) {
 				throw new AssertionError("Summary Failed");
@@ -433,45 +443,79 @@ public final class IsEmptyParallel<LETTER, STATE> extends IsEmpty<LETTER, STATE>
 			// after we process a summary we must not process the return anymore!!
 			return pq;
 		}
-		for (final OutgoingInternalTransition<LETTER, STATE> transition : mOperand.internalSuccessors(state)) {
+
+		boolean firstIteration = true;
+		final Iterator<OutgoingInternalTransition<LETTER, STATE>> internalIterator = mOperand.internalSuccessors(state).iterator();
+		while (internalIterator.hasNext()) {
+			final OutgoingInternalTransition<LETTER, STATE> transition =
+					internalIterator.next();
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ)) && notInPrefixOfCurrentSearch(succ)) {
+			if (mForbiddenStates.contains(succ) || isLoopsInNoLoopMode(succ)) {
+				continue;
+			}
+			if (firstIteration && !internalIterator.hasNext()) {
+				pq.add(new PQState(1, state, transition.getLetter(), transition.getSucc(), stateK, counterexamples,
+						false, false));
+			} else {
 				pq.add(getSuccOfInternal(transition, position, state, stateK, counterexamples));
 			}
+			firstIteration = false;
 		}
 
-		for (final OutgoingCallTransition<LETTER, STATE> transition : mOperand.callSuccessors(state)) {
+		final Iterator<OutgoingCallTransition<LETTER, STATE>> callIterator = mOperand.callSuccessors(state).iterator();
+		while (callIterator.hasNext()) {
+			final OutgoingCallTransition<LETTER, STATE> transition = callIterator.next();
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ)) && notInPrefixOfCurrentSearch(succ)) {
+			if (mForbiddenStates.contains(succ) || isLoopsInNoLoopMode(succ)) {
+				continue;
+			}
+			if (firstIteration && !callIterator.hasNext()) {
+				pq.add(new PQState(1, state, transition.getLetter(), transition.getSucc(), stateK, counterexamples,
+						true, false));
+			} else {
 				pq.add(getSuccOfCall(transition, position, state, stateK, counterexamples));
 			}
+			firstIteration = false;
 		}
+
 
 		if (stateK == mOperand.getEmptyStackState()) {
 			// there is no return transition
 			return pq;
 		}
-		for (final OutgoingReturnTransition<LETTER, STATE> transition : mOperand.returnSuccessorsGivenHier(state,
-				stateK)) {
+
+		final Iterator<OutgoingReturnTransition<LETTER, STATE>> returnIterator =
+				mOperand.returnSuccessorsGivenHier(state, stateK).iterator();
+		while (returnIterator.hasNext()) {
+			final OutgoingReturnTransition<LETTER, STATE> transition = returnIterator.next();
 			final STATE succ = transition.getSucc();
-			if ((!mForbiddenStates.contains(succ)) && notInPrefixOfCurrentSearch(succ)) {
-				for (final STATE stateKk : getCallStatesOfCallState(stateK)) {
-					pq.add(getSuccOfReturn(transition, position, state, stateKk, counterexamples));
-				}
+			if (mForbiddenStates.contains(succ) || isLoopsInNoLoopMode(succ)) {
+				continue;
 			}
+			if (firstIteration && !returnIterator.hasNext()) {
+				pq.add(new PQState(1, state, transition.getLetter(), transition.getSucc(), stateK, counterexamples,
+						false, true));
+			} else {
+				pq.add(getSuccOfReturn(transition, position, state, stateK, counterexamples));
+			}
+			firstIteration = false;
 		}
+
+
 		return pq;
 	}
 
 	/*
 	 * True, if we visited this state before during our search and it is in the prefix we currently consider
 	 */
-	private boolean notInPrefixOfCurrentSearch(final STATE succ) {
-		if (!mNoLoopsMode) {
-			return true;
+	private boolean isLoopsInNoLoopMode(final STATE succ) {
+		if (mNoLoopsMode) {
+			return mCurrentPrefix.contains(succ);
 		}
-		return !mCurrentPrefix.contains(succ);
+		return false;
 	}
+
+
 
 	private PriorityQueue<PQState> pickStartToExplore(final Collection<STATE> states, final Set<Integer> set) {
 		final PriorityQueue<PQState> pq = new PriorityQueue<>(Comparator.comparingInt(PQState::getScore));

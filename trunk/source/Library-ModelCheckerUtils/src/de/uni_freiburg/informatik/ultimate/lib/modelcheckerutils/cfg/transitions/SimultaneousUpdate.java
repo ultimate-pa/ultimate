@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.scripttransfer.HistoryRecordingScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
@@ -124,8 +125,12 @@ public class SimultaneousUpdate {
 		mReadonlyVars = readonlyVars;
 	}
 
-	public static SimultaneousUpdate fromTransFormula(final IUltimateServiceProvider services, final TransFormula tf,
+	public static SimultaneousUpdate fromTransFormula(final IUltimateServiceProvider services,
+			final UnmodifiableTransFormula tfIn,
 			final ManagedScript mgdScript) throws SimultaneousUpdateException {
+
+		final UnmodifiableTransFormula tf = TransFormulaUtils.transferTransformula(mgdScript, tfIn);
+
 		final Set<IProgramVar> havocedVars = new HashSet<>();
 		final Set<IProgramVar> assignmentCandidates = new HashSet<>();
 		final Set<IProgramVar> unmodifiedVars = new HashSet<>();
@@ -170,9 +175,14 @@ public class SimultaneousUpdate {
 					deterministicAssignment.put(pv, boolConst);
 				} else {
 					// extract
-					final TermVariable outVar = tf.getOutVars().get(pv);
+					TermVariable outVar = tf.getOutVars().get(pv);
+					outVar =
+							(TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+									.transferTermToWorker(outVar);
 					final Triple<Term, NondetArrayWriteConstraints, Set<ExtractionImpediments>> rhs =
-							extractUpdateRhs(services, outVar, tf, inVarsReverseMapping.keySet(), mgdScript);
+							extractUpdateRhs(services, outVar, tf,
+									TransFormulaUtils.transferSet(mgdScript.getScript(), inVarsReverseMapping.keySet()),
+									mgdScript);
 					assert rhs.getFirst() == null ^ rhs.getThird() == null;
 					if (rhs.getThird() != null) {
 						throw new SimultaneousUpdateException(String.format(
@@ -318,12 +328,21 @@ public class SimultaneousUpdate {
 								updateImpediments.add(ExtractionImpediments.NORHSARRAY);
 								continue;
 							}
-							final Term withoutInvars = TransFormulaUtils.renameInvarsToDefaultVars(tf, mgdScript,
+							Term withoutInvars =
+									TransFormulaUtils.renameInvarsToDefaultVars(tf, mgdScript,
 									nondetUpdate.getFirst().toTerm(mgdScript.getScript()));
+							withoutInvars =
+									((HistoryRecordingScript) mgdScript.getScript())
+											.transferTermToWorker(withoutInvars);
 							// Additionally, we have to rename the outVar which occurs in the value of the
 							// nondeterministic updates.
-							final TermVariable defaultVar =
+							TermVariable defaultVar =
 									TransFormulaUtils.constructOutvarsToDefaultvarsMap(tf).get(outVar);
+
+							defaultVar =
+									(TermVariable) ((HistoryRecordingScript) mgdScript.getScript())
+											.transferTermToWorker(defaultVar);
+
 							final Term renamed = Substitution.apply(mgdScript,
 									Collections.singletonMap(outVar, defaultVar), withoutInvars);
 							return new Triple<>(renamed, nondetUpdate.getSecond(), null);

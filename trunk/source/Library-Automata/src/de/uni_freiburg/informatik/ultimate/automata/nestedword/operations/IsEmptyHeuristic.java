@@ -498,6 +498,7 @@ public final class IsEmptyHeuristic<LETTER, STATE> extends UnaryNwaOperation<LET
 				.internalSuccessors(current.mTargetState)) {
 			final LETTER symbol = transition.getLetter();
 			final STATE succ = transition.getSucc();
+
 			if (mIsForbiddenState.test(succ) || visited.contains(new Pair<>(current.mTargetState, symbol))
 					|| !followingWayPoint(succ, symbol)) {
 				continue;
