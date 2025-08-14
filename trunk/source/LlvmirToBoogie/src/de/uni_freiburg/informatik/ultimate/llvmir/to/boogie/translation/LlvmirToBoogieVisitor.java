@@ -341,8 +341,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			}
 			final int bitLength = getBitLengthFromType(typeContext);
 			final int constValue = Integer.parseInt(constantContext.intConst().getText());
-			final int modValue = euclideanMod(constValue, bitLength);
-			return new IntegerLiteral(location, Integer.toString(modValue));
+			final long modValue = euclideanMod(constValue, bitLength);
+			return new IntegerLiteral(location, Long.toString(modValue));
 		} else if (constantContext.boolConst() != null) {
 			return new BooleanLiteral(location, constantContext.boolConst().getText().equals("true"));
 		} else if (constantContext.undefConst() != null) {
@@ -361,8 +361,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 * @param bitLength The bit length for the modulus operation.
 	 * @return The non-negative modulus of the value with respect to 2^bitLength.
 	 */
-	public static int euclideanMod(final int value, final int bitLength) {
-		final int modulus = 1 << bitLength;
+	public static long euclideanMod(final int value, final int bitLength) {
+		final long modulus = 1L << (bitLength - 1);
 		return ((value % modulus) + modulus) % modulus;
 	}
 
@@ -385,7 +385,24 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			return Integer.parseInt(typeString.substring(1));
 		}
 		throw new AssertionError("Unsupported type context for bit length extraction.");
+	}
 
+	/**
+	 * Constructs a bit length literal based on the provided bit length.
+	 *
+	 * This method creates an IntegerLiteral that represents the maximum value for the specified bit length, which is
+	 * calculated as 2^(bitLength - 1).
+	 *
+	 * @param location  The location in the source code where this literal is defined.
+	 * @param bitLength The bit length for which to construct the literal.
+	 * @return An IntegerLiteral representing the maximum value for the specified bit length.
+	 * @throws AssertionError if the bit length is not a positive integer.
+	 */
+	private static IntegerLiteral constructBitLengthLiteral(final LlvmirLocation location, final int bitLength) {
+		if (bitLength <= 0) {
+			throw new AssertionError("Bit length must be a positive integer.");
+		}
+		return new IntegerLiteral(location, Long.toString(1L << bitLength - 1));
 	}
 
 	/**
@@ -517,9 +534,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	private static Expression constructSignedExpression(final Expression expr, final int bitLength,
 			final LlvmirLocation location) {
-		final IntegerLiteral condLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength - 1));
-		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, condLiteral);
-		final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+		final IntegerLiteral maxValueLiteral = new IntegerLiteral(location, Long.toString((1L << (bitLength - 1)) - 1));
+		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, maxValueLiteral);
+		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, bitLengthLiteral);
 		final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, binaryExpr, thenExpr, expr);
 		return ifThenElseExpr;
@@ -887,8 +904,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final int oldBitLength = getBitLengthFromType(oldTypeContext);
 				final int newBitLength = getBitLengthFromType(newTypeContext);
-				final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location,
-						Integer.toString(1 << newBitLength));
+				final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, newBitLength);
 				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD,
 						constructSignedExpression(
 								constructExpressionFromValue(instructionType.sExtInst().typeValue().value(),
@@ -910,7 +926,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression rightExpr = constructExpressionFromValue(instructionType.addInst().value(), typeContext,
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHPLUS, leftExpr, rightExpr);
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, binaryExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
@@ -954,7 +970,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Expression[] { ifThenElseExpr });
 			result.addFuncBlock(assignment2);
 
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHMOD, identifierExpr,
 					bitLengthLiteral);
 			final VariableLHS varLhs3 = new VariableLHS(location, identifier);
@@ -972,7 +988,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression rightExpr = constructExpressionFromValue(instructionType.uDivInst().value(), typeContext,
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHDIV, leftExpr, rightExpr);
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, binaryExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
@@ -989,7 +1005,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression rightExpr = constructExpressionFromValue(instructionType.uRemInst().value(), typeContext,
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMOD, leftExpr, rightExpr);
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, binaryExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
@@ -1043,7 +1059,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Statement[] {});
 			result.addFuncBlock(ifStmt2);
 
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression binaryExpr4 = new BinaryExpression(location, Operator.ARITHMOD, identifierExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
@@ -1061,7 +1077,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMINUS, leftExpr,
 					rightExpr);
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, binaryExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
@@ -1078,7 +1094,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			final Expression rightExpr = constructExpressionFromValue(instructionType.mulInst().value(), typeContext,
 					location);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHMUL, leftExpr, rightExpr);
-			final IntegerLiteral bitLengthLiteral = new IntegerLiteral(location, Integer.toString(1 << bitLength));
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, binaryExpr,
 					bitLengthLiteral);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
