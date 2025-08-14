@@ -129,126 +129,9 @@ public class MathLibraryModel implements ILibraryModel {
 		mAuxVarInfoBuilder = auxVarInfoBuilder;
 	}
 
-	private static List<Pair<String, CPrimitives>> getOverapproximatedUnaryFunctions() {
-		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
-
-		// https://en.cppreference.com/w/c/numeric/math/log1p
-		result.add(new Pair<>("log1p", CPrimitives.DOUBLE));
-		result.add(new Pair<>("log1pf", CPrimitives.FLOAT));
-		result.add(new Pair<>("log1pl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/atanh
-		result.add(new Pair<>("atanh", CPrimitives.DOUBLE));
-		result.add(new Pair<>("atanhf", CPrimitives.FLOAT));
-		result.add(new Pair<>("atanhl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/asin
-		result.add(new Pair<>("asin", CPrimitives.DOUBLE));
-		result.add(new Pair<>("asinf", CPrimitives.FLOAT));
-		result.add(new Pair<>("asinl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/acos
-		result.add(new Pair<>("acos", CPrimitives.DOUBLE));
-		result.add(new Pair<>("acosf", CPrimitives.FLOAT));
-		result.add(new Pair<>("acosl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/atan
-		result.add(new Pair<>("atan", CPrimitives.DOUBLE));
-		result.add(new Pair<>("atanf", CPrimitives.FLOAT));
-		result.add(new Pair<>("atanl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/atan2
-		result.add(new Pair<>("atan2", CPrimitives.DOUBLE));
-		result.add(new Pair<>("atan2f", CPrimitives.FLOAT));
-		result.add(new Pair<>("atan2l", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/tan
-		result.add(new Pair<>("tan", CPrimitives.DOUBLE));
-		result.add(new Pair<>("tanf", CPrimitives.FLOAT));
-		result.add(new Pair<>("tanl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/cosh
-		result.add(new Pair<>("cosh", CPrimitives.DOUBLE));
-		result.add(new Pair<>("coshf", CPrimitives.FLOAT));
-		result.add(new Pair<>("coshl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/sinh
-		result.add(new Pair<>("sinh", CPrimitives.DOUBLE));
-		result.add(new Pair<>("sinhf", CPrimitives.FLOAT));
-		result.add(new Pair<>("sinhl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/acosh
-		result.add(new Pair<>("acosh", CPrimitives.DOUBLE));
-		result.add(new Pair<>("acoshf", CPrimitives.FLOAT));
-		result.add(new Pair<>("acoshl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/asinh
-		result.add(new Pair<>("asinh", CPrimitives.DOUBLE));
-		result.add(new Pair<>("asinhf", CPrimitives.FLOAT));
-		result.add(new Pair<>("asinhl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/log10
-		result.add(new Pair<>("log10", CPrimitives.DOUBLE));
-		result.add(new Pair<>("log10f", CPrimitives.FLOAT));
-		result.add(new Pair<>("log10l", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/logb
-		result.add(new Pair<>("logb", CPrimitives.DOUBLE));
-		result.add(new Pair<>("logbf", CPrimitives.FLOAT));
-		result.add(new Pair<>("logbl", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/exp2
-		result.add(new Pair<>("exp2", CPrimitives.DOUBLE));
-		result.add(new Pair<>("exp2f", CPrimitives.FLOAT));
-		result.add(new Pair<>("exp2l", CPrimitives.LONGDOUBLE));
-
-		// http://en.cppreference.com/w/c/numeric/math/log2
-		result.add(new Pair<>("log2", CPrimitives.DOUBLE));
-		result.add(new Pair<>("log2f", CPrimitives.FLOAT));
-		result.add(new Pair<>("log2l", CPrimitives.LONGDOUBLE));
-
-		return result;
-	}
-
-	private static List<Pair<String, CPrimitives>> getOverapproximatedBinaryFunctions() {
-		final List<Pair<String, CPrimitives>> result = new ArrayList<>();
-
-		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
-		// TODO: Only overapproximated until unsoundness can be investigated
-		result.add(new Pair<>("remainder", CPrimitives.DOUBLE));
-		result.add(new Pair<>("remainderf", CPrimitives.FLOAT));
-		result.add(new Pair<>("remainderl", CPrimitives.LONGDOUBLE));
-
-		/**
-		 * 7.12.10.1 The fmod functions
-		 *
-		 * The fmod functions compute the floating-point remainder of x/y.
-		 *
-		 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has the
-		 * same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error occurs or the
-		 * fmod functions return zero is implementation- defined.
-		 */
-		// fmod guarantees that the return value is the same sign as the first argument (x)
-		// fmod(x,y) := copysign(remainder(x,y), x)
-		// TODO: Only overapproximated until unsoundness can be investigated
-		result.add(new Pair<>("fmod", CPrimitives.DOUBLE));
-		result.add(new Pair<>("fmodf", CPrimitives.FLOAT));
-		result.add(new Pair<>("fmodl", CPrimitives.LONGDOUBLE));
-
-		return result;
-	}
-
 	@Override
 	public Collection<FunctionModel> getFunctionModels() {
 		final List<FunctionModel> result = new ArrayList<>();
-		for (final var overapprox : getOverapproximatedUnaryFunctions()) {
-			result.add(new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> mHelper
-					.handleByOverapproximation(main, node, loc, name, 1, new CPrimitive(overapprox.getSecond()))));
-		}
-		for (final var overapprox : getOverapproximatedBinaryFunctions()) {
-			result.add(new FunctionModel(overapprox.getFirst(), (main, node, loc, name) -> mHelper
-					.handleByOverapproximation(main, node, loc, name, 2, new CPrimitive(overapprox.getSecond()))));
-		}
 
 		// see 7.12.7.5 or http://en.cppreference.com/w/c/numeric/math/sqrt
 		result.add(new FunctionModel("sqrt",
@@ -526,6 +409,34 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("islessequal", this::handleIsLessEqual));
 		result.add(new FunctionModel("isunordered", this::handleIsUnordered));
 		result.add(new FunctionModel("islessgreater", this::handleIsLessGreater));
+
+		// see 7.12.10.2 or http://en.cppreference.com/w/c/numeric/math/remainder
+		// TODO: Only overapproximated until unsoundness can be investigated
+		result.add(new FunctionModel("remainder", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
+				node, loc, name, 2, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("remainderf", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
+				node, loc, name, 2, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("remainderl", (main, node, loc, name) -> mHelper.handleByOverapproximation(main,
+				node, loc, name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
+
+		/**
+		 * 7.12.10.1 The fmod functions
+		 *
+		 * The fmod functions compute the floating-point remainder of x/y.
+		 *
+		 * The fmod functions return the value x − ny, for some integer n such that, if y is nonzero, the result has the
+		 * same sign as x and magnitude less than the magnitude of y. If y is zero, whether a domain error occurs or the
+		 * fmod functions return zero is implementation- defined.
+		 */
+		// fmod guarantees that the return value is the same sign as the first argument (x)
+		// fmod(x,y) := copysign(remainder(x,y), x)
+		// TODO: Only overapproximated until unsoundness can be investigated
+		result.add(new FunctionModel("fmod", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("fmodf", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("fmodl", (main, node, loc, name) -> mHelper.handleByOverapproximation(main, node,
+				loc, name, 2, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
 		return result;
 	}
