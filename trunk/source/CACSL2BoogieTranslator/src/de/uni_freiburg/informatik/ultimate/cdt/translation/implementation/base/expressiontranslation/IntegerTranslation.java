@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.FlatSy
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -787,7 +786,7 @@ public class IntegerTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression roundToIntegral(final ILocation loc, final Expression argument, final CPrimitive type,
-			final SmtRoundingMode roundingMode) {
+			final Expression roundingMode) {
 		throw new UnsupportedOperationException(NOT_IMPLEMENTED);
 	}
 

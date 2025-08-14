@@ -282,54 +282,57 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("sqrtl",
 				(main, node, loc, name) -> handleSqrt(main, node, loc, name, new CPrimitive(CPrimitives.LONGDOUBLE))));
 
+		final Expression roundTowardsZero = SmtRoundingMode.RTZ.getBoogieIdentifierExpression();
+		final Expression roundTowardsNegative = SmtRoundingMode.RTN.getBoogieIdentifierExpression();
+		final Expression roundTowardsPositive = SmtRoundingMode.RTP.getBoogieIdentifierExpression();
+		final Expression roundToNearest = SmtRoundingMode.RNA.getBoogieIdentifierExpression();
+
 		// see 7.12.9.8 or http://en.cppreference.com/w/c/numeric/math/trunc
 		result.add(new FunctionModel("trunc", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RTZ)));
+				new CPrimitive(CPrimitives.DOUBLE), roundTowardsZero)));
 		result.add(new FunctionModel("truncf", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RTZ)));
+				new CPrimitive(CPrimitives.FLOAT), roundTowardsZero)));
 		result.add(new FunctionModel("truncl", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RTZ)));
+				new CPrimitive(CPrimitives.LONGDOUBLE), roundTowardsZero)));
 
 		// see 7.12.9.2 or http://en.cppreference.com/w/c/numeric/math/floor
 		result.add(new FunctionModel("floor", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RTN)));
+				new CPrimitive(CPrimitives.DOUBLE), roundTowardsNegative)));
 		result.add(new FunctionModel("floorf", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RTN)));
+				new CPrimitive(CPrimitives.FLOAT), roundTowardsNegative)));
 		result.add(new FunctionModel("floorl", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RTN)));
+				new CPrimitive(CPrimitives.LONGDOUBLE), roundTowardsNegative)));
 
 		// see 7.12.9.1 or http://en.cppreference.com/w/c/numeric/math/ceil
 		result.add(new FunctionModel("ceil", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RTP)));
+				new CPrimitive(CPrimitives.DOUBLE), roundTowardsPositive)));
 		result.add(new FunctionModel("ceilf", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RTP)));
+				new CPrimitive(CPrimitives.FLOAT), roundTowardsPositive)));
 		result.add(new FunctionModel("ceill", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RTP)));
+				new CPrimitive(CPrimitives.LONGDOUBLE), roundTowardsPositive)));
 
 		// see 7.12.9.6 or http://en.cppreference.com/w/c/numeric/math/round
 		result.add(new FunctionModel("round", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.DOUBLE), SmtRoundingMode.RNA)));
+				new CPrimitive(CPrimitives.DOUBLE), roundToNearest)));
 		result.add(new FunctionModel("roundf", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.FLOAT), SmtRoundingMode.RNA)));
+				new CPrimitive(CPrimitives.FLOAT), roundToNearest)));
 		result.add(new FunctionModel("roundl", (main, node, loc, name) -> handleRound(main, node, loc, name,
-				new CPrimitive(CPrimitives.LONGDOUBLE), SmtRoundingMode.RNA)));
+				new CPrimitive(CPrimitives.LONGDOUBLE), roundToNearest)));
 
 		// see 7.12.9.7 or http://en.cppreference.com/w/c/numeric/math/round
 		result.add(new FunctionModel("lround", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
-				name, new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONG), SmtRoundingMode.RNA)));
+				name, new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONG), roundToNearest)));
 		result.add(new FunctionModel("lroundf", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
-				name, new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONG), SmtRoundingMode.RNA)));
+				name, new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONG), roundToNearest)));
 		result.add(new FunctionModel("lroundl", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
-				name, new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONG), SmtRoundingMode.RNA)));
+				name, new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONG), roundToNearest)));
 		result.add(new FunctionModel("llround", (main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc,
-				name, new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONGLONG), SmtRoundingMode.RNA)));
-		result.add(new FunctionModel("llroundf",
-				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
-						new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONGLONG), SmtRoundingMode.RNA)));
+				name, new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONGLONG), roundToNearest)));
+		result.add(new FunctionModel("llroundf", (main, node, loc, name) -> handleRoundWithIntConversion(main, node,
+				loc, name, new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONGLONG), roundToNearest)));
 		result.add(new FunctionModel("llroundl",
 				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
-						new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONGLONG),
-						SmtRoundingMode.RNA)));
+						new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONGLONG), roundToNearest)));
 
 		// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
 		result.add(new FunctionModel("fabs",
@@ -660,7 +663,7 @@ public class MathLibraryModel implements ILibraryModel {
 	}
 
 	private ExpressionResult handleRound(final IDispatcher main, final IASTFunctionCallExpression node,
-			final ILocation loc, final String name, final CPrimitive type, final SmtRoundingMode roundingMode) {
+			final ILocation loc, final String name, final CPrimitive type, final Expression roundingMode) {
 		final ExpressionResult argumentResult = handleFloatArguments(main, node, loc, name, 1, type).getFirst();
 		return new ExpressionResultBuilder().addAllExceptLrValue(argumentResult).setLrValue(new RValue(
 				mExpressionTranslation.roundToIntegral(loc, argumentResult.getLrValue().getValue(), type, roundingMode),
@@ -669,7 +672,7 @@ public class MathLibraryModel implements ILibraryModel {
 
 	private ExpressionResult handleRoundWithIntConversion(final IDispatcher main, final IASTFunctionCallExpression node,
 			final ILocation loc, final String name, final CPrimitive type, final CPrimitive resultType,
-			final SmtRoundingMode roundingMode) {
+			final Expression roundingMode) {
 		return mExpressionTranslation.convertFloatToInt(loc, handleRound(main, node, loc, name, type, roundingMode),
 				resultType);
 	}

@@ -1276,13 +1276,12 @@ public class BitvectorTranslation extends ExpressionTranslation {
 
 	@Override
 	public Expression roundToIntegral(final ILocation loc, final Expression argument, final CPrimitive type,
-			final SmtRoundingMode roundingMode) {
+			final Expression roundingMode) {
 		final String smtFunctionName = "fp.roundToIntegral";
 		declareFloatingPointFunction(loc, smtFunctionName, false, true, type, type);
 		final String boogieFunctionName = getBoogieFunctionName(smtFunctionName, type);
 		return ExpressionFactory.constructFunctionApplication(loc, boogieFunctionName,
-				new Expression[] { roundingMode.getBoogieIdentifierExpression(), argument },
-				mTypeHandler.getBoogieTypeForCType(type));
+				new Expression[] { roundingMode, argument }, mTypeHandler.getBoogieTypeForCType(type));
 	}
 
 	@Override

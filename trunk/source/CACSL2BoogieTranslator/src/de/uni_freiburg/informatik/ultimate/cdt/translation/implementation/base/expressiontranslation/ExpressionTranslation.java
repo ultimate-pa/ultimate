@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation.SmtRoundingMode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.AuxVarInfoBuilder;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -546,7 +545,7 @@ public abstract class ExpressionTranslation {
 	public abstract Expression convertInfinitePrecisionExpression(ILocation loc, Expression exp, CPrimitive type);
 
 	public abstract Expression roundToIntegral(ILocation loc, Expression argument, CPrimitive type,
-			SmtRoundingMode roundingMode);
+			Expression roundingMode);
 
 	public abstract Expression sqrt(ILocation loc, Expression argument, CPrimitive type);
 
