@@ -102,13 +102,13 @@ public class MathLibraryModel implements ILibraryModel {
 
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS = { "frexp", "ldexp", "pow", "hypot", "cbrt", "drem",
 			"significand", "j0", "j1", "jn", "y0", "y1", "yn", "erfc", "lgamma", "tgamma", "gamma", "lgamma_r",
-			"nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo", "lrint", "llrint", "fma", "scalb",
-			"frexpf", "ldexpf", "powf", "hypotf", "cbrtf", "dremf", "significandf", "j0f", "j1f", "jnf", "y0f", "y1f",
-			"ynf", "erfcf", "lgammaf", "tgammaf", "gammaf", "lgammaf_r", "nextafterf", "nexttowardf", "scalbnf",
-			"ilogbf", "scalblnf", "remquof", "lrintf", "llrintf", "fmaf", "scalbf", "frexpl", "ldexpl", "powl",
-			"hypotl", "cbrtl", "dreml", "significandl", "j0l", "j1l", "jnl", "y0l", "y1l", "ynl", "erfcl", "lgammal",
-			"tgammal", "gammal", "lgammal_r", "nextafterl", "nexttowardl", "scalbnl", "ilogbl", "scalblnl", "remquol",
-			"lrintl", "llrintl", "fmal", "scalbl", "signgam;", "modf", "modff", "modfl" };
+			"nextafter", "nexttoward", "scalbn", "ilogb", "scalbln", "remquo", "fma", "scalb", "frexpf", "ldexpf",
+			"powf", "hypotf", "cbrtf", "dremf", "significandf", "j0f", "j1f", "jnf", "y0f", "y1f", "ynf", "erfcf",
+			"lgammaf", "tgammaf", "gammaf", "lgammaf_r", "nextafterf", "nexttowardf", "scalbnf", "ilogbf", "scalblnf",
+			"remquof", "fmaf", "scalbf", "frexpl", "ldexpl", "powl", "hypotl", "cbrtl", "dreml", "significandl", "j0l",
+			"j1l", "jnl", "y0l", "y1l", "ynl", "erfcl", "lgammal", "tgammal", "gammal", "lgammal_r", "nextafterl",
+			"nexttowardl", "scalbnl", "ilogbl", "scalblnl", "remquol", "fmal", "scalbl", "signgam;", "modf", "modff",
+			"modfl" };
 
 	private final FunctionModelHelper mHelper;
 	private final ExpressionResultTransformer mExprResultTransformer;
@@ -136,11 +136,6 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("log1pf", CPrimitives.FLOAT));
 		result.add(new Pair<>("log1pl", CPrimitives.LONGDOUBLE));
 
-		// https://en.cppreference.com/w/c/numeric/math/rint
-		result.add(new Pair<>("rint", CPrimitives.DOUBLE));
-		result.add(new Pair<>("rintf", CPrimitives.FLOAT));
-		result.add(new Pair<>("rintl", CPrimitives.LONGDOUBLE));
-
 		// https://en.cppreference.com/w/c/numeric/math/atanh
 		result.add(new Pair<>("atanh", CPrimitives.DOUBLE));
 		result.add(new Pair<>("atanhf", CPrimitives.FLOAT));
@@ -155,11 +150,6 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("acos", CPrimitives.DOUBLE));
 		result.add(new Pair<>("acosf", CPrimitives.FLOAT));
 		result.add(new Pair<>("acosl", CPrimitives.LONGDOUBLE));
-
-		// https://en.cppreference.com/w/c/numeric/math/nearbyint
-		result.add(new Pair<>("nearbyint", CPrimitives.DOUBLE));
-		result.add(new Pair<>("nearbyintf", CPrimitives.FLOAT));
-		result.add(new Pair<>("nearbyintl", CPrimitives.LONGDOUBLE));
 
 		// http://en.cppreference.com/w/c/numeric/math/signbit
 		// TODO: Handle negative NaN correctly, only overapproximated until then
@@ -333,6 +323,46 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new FunctionModel("llroundl",
 				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
 						new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONGLONG), roundToNearest)));
+
+		// https://en.cppreference.com/w/c/numeric/math/rint
+		result.add(new FunctionModel("rint", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.DOUBLE), mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("rintf", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.FLOAT), mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("rintl", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE), mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("lrint",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONG),
+						mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("lrintf",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONG),
+						mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("lrintl",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONG),
+						mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("llrint",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.DOUBLE), new CPrimitive(CPrimitives.LONGLONG),
+						mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("llrintf",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.FLOAT), new CPrimitive(CPrimitives.LONGLONG),
+						mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("llrintl",
+				(main, node, loc, name) -> handleRoundWithIntConversion(main, node, loc, name,
+						new CPrimitive(CPrimitives.LONGDOUBLE), new CPrimitive(CPrimitives.LONGLONG),
+						mExpressionTranslation.getCurrentRoundingMode())));
+
+		// https://en.cppreference.com/w/c/numeric/math/nearbyint
+		result.add(new FunctionModel("nearbyint", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.DOUBLE), mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("nearbyintf", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.FLOAT), mExpressionTranslation.getCurrentRoundingMode())));
+		result.add(new FunctionModel("nearbyintl", (main, node, loc, name) -> handleRound(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE), mExpressionTranslation.getCurrentRoundingMode())));
 
 		// see 7.12.7.2 or http://en.cppreference.com/w/c/numeric/math/fabs
 		result.add(new FunctionModel("fabs",
