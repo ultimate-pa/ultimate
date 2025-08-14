@@ -5,6 +5,7 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TranslationSettings;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.MemoryAddressing;
 
 public enum MemoryModelDeclarations {
 	ULTIMATE_ALLOC_STACK("#Ultimate.allocOnStack"),
@@ -107,7 +108,7 @@ public enum MemoryModelDeclarations {
 		} else if (this == MemoryModelDeclarations.C_STRCPY) {
 			return strcpyRequirements(rmmf);
 		} else if (this == MemoryModelDeclarations.C_REALLOC) {
-			return reallocRequirements(rmmf);
+			return reallocRequirements(rmmf, settings);
 		} else if (this == MemoryModelDeclarations.ULTIMATE_ALLOC_STACK
 				|| this == MemoryModelDeclarations.ULTIMATE_ALLOC_HEAP) {
 			return allocRequirements(rmmf);
@@ -129,16 +130,23 @@ public enum MemoryModelDeclarations {
 		return changedSomething;
 	}
 
-	private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf) {
+	private static boolean reallocRequirements(final RequiredMemoryModelFeatures rmmf,
+			final TranslationSettings settings) {
 		boolean changedSomething = false;
 		changedSomething |= rmmf.requireMemoryStructureInfrastructure();
 		changedSomething |= rmmf.require(MemoryModelDeclarations.ULTIMATE_DEALLOC);
-		for (final CPrimitives prim : rmmf.getDataOnHeapRequiredUnchecked()) {
-			changedSomething |= rmmf.reportDataOnHeapStoreFunctionRequired(prim);
+
+		if (settings.memoryAddressingPreference() == MemoryAddressing.Two_Dimensional) {
+			for (final CPrimitives prim : rmmf.getDataOnHeapRequiredUnchecked()) {
+				changedSomething |= rmmf.reportDataOnHeapStoreFunctionRequired(prim);
+			}
+			if (rmmf.isPointerOnHeapRequiredUnchecked()) {
+				changedSomething |= rmmf.reportPointerOnHeapStoreFunctionRequired();
+			}
+		} else if (settings.memoryAddressingPreference() == MemoryAddressing.One_Dimensional) {
+			changedSomething |= rmmf.require(MemoryModelDeclarations.C_MEMCPY);
 		}
-		if (rmmf.isPointerOnHeapRequiredUnchecked()) {
-			changedSomething |= rmmf.reportPointerOnHeapStoreFunctionRequired();
-		}
+
 		return changedSomething;
 	}
 

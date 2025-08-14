@@ -239,5 +239,8 @@ public interface IMemoryAdressing {
 	 */
 	List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
 			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
-			final IdentifierExpression ptrIdExprImpl);
+			final IdentifierExpression ptrIdExprImpl, final VariableLHS resultLhsImpl,
+			final IdentifierExpression resultExprImpl, final IdentifierExpression sizeIdExprImpl,
+			final RequiredMemoryModelFeatures requiredFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler);
 }

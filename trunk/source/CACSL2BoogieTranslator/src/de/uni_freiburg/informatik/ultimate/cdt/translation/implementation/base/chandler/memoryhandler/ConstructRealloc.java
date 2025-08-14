@@ -30,7 +30,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryArea;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModel;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryModelDeclarationsHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ProcedureManager;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.ExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -92,11 +94,14 @@ public final class ConstructRealloc {
 	private final ExpressionTranslation mExpressionTranslation;
 	private final IMemoryPointer mMemoryPointer;
 	private final MemoryModel mMemoryModel;
+	private final RequiredMemoryModelFeatures mRequiredMemoryModelFeatures;
+	private final MemoryModelDeclarationsHandler mMemoryModelDeclarationsHandler;
 
 	public ConstructRealloc(final MemoryHandler memoryHandler, final ProcedureManager procedureHandler,
 			final ITypeHandler typeHandler, final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer,
 			final ExpressionTranslation expressionTranslation, final IMemoryPointer memoryPointer,
-			final MemoryModel memoryModel) {
+			final MemoryModel memoryModel, final RequiredMemoryModelFeatures requiredMemoryModelFeatures,
+			final MemoryModelDeclarationsHandler declarationsHandler) {
 		mMemoryHandler = memoryHandler;
 		mProcedureManager = procedureHandler;
 		mTypeHandler = typeHandler;
@@ -104,6 +109,8 @@ public final class ConstructRealloc {
 		mExpressionTranslation = expressionTranslation;
 		mMemoryPointer = memoryPointer;
 		mMemoryModel = memoryModel;
+		mRequiredMemoryModelFeatures = requiredMemoryModelFeatures;
+		mMemoryModelDeclarationsHandler = declarationsHandler;
 	}
 
 	/**
@@ -147,6 +154,10 @@ public final class ConstructRealloc {
 				ExpressionFactory.constructIdentifierExpression(ignoreLoc, pointerType, SFO.REALLOC_PTR,
 						new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, reallocProcName));
 
+		final IdentifierExpression resultExprImpl =
+				ExpressionFactory.constructIdentifierExpression(ignoreLoc, pointerType, SFO.RES,
+						new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, reallocProcName));
+
 		final List<Declaration> bodyDecl = new ArrayList<>();
 		final List<Statement> bodyStmts = new ArrayList<>();
 
@@ -166,7 +177,8 @@ public final class ConstructRealloc {
 				.add(mMemoryHandler.getUltimateMemAllocCall(sizeIdExprImpl, resultLhsImpl, ignoreLoc, MemoryArea.HEAP));
 
 		bodyStmts.addAll(mMemoryModel.constructReallocBodyStatements(ignoreLoc, reallocProcName, heapDataArrays,
-				pointerType, ptrIdExprImpl));
+				pointerType, ptrIdExprImpl, resultLhsImpl, resultExprImpl, sizeIdExprImpl, mRequiredMemoryModelFeatures,
+				mMemoryModelDeclarationsHandler));
 
 		// free(ptr)
 		bodyStmts.add(mMemoryHandler.getDeallocCall(new RValue(ptrIdExprImpl, voidPointerType), ignoreLoc));
