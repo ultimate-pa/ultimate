@@ -41,6 +41,7 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
@@ -151,14 +152,6 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("acosf", CPrimitives.FLOAT));
 		result.add(new Pair<>("acosl", CPrimitives.LONGDOUBLE));
 
-		// http://en.cppreference.com/w/c/numeric/math/signbit
-		// TODO: Handle negative NaN correctly, only overapproximated until then
-		// signbit(x) := isNegative(x) ? 1 : 0;
-		result.add(new Pair<>("signbit", CPrimitives.INT));
-		result.add(new Pair<>("__signbit", CPrimitives.INT));
-		result.add(new Pair<>("__signbitl", CPrimitives.INT));
-		result.add(new Pair<>("__signbitf", CPrimitives.INT));
-
 		// http://en.cppreference.com/w/c/numeric/math/atan
 		result.add(new Pair<>("atan", CPrimitives.DOUBLE));
 		result.add(new Pair<>("atanf", CPrimitives.FLOAT));
@@ -225,13 +218,6 @@ public class MathLibraryModel implements ILibraryModel {
 		result.add(new Pair<>("remainder", CPrimitives.DOUBLE));
 		result.add(new Pair<>("remainderf", CPrimitives.FLOAT));
 		result.add(new Pair<>("remainderl", CPrimitives.LONGDOUBLE));
-
-		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
-		// if second is negative, return arithneg of abs(first), else return abs(first)
-		// TODO: Handle negative NaN, check unsoundness
-		result.add(new Pair<>("copysign", CPrimitives.DOUBLE));
-		result.add(new Pair<>("copysignf", CPrimitives.FLOAT));
-		result.add(new Pair<>("copysignl", CPrimitives.LONGDOUBLE));
 
 		/**
 		 * 7.12.10.1 The fmod functions
@@ -411,6 +397,24 @@ public class MathLibraryModel implements ILibraryModel {
 
 		// see 7.12.3.5 or http://en.cppreference.com/w/c/numeric/math/isnormal
 		result.add(new FunctionModel("isnormal", this::handleIsNormal));
+
+		// http://en.cppreference.com/w/c/numeric/math/signbit
+		// TODO: Handle negative NaN correctly, only overapproximated until then
+		// signbit(x) := isNegative(x) ? 1 : 0;
+		result.add(new FunctionModel("signbit", this::handleSignbit));
+		result.add(new FunctionModel("__signbit", this::handleSignbit));
+		result.add(new FunctionModel("__signbitl", this::handleSignbit));
+		result.add(new FunctionModel("__signbitf", this::handleSignbit));
+
+		// see 7.12.11.1 or http://en.cppreference.com/w/c/numeric/math/copysign
+		// if second is negative, return -abs(first), else return abs(first)
+		// TODO: Overapproximate if second is NaN
+		result.add(new FunctionModel("copysign",
+				(main, node, loc, name) -> handleCopysign(main, node, loc, name, new CPrimitive(CPrimitives.DOUBLE))));
+		result.add(new FunctionModel("copysignf",
+				(main, node, loc, name) -> handleCopysign(main, node, loc, name, new CPrimitive(CPrimitives.FLOAT))));
+		result.add(new FunctionModel("copysignl", (main, node, loc, name) -> handleCopysign(main, node, loc, name,
+				new CPrimitive(CPrimitives.LONGDOUBLE))));
 
 		// see 7.12.4.5 or https://en.cppreference.com/w/c/numeric/math/cos
 		result.add(new FunctionModel("cos",
@@ -1047,6 +1051,64 @@ public class MathLibraryModel implements ILibraryModel {
 				mExpressionTranslation.isNan(loc, first, type), first, secondNaNExpr);
 		return new ExpressionResultBuilder().addAllExceptLrValue(arguments).setLrValue(new RValue(firstNaNExpr, type))
 				.build();
+	}
+
+	private ExpressionResult handleSignbit(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name) {
+		final IASTInitializerClause[] arguments = node.getArguments();
+		mHelper.checkArguments(loc, 1, name, arguments);
+		final ExpressionResult argumentResult =
+				mExprResultTransformer.transformDispatchDecaySwitchRexBoolToInt(main, loc, arguments[0]);
+		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
+		final Expression argument = argumentResult.getLrValue().getValue();
+		final CPrimitive type = (CPrimitive) argumentResult.getCType();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(argumentResult);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, intType, AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(auxVar);
+		final Statement nondet = new HavocStatement(loc, new VariableLHS[] { auxVar.getLhs() });
+		new OverapproxVariable("sign of NaN", loc).annotate(nondet);
+		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, intType, BigInteger.ZERO);
+		builder.addStatement(StatementFactory.constructIfStatement(loc,
+				mExpressionTranslation.isNan(loc, argument, type), List.of(nondet),
+				List.of(StatementFactory.constructIfStatement(loc,
+						mExpressionTranslation.isPositive(loc, argument, type),
+						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), zero)),
+						List.of(new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, Operator.COMPNEQ,
+								auxVar.getExp(), zero)))))));
+		return builder.setLrValue(new RValue(auxVar.getExp(), intType)).build();
+	}
+
+	private ExpressionResult handleCopysign(final IDispatcher main, final IASTFunctionCallExpression node,
+			final ILocation loc, final String name, final CPrimitive type) {
+		final List<ExpressionResult> arguments = handleFloatArguments(main, node, loc, name, 2, type);
+		final Expression first = arguments.get(0).getLrValue().getValue();
+		final Expression second = arguments.get(1).getLrValue().getValue();
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder().addAllExceptLrValue(arguments);
+		final AuxVarInfo auxVar = mAuxVarInfoBuilder.constructAuxVarInfo(loc, type, AUXVAR.RETURNED);
+		builder.addAuxVarWithDeclaration(auxVar);
+		final Expression abs = mExpressionTranslation.abs(loc, first, type);
+		final Statement nondet = new AssumeStatement(loc,
+				ExpressionFactory.or(loc,
+						mExpressionTranslation.constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals,
+								auxVar.getExp(), type, first, type),
+						mExpressionTranslation.constructBinaryComparisonExpression(
+								loc, IASTBinaryExpression.op_equals, auxVar.getExp(), type, mExpressionTranslation
+										.constructUnaryExpression(loc, IASTUnaryExpression.op_minus, first, type),
+								type)));
+		new OverapproxVariable("sign of NaN", loc).annotate(nondet);
+		builder.addStatement(StatementFactory.constructIfStatement(loc, mExpressionTranslation.isNan(loc, first, type),
+				// If the first argument is NaN, just return it. This works for now, as we cannot handle negative NaN
+				// anyway.
+				// TODO: If we can handle negative NaN, this has to be changed!
+				List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(), first)),
+				List.of(StatementFactory.constructIfStatement(loc, mExpressionTranslation.isNan(loc, second, type),
+						List.of(nondet),
+						List.of(StatementFactory.constructSingleAssignmentStatement(loc, auxVar.getLhs(),
+								ExpressionFactory.constructIfThenElseExpression(loc,
+										mExpressionTranslation.isPositive(loc, second, type), abs,
+										mExpressionTranslation.constructUnaryExpression(loc,
+												IASTUnaryExpression.op_minus, abs, type))))))));
+		return builder.setLrValue(new RValue(auxVar.getExp(), type)).build();
 	}
 
 	@Override
