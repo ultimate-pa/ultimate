@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -344,9 +345,9 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				return new BooleanLiteral(location, constantContext.intConst().getText().equals("1"));
 			}
 			final int bitLength = getBitLengthFromType(typeContext);
-			final int constValue = Integer.parseInt(constantContext.intConst().getText());
-			final long modValue = euclideanMod(constValue, bitLength, isSigned);
-			return new IntegerLiteral(location, Long.toString(modValue));
+			final BigInteger constValue = BigInteger.valueOf(Long.parseLong(constantContext.intConst().getText()));
+			final BigInteger modValue = euclideanMod(constValue, bitLength, isSigned);
+			return new IntegerLiteral(location, modValue.toString());
 		} else if (constantContext.boolConst() != null) {
 			return new BooleanLiteral(location, constantContext.boolConst().getText().equals("true"));
 		} else if (constantContext.undefConst() != null) {
@@ -356,19 +357,19 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
-	 * Computes the Euclidean modulus of a value with respect to a specified bit length.
+	 * Computes the euclidean modulus of a value based on the specified bit length and signedness.
 	 *
-	 * This method calculates the modulus of the given value with respect to 2 raised to the power of the specified bit
-	 * length, ensuring that the result is always non-negative.
+	 * This method calculates the modulus of a given value with respect to a power of two, ensuring that the result is
+	 * always non-negative. It handles both signed and unsigned integers by adjusting the modulus accordingly.
 	 *
 	 * @param value     The value for which to compute the modulus.
-	 * @param bitLength The bit length for the modulus operation.
-	 * @param isSigned  Indicates whether the constant should be treated as signed or unsigned.
-	 * @return The non-negative modulus of the value.s
+	 * @param bitLength The bit length to use for the modulus calculation.
+	 * @param isSigned  Indicates whether the value is signed or unsigned.
+	 * @return A BigInteger representing the non-negative modulus of the value.
 	 */
-	public static long euclideanMod(final int value, final int bitLength, final boolean isSigned) {
-		final long modulus = 1L << (bitLength - (isSigned ? 1 : 0));
-		return ((value % modulus) + modulus) % modulus;
+	public static BigInteger euclideanMod(final BigInteger value, final int bitLength, final boolean isSigned) {
+		final BigInteger modulus = BigInteger.ONE.shiftLeft(bitLength - (isSigned ? 1 : 0));
+		return ((value.mod(modulus)).add(modulus)).mod(modulus);
 	}
 
 	/**
@@ -395,19 +396,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	/**
 	 * Constructs a bit length literal based on the provided bit length.
 	 *
-	 * This method creates an IntegerLiteral that represents the maximum value for the specified bit length, which is
-	 * calculated as 2^(bitLength - 1).
+	 * This method creates an IntegerLiteral that represents (2^bitLength-1).
 	 *
 	 * @param location  The location in the source code where this literal is defined.
 	 * @param bitLength The bit length for which to construct the literal.
-	 * @return An IntegerLiteral representing the maximum value for the specified bit length.
+	 * @return An IntegerLiteral representing (2^bitLength-1).
 	 * @throws AssertionError if the bit length is not a positive integer.
 	 */
 	private static IntegerLiteral constructBitLengthLiteral(final LlvmirLocation location, final int bitLength) {
 		if (bitLength <= 0) {
 			throw new AssertionError("Bit length must be a positive integer.");
 		}
-		return new IntegerLiteral(location, Long.toString(1L << bitLength - 1));
+		return new IntegerLiteral(location, BigInteger.ONE.shiftLeft(bitLength - 1).toString());
 	}
 
 	/**
@@ -539,7 +539,8 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 */
 	private static Expression constructSignedExpression(final Expression expr, final int bitLength,
 			final LlvmirLocation location) {
-		final IntegerLiteral maxValueLiteral = new IntegerLiteral(location, Long.toString((1L << (bitLength - 1)) - 1));
+		final IntegerLiteral maxValueLiteral = new IntegerLiteral(location,
+				BigInteger.ONE.shiftLeft(bitLength - 1).subtract(BigInteger.ONE).toString());
 		final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPGEQ, expr, maxValueLiteral);
 		final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength);
 		final BinaryExpression thenExpr = new BinaryExpression(location, Operator.ARITHMINUS, expr, bitLengthLiteral);
@@ -821,15 +822,17 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 			Expression leftExpr = null;
 			Expression rightExpr = null;
-			final Operator operator = getCompOperatorFromOperatorValue(instructionType.iCmpInst().iPred().getText());
+			final String operatorString = instructionType.iCmpInst().iPred().getText();
+			final Operator operator = getCompOperatorFromOperatorValue(operatorString);
+			final boolean isSigned = operatorString.startsWith("s");
 
 			final LLVMIRParser.ValueContext leftValue = instructionType.iCmpInst().typeValue().value();
-			leftExpr = constructExpressionFromValue(leftValue, typeContext, location, true);
+			leftExpr = constructExpressionFromValue(leftValue, typeContext, location, isSigned);
 
 			final LLVMIRParser.ValueContext rightValue = instructionType.iCmpInst().value();
-			rightExpr = constructExpressionFromValue(rightValue, typeContext, location, true);
+			rightExpr = constructExpressionFromValue(rightValue, typeContext, location, isSigned);
 
-			if (typeContext.intType() != null && !typeContext.intType().getText().equals("i1")) {
+			if (isSigned && typeContext.intType() != null && !typeContext.intType().getText().equals("i1")) {
 				final int bitLength = getBitLengthFromType(typeContext);
 				if (operator == Operator.COMPLEQ || operator == Operator.COMPLT || operator == Operator.COMPGEQ
 						|| operator == Operator.COMPGT) {
