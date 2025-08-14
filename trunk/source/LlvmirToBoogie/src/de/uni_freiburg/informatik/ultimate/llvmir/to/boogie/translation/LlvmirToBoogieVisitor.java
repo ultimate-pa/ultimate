@@ -37,6 +37,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -1122,7 +1123,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 			}
 			result.addFuncLocalVar(constructVarDecFromTypeContext(typeContext, identifier, location));
 			final String callIdentifier = instructionType.callInst().value().constant().getText();
-			if (callIdentifier.equals("@__VERIFIER_nondet_int") || callIdentifier.equals("@__VERIFIER_nondet_short")
+			if (callIdentifier.equals("@printf")) {
+				// This call can be ignored as it is not relevant for the Boogie translation
+			} else if (callIdentifier.equals("@__VERIFIER_nondet_int")
+					|| callIdentifier.equals("@__VERIFIER_nondet_short")
 					|| callIdentifier.equals("@__VERIFIER_nondet_ushort")
 					|| callIdentifier.equals("@__VERIFIER_nondet_bool")
 					|| callIdentifier.equals("@__VERIFIER_nondet_ulong")
@@ -1130,10 +1134,29 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					|| callIdentifier.equals("@__VERIFIER_nondet_uint")
 					|| callIdentifier.equals("@__VERIFIER_nondet_ulonglong")
 					|| callIdentifier.equals("@__VERIFIER_nondet_char")
-					|| callIdentifier.equals("@__VERIFIER_nondet_uchar") || callIdentifier.equals("@printf")) {
+					|| callIdentifier.equals("@__VERIFIER_nondet_uchar")) {
 				final VariableLHS varLhs = new VariableLHS(location, identifier);
 				final HavocStatement havocStmt = new HavocStatement(location, new VariableLHS[] { varLhs });
 				result.addFuncBlock(havocStmt);
+
+				final int bitLength = getBitLengthFromType(typeContext);
+				final boolean isSigned = callIdentifier.equals("@__VERIFIER_nondet_int")
+						|| callIdentifier.equals("@__VERIFIER_nondet_short")
+						|| callIdentifier.equals("@__VERIFIER_nondet_char");
+
+				final IntegerLiteral maxValueLiteral = new IntegerLiteral(location,
+						BigInteger.ONE.shiftLeft(bitLength - (isSigned ? 1 : 0)).subtract(BigInteger.ONE).toString());
+				final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.COMPLEQ,
+						new IdentifierExpression(location, identifier), maxValueLiteral);
+				final AssumeStatement assumeStmt = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr);
+				result.addFuncBlock(assumeStmt);
+
+				final IntegerLiteral minValueLiteral = new IntegerLiteral(location,
+						isSigned ? BigInteger.ONE.shiftLeft(bitLength - 1).negate().toString() : "0");
+				final BinaryExpression binaryExpr2 = new BinaryExpression(location, Operator.COMPGEQ,
+						new IdentifierExpression(location, identifier), minValueLiteral);
+				final AssumeStatement assumeStmt2 = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr2);
+				result.addFuncBlock(assumeStmt2);
 			} else {
 				final ArrayList<Expression> args = new ArrayList<>();
 				for (final LLVMIRParser.ArgContext arg : instructionType.callInst().args().arg()) {
