@@ -105,6 +105,8 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 	private boolean mReportTrivialConsistency;
 	private boolean mGenerateFailurePath;
 
+	private int mRTIPreCheckRange;
+
 	private boolean mSeparateInvariantHandling;
 	private RtInconcistencyConditionGenerator mRtInconcistencyConditionGenerator;
 	private final NormalFormTransformer<Expression> mNormalFormTransformer;
@@ -133,7 +135,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		// set preferences
 		mCheckVacuity = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_VACUITY);
-		mRTIPreCheck =  prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK);
+		mRTIPreCheck = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_PRE_CHECK);
 
 		if (prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY)) {
 			final int length = mReqPeas.size();
@@ -147,6 +149,7 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 		mCheckConsistency = prefs.getBoolean(Pea2BoogiePreferences.LABEL_CHECK_CONSISTENCY);
 		mCheckRedundancy = prefs.getEnum(Pea2BoogiePreferences.LABEL_TRANSFOMER_MODE,
 				PEATransformerMode.class) == PEATransformerMode.REQ_RED;
+		mRTIPreCheckRange = prefs.getInt(Pea2BoogiePreferences.LABEL_CHECK_RT_INCONSISTENCY_CHAIN_LINK_REQS);
 
 		// log preferences
 		mLogger.info(
@@ -359,12 +362,13 @@ public class ReqCheckAnnotator implements IReq2PeaAnnotator {
 
 		final List<Statement> stmtList = new ArrayList<>();
 		List<Entry<PatternType<?>, PhaseEventAutomata>[]> subsets = new ArrayList<>();
-		if(!mRTIPreCheck) {
-			subsets = CrossProducts.subArrays(
-				consideredAutomata.toArray(new Entry[count]), actualCombinationNum, new Entry[actualCombinationNum]);
+		if (mRTIPreCheck) {
+			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mRTIPreCheckRange);
+
 		} else {
 
-			subsets = mRtInconcistencyConditionGenerator.doRtiPreCheck(mReqPeas, mCombinationNum);
+			subsets = CrossProducts.subArrays(consideredAutomata.toArray(new Entry[count]), actualCombinationNum,
+					new Entry[actualCombinationNum]);
 		}
 
 		int subsetsSize = subsets.size();
