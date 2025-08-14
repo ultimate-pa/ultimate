@@ -305,12 +305,11 @@ trunk/examples/witness-generation-validation/regression/*.yml
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Query.java
 /trunk/source/Crocotta/src/de/uni_freiburg/informatik/ultimate/crocotta/ast/Union.java
 
-/trunk/source/UltimateVersion/version.properties
-
 /trunk/source/JavaCup/bootstrap/java_cup/*
 /trunk/source/JavaCup/classes/java_cup
 /trunk/source/JavaCup/dist
 /trunk/source/JavaCup/java/java_cup
+/trunk/source/CoreRCP/version.properties
 /trunk/source/JavaCup/bootstrap/com/github/jhoenicke/javacup
 /trunk/source/JavaCup/classes/com/github/jhoenicke/javacup
 /trunk/source/JavaCup/java/com/github/jhoenicke/javacup

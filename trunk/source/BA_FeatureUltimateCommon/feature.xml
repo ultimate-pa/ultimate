@@ -159,10 +159,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="de.uni_freiburg.informatik.ultimate.version"
-         version="0.0.0"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel"
          version="0.0.0"/>
 
