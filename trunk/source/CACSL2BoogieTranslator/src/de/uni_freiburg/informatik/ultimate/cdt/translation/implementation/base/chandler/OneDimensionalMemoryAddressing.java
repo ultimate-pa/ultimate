@@ -8,15 +8,18 @@ import java.util.List;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.boogie.StatementFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -28,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
@@ -241,8 +245,25 @@ public class OneDimensionalMemoryAddressing extends BaseMemoryAdressing<OneDimen
 	@Override
 	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
 			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
-			final IdentifierExpression ptrIdExprImpl) {
-		// TODO: Implementation for realloc
-		throw new UnsupportedOperationException("Realloc is currently not supported in the 1D memory addressing!");
+			final IdentifierExpression ptrIdExprImpl, final VariableLHS resultLhsImpl,
+			final IdentifierExpression resultExprImpl, final IdentifierExpression sizeIdExprImpl,
+			final RequiredMemoryModelFeatures requiredFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
+
+		final List<Statement> stmts = new ArrayList<>();
+
+		for (final HeapDataArray hda : heapDataArrays) {
+			final CallStatement call =
+					StatementFactory.constructCallStatement(loc, false, new VariableLHS[] { resultLhsImpl },
+							SFO.C_MEMCPY, new Expression[] { resultExprImpl, ptrIdExprImpl, sizeIdExprImpl });
+
+			// add marker for global declaration to memory handler
+			MemoryModelExpressionHelper.requireMemoryModelFeature(MemoryModelDeclarations.C_MEMCPY, requiredFeatures,
+					memoryModelDeclarationsHandler);
+
+			stmts.add(call);
+		}
+
+		return stmts;
 	}
 }

@@ -494,8 +494,12 @@ public class MemoryModel {
 	 */
 	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
 			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
-			final IdentifierExpression ptrIdExprImpl) {
+			final IdentifierExpression ptrIdExprImpl, final VariableLHS resultLhsImpl,
+			final IdentifierExpression resultExprImpl, final IdentifierExpression sizeIdExprImpl,
+			final RequiredMemoryModelFeatures requiredFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 		return mMemoryAddressing.constructReallocBodyStatements(loc, procName, heapDataArrays, pointerType,
-				ptrIdExprImpl);
+				ptrIdExprImpl, resultLhsImpl, resultExprImpl, sizeIdExprImpl, requiredFeatures,
+				memoryModelDeclarationsHandler);
 	}
 }

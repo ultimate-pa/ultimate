@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.ICType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -534,10 +534,10 @@ public class TwoDimensionalMemoryAddressing extends BaseMemoryAdressing<TwoDimen
 	@Override
 	public List<Statement> constructReallocBodyStatements(final ILocation loc, final String procName,
 			final Collection<HeapDataArray> heapDataArrays, final BoogieType pointerType,
-			final IdentifierExpression ptrIdExprImpl) {
-
-		final IdentifierExpression resultExprImpl = ExpressionFactory.constructIdentifierExpression(loc, pointerType,
-				SFO.RES, new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, procName));
+			final IdentifierExpression ptrIdExprImpl, final VariableLHS resultLhsImpl,
+			final IdentifierExpression resultExprImpl, final IdentifierExpression sizeIdExprImpl,
+			final RequiredMemoryModelFeatures requiredFeatures,
+			final MemoryModelDeclarationsHandler memoryModelDeclarationsHandler) {
 
 		final List<Statement> stmts = new ArrayList<>();
 
