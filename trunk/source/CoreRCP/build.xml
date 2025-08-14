@@ -1,0 +1,107 @@
+<project name="core-versioning" default="generate" basedir=".">
+	<property name="pluginDir" location="${basedir}" />
+	<property name="workspaceDir" location="${pluginDir}/.." />
+	<property name="gitDir" location="${workspaceDir}/../../.git" />
+
+	<description>Build automation for Ultimate versioning information</description>
+
+	<target name="generate" depends="generate-version" />
+	<target name="clean" depends="clean-version" />
+
+	<echo level="info">CoreRCP: pluginDir     is ${pluginDir}</echo>
+	<echo level="info">CoreRCP: workspaceDir  is ${workspaceDir}</echo>
+	<echo level="info">CoreRCP: gitDir        is ${gitDir}</echo>
+
+	<target name="check-git">
+		<!-- Check if Git repository data is available -->
+		<condition property="gitPresent">
+			<or>
+				<available file="${gitDir}" type="dir"/>
+				<available file="${gitDir}" type="file"/>
+			</or>
+		</condition>
+	</target>
+
+	<target name="get-versioning" depends="check-git" if="gitPresent">
+		<!-- Get Ultimate versioning information from Git repository -->
+		<!-- Get long repository revision from Git -->
+		<exec executable="git" outputproperty="gitRevisionLong" failifexecutionfails="false">
+			<arg value="rev-parse"/>
+			<arg value="HEAD"/>
+		</exec>
+		<condition property="repositoryRevisionLong" value="${gitRevisionLong}" else="?">
+			<and>
+				<isset property="gitRevisionLong"/>
+				<length string="${gitRevisionLong}" trim="yes" length="0" when="greater"/>
+			</and>
+		</condition>
+		<!-- Get short repository revision from Git -->
+		<exec executable="git" outputproperty="gitRevisionShort" failifexecutionfails="false">
+			<arg value="rev-parse"/>
+			<arg value="--short"/>
+			<arg value="HEAD"/>
+		</exec>
+		<condition property="repositoryRevisionShort" value="${gitRevisionShort}" else="?">
+			<and>
+				<isset property="gitRevisionShort"/>
+				<length string="${gitRevisionShort}" trim="yes" length="0" when="greater"/>
+			</and>
+		</condition>
+		<!-- Get repository tag from Git -->
+		<exec executable="git" outputproperty="gitTag" failifexecutionfails="false">
+			<arg value="describe"/>
+			<arg value="--tags"/>
+			<arg value="--abbrev=0"/>
+		</exec>
+		<condition property="repositoryTag" value="${gitTag}" else="?">
+			<and>
+				<isset property="gitTag"/>
+				<length string="${gitTag}" trim="yes" length="0" when="greater"/>
+			</and>
+		</condition>
+		<!-- Get repository branch from Git -->
+		<exec executable="git" outputproperty="gitBranch" failifexecutionfails="false">
+			<arg value="rev-parse"/>
+			<arg value="--abbrev-ref"/>
+			<arg value="HEAD"/>
+		</exec>
+		<condition property="repositoryBranch" value="${gitBranch}" else="?">
+			<and>
+				<isset property="gitBranch"/>
+				<length string="${gitBranch}" trim="yes" length="0" when="greater"/>
+			</and>
+		</condition>
+		<!-- Get repository dirty from Git -->
+		<exec executable="git" outputproperty="gitDirty" failifexecutionfails="false">
+			<arg value="describe"/>
+			<arg value="--always"/>
+			<arg value="--dirty"/>
+		</exec>
+		<condition property="repositoryDirty" value="true" else="false">
+			<and>
+				<isset property="gitDirty"/>
+				<contains string="${gitDirty}" substring="dirty"/>
+			</and>
+		</condition>
+	</target>
+
+	<target name="generate-version" depends="get-versioning">
+		<!-- Generate Ultimate version file from Git repository -->
+		<propertyfile file="version.properties">
+			<entry key="git.commit.id" value="${repositoryRevisionLong}"/>
+			<entry key="git.commit.id.abbrev" value="${repositoryRevisionShort}"/>
+			<entry key="git.build.version" value="${repositoryTag}"/>
+			<entry key="git.branch" value="${repositoryBranch}"/>
+			<entry key="git.dirty" value="${repositoryDirty}"/>
+		</propertyfile>
+	</target>
+
+	<target name="clean-version">
+		<!-- Clean generated Ultimate version file -->
+		<delete verbose="true" failonerror="false">
+			<fileset dir="${pluginDir}" defaultexcludes="false">
+				<include name="version.properties" />
+			</fileset>
+		</delete>
+	</target>
+</project>
