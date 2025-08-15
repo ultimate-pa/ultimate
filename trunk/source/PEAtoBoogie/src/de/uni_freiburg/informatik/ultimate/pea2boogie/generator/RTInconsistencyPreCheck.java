@@ -91,6 +91,7 @@ public class RTInconsistencyPreCheck {
 				}
 			}
 		}
+		doChainLinkTest();
 
 		// for chain-link requirements
 		if (mCombinationNum >= 1) {
@@ -172,6 +173,18 @@ public class RTInconsistencyPreCheck {
 		}
 
 		return mrtiSets;
+	}
+
+	private void doChainLinkTest()
+	{
+		int counter = 1;
+		while (counter <= mCombinationNum) {
+			for(final ReqWithRTIPCattributes req: ) {
+				counter ++;
+			}
+		}
+		// TODO Auto-generated method stub
+
 	}
 
 	/**
