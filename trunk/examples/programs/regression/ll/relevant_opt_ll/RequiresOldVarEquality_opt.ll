@@ -6,7 +6,7 @@ target triple = "aarch64-unknown-linux-gnu"
 
 @g = dso_local global i32 0, align 4
 
-define dso_local void @increment() {
+define dso_local void @main() {
 entry:
   %0 = load i32, ptr @g, align 4
   %inc = add nsw i32 %0, 1

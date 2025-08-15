@@ -62,7 +62,7 @@ public class LlvmirToBoogieTest extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public long getTimeout() {
-		return 10 * 100000;
+		return 10 * 1000;
 	}
 
 	private static final String[] mToolchains = {
