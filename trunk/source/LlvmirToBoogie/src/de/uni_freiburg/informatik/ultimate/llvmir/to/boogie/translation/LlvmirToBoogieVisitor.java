@@ -84,6 +84,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	private LlvmirLocation mLocation;
 	private final static String mLabelIdentifier = "aux#label";
 	private final static String mUndefIdentifier = "aux#undef";
+	private final String mCDivIdentifier = "aux#cdiv";
 
 	private final ArrayList<Declaration> mDeclarations = new ArrayList<>();
 	private final HashMap<String, Pair<Declaration, Statement>> mGlobalVars = new HashMap<>();
@@ -566,6 +567,67 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
+	 * Constructs a procedure for performing integer division with special handling for signed and unsigned integers.
+	 *
+	 * This method creates a procedure that performs division on two integers, handling cases where the divisor is zero
+	 * or where the dividend or divisor is negative. It uses an if-then-else expression to determine the result based on
+	 * the signs of the operands.
+	 *
+	 * @param bitLength The bit length of the integers involved in the division.
+	 */
+	private void constructCDivProcedure() {
+		final String xIdentifier = "aux#x";
+		final String yIdentifier = "aux#y";
+		final String retIdentifier = "aux#ret";
+
+		final Expression xExpr = new IdentifierExpression(mLocation, xIdentifier);
+		final Expression yExpr = new IdentifierExpression(mLocation, yIdentifier);
+		final Expression zeroExpr = new IntegerLiteral(mLocation, "0");
+
+		final Expression xNonNeg = new BinaryExpression(mLocation, Operator.COMPGEQ, xExpr, zeroExpr);
+		final Expression yNonNeg = new BinaryExpression(mLocation, Operator.COMPGEQ, yExpr, zeroExpr);
+
+		final Expression thenExpr = new BinaryExpression(mLocation, Operator.ARITHDIV, xExpr, yExpr);
+
+		final IfThenElseExpression xAbs = new IfThenElseExpression(mLocation, xNonNeg, xExpr,
+				new BinaryExpression(mLocation, Operator.ARITHMINUS, zeroExpr, xExpr));
+		final IfThenElseExpression yAbs = new IfThenElseExpression(mLocation, yNonNeg, yExpr,
+				new BinaryExpression(mLocation, Operator.ARITHMINUS, zeroExpr, yExpr));
+		final Expression divMod = new BinaryExpression(mLocation, Operator.ARITHDIV, xAbs, yAbs);
+
+		final Expression elseExpr = new BinaryExpression(mLocation, Operator.ARITHMINUS, zeroExpr, divMod);
+
+		final Expression binaryExpr = new BinaryExpression(mLocation, Operator.COMPEQ, xNonNeg, yNonNeg);
+
+		final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(mLocation, binaryExpr, thenExpr, elseExpr);
+
+		final VariableLHS returnVar = new VariableLHS(mLocation, retIdentifier);
+		final AssignmentStatement assignmentStmt = new AssignmentStatement(mLocation, new LeftHandSide[] { returnVar },
+				new Expression[] { ifThenElseExpr });
+		final ReturnStatement returnStmt = new ReturnStatement(mLocation);
+
+		final Body body = new Body(mLocation, new VariableDeclaration[] {},
+				new Statement[] { assignmentStmt, returnStmt });
+
+		final ArrayList<Attribute> attributes = new ArrayList<>();
+		final ArrayList<String> typeParams = new ArrayList<>();
+		final ArrayList<VarList> inParams = new ArrayList<>();
+		final ArrayList<VarList> outParams = new ArrayList<>();
+
+		final PrimitiveType intTypePrim = new PrimitiveType(mLocation, "int");
+
+		final VarList varList = new VarList(mLocation, new String[] { xIdentifier, yIdentifier }, intTypePrim);
+		inParams.add(varList);
+
+		final VarList retVarList = new VarList(mLocation, new String[] { retIdentifier }, intTypePrim);
+		outParams.add(retVarList);
+
+		final Procedure procedure = new Procedure(mLocation, new Attribute[] {}, mCDivIdentifier, new String[] {},
+				inParams.toArray(VarList[]::new), outParams.toArray(VarList[]::new), new Specification[] {}, body);
+		mDeclarations.add(procedure);
+	}
+
+	/**
 	 * Handles the visit event for the compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and processes the children of the compilation unit context to construct
@@ -577,6 +639,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	@Override
 	public Result visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = constructLocation(ctx);
+		constructCDivProcedure();
 
 		ParseTree mainFunc = null;
 
@@ -987,41 +1050,18 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					typeContext, location, false);
 			final Expression rightExpr = constructExpressionFromValue(instructionType.sDivInst().value(), typeContext,
 					location, false);
-			final BinaryExpression binaryExpr = new BinaryExpression(location, Operator.ARITHDIV,
-					constructSignedExpression(leftExpr, bitLength, location),
-					constructSignedExpression(rightExpr, bitLength, location));
-			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { binaryExpr });
-			result.addFuncBlock(assignment);
+			final CallStatement callStmt = new CallStatement(location, false, new VariableLHS[] { varLhs },
+					mCDivIdentifier, new Expression[] { leftExpr, rightExpr });
+			result.addFuncBlock(callStmt);
 
-			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD,
-					constructSignedExpression(leftExpr, bitLength, location),
-					constructSignedExpression(rightExpr, bitLength, location));
-			final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
-			final BinaryExpression leftBinaryExpr = new BinaryExpression(location, Operator.COMPNEQ, signedExpr,
-					zeroLiteral);
-			final IdentifierExpression identifierExpr = new IdentifierExpression(location, identifier);
-			final BinaryExpression rightBinaryExpr = new BinaryExpression(location, Operator.COMPLT, identifierExpr,
-					zeroLiteral);
-			final BinaryExpression condBinaryExpr = new BinaryExpression(location, Operator.LOGICAND, leftBinaryExpr,
-					rightBinaryExpr);
-			final IntegerLiteral oneLiteral = new IntegerLiteral(location, "1");
-			final BinaryExpression thenBinaryExpr = new BinaryExpression(location, Operator.ARITHPLUS, identifierExpr,
-					oneLiteral);
-			final IfThenElseExpression ifThenElseExpr = new IfThenElseExpression(location, condBinaryExpr,
-					thenBinaryExpr, identifierExpr);
 			final VariableLHS varLhs2 = new VariableLHS(location, identifier);
-			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs2 },
-					new Expression[] { ifThenElseExpr });
-			result.addFuncBlock(assignment2);
-
-			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, true);
-			final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHMOD, identifierExpr,
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
+			final Expression leftExpr2 = new IdentifierExpression(location, identifier);
+			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, leftExpr2,
 					bitLengthLiteral);
-			final VariableLHS varLhs3 = new VariableLHS(location, identifier);
-			final AssignmentStatement assignment3 = new AssignmentStatement(location, new LeftHandSide[] { varLhs3 },
-					new Expression[] { binaryExpr3 });
-			result.addFuncBlock(assignment3);
+			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs2 },
+					new Expression[] { signedExpr });
+			result.addFuncBlock(assignment2);
 		} else if (instructionType.uDivInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.uDivInst().typeValue().firstClassType()
 					.concreteType();
@@ -1073,43 +1113,15 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					new Expression[] { binaryExpr });
 			result.addFuncBlock(assignment);
 
-			final IntegerLiteral zeroLiteral = new IntegerLiteral(location, "0");
-			final BinaryExpression leftBinaryExpr = new BinaryExpression(location, Operator.COMPLT, binaryExpr,
-					zeroLiteral);
-			final BinaryExpression rightBinaryExpr = new BinaryExpression(location, Operator.COMPGT,
-					new IdentifierExpression(location, identifier), zeroLiteral);
-			final BinaryExpression condBinaryExpr = new BinaryExpression(location, Operator.LOGICAND, leftBinaryExpr,
-					rightBinaryExpr);
-			final IdentifierExpression identifierExpr = new IdentifierExpression(location, identifier);
-			final BinaryExpression binaryExpr2 = new BinaryExpression(location, Operator.ARITHMINUS, identifierExpr,
-					constructSignedExpression(rightBinaryExpr, bitLength, location));
 			final VariableLHS varLhs2 = new VariableLHS(location, identifier);
-			final AssignmentStatement thenAssignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs2 },
-					new Expression[] { binaryExpr2 });
-			final IfStatement ifStmt = new IfStatement(location, condBinaryExpr, new Statement[] { thenAssignment },
-					new Statement[] {});
-			result.addFuncBlock(ifStmt);
-
-			final BinaryExpression leftBinaryExpr2 = new BinaryExpression(location, Operator.COMPGT,
-					constructSignedExpression(leftExpr, bitLength, location), zeroLiteral);
-			final BinaryExpression rightBinaryExpr2 = new BinaryExpression(location, Operator.COMPLT,
-					constructSignedExpression(rightExpr, bitLength, location), zeroLiteral);
-			final BinaryExpression condBinaryExpr2 = new BinaryExpression(location, Operator.LOGICAND, leftBinaryExpr2,
-					rightBinaryExpr2);
-			final BinaryExpression binaryExpr3 = new BinaryExpression(location, Operator.ARITHMINUS, identifierExpr,
-					constructSignedExpression(rightBinaryExpr2, bitLength, location));
-			final AssignmentStatement thenAssignment2 = new AssignmentStatement(location,
-					new LeftHandSide[] { varLhs2 }, new Expression[] { binaryExpr3 });
-			final IfStatement ifStmt2 = new IfStatement(location, condBinaryExpr2, new Statement[] { thenAssignment2 },
-					new Statement[] {});
-			result.addFuncBlock(ifStmt2);
-
-			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, true);
-			final BinaryExpression binaryExpr4 = new BinaryExpression(location, Operator.ARITHMOD, identifierExpr,
+			final IntegerLiteral bitLengthLiteral = constructBitLengthLiteral(location, bitLength, false);
+			final Expression leftExpr2 = new IdentifierExpression(location, identifier);
+			final BinaryExpression signedExpr = new BinaryExpression(location, Operator.ARITHMOD, leftExpr2,
 					bitLengthLiteral);
-			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
-					new Expression[] { binaryExpr4 });
+			final AssignmentStatement assignment2 = new AssignmentStatement(location, new LeftHandSide[] { varLhs2 },
+					new Expression[] { signedExpr });
 			result.addFuncBlock(assignment2);
+
 		} else if (instructionType.subInst() != null) {
 			final LLVMIRParser.ConcreteTypeContext typeContext = instructionType.subInst().typeValue().firstClassType()
 					.concreteType();
