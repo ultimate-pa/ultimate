@@ -844,7 +844,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				}
 			}
 
-			final VariableLHS varLhs = new VariableLHS(null, identifier);
+			final VariableLHS varLhs = new VariableLHS(location, identifier);
 			final BinaryExpression binaryExpr = new BinaryExpression(location, operator, leftExpr, rightExpr);
 			final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 					new Expression[] { binaryExpr });
