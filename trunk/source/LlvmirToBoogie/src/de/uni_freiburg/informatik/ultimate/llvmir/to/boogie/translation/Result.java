@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.llvmir.to.boogie.translation;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
  */
 public class Result {
 	private final ArrayList<VariableDeclaration> mFuncLocalVars;
+	private final ArrayList<ModifiesSpecification> mFuncModifiedGlobalVars = new ArrayList<>();
 	private final ArrayList<Statement> mFuncBlock;
 
 	public Result() {
@@ -47,6 +49,10 @@ public class Result {
 
 	public ArrayList<VariableDeclaration> getFuncLocalVars() {
 		return mFuncLocalVars;
+	}
+
+	public ArrayList<ModifiesSpecification> getFuncModifiedGlobalVars() {
+		return mFuncModifiedGlobalVars;
 	}
 
 	public ArrayList<Statement> getFuncBlock() {
@@ -59,6 +65,10 @@ public class Result {
 
 	public void addFuncLocalVars(final Collection<VariableDeclaration> funcLocalVars) {
 		mFuncLocalVars.addAll(funcLocalVars);
+	}
+
+	public void addFuncModifiedGlobalVar(final ModifiesSpecification funcModifiedGlobalVar) {
+		mFuncModifiedGlobalVars.add(funcModifiedGlobalVar);
 	}
 
 	public void addFuncBlock(final Statement funcBlock) {
@@ -77,6 +87,7 @@ public class Result {
 	 */
 	public Result merge(final Result other) {
 		mFuncLocalVars.addAll(other.getFuncLocalVars());
+		mFuncModifiedGlobalVars.addAll(other.getFuncModifiedGlobalVars());
 		mFuncBlock.addAll(other.getFuncBlock());
 		return this;
 	}

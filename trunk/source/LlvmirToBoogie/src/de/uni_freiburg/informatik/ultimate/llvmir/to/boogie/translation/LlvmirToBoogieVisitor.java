@@ -151,9 +151,10 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	 *
 	 * @param identifier The identifier of the variable to be modified.
 	 * @param location   The location in the source code where this specification is defined.
-	 * @return A Specification object representing the modifies specification for the given identifier.
+	 * @return A ModifiesSpecification object representing the modifies specification for the given identifier.
 	 */
-	private static Specification constructSpecFromIdentifier(final String identifier, final LlvmirLocation location) {
+	private static ModifiesSpecification constructSpecFromIdentifier(final String identifier,
+			final LlvmirLocation location) {
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
 		return new ModifiesSpecification(location, false, new VariableLHS[] { varLhs });
 	}
@@ -608,7 +609,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final ArrayList<String> typeParams = new ArrayList<>();
 		final ArrayList<VarList> inParams = new ArrayList<>();
 		final ArrayList<VarList> outParams = new ArrayList<>();
-		final ArrayList<Specification> spec = new ArrayList<>();
 
 		for (final LLVMIRParser.ParamContext param : ctx.funcHeader().params().param()) {
 			PrimitiveType paramType = null;
@@ -640,7 +640,7 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 
 		final Procedure procedure = new Procedure(location, attributes.toArray(Attribute[]::new), funcName,
 				typeParams.toArray(String[]::new), inParams.toArray(VarList[]::new), outParams.toArray(VarList[]::new),
-				spec.toArray(Specification[]::new), body);
+				result.getFuncModifiedGlobalVars().toArray(Specification[]::new), body);
 		mDeclarations.add(procedure);
 
 		return null;
@@ -1273,7 +1273,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		final Result result = new Result();
 		final LlvmirLocation location = constructLocation(ctx);
 
-		final String identifier = unifyIdentifier(ctx.typeValue(1).value().LocalIdent().getText());
+		String identifier = null;
+		final LLVMIRParser.ValueContext valueContext1 = ctx.typeValue(1).value();
+		if (valueContext1.LocalIdent() != null) {
+			identifier = unifyIdentifier(ctx.typeValue(1).value().LocalIdent().getText());
+		} else if (valueContext1.constant() != null) {
+			identifier = unifyIdentifier(valueContext1.constant().GlobalIdent().getText());
+			result.addFuncModifiedGlobalVar(constructSpecFromIdentifier(identifier, location));
+		} else {
+			throw new AssertionError("Something went wrong while parsing the store instruction:");
+		}
 		final VariableLHS varLhs = new VariableLHS(location, identifier);
 		final AssignmentStatement assignment = new AssignmentStatement(location, new LeftHandSide[] { varLhs },
 				new Expression[] { constructExpressionFromValue(ctx.typeValue(0).value(),
