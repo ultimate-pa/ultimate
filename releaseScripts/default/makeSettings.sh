@@ -45,6 +45,42 @@ test_if_cmd_is_available() {
   fi
 }
 
+test_cmd_version_greater_equal() {
+  local CMD_VERS_ACTUAL="${1}"
+  local CMD_VERS_EXPCTD="${2}"
+  local CMD_NAME="${3}"
+
+  if [ "$(semver_compare ${CMD_VERS_ACTUAL} ${CMD_VERS_EXPCTD})" -eq -1 ]; then
+    printf '%s version %s is too old. ' "${CMD_NAME}" "${CMD_VERS_ACTUAL}"
+    printf 'Please install %s %s or newer.\n' "${CMD_NAME}" "${CMD_VERS_EXPCTD}"
+    exit 1
+  fi
+}
+
+get_cmd_version() {
+  ${@} | grep -m1 -Po "(\d+\.)+\d+"
+}
+
+print_cmd_version() {
+  local CMD_VERS="${1}"
+  local CMD_NAME="${2}"
+
+  printf '%s: %s\n' "${CMD_NAME}" "${CMD_VERS}"
+}
+
+print_newline() {
+  printf '\n'
+}
+
+print_heading() {
+  local HEADING_NAME="${1}"
+  local HEADING_LENGTH="${#HEADING_NAME}"
+  local HEADING_UNDERLINE="$(printf '━%.0s' $(seq 1 ${HEADING_LENGTH}))"
+
+  printf '%s\n' "${HEADING_NAME}"
+  printf '%s\n' "${HEADING_UNDERLINE}"
+}
+
 spushd() {
   pushd "$1" > /dev/null || { echo "Could not change into $1" ;  exit 1; }
 }
