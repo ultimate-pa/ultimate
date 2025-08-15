@@ -23,7 +23,7 @@ pipeline {
     timestamps()
   }
   environment {
-    PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
+    PATH = "${env.WORKSPACE}/releaseScripts/default/adds/solvers/linux/x86_64:${env.PATH}"
   }
   tools {
     jdk 'JDK21'

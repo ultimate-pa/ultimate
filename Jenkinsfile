@@ -9,7 +9,7 @@ pipeline {
     timestamps()
   }
   environment {
-    PATH = "${env.WORKSPACE}/releaseScripts/default/adds:${env.PATH}"
+    PATH = "${env.WORKSPACE}/releaseScripts/default/adds/solvers/linux/x86_64:${env.PATH}"
   }
   tools {
     jdk 'JDK21'
@@ -32,7 +32,7 @@ pipeline {
     stage('Build and run basic tests') {
       steps {
         withMaven(mavenOpts: '-Xmx4g -Xss4m -ea', options: [artifactsPublisher(disabled: true)]) {
-          sh 'cd trunk/source/BA_MavenParentUltimate && mvn -T 1C clean install'
+          sh 'cd releaseScripts/default && ./makeBuild.sh'
         }
       }
     }

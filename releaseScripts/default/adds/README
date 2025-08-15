@@ -60,6 +60,35 @@ files available in Ultimate's config/ directory. Depending on the concrete tool
 you downloaded, the toolchain and the settings invoke very different
 verification algorithms.
 
+The Ultimate framework provides several verification tools. These tools do
+not use the classic Ultimate launcher; they are used via the Python wrapper
+script Ultimate.py. The following verification tools are available as
+separate archives:
+
+* Ultimate Automizer
+   Verifies C programs using trace abstraction, which generalizes
+   infeasibility proofs for single program traces to Floyd-Hoare automata
+   that cover larger parts of the program.
+* Ultimate GemCutter
+   Verifies concurrent C programs based on commutativity, i.e., the
+   observation that for certain statements from different threads the
+   execution order does not matter. It integrates partial order reduction
+   with a trace abstraction-based CEGAR scheme.
+* Ultimate Kojak
+   Verifies C programs using an extension of the Lazy Interpolants CEGAR
+   scheme.
+* Ultimate Referee
+   Checks whether a program annotated with invariants is proven correct by
+   an inductive proof. The invariants can be extracted from correctness
+   witnesses, therefore Referee can be used as a validator for these.
+* Ultimate ReqCheck
+   Checks requirements for real-time inconsistencies and computes test goals
+   from them.
+* Ultimate Taipan
+   Verifies C programs using abstract interpretation with various domains to
+   find loop invariants for path programs. Proofs for path programs are
+   combined using automata operations on Floyd-Hoare automata.
+
 The script supports the input parameters that are used in the SV-COMP and
 should be invoked as follows.
 
