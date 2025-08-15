@@ -553,6 +553,19 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	}
 
 	/**
+	 * Retrieves a Procedure object from the list of declarations based on the given identifier.
+	 *
+	 * @param identifier The identifier of the procedure to retrieve.
+	 * @return The Procedure object corresponding to the identifier.
+	 * @throws AssertionError if no procedure with the given identifier is found.
+	 */
+	private Procedure getProcedureFromDeclarations(final String identifier) throws AssertionError {
+		return mDeclarations.stream().filter(dec -> dec instanceof Procedure).map(dec -> (Procedure) dec)
+				.filter(proc -> proc.getIdentifier().equals(identifier)).findFirst()
+				.orElseThrow(() -> new AssertionError("Procedure with identifier '" + identifier + "' not found."));
+	}
+
+	/**
 	 * Handles the visit event for the compilation unit in the LLVM IR parse tree.
 	 *
 	 * This method initializes the location and processes the children of the compilation unit context to construct
@@ -565,7 +578,28 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 	public Result visitCompilationUnit(final LLVMIRParser.CompilationUnitContext ctx) {
 		mLocation = constructLocation(ctx);
 
-		visitChildren(ctx);
+		ParseTree mainFunc = null;
+
+		for (final ParseTree child : ctx.children) {
+			if (!(child.getChild(0) instanceof LLVMIRParser.FuncDefContext)) {
+				visit(child); // visit non-function definitions immediately
+				continue;
+			}
+
+			final LLVMIRParser.FuncDefContext funcDef = (LLVMIRParser.FuncDefContext) child.getChild(0);
+			final String funcName = funcDef.funcHeader().GlobalIdent().getText();
+
+			if ("@main".equals(funcName)) {
+				mainFunc = child;
+			} else {
+				visit(child); // visit non-main immediately
+			}
+		}
+
+		// process main last
+		if (mainFunc != null) {
+			visit(mainFunc);
+		}
 
 		constructInitialDeclarations();
 		mResult = new Unit(mLocation, mDeclarations.toArray(Declaration[]::new));
@@ -1158,6 +1192,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 				final AssumeStatement assumeStmt2 = new AssumeStatement(location, new NamedAttribute[] {}, binaryExpr2);
 				result.addFuncBlock(assumeStmt2);
 			} else {
+				final Procedure proc = getProcedureFromDeclarations(unifyIdentifier(callIdentifier));
+				for (final Specification spec : proc.getSpecification()) {
+					if (!(spec instanceof ModifiesSpecification)) {
+						continue;
+					}
+					for (final VariableLHS varLhs : ((ModifiesSpecification) spec).getIdentifiers()) {
+						final String varIdentifier = varLhs.getIdentifier();
+						result.addFuncModifiedGlobalVar(constructSpecFromIdentifier(varIdentifier, location));
+					}
+				}
 				final ArrayList<Expression> args = new ArrayList<>();
 				for (final LLVMIRParser.ArgContext arg : instructionType.callInst().args().arg()) {
 					args.add(constructExpressionFromValue(arg.value(), typeContext, location, false));
@@ -1316,6 +1360,16 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 		} else if (callIdentifier.equals("@printf")) {
 			// This call can be ignored as it is not relevant for the Boogie translation
 		} else {
+			final Procedure proc = getProcedureFromDeclarations(unifyIdentifier(callIdentifier));
+			for (final Specification spec : proc.getSpecification()) {
+				if (!(spec instanceof ModifiesSpecification)) {
+					continue;
+				}
+				for (final VariableLHS varLhs : ((ModifiesSpecification) spec).getIdentifiers()) {
+					final String varIdentifier = varLhs.getIdentifier();
+					result.addFuncModifiedGlobalVar(constructSpecFromIdentifier(varIdentifier, location));
+				}
+			}
 			final ArrayList<Expression> args = new ArrayList<>();
 			for (final LLVMIRParser.ArgContext arg : ctx.args().arg()) {
 				args.add(constructExpressionFromValue(arg.value(), arg.concreteType(), location, false));
@@ -1324,7 +1378,6 @@ public class LlvmirToBoogieVisitor extends LLVMIRBaseVisitor<Result> {
 					unifyIdentifier(callIdentifier), args.toArray(Expression[]::new));
 			result.addFuncBlock(callStmt);
 		}
-
 		return result;
 	}
 }
