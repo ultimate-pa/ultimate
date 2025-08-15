@@ -653,7 +653,8 @@ public class RtInconcistencyConditionGenerator {
 		final RTInconsistencyPreCheck rtiPreCheck = new RTInconsistencyPreCheck();
 
 		// TODO Auto-generated method stub
-		return rtiPreCheck.doRtiPreCheck(reqPeas, mLogger, mScript, mCddToSmt, rTIPreCheckRange);
+		return rtiPreCheck.doRtiPreCheck(reqPeas, mLogger, mScript, mCddToSmt, mServices, mManagedScript,
+				rTIPreCheckRange);
 	}
 
 }

@@ -10,10 +10,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
+import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.lib.smtlibutils.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType.ReqPeas;
@@ -25,8 +27,10 @@ import de.uni_freiburg.informatik.ultimate.pea2boogie.CddToSmt;
 
 public class RTInconsistencyPreCheck {
 	private Script mScript;
+	private ManagedScript mManagedScript;
 	private ILogger mLogger;
 	private CddToSmt mCddToSmt;
+	private IUltimateServiceProvider mServices;
 	public List<ReqWithRTIPCattributes> mListWithChainLinkReqs;
 	public Map<TermVariable, List<ReqWithRTIPCattributes>> VariablesDict;
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> mrtiSets;
@@ -55,14 +59,20 @@ public class RTInconsistencyPreCheck {
 	 * This method is used to check the RTI sets of the requirements. First single reqs (so depth of search = 2), later
 	 * sets with chain-link requirements (depth of search >= 3)
 	 *
+	 * @param services
+	 * @param managedScript
+	 *
 	 * @param reqs
 	 *            List of ReqWithRTIPCattributes containing the requirements to be formatted.
 	 * @return An array of Map.Entry objects representing the formatted RTI sets.
 	 */
 	public List<Entry<PatternType<?>, PhaseEventAutomata>[]> doRtiPreCheck(final List<ReqPeas> reqPeas,
-			final ILogger logger, final Script script, final CddToSmt cddToSmt, final int range) {
+			final ILogger logger, final Script script, final CddToSmt cddToSmt, final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final int range) {
 		mScript = script;
+		mManagedScript = managedScript;
 		mLogger = logger;
+		mServices = services;
 		mCddToSmt = cddToSmt;
 		mCombinationNum = range;
 		mListWithChainLinkReqs = new ArrayList<>();
@@ -92,76 +102,42 @@ public class RTInconsistencyPreCheck {
 			}
 		}
 		doChainLinkTest();
-
-		// for chain-link requirements
-		if (mCombinationNum >= 1) {
-			int counter = 1;
-			while (counter <= mCombinationNum) {
-				counter++;
-				mLogger.info("START DOING CHAIN REQS");
-				mLogger.info("depth:" + counter);
-
-				for (final ReqWithRTIPCattributes req : mListWithChainLinkReqs) {
-					boolean help = true;
-					mLogger.info("---------Neuer Vergleich---------");
-					mLogger.info(req.mName);
-					mLogger.info(req.mOriginalPea.getPattern().toString());
-
-					final List<List<ReqWithRTIPCattributes>> list = new ArrayList<>();
-					for (final Term exitOption : req.mExitOptions) {
-						final List<ReqWithRTIPCattributes> helpList = new ArrayList<>();
-						final List<ReqWithRTIPCattributes> actualList = new ArrayList<>();
-						final TermVariable[] Variables = exitOption.getFreeVars();
-						for (final TermVariable variable : Variables) {
-							mLogger.info(variable);
-							if (VariablesDict.containsKey(variable) && VariablesDict.get(variable).size() > 0) {
-								helpList.addAll(VariablesDict.get(variable));
-							}
-						}
-						for (final ReqWithRTIPCattributes huhu : helpList) {
-							if (!makePreCheckForChainLink(huhu, req, exitOption)) {
-								actualList.add(huhu);
-							}
-						}
-
-						if (actualList.size() != 0) {
-							list.add(actualList);
-						} else {
-							mLogger.info("keine rti möglich");
-							help = false;
-							break;
-
-						}
-
-					}
-					if (help) {
-						mLogger.info("erstmal" + cartesianProduct(list).size());
-						for (final List<ReqWithRTIPCattributes> reqCombo : cartesianProduct(list)) {
-							mLogger.info("neuer Vegleich");
-							if (!mrtiSets.contains(reqCombo)) {
-								for (final List<ReqWithRTIPCattributes> rtisFound : mRtiSetsAll) {
-									if (reqCombo.containsAll(rtisFound)) {
-										mLogger.info("rausgeschmissen weil schon drin");
-										continue;
-									}
-
-								}
-
-								final List<ReqWithRTIPCattributes> ll = new ArrayList<>(reqCombo);
-								ll.add(req);
-								if (!makePreCheckFromList(ll) && !mrtiSets.contains(rtiSetsFormatted(ll))) {
-									mrtiSets.add(rtiSetsFormatted(ll));
-									mLogger.info("RTI WITH CHIANLINKL FOUND");
-								}
-
-							}
-						}
-					}
-
-				}
-			}
-		}
-
+		/*
+		 * // for chain-link requirements if (mCombinationNum >= 1) { int counter = 1; while (counter <=
+		 * mCombinationNum) { counter++; mLogger.info("START DOING CHAIN REQS"); mLogger.info("depth:" + counter);
+		 *
+		 * for (final ReqWithRTIPCattributes req : mListWithChainLinkReqs) { boolean help = true;
+		 * mLogger.info("---------Neuer Vergleich---------"); mLogger.info(req.mName);
+		 * mLogger.info(req.mOriginalPea.getPattern().toString());
+		 *
+		 * final List<List<ReqWithRTIPCattributes>> list = new ArrayList<>(); for (final Term exitOption :
+		 * req.mExitOptions) { final List<ReqWithRTIPCattributes> helpList = new ArrayList<>(); final
+		 * List<ReqWithRTIPCattributes> actualList = new ArrayList<>(); final TermVariable[] Variables =
+		 * exitOption.getFreeVars(); for (final TermVariable variable : Variables) { mLogger.info(variable); if
+		 * (VariablesDict.containsKey(variable) && VariablesDict.get(variable).size() > 0) {
+		 * helpList.addAll(VariablesDict.get(variable)); } } for (final ReqWithRTIPCattributes huhu : helpList) { if
+		 * (!makePreCheckForChainLink(huhu, req, exitOption)) { actualList.add(huhu); } }
+		 *
+		 * if (actualList.size() != 0) { list.add(actualList); } else { mLogger.info("keine rti möglich"); help = false;
+		 * break;
+		 *
+		 * }
+		 *
+		 * } if (help) { mLogger.info("erstmal" + cartesianProduct(list).size()); for (final
+		 * List<ReqWithRTIPCattributes> reqCombo : cartesianProduct(list)) { mLogger.info("neuer Vegleich"); if
+		 * (!mrtiSets.contains(reqCombo)) { for (final List<ReqWithRTIPCattributes> rtisFound : mRtiSetsAll) { if
+		 * (reqCombo.containsAll(rtisFound)) { mLogger.info("rausgeschmissen weil schon drin"); continue; }
+		 *
+		 * }
+		 *
+		 * final List<ReqWithRTIPCattributes> ll = new ArrayList<>(reqCombo); ll.add(req); if (!makePreCheckFromList(ll)
+		 * && !mrtiSets.contains(rtiSetsFormatted(ll))) { mrtiSets.add(rtiSetsFormatted(ll));
+		 * mLogger.info("RTI WITH CHIANLINKL FOUND"); }
+		 *
+		 * } } }
+		 *
+		 * } } }
+		 */
 		// ✅ Logger-Ausgaben und Rückgabe jetzt innerhalb der Methode
 		mLogger.info("PreCheck found possible rt-inconsistent sets::");
 		mLogger.info("Number of sets: " + mrtiSets.size());
@@ -173,18 +149,94 @@ public class RTInconsistencyPreCheck {
 		}
 
 		return mrtiSets;
+
 	}
 
-	private void doChainLinkTest()
-	{
+	private void doChainLinkTest() {
 		int counter = 1;
 		while (counter <= mCombinationNum) {
-			for(final ReqWithRTIPCattributes req: ) {
-				counter ++;
+			final List<List<ReqWithRTIPCattributes>> combos = kombinationen(mListWithChainLinkReqs, counter);
+			for (final List<ReqWithRTIPCattributes> combo : combos) {
+				TermVariable[] variables = combo.get(0).mFullExitOption.getFreeVars();
+				Term CombinedEC = combo.get(0).mFullExitOption;
+				boolean RtiPossible = true;
+				for (int i = 1; i < combo.size(); i++) {
+
+					if (habenSchnittmenge(combo.get(i).mFullExitOption.getFreeVars(), variables)) {
+						CombinedEC = SmtUtils.and(mScript, CombinedEC, combo.get(i).mFullExitOption);
+						variables = CombinedEC.getFreeVars();
+					} else {
+						RtiPossible = false;
+						break;
+					}
+
+				}
+				if (!RtiPossible) {
+					continue;
+				}
+				final Term[] combinedEOptions = SmtUtils.getDisjuncts(CombinedEC);
+
+				// find singles
+				final List<List<ReqWithRTIPCattributes>> list = new ArrayList<>();
+				for (final Term exitOption : combinedEOptions) {
+					final List<ReqWithRTIPCattributes> helpList = new ArrayList<>();
+					final List<ReqWithRTIPCattributes> actualList = new ArrayList<>();
+					final TermVariable[] Variables = exitOption.getFreeVars();
+					for (final TermVariable variable : Variables) {
+						mLogger.info(variable);
+						if (VariablesDict.containsKey(variable) && VariablesDict.get(variable).size() > 0) {
+							helpList.addAll(VariablesDict.get(variable));
+						}
+					}
+					for (final ReqWithRTIPCattributes huhu : helpList) {
+						if (!makePreCheckForChainLink(huhu, req, exitOption)) {
+							actualList.add(huhu);
+						}
+
+					}
+					if (actualList.size() != 0) {
+						list.add(actualList);
+					} else {
+						mLogger.info("keine rti möglich");
+						help = false;
+					}
+					break;
+				}
+
 			}
+			counter++;
 		}
 		// TODO Auto-generated method stub
 
+	}
+
+	public static <T> boolean habenSchnittmenge(final TermVariable[] vars1, final TermVariable[] variables) {
+		for (final TermVariable elem : variables) {
+			if (Arrays.asList(vars1).contains(elem)) {
+				return true; // Überschneidung gefunden
+			}
+		}
+		return false; // Keine gemeinsamen Elemente
+	}
+
+	public static <T> List<List<ReqWithRTIPCattributes>> kombinationen(final List<ReqWithRTIPCattributes> liste,
+			final int n) {
+		final List<List<ReqWithRTIPCattributes>> ergebnis = new ArrayList<>();
+		kombiHelfer(liste, n, 0, new ArrayList<>(), ergebnis);
+		return ergebnis;
+	}
+
+	private static <T> void kombiHelfer(final List<ReqWithRTIPCattributes> liste, final int n, final int start,
+			final List<ReqWithRTIPCattributes> aktuell, final List<List<ReqWithRTIPCattributes>> ergebnis) {
+		if (aktuell.size() == n) {
+			ergebnis.add(new ArrayList<>(aktuell));
+			return;
+		}
+		for (int i = start; i < liste.size(); i++) {
+			aktuell.add(liste.get(i));
+			kombiHelfer(liste, n, i + 1, aktuell, ergebnis);
+			aktuell.remove(aktuell.size() - 1);
+		}
 	}
 
 	/**
