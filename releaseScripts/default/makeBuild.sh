@@ -81,6 +81,10 @@ package() {
     exit_on_fail bash makePackageSmall.sh "DeltaDebugger" "${platform}"
     print_newline
 
+    print_heading "Package Ultimate Eliminator [${platform}]"
+    exit_on_fail bash makePackageSmall.sh "Eliminator" "${platform}"
+    print_newline
+
     print_heading "Package Ultimate WebBackend [${platform}]"
     exit_on_fail bash makePackageSmall.sh "WebBackend" "${platform}"
     print_newline

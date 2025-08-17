@@ -40,6 +40,10 @@ archive() {
     exit_on_fail bash makeZip.sh "DeltaDebugger" "${platform}"
     print_newline
 
+    print_heading "Archive Ultimate Eliminator [${platform}]"
+    exit_on_fail bash makeZip.sh "Eliminator" "${platform}"
+    print_newline
+
     print_heading "Archive Ultimate WebBackend [${platform}]"
     exit_on_fail bash makeZip.sh "WebBackend" "${platform}"
     print_newline
