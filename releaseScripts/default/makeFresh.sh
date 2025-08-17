@@ -51,6 +51,14 @@ archive() {
     print_heading "Archive Ultimate ReqCheck [${platform}]"
     exit_on_fail bash makeZip.sh "ReqCheck" "${platform}"
     print_newline
+
+    print_heading "Archive Ultimate Command Line [${platform}]"
+    exit_on_fail bash makeZip.sh "CLI-E4" "${platform}"
+    print_newline
+
+    print_heading "Archive Ultimate Debug UI [${platform}]"
+    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${platform}"
+    print_newline
   done
 }
 

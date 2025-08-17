@@ -12,6 +12,10 @@ hs_err_pid*
 
 /packaging/docker/*.env
 
+/releaseScripts/default/UCLI-E4-linux/*
+/releaseScripts/default/UCLI-E4-win32/*
+/releaseScripts/default/UDebug-E4-linux/*
+/releaseScripts/default/UDebug-E4-win32/*
 /releaseScripts/default/UDeltaDebugger-linux/*
 /releaseScripts/default/UDeltaDebugger-win32/*
 /releaseScripts/default/UAutomizer-linux/*

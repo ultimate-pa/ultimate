@@ -77,6 +77,14 @@ package() {
     print_newline
 
     # makePackageSmall.sh <toolname> <targetarch>
+    print_heading "Package Ultimate Command Line [${platform}]"
+    exit_on_fail bash makePackageSmall.sh "CLI-E4" "${platform}"
+    print_newline
+
+    print_heading "Package Ultimate Debug UI [${platform}]"
+    exit_on_fail bash makePackageSmall.sh "Debug-E4" "${platform}"
+    print_newline
+
     print_heading "Package Ultimate DeltaDebugger [${platform}]"
     exit_on_fail bash makePackageSmall.sh "DeltaDebugger" "${platform}"
     print_newline
